@@ -1,0 +1,10 @@
+*
+
+
+!docs/
+!docs/*
+
+!README.md
+!README_ZH.md
+
+!.gitignore
