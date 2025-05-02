@@ -1,0 +1,102 @@
+appId: co.oxoyo.flying-bird-wallpaper
+productName: Flying-Bird-Wallpaper
+# 启用更新文件生成
+generateUpdatesFilesForAllChannels: true
+
+# 全局配置
+forceCodeSigning: false
+buildDependenciesFromSource: true
+compression: store
+
+directories:
+  buildResources: build
+  output: dist
+files:
+  - 'out/**/*'
+  - '!**/.vscode/*'
+  - '!src/*'
+  - '!electron.vite.config.{js,ts,mjs,cjs}'
+  - '!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
+  - '!{.env,.env.*,.npmrc,package-lock.json}'
+extraMetadata:
+  main: out/main/index.js
+extraResources:
+  - from: out/h5
+    to: resources/h5
+  - from: resources
+    to: resources
+asarUnpack:
+  - resources/**
+  - h5/**
+  - '**/*.{node,dll,exe,png,ico}'
+  - '**/node_modules/@iconify-json/**'
+win:
+  executableName: Flying Bird Wallpaper
+  target:
+    - target: nsis
+      arch:
+        - x64
+        - arm64
+  icon: build/icon.ico
+
+# NSIS 配置
+nsis:
+  artifactName: '${productName}-${version}-${arch}-setup.${ext}'
+  shortcutName: ${productName}
+  uninstallDisplayName: ${productName}
+  createDesktopShortcut: always
+  differentialPackage: false
+
+mac:
+  artifactName: '${productName}-${version}-${arch}.${ext}'
+  entitlementsInherit: build/entitlements.mac.plist
+  category: public.app-category.utilities
+  darkModeSupport: true
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  icon: build/icon.icns
+  identity: 'co.oxoyo.flying-bird-wallpaper'
+  extendInfo:
+    - NSCameraUsageDescription: Application requests access to the device's camera.
+    - NSMicrophoneUsageDescription: Application requests access to the device's microphone.
+    - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
+    - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
+  notarize: false
+  target:
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+dmg:
+  artifactName: '${productName}-${version}-${arch}.${ext}'
+  icon: build/icon.icns
+  window:
+    width: 540
+    height: 380
+  writeUpdateInfo: true
+
+# Linux 配置已禁用
+# linux:
+#   target:
+#     - AppImage
+#     - snap
+#     - deb
+#   maintainer: electronjs.org
+#   category: Utility
+# appImage:
+#   artifactName: ${productName}-${version}.${ext}
+npmRebuild: true # 将 false 改为 true
+publish:
+  # GitHub 发布配置
+  provider: github
+  owner: OXOYO
+  repo: Flying-Bird-Wallpaper
+  private: false
+  releaseType: release
+  publishAutoUpdate: true
+  publisherName: ['*.exe', '*.dmg', 'latest*.yml', '!*.blockmap']
+  # 本地发布测试
+  # provider: generic
+  # url: http://localhost:8080
+electronDownload:
+  mirror: https://npmmirror.com/mirrors/electron/

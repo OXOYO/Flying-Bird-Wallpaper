@@ -1,0 +1,12 @@
+/* 自定义Element-plus主题 */
+
+$--colors: (
+  "primary": (
+    "base": #71956C,
+  ),
+);
+
+/* 只需要重写你需要的即可 */
+@forward 'element-plus/theme-chalk/src/common/var.scss' with (
+  $colors: $--colors
+);

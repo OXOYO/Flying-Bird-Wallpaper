@@ -1,0 +1,471 @@
+{
+  "appInfo": {
+    "name": "Flying Bird Wallpaper",
+    "description": "Flying Bird Wallpaper is a beautiful picture browser that allows you to easily browse and collect beautiful pictures, and set the wallpaper with one click to create a unique desktop style. "
+  },
+  "actions": {
+    "autoSwitchWallpaper": {
+      "start": "Start automatic switching",
+      "stop": "Stop automatic switching"
+    },
+    "nextWallpaper": "Next wallpaper",
+    "prevWallpaper": "Previous wallpaper",
+    "closeSuspensionBall": "Close the suspension ball",
+    "openSuspensionBall": "Show the suspension ball",
+    "quit": "Quit",
+    "checkUpdate": "Check update",
+    "menu": "Menu",
+    "wordDrawer": "Word",
+    "qrCode": "QR Code"
+  },
+  "qrCode": {
+    "notice": "Scan QR code to access mobile version",
+    "imgPlaceholder": "Please start H5 server first",
+    "imgError": "Failed to get QR code",
+    "startH5Server": "Start H5 server",
+    "stopH5Server": "Stop H5 server"
+  },
+  "pages": {
+    "Setting": {
+      "tabs": {
+        "baseSetting": "Basic settings",
+        "privacySpace": "Privacy space"
+      },
+      "divider": {
+        "base": "Basic settings",
+        "wallpaper": "Wallpaper settings",
+        "switch": "Switch settings",
+        "wallpaperResource": "Wallpaper resources",
+        "resourceSettings": "Resource settings",
+        "localResource": "Local resources",
+        "webResource": "Web resources",
+        "dynamicWallpaper": "Dynamic wallpaper",
+        "remoteResource": "Remote resources",
+        "other": "Other settings",
+        "privacyPassword": "Privacy password",
+        "h5Settings": "H5 settings"
+      },
+      "settingDataForm": {
+        "locale": "Language",
+        "startup": "Startup",
+        "openMainWindowOnStartup": "Open on startup",
+        "startH5ServerOnStartup": "Start H5 server on startup",
+        "suspensionBallVisible": "Show suspension ball",
+        "enabledMenus": "Enable menu",
+        "autoSwitchWallpaper": "Automatically switch",
+        "switchType": "Switch mode",
+        "switchIntervalTime": "Switch interval",
+        "allScreen": "Apply to all screens",
+        "scaleType": "Filling mode",
+        "wallpaperResource": "Wallpaper resource",
+        "orientation": "Wallpaper orientation",
+        "quality": "Wallpaper quality",
+        "filterKeywords": {
+          "label": "Filter keywords",
+          "placeholder": "Please enter keywords"
+        },
+        "localResourceFolders": {
+          "label": "Local resource directory",
+          "placeholder": "Please select directory"
+        },
+        "allowedFileExt": {
+          "label": "Allowed file extensions",
+          "placeholder": "Please select allowed file extensions"
+        },
+        "autoRefreshDirectory": "Timed refresh",
+        "refreshDirectoryIntervalTime": "Refresh interval",
+        "webWallpaperUrl": {
+          "label": "Web URL",
+          "placeholder": "Please enter URL"
+        },
+        "dynamicAutoPlayOnStartup": "Automatically play on startup",
+        "dynamicMuteAudio": "Mute audio",
+        "dynamicBrightness": "Brightness",
+        "dynamicContrast": "Contrast",
+        "dynamicPerformanceMode": {
+          "label": "Performance mode",
+          "placeholder": "Please select performance mode"
+        },
+        "dynamicScaleMode": {
+          "label": "Filling mode",
+          "placeholder": "Please select filling mode"
+        },
+        "remoteResourceSecretKeys": {
+          "label": "Resource key",
+          "placeholder": "Please enter key"
+        },
+        "downloadSources": "Download sources",
+        "downloadOrientation": "Image orientation",
+        "downloadKeywords": {
+          "label": "Download keywords",
+          "placeholder": "Please enter keywords"
+        },
+        "autoDownload": "Automatically download",
+        "downloadIntervalTime": "Download interval",
+        "downloadFolder": {
+          "label": "Download directory",
+          "placeholder": "Please select directory"
+        },
+        "autoClearDownloaded": "Automatic cleanup",
+        "clearDownloadedExpiredTime": "Expired Time",
+        "sortField": "Sort field",
+        "sortType": "Sort method",
+        "themeColor": "Theme color",
+        "enableExpandSideMenu": "Enable expand side menu",
+        "showSideMenuLabel": "Show side menu label",
+        "viewImageIntervalTime": "View image interval",
+        "showImageTag": "Show image tag",
+        "confirmOnDeleteFile": "Confirm on delete",
+        "h5AutoSwitch": "Automatic switching",
+        "h5SwitchType": "Switching mode",
+        "h5SwitchIntervalTime": "Switching interval",
+        "h5Orientation": "Image orientation",
+        "h5Quality": "Image quality",
+        "h5SortField": "Sort field",
+        "h5SortType": "Sort mode",
+        "h5ImageDisplaySize": "Image display size",
+        "h5FloatingButtonPosition": "Floating button position"
+      },
+      "privacyPasswordForm": {
+        "old": {
+          "label": "Old password",
+          "placeholder": "Please enter your old password",
+          "tooltip": "The password consists of numbers, at least 3 digits and at most 6 digits. The default password is empty"
+        },
+        "new": {
+          "label": "New password",
+          "placeholder": "Please enter your new password",
+          "tooltip": "The password consists of numbers, at least 3 digits and at most 6 digits"
+        },
+        "confirm": "Update password"
+      }
+    },
+    "Utils": {
+      "refreshDirectory": "Refresh local resource directory data",
+      "clearCurrentResourceDB": "Clear the current resource data",
+      "clearWordsDB": "Clear the word data",
+      "clearFavoritesDB": "Clear the favorites data",
+      "clearHistoryDB": "Clear the history data",
+      "clearCache": "Clear the cache data",
+      "clearDownloadedAll": "Clean up all downloaded",
+      "clearDownloadedExpired": "Clean up expired downloaded",
+      "nextWallpaper": "Next wallpaper",
+      "prevWallpaper": "Previous wallpaper",
+      "execute": "Execute",
+      "openDatabaseDir": "Open the database directory",
+      "openLogsDir": "Open the log directory",
+      "openPluginsDir": "Open custom plugin directory",
+      "startH5Server": "Start H5 server",
+      "stopH5Server": "Stop H5 server",
+      "setWebWallpaper": "Set web wallpaper",
+      "setDynamicWallpaper": "Set dynamic wallpaper",
+      "closeDynamicWallpaper": "Close dynamic wallpaper",
+      "openPage": {}
+    },
+    "About": {
+      "name": "Name",
+      "description": "Description",
+      "author": "Author",
+      "version": "Version",
+      "github": "GitHub",
+      "email": "Email"
+    }
+  },
+  "messages": {
+    "operationSuccess": "Operation successful!",
+    "operationFail": "Operation failed!",
+    "operationIllegal": "Illegal operation!",
+    "operationInProgress": "Operation in progress!",
+    "folderAlreadyExist": "Resource directory is duplicated!",
+    "confirmMessageTemplate": "Are you sure you want to <span style=\"color: red; font-weight: bolder; margin: 0 5px\">{text}</span>?",
+    "confirmMessageDanger": "Dangerous operation, this operation is irreversible, do you confirm to execute it?",
+    "inputPrivacySpacePassword": "Please enter the privacy space password!",
+    "inputPrivacySpacePasswordErrorMessage": "Minimum 3 digits, maximum 6 digits!",
+    "enterPrivacySpaceSuccess": "Entered the privacy space!",
+    "exitedPrivacySpaceSuccess": "Exited the privacy space!",
+    "noMoreData": "No more data!",
+    "getDataFail": "Failed to get data!",
+    "copySuccess": "Copied!",
+    "copyFail": "Copy failed!",
+    "confirmDelete": "Deleted data cannot be restored. Confirm to delete?",
+    "refreshDirectorySuccess": "Refresh resource directory successfully, successfully inserted {insertedCount} items, total number of data {total} items!",
+    "refreshDirectoryFail": "Refresh resource failed!",
+    "refreshDirectoryFailSettingError": "Refresh resource failed, please check the resource settings!",
+    "refreshDirectoryFailNotSettingFolder": "Refresh resource failed, please check the local resource directory settings!",
+    "refreshDirectoryFailNotSettingFileExt": "Refresh resource failed, please check the allowed file extensions settings!",
+    "clearTableSuccess": "Clear data successfully!",
+    "clearTableFail": "Clear data failed!",
+    "clearCacheSuccess": "Clear cache successfully!",
+    "clearCacheFail": "Clear cache failed!",
+    "clearTableAutoincrementFail": "Clear table successfully, clear table autoincrement sequence failed!",
+    "operationSuccessWithInsertFail": "Operation successful, insert database failed!",
+    "oldPasswordError": "Old password is wrong!",
+    "newPasswordNotEmpty": "New password cannot be empty!",
+    "passwordError": "Password error!",
+    "alreadyInPrivacySpace": "Already in privacy space!",
+    "alreadyInFavorites": "Already in favorites!",
+    "operationTooFrequent": "Operation is too frequent, please try again later!",
+    "privacyPasswordNotSet": "Privacy password is not set, please set privacy password first!",
+    "verifyPrivacyPasswordSuccess": "Verification passed!",
+    "verifyPrivacyPasswordFail": "Verification failed!",
+    "operationFailWithDataDuplication": "Operation failed, data is duplicated!",
+    "querySuccess": "Query successful!",
+    "queryFail": "Query failed!",
+    "queryEmpty": "Query result is empty!",
+    "paramsError": "Parameter error!",
+    "setWallpaperSuccess": "Set wallpaper successfully!",
+    "setWallpaperFail": "Set wallpaper failed!",
+    "enterKeywords": "Please enter keywords!",
+    "pleaseSetDownloadFolder": "Please set the download directory first!",
+    "downloadFolderNotExistOrNotSet": "Download directory does not exist or not set!",
+    "resourceSecretKeyUnset": "Please set the remote resource secret key first!",
+    "h5ServerStartSuccess": "Start H5 server successfully!",
+    "h5ServerStartFail": "Start H5 server failed!",
+    "h5ServerStopSuccess": "Stop H5 server successfully!",
+    "h5ServerStopFail": "Stop H5 server failed!",
+    "dbConnectFail": "Database connection failed!",
+    "fileNotExist": "File does not exist!",
+    "resourceNotExist": "Resource does not exist!",
+    "downloadFail": "Download failed!",
+    "alreadyExists": "already exists!",
+    "notExists": "does not exist!",
+    "urlEmpty": "URL is empty!",
+    "invalidUrl": "Invalid URL!",
+    "fileServerNotInitialized": "File server is not initialized!",
+    "useDefaultSettings": "Using default settings!",
+    "clearDownloadedDone": "Clean up completed, total {allCount}, success {successCount}, fail {failCount}!",
+    "updateAvailable": "New version {version} found!",
+    "checkUpdateFail": "Check for update failed!",
+    "checkUpdateSuccess": "Check for update successful!",
+    "updateNotAvailable": "The latest version is now available!"
+  },
+  "resourceTypeList": {
+    "localResource": "Local resources",
+    "remoteResource": "Remote resources"
+  },
+  "resourceList": {
+    "resources": "resource library",
+    "local": "local resources",
+    "favorites": "favorites"
+  },
+  "menuList": {
+    "Explore": "Gallery",
+    "Search": "Search",
+    "Words": "Words",
+    "Favorites": "Favorites",
+    "History": "History",
+    "Setting": "Settings",
+    "Utils": "Tools",
+    "About": "About"
+  },
+  "scaleTypes": {
+    "auto": "auto",
+    "span": "span",
+    "fill": "fill",
+    "fit": "fit",
+    "stretch": "stretch",
+    "center": "center",
+    "tile": "tile"
+  },
+  "intervalUnits": {
+    "s": "second",
+    "m": "minute",
+    "h": "hour",
+    "d": "day"
+  },
+  "orientationOptions": {
+    "landscape": "landscape",
+    "portrait": "portrait"
+  },
+  "switchTypeOptions": {
+    "random": "random",
+    "order": "order"
+  },
+  "sortFieldOptions": {
+    "created_at": "Record creation time",
+    "updated_at": "Record modification time",
+    "ctimeMs": "Resource creation time",
+    "mtimeMs": "Resource modification time",
+    "fileName": "Resource file name"
+  },
+  "sortTypeOptions": {
+    "asc": "asc",
+    "desc": "desc"
+  },
+  "imageDisplaySizeOptions": {
+    "contain": "contain",
+    "cover": "cover"
+  },
+  "h5FloatingButtonPositionOptions": {
+    "left": "left",
+    "right": "right"
+  },
+  "dynamicPerformanceModeOptions": {
+    "high": "high",
+    "balanced": "balanced",
+    "powersave": "powersave"
+  },
+  "dynamicScaleModeOptions": {
+    "cover": "cover",
+    "contain": "contain",
+    "stretch": "stretch"
+  },
+  "wordTypeList": {
+    "chinese": "中文",
+    "english": "English"
+  },
+  "emptyHelp": {
+    "text": "No data yet, please check settings",
+    "jumpText": "Check settings"
+  },
+  "exploreCommon": {
+    "onLoadMore": "Load more",
+    "onRefresh": "Refresh",
+    "onTogglePrivacySpace": {
+      "quit": "Exit privacy space",
+      "enter": "Enter privacy space"
+    },
+    "onSwitchResource": "Switch resources",
+    "onRefreshDirectory": "Refresh resource directory",
+    "setAsWallpaperWithDownload": "Set as wallpaper",
+    "doViewImage": "Preview image",
+    "addToFavorites": "Add to favorites",
+    "removeFavorites": "Cancel favorites",
+    "addToPrivacySpace": "Add to privacy space",
+    "removePrivacySpace": "Remove from privacy space",
+    "onCopyFilePath": "Copy file path",
+    "onDeleteFile": "Delete file",
+    "showItemInFolder": "Open in folder",
+    "openLink": "Open link",
+    "viewInfo": "View information",
+    "searchForm": {
+      "filterKeywords": {
+        "placeholder": "Please enter keywords and press Enter to search"
+      },
+      "resourceType": {
+        "placeholder": "Resource type"
+      },
+      "resourceName": {
+        "placeholder": "Resource Name"
+      },
+      "orientation": {
+        "placeholder": "Image orientation"
+      },
+      "quality": {
+        "placeholder": "Image quality"
+      }
+    },
+    "onSyncToWallpaperSetting": "Sync to wallpaper settings",
+    "totalText": "Total {current} / {total} items"
+  },
+  "autoRefreshList": {
+    "off": "Turn off auto refresh",
+    "on": "Turn on auto refresh"
+  },
+  "gridSizeList": {
+    "label": {
+      "auto": "Auto",
+      "size": "{size}"
+    },
+    "alt": {
+      "auto": "Grid: Auto",
+      "size": "Grid: {size}"
+    }
+  },
+  "gridRatioList": {
+    "square": "Square",
+    "rectangle": "Rectangle",
+    "verticalRectangle": "Vertical rectangle"
+  },
+  "comingSoon": "Coming soon",
+  "viewInfo": {
+    "title": "View information",
+    "row": {
+      "title": "Title",
+      "desc": "Description",
+      "author": "Author",
+      "link": "Link",
+      "resourceName": "Resource Name",
+      "fileName": "File Name",
+      "filePath": "File Path",
+      "fileSize": "File Size",
+      "quality": "Quality",
+      "dimensions": "Dimensions",
+      "fileExt": "File Extension",
+      "created_at": "Created At",
+      "updated_at": "Updated At"
+    }
+  },
+  "h5": {
+    "tabbar": {
+      "home": "Home",
+      "search": "Search",
+      "setting": "Settings"
+    },
+    "pages": {
+      "home": {
+        "title": "Home"
+      },
+      "search": {
+        "title": "Search"
+      },
+      "setting": {
+        "title": "Settings",
+        "form": {
+          "appSetting": "App Settings",
+          "locale": {
+            "label": "Language",
+            "placeholder": "Select language"
+          },
+          "themes": {
+            "primary": {
+              "label": "Theme Color",
+              "placeholder": "Select theme color"
+            }
+          },
+          "imageSetting": "Image Settings",
+          "imageDisplaySize": {
+            "label": "Image Display Size",
+            "placeholder": "Select image display size"
+          },
+          "h5AutoSwitch": "Auto Switch",
+          "h5SwitchType": {
+            "label": "Switch Mode",
+            "placeholder": "Select switch mode"
+          },
+          "h5SwitchIntervalTime": "Switch Interval",
+          "h5Resource": {
+            "label": "Resource",
+            "placeholder": "Select resource"
+          },
+          "h5Orientation": {
+            "label": "Image Orientation",
+            "placeholder": "Select image orientation"
+          },
+          "h5Quality": {
+            "label": "Image Quality",
+            "placeholder": "Select image quality"
+          },
+          "h5SortField": {
+            "label": "Sort Field",
+            "placeholder": "Select sort field"
+          },
+          "h5SortType": {
+            "label": "Sort Order",
+            "placeholder": "Select sort order"
+          },
+          "h5ImageDisplaySize": {
+            "label": "Image Display Size",
+            "placeholder": "Select image display size"
+          },
+          "h5FloatingButtonPosition": {
+            "label": "Floating Button Position",
+            "placeholder": "Select floating button position"
+          }
+        },
+        "about": "About",
+        "version": "Version"
+      }
+    }
+  }
+}

@@ -1,0 +1,471 @@
+{
+  "appInfo": {
+    "name": "飞鸟壁纸",
+    "description": "飞鸟壁纸是一款精美图片浏览器，让你轻松浏览、收藏心动美图，并一键设置壁纸，打造独一无二的桌面风格。"
+  },
+  "actions": {
+    "autoSwitchWallpaper": {
+      "start": "启动自动切换",
+      "stop": "停止自动切换"
+    },
+    "nextWallpaper": "下一个壁纸",
+    "prevWallpaper": "上一个壁纸",
+    "closeSuspensionBall": "关闭悬浮球",
+    "openSuspensionBall": "显示悬浮球",
+    "quit": "退出",
+    "checkUpdate": "检查更新",
+    "menu": "菜单",
+    "wordDrawer": "词库",
+    "qrCode": "二维码"
+  },
+  "qrCode": {
+    "notice": "扫描二维码访问移动版",
+    "imgPlaceholder": "请先启动H5服务",
+    "imgError": "加载二维码失败",
+    "startH5Server": "启动H5服务",
+    "stopH5Server": "停止H5服务"
+  },
+  "pages": {
+    "Setting": {
+      "tabs": {
+        "baseSetting": "基础设置",
+        "privacySpace": "隐私空间"
+      },
+      "divider": {
+        "base": "基础设置",
+        "wallpaper": "壁纸设置",
+        "switch": "切换设置",
+        "wallpaperResource": "壁纸资源",
+        "resourceSettings": "资源设置",
+        "localResource": "本地资源",
+        "webResource": "网页资源",
+        "dynamicWallpaper": "动态壁纸",
+        "remoteResource": "远程资源",
+        "other": "其他设置",
+        "privacyPassword": "隐私密码",
+        "h5Settings": "H5设置"
+      },
+      "settingDataForm": {
+        "locale": "语言",
+        "startup": "开机启动",
+        "openMainWindowOnStartup": "启动时打开主窗口",
+        "startH5ServerOnStartup": "启动时启动H5服务",
+        "suspensionBallVisible": "显示悬浮球",
+        "enabledMenus": "启用菜单",
+        "autoSwitchWallpaper": "自动切换壁纸",
+        "switchType": "切换方式",
+        "switchIntervalTime": "切换间隔",
+        "allScreen": "应用到所有屏幕",
+        "scaleType": "填充方式",
+        "wallpaperResource": "壁纸资源",
+        "orientation": "壁纸方向",
+        "quality": "壁纸质量",
+        "filterKeywords": {
+          "label": "过滤关键词",
+          "placeholder": "请输入关键词"
+        },
+        "localResourceFolders": {
+          "label": "资源目录",
+          "placeholder": "请选择目录"
+        },
+        "allowedFileExt": {
+          "label": "允许文件类型",
+          "placeholder": "请选择文件类型"
+        },
+        "autoRefreshDirectory": "定时刷新",
+        "refreshDirectoryIntervalTime": "刷新间隔",
+        "webWallpaperUrl": {
+          "label": "网页地址",
+          "placeholder": "请输入网页地址"
+        },
+        "dynamicAutoPlayOnStartup": "启动时自动播放",
+        "dynamicMuteAudio": "静音播放",
+        "dynamicBrightness": "亮度",
+        "dynamicContrast": "对比度",
+        "dynamicPerformanceMode": {
+          "label": "性能模式",
+          "placeholder": "请选择性能模式"
+        },
+        "dynamicScaleMode": {
+          "label": "缩放模式",
+          "placeholder": "请选择缩放模式"
+        },
+        "remoteResourceSecretKeys": {
+          "label": "资源密钥",
+          "placeholder": "请输入密钥"
+        },
+        "downloadSources": "下载源",
+        "downloadOrientation": "图片方向",
+        "downloadKeywords": {
+          "label": "下载关键词",
+          "placeholder": "请输入关键词"
+        },
+        "autoDownload": "自动下载",
+        "downloadIntervalTime": "下载间隔",
+        "downloadFolder": {
+          "label": "下载目录",
+          "placeholder": "请选择目录"
+        },
+        "autoClearDownloaded": "自动清理",
+        "clearDownloadedExpiredTime": "过期时间",
+        "sortField": "排序字段",
+        "sortType": "排序方式",
+        "themeColor": "主题色",
+        "enableExpandSideMenu": "启用展开侧边栏",
+        "showSideMenuLabel": "显示侧边栏文本",
+        "viewImageIntervalTime": "预览播放间隔",
+        "showImageTag": "显示图片标签",
+        "confirmOnDeleteFile": "删除文件前确认",
+        "h5AutoSwitch": "自动切换",
+        "h5SwitchType": "切换方式",
+        "h5SwitchIntervalTime": "切换间隔",
+        "h5Orientation": "图片方向",
+        "h5Quality": "图片质量",
+        "h5SortField": "排序字段",
+        "h5SortType": "排序方式",
+        "h5ImageDisplaySize": "图片显示尺寸",
+        "h5FloatingButtonPosition": "悬浮按钮位置"
+      },
+      "privacyPasswordForm": {
+        "old": {
+          "label": "旧密码",
+          "placeholder": "请输入旧密码",
+          "tooltip": "密码由数字组成，最少3位，最多6位数字，默认密码为空"
+        },
+        "new": {
+          "label": "新密码",
+          "placeholder": "请输入新密码",
+          "tooltip": "密码由数字组成，最少3位，最多6位数字"
+        },
+        "confirm": "更新密码"
+      }
+    },
+    "Utils": {
+      "refreshDirectory": "刷新本地资源目录数据",
+      "clearCurrentResourceDB": "清空当前资源数据",
+      "clearWordsDB": "清空词库数据",
+      "clearFavoritesDB": "清空收藏数据",
+      "clearHistoryDB": "清空回忆数据",
+      "clearCache": "清空缓存数据",
+      "clearDownloadedAll": "清空所有下载",
+      "clearDownloadedExpired": "清理过期下载",
+      "nextWallpaper": "下一个壁纸",
+      "prevWallpaper": "上一个壁纸",
+      "execute": "执行",
+      "openDatabaseDir": "打开操作数据库目录",
+      "openLogsDir": "打开操作日志目录",
+      "openPluginsDir": "打开自定义插件目录",
+      "startH5Server": "启动H5服务",
+      "stopH5Server": "停止H5服务",
+      "setWebWallpaper": "设置网页壁纸",
+      "setDynamicWallpaper": "设置动态壁纸",
+      "closeDynamicWallpaper": "关闭动态壁纸",
+      "openPage": {}
+    },
+    "About": {
+      "name": "名称",
+      "description": "描述",
+      "author": "作者",
+      "version": "版本",
+      "github": "GitHub",
+      "email": "Email"
+    }
+  },
+  "messages": {
+    "operationSuccess": "操作成功！",
+    "operationFail": "操作失败！",
+    "operationIllegal": "非法操作！",
+    "operationInProgress": "操作执行中！",
+    "folderAlreadyExist": "资源目录重复！",
+    "confirmMessageTemplate": "确认要<span style=\"color: red; font-weight: bolder; margin: 0 5px\">{text}</span>吗？",
+    "confirmMessageDanger": "危险操作，此操作不可逆，确认执行吗?",
+    "inputPrivacySpacePassword": "请输入隐私空间密码！",
+    "inputPrivacySpacePasswordErrorMessage": "最少3位，最多6位数字！",
+    "enterPrivacySpaceSuccess": "已进入隐私空间！",
+    "exitedPrivacySpaceSuccess": "已退出隐私空间！",
+    "noMoreData": "没有更多数据了！",
+    "getDataFail": "获取数据失败！",
+    "copySuccess": "已复制！",
+    "copyFail": "复制失败！",
+    "confirmDelete": "删除后无法恢复，确认删除吗？",
+    "refreshDirectorySuccess": "刷新资源目录成功，成功插入 {insertedCount} 条，数据总数 {total} 条！",
+    "refreshDirectoryFail": "刷新资源失败！",
+    "refreshDirectoryFailSettingError": "刷新资源失败，配置错误！",
+    "refreshDirectoryFailNotSettingFolder": "刷新资源失败，未设置资源目录！",
+    "refreshDirectoryFailNotSettingFileExt": "刷新资源失败，未设置允许的文件类型！",
+    "clearTableSuccess": "清空数据成功！",
+    "clearTableFail": "清空数据失败！",
+    "clearCacheSuccess": "清除缓存成功！",
+    "clearCacheFail": "清除缓存失败！",
+    "clearTableAutoincrementFail": "清除表成功，清除表自增序列失败！",
+    "operationSuccessWithInsertFail": "操作成功，插入数据库失败！",
+    "oldPasswordError": "旧密码错误！",
+    "newPasswordNotEmpty": "新密码不能为空！",
+    "passwordError": "密码错误！",
+    "alreadyInPrivacySpace": "已在隐私空间！",
+    "alreadyInFavorites": "已在收藏！",
+    "operationTooFrequent": "操作太频繁，请稍后再试！",
+    "privacyPasswordNotSet": "隐私密码未设置，请先设置隐私密码！",
+    "verifyPrivacyPasswordSuccess": "验证通过！",
+    "verifyPrivacyPasswordFail": "验证失败！",
+    "operationFailWithDataDuplication": "操作失败，数据重复！",
+    "querySuccess": "查询成功！",
+    "queryFail": "查询失败！",
+    "queryEmpty": "查询结果为空！",
+    "paramsError": "参数错误！",
+    "setWallpaperSuccess": "设置壁纸成功！",
+    "setWallpaperFail": "设置壁纸失败！",
+    "enterKeywords": "请输入关键词！",
+    "pleaseSetDownloadFolder": "请先设置下载目录！",
+    "downloadFolderNotExistOrNotSet": "下载目录不存在或未设置！",
+    "resourceSecretKeyUnset": "请先设置远程资源密钥！",
+    "h5ServerStartSuccess": "H5服务启动成功！",
+    "h5ServerStartFail": "H5服务启动失败！",
+    "h5ServerStopSuccess": "H5服务停止成功！",
+    "h5ServerStopFail": "H5服务停止失败！",
+    "dbConnectFail": "数据库链接失败！",
+    "fileNotExist": "文件不存在！",
+    "resourceNotExist": "资源不存在！",
+    "downloadFail": "下载失败！",
+    "alreadyExists": "已存在！",
+    "notExists": "不存在！",
+    "urlEmpty": "URL不能为空！",
+    "invalidUrl": "无效的URL！",
+    "fileServerNotInitialized": "文件服务器未初始化！",
+    "useDefaultSettings": "使用默认设置！",
+    "clearDownloadedDone": "清理完成，共 {allCount}，成功 {successCount}, 失败 {failCount}！",
+    "updateAvailable": "发现新版本 {version}",
+    "checkUpdateFail": "检查更新失败！",
+    "checkUpdateSuccess": "检查更新成功！",
+    "updateNotAvailable": "当前已是最新版本！"
+  },
+  "resourceTypeList": {
+    "localResource": "本地资源",
+    "remoteResource": "远程资源"
+  },
+  "resourceList": {
+    "resources": "资源库",
+    "local": "本地资源",
+    "favorites": "收藏"
+  },
+  "menuList": {
+    "Explore": "图库",
+    "Search": "搜索",
+    "Words": "词库",
+    "Favorites": "收藏",
+    "History": "回忆",
+    "Setting": "设置",
+    "Utils": "工具",
+    "About": "关于"
+  },
+  "scaleTypes": {
+    "auto": "自动",
+    "span": "自动",
+    "fill": "填充",
+    "fit": "适应",
+    "stretch": "拉伸",
+    "center": "居中",
+    "tile": "平铺"
+  },
+  "intervalUnits": {
+    "s": "秒",
+    "m": "分钟",
+    "h": "小时",
+    "d": "天"
+  },
+  "orientationOptions": {
+    "landscape": "横向",
+    "portrait": "纵向"
+  },
+  "switchTypeOptions": {
+    "random": "随机",
+    "order": "顺序"
+  },
+  "sortFieldOptions": {
+    "created_at": "记录创建时间",
+    "updated_at": "记录修改时间",
+    "ctimeMs": "资源创建时间",
+    "mtimeMs": "资源修改时间",
+    "fileName": "资源文件名"
+  },
+  "sortTypeOptions": {
+    "asc": "升序",
+    "desc": "降序"
+  },
+  "imageDisplaySizeOptions": {
+    "contain": "适应",
+    "cover": "填充"
+  },
+  "h5FloatingButtonPositionOptions": {
+    "left": "左侧",
+    "right": "右侧"
+  },
+  "dynamicPerformanceModeOptions": {
+    "high": "高",
+    "balanced": "均衡",
+    "powersave": "省电"
+  },
+  "dynamicScaleModeOptions": {
+    "cover": "填充",
+    "contain": "适应",
+    "stretch": "拉伸"
+  },
+  "wordTypeList": {
+    "chinese": "中文",
+    "english": "English"
+  },
+  "emptyHelp": {
+    "text": "暂无数据，请检查设置",
+    "jumpText": "检查设置"
+  },
+  "exploreCommon": {
+    "onLoadMore": "加载更多",
+    "onRefresh": "刷新",
+    "onTogglePrivacySpace": {
+      "quit": "退出隐私空间",
+      "enter": "进入隐私空间"
+    },
+    "onSwitchResource": "切换资源",
+    "onRefreshDirectory": "刷新资源目录",
+    "setAsWallpaperWithDownload": "设为壁纸",
+    "doViewImage": "预览图片",
+    "addToFavorites": "加入收藏",
+    "removeFavorites": "取消收藏",
+    "addToPrivacySpace": "加入隐私空间",
+    "removePrivacySpace": "移出隐私空间",
+    "onCopyFilePath": "复制文件路径",
+    "onDeleteFile": "删除文件",
+    "showItemInFolder": "在文件夹中打开",
+    "openLink": "打开链接",
+    "viewInfo": "查看信息",
+    "searchForm": {
+      "filterKeywords": {
+        "placeholder": "请输入关键词，回车查询"
+      },
+      "resourceType": {
+        "placeholder": "资源类型"
+      },
+      "resourceName": {
+        "placeholder": "资源名称"
+      },
+      "orientation": {
+        "placeholder": "图片方向"
+      },
+      "quality": {
+        "placeholder": "图片质量"
+      }
+    },
+    "onSyncToWallpaperSetting": "同步到壁纸设置",
+    "totalText": "共 {current} / {total} 条"
+  },
+  "autoRefreshList": {
+    "off": "关闭自动刷新",
+    "on": "开启自动刷新"
+  },
+  "gridSizeList": {
+    "label": {
+      "auto": "自动",
+      "size": "{size}"
+    },
+    "alt": {
+      "auto": "格子：自动",
+      "size": "格子：{size}"
+    }
+  },
+  "gridRatioList": {
+    "square": "正方形",
+    "rectangle": "长方形",
+    "verticalRectangle": "竖长方形"
+  },
+  "comingSoon": "敬请期待",
+  "viewInfo": {
+    "title": "查看信息",
+    "row": {
+      "title": "标题",
+      "desc": "描述",
+      "author": "作者",
+      "link": "链接",
+      "resourceName": "资源名称",
+      "fileName": "文件名",
+      "filePath": "文件路径",
+      "fileExt": "扩展名",
+      "fileSize": "文件大小",
+      "quality": "质量",
+      "dimensions": "尺寸",
+      "created_at": "创建时间",
+      "updated_at": "更新时间"
+    }
+  },
+  "h5": {
+    "tabbar": {
+      "home": "首页",
+      "search": "搜索",
+      "setting": "设置"
+    },
+    "pages": {
+      "home": {
+        "title": "首页"
+      },
+      "search": {
+        "title": "搜索"
+      },
+      "setting": {
+        "title": "设置",
+        "form": {
+          "appSetting": "应用设置",
+          "locale": {
+            "label": "语言",
+            "placeholder": "请选择语言"
+          },
+          "themes": {
+            "primary": {
+              "label": "主题色",
+              "placeholder": "请选择主题色"
+            }
+          },
+          "imageSetting": "图片设置",
+          "imageDisplaySize": {
+            "label": "图片显示尺寸",
+            "placeholder": "请选择图片显示尺寸"
+          },
+          "h5AutoSwitch": "自动切换",
+          "h5SwitchType": {
+            "label": "切换方式",
+            "placeholder": "请选择切换方式"
+          },
+          "h5SwitchIntervalTime": "切换间隔",
+          "h5Resource": {
+            "label": "图片资源",
+            "placeholder": "请选择资源"
+          },
+          "h5Orientation": {
+            "label": "图片方向",
+            "placeholder": "请选择图片方向"
+          },
+          "h5Quality": {
+            "label": "图片质量",
+            "placeholder": "请选择图片质量"
+          },
+          "h5SortField": {
+            "label": "排序字段",
+            "placeholder": "请选择排序字段"
+          },
+          "h5SortType": {
+            "label": "排序方式",
+            "placeholder": "请选择排序方式"
+          },
+          "h5ImageDisplaySize": {
+            "label": "图片显示尺寸",
+            "placeholder": "请选择图片显示尺寸"
+          },
+          "h5FloatingButtonPosition": {
+            "label": "悬浮按钮位置",
+            "placeholder": "请选择悬浮按钮位置"
+          }
+        },
+        "about": "关于",
+        "version": "版本"
+      }
+    }
+  }
+}

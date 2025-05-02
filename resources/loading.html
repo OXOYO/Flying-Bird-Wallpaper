@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body{
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    /* 动画来源：https://css-loaders.com/ */
+    /* HTML: <div class="loader"></div> */
+    /*.loader {
+      width: 60px;
+      aspect-ratio: 1;
+      --_c:no-repeat radial-gradient(farthest-side,#25b09b 92%,#0000);
+      background:
+        var(--_c) top,
+        var(--_c) left,
+        var(--_c) right,
+        var(--_c) bottom;
+      background-size: 12px 12px;
+      animation: l7 1s infinite;
+    }
+    @keyframes l7 {to{transform: rotate(.5turn)}}*/
+
+    /* HTML: <div class="loader"></div> */
+    .loader {
+      width: 30px;
+      aspect-ratio: 1;
+      display: grid;
+      transform: translateY(100%);
+    }
+    .loader::before,
+    .loader::after {
+      content: "";
+      grid-area: 1/1;
+      border-radius: 50%;
+      transform-origin: bottom;
+      position: relative;
+    }
+    .loader::before {
+      background: radial-gradient(at 30% 30%,#0000,#000a) red;
+      transform: scaleY(0.65);
+      top: 0;
+      animation: l11-1, l11-2;
+      animation-duration: 2s;
+      animation-timing-function: cubic-bezier(0,400,1,400),ease;
+      animation-iteration-count: infinite;
+    }
+    .loader::after {
+      background: #ccc;
+      filter: blur(8px);
+      transform: scaleY(0.3) translate(0px,0px);
+      left: 0;
+      animation: l11-3 2s cubic-bezier(0,400,1,400) infinite;
+    }
+    @keyframes l11-1 {
+      100% {top:-0.2px}
+    }
+    @keyframes l11-2 {
+      4%,96% {transform: scaleY(1)}
+    }
+    @keyframes l11-3 {
+      100% {transform: scaleY(0.3) translate(0.1px,-0.1px)}
+    }
+  </style>
+</head>
+<body>
+  <div class="loader"></div>
+</body>
+</html>

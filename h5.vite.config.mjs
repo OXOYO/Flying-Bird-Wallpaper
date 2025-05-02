@@ -1,0 +1,38 @@
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import AutoImport from 'unplugin-auto-import/vite'
+import liveReload from 'vite-plugin-live-reload'
+import { resolve, dirname } from 'path'
+import { fileURLToPath } from 'url'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+
+export default defineConfig({
+  root: resolve(__dirname, 'src/h5'),
+  base: './', // 确保资源使用相对路径
+  resolve: {
+    alias: {
+      '@src': resolve('src'),
+      '@h5': resolve('src/h5'),
+      '@resources': resolve('./resources'),
+      '@common': resolve('src/common'),
+      '@i18n': resolve('src/i18n')
+    }
+  },
+  plugins: [
+    vue(),
+    AutoImport({
+      // 自动导入 Vue 相关函数，如：ref, reactive, toRef 等
+      imports: ['vue']
+    }),
+    liveReload(['src/h5/**/*']) // 监听 src 目录下的文件变化
+  ],
+  build: {
+    emptyOutDir: true, // 清空 outDir
+    outDir: '../../out/h5', // 客户端输出目录
+    assetsDir: 'assets', // 静态资源目录，相对outDir
+    rollupOptions: {
+      input: resolve(__dirname, 'src/h5/index.html') // 客户端入口文件
+    }
+  }
+})

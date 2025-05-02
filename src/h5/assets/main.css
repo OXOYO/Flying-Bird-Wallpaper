@@ -1,0 +1,6 @@
+.page-wrapper {
+  width: 100vw;
+  height: calc(100vh - var(--van-tabbar-height));
+  /* 禁止下拉刷新 */
+  overscroll-behavior: none;
+}
