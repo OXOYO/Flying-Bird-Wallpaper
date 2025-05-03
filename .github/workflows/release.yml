@@ -36,8 +36,6 @@ jobs:
           fi
 
           # 生成变更日志
-          echo "# $LATEST_TAG" > CHANGELOG.md
-          echo "" >> CHANGELOG.md
           echo "## What's Changed" >> CHANGELOG.md
           echo "" >> CHANGELOG.md
 
