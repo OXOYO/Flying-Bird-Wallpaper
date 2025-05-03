@@ -27,8 +27,7 @@ export default async ({
     const __dirname = path.dirname(fileURLToPath(import.meta.url))
     const isProduction = process.env.NODE_ENV === 'production'
     port = await findAvailablePort(port)
-    // host = getLocalIP()
-    host = 'localhost'
+    host = getLocalIP()
 
     // 创建 Koa 服务器
     const app = new Koa()
