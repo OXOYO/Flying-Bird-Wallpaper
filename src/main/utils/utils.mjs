@@ -209,7 +209,7 @@ export const getIconPath = (iconName) => {
     return ''
   }
   // 开发环境下使用项目根目录下的资源
-  return path.resolve(path.join(process.env.FBW_RESOURCES_PATH, `/icons/${iconName}`))
+  return path.resolve(path.join(process.env.FBW_RESOURCES_PATH, 'icons', iconName))
 }
 
 /**

@@ -54,9 +54,9 @@ process.env.FBW_CERTS_PATH = getDirPathByName(userDataPath, 'certs')
 process.env.FBW_PLUGINS_PATH = getDirPathByName(userDataPath, 'plugins')
 process.env.FBW_TEMP_PATH = getDirPathByName(userDataPath, 'temp')
 // 获取资源路径，开发环境下使用项目根目录下的资源，生产环境下使用 resources 目录下的资源
-process.env.FBW_RESOURCES_PATH = isDev()
-  ? path.join(__dirname, '../../resources')
-  : path.join(process.resourcesPath, 'resources')
+process.env.FBW_RESOURCES_PATH = app.isPackaged
+  ? path.join(process.resourcesPath, 'resources')
+  : path.join(__dirname, '../../resources')
 
 // 定义图标路径变量
 const iconLogo = getIconPath('icon_512x512.png')
@@ -1032,7 +1032,7 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
       updater = new Updater()
       // 绑定事件
       updater.on('update-available', (info) => {
-        // console.log('有可用更新', info)
+        global.logger.info('有可用更新', info)
         // 显示系统通知
         const notice = new Notification({
           title: t('actions.checkUpdate'),
@@ -1047,7 +1047,7 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
         notice.show()
       })
       updater.on('update-not-available', (info) => {
-        // console.log('无需更新', info)
+        global.logger.info('无需更新', info)
         // 显示系统通知
         new Notification({
           title: t('actions.checkUpdate'),
