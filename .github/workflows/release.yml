@@ -23,29 +23,56 @@ jobs:
         with:
           node-version: 20
 
-      # - name: Generate Changelog
-      #   id: changelog
-      #   run: |
-      #     # 获取最新的两个标签
-      #     LATEST_TAG=$(git describe --tags --abbrev=0)
-      #     PREVIOUS_TAG=$(git describe --tags --abbrev=0 `git rev-list --tags --skip=1 --max-count=1`)
-      #
-      #     # 如果没有前一个标签，则从第一次提交开始
-      #     if [ -z "$PREVIOUS_TAG" ]; then
-      #       PREVIOUS_TAG=$(git rev-list --max-parents=0 HEAD)
-      #     fi
-      #
-      #     # 生成变更日志
-      #     echo "## 更新内容" > CHANGELOG.md
-      #     echo "" >> CHANGELOG.md
-      #     git log $PREVIOUS_TAG..$LATEST_TAG --pretty=format:"* %s" --reverse | grep -v "Merge" >> CHANGELOG.md
-      #     echo "" >> CHANGELOG.md
-      #
-      #     # 将变更日志内容设置为输出变量
-      #     CHANGELOG=$(cat CHANGELOG.md)
-      #     echo "changelog<<EOF" >> $GITHUB_OUTPUT
-      #     echo "$CHANGELOG" >> $GITHUB_OUTPUT
-      #     echo "EOF" >> $GITHUB_OUTPUT
+      - name: Generate Changelog
+        id: changelog
+        run: |
+          # 获取最新的两个标签
+          LATEST_TAG=$(git describe --tags --abbrev=0)
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 `git rev-list --tags --skip=1 --max-count=1`)
+
+          # 如果没有前一个标签，则从第一次提交开始
+          if [ -z "$PREVIOUS_TAG" ]; then
+            PREVIOUS_TAG=$(git rev-list --max-parents=0 HEAD)
+          fi
+
+          # 生成变更日志
+          echo "# $LATEST_TAG" > CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "## What's Changed" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+
+          # 新特性
+          echo "### New Features 🎉" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          git log $PREVIOUS_TAG..$LATEST_TAG --pretty=format:"* %s" --reverse | grep -i -E "feat:|feature:|新增|添加" | sed 's/^* feat: /* /' | sed 's/^* feature: /* /' >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+
+          # Bug 修复
+          echo "### Bug Fixes 🐞" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          git log $PREVIOUS_TAG..$LATEST_TAG --pretty=format:"* %s" --reverse | grep -i -E "fix:|修复|bug|问题" | sed 's/^* fix: /* /' >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+
+          # 文档
+          echo "### Document 📖" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          git log $PREVIOUS_TAG..$LATEST_TAG --pretty=format:"* %s" --reverse | grep -i -E "docs:|doc:|文档" | sed 's/^* docs: /* /' | sed 's/^* doc: /* /' >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+
+          # 其他变更
+          echo "### Other Changes" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          git log $PREVIOUS_TAG..$LATEST_TAG --pretty=format:"* %s" --reverse | grep -v -i -E "feat:|feature:|fix:|docs:|doc:|merge|新增|添加|修复|bug|问题|文档" | grep -v "^$" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+
+          # 将变更日志内容设置为输出变量
+          CHANGELOG=$(cat CHANGELOG.md)
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create Release
         id: create-release
@@ -55,8 +82,7 @@ jobs:
         with:
           tag_name: ${{ github.ref_name }}
           release_name: ${{ github.ref_name }}
-          # body: ${{ steps.changelog.outputs.changelog }}
-          body: '新版本发布'
+          body: ${{ steps.changelog.outputs.changelog }}
           draft: false
           prerelease: false
 
