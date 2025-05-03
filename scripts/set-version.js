@@ -39,10 +39,10 @@ if (fs.existsSync(issPath)) {
 console.log(`版本已更新至 ${newVersion}`)
 
 // 创建Git标签
-try {
-  execSync(`git tag v${newVersion}`)
-  console.log(`已创建标签 v${newVersion}`)
-  console.log('使用 git push --tags 推送标签到远程仓库')
-} catch (error) {
-  console.error('创建标签失败:', error.message)
-}
+// try {
+//   execSync(`git tag v${newVersion}`)
+//   console.log(`已创建标签 v${newVersion}`)
+//   console.log('使用 git push --tags 推送标签到远程仓库')
+// } catch (error) {
+//   console.error('创建标签失败:', error.message)
+// }
