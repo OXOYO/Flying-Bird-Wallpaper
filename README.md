@@ -28,3 +28,9 @@ $ npm run build:mac
 # For Linux
 $ npm run build:linux
 ```
+
+## LICENSE
+
+MIT License
+
+Copyright (c) 2025-present OXOYO
