@@ -29,22 +29,7 @@
 
 飞鸟壁纸是一款跨平台桌面壁纸应用，让您轻松浏览、收藏美图，一键设置桌面壁纸。
 
-## 预览效果
-
-<img src="./docs/fbw_search.png" width="100%">
-
-<img src="./docs/fbw_viewer_inline.png" width="100%">
-
-<img src="./docs/fbw_viewer_window.png" width="100%">
-
-<img src="./docs/fbw_image_info.png" width="100%">
-
-<img src="./docs/fbw_settings.png" width="100%">
-
-<img src="./docs/fbw_utils.png" width="100%">
-
-<img src="./docs/fbw_h5_home.png" width="30%">
-<img src="./docs/fbw_h5_settings.png" width="30%">
+## [预览效果](./docs/preview.md)
 
 ## 核心功能
 
