@@ -86,6 +86,8 @@ MIT License
 Copyright (c) 2025-present OXOYO
 
 <!-- GitAds-Verify: 2DQDBEC5WHGXH8Q8198DF9OQ85LSRDJ4 -->
+## GitAds Sponsored
+[![Sponsored by GitAds](https://gitads.dev/v1/ad-serve?source=oxoyo/flying-bird-wallpaper@github)](https://gitads.dev/v1/ad-track?source=oxoyo/flying-bird-wallpaper@github)
 
 ## Contact
 
