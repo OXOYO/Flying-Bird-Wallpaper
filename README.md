@@ -1,4 +1,29 @@
+<p align="center">
+  <img src="./docs/fbw_social_preview.png" width="100%">
+</p>
+
+<div align="center">
+
 # 飞鸟壁纸 (Flying Bird Wallpaper)
+
+  <!-- License -->
+  <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/blob/master/LICENSE">
+    <img src="https://img.shields.io/github/license/OXOYO/Flying-Bird-Wallpaper.svg" alt="LICENSE">
+  </a>
+  <!-- Downloads total -->
+  <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/releases">
+    <img src="https://img.shields.io/github/downloads/OXOYO/Flying-Bird-Wallpaper/total.svg" alt="total download">
+  </a>
+  <!-- Release -->
+  <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/releases">  
+    <img src="https://img.shields.io/github/v/release/OXOYO/Flying-Bird-Wallpaper" alt="release">
+  </a>
+  <!-- Workflow status -->
+  <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/releases">
+    <img src="https://img.shields.io/github/actions/workflow/status/OXOYO/Flying-Bird-Wallpaper/release.yml" alt="release status">
+  </a>
+
+</div>
 
 ## 项目简介
 
