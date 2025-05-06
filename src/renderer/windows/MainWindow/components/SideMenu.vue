@@ -110,7 +110,7 @@ onBeforeUnmount(() => {
   <div class="side-menu">
     <custom-title-bar />
     <div class="side-logo">
-      <el-avatar :size="40" :src="iconLogo" style="background-color: transparent" />
+      <img :src="iconLogo" alt="logo" />
     </div>
     <el-scrollbar style="height: auto; flex: 1">
       <el-button
@@ -262,6 +262,18 @@ onBeforeUnmount(() => {
   width: 100%;
   height: 50px;
   margin-bottom: 15px;
+
+  img {
+    width: 40px;
+    height: 40px;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  &:hover {
+    img {
+      transform: scale(1.15) rotate(5deg);
+    }
+  }
 }
 .side-menu-btn {
   width: 100%;
