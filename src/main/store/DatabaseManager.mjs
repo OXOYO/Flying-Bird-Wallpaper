@@ -11,32 +11,32 @@ const createTables = [
    storeKey TEXT PRIMARY KEY, -- 存储Key
    storeData TEXT NOT NULL, -- 存储数据
    storeType TEXT NOT NULL DEFAULT 'string', -- 数据类型
-   created_at DATETIME DEFAULT (datetime('now')), -- 记录创建时间
-   updated_at DATETIME DEFAULT (datetime('now')), -- 记录修改时间
+   created_at DATETIME DEFAULT (datetime('now', 'localtime')), -- 记录创建时间
+   updated_at DATETIME DEFAULT (datetime('now', 'localtime')), -- 记录修改时间
    UNIQUE (storeKey) -- 唯一键
  )`,
   // 数据表: fbw_favorites 用于存储收藏夹数据
   `CREATE TABLE IF NOT EXISTS fbw_favorites (
    id INTEGER PRIMARY KEY AUTOINCREMENT, -- 收藏记录自增ID
    resourceId INTEGER NOT NULL, -- 资源记录ID
-   created_at DATETIME DEFAULT (datetime('now')), -- 记录创建时间
-   updated_at DATETIME DEFAULT (datetime('now')), -- 记录修改时间
+   created_at DATETIME DEFAULT (datetime('now', 'localtime')), -- 记录创建时间
+   updated_at DATETIME DEFAULT (datetime('now', 'localtime')), -- 记录修改时间
    UNIQUE (resourceId) -- 唯一键
  )`,
   // 数据表: fbw_history 用于存储已设置的壁纸记录数据
   `CREATE TABLE IF NOT EXISTS fbw_history (
    id INTEGER PRIMARY KEY AUTOINCREMENT, -- 壁纸记录自增ID
    resourceId INTEGER NOT NULL, -- 资源记录ID
-   created_at DATETIME DEFAULT (datetime('now')), -- 记录创建时间
-   updated_at DATETIME DEFAULT (datetime('now')), -- 记录修改时间
+   created_at DATETIME DEFAULT (datetime('now', 'localtime')), -- 记录创建时间
+   updated_at DATETIME DEFAULT (datetime('now', 'localtime')), -- 记录修改时间
    UNIQUE (id) -- 唯一键
  )`,
   // 数据表: fbw_privacy_space 用于存储隐私空间数据
   `CREATE TABLE IF NOT EXISTS fbw_privacy_space (
    id INTEGER PRIMARY KEY AUTOINCREMENT, -- 隐私空间记录自增ID
    resourceId INTEGER NOT NULL, -- 资源记录ID
-   created_at DATETIME DEFAULT (datetime('now')), -- 记录创建时间
-   updated_at DATETIME DEFAULT (datetime('now')), -- 记录修改时间
+   created_at DATETIME DEFAULT (datetime('now', 'localtime')), -- 记录创建时间
+   updated_at DATETIME DEFAULT (datetime('now', 'localtime')), -- 记录修改时间
    UNIQUE (resourceId) -- 唯一键
  )`,
   // 数据表: resources 用于存储图片资源数据
@@ -60,8 +60,8 @@ const createTables = [
    atimeMs INTEGER NOT NULL DEFAULT 0, -- 本地文件最后访问时间
    mtimeMs INTEGER NOT NULL DEFAULT 0, -- 本地文件最后修改时间
    ctimeMs INTEGER NOT NULL DEFAULT 0, -- 本地文件创建时间
-   created_at DATETIME DEFAULT (datetime('now')), -- 记录创建时间
-   updated_at DATETIME DEFAULT (datetime('now')), -- 记录修改时间
+   created_at DATETIME DEFAULT (datetime('now', 'localtime')), -- 记录创建时间
+   updated_at DATETIME DEFAULT (datetime('now', 'localtime')), -- 记录修改时间
    UNIQUE (filePath) -- 唯一键
  )`,
   // 数据表：分词数据
@@ -70,8 +70,8 @@ const createTables = [
    word TEXT NOT NULL DEFAULT '', -- 分词
    count INTEGER  NOT NULL DEFAULT 0, -- 计数
    type INTEGER  NOT NULL DEFAULT 0, -- 类型：中文、英文
-   created_at DATETIME DEFAULT (datetime('now')), -- 记录创建时间
-   updated_at DATETIME DEFAULT (datetime('now')), -- 记录修改时间
+   created_at DATETIME DEFAULT (datetime('now', 'localtime')), -- 记录创建时间
+   updated_at DATETIME DEFAULT (datetime('now', 'localtime')), -- 记录修改时间
    UNIQUE (word) -- 唯一键
  )`
 ]
