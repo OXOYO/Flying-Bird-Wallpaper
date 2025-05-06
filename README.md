@@ -85,6 +85,8 @@ MIT License
 
 Copyright (c) 2025-present OXOYO
 
+<!-- GitAds-Verify: 2DQDBEC5WHGXH8Q8198DF9OQ85LSRDJ4 -->
+
 ## Contact
 
 <div align="left">
