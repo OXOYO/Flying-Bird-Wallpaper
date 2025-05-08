@@ -41,14 +41,14 @@ win:
 
 # NSIS 配置
 nsis:
-  artifactName: '${productName}-${version}-${arch}-setup.${ext}'
+  artifactName: 'Flying-Bird-Wallpaper-${version}-${arch}-setup.${ext}'
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
   differentialPackage: false
 
 mac:
-  artifactName: '${productName}-${version}-${arch}.${ext}'
+  artifactName: 'Flying-Bird-Wallpaper-${version}-${arch}.${ext}'
   entitlementsInherit: build/entitlements.mac.plist
   category: public.app-category.utilities
   darkModeSupport: true
@@ -68,7 +68,7 @@ mac:
         - x64
         - arm64
 dmg:
-  artifactName: '${productName}-${version}-${arch}.${ext}'
+  artifactName: 'Flying-Bird-Wallpaper-${version}-${arch}.${ext}'
   icon: build/icon.icns
   window:
     width: 540
@@ -84,7 +84,7 @@ dmg:
 #   maintainer: electronjs.org
 #   category: Utility
 # appImage:
-#   artifactName: ${productName}-${version}.${ext}
+#   artifactName: Flying-Bird-Wallpaper-${version}.${ext}
 npmRebuild: true # 将 false 改为 true
 publish:
   # GitHub 发布配置
