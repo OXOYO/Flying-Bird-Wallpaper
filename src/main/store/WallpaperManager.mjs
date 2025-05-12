@@ -40,22 +40,10 @@ export default class WallpaperManager {
     return this.settingManager.settingData
   }
 
-  resetParams(keys = ['autoSwitchWallpaper', 'switchToPrevWallpaper', 'autoDownload']) {
+  resetParams(keys = ['switchToPrevWallpaper', 'autoDownload']) {
     keys = Array.isArray(keys) ? keys : keys ? [keys] : []
     this.params = this.params || {}
 
-    if (keys.includes('autoSwitchWallpaper')) {
-      // 保留 prevSourceId 的值，不要重置它
-      const prevSourceId = this.params.autoSwitchWallpaper?.prevSourceId || null
-      // 添加一个历史记录队列，记录最近切换过的壁纸ID
-      const recentIds = this.params.autoSwitchWallpaper?.recentIds || []
-      this.params.autoSwitchWallpaper = {
-        // 记录切换的ID，用于顺序切换时查找索引
-        prevSourceId,
-        // 记录最近切换过的壁纸ID，避免短时间内重复显示
-        recentIds
-      }
-    }
     if (keys.includes('switchToPrevWallpaper')) {
       this.params.switchToPrevWallpaper = {
         // 切换上一个壁纸时，默认索引为0
@@ -76,7 +64,6 @@ export default class WallpaperManager {
 
   // 执行切换壁纸
   async doSwitchToNextWallpaper() {
-    // this.resetParams('autoSwitchWallpaper')
     const {
       wallpaperResource = 'resources',
       filterKeywords,
@@ -89,9 +76,18 @@ export default class WallpaperManager {
     const isResources = wallpaperResource === 'resources'
     const isFavorites = wallpaperResource === 'favorites'
 
+    // 获取最近使用的壁纸ID列表
+    const recent_stmt = this.db.prepare(
+      `SELECT resourceId FROM fbw_history ORDER BY created_at DESC LIMIT 10`
+    )
+    const recent_results = recent_stmt.all()
+    const recentIds = recent_results.map((item) => item.resourceId)
+    const prevSourceId = recentIds[0]
+
     const query_where = []
     let query_where_str = ''
-    const query_params = []
+    let query_params = []
+    let query_sql = ''
     let query_stmt
 
     if (!isFavorites && !isResources) {
@@ -121,34 +117,18 @@ export default class WallpaperManager {
 
     // 随机切换
     if (switchType === 1) {
-      // 获取最近使用的壁纸ID列表（限制为最近10个）
-      const recent_stmt = this.db.prepare(
-        `SELECT resourceId FROM fbw_history ORDER BY created_at DESC LIMIT 10`
-      )
-      const recent_results = recent_stmt.all()
-      const recentIds = recent_results.map((item) => item.resourceId)
-
-      let query_sql = ''
       // 处理收藏夹查询
       if (isFavorites) {
-        query_sql = `
-            SELECT r.*
-            FROM fbw_resources r
-            JOIN fbw_favorites f ON r.id = f.resourceId
-            ${query_where_str ? query_where_str + ' AND' : 'WHERE'}
-            NOT EXISTS (SELECT 1 FROM fbw_privacy_space p WHERE p.resourceId = r.id)
-          `
-
         // 如果有最近使用记录，尝试排除这些记录
         if (recentIds.length > 0) {
           // 先检查排除最近记录后是否还有壁纸可用
           const check_stmt = this.db.prepare(
             `SELECT COUNT(*) AS count
-               FROM fbw_resources r
-               JOIN fbw_favorites f ON r.id = f.resourceId
-               ${query_where_str ? query_where_str + ' AND' : 'WHERE'}
-               NOT EXISTS (SELECT 1 FROM fbw_privacy_space p WHERE p.resourceId = r.id) AND
-               r.id NOT IN (${recentIds.map(() => '?').join(',')})`
+            FROM fbw_resources r
+            JOIN fbw_favorites f ON r.id = f.resourceId
+            ${query_where_str ? query_where_str + ' AND' : 'WHERE'}
+            NOT EXISTS (SELECT 1 FROM fbw_privacy_space p WHERE p.resourceId = r.id) AND
+            r.id NOT IN (${recentIds.map(() => '?').join(',')})`
           )
           const check_params = [...query_params, ...recentIds]
           const check_result = check_stmt.get(...check_params)
@@ -156,29 +136,18 @@ export default class WallpaperManager {
           // 如果排除后还有壁纸，则从未使用的壁纸中随机选择
           if (check_result && check_result.count > 0) {
             query_sql = `
-                SELECT r.*
-                FROM fbw_resources r
-                JOIN fbw_favorites f ON r.id = f.resourceId
-                ${query_where_str ? query_where_str + ' AND' : 'WHERE'}
-                NOT EXISTS (SELECT 1 FROM fbw_privacy_space p WHERE p.resourceId = r.id) AND
-                r.id NOT IN (${recentIds.map(() => '?').join(',')})
-                ORDER BY RANDOM() LIMIT 1
-              `
+              SELECT r.*
+              FROM fbw_resources r
+              JOIN fbw_favorites f ON r.id = f.resourceId
+              ${query_where_str ? query_where_str + ' AND' : 'WHERE'}
+              NOT EXISTS (SELECT 1 FROM fbw_privacy_space p WHERE p.resourceId = r.id) AND
+              r.id NOT IN (${recentIds.map(() => '?').join(',')})
+              ORDER BY RANDOM() LIMIT 1
+            `
             query_params.push(...recentIds)
           } else {
             // 如果排除后没有壁纸了，则从所有符合条件的壁纸中随机选择
             query_sql = `
-                SELECT r.*
-                FROM fbw_resources r
-                JOIN fbw_favorites f ON r.id = f.resourceId
-                ${query_where_str ? query_where_str + ' AND' : 'WHERE'}
-                NOT EXISTS (SELECT 1 FROM fbw_privacy_space p WHERE p.resourceId = r.id)
-                ORDER BY RANDOM() LIMIT 1
-              `
-          }
-        } else {
-          // 没有历史记录，直接随机选择
-          query_sql = `
               SELECT r.*
               FROM fbw_resources r
               JOIN fbw_favorites f ON r.id = f.resourceId
@@ -186,23 +155,39 @@ export default class WallpaperManager {
               NOT EXISTS (SELECT 1 FROM fbw_privacy_space p WHERE p.resourceId = r.id)
               ORDER BY RANDOM() LIMIT 1
             `
+          }
+        } else {
+          // 没有历史记录，直接随机选择
+          query_sql = `
+            SELECT r.*
+            FROM fbw_resources r
+            JOIN fbw_favorites f ON r.id = f.resourceId
+            ${query_where_str ? query_where_str + ' AND' : 'WHERE'}
+            NOT EXISTS (SELECT 1 FROM fbw_privacy_space p WHERE p.resourceId = r.id)
+            ORDER BY RANDOM() LIMIT 1
+          `
         }
       } else {
-        // 原有的资源查询逻辑
-        query_sql = `SELECT * FROM fbw_resources ${query_where_str}`
-
         // 如果有最近使用记录，尝试排除这些记录
         if (recentIds.length > 0) {
           // 先检查排除最近记录后是否还有壁纸可用
           const check_stmt = this.db.prepare(
-            `SELECT COUNT(*) AS count FROM fbw_resources ${query_where_str ? query_where_str + ' AND' : 'WHERE'} id NOT IN (${recentIds.map(() => '?').join(',')})`
+            `SELECT COUNT(*) AS count
+            FROM fbw_resources
+            ${query_where_str ? query_where_str + ' AND' : 'WHERE'}
+            id NOT IN (${recentIds.map(() => '?').join(',')})`
           )
           const check_params = [...query_params, ...recentIds]
           const check_result = check_stmt.get(...check_params)
 
           // 如果排除后还有壁纸，则从未使用的壁纸中随机选择
           if (check_result && check_result.count > 0) {
-            query_sql = `SELECT * FROM fbw_resources ${query_where_str ? query_where_str + ' AND' : 'WHERE'} id NOT IN (${recentIds.map(() => '?').join(',')}) ORDER BY RANDOM() LIMIT 1`
+            query_sql = `
+              SELECT * FROM fbw_resources
+              ${query_where_str ? query_where_str + ' AND' : 'WHERE'}
+              id NOT IN (${recentIds.map(() => '?').join(',')})
+              ORDER BY RANDOM() LIMIT 1
+            `
             query_params.push(...recentIds)
           } else {
             // 如果排除后没有壁纸了，则从所有符合条件的壁纸中随机选择
@@ -213,232 +198,173 @@ export default class WallpaperManager {
           query_sql = `SELECT * FROM fbw_resources ${query_where_str} ORDER BY RANDOM() LIMIT 1`
         }
       }
-
-      query_stmt = this.db.prepare(query_sql)
-      const query_result = query_stmt.get(...query_params)
-      if (query_result) {
-        return await this.setAsWallpaper(query_result, true, true)
-      }
-    } else {
       // 顺序切换
-      let count_stmt
-      let count_result
-
+    } else {
+      // 处理收藏夹查询
       if (isFavorites) {
-        // 收藏夹查询总数
-        count_stmt = this.db.prepare(
-          `SELECT COUNT(*) AS total
-             FROM fbw_resources r
-             JOIN fbw_favorites f ON r.id = f.resourceId
-             ${query_where_str ? query_where_str + ' AND' : 'WHERE'}
-             NOT EXISTS (SELECT 1 FROM fbw_privacy_space p WHERE p.resourceId = r.id)`
-        )
-      } else {
-        // 普通资源查询总数
-        count_stmt = this.db.prepare(
-          `SELECT COUNT(*) AS total FROM fbw_resources ${query_where_str}`
-        )
-      }
+        // 如果有上一次切换的ID，则从该ID之后开始查询
+        if (prevSourceId) {
+          // 修改为使用收藏表的created_at字段作为排序依据
+          const favSortField = 'created_at' // 使用收藏表的创建时间
+          // 直接查询上一个壁纸在收藏表中的创建时间
+          const index_stmt = this.db.prepare(
+            `SELECT f.${favSortField}
+              FROM fbw_favorites f
+              WHERE f.resourceId = ?`
+          )
+          const index_result = index_stmt.get(prevSourceId)
 
-      count_result = count_stmt.get(...query_params)
-      if (count_result && count_result.total > 0) {
-        let query_sql
-
-        if (isFavorites) {
-          // 如果有上一次切换的ID，则从该ID之后开始查询
-          if (this.params.autoSwitchWallpaper.prevSourceId) {
-            // 修改为使用收藏表的created_at字段作为排序依据
-            const favSortField = 'created_at' // 使用收藏表的创建时间
-
-            // 直接查询上一个壁纸在收藏表中的创建时间
-            const index_stmt = this.db.prepare(
-              `SELECT f.${favSortField}
-               FROM fbw_favorites f
-               WHERE f.resourceId = ?`
+          if (index_result && index_result[favSortField] !== undefined) {
+            // 检查是否有符合条件的下一个壁纸
+            const check_stmt = this.db.prepare(
+              `SELECT COUNT(*) AS count
+                FROM fbw_resources r
+                JOIN fbw_favorites f ON r.id = f.resourceId
+                ${query_where_str ? query_where_str + ' AND' : 'WHERE'}
+                NOT EXISTS (SELECT 1 FROM fbw_privacy_space p WHERE p.resourceId = r.id) AND
+                f.${favSortField} ${sortType === -1 ? '<=' : '>='} ?`
             )
-            const index_result = index_stmt.get(this.params.autoSwitchWallpaper.prevSourceId)
+            const check_params = [...query_params, index_result[favSortField]]
+            const check_result = check_stmt.get(...check_params)
 
-            if (index_result && index_result[favSortField] !== undefined) {
-              // 获取最近切换过的壁纸ID列表
-              const recentIds = this.params.autoSwitchWallpaper.recentIds || []
-
-              // 构建排除条件
-              let excludeIds =
-                recentIds.length > 0
-                  ? `r.id NOT IN (${recentIds.map(() => '?').join(',')})`
-                  : 'r.id != ?'
-
+            // 如果有符合条件的下一个壁纸，则查询下一个壁纸
+            if (check_result && check_result.count > 0) {
               // 查询下一个壁纸，按照收藏时间排序
               query_sql = `
-                SELECT r.*
-                FROM fbw_resources r
-                JOIN fbw_favorites f ON r.id = f.resourceId
-                ${query_where_str ? query_where_str + ' AND' : 'WHERE'}
-                NOT EXISTS (SELECT 1 FROM fbw_privacy_space p WHERE p.resourceId = r.id) AND
-                ${excludeIds} AND
-                f.${favSortField} ${sortType === -1 ? '<' : '>'} ?
-                ORDER BY f.${favSortField} ${sortType === -1 ? 'DESC' : 'ASC'}
-                LIMIT 1
-              `
-
-              // 添加参数
-              if (recentIds.length > 0) {
-                query_params.push(...recentIds)
-              } else {
-                query_params.push(this.params.autoSwitchWallpaper.prevSourceId)
-              }
-              query_params.push(index_result[favSortField])
-
-              // 检查是否有符合条件的下一个壁纸
-              const check_stmt = this.db.prepare(
-                `SELECT COUNT(*) AS count
-                FROM fbw_resources r
-                JOIN fbw_favorites f ON r.id = f.resourceId
-                ${query_where_str ? query_where_str + ' AND' : 'WHERE'}
-                NOT EXISTS (SELECT 1 FROM fbw_privacy_space p WHERE p.resourceId = r.id) AND
-                ${excludeIds} AND
-                f.${favSortField} ${sortType === -1 ? '<' : '>'} ?`
-              )
-              const check_result = check_stmt.get(
-                ...(recentIds.length > 0
-                  ? [...recentIds, index_result[favSortField]]
-                  : [this.params.autoSwitchWallpaper.prevSourceId, index_result[favSortField]])
-              )
-
-              // 如果没有下一个壁纸，则从头开始
-              if (!check_result || check_result.count === 0) {
-                query_sql = `
                   SELECT r.*
                   FROM fbw_resources r
                   JOIN fbw_favorites f ON r.id = f.resourceId
                   ${query_where_str ? query_where_str + ' AND' : 'WHERE'}
                   NOT EXISTS (SELECT 1 FROM fbw_privacy_space p WHERE p.resourceId = r.id) AND
-                  ${excludeIds}
+                  f.${favSortField} ${sortType === -1 ? '<=' : '>='} ?
                   ORDER BY f.${favSortField} ${sortType === -1 ? 'DESC' : 'ASC'}
                   LIMIT 1
                 `
-                // 移除最后添加的参数，只保留排除ID的参数
-                query_params.pop()
-              }
+              // 与检查语句的参数相同
+              query_params = [...check_params]
             } else {
-              // 如果获取不到上一个壁纸的排序字段值，则从头开始
+              // 如果没有下一个壁纸，则从头开始
               query_sql = `
+                  SELECT r.*
+                  FROM fbw_resources r
+                  JOIN fbw_favorites f ON r.id = f.resourceId
+                  ${query_where_str ? query_where_str + ' AND' : 'WHERE'}
+                  NOT EXISTS (SELECT 1 FROM fbw_privacy_space p WHERE p.resourceId = r.id)
+                  ORDER BY f.${favSortField} ${sortType === -1 ? 'DESC' : 'ASC'}
+                  LIMIT 1
+                `
+            }
+          } else {
+            // 如果获取不到上一个壁纸的排序字段值，则从头开始
+            query_sql = `
                 SELECT r.*
                 FROM fbw_resources r
                 JOIN fbw_favorites f ON r.id = f.resourceId
                 ${query_where_str ? query_where_str + ' AND' : 'WHERE'}
-                NOT EXISTS (SELECT 1 FROM fbw_privacy_space p WHERE p.resourceId = r.id) AND
-                r.id != ?
+                NOT EXISTS (SELECT 1 FROM fbw_privacy_space p WHERE p.resourceId = r.id)
                 ORDER BY f.created_at ${sortType === -1 ? 'DESC' : 'ASC'}
                 LIMIT 1
               `
-              query_params.push(this.params.autoSwitchWallpaper.prevSourceId)
-            }
-          } else {
-            // 没有上一次切换的ID，从头开始，按收藏时间排序
-            query_sql = `
-              SELECT r.*
-              FROM fbw_resources r
-              JOIN fbw_favorites f ON r.id = f.resourceId
-              ${query_where_str ? query_where_str + ' AND' : 'WHERE'}
-              NOT EXISTS (SELECT 1 FROM fbw_privacy_space p WHERE p.resourceId = r.id)
-              ORDER BY f.created_at ${sortType === -1 ? 'DESC' : 'ASC'}
-              LIMIT 1
-            `
           }
         } else {
-          // 原有的顺序查询逻辑也需要修改，确保不会重复显示同一个壁纸
-          if (this.params.autoSwitchWallpaper.prevSourceId) {
-            // 直接查询上一个壁纸的排序字段值
-            const index_stmt = this.db.prepare(
-              `SELECT ${sortField} FROM fbw_resources WHERE id = ?`
+          // 没有上一次切换的ID，从头开始，按收藏时间排序
+          query_sql = `
+            SELECT r.*
+            FROM fbw_resources r
+            JOIN fbw_favorites f ON r.id = f.resourceId
+            ${query_where_str ? query_where_str + ' AND' : 'WHERE'}
+            NOT EXISTS (SELECT 1 FROM fbw_privacy_space p WHERE p.resourceId = r.id)
+            ORDER BY f.created_at ${sortType === -1 ? 'DESC' : 'ASC'}
+            LIMIT 1
+          `
+        }
+      } else {
+        // 顺序切换时也排除最近10条历史记录，排序加id，循环切换
+        if (prevSourceId) {
+          // 获取上一个壁纸的排序字段值
+          const index_stmt = this.db.prepare(`SELECT ${sortField} FROM fbw_resources WHERE id = ?`)
+          const index_result = index_stmt.get(prevSourceId)
+          const sortFieldVal = index_result[sortField]
+          if (index_result && sortFieldVal !== undefined) {
+            // 排除最近10条历史记录
+            const excludeIds =
+              recentIds.length > 0 ? `id NOT IN (${recentIds.map(() => '?').join(',')}) AND` : ''
+            const excludeParams = recentIds
+            // 查找下一个
+            const check_stmt = this.db.prepare(
+              `SELECT COUNT(*) AS count
+              FROM fbw_resources
+              ${query_where_str ? query_where_str + ' AND' : 'WHERE'}
+              ${excludeIds}
+              (${sortField} ${sortType === -1 ? '<' : '>'} ? OR (${sortField} = ? AND id > ?))`
             )
-            const index_result = index_stmt.get(this.params.autoSwitchWallpaper.prevSourceId)
-
-            if (index_result && index_result[sortField] !== undefined) {
-              // 获取最近切换过的壁纸ID列表
-              const recentIds = this.params.autoSwitchWallpaper.recentIds || []
-
-              // 构建排除条件
-              let excludeIds =
-                recentIds.length > 0
-                  ? `id NOT IN (${recentIds.map(() => '?').join(',')})`
-                  : 'id != ?'
-
-              // 查询下一个壁纸
+            const check_params = [
+              ...query_params,
+              ...excludeParams,
+              sortFieldVal,
+              sortFieldVal,
+              prevSourceId
+            ]
+            const check_result = check_stmt.get(...check_params)
+            if (check_result && check_result.count > 0) {
+              // 查找下一个
               query_sql = `
                 SELECT *
                 FROM fbw_resources
                 ${query_where_str ? query_where_str + ' AND' : 'WHERE'}
-                ${excludeIds} AND
-                ${sortField} ${sortType === -1 ? '<' : '>'} ?
-                ORDER BY ${sortField} ${sortType === -1 ? 'DESC' : 'ASC'}
+                ${excludeIds}
+                (${sortField} ${sortType === -1 ? '<' : '>'} ? OR (${sortField} = ? AND id > ?))
+                ORDER BY ${sortField} ${sortType === -1 ? 'DESC' : 'ASC'}, id
                 LIMIT 1
               `
-
-              // 添加参数
-              if (recentIds.length > 0) {
-                query_params.push(...recentIds)
-              } else {
-                query_params.push(this.params.autoSwitchWallpaper.prevSourceId)
-              }
-              query_params.push(index_result[sortField])
-
-              // 检查是否有符合条件的下一个壁纸
-              const check_stmt = this.db.prepare(
-                `SELECT COUNT(*) AS count
-                FROM fbw_resources
-                ${query_where_str ? query_where_str + ' AND' : 'WHERE'}
-                id != ? AND
-                ${sortField} ${sortType === -1 ? '<' : '>'} ?`
-              )
-              const check_result = check_stmt.get(
-                this.params.autoSwitchWallpaper.prevSourceId,
-                index_result[sortField]
-              )
-
-              // 如果没有下一个壁纸，则从头开始
-              if (!check_result || check_result.count === 0) {
-                query_sql = `
-                  SELECT *
-                  FROM fbw_resources
-                  ${query_where_str ? query_where_str + ' AND' : 'WHERE'}
-                  id != ?
-                  ORDER BY ${sortField} ${sortType === -1 ? 'DESC' : 'ASC'}
-                  LIMIT 1
-                `
-                // 移除最后添加的参数，只保留 prevSourceId
-                query_params.pop()
-              }
+              query_params = [
+                ...query_params,
+                ...excludeParams,
+                sortFieldVal,
+                sortFieldVal,
+                prevSourceId
+              ]
             } else {
-              // 如果获取不到上一个壁纸的排序字段值，则从头开始
+              // 循环到头部，排除最近10条
               query_sql = `
                 SELECT *
                 FROM fbw_resources
                 ${query_where_str ? query_where_str + ' AND' : 'WHERE'}
-                id != ?
-                ORDER BY ${sortField} ${sortType === -1 ? 'DESC' : 'ASC'}
+                ${excludeIds}
+                ORDER BY ${sortField} ${sortType === -1 ? 'DESC' : 'ASC'}, id
                 LIMIT 1
               `
-              query_params.push(this.params.autoSwitchWallpaper.prevSourceId)
+              query_params = [...query_params, ...excludeParams]
             }
           } else {
-            // 没有上一次切换的ID，从头开始
+            // 如果获取不到上一个壁纸的排序字段值，则从头开始
             query_sql = `
-              SELECT *
-              FROM fbw_resources
-              ${query_where_str}
-              ORDER BY ${sortField} ${sortType === -1 ? 'DESC' : 'ASC'}
-              LIMIT 1
-            `
+                SELECT *
+                FROM fbw_resources
+                ${query_where_str ? query_where_str + ' AND' : 'WHERE'}
+                ORDER BY ${sortField} ${sortType === -1 ? 'DESC' : 'ASC'}, id
+                LIMIT 1
+              `
           }
+        } else {
+          // 没有上一次切换的ID，从头开始
+          query_sql = `
+            SELECT *
+            FROM fbw_resources
+            ${query_where_str}
+            ORDER BY ${sortField} ${sortType === -1 ? 'DESC' : 'ASC'}, id
+            LIMIT 1
+          `
         }
+      }
+    }
 
-        query_stmt = this.db.prepare(query_sql)
-        const query_result = query_stmt.get(...query_params)
-        if (query_result) {
-          return await this.setAsWallpaper(query_result, true, true)
-        }
+    // 执行查询
+    if (query_sql) {
+      query_stmt = this.db.prepare(query_sql)
+      const query_result = query_stmt.get(...query_params)
+      if (query_result && query_result.id !== prevSourceId) {
+        return await this.setAsWallpaper(query_result, true, true)
       }
     }
 
@@ -504,28 +430,6 @@ export default class WallpaperManager {
       // 重置参数
       if (isResetParams) {
         this.resetParams('switchToPrevWallpaper')
-      }
-
-      // 确保 params.autoSwitchWallpaper 存在
-      this.params.autoSwitchWallpaper = this.params.autoSwitchWallpaper || {}
-
-      // 记录上一次切换的ID
-      this.params.autoSwitchWallpaper.prevSourceId = item.id
-
-      // 更新最近切换过的壁纸ID队列
-      this.params.autoSwitchWallpaper.recentIds = this.params.autoSwitchWallpaper.recentIds || []
-      // 如果当前ID已经在队列中，先移除它
-      this.params.autoSwitchWallpaper.recentIds = this.params.autoSwitchWallpaper.recentIds.filter(
-        (id) => id !== item.id
-      )
-      // 将当前ID添加到队列头部
-      this.params.autoSwitchWallpaper.recentIds.unshift(item.id)
-      // 限制队列长度，只保留最近的5个ID
-      if (this.params.autoSwitchWallpaper.recentIds.length > 5) {
-        this.params.autoSwitchWallpaper.recentIds = this.params.autoSwitchWallpaper.recentIds.slice(
-          0,
-          5
-        )
       }
 
       return {
