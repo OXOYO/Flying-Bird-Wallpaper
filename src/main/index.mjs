@@ -840,8 +840,8 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
     }
   }
 
-  // 注册自定义协议
-  const registerProtocol = () => {
+  // 处理自定义协议
+  const handleProtocol = () => {
     protocol.handle('fbwtp', async (request) => {
       let url = request.url.replace(/^fbwtp:\/\//, '') // 去除自定义协议前缀
       // 处理 Windows 上的绝对路径（例如 'E:/xx/yy'）
@@ -1301,8 +1301,8 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
         return { success: result, msg: result ? '关闭动态壁纸成功' : '没有正在运行的动态壁纸' }
       })
 
-      // 注册fbwtp://协议
-      registerProtocol()
+      // 处理fbwtp://协议
+      handleProtocol()
       // 初始化Store
       store = new Store({
         sendCommonData,
