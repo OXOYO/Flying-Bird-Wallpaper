@@ -22,6 +22,10 @@
   <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/releases">
     <img src="https://img.shields.io/github/actions/workflow/status/OXOYO/Flying-Bird-Wallpaper/release.yml" alt="release status">
   </a>
+  <!-- DeepWiki -->
+  <a href="https://deepwiki.com/OXOYO/Flying-Bird-Wallpaper">
+    <img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki">
+  </a>
 
   <h3>简体中文 | <a href="README.md">English</a></h3>
   
