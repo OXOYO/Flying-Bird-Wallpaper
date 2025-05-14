@@ -17,5 +17,16 @@
   },
   "eslint.probe": ["javascript", "vue", "html", "markdown"],
   "eslint.format.enable": true,
-  "i18n-ally.localesPaths": ["src/i18n", "src/i18n/locale"]
+  "i18n-ally.localesPaths": ["src/i18n/locale/lang"],
+  "i18n-ally.dirStructure": "",
+  "i18n-ally.displayLanguage": "zh-CN",
+  "i18n-ally.extract.autoDetect": false,
+  "i18n-ally.keystyle": "",
+  "i18n-ally.disabled": false,
+  "i18n-ally.disablePathParsing": false,
+  "i18n-ally.editor.preferEditor": false,
+  "i18n-ally.extract.keygenStrategy": "slug",
+  "i18n-ally.fullReloadOnChanged": false,
+  "i18n-ally.ignoredLocales": [],
+  "i18n-ally.localeCountryMap": {}
 }
