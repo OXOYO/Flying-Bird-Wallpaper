@@ -1,4 +1,3 @@
-import { defineStore } from 'pinia'
 import { defaultSettingData } from '@common/publicData.js'
 
 const UseSettingStore = defineStore('setting', {

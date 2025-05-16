@@ -1,6 +1,5 @@
 <script setup>
 import Viewer from 'viewerjs'
-import { storeToRefs } from 'pinia'
 import UseSettingStore from '@renderer/stores/settingStore.js'
 
 const settingStore = UseSettingStore()

@@ -1,4 +1,3 @@
-import { defineStore } from 'pinia'
 import { defaultSettingData } from '@common/publicData.js'
 import * as api from '@h5/api/index.js'
 

@@ -1,5 +1,4 @@
 <script setup>
-import { storeToRefs } from 'pinia'
 import UseCommonStore from './stores/commonStore.js'
 import UseSettingStore from './stores/settingStore.js'
 import home from './pages/home/index.vue'

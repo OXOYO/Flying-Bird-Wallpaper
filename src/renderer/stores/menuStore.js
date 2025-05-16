@@ -1,4 +1,3 @@
-import { defineStore } from 'pinia'
 import { menuList } from '@common/publicData.js'
 
 const UseMenuStore = defineStore('menu', {

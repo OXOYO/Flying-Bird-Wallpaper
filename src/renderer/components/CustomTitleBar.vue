@@ -1,5 +1,4 @@
 <script setup>
-import { storeToRefs } from 'pinia'
 import UseCommonStore from '@renderer/stores/commonStore.js'
 
 const commonStore = UseCommonStore()

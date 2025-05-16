@@ -1,4 +1,3 @@
-import { defineStore } from 'pinia'
 import { defaultResourceMap } from '@common/publicData.js'
 
 const UseCommonStore = defineStore('common', {

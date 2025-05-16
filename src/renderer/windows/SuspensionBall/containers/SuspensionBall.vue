@@ -1,5 +1,4 @@
 <script setup>
-import { storeToRefs } from 'pinia'
 import UseSettingStore from '@renderer/stores/settingStore.js'
 import iconLogo from '@resources/icons/icon_64x64.png'
 

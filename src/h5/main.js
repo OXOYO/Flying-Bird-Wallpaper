@@ -1,5 +1,3 @@
-import { createApp } from 'vue'
-import { createPinia } from 'pinia'
 import Vant, { Lazyload } from 'vant'
 import 'vant/lib/index.css'
 import './assets/main.css'

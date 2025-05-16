@@ -1,5 +1,4 @@
 <script setup>
-import { storeToRefs } from 'pinia'
 import UseMenuStore from '@renderer/stores/menuStore.js'
 import Explore from '../pages/Explore.vue'
 import Search from '../pages/Search.vue'

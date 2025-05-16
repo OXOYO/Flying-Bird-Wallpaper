@@ -1,5 +1,3 @@
-import { defineStore } from 'pinia'
-
 const UseWordsStore = defineStore('words', {
   state: () => {
     return {

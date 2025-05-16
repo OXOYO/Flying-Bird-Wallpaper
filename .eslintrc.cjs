@@ -1,5 +1,6 @@
 /* eslint-env node */
 require('@rushstack/eslint-patch/modern-module-resolution')
+const autoImportGlobals = require('./.eslintrc-auto-import.json')
 
 module.exports = {
   // 使用 vue-eslint-parser 作为主解析器
@@ -25,6 +26,7 @@ module.exports = {
     '@vue/eslint-config-prettier',
     './.eslintrc-auto-import.json'
   ],
+  globals: autoImportGlobals.globals || {},
   rules: {
     'vue/require-default-prop': 'off',
     'vue/multi-word-component-names': 'off'

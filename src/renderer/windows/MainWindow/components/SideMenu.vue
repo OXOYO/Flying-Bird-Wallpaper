@@ -1,5 +1,4 @@
 <script setup>
-import { storeToRefs } from 'pinia'
 import UseSettingStore from '@renderer/stores/settingStore.js'
 import UseMenuStore from '@renderer/stores/menuStore.js'
 import UseWordsStore from '@renderer/stores/wordsStore.js'

@@ -1,5 +1,4 @@
 <script setup>
-import { storeToRefs } from 'pinia'
 import UseMenuStore from '@renderer/stores/menuStore.js'
 import UseWordsStore from '@renderer/stores/wordsStore.js'
 import { useTranslation } from 'i18next-vue'

@@ -1,6 +1,5 @@
 <script setup>
 import clipboard from 'clipboardy'
-import { storeToRefs } from 'pinia'
 import UseCommonStore from '@renderer/stores/commonStore.js'
 import UseSettingStore from '@renderer/stores/settingStore.js'
 import UseWordsStore from '@renderer/stores/wordsStore.js'
