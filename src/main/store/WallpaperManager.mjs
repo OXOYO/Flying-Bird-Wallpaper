@@ -288,14 +288,14 @@ export default class WallpaperManager {
           if (index_result && sortFieldVal !== undefined) {
             // 排除最近10条历史记录
             const excludeIds =
-              recentIds.length > 0 ? `id NOT IN (${recentIds.map(() => '?').join(',')}) AND` : ''
+              recentIds.length > 0 ? `id NOT IN (${recentIds.map(() => '?').join(',')})` : ''
             const excludeParams = recentIds
             // 查找下一个
             const check_stmt = this.db.prepare(
               `SELECT COUNT(*) AS count
               FROM fbw_resources
               ${query_where_str ? query_where_str + ' AND' : 'WHERE'}
-              ${excludeIds}
+              ${excludeIds ? excludeIds + ' AND' : ''}
               (${sortField} ${sortType === -1 ? '<' : '>'} ? OR (${sortField} = ? AND id > ?))`
             )
             const check_params = [
@@ -312,7 +312,7 @@ export default class WallpaperManager {
                 SELECT *
                 FROM fbw_resources
                 ${query_where_str ? query_where_str + ' AND' : 'WHERE'}
-                ${excludeIds}
+                ${excludeIds ? excludeIds + ' AND' : ''}
                 (${sortField} ${sortType === -1 ? '<' : '>'} ? OR (${sortField} = ? AND id > ?))
                 ORDER BY ${sortField} ${sortType === -1 ? 'DESC' : 'ASC'}, id
                 LIMIT 1
