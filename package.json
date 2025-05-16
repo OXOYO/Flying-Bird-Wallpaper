@@ -17,7 +17,7 @@
   "scripts": {
     "clean": "rimraf out dist",
     "format": "prettier --write .",
-    "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix",
+    "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts,.vue --fix",
     "build:h5_watch": "vite build --config h5.vite.config.mjs --watch",
     "build:h5": "vite build --config h5.vite.config.mjs",
     "preview:app": "npm run clean && npm run build:h5 && electron-vite preview",

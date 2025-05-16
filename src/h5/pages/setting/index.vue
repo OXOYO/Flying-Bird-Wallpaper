@@ -2,7 +2,6 @@
 import { storeToRefs } from 'pinia'
 import {
   intervalUnits,
-  unitToValField,
   qualityList,
   orientationOptions,
   switchTypeOptions,
@@ -98,7 +97,7 @@ const onShowPicker = (field) => {
   showPickers[field] = true
 }
 
-const onConfirmPicker = (field, { selectedValues, selectedOptions, selectedIndexes }) => {
+const onConfirmPicker = (field, { selectedValues }) => {
   showPickers[field] = false
   switch (field) {
     case 'locale':
@@ -117,7 +116,7 @@ const onConfirmPicker = (field, { selectedValues, selectedOptions, selectedIndex
 
   onSettingDataChange(field)
 }
-const onCancelPicker = (field, { selectedValues, selectedOptions, selectedIndexes }) => {
+const onCancelPicker = (field) => {
   showPickers[field] = false
 }
 

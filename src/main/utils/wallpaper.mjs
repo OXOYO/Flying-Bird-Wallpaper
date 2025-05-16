@@ -5,7 +5,7 @@ import { BrowserWindow, screen, app } from 'electron'
 import { exec, execSync } from 'child_process'
 import path from 'path'
 import fs from 'fs'
-import { isLinux, isMac, isWin, ensureDir } from './utils.mjs'
+import { isLinux, isMac, isWin } from './utils.mjs'
 
 // 全局变量，用于跟踪壁纸窗口
 let wallpaperWindow = null
@@ -56,12 +56,12 @@ export const setDynamicWallpaper = async (videoPath) => {
         <script>
           const video = document.querySelector('video');
           video.play().catch(err => console.error('视频播放失败:', err));
-          
+
           // 监听视频加载事件
           video.addEventListener('loadeddata', () => {
             console.log('视频加载成功');
           });
-          
+
           // 监听视频错误事件
           video.addEventListener('error', (e) => {
             console.error('视频加载错误:', e);
@@ -212,9 +212,9 @@ const setMacWallpaper = async (window) => {
       tell application "Finder"
         activate
       end tell
-      
+
       delay 0.5
-      
+
       tell application "System Events"
         tell process "Electron"
           set visible to true
@@ -222,9 +222,9 @@ const setMacWallpaper = async (window) => {
           set attributes of window 1 to {subrole:"AXUnknown"}
         end tell
       end tell
-      
+
       delay 0.5
-      
+
       tell application "Finder"
         activate
       end tell
@@ -266,7 +266,7 @@ const setMacWallpaper = async (window) => {
               set attributes of window 1 to {subrole:"AXUnknown"}
             end tell
           end tell
-          
+
           tell application "Finder" to activate
         `
         exec(`osascript -e '${refreshScript}'`)
@@ -350,7 +350,7 @@ const setWinWallpaper = async (window) => {
 
     // 发送特殊消息给桌面窗口
     execSync(
-      `powershell -command "Add-Type -TypeDefinition 'using System;using System.Runtime.InteropServices;public class Win32 {[DllImport(\"user32.dll\")]public static extern IntPtr SendMessageW(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);}' -Language CSharp; [Win32]::SendMessageW([IntPtr]${progman}, 0x052C, [IntPtr]0, [IntPtr]0)"`
+      `powershell -command "Add-Type -TypeDefinition 'using System;using System.Runtime.InteropServices;public class Win32 {[DllImport("user32.dll")]public static extern IntPtr SendMessageW(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);}' -Language CSharp; [Win32]::SendMessageW([IntPtr]${progman}, 0x052C, [IntPtr]0, [IntPtr]0)"`
     )
 
     // 查找WorkerW窗口

@@ -1,5 +1,4 @@
 <script setup>
-import { storeToRefs } from 'pinia'
 import UseSettingStore from '@h5/stores/settingStore.js'
 import * as api from '@h5/api/index.js'
 import { showImagePreview, showNotify } from 'vant'

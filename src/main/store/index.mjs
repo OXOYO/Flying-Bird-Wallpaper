@@ -2,7 +2,7 @@ import { app, ipcMain, BrowserWindow, screen, powerMonitor } from 'electron'
 import path from 'path'
 import fs from 'fs'
 import { createFileServer, createH5Server } from '../child_server/index.mjs'
-import { t, changeLanguage } from '../../i18n/server.js'
+import { t } from '../../i18n/server.js'
 import DatabaseManager from './DatabaseManager.mjs'
 import ResourcesManager from './ResourcesManager.mjs'
 import WallpaperManager from './WallpaperManager.mjs'
@@ -89,7 +89,6 @@ export default class Store {
       this.handleFileServerStart()
 
       // 如果设置了自动启动H5服务，在初始化完成后启动
-      console.log('开机是否启动H5服务...', this.settingData.startH5ServerOnStartup)
       if (this.settingData.startH5ServerOnStartup) {
         try {
           global.logger.info('初始化完成后启动H5服务...')
@@ -332,7 +331,7 @@ export default class Store {
             env: process.env
           },
           onMessage: ({ data }) => {
-            console.log('H5服务器收到消息:', data)
+            // console.log('H5服务器收到消息:', data)
             if (data.event === 'SERVER_START::SUCCESS') {
               this.h5ServerUrl = data.url
 
@@ -449,7 +448,7 @@ export default class Store {
   // 处理IPC通信
   handleIpc() {
     // 获取设置数据
-    ipcMain.handle('main:getSettingData', (event) => {
+    ipcMain.handle('main:getSettingData', () => {
       return this.settingManager.getSettingData()
     })
 
@@ -459,7 +458,7 @@ export default class Store {
     })
 
     // 获取资源数据
-    ipcMain.handle('main:getResourceMap', (event) => {
+    ipcMain.handle('main:getResourceMap', () => {
       return this.dbManager.getResourceMap()
     })
 
@@ -469,7 +468,7 @@ export default class Store {
     })
 
     // 检查是否设置了隐私密码
-    ipcMain.handle('main:hasPrivacyPassword', async (event) => {
+    ipcMain.handle('main:hasPrivacyPassword', async () => {
       return await this.settingManager.hasPrivacyPassword()
     })
 
@@ -508,12 +507,12 @@ export default class Store {
     })
 
     // 切换壁纸
-    ipcMain.handle('main:nextWallpaper', async (event) => {
+    ipcMain.handle('main:nextWallpaper', async () => {
       return this.doManualSwitchWallpaper('next')
     })
 
     // 切换至上一个壁纸
-    ipcMain.handle('main:prevWallpaper', async (event) => {
+    ipcMain.handle('main:prevWallpaper', async () => {
       return this.doManualSwitchWallpaper('prev')
     })
 
@@ -532,7 +531,7 @@ export default class Store {
     // })
 
     // 启停定时切换壁纸
-    ipcMain.handle('main:toggleAutoSwitchWallpaper', async (event) => {
+    ipcMain.handle('main:toggleAutoSwitchWallpaper', async () => {
       return this.toggleAutoSwitchWallpaper()
     })
 
@@ -547,7 +546,7 @@ export default class Store {
     })
 
     // 刷新当前资源目录
-    ipcMain.handle('main:refreshDirectory', async (event) => {
+    ipcMain.handle('main:refreshDirectory', async () => {
       const res = this.fileManager.refreshDirectory(this.locks, true)
       if (res && !res.success) {
         this.sendMsg(this.mainWindow, {
@@ -563,15 +562,15 @@ export default class Store {
     })
 
     // H5服务相关
-    ipcMain.handle('main:startH5Server', (event) => {
+    ipcMain.handle('main:startH5Server', () => {
       this.handleH5ServerStart(3, 2000)
     })
 
-    ipcMain.handle('main:stopH5Server', (event) => {
+    ipcMain.handle('main:stopH5Server', () => {
       this.handleH5ServerStop()
     })
 
-    ipcMain.handle('main:clearDownloadedAll', async (event) => {
+    ipcMain.handle('main:clearDownloadedAll', async () => {
       const res = await this.wallpaperManager.clearDownloadedAll()
       if (res) {
         this.sendMsg(this.mainWindow, {
@@ -581,7 +580,7 @@ export default class Store {
       }
     })
 
-    ipcMain.handle('main:clearDownloadedExpired', async (event) => {
+    ipcMain.handle('main:clearDownloadedExpired', async () => {
       const res = await this.wallpaperManager.clearDownloadedExpired()
       if (res) {
         this.sendMsg(this.mainWindow, {
@@ -697,7 +696,7 @@ export default class Store {
 
       // 保存截图到下载文件
       const downloadFilePath = path.join(process.env.FBW_DOWNLOAD_PATH, 'wallpaper.png')
-      console.log('downloadFilePath', downloadFilePath)
+      // console.log('downloadFilePath', downloadFilePath)
       fs.writeFileSync(downloadFilePath, pngData)
 
       return downloadFilePath

@@ -61,9 +61,9 @@ const isLocalResource = computed(() => {
   return searchForm.resourceType === 'localResource'
 })
 
-const isRemoteResource = computed(() => {
-  return searchForm.resourceType === 'remoteResource'
-})
+// const isRemoteResource = computed(() => {
+//   return searchForm.resourceType === 'remoteResource'
+// })
 
 const resourceMap = computed(() => {
   return commonStore.resourceMap
@@ -1085,7 +1085,7 @@ const onCopyFilePath = (filePath) => {
         message: t('messages.copySuccess')
       })
     })
-    .catch((e) => {
+    .catch(() => {
       ElMessage({
         type: 'error',
         message: t('messages.copyFail')
@@ -1284,7 +1284,7 @@ onBeforeUnmount(() => {
             <el-option v-for="text in qualityList" :key="text" :label="text" :value="text" />
           </el-select>
         </template>
-        <template #append v-if="isSearchMenu && isLocalResource">
+        <template v-if="isSearchMenu && isLocalResource" #append>
           <el-button type="primary" size="large" @click="onSyncToWallpaperSetting">{{
             t('exploreCommon.onSyncToWallpaperSetting')
           }}</el-button>
@@ -1316,8 +1316,8 @@ onBeforeUnmount(() => {
               plain
               @click="onWordClick(item)"
             >
-              <span>{{ item.word }}</span
-              ><span>{{ item.count }}</span>
+              <span>{{ item.word }}</span>
+              <span>{{ item.count }}</span>
             </el-button>
           </div>
           <EmptyHelp v-else />

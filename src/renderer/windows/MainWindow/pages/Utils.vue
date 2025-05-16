@@ -1,13 +1,11 @@
 <script setup>
 import { storeToRefs } from 'pinia'
 import UseSettingStore from '@renderer/stores/settingStore.js'
-import UseMenuStore from '@renderer/stores/menuStore.js'
 import { colorList } from '@common/publicData.js'
 import { useTranslation } from 'i18next-vue'
 
 const { t } = useTranslation()
 
-const menuStore = UseMenuStore()
 const settingStore = UseSettingStore()
 const { settingData } = storeToRefs(settingStore)
 
@@ -28,10 +26,6 @@ const onSetDynamicWallpaper = async () => {
     type: setRes.success ? 'success' : 'error',
     message: setRes.message
   })
-}
-
-const openPage = (name) => {
-  menuStore.setSelected(name)
 }
 
 const utilList = ref([
@@ -153,7 +147,7 @@ const onExec = (name) => {
   let args = []
   const util = utilList.value.find((item) => item.name === name)
   switch (name) {
-    case 'clearCurrentResourceDB':
+    case 'clearCurrentResourceDB': {
       funcName = 'doClearDB'
       const resourceName = settingData.value.resourceName
       if (['resources', 'favorites'].includes(resourceName)) {
@@ -162,6 +156,7 @@ const onExec = (name) => {
         args = ['resources', resourceName]
       }
       break
+    }
     case 'clearWordsDB':
       funcName = 'doClearDB'
       args = ['words']
@@ -212,9 +207,6 @@ const onExec = (name) => {
       break
     case 'closeDynamicWallpaper':
       funcName = 'closeDynamicWallpaper'
-      break
-    case 'openPage':
-      args = [util.value]
       break
   }
   if (!util.handle && typeof window.FBW[funcName] !== 'function') {

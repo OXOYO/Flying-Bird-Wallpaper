@@ -36,7 +36,7 @@ const onMouseMove = (e) => {
   }
 }
 
-const onMouseUp = (e) => {
+const onMouseUp = () => {
   if (!isDragging.value) {
     // 如果没有拖拽，则认为是点击事件
     window.FBW.toggleMainWindow()

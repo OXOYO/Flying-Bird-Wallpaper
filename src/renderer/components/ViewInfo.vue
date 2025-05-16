@@ -67,7 +67,7 @@ defineExpose({
         <el-image :src="info.src" style="pointer-events: auto" />
       </div>
       <el-scrollbar class="info-block">
-        <div v-for="key in infoKeys" class="info-row">
+        <div v-for="key in infoKeys" :key="key" class="info-row">
           <div class="info-key">{{ t(`viewInfo.row.${key}`) }}:</div>
           <div class="info-value">{{ handleInfoVal(key) }}</div>
         </div>

@@ -142,7 +142,6 @@ const onSettingDataFormConfirm = () => {
   return formEl.validate(async (valid) => {
     if (valid) {
       flags.saving = true
-      console.log('toRaw(settingDataForm)', toRaw(settingDataForm))
       const res = await window.FBW.updateSettingData(toRaw(settingDataForm))
       flags.saving = false
       let options = {}
@@ -164,10 +163,10 @@ const onSettingDataFormConfirm = () => {
   })
 }
 
-const onSettingDataFormReset = (formEl) => {
-  if (!formEl) return
-  formEl.resetFields()
-}
+// const onSettingDataFormReset = (formEl) => {
+//   if (!formEl) return
+//   formEl.resetFields()
+// }
 
 const openSelectFolderDialog = async (field, index) => {
   if (flags.selectFolder) {
@@ -336,7 +335,7 @@ onBeforeUnmount(() => {
       <el-tab-pane :label="t('pages.Setting.tabs.privacySpace')" name="privacySpace"></el-tab-pane>
     </el-tabs>
     <!-- 内容区域 -->
-    <div class="base-settings-wrapper" v-show="activeTab === 'baseSetting'">
+    <div v-show="activeTab === 'baseSetting'" class="base-settings-wrapper">
       <el-anchor
         class="anchor-block"
         :container="anchorContainer"
