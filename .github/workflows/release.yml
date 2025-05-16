@@ -40,31 +40,43 @@ jobs:
           echo "" >> CHANGELOG.md
 
           # 新特性
-          echo "### New Features 🎉" >> CHANGELOG.md
-          echo "" >> CHANGELOG.md
-          git log $PREVIOUS_TAG..$LATEST_TAG --pretty=format:"* %s" --reverse | grep -i -E "feat:|feature:|新增|添加" | sed 's/^* feat: /* /' | sed 's/^* feature: /* /' >> CHANGELOG.md
-          echo "" >> CHANGELOG.md
-          echo "" >> CHANGELOG.md
+          FEATURES=$(git log $PREVIOUS_TAG..$LATEST_TAG --pretty=format:"* %s" --reverse | grep -i -E "feat:|feature:|新增|添加" | sed 's/^* feat: /* /' | sed 's/^* feature: /* /')
+          if [ ! -z "$FEATURES" ]; then
+            echo "### New Features 🎉" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            echo "$FEATURES" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+          fi
 
           # Bug 修复
-          echo "### Bug Fixes 🐞" >> CHANGELOG.md
-          echo "" >> CHANGELOG.md
-          git log $PREVIOUS_TAG..$LATEST_TAG --pretty=format:"* %s" --reverse | grep -i -E "fix:|修复|bug|问题" | sed 's/^* fix: /* /' >> CHANGELOG.md
-          echo "" >> CHANGELOG.md
-          echo "" >> CHANGELOG.md
+          FIXES=$(git log $PREVIOUS_TAG..$LATEST_TAG --pretty=format:"* %s" --reverse | grep -i -E "fix:|修复|bug|问题" | sed 's/^* fix: /* /')
+          if [ ! -z "$FIXES" ]; then
+            echo "### Bug Fixes 🐞" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            echo "$FIXES" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+          fi
 
           # 文档
-          echo "### Document 📖" >> CHANGELOG.md
-          echo "" >> CHANGELOG.md
-          git log $PREVIOUS_TAG..$LATEST_TAG --pretty=format:"* %s" --reverse | grep -i -E "docs:|doc:|文档" | sed 's/^* docs: /* /' | sed 's/^* doc: /* /' >> CHANGELOG.md
-          echo "" >> CHANGELOG.md
-          echo "" >> CHANGELOG.md
+          DOCS=$(git log $PREVIOUS_TAG..$LATEST_TAG --pretty=format:"* %s" --reverse | grep -i -E "docs:|doc:|文档" | sed 's/^* docs: /* /' | sed 's/^* doc: /* /')
+          if [ ! -z "$DOCS" ]; then
+            echo "### Document 📖" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            echo "$DOCS" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+          fi
 
           # 其他变更
-          echo "### Other Changes" >> CHANGELOG.md
-          echo "" >> CHANGELOG.md
-          git log $PREVIOUS_TAG..$LATEST_TAG --pretty=format:"* %s" --reverse | grep -v -i -E "feat:|feature:|fix:|docs:|doc:|merge|新增|添加|修复|bug|问题|文档" | grep -v "^$" >> CHANGELOG.md
-          echo "" >> CHANGELOG.md
+          OTHERS=$(git log $PREVIOUS_TAG..$LATEST_TAG --pretty=format:"* %s" --reverse | grep -v -i -E "feat:|feature:|fix:|docs:|doc:|chore:|merge|新增|添加|修复|bug|问题|文档|杂务" | grep -v "^$")
+          if [ ! -z "$OTHERS" ]; then
+            echo "### Other Changes" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            echo "$OTHERS" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+          fi
 
           # 将变更日志内容设置为输出变量
           CHANGELOG=$(cat CHANGELOG.md)
