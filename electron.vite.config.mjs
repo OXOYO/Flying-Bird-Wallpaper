@@ -50,7 +50,7 @@ export default defineConfig({
       AutoImport({
         // 自动导入 Vue 相关函数，如：ref, reactive, toRef 等
         imports: ['vue', 'pinia'],
-        dts: 'src/renderer/auto-imports.d.ts',
+        dts: './auto-imports.d.ts',
         resolvers: [
           // 自动导入 Element Plus 相关函数，如：ElMessage, ElMessageBox... (带样式)
           ElementPlusResolver({ importStyle: 'sass' })

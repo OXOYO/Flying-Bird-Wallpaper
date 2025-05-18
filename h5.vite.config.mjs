@@ -25,7 +25,7 @@ export default defineConfig({
       // 自动导入 Vue 相关函数，如：ref, reactive, toRef 等
       imports: ['vue', 'pinia'],
       // 生成 TypeScript 声明文件
-      dts: 'src/h5/auto-imports.d.ts',
+      dts: './auto-imports.d.ts',
       // 生成 ESLint 配置文件
       eslintrc: {
         enabled: true,
