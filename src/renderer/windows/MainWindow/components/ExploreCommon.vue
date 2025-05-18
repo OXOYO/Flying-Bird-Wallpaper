@@ -664,10 +664,22 @@ const handleGridSize = (blockWidth = 900, blockHeight = 600) => {
     cardForm.cardHeight = Math.floor(cardForm.cardWidth * gridForm.gridHWRatio)
   }
   // cardForm.showThumb = cardForm.cardHeight > 200 && cardForm.cardWidth > 200
-  // 优化 buffer 设置
-  const minBuffer = cardForm.cardHeight * 2 // 最小两行高度
-  const maxBuffer = blockHeight * 0.5 // 最大窗口高度的 50%
-  cardForm.buffer = parseInt(Math.min(Math.max(minBuffer, blockHeight * 0.3), maxBuffer))
+  // 优化 buffer 设置 - 根据滚动速度和设备性能动态调整
+  const calculateOptimalBuffer = () => {
+    const baseBuffer = cardForm.cardHeight * 2 // 基础缓冲区为两行高度
+    const screenRows = Math.ceil(blockHeight / cardForm.cardHeight) // 屏幕可见行数
+
+    // 根据设备性能调整缓冲区大小
+    const performanceMultiplier = window.navigator.hardwareConcurrency > 4 ? 1.5 : 1
+
+    // 计算最终缓冲区大小，确保至少有一屏的缓冲
+    return Math.min(
+      Math.max(baseBuffer, screenRows * cardForm.cardHeight * performanceMultiplier),
+      blockHeight * 0.5 // 最大不超过视口高度的50%
+    )
+  }
+
+  cardForm.buffer = parseInt(calculateOptimalBuffer())
   // FIXME 动态计算pageSize
   // 计算当前卡片大小下，block容器可以包含多少个卡片
   const allCardSize = Math.floor(
@@ -684,6 +696,10 @@ const handleGridSize = (blockWidth = 900, blockHeight = 600) => {
 const doCompleteList = async () => {
   if (cardList.value.length && searchForm.pageSize > cardList.value.length) {
     await getNextList()
+    // 在获取新数据后强制更新视图
+    nextTick(() => {
+      scrollRef.value?.updateVisibleItems(true)
+    })
   }
 }
 
@@ -737,12 +753,13 @@ const onRefresh = async (flag = true) => {
   flags.loading = false
   flags.empty = false
   flags.hasMore = true
-  setTimeout(async () => {
-    // 强制更新可视区域的项目
-    scrollRef.value?.updateVisibleItems(true)
-    // 执行查询
-    await getNextList()
-  })
+
+  // 使用nextTick替代setTimeout
+  await nextTick()
+  // 强制更新可视区域的项目
+  scrollRef.value?.updateVisibleItems(true)
+  // 执行查询
+  await getNextList()
 }
 
 const onSearch = async () => {
@@ -765,6 +782,20 @@ const onLoadMore = async () => {
   }
 }
 
+// 添加图片预加载函数
+const preloadImages = (items, startIndex, count) => {
+  if (!items || !items.length) return
+
+  const endIndex = Math.min(startIndex + count, items.length)
+  for (let i = startIndex; i < endIndex; i++) {
+    const item = items[i]
+    if (item && item.src) {
+      const img = new Image()
+      img.src = `${item.src}${imgUrlQuery.value}`
+    }
+  }
+}
+
 const onScroll = (event) => {
   const { scrollTop, scrollHeight, clientHeight } = event.target
   // 检测是否接近底部（可以调整 buffer 区域）
@@ -781,6 +812,14 @@ const onScroll = (event) => {
     flags.scrollDebounce = false
   }, 300)
   getNextList()
+
+  // 预加载当前可见区域之后的图片
+  if (!flags.loading && scrollTop > 0) {
+    const visibleInfo = scrollRef.value?.getVisibleRange()
+    if (visibleInfo) {
+      preloadImages(cardList.value, visibleInfo.endIndex + 1, 10)
+    }
+  }
 }
 
 const getNextList = async () => {
@@ -867,6 +906,9 @@ const getNextList = async () => {
 
     flags.empty = !cardList.value.length
   }
+  nextTick(() => {
+    scrollRef.value?.updateVisibleItems(true)
+  })
 }
 
 // 将筛选条件同步到壁纸设置
@@ -947,12 +989,16 @@ const onTagClick = (field, value) => {
   onRefresh(false)
 }
 
-const onImageLoad = (e) => {
-  // 为加载完成的图片元素添加 loaded 类
-  const imageWrapper = e.target.parentElement
-  if (imageWrapper) {
-    imageWrapper.classList.add('el-image--loaded')
-  }
+// 添加图片加载状态跟踪
+const imageLoadingStatus = reactive({})
+
+const onImageLoad = (index) => {
+  imageLoadingStatus[index] = 'loaded'
+}
+
+const onImageError = (index, item) => {
+  imageLoadingStatus[index] = 'error'
+  console.log('图片加载失败:', item.thumbUrl)
 }
 
 // 查看图片
@@ -1195,8 +1241,12 @@ onMounted(() => {
   // 监听元素宽度变化
   resizeObserver.observe(cardBlockRef.value)
   handleMenuParams()
-  onRefresh(true)
   getWords()
+
+  // 确保在组件挂载后立即加载数据
+  nextTick(() => {
+    onRefresh(true)
+  })
 })
 onBeforeUnmount(() => {
   // 取消主进程事件监听
@@ -1437,15 +1487,25 @@ onBeforeUnmount(() => {
                   loading="lazy"
                   lazy
                   fit="cover"
-                  @load="onImageLoad"
+                  :class="{
+                    'image-loaded': imageLoadingStatus[index] === 'loaded',
+                    'image-loading':
+                      !imageLoadingStatus[index] || imageLoadingStatus[index] === 'loading',
+                    'image-error': imageLoadingStatus[index] === 'error'
+                  }"
+                  @load="onImageLoad(index)"
+                  @error="onImageError(index, item)"
                   @dblclick="doViewImage(item, index, true)"
                 >
                   <template #placeholder>
                     <div class="image-loading">Loading...</div>
                   </template>
                   <template #error>
-                    <div class="image-error">
+                    <div class="image-error" @click="onImageError($event, index, item)">
                       <IconifyIcon icon="material-symbols:broken-image-sharp" />
+                      <span v-if="imageLoadingStatus[index] === 'error'" class="retry-text">{{
+                        t('exploreCommon.retryLoading')
+                      }}</span>
                     </div>
                   </template>
                 </el-image>
@@ -1764,13 +1824,24 @@ onBeforeUnmount(() => {
   }
 
   :deep(.el-image__inner) {
-    opacity: 1;
+    opacity: 0;
     transition: all 0.3s ease-in-out;
+  }
+
+  :deep(.el-image__inner.is-loaded) {
+    opacity: 1;
   }
 
   :deep(.el-image__placeholder),
   :deep(.el-image__error) {
     background-color: transparent;
+  }
+
+  .image-loaded {
+    opacity: 1 !important;
+    :deep(.el-image__inner) {
+      opacity: 1 !important;
+    }
   }
 
   .image-loading {
