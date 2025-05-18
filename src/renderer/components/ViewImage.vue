@@ -106,6 +106,26 @@ const createGallery = () => {
     },
     viewed: ({ detail }) => {
       viewedIndex = detail.index
+
+      // 获取图片和容器尺寸
+      const image = detail.image
+      const containerWidth = gallery.containerData.width
+      // 考虑顶部35px间距，减少有效高度
+      const containerHeight = gallery.containerData.height - 35
+      const imageWidth = image.naturalWidth
+      const imageHeight = image.naturalHeight
+
+      // 计算适合的缩放比例，使图片完全填充容器（可能裁剪部分内容）
+      const scale = Math.max(containerWidth / imageWidth, containerHeight / imageHeight)
+
+      // 应用缩放
+      gallery.zoomTo(scale)
+
+      // 缩放后居中图片
+      gallery.moveTo(
+        (containerWidth - imageWidth * scale) / 2,
+        (containerHeight - imageHeight * scale) / 2
+      )
     },
     hidden: () => {
       flags.visible = false
