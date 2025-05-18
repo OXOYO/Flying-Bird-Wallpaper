@@ -116,6 +116,7 @@
         "viewImageIntervalTime": "View image interval",
         "showImageTag": "Show image tag",
         "confirmOnDeleteFile": "Confirm on delete",
+        "enableSegmentationTask": "Enable segmentation task",
         "h5AutoSwitch": "Automatic switching",
         "h5SwitchType": "Switching mode",
         "h5SwitchIntervalTime": "Switching interval",

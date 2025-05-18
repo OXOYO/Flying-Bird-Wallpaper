@@ -1244,6 +1244,15 @@ onBeforeUnmount(() => {
                 @change="onThemeColorChange"
               />
             </el-form-item>
+            <el-form-item
+              :label="t('pages.Setting.settingDataForm.enableSegmentationTask')"
+              prop="enableWordSegmentation"
+            >
+              <el-checkbox
+                v-model="settingDataForm.enableWordSegmentation"
+                @change="onSettingDataFormChange"
+              />
+            </el-form-item>
           </div>
         </el-form>
       </el-scrollbar>

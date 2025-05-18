@@ -178,6 +178,8 @@ export const defaultSettingData = {
   showImageTag: true,
   // 删除文件时是否需要确认
   confirmOnDeleteFile: true,
+  // 启用分词计算任务
+  enableSegmentationTask: false,
   /* h5服务配置 */
   h5AutoSwitch: true,
   h5SwitchType: 1,

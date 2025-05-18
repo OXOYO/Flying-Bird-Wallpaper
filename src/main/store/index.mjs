@@ -156,27 +156,23 @@ export default class Store {
 
   // 开启定时任务
   startScheduledTasks() {
-    // 开启定时计算图片质量
-    this.taskScheduler.scheduleTask(
-      'handleQuality',
-      60 * 1000,
-      () => {
-        this.fileManager.intervalHandleQuality(this.locks)
-      },
-      10 * 60 * 1000
-    )
+    this.startMonitorMemoryTask()
+    this.startHandleQualityTask()
+    this.startHandleWordsTask()
 
-    // 开启定时处理词库
-    this.taskScheduler.scheduleTask(
-      'handleWords',
-      60 * 1000,
-      () => {
-        this.wordsManager.intervalHandleWords(this.locks)
-      },
-      12 * 60 * 1000
-    )
+    // 处理定时任务
+    this.intervalSwitchWallpaper()
+    this.intervalRefreshDirectory()
+    this.intervalDownload()
+    this.intervalClearDownloaded()
+  }
 
-    // 添加内存监控任务
+  // 启动内存监控任务
+  startMonitorMemoryTask() {
+    const key = 'monitorMemory'
+    // 清理任务
+    this.taskScheduler.clearTask(key)
+    // 开启内存监控任务
     this.taskScheduler.scheduleTask('monitorMemory', 5 * 60 * 1000, () => {
       const memoryUsage = process.memoryUsage()
       const heapUsedMB = Math.round((memoryUsage.heapUsed / 1024 / 1024) * 100) / 100
@@ -192,12 +188,41 @@ export default class Store {
         }
       }
     })
+  }
 
-    // 处理定时任务
-    this.intervalSwitchWallpaper()
-    this.intervalRefreshDirectory()
-    this.intervalDownload()
-    this.intervalClearDownloaded()
+  // 启动图片质量处理任务
+  startHandleQualityTask() {
+    const key = 'handleQuality'
+    // 清理任务
+    this.taskScheduler.clearTask(key)
+    // 开启定时计算图片质量
+    this.taskScheduler.scheduleTask(
+      key,
+      7 * 60 * 1000,
+      () => {
+        this.fileManager.intervalHandleQuality(this.locks)
+      },
+      10 * 60 * 1000
+    )
+  }
+
+  // 启动处理分词任务
+  startHandleWordsTask() {
+    const key = 'handleWords'
+    // 清理任务
+    this.taskScheduler.clearTask(key)
+    // 检查是否启用词库处理任务
+    if (this.settingData.enableSegmentationTask) {
+      // 开启定时处理词库
+      this.taskScheduler.scheduleTask(
+        key,
+        11 * 60 * 1000,
+        () => {
+          this.wordsManager.intervalHandleWords(this.locks)
+        },
+        12 * 60 * 1000
+      )
+    }
   }
 
   // 设置电源监控
@@ -656,6 +681,8 @@ export default class Store {
         this.intervalClearDownloaded()
       }
 
+      // 处理分词任务
+      this.startHandleWordsTask()
       // 处理应用打包后开机自启
       this.handleStartup()
     }
@@ -812,7 +839,7 @@ export default class Store {
 
     // 如果开启了自动刷新目录
     if (this.settingData[key]) {
-      // 设置定时刷新目录，间隔时间单位为分钟
+      // 设置定时刷新目录
       this.taskScheduler.scheduleTask(key, this.handleInterval(key), () => {
         this.fileManager.refreshDirectory(this.locks)
       })
@@ -828,7 +855,7 @@ export default class Store {
     this.wallpaperManager.resetParams(key)
     // 如果开启了自动下载壁纸
     if (this.settingData[key]) {
-      // 设置定时下载壁纸，间隔时间单位为分钟
+      // 设置定时下载壁纸
       this.taskScheduler.scheduleTask(key, this.handleInterval(key), async () => {
         await this.wallpaperManager.downloadWallpaper()
       })

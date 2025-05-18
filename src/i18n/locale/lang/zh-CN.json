@@ -116,6 +116,7 @@
         "viewImageIntervalTime": "预览播放间隔",
         "showImageTag": "显示图片标签",
         "confirmOnDeleteFile": "删除文件前确认",
+        "enableSegmentationTask": "启用分词任务",
         "h5AutoSwitch": "自动切换",
         "h5SwitchType": "切换方式",
         "h5SwitchIntervalTime": "切换间隔",
