@@ -1099,11 +1099,11 @@ const onDeleteFile = (item, index) => {
     if (res.success) {
       callback = async () => {
         cardList.value.splice(index, 1)
+        await doCompleteList()
         // 强制更新
-        setTimeout(() => {
+        nextTick(() => {
           scrollRef.value?.updateVisibleItems(true)
         })
-        await doCompleteList()
       }
     }
     setCardItemStatus(index, res.success ? 'success' : 'error', callback)
