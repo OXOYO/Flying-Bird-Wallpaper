@@ -3,12 +3,12 @@
  * */
 import os from 'os'
 import fs from 'fs'
-import fsp from 'fs/promises'
 import path from 'path'
 import net from 'net'
 import crypto from 'crypto'
 import sharp from 'sharp'
 import forge from 'node-forge'
+import fg from 'fast-glob'
 
 const OS_TYPES = {
   Linux: 'linux',
@@ -40,6 +40,12 @@ export const isFunc = (func) => {
   return typeof func === 'function'
 }
 
+export const echoDebugLog = (msg) => {
+  if (isDev() && msg) {
+    fs.appendFileSync('debug.log', msg + '\n')
+  }
+}
+
 // 获取应用相关目录地址
 export const getDirPathByName = (userDataPath = '', dirName = '') => {
   let dirPath = ''
@@ -56,44 +62,175 @@ export const getDirPathByName = (userDataPath = '', dirName = '') => {
   return dirPath
 }
 
+// 文件系统缓存
+const fsCache = {
+  directories: {},
+  lastUpdate: Date.now(),
+  // 缓存有效期（毫秒）
+  ttl: 60000 // 1分钟
+}
+
+// 清除缓存
+export const clearFsCache = () => {
+  Object.keys(fsCache.directories).forEach((key) => {
+    delete fsCache.directories[key]
+  })
+  fsCache.lastUpdate = Date.now()
+}
+
 // 异步读取目录并返回所有文件（包括子目录中的文件）
-export const readDirRecursive = async (resourceName, dirPath, allowedFileExt) => {
-  let files = await fsp.readdir(dirPath, { withFileTypes: true })
-  let imageFiles = []
+// 使用 fast-glob 优化性能
+export const readDirRecursive = async (
+  resourceName,
+  dirPath,
+  allowedFileExt,
+  existingFiles = []
+) => {
+  const cacheTime = {
+    start: Date.now(),
+    end: Date.now()
+  }
+  // 检查缓存是否存在且有效
+  const cacheKey = `${dirPath}_${allowedFileExt.join('_')}`
+  echoDebugLog(`[${new Date().toISOString()}] 读取目录: ${cacheKey}`)
+  // 检查缓存是否存在且有效
+  if (fsCache.directories[cacheKey] && Date.now() - fsCache.lastUpdate < fsCache.ttl) {
+    // 使用缓存数据，但仍然进行增量更新检查
+    const cachedFiles = fsCache.directories[cacheKey]
 
-  for (const file of files) {
-    const fullPath = path.join(dirPath, file.name)
+    // 如果没有现有文件信息，直接返回缓存
+    if (!existingFiles || existingFiles.length === 0) {
+      echoDebugLog(`[FileServer] 缓存数据直接返回: ${cacheKey}`)
+      return cachedFiles
+    }
 
-    if (file.isDirectory()) {
-      // 如果是目录，递归读取
-      const dirData = await readDirRecursive(resourceName, fullPath, allowedFileExt)
-      imageFiles = imageFiles.concat(dirData)
-    } else if (file.isFile()) {
-      // 如果是文件，检查是否为图片
-      const fileExt = path.extname(file.name).toLowerCase()
-      if (allowedFileExt.includes(fileExt)) {
-        // 同步读取文件信息
-        const fileStat = fs.statSync(fullPath)
-        const imgData = await calculateImageByPath(fullPath)
-        imageFiles.push({
-          resourceName: resourceName,
-          fileName: file.name,
-          filePath: fullPath,
-          fileExt: fileExt,
-          fileSize: fileStat.size,
+    // 否则，过滤出需要更新的文件
+    const existingFilesMap = new Map()
+    for (const file of existingFiles) {
+      if (file.filePath) {
+        existingFilesMap.set(file.filePath, file)
+      }
+    }
+
+    const ret = cachedFiles.filter((file) => {
+      const existingFile = existingFilesMap.get(file.filePath)
+      return !existingFile || file.mtimeMs > existingFile.mtimeMs
+    })
+    echoDebugLog(`[FileServer] 缓存数据增量更新: ${cacheKey}`)
+    return ret
+  }
+  cacheTime.end = Date.now()
+  echoDebugLog(`[FileServer] 读取目录耗时: ${cacheTime.end - cacheTime.start}ms`)
+
+  const existingTime = {
+    start: Date.now(),
+    end: Date.now()
+  }
+  // 构建现有文件的映射，用于快速查找
+  const existingFilesMap = new Map()
+  for (const file of existingFiles) {
+    if (file.filePath) {
+      existingFilesMap.set(file.filePath, file)
+    }
+  }
+  existingTime.end = Date.now()
+  echoDebugLog(`[FileServer] 过滤现有文件耗时: ${existingTime.end - existingTime.start}ms`)
+
+  const patternsTime = {
+    start: Date.now(),
+    end: Date.now()
+  }
+  // 使用 fast-glob 快速获取所有匹配的文件
+  const patterns = allowedFileExt.map((ext) => `**/*${ext}`)
+  const entries = await fg(patterns, {
+    cwd: dirPath,
+    absolute: true,
+    onlyFiles: true,
+    stats: false,
+    followSymbolicLinks: false
+  })
+  patternsTime.end = Date.now()
+  echoDebugLog(`[FileServer] 构建 patterns 耗时: ${patternsTime.end - patternsTime.start}ms`)
+
+  const fileTime = {
+    start: Date.now(),
+    end: Date.now()
+  }
+  // 批量获取文件状态
+  const fileStats = await Promise.all(
+    entries.map(async (filePath) => {
+      try {
+        const stats = await fs.promises.stat(filePath)
+        return {
+          filePath,
+          stats,
+          fileName: path.basename(filePath),
+          fileExt: path.extname(filePath).toLowerCase()
+        }
+      } catch (err) {
+        console.error(`获取文件状态失败: ${filePath}`, err)
+        return null
+      }
+    })
+  )
+  fileTime.end = Date.now()
+  echoDebugLog(`[FileServer] 批量获取文件状态耗时: ${fileTime.end - fileTime.start}ms`)
+
+  const filterTime = {
+    start: Date.now(),
+    end: Date.now()
+  }
+  // 过滤掉获取状态失败的文件
+  const validFiles = fileStats.filter(Boolean)
+
+  // 过滤需要处理的文件（不存在或已修改）
+  const filesToProcess = validFiles.filter((file) => {
+    const existingFile = existingFilesMap.get(file.filePath)
+    return !existingFile || file.stats.mtimeMs > existingFile.mtimeMs
+  })
+  filterTime.end = Date.now()
+  echoDebugLog(`[FileServer] 过滤需要处理的文件耗时: ${filterTime.end - filterTime.start}ms`)
+
+  const imageTime = {
+    start: Date.now(),
+    end: Date.now()
+  }
+  // 批量处理文件元数据
+  const imageFiles = await Promise.all(
+    filesToProcess.map(async (file) => {
+      try {
+        const imgData = await calculateImageByPath(file.filePath)
+        return {
+          resourceName,
+          fileName: file.fileName,
+          filePath: file.filePath,
+          fileExt: file.fileExt,
+          fileSize: file.stats.size,
           quality: imgData.quality,
           width: imgData.width,
           height: imgData.height,
           isLandscape: imgData.isLandscape,
-          atimeMs: fileStat.atimeMs,
-          mtimeMs: fileStat.mtimeMs,
-          ctimeMs: fileStat.ctimeMs
-        })
+          atimeMs: file.stats.atimeMs,
+          mtimeMs: file.stats.mtimeMs,
+          ctimeMs: file.stats.ctimeMs
+        }
+      } catch (err) {
+        console.error(`处理图片元数据失败: ${file.filePath}`, err)
+        return null
       }
-    }
-  }
+    })
+  )
+  imageTime.end = Date.now()
+  echoDebugLog(`[FileServer] 批量处理文件元数据耗时: ${imageTime.end - imageTime.start}ms`)
 
-  return imageFiles
+  // 过滤掉处理失败的文件
+  const validImageFiles = imageFiles.filter(Boolean)
+
+  // 更新缓存
+  fsCache.directories[cacheKey] = validImageFiles
+  fsCache.lastUpdate = Date.now()
+
+  return validImageFiles
 }
 
 export const formatFileSize = (bytes = 0) => {

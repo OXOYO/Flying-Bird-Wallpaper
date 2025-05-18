@@ -83,6 +83,8 @@ const createIndexes = [
   'CREATE INDEX IF NOT EXISTS idx_resources_created_at ON fbw_resources(created_at)',
   'CREATE INDEX IF NOT EXISTS idx_resources_landscape ON fbw_resources(isLandscape)',
   'CREATE INDEX IF NOT EXISTS idx_resources_quality ON fbw_resources(quality)',
+  'CREATE INDEX IF NOT EXISTS idx_resources_filePath ON fbw_resources(filePath)',
+  'CREATE INDEX IF NOT EXISTS idx_resources_fileExt ON fbw_resources(fileExt)',
 
   // 收藏、历史和隐私空间的基础索引
   'CREATE INDEX IF NOT EXISTS idx_favorites_resourceid ON fbw_favorites(resourceId)',

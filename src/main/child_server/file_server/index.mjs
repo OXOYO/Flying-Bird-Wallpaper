@@ -9,39 +9,107 @@ process.parentPort.on('message', (e) => {
   // 监听消息
   port.on('message', async (e) => {
     const { data } = e
+
+    // 分批处理大量文件
+    const processBatch = async (files, batchSize = 1000) => {
+      const results = []
+      for (let i = 0; i < files.length; i += batchSize) {
+        const batch = files.slice(i, i + batchSize)
+        results.push(...batch)
+
+        // 允许事件循环处理其他任务
+        await new Promise((resolve) => setTimeout(resolve, 0))
+      }
+      return results
+    }
+
     if (data.event === 'SERVER_START') {
       port.postMessage({
         event: 'SERVER_START::SUCCESS'
       })
     } else if (data.event === 'REFRESH_DIRECTORY') {
+      const readDirTime = {
+        start: Date.now(),
+        end: Date.now()
+      }
       try {
+        // 获取现有文件列表（如果有）
+        const existingFiles = data.existingFiles || []
+
         const fileMap = new Map()
-        for (let i = 0; i < data.folderPaths.length; i++) {
-          const fileList = await readDirRecursive(
-            data.resourceName,
-            data.folderPaths[i],
-            data.allowedFileExt
-          )
-          if (fileList.length) {
-            for (let i = 0; i < fileList.length; i++) {
-              const item = fileList[i]
+
+        // 并行处理多个目录
+        const dirPromises = data.folderPaths.map((folderPath) =>
+          readDirRecursive(data.resourceName, folderPath, data.allowedFileExt, existingFiles)
+        )
+        // 等待所有目录处理完成
+        const results = await Promise.all(dirPromises)
+
+        // 合并结果
+        for (const fileList of results) {
+          if (fileList && fileList.length) {
+            for (const item of fileList) {
               fileMap.set(item.filePath, item)
             }
           }
         }
-        port.postMessage({
-          event: 'REFRESH_DIRECTORY::SUCCESS',
-          isManual: data.isManual,
-          resourceName: data.resourceName,
-          list: [...fileMap.values()]
-        })
+
+        readDirTime.end = Date.now()
+
+        // 添加统计信息
+        const stats = {
+          newFiles: fileMap.size,
+          modifiedFiles: 0,
+          totalProcessed: fileMap.size
+        }
+
+        // 对于大量文件，使用批量处理
+        if (fileMap.size > 5000) {
+          // 先发送一个处理中的消息
+          port.postMessage({
+            event: 'REFRESH_DIRECTORY::PROCESSING',
+            isManual: data.isManual,
+            resourceName: data.resourceName,
+            totalFiles: fileMap.size,
+            refreshDirStartTime: data.refreshDirStartTime,
+            readDirTime
+          })
+
+          // 分批处理文件
+          const batchedList = await processBatch([...fileMap.values()], 1000)
+
+          // 发送最终结果
+          port.postMessage({
+            event: 'REFRESH_DIRECTORY::SUCCESS',
+            isManual: data.isManual,
+            resourceName: data.resourceName,
+            list: batchedList,
+            stats,
+            refreshDirStartTime: data.refreshDirStartTime,
+            readDirTime
+          })
+        } else {
+          // 对于少量文件，直接发送
+          port.postMessage({
+            event: 'REFRESH_DIRECTORY::SUCCESS',
+            isManual: data.isManual,
+            resourceName: data.resourceName,
+            list: [...fileMap.values()],
+            stats,
+            refreshDirStartTime: data.refreshDirStartTime,
+            readDirTime
+          })
+        }
       } catch (err) {
         global.logger.error(`[FileServer] 刷新资源目录失败: ${err}`)
+        readDirTime.end = Date.now()
         port.postMessage({
           event: 'REFRESH_DIRECTORY::FAIL',
           isManual: data.isManual,
           resourceName: data.resourceName,
-          list: []
+          list: [],
+          refreshDirStartTime: data.refreshDirStartTime,
+          readDirTime
         })
       }
     } else if (data.event === 'HANDLE_IMAGE_QUALITY') {
@@ -70,6 +138,6 @@ process.parentPort.on('message', (e) => {
       }
     }
   })
-  // FIXME [???] 开始发送该端口中的消息队列，使用 onmessage 已隐含调用该方法
+
   port.start()
 })

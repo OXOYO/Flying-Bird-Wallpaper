@@ -273,9 +273,13 @@ export default class Store {
         onMessage: ({ data }) => {
           switch (data.event) {
             case 'REFRESH_DIRECTORY::SUCCESS':
+              // 添加接收时间戳
+              data.receiveMsgTime = Date.now()
               this.onRefreshDirectorySuccess(data)
               break
             case 'REFRESH_DIRECTORY::FAIL':
+              // 添加接收时间戳
+              data.receiveMsgTime = Date.now()
               this.onRefreshDirectoryFail(data)
               break
             case 'HANDLE_IMAGE_QUALITY::SUCCESS':
@@ -291,7 +295,32 @@ export default class Store {
 
   // 文件服务子进程-遍历目录完成
   onRefreshDirectorySuccess(data) {
+    // 获取开始时间和接收时间，使用当前时间作为默认值而不是0
+    const startTime = data.refreshDirStartTime
+    // 父进程向子进程发送消息耗时
+    const parentToChildCoast = data.readDirTime.start - startTime
+    // 子进程向父进程发送消息耗时
+    const childToParentCoast = data.receiveMsgTime - data.readDirTime.end
+    // 遍历目录耗时
+    const readDirCoast = data.readDirTime.end - data.readDirTime.start
+    // 记录开始处理数据库的时间
+    const processDataStartTime = Date.now()
     const res = this.fileManager.processDirectoryData(data)
+
+    // 记录结束时间
+    const endTime = Date.now()
+
+    // 计算各阶段耗时
+    const totalCoast = endTime - startTime
+    const processDataCost = endTime - processDataStartTime
+
+    // 转换成YYYY-MM-DD HH:mm:ss格式
+    const timeNow = new Date().toLocaleString()
+    // 打印耗时信息
+    console.log(
+      `刷新目录完成 - 时间: ${timeNow}  总耗时: ${totalCoast}ms, 父=>子: ${parentToChildCoast}, 遍历目录耗时: ${readDirCoast}ms, 子=>父: ${childToParentCoast}ms, 插入数据库耗时: ${processDataCost}ms`
+    )
+
     // 清除锁
     this.locks.refreshDirectory = false
     // 手动刷新完成后发送消息

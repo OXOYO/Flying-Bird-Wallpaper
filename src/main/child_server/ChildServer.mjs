@@ -29,7 +29,7 @@ export default class ChildServer {
     })
 
     this.#port2.on('message', onMessage)
-    // FIXME [???] 开始发送该端口中的消息队列，使用 onmessage 已隐含调用该方法
+
     this.#port2.start()
     // 初始消息
     this.#child.postMessage(

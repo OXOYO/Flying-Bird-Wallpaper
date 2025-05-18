@@ -23,6 +23,29 @@ export default class FileManager {
 
     this.resetParams()
 
+    // 预编译SQL语句
+    if (this.db) {
+      this.preparedStatements = {
+        insertResource: this.db.prepare(
+          `INSERT OR IGNORE INTO fbw_resources
+            (resourceName, fileName, filePath, fileExt, fileSize, quality, width, height, isLandscape, atimeMs, mtimeMs, ctimeMs) VALUES
+            (@resourceName, @fileName, @filePath, @fileExt, @fileSize, @quality, @width, @height, @isLandscape, @atimeMs, @mtimeMs, @ctimeMs)`
+        ),
+        updateResource: this.db.prepare(
+          `UPDATE fbw_resources SET
+            fileSize = @fileSize,
+            quality = @quality,
+            width = @width,
+            height = @height,
+            isLandscape = @isLandscape,
+            atimeMs = @atimeMs,
+            mtimeMs = @mtimeMs,
+            ctimeMs = @ctimeMs
+          WHERE resourceName = @resourceName AND filePath = @filePath`
+        )
+      }
+    }
+
     // 保存实例
     instance = this
   }
@@ -85,14 +108,32 @@ export default class FileManager {
 
     locks.refreshDirectory = true
 
-    // 发送消息到文件服务子进程
-    this.fileServer?.postMessage({
-      event: 'REFRESH_DIRECTORY',
-      isManual,
-      allowedFileExt,
-      resourceName,
-      folderPaths
-    })
+    // 获取数据库中已有的文件信息
+    try {
+      // 查询所有本地资源的文件路径和修改时间
+      const query_stmt = this.db.prepare(
+        `SELECT id, filePath, mtimeMs FROM fbw_resources WHERE resourceName = ?`
+      )
+      const existingFiles = query_stmt.all(resourceName)
+
+      // 发送消息到文件服务子进程，包含现有文件信息
+      this.fileServer?.postMessage({
+        event: 'REFRESH_DIRECTORY',
+        isManual,
+        allowedFileExt,
+        resourceName,
+        folderPaths,
+        existingFiles, // 传递现有文件信息
+        refreshDirStartTime: Date.now()
+      })
+    } catch (err) {
+      this.logger.error(`获取现有文件信息失败: ${err}`)
+      locks.refreshDirectory = false
+      return {
+        success: false,
+        msg: t('messages.refreshDirectoryFail')
+      }
+    }
   }
 
   /**
@@ -116,12 +157,14 @@ export default class FileManager {
     }
     if (Array.isArray(list) && list.length) {
       try {
-        // 构建批量插入的SQL语句
-        const insert_stmt = this.db.prepare(
-          `INSERT OR IGNORE INTO fbw_resources
-            (resourceName, fileName, filePath, fileExt, fileSize, quality, width, height, isLandscape, atimeMs, mtimeMs, ctimeMs) VALUES
-            (@resourceName, @fileName, @filePath, @fileExt, @fileSize, @quality, @width, @height, @isLandscape, @atimeMs, @mtimeMs, @ctimeMs)`
-        )
+        // 使用预编译语句
+        const insert_stmt =
+          this.preparedStatements?.insertResource ||
+          this.db.prepare(
+            `INSERT OR IGNORE INTO fbw_resources
+              (resourceName, fileName, filePath, fileExt, fileSize, quality, width, height, isLandscape, atimeMs, mtimeMs, ctimeMs) VALUES
+              (@resourceName, @fileName, @filePath, @fileExt, @fileSize, @quality, @width, @height, @isLandscape, @atimeMs, @mtimeMs, @ctimeMs)`
+          )
 
         // 记录插入成功的数量
         let insertedCount = 0

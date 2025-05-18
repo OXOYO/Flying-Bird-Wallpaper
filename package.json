@@ -53,6 +53,7 @@
     "electron-localshortcut": "^3.2.1",
     "electron-updater": "6.3.9",
     "element-plus": "^2.9.6",
+    "fast-glob": "^3.3.3",
     "i18next": "^23.16.8",
     "i18next-vue": "^5.2.0",
     "koa": "^2.15.3",

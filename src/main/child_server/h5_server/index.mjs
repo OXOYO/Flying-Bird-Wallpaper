@@ -56,6 +56,6 @@ process.parentPort.on('message', (e) => {
       })
     }
   })
-  // FIXME [???] 开始发送该端口中的消息队列，使用 onmessage 已隐含调用该方法
+
   port.start()
 })
