@@ -1009,7 +1009,7 @@ const onImageLoad = (index) => {
 
 const onImageError = (index, item) => {
   imageLoadingStatus[index] = 'error'
-  console.log('图片加载失败:', item.thumbUrl)
+  console.log('图片加载失败:', item)
 }
 
 // 查看图片
@@ -1519,14 +1519,11 @@ onBeforeUnmount(() => {
                   @dblclick="doViewImage(item, index, true)"
                 >
                   <template #placeholder>
-                    <div class="image-loading">Loading...</div>
+                    <div class="image-loading-inner">Loading...</div>
                   </template>
                   <template #error>
-                    <div class="image-error" @click="onImageError($event, index, item)">
+                    <div class="image-error-inner">
                       <IconifyIcon icon="material-symbols:broken-image-sharp" />
-                      <span v-if="imageLoadingStatus[index] === 'error'" class="retry-text">{{
-                        t('exploreCommon.retryLoading')
-                      }}</span>
                     </div>
                   </template>
                 </el-image>
@@ -1881,6 +1878,7 @@ onBeforeUnmount(() => {
   }
 
   .image-error {
+    opacity: 1 !important;
     width: 100%;
     height: 100%;
     display: flex;
@@ -1947,7 +1945,7 @@ onBeforeUnmount(() => {
   border-radius: 4px;
 }
 
-.image-loading {
+.image-loading-inner {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1956,7 +1954,7 @@ onBeforeUnmount(() => {
   font-size: 12px;
   color: #ffffff;
 }
-.image-error {
+.image-error-inner {
   display: flex;
   justify-content: center;
   align-items: center;
