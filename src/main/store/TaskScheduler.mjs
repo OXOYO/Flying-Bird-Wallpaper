@@ -2,14 +2,22 @@
  * 任务调度器
  * 负责管理所有定时任务
  */
-// 添加单例实例变量
-let instance = null
-
 export default class TaskScheduler {
+  // 单例实例
+  static _instance = null
+
+  // 获取单例实例
+  static getInstance(logger) {
+    if (!TaskScheduler._instance) {
+      TaskScheduler._instance = new TaskScheduler(logger)
+    }
+    return TaskScheduler._instance
+  }
+
   constructor(logger) {
-    // 如果实例已存在，直接返回该实例
-    if (instance) {
-      return instance
+    // 防止直接实例化
+    if (TaskScheduler._instance) {
+      return TaskScheduler._instance
     }
 
     this.logger = logger
@@ -29,7 +37,7 @@ export default class TaskScheduler {
     }
 
     // 保存实例
-    instance = this
+    TaskScheduler._instance = this
   }
 
   // 调度任务

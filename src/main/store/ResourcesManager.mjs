@@ -3,14 +3,22 @@ import path from 'path'
 import ApiBase from '../ApiBase.js'
 import { commonResourceMap, defaultResourceMap } from '../../common/publicData.js'
 
-// 添加单例实例变量
-let instance = null
-
 export default class ResourcesManager {
+  // 单例实例
+  static _instance = null
+
+  // 获取单例实例
+  static getInstance(logger, dbManager) {
+    if (!ResourcesManager._instance) {
+      ResourcesManager._instance = new ResourcesManager(logger, dbManager)
+    }
+    return ResourcesManager._instance
+  }
+
   constructor(logger, dbManager) {
-    // 如果实例已存在且参数相同，直接返回该实例
-    if (instance && instance.dbManager === dbManager) {
-      return instance
+    // 防止直接实例化
+    if (ResourcesManager._instance) {
+      return ResourcesManager._instance
     }
 
     this.logger = logger
@@ -30,8 +38,7 @@ export default class ResourcesManager {
     this._initialized = false
     this._initPromise = this._init()
 
-    // 保存实例
-    instance = this
+    ResourcesManager._instance = this
   }
 
   async _init() {

@@ -1,18 +1,28 @@
 import fs from 'fs'
 import { t } from '../../i18n/server.js'
 
-// 添加单例实例变量
-let instance = null
-
 export default class FileManager {
+  // 单例实例
+  static _instance = null
+
+  // 获取单例实例
+  static getInstance(logger, dbManager, settingManager, fileServer, wordsManager) {
+    if (!FileManager._instance) {
+      FileManager._instance = new FileManager(
+        logger,
+        dbManager,
+        settingManager,
+        fileServer,
+        wordsManager
+      )
+    }
+    return FileManager._instance
+  }
+
   constructor(logger, dbManager, settingManager, fileServer, wordsManager) {
-    // 如果实例已存在且参数相同，直接返回该实例
-    if (
-      instance &&
-      instance.dbManager === dbManager &&
-      instance.settingManager === settingManager
-    ) {
-      return instance
+    // 防止直接实例化
+    if (FileManager._instance) {
+      return FileManager._instance
     }
 
     this.logger = logger
@@ -47,8 +57,7 @@ export default class FileManager {
       }
     }
 
-    // 保存实例
-    instance = this
+    FileManager._instance = this
   }
 
   // 使用 settingManager 获取设置

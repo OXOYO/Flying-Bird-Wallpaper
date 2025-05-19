@@ -18,15 +18,20 @@ const safeCallback = (callback, response) => {
 
 export default async function setupSocketIO(io, { t, logger, postMessage }) {
   // 初始化数据库管理器
-  const dbManager = new DatabaseManager(logger)
+  const dbManager = DatabaseManager.getInstance(logger)
   await dbManager.waitForInitialization()
 
   // 初始化各种管理器并等待它们初始化完成
-  const settingManager = new SettingManager(logger, dbManager)
+  const settingManager = SettingManager.getInstance(logger, dbManager)
   await settingManager.waitForInitialization()
 
-  const fileManager = new FileManager(logger, dbManager, settingManager)
-  const wallpaperManager = new WallpaperManager(logger, dbManager, settingManager, fileManager)
+  const fileManager = FileManager.getInstance(logger, dbManager, settingManager)
+  const wallpaperManager = WallpaperManager.getInstance(
+    logger,
+    dbManager,
+    settingManager,
+    fileManager
+  )
 
   logger.info('Socket.IO 管理器初始化完成')
 

@@ -80,6 +80,14 @@ const createTables = [
     created_at DATETIME DEFAULT (datetime('now', 'localtime')), -- 记录创建时间
     updated_at DATETIME DEFAULT (datetime('now', 'localtime')), -- 记录修改时间
     UNIQUE (word) -- 唯一键
+  )`,
+  // 系统表：版本管理
+  `CREATE TABLE IF NOT EXISTS fbw_version (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, -- 记录自增ID
+    version TEXT NOT NULL, -- 版本号
+    created_at DATETIME DEFAULT (datetime('now', 'localtime')), -- 记录创建时间
+    updated_at DATETIME DEFAULT (datetime('now', 'localtime')), -- 记录修改时间
+    UNIQUE (version) -- 唯一键
   )`
 ]
 
@@ -111,14 +119,22 @@ const createIndexes = [
   'CREATE INDEX IF NOT EXISTS idx_resource_words_wordid ON fbw_resource_words(wordId)'
 ]
 
-// 单例实例
-let instance = null
-
 export default class DatabaseManager {
+  // 单例实例
+  static _instance = null
+
+  // 获取单例实例
+  static getInstance(logger) {
+    if (!DatabaseManager._instance) {
+      DatabaseManager._instance = new DatabaseManager(logger)
+    }
+    return DatabaseManager._instance
+  }
+
   constructor(logger) {
-    // 如果已经存在实例，则直接返回该实例
-    if (instance) {
-      return instance
+    // 防止直接实例化
+    if (DatabaseManager._instance) {
+      return DatabaseManager._instance
     }
 
     this.logger = logger
@@ -127,7 +143,7 @@ export default class DatabaseManager {
     this._initPromise = this._init()
 
     // 保存实例
-    instance = this
+    DatabaseManager._instance = this
   }
 
   async _init() {

@@ -94,6 +94,9 @@ publish:
   private: false
   releaseType: release
   publishAutoUpdate: true
+  # 添加更新通道配置
+  channel: latest
+  # 确保发布正确的文件
   publisherName: ['*.exe', '*.dmg', 'latest*.yml', '!*.blockmap']
   # 本地发布测试
   # provider: generic

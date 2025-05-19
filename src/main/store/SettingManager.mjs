@@ -3,16 +3,24 @@ import { t, changeLanguage } from '../../i18n/server.js'
 import { defaultSettingData } from '../../common/publicData.js'
 import { generateSalt, hashPassword, verifyPassword } from '../utils/utils.mjs'
 
-// 单例模式
-let instance = null
-
 export default class SettingManager extends EventEmitter {
+  // 单例实例
+  static _instance = null
+
+  // 获取单例实例
+  static getInstance(logger, dbManager) {
+    if (!SettingManager._instance) {
+      SettingManager._instance = new SettingManager(logger, dbManager)
+    }
+    return SettingManager._instance
+  }
+
   constructor(logger, dbManager) {
     super()
 
-    if (instance) {
-      // 如果实例已存在，直接返回该实例
-      return instance
+    // 防止直接实例化
+    if (SettingManager._instance) {
+      return SettingManager._instance
     }
 
     this.logger = logger
@@ -21,7 +29,7 @@ export default class SettingManager extends EventEmitter {
     this._initialized = false
     this._initPromise = this._init()
 
-    instance = this
+    SettingManager._instance = this
   }
 
   // 初始化方法

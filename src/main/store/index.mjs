@@ -10,6 +10,7 @@ import TaskScheduler from './TaskScheduler.mjs'
 import FileManager from './FileManager.mjs'
 import WordsManager from './WordsManager.mjs'
 import SettingManager from './SettingManager.mjs'
+import VersionManager from './VersionManager.mjs'
 // 导入动态壁纸工具
 // import { setDynamicWallpaper, closeDynamicWallpaper } from '../utils/wallpaper.mjs'
 import { handleTimeByUnit } from '../utils/utils.mjs'
@@ -44,17 +45,21 @@ export default class Store {
   async _init() {
     try {
       // 初始化数据库管理器
-      this.dbManager = new DatabaseManager(global.logger)
+      this.dbManager = DatabaseManager.getInstance(global.logger)
       // 等待数据库管理器初始化完成
       await this.dbManager.waitForInitialization()
       this.db = this.dbManager.db
 
+      // 初始化版本管理器
+      this.versionManager = VersionManager.getInstance(global.logger, this.dbManager)
+      await this.versionManager.waitForInitialization()
+
       // 初始化设置管理器
-      this.settingManager = new SettingManager(global.logger, this.dbManager)
+      this.settingManager = SettingManager.getInstance(global.logger, this.dbManager)
       // 等待设置管理器初始化完成
       await this.settingManager.waitForInitialization()
       // 初始化资源管理器
-      this.resourcesManager = new ResourcesManager(global.logger, this.dbManager)
+      this.resourcesManager = ResourcesManager.getInstance(global.logger, this.dbManager)
       // 等待资源管理器初始化完成
       await this.resourcesManager.waitForInitialization()
 
@@ -66,16 +71,20 @@ export default class Store {
       this.h5ServerUrl = null
 
       // 初始化其他管理器
-      this.taskScheduler = new TaskScheduler(global.logger)
-      this.wordsManager = new WordsManager(global.logger, this.dbManager, this.settingManager)
-      this.fileManager = new FileManager(
+      this.taskScheduler = TaskScheduler.getInstance(global.logger)
+      this.wordsManager = WordsManager.getInstance(
+        global.logger,
+        this.dbManager,
+        this.settingManager
+      )
+      this.fileManager = FileManager.getInstance(
         global.logger,
         this.dbManager,
         this.settingManager,
         this.fileServer,
         this.wordsManager
       )
-      this.wallpaperManager = new WallpaperManager(
+      this.wallpaperManager = WallpaperManager.getInstance(
         global.logger,
         this.dbManager,
         this.settingManager,
