@@ -1246,10 +1246,10 @@ onBeforeUnmount(() => {
             </el-form-item>
             <el-form-item
               :label="t('pages.Setting.settingDataForm.enableSegmentationTask')"
-              prop="enableWordSegmentation"
+              prop="enableSegmentationTask"
             >
               <el-checkbox
-                v-model="settingDataForm.enableWordSegmentation"
+                v-model="settingDataForm.enableSegmentationTask"
                 @change="onSettingDataFormChange"
               />
             </el-form-item>
