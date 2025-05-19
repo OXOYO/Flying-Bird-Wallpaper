@@ -230,7 +230,7 @@ export default class Store {
         () => {
           this.wordsManager.intervalHandleWords(this.locks)
         },
-        12 * 60 * 1000
+        10 * 60 * 1000
       )
     }
   }
