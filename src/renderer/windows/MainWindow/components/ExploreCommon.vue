@@ -109,9 +109,17 @@ const words = ref({
 })
 
 const activeWordTab = ref(1)
+const wordFilter = ref('')
 
 const activeWordTabColor = computed(() => {
   return wordTypeList.value[activeWordTab.value - 1].color
+})
+const activeWordsList = computed(() => {
+  const list = words.value[activeWordTab.value]
+  if (wordFilter.value) {
+    return list.filter((item) => item.word.includes(wordFilter.value))
+  }
+  return Array.isArray(list) ? list : []
 })
 
 // 卡片列表
@@ -440,6 +448,9 @@ const handleMenuParams = () => {
   searchForm.filterKeywords = props.menuParams && props.menuParams.word ? props.menuParams.word : ''
 }
 
+const onTabChange = () => {
+  wordFilter.value = ''
+}
 const getWords = () => {
   if (isSearchMenu.value) {
     window.FBW.getWords({
@@ -1140,7 +1151,7 @@ const onCopyFilePath = (filePath) => {
 
 const onDeleteFile = (item, index) => {
   const onConfirmDeleteFile = async () => {
-    const res = await window.FBW.deleteFile(item.id, item.filePath)
+    const res = await window.FBW.deleteFile(toRaw(item))
     let callback
     if (res.success) {
       callback = async () => {
@@ -1345,7 +1356,7 @@ onBeforeUnmount(() => {
         v-if="isSearchMenu"
         :class="{ 'word-drawer': true, 'word-drawer-visible': wordDrawerVisible }"
       >
-        <el-tabs v-model="activeWordTab" class="words-tabs">
+        <el-tabs v-model="activeWordTab" class="words-tabs" @tab-change="onTabChange">
           <el-tab-pane
             v-for="tabItem in wordTypeList"
             :key="tabItem.value"
@@ -1354,10 +1365,20 @@ onBeforeUnmount(() => {
           >
           </el-tab-pane>
         </el-tabs>
-        <el-scrollbar style="height: calc(100% - 50px); width: 100%">
-          <div v-if="words[activeWordTab].length" class="word-list">
+        <!-- 过滤分词列表 -->
+        <div class="word-filter">
+          <el-input
+            v-model="wordFilter"
+            :placeholder="t('exploreCommon.wordFilter.placeholder')"
+            clearable
+            size="small"
+          />
+        </div>
+        <!-- 分词列表 -->
+        <el-scrollbar style="height: calc(100% - 100px); width: 100%">
+          <div v-if="activeWordsList.length" class="word-list">
             <el-button
-              v-for="item in words[activeWordTab]"
+              v-for="item in activeWordsList"
               :key="item.word"
               class="word-item"
               :color="activeWordTabColor"
@@ -1626,6 +1647,11 @@ onBeforeUnmount(() => {
   .words-tabs {
     width: 100%;
   }
+
+  .word-filter {
+    width: 100%;
+    margin: 0 0 10px;
+  }
   .word-list {
     width: 100%;
     display: flex;
@@ -1637,7 +1663,7 @@ onBeforeUnmount(() => {
 
   .word-item {
     margin: 0;
-    width: 140px;
+    width: 100%;
 
     :deep(> span) {
       width: 100%;

@@ -56,7 +56,11 @@ export default class WordsManager {
 
     // 查询未处理分词的图片
     const query_stmt = this.db.prepare(
-      `SELECT id, title, desc FROM fbw_resources WHERE isCut = 0 LIMIT ? OFFSET ?`
+      `SELECT r.id, r.title, r.desc, r.fileName
+      FROM fbw_resources r
+      WHERE
+      NOT EXISTS (SELECT 1 FROM fbw_resource_words rw WHERE rw.resourceId = r.id)
+      LIMIT ? OFFSET ?`
     )
     const query_result = query_stmt.all(pageSize, (startPage - 1) * pageSize)
 
@@ -87,9 +91,6 @@ export default class WordsManager {
     }
 
     try {
-      // 更新资源为已处理分词
-      const update_stmt = this.db.prepare(`UPDATE fbw_resources SET isCut = 1 WHERE id = ?`)
-
       // 插入分词
       const insert_stmt = this.db.prepare(
         `INSERT OR IGNORE INTO fbw_words (word, count, type) VALUES (?, ?, ?)`
@@ -100,12 +101,17 @@ export default class WordsManager {
         `UPDATE fbw_words SET count = count + 1 WHERE word = ?`
       )
 
+      // 获取分词ID
+      const get_word_id_stmt = this.db.prepare(`SELECT id FROM fbw_words WHERE word = ?`)
+
+      // 插入资源与分词的关联
+      const insert_resource_word_stmt = this.db.prepare(
+        `INSERT OR IGNORE INTO fbw_resource_words (resourceId, wordId) VALUES (?, ?)`
+      )
+
       const transaction = this.db.transaction(() => {
         for (let i = 0; i < list.length; i++) {
           const item = list[i]
-
-          // 更新资源为已处理分词
-          update_stmt.run(item.id)
 
           // 处理标题和描述
           const content = item.title ? `${item.title} ${item.desc}`.trim() : item.fileName
@@ -136,6 +142,13 @@ export default class WordsManager {
             if (!insert_result.changes) {
               update_word_stmt.run(word)
             }
+
+            // 获取分词ID
+            const wordRecord = get_word_id_stmt.get(word)
+            if (wordRecord && wordRecord.id) {
+              // 插入资源与分词的关联
+              insert_resource_word_stmt.run(item.id, wordRecord.id)
+            }
           }
         }
       })
@@ -145,6 +158,65 @@ export default class WordsManager {
       this.logger.info(`处理分词成功: count => ${list.length}`)
     } catch (err) {
       this.logger.error(`处理分词失败: error => ${err}`)
+    }
+  }
+
+  /**
+   * 处理删除资源时的分词计数更新
+   * @param {Object} resource - 被删除的资源
+   */
+  handleDeletedResource(resource) {
+    if (!resource) {
+      return
+    }
+
+    try {
+      // 处理标题和描述
+      const content = resource.title
+        ? `${resource.title} ${resource.desc}`.trim()
+        : resource.fileName
+      if (!content) return
+
+      // 获取分词
+      const words = this.cutWords(content)
+
+      // 更新分词计数
+      const update_word_stmt = this.db.prepare(
+        `UPDATE fbw_words SET count = count - 1 WHERE word = ?`
+      )
+
+      // 删除计数为0的分词
+      const delete_word_stmt = this.db.prepare(
+        `DELETE FROM fbw_words WHERE word = ? AND count <= 0`
+      )
+
+      // 删除资源与分词的关联
+      const delete_resource_word_stmt = this.db.prepare(
+        `DELETE FROM fbw_resource_words WHERE resourceId = ?`
+      )
+
+      const transaction = this.db.transaction(() => {
+        // 删除资源与分词的关联
+        delete_resource_word_stmt.run(resource.id)
+
+        for (const word of words) {
+          if (!word.trim()) continue
+
+          // 减少计数
+          update_word_stmt.run(word)
+
+          // 删除计数为0的分词
+          delete_word_stmt.run(word)
+        }
+      })
+
+      // 执行事务
+      transaction()
+      this.logger.info(
+        `更新删除资源的分词计数成功: 资源ID => ${resource.id}，分词 => ${words.join(',')}`
+      )
+    } catch (err) {
+      this.logger.error(`更新删除资源的分词计数失败: error => ${err}`)
     }
   }
 

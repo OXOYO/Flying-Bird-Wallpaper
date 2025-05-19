@@ -67,11 +67,13 @@ export default class Store {
 
       // 初始化其他管理器
       this.taskScheduler = new TaskScheduler(global.logger)
+      this.wordsManager = new WordsManager(global.logger, this.dbManager, this.settingManager)
       this.fileManager = new FileManager(
         global.logger,
         this.dbManager,
         this.settingManager,
-        this.fileServer
+        this.fileServer,
+        this.wordsManager
       )
       this.wallpaperManager = new WallpaperManager(
         global.logger,
@@ -80,7 +82,6 @@ export default class Store {
         this.fileManager,
         this.resourcesManager
       )
-      this.wordsManager = new WordsManager(global.logger, this.dbManager, this.settingManager)
 
       // 处理IPC通信
       this.handleIpc()
@@ -541,8 +542,8 @@ export default class Store {
     })
 
     // 删除文件
-    ipcMain.handle('main:deleteFile', async (event, resourceId, filePath) => {
-      return await this.fileManager.deleteFile(resourceId, filePath)
+    ipcMain.handle('main:deleteFile', async (event, item) => {
+      return await this.fileManager.deleteFile(item)
     })
 
     // 搜索资源数据

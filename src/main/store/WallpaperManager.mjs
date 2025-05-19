@@ -715,7 +715,7 @@ export default class WallpaperManager {
           query_sql = `
             SELECT
             r.*,
-             (SELECT COUNT(*) FROM fbw_favorites f WHERE f.resourceId = r.id) AS isFavorite
+            (SELECT COUNT(*) FROM fbw_favorites f WHERE f.resourceId = r.id) AS isFavorite
             FROM fbw_resources r
             ${query_where_str}
             ${order_by_str}
@@ -1113,7 +1113,7 @@ export default class WallpaperManager {
         for (let i = 0; i < query_result.length; i++) {
           try {
             const item = query_result[i]
-            const res = await this.fileManager.deleteFile(item.id, item.filePath)
+            const res = await this.fileManager.deleteFile(item)
             if (res.success) {
               successCount++
             } else {
@@ -1169,7 +1169,7 @@ export default class WallpaperManager {
         for (let i = 0; i < query_result.length; i++) {
           try {
             const item = query_result[i]
-            const res = await this.fileManager.deleteFile(item.id, item.filePath)
+            const res = await this.fileManager.deleteFile(item)
             if (res.success) {
               successCount++
             } else {

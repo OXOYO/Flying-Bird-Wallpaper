@@ -357,6 +357,9 @@
       }
     },
     "onSyncToWallpaperSetting": "Sync to wallpaper settings",
+    "wordFilter": {
+      "placeholder": "Filter keywords"
+    },
     "totalText": "Total {current} / {total} items"
   },
   "autoRefreshList": {

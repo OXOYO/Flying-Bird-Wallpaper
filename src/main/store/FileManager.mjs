@@ -5,7 +5,7 @@ import { t } from '../../i18n/server.js'
 let instance = null
 
 export default class FileManager {
-  constructor(logger, dbManager, settingManager, fileServer) {
+  constructor(logger, dbManager, settingManager, fileServer, wordsManager) {
     // 如果实例已存在且参数相同，直接返回该实例
     if (
       instance &&
@@ -20,6 +20,7 @@ export default class FileManager {
     this.db = dbManager.db
     this.settingManager = settingManager
     this.fileServer = fileServer
+    this.wordsManager = wordsManager
 
     this.resetParams()
 
@@ -310,19 +311,21 @@ export default class FileManager {
 
   /**
    * 删除文件
-   * @param {string} id - 文件ID
-   * @param {string} filePath - 文件路径
+   * @param {Object} item - 资源项
    * @returns {Object} 删除结果
    */
   // 优化错误处理，添加重试机制
-  async deleteFile(id, filePath) {
+  async deleteFile(item) {
     let ret = {
       success: false,
       msg: t('messages.operationFail')
     }
-    if (!id) {
+    if (!item) {
       return ret
     }
+
+    const id = item.id
+    let filePath = item.filePath
 
     let retryCount = 0
     const maxRetries = 3
@@ -370,6 +373,9 @@ export default class FileManager {
 
         // 提交事务
         this.db.exec('COMMIT')
+
+        // 处理删除资源的分词
+        this.wordsManager?.handleDeletedResource(item)
 
         ret = {
           success: true,

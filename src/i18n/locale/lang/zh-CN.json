@@ -357,6 +357,9 @@
       }
     },
     "onSyncToWallpaperSetting": "同步到壁纸设置",
+    "wordFilter": {
+      "placeholder": "请输入关键词"
+    },
     "totalText": "共 {current} / {total} 条"
   },
   "autoRefreshList": {
