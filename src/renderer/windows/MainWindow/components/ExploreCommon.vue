@@ -794,17 +794,35 @@ const onLoadMore = async () => {
 }
 
 // 添加图片预加载函数
-const preloadImages = (items, startIndex, count) => {
-  if (!items || !items.length) return
+const preloadImages = (list, startIndex, count, priority = false) => {
+  if (!list || !list.length) return
 
-  const endIndex = Math.min(startIndex + count, items.length)
-  for (let i = startIndex; i < endIndex; i++) {
-    const item = items[i]
-    if (item && item.src) {
-      const img = new Image()
-      img.src = `${item.src}${imgUrlQuery.value}`
+  const endIndex = Math.min(startIndex + count, list.length)
+
+  // 使用 requestIdleCallback 在浏览器空闲时加载图片，除非是高优先级
+  const loadFunc = priority ? setTimeout : window.requestIdleCallback || setTimeout
+
+  // 限制同时加载的图片数量
+  const batchSize = 5
+  const loadBatch = (batchStart) => {
+    const batchEnd = Math.min(batchStart + batchSize, endIndex)
+
+    for (let i = batchStart; i < batchEnd; i++) {
+      const item = list[i]
+      if (item && item.src) {
+        const img = new Image()
+        img.src = `${item.src}${imgUrlQuery.value}`
+      }
+    }
+
+    // 如果还有更多图片要加载，安排下一批
+    if (batchEnd < endIndex) {
+      loadFunc(() => loadBatch(batchEnd))
     }
   }
+
+  // 开始加载第一批
+  loadFunc(() => loadBatch(startIndex))
 }
 
 const onScroll = (event) => {
@@ -823,14 +841,6 @@ const onScroll = (event) => {
     flags.scrollDebounce = false
   }, 300)
   getNextList()
-
-  // 预加载当前可见区域之后的图片
-  if (!flags.loading && scrollTop > 0) {
-    const visibleInfo = scrollRef.value?.getVisibleRange()
-    if (visibleInfo) {
-      preloadImages(cardList.value, visibleInfo.endIndex + 1, 10)
-    }
-  }
 }
 
 const getNextList = async () => {
@@ -869,6 +879,7 @@ const getNextList = async () => {
         // 去重
         const ids = cardList.value.map((item) => item.uniqueKey)
         const list = res.data.list.filter((item) => !ids.includes(item.uniqueKey))
+        preloadImages(list, 0, list.length)
         cardList.value.push(...list)
         searchForm.total = res.data.total
         flags.hasMore = cardList.value.length < res.data.total
@@ -902,6 +913,7 @@ const getNextList = async () => {
       })
     }
   } catch (err) {
+    console.error(err)
     ElMessage({
       type: 'error',
       message: t('messages.getDataFail')
@@ -1230,6 +1242,18 @@ const onOutBtn = () => {
   hoverBtnName.value = null
 }
 
+const isShowTag = (item) => {
+  return (
+    settingData.value.showImageTag &&
+    (item.resourceName ||
+      (item.quality && item.quality !== 'unset') ||
+      item.isLandscape === 1 ||
+      item.isLandscape === 0) &&
+    cardForm.cardHeight > 100 &&
+    cardForm.cardWidth > 100
+  )
+}
+
 const onTriggerActionCallback = (event, action, params) => {
   if (
     action === 'setWallpaper' &&
@@ -1449,16 +1473,7 @@ onBeforeUnmount(() => {
               :style="itemStyle"
               @mouseenter="onOverCard(index)"
             >
-              <div
-                v-if="
-                  settingData.showImageTag &&
-                  (item.resourceName ||
-                    (item.quality && item.quality !== 'unset') ||
-                    item.isLandscape === 1 ||
-                    item.isLandscape === 0)
-                "
-                class="card-item-tags"
-              >
+              <div v-if="isShowTag(item)" class="card-item-tags">
                 <div
                   v-if="item.resourceName"
                   class="tag-item"
@@ -1677,7 +1692,7 @@ onBeforeUnmount(() => {
   position: relative;
 }
 .fixed-btn {
-  position: fixed;
+  position: absolute;
   right: 40px;
   bottom: 0;
   z-index: 5;
@@ -1815,7 +1830,6 @@ onBeforeUnmount(() => {
   height: 100%;
   position: relative;
   overflow: hidden;
-  background-color: rgba(0, 0, 0, 0.2);
 
   .card-item-image {
     width: 100%;
@@ -1823,6 +1837,8 @@ onBeforeUnmount(() => {
     position: absolute;
     top: 0;
     left: 0;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 12px;
     will-change: opacity, transform;
     transform: translateZ(0);
     backface-visibility: hidden;
@@ -1837,56 +1853,37 @@ onBeforeUnmount(() => {
 
     &.full {
       opacity: 0;
-      filter: none;
       transform: scale(1) translateZ(0);
 
-      &.el-image--loaded {
+      &.image-loading {
+        opacity: 1;
+      }
+      &.image-loaded {
+        opacity: 1;
+      }
+      &.image-error {
         opacity: 1;
       }
     }
-  }
 
-  :deep(.el-image__inner) {
-    opacity: 0;
-    transition: all 0.3s ease-in-out;
-  }
-
-  :deep(.el-image__inner.is-loaded) {
-    opacity: 1;
-  }
-
-  :deep(.el-image__placeholder),
-  :deep(.el-image__error) {
-    background-color: transparent;
-  }
-
-  .image-loaded {
-    opacity: 1 !important;
-    :deep(.el-image__inner) {
-      opacity: 1 !important;
+    .image-loading-inner {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+      font-size: 12px;
+      color: #ffffff;
     }
-  }
-
-  .image-loading {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: rgba(0, 0, 0, 0.2);
-    color: rgba(255, 255, 255, 0.7);
-  }
-
-  .image-error {
-    opacity: 1 !important;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: rgba(0, 0, 0, 0.2);
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 40px;
+    .image-error-inner {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+      font-size: 50px;
+      color: #ffffff;
+    }
   }
 }
 
@@ -1943,25 +1940,6 @@ onBeforeUnmount(() => {
   background-color: rgba(0, 0, 0, 0.6);
   padding: 2px 4px;
   border-radius: 4px;
-}
-
-.image-loading-inner {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  height: 100%;
-  font-size: 12px;
-  color: #ffffff;
-}
-.image-error-inner {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  height: 100%;
-  font-size: 50px;
-  color: #ffffff;
 }
 
 .total-text {
