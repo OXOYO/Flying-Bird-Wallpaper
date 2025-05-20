@@ -192,8 +192,7 @@ const cardForm = reactive({
   cardGap: 4,
   cardHeight: Math.floor(225 * 0.618),
   gridItems: gridForm.gridSize === 'auto' ? 4 : gridForm.gridSize,
-  buffer: 100,
-  showThumb: false
+  buffer: 100
 })
 
 const searchForm = reactive({
@@ -674,7 +673,6 @@ const handleGridSize = (blockWidth = 900, blockHeight = 600) => {
     cardForm.cardWidth = Math.floor(blockWidth / cardForm.gridItems)
     cardForm.cardHeight = Math.floor(cardForm.cardWidth * gridForm.gridHWRatio)
   }
-  // cardForm.showThumb = cardForm.cardHeight > 200 && cardForm.cardWidth > 200
   // 优化 buffer 设置 - 根据滚动速度和设备性能动态调整
   const calculateOptimalBuffer = () => {
     const baseBuffer = cardForm.cardHeight * 2 // 基础缓冲区为两行高度
@@ -812,6 +810,23 @@ const preloadImages = (list, startIndex, count, priority = false) => {
       if (item && item.src) {
         const img = new Image()
         img.src = `${item.src}${imgUrlQuery.value}`
+        img.crossOrigin = 'Anonymous'
+        img.onload = () => {
+          // const canvas = document.createElement('canvas')
+          // const ctx = canvas.getContext('2d')
+          // canvas.width = 1
+          // canvas.height = 1
+
+          // ctx.drawImage(img, 0, 0, 1, 1)
+          // const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data
+          // item.dominantColor = `rgb(${r}, ${g}, ${b})`
+          // canvas.remove()
+          img.remove()
+        }
+        img.onerror = () => {
+          // item.dominantColor = 'transparent'
+          img.remove()
+        }
       }
     }
 
@@ -1010,18 +1025,6 @@ const onTagClick = (field, value) => {
 
   // 触发刷新
   onRefresh(false)
-}
-
-// 添加图片加载状态跟踪
-const imageLoadingStatus = reactive({})
-
-const onImageLoad = (index) => {
-  imageLoadingStatus[index] = 'loaded'
-}
-
-const onImageError = (index, item) => {
-  imageLoadingStatus[index] = 'error'
-  console.log('图片加载失败:', item)
 }
 
 // 查看图片
@@ -1508,34 +1511,21 @@ onBeforeUnmount(() => {
                 </div>
               </div>
               <div class="card-item-image-wrapper">
-                <!-- 缩略图 -->
-                <el-image
-                  v-if="cardForm.showThumb"
-                  class="card-item-image thumbnail"
-                  :src="`${item.src}?w=100`"
-                  loading="eager"
-                  fit="cover"
-                />
                 <!-- 高清图 -->
                 <el-image
-                  class="card-item-image full"
+                  class="card-item-image"
                   :src="`${item.src}${imgUrlQuery}`"
                   loading="lazy"
                   lazy
                   fit="cover"
-                  :class="{
-                    'image-loaded': imageLoadingStatus[index] === 'loaded',
-                    'image-loading':
-                      !imageLoadingStatus[index] || imageLoadingStatus[index] === 'loading',
-                    'image-error': imageLoadingStatus[index] === 'error'
+                  :style="{
+                    backgroundColor: item.dominantColor || 'transparent'
                   }"
-                  @load="onImageLoad(index)"
-                  @error="onImageError(index, item)"
                   @dblclick="doViewImage(item, index, true)"
                 >
-                  <template #placeholder>
+                  <!-- <template #placeholder>
                     <div class="image-loading-inner">Loading...</div>
-                  </template>
+                  </template> -->
                   <template #error>
                     <div class="image-error-inner">
                       <IconifyIcon icon="material-symbols:broken-image-sharp" />
@@ -1773,11 +1763,19 @@ onBeforeUnmount(() => {
 }
 
 .card-item {
+  contain: content;
   background-color: rgba(0, 0, 0, 0.2);
   position: relative;
   cursor: pointer;
   overflow: hidden;
-  transition: all 0.3s ease-in-out;
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  transition:
+    transform 0.3s ease-out,
+    opacity 0.3s ease-out;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 
   &:active {
     opacity: 0.8;
@@ -1839,31 +1837,12 @@ onBeforeUnmount(() => {
     left: 0;
     color: rgba(255, 255, 255, 0.7);
     font-size: 12px;
-    will-change: opacity, transform;
+    will-change: transform;
     transform: translateZ(0);
     backface-visibility: hidden;
-    opacity: 0;
-    transition: opacity 0.3s ease-out;
 
-    &.thumbnail {
-      opacity: 1;
-      filter: blur(4px) brightness(0.8);
-      transform: scale(1.1) translateZ(0);
-    }
-
-    &.full {
-      opacity: 0;
-      transform: scale(1) translateZ(0);
-
-      &.image-loading {
-        opacity: 1;
-      }
-      &.image-loaded {
-        opacity: 1;
-      }
-      &.image-error {
-        opacity: 1;
-      }
+    :deep(.el-image__placeholder) {
+      background-color: transparent !important;
     }
 
     .image-loading-inner {

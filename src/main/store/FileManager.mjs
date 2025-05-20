@@ -39,20 +39,8 @@ export default class FileManager {
       this.preparedStatements = {
         insertResource: this.db.prepare(
           `INSERT OR IGNORE INTO fbw_resources
-            (resourceName, fileName, filePath, fileExt, fileSize, quality, width, height, isLandscape, atimeMs, mtimeMs, ctimeMs) VALUES
-            (@resourceName, @fileName, @filePath, @fileExt, @fileSize, @quality, @width, @height, @isLandscape, @atimeMs, @mtimeMs, @ctimeMs)`
-        ),
-        updateResource: this.db.prepare(
-          `UPDATE fbw_resources SET
-            fileSize = @fileSize,
-            quality = @quality,
-            width = @width,
-            height = @height,
-            isLandscape = @isLandscape,
-            atimeMs = @atimeMs,
-            mtimeMs = @mtimeMs,
-            ctimeMs = @ctimeMs
-          WHERE resourceName = @resourceName AND filePath = @filePath`
+            (resourceName, fileName, filePath, fileExt, fileSize, atimeMs, mtimeMs, ctimeMs) VALUES
+            (@resourceName, @fileName, @filePath, @fileExt, @fileSize, @atimeMs, @mtimeMs, @ctimeMs)`
         )
       }
     }
@@ -172,8 +160,8 @@ export default class FileManager {
           this.preparedStatements?.insertResource ||
           this.db.prepare(
             `INSERT OR IGNORE INTO fbw_resources
-              (resourceName, fileName, filePath, fileExt, fileSize, quality, width, height, isLandscape, atimeMs, mtimeMs, ctimeMs) VALUES
-              (@resourceName, @fileName, @filePath, @fileExt, @fileSize, @quality, @width, @height, @isLandscape, @atimeMs, @mtimeMs, @ctimeMs)`
+              (resourceName, fileName, filePath, fileExt, fileSize, atimeMs, mtimeMs, ctimeMs) VALUES
+              (@resourceName, @fileName, @filePath, @fileExt, @fileSize, @atimeMs, @mtimeMs, @ctimeMs)`
           )
 
         // 记录插入成功的数量
@@ -197,10 +185,6 @@ export default class FileManager {
             filePath: item.filePath,
             fileExt: item.fileExt,
             fileSize: item.fileSize,
-            quality: item.quality,
-            width: item.width,
-            height: item.height,
-            isLandscape: item.isLandscape,
             atimeMs: item.atimeMs,
             mtimeMs: item.mtimeMs,
             ctimeMs: item.ctimeMs
@@ -298,7 +282,7 @@ export default class FileManager {
     try {
       // 更新图片质量
       const update_stmt = this.db.prepare(
-        `UPDATE fbw_resources SET quality = @quality, width = @width, height = @height, isLandscape = @isLandscape WHERE id = @id`
+        `UPDATE fbw_resources SET quality = @quality, width = @width, height = @height, isLandscape = @isLandscape, @dominantColor = @dominantColor WHERE id = @id`
       )
 
       const transaction = this.db.transaction(() => {

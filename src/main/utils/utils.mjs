@@ -199,17 +199,18 @@ export const readDirRecursive = async (
   const imageFiles = await Promise.all(
     filesToProcess.map(async (file) => {
       try {
-        const imgData = await calculateImageByPath(file.filePath)
+        // const imgData = await calculateImageByPath(file.filePath)
         return {
           resourceName,
           fileName: file.fileName,
           filePath: file.filePath,
           fileExt: file.fileExt,
           fileSize: file.stats.size,
-          quality: imgData.quality,
-          width: imgData.width,
-          height: imgData.height,
-          isLandscape: imgData.isLandscape,
+          // quality: imgData.quality,
+          // width: imgData.width,
+          // height: imgData.height,
+          // isLandscape: imgData.isLandscape,
+          // dominantColor: imgData.dominantColor,
           atimeMs: file.stats.atimeMs,
           mtimeMs: file.stats.mtimeMs,
           ctimeMs: file.stats.ctimeMs
@@ -260,12 +261,35 @@ export const calculateImageOrientation = (width, height) => {
   return width > height ? 1 : 0
 }
 
+export const extractDominantColor = async (filePath) => {
+  try {
+    // 将图片缩小到 1x1 像素以获取平均颜色
+    const { data } = await sharp(filePath)
+      .resize(1, 1, { fit: 'cover' })
+      .raw()
+      .toBuffer({ resolveWithObject: true })
+
+    // 根据图片通道数获取颜色值
+    const r = data[0]
+    const g = data[1]
+    const b = data[2]
+
+    // 返回十六进制颜色值
+    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
+  } catch (err) {
+    console.error('提取图片主色调失败:', filePath, err)
+    // 默认透明色
+    return '#00000000'
+  }
+}
+
 export const calculateImageByPath = async (filePath) => {
   let ret = {
     quality: '',
     isLandscape: -1,
     width: 0,
-    height: 0
+    height: 0,
+    dominantColor: '#00000000'
   }
   try {
     const { width, height } = await sharp(filePath).metadata()
@@ -273,6 +297,8 @@ export const calculateImageByPath = async (filePath) => {
     ret.height = height
     ret.quality = calculateImageQuality(width, height)
     ret.isLandscape = calculateImageOrientation(width, height)
+    // 提取主色调
+    ret.dominantColor = await extractDominantColor(filePath)
     return ret
   } catch (err) {
     return ret
