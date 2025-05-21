@@ -85,20 +85,14 @@ const cardBlockStyle = computed(() => {
 })
 
 const imgUrlQuery = computed(() => {
-  const { cardWidth: w, cardHeight: h } = cardForm
   let query = ''
-  switch (searchForm.resourceName) {
-    case 'pexels':
-      query = `?w=${w}&h=${h}`
-      break
-    case 'unsplash':
-      query = `?w=${w}&h=${h}`
-      break
-    case 'birdpaper':
-      query = ''
-      break
-    default:
-      query = `?w=${w}&h=${h}`
+  // 固定宽高
+  const w = 1080
+  const h = Math.floor(w * gridForm.gridHWRatio)
+  if (searchForm.resourceType === 'localResource') {
+    query = `?w=${w}`
+  } else {
+    query = `?w=${w}&h=${h}`
   }
   return query
 })
