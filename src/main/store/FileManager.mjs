@@ -282,7 +282,7 @@ export default class FileManager {
     try {
       // 更新图片质量
       const update_stmt = this.db.prepare(
-        `UPDATE fbw_resources SET quality = @quality, width = @width, height = @height, isLandscape = @isLandscape, @dominantColor = @dominantColor WHERE id = @id`
+        `UPDATE fbw_resources SET quality = @quality, width = @width, height = @height, isLandscape = @isLandscape, dominantColor = @dominantColor WHERE id = @id`
       )
 
       const transaction = this.db.transaction(() => {
