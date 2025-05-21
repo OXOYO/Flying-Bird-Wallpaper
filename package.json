@@ -65,7 +65,7 @@
     "pino": "^9.6.0",
     "pino-roll": "^3.0.0",
     "qrcode": "^1.5.4",
-    "sharp": "^0.33.5",
+    "sharp": "^0.34.2",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "uuid": "^10.0.0",
