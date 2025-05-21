@@ -791,55 +791,6 @@ const onLoadMore = async () => {
   }
 }
 
-// 添加图片预加载函数
-const preloadImages = (list, startIndex, count, priority = false) => {
-  if (!list || !list.length) return
-
-  const endIndex = Math.min(startIndex + count, list.length)
-
-  // 使用 requestIdleCallback 在浏览器空闲时加载图片，除非是高优先级
-  const loadFunc = priority ? setTimeout : window.requestIdleCallback || setTimeout
-
-  // 限制同时加载的图片数量
-  const batchSize = 5
-  const loadBatch = (batchStart) => {
-    const batchEnd = Math.min(batchStart + batchSize, endIndex)
-
-    for (let i = batchStart; i < batchEnd; i++) {
-      const item = list[i]
-      if (item && item.src) {
-        const img = new Image()
-        img.src = `${item.src}${imgUrlQuery.value}`
-        img.crossOrigin = 'Anonymous'
-        img.onload = () => {
-          // const canvas = document.createElement('canvas')
-          // const ctx = canvas.getContext('2d')
-          // canvas.width = 1
-          // canvas.height = 1
-
-          // ctx.drawImage(img, 0, 0, 1, 1)
-          // const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data
-          // item.dominantColor = `rgb(${r}, ${g}, ${b})`
-          // canvas.remove()
-          img.remove()
-        }
-        img.onerror = () => {
-          // item.dominantColor = 'transparent'
-          img.remove()
-        }
-      }
-    }
-
-    // 如果还有更多图片要加载，安排下一批
-    if (batchEnd < endIndex) {
-      loadFunc(() => loadBatch(batchEnd))
-    }
-  }
-
-  // 开始加载第一批
-  loadFunc(() => loadBatch(startIndex))
-}
-
 const onScroll = (event) => {
   const { scrollTop, scrollHeight, clientHeight } = event.target
   // 检测是否接近底部（可以调整 buffer 区域）
@@ -894,7 +845,6 @@ const getNextList = async () => {
         // 去重
         const ids = cardList.value.map((item) => item.uniqueKey)
         const list = res.data.list.filter((item) => !ids.includes(item.uniqueKey))
-        preloadImages(list, 0, list.length)
         cardList.value.push(...list)
         searchForm.total = res.data.total
         flags.hasMore = cardList.value.length < res.data.total
