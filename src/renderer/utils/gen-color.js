@@ -130,7 +130,7 @@ function hexToRGB(hex) {
   hex = hex.toUpperCase()
   const hexRegExp = /^#([0-9A-F]{6})$/
   if (!hexRegExp.test(hex)) {
-    throw new Error('请传入合法的16进制颜色值，eg: #FF0000')
+    return null
   }
 
   const hexValArr = (hexRegExp.exec(hex) || ['000000'])[1].split('')

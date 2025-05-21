@@ -10,6 +10,7 @@ import {
   orientationOptions,
   autoRefreshListOptions
 } from '@common/publicData.js'
+import { hexToRGB } from '@renderer/utils/gen-color.js'
 
 const { t } = useTranslation()
 const commonStore = UseCommonStore()
@@ -838,7 +839,13 @@ const getNextList = async () => {
       if (res.data.list.length) {
         // 去重
         const ids = cardList.value.map((item) => item.uniqueKey)
-        const list = res.data.list.filter((item) => !ids.includes(item.uniqueKey))
+        const list = res.data.list
+          .filter((item) => !ids.includes(item.uniqueKey))
+          .map((item) => {
+            item.dominantColorRgb = hexToRGB(item.dominantColor)
+            return item
+          })
+
         cardList.value.push(...list)
         searchForm.total = res.data.total
         flags.hasMore = cardList.value.length < res.data.total
@@ -1477,7 +1484,14 @@ onBeforeUnmount(() => {
                   </template>
                 </el-image>
               </div>
-              <div v-if="hoverCardIndex === index" class="card-item-btns">
+              <div
+                class="card-item-btns"
+                :style="{
+                  backgroundColor: item.dominantColorRgb
+                    ? `rgba(${item.dominantColorRgb.r}, ${item.dominantColorRgb.g}, ${item.dominantColorRgb.b}, .5)`
+                    : ''
+                }"
+              >
                 <el-button
                   v-for="btn in cardItemBtns"
                   :key="btn.action"
@@ -1831,7 +1845,7 @@ onBeforeUnmount(() => {
   align-items: center;
   /* 网格间距 */
   gap: 4px;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(6px);
   background-color: rgba(255, 255, 255, 0.5);
 
   .card-item-btn {
