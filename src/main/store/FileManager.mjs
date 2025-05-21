@@ -232,7 +232,7 @@ export default class FileManager {
 
     // 查询未处理质量的图片
     const query_stmt = this.db.prepare(
-      `SELECT id, filePath FROM fbw_resources WHERE quality = 'unset' LIMIT ? OFFSET ?`
+      `SELECT id, filePath FROM fbw_resources WHERE quality = '' LIMIT ? OFFSET ?`
     )
     const query_result = query_stmt.all(batchSize, (startPage - 1) * pageSize)
 
