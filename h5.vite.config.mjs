@@ -4,6 +4,8 @@ import AutoImport from 'unplugin-auto-import/vite'
 import liveReload from 'vite-plugin-live-reload'
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
+// 图标按需加载
+import Icons from 'unplugin-icons/vite'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -33,7 +35,11 @@ export default defineConfig({
         globalsPropValue: true
       }
     }),
-    liveReload(['src/h5/**/*']) // 监听 src 目录下的文件变化
+    liveReload(['src/h5/**/*']), // 监听 src 目录下的文件变化
+    Icons({
+      compiler: 'vue3',
+      autoInstall: true
+    })
   ],
   build: {
     emptyOutDir: true, // 清空 outDir
