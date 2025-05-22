@@ -42,6 +42,7 @@
     "@iconify-json/material-symbols": "^1.2.16",
     "@iconify-json/material-symbols-light": "^1.2.15",
     "@iconify-json/mdi": "^1.2.3",
+    "@iconify-json/ri": "^1.2.5",
     "@iconify-json/stash": "^1.2.2",
     "@iconify/vue": "^4.3.0",
     "@koa/bodyparser": "^5.1.1",

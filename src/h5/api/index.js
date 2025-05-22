@@ -25,6 +25,14 @@ export const toggleFavorite = async (id) => {
   return await emitAsync('toggleFavorite', id)
 }
 
+export const addToFavorites = async (id) => {
+  return await emitAsync('addToFavorites', id)
+}
+
+export const removeFavorites = async (id) => {
+  return await emitAsync('removeFavorites', id)
+}
+
 // 设置接口
 export const getSettingData = async () => {
   return await emitAsync('getSettingData')

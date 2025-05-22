@@ -13,6 +13,7 @@ export const createTables = [
   `CREATE TABLE IF NOT EXISTS fbw_favorites (
     id INTEGER PRIMARY KEY AUTOINCREMENT, -- 收藏记录自增ID
     resourceId INTEGER NOT NULL, -- 资源记录ID
+    num INTEGER NOT NULL DEFAULT 1, -- 收藏次数
     created_at DATETIME DEFAULT (datetime('now', 'localtime')), -- 记录创建时间
     updated_at DATETIME DEFAULT (datetime('now', 'localtime')), -- 记录修改时间
     UNIQUE (resourceId) -- 唯一键

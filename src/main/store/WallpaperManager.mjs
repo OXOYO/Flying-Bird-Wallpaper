@@ -1231,16 +1231,45 @@ export default class WallpaperManager {
     }
 
     try {
-      const tableName = isPrivacySpace ? 'fbw_privacy_space' : 'fbw_favorites'
-      const insert_stmt = this.db.prepare(
-        `INSERT OR IGNORE INTO ${tableName} (resourceId) VALUES (?)`
-      )
-      const insert_result = insert_stmt.run(resourceId)
+      if (isPrivacySpace) {
+        const insert_stmt = this.db.prepare(
+          `INSERT OR IGNORE INTO fbw_privacy_space (resourceId) VALUES (?)`
+        )
+        const insert_result = insert_stmt.run(resourceId)
 
-      if (insert_result.changes > 0) {
-        ret = {
-          success: true,
-          msg: t('messages.operationSuccess')
+        if (insert_result.changes > 0) {
+          ret = {
+            success: true,
+            msg: t('messages.operationSuccess')
+          }
+        }
+      } else {
+        // 检查资源是否已收藏，如果已收藏则num+1, 未收藏则插入
+        const check_stmt = this.db.prepare(`SELECT * FROM fbw_favorites WHERE resourceId =?`)
+        const check_result = check_stmt.get(resourceId)
+        if (check_result) {
+          // 更新收藏数量
+          const update_stmt = this.db.prepare(
+            `UPDATE fbw_favorites SET num = num + 1 WHERE resourceId =?`
+          )
+          const update_result = update_stmt.run(resourceId)
+          if (update_result.changes > 0) {
+            ret = {
+              success: true,
+              msg: t('messages.operationSuccess')
+            }
+          }
+        } else {
+          const insert_stmt = this.db.prepare(
+            `INSERT INTO fbw_favorites (resourceId, num) VALUES (?, 1)`
+          )
+          const insert_result = insert_stmt.run(resourceId)
+          if (insert_result.changes > 0) {
+            ret = {
+              success: true,
+              msg: t('messages.operationSuccess')
+            }
+          }
         }
       }
     } catch (err) {

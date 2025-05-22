@@ -173,6 +173,53 @@ export default async function setupSocketIO(io, { t, logger, postMessage }) {
       }
     })
 
+    // 加入收藏
+    socket.on('addToFavorites', async (id, callback) => {
+      try {
+        if (!id) {
+          safeCallback(callback, {
+            success: false,
+            msg: t('messages.operationFail')
+          })
+          return
+        }
+        const res = await wallpaperManager.addToFavorites(id)
+        safeCallback(callback, {
+          success: res.success,
+          msg: res.success ? t('messages.operationSuccess') : t('messages.operationFail')
+        })
+      } catch (err) {
+        logger.error(`加入收藏错误: ${err}`)
+        safeCallback(callback, {
+          success: false,
+          msg: t('messages.operationFail')
+        })
+      }
+    })
+    // 取消收藏
+    socket.on('removeFavorites', async (id, callback) => {
+      try {
+        if (!id) {
+          safeCallback(callback, {
+            success: false,
+            msg: t('messages.operationFail')
+          })
+          return
+        }
+        const res = await wallpaperManager.removeFavorites(id)
+        safeCallback(callback, {
+          success: res.success,
+          msg: res.success ? t('messages.operationSuccess') : t('messages.operationFail')
+        })
+      } catch (err) {
+        logger.error(`取消收藏错误: ${err}`)
+        safeCallback(callback, {
+          success: false,
+          msg: t('messages.operationFail')
+        })
+      }
+    })
+
     // 断开连接
     socket.on('disconnect', () => {
       logger.info(`客户端断开连接: ${socket.id}`)

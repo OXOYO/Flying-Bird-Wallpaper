@@ -1,6 +1,7 @@
 <script setup>
 import UseSettingStore from '@h5/stores/settingStore.js'
 import * as api from '@h5/api/index.js'
+import { vibrate } from '@h5/utils/index.js'
 import { showImagePreview, showNotify } from 'vant'
 import { useTranslation } from 'i18next-vue'
 
@@ -45,6 +46,14 @@ const extendedIntervals = ref(null)
 // 倒计时
 const countdown = ref(settingData.value.h5SwitchIntervalTime)
 
+// 用于处理双击事件
+const lastClickTime = ref(0)
+const clickTimer = ref(null)
+
+// 定时器
+let autoSwitchTimer = null
+let countdownTimer = null
+
 // 是否随机
 const isRandom = computed(() => {
   // 1:随机 2:顺序
@@ -82,10 +91,6 @@ watch(
     settingData.value = newVal
   }
 )
-
-// 定时器
-let autoSwitchTimer = null
-let countdownTimer = null
 
 const init = async () => {
   initFlag()
@@ -387,15 +392,55 @@ const changeSwitchIntervalTime = async () => {
   }
 }
 
-// 收藏或取消收藏当前图片
-const toggleFavorite = async () => {
+// 处理收藏按钮点击
+const handleFavoriteClick = async () => {
+  const currentTime = new Date().getTime()
+  const timeDiff = currentTime - lastClickTime.value
+
+  // 清除任何现有的定时器
+  if (clickTimer.value) {
+    clearTimeout(clickTimer.value)
+    clickTimer.value = null
+  }
+
+  if (timeDiff < 300) {
+    // 双击 - 取消收藏
+    await onRemoveFavorites()
+    lastClickTime.value = 0 // 重置点击时间
+  } else {
+    // 第一次点击 - 设置定时器等待可能的第二次点击
+    lastClickTime.value = currentTime
+    clickTimer.value = setTimeout(async () => {
+      // 如果没有第二次点击，执行单击操作（添加收藏）
+      await onAddToFavorites()
+      clickTimer.value = null
+    }, 300)
+  }
+}
+
+// 单击加入收藏
+const onAddToFavorites = async () => {
   const currentImage = imageList.value[currentIndex.value]
   if (!currentImage) {
     return
   }
-  const res = await api.toggleFavorite(currentImage.id)
+  const res = await api.addToFavorites(currentImage.id)
   if (res.success) {
-    currentImage.isFavorite = !currentImage.isFavorite
+    currentImage.isFavorite = true
+    vibrate()
+  }
+}
+
+// 双击取消收藏
+const onRemoveFavorites = async () => {
+  const currentImage = imageList.value[currentIndex.value]
+  if (!currentImage) {
+    return
+  }
+  const res = await api.removeFavorites(currentImage.id)
+  if (res.success) {
+    currentImage.isFavorite = false
+    vibrate()
   }
 }
 
@@ -533,42 +578,55 @@ const handlePageShow = () => {}
   <!-- 浮动按钮 -->
   <div class="floating-buttons" :style="floatingButtonsStyle">
     <!-- 启停自动翻页 -->
-    <van-button
-      round
+    <div
       class="floating-button"
       :class="{ 'progress-button': settingData.h5AutoSwitch }"
       :style="{ '--animation-duration': settingData.h5SwitchIntervalTime + 's' }"
       @click="toggleAutoSwitch"
     >
-      <van-icon :name="settingData.h5AutoSwitch ? 'pause' : 'play'" size="24px" />
-    </van-button>
+      <IconifyIcon
+        class="floating-button-icon"
+        :icon="settingData.h5AutoSwitch ? 'ri:pause-fill' : 'ri:play-fill'"
+      />
+    </div>
 
     <!-- 切换翻页等待时长 -->
-    <van-button round class="floating-button" @click="changeSwitchIntervalTime">
+    <div class="floating-button" @click="changeSwitchIntervalTime">
       {{ settingData.h5AutoSwitch ? countdown : settingData.h5SwitchIntervalTime }}s
-    </van-button>
+    </div>
 
     <!-- 切换随机模式 -->
-    <van-button round class="floating-button" @click="toggleRandom">
-      {{ isRandom ? t('switchTypeOptions.random') : t('switchTypeOptions.order') }}
-    </van-button>
+    <div class="floating-button" @click="toggleRandom">
+      <IconifyIcon
+        class="floating-button-icon"
+        :icon="isRandom ? 'ri:shuffle-line' : 'ri:repeat-line'"
+      />
+    </div>
 
     <!-- 收藏图片 -->
-    <van-button round class="floating-button" @click="toggleFavorite">
-      <van-icon :name="isFavorite ? 'star' : 'star-o'" size="24px" />
-    </van-button>
+    <div class="floating-button" @click="handleFavoriteClick">
+      <IconifyIcon
+        class="floating-button-icon"
+        :icon="currentImage?.isFavorite ? 'ri:star-fill' : 'ri:star-line'"
+        :style="{ color: isFavorite ? 'gold' : '' }"
+      />
+    </div>
 
     <!-- 切换背景大小 -->
-    <van-button round class="floating-button" @click="toggleImageDisplaySize">
-      <van-icon
-        :name="settingData.h5ImageDisplaySize === 'cover' ? 'shrink' : 'expand-o'"
-        size="24px"
+    <div class="floating-button" @click="toggleImageDisplaySize">
+      <IconifyIcon
+        class="floating-button-icon"
+        :icon="
+          settingData.h5ImageDisplaySize === 'cover'
+            ? 'ri:collapse-diagonal-line'
+            : 'ri:expand-diagonal-line'
+        "
       />
-    </van-button>
+    </div>
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .page-home {
   background-color: #333;
 }
@@ -602,17 +660,29 @@ const handlePageShow = () => {}
 .floating-button {
   width: 40px;
   height: 40px;
+  line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(0, 0, 0, 0.5); /* 黑色半透明背景 */
-  color: white; /* 白色文字 */
-  border: none; /* 去掉边框 */
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+
+  &:active {
+    .floating-button-icon {
+      transform: scale(1.2);
+    }
+  }
 }
 
-.floating-button .van-icon {
-  color: white; /* 图标颜色为白色 */
-  font-size: 24px; /* 设置图标大小为 24px */
+.floating-button-icon {
+  transition: transform 0.3s ease-out;
+  color: white;
+  font-size: 24px;
 }
 
 /* 自定义按钮样式 */

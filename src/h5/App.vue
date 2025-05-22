@@ -25,9 +25,9 @@ const pages = {
 const pageRef = ref(null)
 
 const tabbarList = [
-  { name: 'home', title: '首页', locale: 'h5.tabbar.home', icon: 'wap-home-o' },
-  { name: 'search', title: '搜索', locale: 'h5.tabbar.search', icon: 'search' },
-  { name: 'setting', title: '设置', locale: 'h5.tabbar.setting', icon: 'setting-o' }
+  { name: 'home', title: '首页', locale: 'h5.tabbar.home', icon: 'ri:home-2-line' },
+  { name: 'search', title: '搜索', locale: 'h5.tabbar.search', icon: 'ri:search-line' },
+  { name: 'setting', title: '设置', locale: 'h5.tabbar.setting', icon: 'ri:settings-line' }
 ]
 
 let wakeLock = null
@@ -153,10 +153,13 @@ onUnmounted(() => {
           v-for="item in tabbarList"
           :key="item.name"
           :name="item.name"
-          :icon="item.icon"
           @click="() => onTabbarTrigger(item.name)"
-          >{{ t(item.locale) }}</van-tabbar-item
         >
+          {{ t(item.locale) }}
+          <template #icon>
+            <IconifyIcon :icon="item.icon" />
+          </template>
+        </van-tabbar-item>
       </van-tabbar>
     </div>
   </van-config-provider>
