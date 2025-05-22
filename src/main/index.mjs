@@ -38,7 +38,7 @@ import setDynamicWallpaper from './utils/setDynamicWallpaper.mjs'
 // import setMacDynamicWallpaper from './utils/setMacDynamicWallpaper.mjs'
 import { t } from '../i18n/server.js'
 import cache from './cache.mjs'
-import { menuList } from '../common/publicData'
+import { menuList, mimeTypes } from '../common/publicData'
 import axios from 'axios'
 import Updater from './updater.mjs'
 import { appInfo } from '../common/config.js'
@@ -847,6 +847,7 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
     protocol.handle('fbwtp', async (request) => {
       let T1, T2, T3, T4
       T1 = Date.now()
+
       // 使用不带query的url作为缓存的key
       const [cacheKey, queryStr] = request.url.split('?')
       let url = cacheKey.replace(/^fbwtp:\/\//, '') // 去除自定义协议前缀
@@ -877,31 +878,18 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
             status: 200,
             headers: {
               ...cacheData.headers,
-              'Server-Timing': `cache-hit;desc="Cache hit!";dur=${Date.now() - T1}`
+              'Server-Timing': `cache-hit;dur=${Date.now() - T1}`
             }
           })
         }
         T2 = Date.now()
+
         const stats = await fs.promises.stat(filePath) // 获取文件大小
         const originalFileSize = stats.size
         const extension = path.extname(filePath).toLowerCase()
-        const mimeTypes = {
-          '.png': 'image/png',
-          '.jpg': 'image/jpeg',
-          '.jpeg': 'image/jpeg',
-          '.avif': 'image/avif',
-          '.webp': 'image/webp',
-          '.gif': 'image/gif',
-          '.mp4': 'video/mp4',
-          '.webm': 'video/webm',
-          '.ogg': 'video/ogg',
-          '.mov': 'video/quicktime',
-          '.avi': 'video/x-msvideo',
-          '.wmv': 'video/x-ms-wmv',
-          '.flv': 'video/x-flv'
-        }
-        let mimeType = mimeTypes[extension] || 'application/octet-stream'
+        const mimeType = mimeTypes[extension] || 'application/octet-stream'
         T3 = Date.now()
+
         // 读取文件并处理
         let fileBuffer
         // 只对图片进行调整大小，视频文件直接读取
@@ -924,9 +912,9 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
         } else {
           fileBuffer = await fs.promises.readFile(filePath)
         }
+        const fileSize = fileBuffer.length.toString()
         T4 = Date.now()
 
-        const fileSize = fileBuffer.length.toString()
         const headers = {
           'Accept-Ranges': 'bytes',
           'Content-Type': mimeType,
