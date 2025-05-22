@@ -127,6 +127,9 @@ function hslToRgb(hsl) {
  * @returns { r: number, g: number, b: number }
  */
 function hexToRGB(hex) {
+  if (!hex) {
+    return null
+  }
   hex = hex.toUpperCase()
   const hexRegExp = /^#([0-9A-F]{6})$/
   if (!hexRegExp.test(hex)) {
