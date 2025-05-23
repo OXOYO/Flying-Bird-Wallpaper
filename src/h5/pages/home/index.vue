@@ -1,4 +1,5 @@
 <script setup>
+import UseCommonStore from '@h5/stores/commonStore.js'
 import UseSettingStore from '@h5/stores/settingStore.js'
 import * as api from '@h5/api/index.js'
 import { vibrate } from '@h5/utils/index.js'
@@ -6,9 +7,11 @@ import { showImagePreview, showNotify, showConfirmDialog } from 'vant'
 import { useTranslation } from 'i18next-vue'
 
 const { t } = useTranslation()
+const commonStore = UseCommonStore()
 const settingStore = UseSettingStore()
 // 直接使用 settingStore 中的数据
 const settingData = ref(settingStore.settingData)
+const { tabbarVisible } = storeToRefs(commonStore)
 
 const imageSliderRef = ref(null)
 
@@ -737,6 +740,15 @@ const onSettingDataChange = async (payload) => {
   await settingStore.h5UpdateSettingData(payload)
 }
 
+const onToggleTabbar = () => {
+  commonStore.toggleTabbarVisible()
+}
+
+const onBackTop = () => {
+  autoSwitch.currentIndex = 0
+  touchPosition.offsetY = 0
+}
+
 defineExpose({
   init
 })
@@ -830,6 +842,7 @@ const handlePageShow = () => {}
   <div class="floating-buttons" :style="floatingButtonsStyle">
     <!-- 启停自动翻页 -->
     <div
+      v-if="settingData.h5EnabledFloatingButtons.includes('autoSwitch')"
       class="floating-button"
       :class="{ 'progress-button': settingData.h5AutoSwitch }"
       :style="{ '--animation-duration': settingData.h5SwitchIntervalTime + 's' }"
@@ -842,12 +855,20 @@ const handlePageShow = () => {}
     </div>
 
     <!-- 切换翻页等待时长 -->
-    <div class="floating-button" @click="changeSwitchIntervalTime">
+    <div
+      v-if="settingData.h5EnabledFloatingButtons.includes('intervalTime')"
+      class="floating-button"
+      @click="changeSwitchIntervalTime"
+    >
       {{ settingData.h5AutoSwitch ? autoSwitch.countdown : settingData.h5SwitchIntervalTime }}s
     </div>
 
     <!-- 切换随机模式 -->
-    <div class="floating-button" @click="toggleRandom">
+    <div
+      v-if="settingData.h5EnabledFloatingButtons.includes('switchType')"
+      class="floating-button"
+      @click="toggleRandom"
+    >
       <IconifyIcon
         class="floating-button-icon"
         :icon="isRandom ? 'ri:shuffle-line' : 'ri:repeat-line'"
@@ -856,6 +877,7 @@ const handlePageShow = () => {}
 
     <!-- 收藏图片 -->
     <div
+      v-if="settingData.h5EnabledFloatingButtons.includes('favorites')"
       class="floating-button"
       @click="handleFavoriteClick"
       @touchstart="startFavoriteHold"
@@ -873,7 +895,11 @@ const handlePageShow = () => {}
     </div>
 
     <!-- 切换背景大小 -->
-    <div class="floating-button" @click="toggleImageDisplaySize">
+    <div
+      v-if="settingData.h5EnabledFloatingButtons.includes('displaySize')"
+      class="floating-button"
+      @click="toggleImageDisplaySize"
+    >
       <IconifyIcon
         class="floating-button-icon"
         :icon="
@@ -882,6 +908,27 @@ const handlePageShow = () => {}
             : 'ri:expand-diagonal-line'
         "
       />
+    </div>
+
+    <!-- 切换标签栏显示 -->
+    <div
+      v-if="settingData.h5EnabledFloatingButtons.includes('toggleTabbar')"
+      class="floating-button"
+      @click="onToggleTabbar"
+    >
+      <IconifyIcon
+        class="floating-button-icon"
+        :icon="tabbarVisible ? 'ri:home-3-line' : 'ri:home-2-line'"
+      />
+    </div>
+
+    <!-- 返回顶部 -->
+    <div
+      v-if="settingData.h5EnabledFloatingButtons.includes('backtop') && autoSwitch.currentIndex > 5"
+      class="floating-button"
+      @click="onBackTop"
+    >
+      <IconifyIcon class="floating-button-icon" icon="tdesign:backtop" />
     </div>
   </div>
 
@@ -911,7 +958,7 @@ const handlePageShow = () => {}
 }
 .image-slider {
   width: 100%;
-  height: calc(100vh - var(--van-tabbar-height));
+  height: calc(100vh - var(--fbw-tabbar-height));
   overflow: hidden;
   position: relative;
 }
@@ -922,7 +969,7 @@ const handlePageShow = () => {}
 
 .image-item {
   width: 100%;
-  height: calc(100vh - var(--van-tabbar-height));
+  height: calc(100vh - var(--fbw-tabbar-height));
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -930,7 +977,7 @@ const handlePageShow = () => {}
 
 .floating-buttons {
   position: fixed;
-  bottom: calc(50px + var(--van-tabbar-height));
+  bottom: calc(50px + var(--fbw-tabbar-height));
   display: flex;
   flex-direction: column;
   gap: 10px;

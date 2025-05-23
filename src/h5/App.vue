@@ -14,7 +14,7 @@ const { t, i18next } = useTranslation()
 const commonStore = UseCommonStore()
 const settingStore = UseSettingStore()
 
-const { activeTabbar } = storeToRefs(commonStore)
+const { activeTabbar, tabbarVisible } = storeToRefs(commonStore)
 const { settingData } = storeToRefs(settingStore)
 
 const pages = {
@@ -25,7 +25,7 @@ const pages = {
 const pageRef = ref(null)
 
 const tabbarList = [
-  { name: 'home', title: '首页', locale: 'h5.tabbar.home', icon: 'ri:home-2-line' },
+  { name: 'home', title: '首页', locale: 'h5.tabbar.home', icon: 'ri:home-3-line' },
   { name: 'search', title: '搜索', locale: 'h5.tabbar.search', icon: 'ri:search-line' },
   { name: 'setting', title: '设置', locale: 'h5.tabbar.setting', icon: 'ri:settings-line' }
 ]
@@ -148,7 +148,7 @@ onUnmounted(() => {
   <van-config-provider :theme-vars="themeVars" theme-vars-scope="global">
     <div id="app">
       <component :is="currentPage || pageEmpty" ref="pageRef"></component>
-      <van-tabbar v-model="activeTabbar" @change="onTabbarChange">
+      <van-tabbar v-if="tabbarVisible" v-model="activeTabbar" @change="onTabbarChange">
         <van-tabbar-item
           v-for="item in tabbarList"
           :key="item.name"

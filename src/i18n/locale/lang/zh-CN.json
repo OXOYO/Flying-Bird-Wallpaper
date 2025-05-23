@@ -306,6 +306,15 @@
     "left": "左侧",
     "right": "右侧"
   },
+  "h5FloatingButtonsOptions": {
+    "autoSwitch": "自动切换",
+    "intervalTime": "切换间隔",
+    "switchType": "切换方式",
+    "favorites": "收藏",
+    "displaySize": "显示尺寸",
+    "toggleTabbar": "切换标签栏",
+    "backtop": "返回顶部"
+  },
   "dynamicPerformanceModeOptions": {
     "high": "高",
     "balanced": "均衡",
@@ -478,6 +487,10 @@
           "h5FloatingButtonPosition": {
             "label": "悬浮按钮位置",
             "placeholder": "请选择悬浮按钮位置"
+          },
+          "h5EnabledFloatingButtons": {
+            "label": "启用悬浮按钮",
+            "placeholder": "请选择启用的悬浮按钮"
           }
         },
         "about": "关于",

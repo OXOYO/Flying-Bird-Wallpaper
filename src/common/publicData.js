@@ -191,7 +191,16 @@ export const defaultSettingData = {
   h5SortField: 'created_at',
   h5SortType: -1,
   h5ImageDisplaySize: 1,
-  h5FloatingButtonPosition: 'left'
+  h5FloatingButtonPosition: 'left',
+  h5EnabledFloatingButtons: [
+    'autoSwitch',
+    'intervalTime',
+    'switchType',
+    'favorites',
+    'displaySize',
+    'toggleTabbar',
+    'backtop'
+  ]
 }
 
 export const colorList = [
@@ -311,6 +320,16 @@ export const imageDisplaySizeOptions = [
 export const h5FloatingButtonPositionOptions = [
   { label: '左侧', value: 'left', locale: 'h5FloatingButtonPositionOptions.left' },
   { label: '右侧', value: 'right', locale: 'h5FloatingButtonPositionOptions.right' }
+]
+
+export const h5FloatingButtonsOptions = [
+  { label: '自动切换', value: 'autoSwitch', locale: 'h5FloatingButtonsOptions.autoSwitch' },
+  { label: '切换间隔', value: 'intervalTime', locale: 'h5FloatingButtonsOptions.intervalTime' },
+  { label: '切换方式', value: 'switchType', locale: 'h5FloatingButtonsOptions.switchType' },
+  { label: '收藏', value: 'favorites', locale: 'h5FloatingButtonsOptions.favorites' },
+  { label: '显示尺寸', value: 'displaySize', locale: 'h5FloatingButtonsOptions.displaySize' },
+  { label: '切换标签栏', value: 'toggleTabbar', locale: 'h5FloatingButtonsOptions.toggleTabbar' },
+  { label: '返回顶部', value: 'backtop', locale: 'h5FloatingButtonsOptions.backtop' }
 ]
 
 export const allowedFileExtList = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']

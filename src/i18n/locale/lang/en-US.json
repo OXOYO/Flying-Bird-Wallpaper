@@ -306,6 +306,15 @@
     "left": "left",
     "right": "right"
   },
+  "h5FloatingButtonsOptions": {
+    "autoSwitch": "auto switch",
+    "intervalTime": "interval time",
+    "switchType": "switch type",
+    "favorites": "favorites",
+    "displaySize": "display size",
+    "toggleTabbar": "toggle tabbar",
+    "backtop": "backtop"
+  },
   "dynamicPerformanceModeOptions": {
     "high": "high",
     "balanced": "balanced",
@@ -478,6 +487,10 @@
           "h5FloatingButtonPosition": {
             "label": "Floating Button Position",
             "placeholder": "Select floating button position"
+          },
+          "h5EnabledFloatingButtons": {
+            "label": "Enabled Floating Buttons",
+            "placeholder": "Select enabled floating buttons"
           }
         },
         "about": "About",

@@ -7,7 +7,8 @@ import {
   sortFieldOptions,
   sortTypeOptions,
   imageDisplaySizeOptions,
-  h5FloatingButtonPositionOptions
+  h5FloatingButtonPositionOptions,
+  h5FloatingButtonsOptions
 } from '@common/publicData.js'
 import { localeOptions } from '@i18n/locale/index.js'
 import { appInfo } from '@common/config.js'
@@ -25,8 +26,20 @@ const { settingData } = storeToRefs(settingStore)
 const settingDataForm = reactive(settingData.value)
 
 const showPickers = reactive({
-  h5SwitchType: false
+  locale: false,
+  h5SwitchType: false,
+  h5Resource: false,
+  h5Orientation: false,
+  h5Quality: false,
+  h5SortField: false,
+  h5SortType: false,
+  h5ImageDisplaySize: false,
+  h5FloatingButtonPosition: false,
+  h5EnabledFloatingButtons: false
 })
+
+// 选中的浮动按钮
+const floatingButtonsChecked = reactive({})
 
 const optionsToColumns = (options) => {
   return options.map((option) => ({
@@ -67,7 +80,8 @@ const pickerColumns = computed(() => {
     h5SortField: optionsToColumns(sortFieldOptions),
     h5SortType: optionsToColumns(sortTypeOptions),
     h5ImageDisplaySize: optionsToColumns(imageDisplaySizeOptions),
-    h5FloatingButtonPosition: optionsToColumns(h5FloatingButtonPositionOptions)
+    h5FloatingButtonPosition: optionsToColumns(h5FloatingButtonPositionOptions),
+    h5EnabledFloatingButtons: optionsToColumns(h5FloatingButtonsOptions)
   }
 })
 
@@ -82,7 +96,8 @@ const fieldsData = computed(() => {
     h5SortField: '',
     h5SortType: '',
     h5ImageDisplaySize: '',
-    h5FloatingButtonPosition: ''
+    h5FloatingButtonPosition: '',
+    h5EnabledFloatingButtons: []
   }
   Object.keys(ret).forEach((key) => {
     const target = pickerColumns.value[key].find((item) => item.value === settingDataForm[key])
@@ -92,8 +107,25 @@ const fieldsData = computed(() => {
   return ret
 })
 
+const init = () => {
+  initFloatingButtonsChecked()
+}
+
+const initFloatingButtonsChecked = () => {
+  pickerColumns.value.h5EnabledFloatingButtons.forEach((item) => {
+    floatingButtonsChecked[item.value] = settingData.value.h5EnabledFloatingButtons.includes(
+      item.value
+    )
+      ? true
+      : false
+  })
+}
+
 const onShowPicker = (field) => {
   showPickers[field] = true
+  if (field === 'h5EnabledFloatingButtons') {
+    initFloatingButtonsChecked()
+  }
 }
 
 const onConfirmPicker = (field, { selectedValues }) => {
@@ -110,6 +142,13 @@ const onConfirmPicker = (field, { selectedValues }) => {
     case 'h5ImageDisplaySize':
     case 'h5FloatingButtonPosition':
       settingDataForm[field] = selectedValues[0]
+      break
+    case 'h5EnabledFloatingButtons':
+      settingDataForm.h5EnabledFloatingButtons = Object.keys(floatingButtonsChecked).filter(
+        (key) => {
+          return floatingButtonsChecked[key]
+        }
+      )
       break
   }
 
@@ -137,6 +176,10 @@ const onSettingDataChange = async (field) => {
     message: res.msg
   })
 }
+
+onMounted(() => {
+  init()
+})
 </script>
 
 <template>
@@ -356,6 +399,37 @@ const onSettingDataChange = async (field) => {
           @confirm="(...args) => onConfirmPicker('h5FloatingButtonPosition', ...args)"
           @cancel="(...args) => onCancelPicker('h5FloatingButtonPosition', ...args)"
         />
+      </van-popup>
+
+      <van-field
+        v-model="fieldsData.h5EnabledFloatingButtons"
+        is-link
+        readonly
+        name="h5EnabledFloatingButtons"
+        :label="t('h5.pages.setting.form.h5EnabledFloatingButtons.label')"
+        :placeholder="t('h5.pages.setting.form.h5EnabledFloatingButtons.placeholder')"
+        @click="onShowPicker('h5EnabledFloatingButtons')"
+      />
+      <van-popup
+        v-model:show="showPickers.h5EnabledFloatingButtons"
+        destroy-on-close
+        position="bottom"
+      >
+        <van-picker
+          :columns="pickerColumns.h5EnabledFloatingButtons"
+          @confirm="(...args) => onConfirmPicker('h5EnabledFloatingButtons', ...args)"
+          @cancel="(...args) => onCancelPicker('h5EnabledFloatingButtons', ...args)"
+        >
+          <template #option="option">
+            <van-checkbox
+              v-model="floatingButtonsChecked[option.value]"
+              :name="option.value"
+              shape="square"
+            >
+              <div style="display: inline-block; min-width: 100px">{{ option.text }}</div>
+            </van-checkbox>
+          </template>
+        </van-picker>
       </van-popup>
     </van-cell-group>
 

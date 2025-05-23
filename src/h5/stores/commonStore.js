@@ -5,12 +5,19 @@ const UseCommonStore = defineStore('common', {
   state: () => {
     return {
       activeTabbar: 'home',
+      tabbarVisible: true,
       resourceMap: JSON.parse(JSON.stringify(defaultResourceMap))
     }
   },
   actions: {
     setActiveTabbar(name) {
       this.activeTabbar = name
+    },
+    toggleTabbarVisible() {
+      this.tabbarVisible = !this.tabbarVisible
+      // 设置根元素的css变量
+      const tabbarHeight = this.tabbarVisible ? 'var(--van-tabbar-height)' : '0px'
+      document.documentElement.style.setProperty('--fbw-tabbar-height', tabbarHeight)
     },
     setResourceMap(resourceMap) {
       this.resourceMap = resourceMap

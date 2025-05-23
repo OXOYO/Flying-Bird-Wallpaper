@@ -1,6 +1,10 @@
+:root {
+  --fbw-tabbar-height: var(--van-tabbar-height);
+}
+
 .page-wrapper {
   width: 100vw;
-  height: calc(100vh - var(--van-tabbar-height));
+  height: calc(100vh - var(--fbw-tabbar-height));
   /* 禁止下拉刷新 */
   overscroll-behavior: none;
 }
