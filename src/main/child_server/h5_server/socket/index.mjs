@@ -219,6 +219,29 @@ export default async function setupSocketIO(io, { t, logger, postMessage }) {
         })
       }
     })
+    // 删除图片
+    socket.on('deleteImage', async (item, callback) => {
+      try {
+        if (!item) {
+          safeCallback(callback, {
+            success: false,
+            msg: t('messages.operationFail')
+          })
+          return
+        }
+        const res = await fileManager.deleteFile(item)
+        safeCallback(callback, {
+          success: res.success,
+          msg: res.success ? t('messages.operationSuccess') : t('messages.operationFail')
+        })
+      } catch (err) {
+        logger.error(`删除图片错误: ${err}`)
+        safeCallback(callback, {
+          success: false,
+          msg: t('messages.operationFail')
+        })
+      }
+    })
 
     // 断开连接
     socket.on('disconnect', () => {

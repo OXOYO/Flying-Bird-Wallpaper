@@ -2,7 +2,7 @@
 import UseSettingStore from '@h5/stores/settingStore.js'
 import * as api from '@h5/api/index.js'
 import { vibrate } from '@h5/utils/index.js'
-import { showImagePreview, showNotify } from 'vant'
+import { showImagePreview, showNotify, showConfirmDialog } from 'vant'
 import { useTranslation } from 'i18next-vue'
 
 const { t } = useTranslation()
@@ -49,6 +49,10 @@ const countdown = ref(settingData.value.h5SwitchIntervalTime)
 // 用于处理双击事件
 const lastClickTime = ref(0)
 const clickTimer = ref(null)
+// 长按相关状态
+const longPressTimer = ref(null)
+const showActionPopup = ref(false)
+const selectedImageIndex = ref(null)
 
 // 定时器
 let autoSwitchTimer = null
@@ -480,6 +484,133 @@ const onPreviewImage = async (index) => {
     maxZoom: 100,
     minZoom: 1 / 3
   })
+  vibrate()
+}
+
+// 长按开始
+const onLongPressStart = (index, event) => {
+  // 防止触发其他事件
+  event.preventDefault()
+
+  // 设置长按定时器
+  longPressTimer.value = setTimeout(() => {
+    selectedImageIndex.value = index
+    showActionPopup.value = true
+    vibrate() // 触发震动反馈
+  }, 500) // 500毫秒长按触发
+}
+
+// 长按结束
+const onLongPressEnd = () => {
+  if (longPressTimer.value) {
+    clearTimeout(longPressTimer.value)
+    longPressTimer.value = null
+  }
+}
+
+// 保存图片
+const saveImage = async () => {
+  if (selectedImageIndex.value === null) return
+
+  try {
+    const currentImage = imageList.value[selectedImageIndex.value]
+    // 创建一个隐藏的a标签
+    const link = document.createElement('a')
+
+    // 设置下载链接为图片URL
+    // 注意：如果图片URL是相对路径，需要转换为绝对路径
+    link.href = currentImage.url
+
+    // 从URL中提取文件名，或者使用自定义文件名
+    const fileName = currentImage.filePath.split('/').pop() || `image-${Date.now()}.jpg`
+    link.download = fileName
+
+    // 将链接添加到文档中
+    document.body.appendChild(link)
+
+    // 模拟点击下载
+    link.click()
+
+    // 移除链接
+    document.body.removeChild(link)
+    showNotify({
+      type: 'success',
+      message: t('messages.saveSuccess')
+    })
+    vibrate()
+  } catch (error) {
+    showNotify({
+      type: 'danger',
+      message: t('messages.saveFail')
+    })
+  } finally {
+    showActionPopup.value = false
+  }
+}
+
+// 删除图片
+const deleteImage = async () => {
+  if (selectedImageIndex.value === null) return
+
+  // 关闭操作弹层
+  showActionPopup.value = false
+
+  // 显示确认对话框
+  try {
+    await showConfirmDialog({
+      title: t('h5.pages.home.actions.confirmDelete'),
+      message: t('h5.pages.home.actions.confirmDeleteMessage'),
+      confirmButtonText: t('h5.pages.home.actions.confirmDeleteBtn'),
+      cancelButtonText: t('h5.pages.home.actions.cancelDeleteBtn'),
+      confirmButtonColor: '#ee0a24',
+      closeOnClickOverlay: true
+    })
+
+    // 用户点击确认后执行删除操作
+    const currentImage = imageList.value[selectedImageIndex.value]
+    const res = await api.deleteImage(toRaw(currentImage))
+    if (res.success) {
+      // 从列表中移除该图片
+      imageList.value.splice(selectedImageIndex.value, 1)
+
+      // 如果删除的是当前显示的图片，需要调整当前索引
+      if (selectedImageIndex.value === currentIndex.value) {
+        if (currentIndex.value >= imageList.value.length) {
+          currentIndex.value = Math.max(0, imageList.value.length - 1)
+        }
+        // 更新偏移量
+        const clientHeight = imageSliderRef.value.clientHeight
+        offsetY.value = -currentIndex.value * clientHeight
+      } else if (selectedImageIndex.value < currentIndex.value) {
+        // 如果删除的是当前图片之前的图片，当前索引需要减1
+        currentIndex.value--
+        // 更新偏移量
+        const clientHeight = imageSliderRef.value.clientHeight
+        offsetY.value = -currentIndex.value * clientHeight
+      }
+
+      showNotify({
+        type: 'success',
+        message: t('messages.deleteSuccess')
+      })
+      vibrate()
+    } else {
+      showNotify({
+        type: 'danger',
+        message: t('messages.deleteFail')
+      })
+    }
+  } catch (error) {
+    // 用户取消删除或发生错误
+    if (error !== 'cancel') {
+      showNotify({
+        type: 'danger',
+        message: t('messages.deleteFail')
+      })
+    }
+  } finally {
+    selectedImageIndex.value = null
+  }
 }
 
 const onSettingDataChange = async (payload) => {
@@ -569,6 +700,9 @@ const handlePageShow = () => {}
             class="image-item"
             :style="imageItemStyle"
             @dblclick="onPreviewImage(index)"
+            @touchstart="(e) => onLongPressStart(index, e)"
+            @touchend="onLongPressEnd"
+            @touchmove="onLongPressEnd"
           ></div>
         </van-list>
       </div>
@@ -624,6 +758,25 @@ const handlePageShow = () => {}
       />
     </div>
   </div>
+
+  <!-- 长按操作弹层 -->
+  <van-popup
+    v-model:show="showActionPopup"
+    destroy-on-close
+    position="bottom"
+    :style="{ padding: '16px' }"
+  >
+    <div class="action-popup-content">
+      <div class="action-item" @click="saveImage">
+        <IconifyIcon class="action-icon" icon="ri:download-line" />
+        <span>{{ t('h5.pages.home.actions.saveImage') }}</span>
+      </div>
+      <div class="action-item delete-action" @click="deleteImage">
+        <IconifyIcon class="action-icon" icon="ri:delete-bin-line" />
+        <span>{{ t('h5.pages.home.actions.deleteImage') }}</span>
+      </div>
+    </div>
+  </van-popup>
 </template>
 
 <style scoped lang="scss">
@@ -713,5 +866,37 @@ const handlePageShow = () => {}
   100% {
     transform: rotate(360deg);
   }
+}
+
+/* 操作弹层样式 */
+.action-popup-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.action-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 0;
+  font-size: 16px;
+
+  &:active {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+}
+
+.action-icon {
+  margin-right: 12px;
+  font-size: 24px;
+}
+
+.delete-action {
+  color: #ff4d4f;
+}
+
+.cancel-action {
+  border-top: 1px solid #eee;
+  padding-top: 16px;
 }
 </style>

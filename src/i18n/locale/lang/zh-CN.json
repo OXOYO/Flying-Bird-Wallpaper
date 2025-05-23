@@ -238,7 +238,11 @@
     "updateAvailable": "发现新版本 {version}",
     "checkUpdateFail": "检查更新失败！",
     "checkUpdateSuccess": "检查更新成功！",
-    "updateNotAvailable": "当前已是最新版本！"
+    "updateNotAvailable": "当前已是最新版本！",
+    "saveSuccess": "保存成功！",
+    "saveFail": "保存失败！",
+    "deleteSuccess": "删除成功！",
+    "deleteFail": "删除失败！"
   },
   "resourceTypeList": {
     "localResource": "本地资源",
@@ -408,7 +412,15 @@
     },
     "pages": {
       "home": {
-        "title": "首页"
+        "title": "首页",
+        "actions": {
+          "saveImage": "保存图片",
+          "deleteImage": "删除图片",
+          "confirmDelete": "确认删除",
+          "confirmDeleteMessage": "确认要删除图片吗？",
+          "confirmDeleteBtn": "确认",
+          "cancelDeleteBtn": "取消"
+        }
       },
       "search": {
         "title": "搜索"

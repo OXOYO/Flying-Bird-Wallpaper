@@ -33,6 +33,10 @@ export const removeFavorites = async (id) => {
   return await emitAsync('removeFavorites', id)
 }
 
+export const deleteImage = async (item) => {
+  return await emitAsync('deleteImage', item)
+}
+
 // 设置接口
 export const getSettingData = async () => {
   return await emitAsync('getSettingData')

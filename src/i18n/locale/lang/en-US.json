@@ -238,7 +238,11 @@
     "updateAvailable": "New version {version} found!",
     "checkUpdateFail": "Check for update failed!",
     "checkUpdateSuccess": "Check for update successful!",
-    "updateNotAvailable": "The latest version is now available!"
+    "updateNotAvailable": "The latest version is now available!",
+    "saveSuccess": "Save successfully!",
+    "saveFail": "Save failed!",
+    "deleteSuccess": "Delete successfully!",
+    "deleteFail": "Delete failed!"
   },
   "resourceTypeList": {
     "localResource": "Local resources",
@@ -408,7 +412,15 @@
     },
     "pages": {
       "home": {
-        "title": "Home"
+        "title": "Home",
+        "actions": {
+          "saveImage": "Save Image",
+          "deleteImage": "Delete Image",
+          "confirmDelete": "Confirm Delete",
+          "confirmDeleteMessage": "Are you sure you want to delete this image?",
+          "confirmDeleteBtn": "Confirm",
+          "cancelDeleteBtn": "Cancel"
+        }
       },
       "search": {
         "title": "Search"
