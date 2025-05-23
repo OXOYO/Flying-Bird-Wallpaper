@@ -905,7 +905,7 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
               width,
               fit: 'inside', // 保持宽高比
               withoutEnlargement: true, // 避免放大小图片
-              kernel: 'nearest', // 使用最快的缩放算法
+              kernel: 'lanczos3', // 使用最好的缩放算法
               fastShrinkOnLoad: true // 启用快速缩小
             })
             .toBuffer()

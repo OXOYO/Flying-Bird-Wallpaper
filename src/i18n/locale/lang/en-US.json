@@ -336,6 +336,10 @@
   "exploreCommon": {
     "onLoadMore": "Load more",
     "onRefresh": "Refresh",
+    "isRandom": {
+      "on": "Random",
+      "off": "Order"
+    },
     "onTogglePrivacySpace": {
       "quit": "Exit privacy space",
       "enter": "Enter privacy space"

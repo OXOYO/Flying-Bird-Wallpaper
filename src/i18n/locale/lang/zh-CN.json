@@ -336,6 +336,10 @@
   "exploreCommon": {
     "onLoadMore": "加载更多",
     "onRefresh": "刷新",
+    "isRandom": {
+      "on": "随机",
+      "off": "顺序"
+    },
     "onTogglePrivacySpace": {
       "quit": "退出隐私空间",
       "enter": "进入隐私空间"

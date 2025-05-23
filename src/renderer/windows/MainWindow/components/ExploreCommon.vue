@@ -199,6 +199,7 @@ const searchForm = reactive({
   orientation: [],
   startPage: 1,
   pageSize: 50,
+  isRandom: false,
   sortField: settingData.value.sortField || 'created_at',
   sortType: settingData.value.sortType || -1,
   total: 0
@@ -254,6 +255,16 @@ const fixedBtns = computed(() => {
       actionParams: [],
       title: searchForm.sortType > 0 ? t('sortType.asc') : t('sortType.desc'),
       icon: searchForm.sortType > 0 ? 'lucide:sort-asc' : 'lucide:sort-desc',
+      iconStyle: {},
+      style: {
+        bottom: getBottom()
+      }
+    })
+    ret.push({
+      action: 'isRandom',
+      actionParams: [],
+      title: searchForm.isRandom ? t('exploreCommon.isRandom.on') : t('exploreCommon.isRandom.off'),
+      icon: searchForm.isRandom ? 'ri:shuffle-line' : 'ri:repeat-line',
       iconStyle: {},
       style: {
         bottom: getBottom()
@@ -473,6 +484,9 @@ const onFixedBtnClick = (action, actionParams, childVal) => {
       break
     case 'onSwitchSortType':
       onSwitchSortType()
+      break
+    case 'isRandom':
+      isRandom()
       break
     case 'onSwitchResource':
       onSwitchResource()
@@ -719,12 +733,20 @@ const onSwitchSortType = async () => {
   }
 }
 
+const isRandom = async () => {
+  searchForm.isRandom = !searchForm.isRandom
+  await onRefresh(false)
+}
+
 const onRefreshDirectory = () => {
   window.FBW.refreshDirectory()
 }
 
 const onSourceTypeChange = () => {
   nextTick(() => {
+    if (searchForm.resourceType === 'localResource') {
+      searchForm.isRandom = false
+    }
     searchForm.resourceNameIndex = 0
     searchForm.resourceName = currentSourceList.value[0].value
     onSearch()
@@ -818,6 +840,7 @@ const getNextList = async () => {
     orientation,
     startPage,
     pageSize,
+    isRandom,
     sortField,
     sortType
   } = searchForm
@@ -826,6 +849,7 @@ const getNextList = async () => {
     resourceName,
     startPage,
     pageSize,
+    isRandom,
     sortField,
     sortType,
     filterKeywords,
