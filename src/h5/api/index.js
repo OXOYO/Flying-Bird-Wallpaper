@@ -29,6 +29,10 @@ export const addToFavorites = async (id) => {
   return await emitAsync('addToFavorites', id)
 }
 
+export const updateFavoriteCount = async (id, count) => {
+  return await emitAsync('updateFavoriteCount', { id, count })
+}
+
 export const removeFavorites = async (id) => {
   return await emitAsync('removeFavorites', id)
 }

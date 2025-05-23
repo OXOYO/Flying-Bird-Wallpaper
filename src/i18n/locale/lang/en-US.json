@@ -242,7 +242,8 @@
     "saveSuccess": "Save successfully!",
     "saveFail": "Save failed!",
     "deleteSuccess": "Delete successfully!",
-    "deleteFail": "Delete failed!"
+    "deleteFail": "Delete failed!",
+    "maxFavoriteCountReached": "Maximum number of favorites reached!"
   },
   "resourceTypeList": {
     "localResource": "Local resources",

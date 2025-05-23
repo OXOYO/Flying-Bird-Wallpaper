@@ -196,6 +196,29 @@ export default async function setupSocketIO(io, { t, logger, postMessage }) {
         })
       }
     })
+    // 更新收藏数量
+    socket.on('updateFavoriteCount', async ({ id, count }, callback) => {
+      try {
+        if (!id) {
+          safeCallback(callback, {
+            success: false,
+            msg: t('messages.operationFail')
+          })
+          return
+        }
+        const res = await wallpaperManager.updateFavoriteCount(id, count)
+        safeCallback(callback, {
+          success: res.success,
+          msg: res.success ? t('messages.operationSuccess') : t('messages.operationFail')
+        })
+      } catch (err) {
+        logger.error(`更新收藏数量错误: ${err}`)
+        safeCallback(callback, {
+          success: false,
+          msg: t('messages.operationFail')
+        })
+      }
+    })
     // 取消收藏
     socket.on('removeFavorites', async (id, callback) => {
       try {

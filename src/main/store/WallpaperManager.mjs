@@ -1279,6 +1279,53 @@ export default class WallpaperManager {
     return ret
   }
 
+  // 更新收藏数量
+  async updateFavoriteCount(resourceId, count) {
+    let ret = {
+      success: false,
+      msg: t('messages.operationFail')
+    }
+    try {
+      if (!resourceId || count === undefined || count <= 0) {
+        ret.msg = t('messages.paramsError')
+        return ret
+      }
+      // 当没有资源时插入，当有资源时num加count
+      const check_stmt = this.db.prepare(`SELECT * FROM fbw_favorites WHERE resourceId =?`)
+      const check_result = check_stmt.get(resourceId)
+      if (!check_result) {
+        const insert_stmt = this.db.prepare(
+          `INSERT INTO fbw_favorites (resourceId, num) VALUES (?, ?)`
+        )
+        const insert_result = insert_stmt.run(resourceId, count)
+        if (insert_result.changes > 0) {
+          ret = {
+            success: true,
+            msg: t('messages.operationSuccess')
+          }
+          return ret
+        }
+      } else {
+        count += check_result.num
+        if (count <= 0) {
+          return ret
+        }
+        // 更新收藏数量
+        const update_stmt = this.db.prepare(`UPDATE fbw_favorites SET num =? WHERE resourceId =?`)
+        const update_result = update_stmt.run(count, resourceId)
+        if (update_result.changes > 0) {
+          ret = {
+            success: true,
+            msg: t('messages.operationSuccess')
+          }
+        }
+      }
+    } catch (err) {
+      this.logger.error(`更新收藏数量失败: ${err}`)
+    }
+    return ret
+  }
+
   // 移出收藏夹
   async removeFavorites(resourceId, isPrivacySpace = false) {
     let ret = {

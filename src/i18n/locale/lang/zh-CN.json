@@ -242,7 +242,8 @@
     "saveSuccess": "保存成功！",
     "saveFail": "保存失败！",
     "deleteSuccess": "删除成功！",
-    "deleteFail": "删除失败！"
+    "deleteFail": "删除失败！",
+    "maxFavoriteCountReached": "收藏数量已达上限！"
   },
   "resourceTypeList": {
     "localResource": "本地资源",

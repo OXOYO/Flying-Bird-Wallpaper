@@ -12,15 +12,6 @@ const settingData = ref(settingStore.settingData)
 
 const imageSliderRef = ref(null)
 
-// 图片列表
-const imageList = ref([])
-
-const pageInfo = {
-  startPage: 1,
-  pageSize: 10
-}
-
-// 在 script setup 部分修改状态变量
 const flags = reactive({
   // 下拉刷新状态
   refreshing: false,
@@ -29,34 +20,57 @@ const flags = reactive({
   // List 组件是否加载完成
   finished: false,
   // 是否正在动画
-  isAnimating: false
+  isAnimating: false,
+  // 是否正在长按收藏
+  isFavoriteHolding: false,
+  // 是否操作弹层
+  showActionPopup: false
 })
 
-// 当前偏移量（用于滑动）
-const offsetY = ref(0)
+const pageInfo = {
+  startPage: 1,
+  pageSize: 10
+}
 
-// 触摸起始位置
-const startY = ref(0)
+// 滑动位置
+const touchPosition = reactive({
+  // 触摸起始位置
+  startY: 0,
+  // 滑动偏移量
+  offsetY: 0
+})
 
-// 当前显示的图片索引
-const currentIndex = ref(0)
+// 自动切换相关状态
+const autoSwitch = reactive({
+  switchTimer: null,
+  countdownTimer: null,
+  countdown: settingData.value.h5SwitchIntervalTime,
+  // 扩展的间隔时间数组
+  intervals: null,
+  // 当前显示的图片索引
+  currentIndex: 0,
+  // 图片列表
+  imageList: []
+})
 
-// 存储扩展后的间隔时间数组
-const extendedIntervals = ref(null)
-// 倒计时
-const countdown = ref(settingData.value.h5SwitchIntervalTime)
+// 收藏双击相关状态
+const favoriteClick = reactive({
+  lastClickTime: 0,
+  timer: null
+})
 
-// 用于处理双击事件
-const lastClickTime = ref(0)
-const clickTimer = ref(null)
 // 长按相关状态
-const longPressTimer = ref(null)
-const showActionPopup = ref(false)
-const selectedImageIndex = ref(null)
+const longPress = reactive({
+  timer: null,
+  selectedIndex: null
+})
 
-// 定时器
-let autoSwitchTimer = null
-let countdownTimer = null
+// 收藏长按相关状态
+const favoriteHold = reactive({
+  timer: null,
+  count: 0,
+  interval: null
+})
 
 // 是否随机
 const isRandom = computed(() => {
@@ -66,7 +80,7 @@ const isRandom = computed(() => {
 
 // 是否收藏当前图片
 const isFavorite = computed(() => {
-  return imageList.value[currentIndex.value]?.isFavorite
+  return autoSwitch.imageList[autoSwitch.currentIndex]?.isFavorite
 })
 
 const imageItemStyle = computed(() => {
@@ -99,14 +113,12 @@ watch(
 const init = async () => {
   initFlag()
   initPageInfo()
-  imageList.value = []
-  currentIndex.value = 0
-  offsetY.value = 0
-  startY.value = 0
-  // 重置倒计时
-  countdown.value = settingData.value.h5SwitchIntervalTime
-  // 重置扩展间隔时间数组
-  extendedIntervals.value = null
+  initTouchPosition()
+  initAutoSwitch()
+  initFavoriteClick()
+  initLongPress()
+  initFavoriteHold()
+
   const h5AutoSwitch = settingData.value.h5AutoSwitch
   stopAutoSwitch()
   // 加载数据
@@ -121,9 +133,11 @@ const init = async () => {
 
 const initFlag = () => {
   flags.refreshing = false
-  flags.finished = false
   flags.loading = false
+  flags.finished = false
   flags.isAnimating = false
+  flags.isFavoriteHolding = false
+  flags.showActionPopup = false
 }
 
 const initPageInfo = () => {
@@ -131,9 +145,39 @@ const initPageInfo = () => {
   pageInfo.pageSize = 10
 }
 
+const initTouchPosition = () => {
+  touchPosition.startY = 0
+  touchPosition.offsetY = 0
+}
+
+const initAutoSwitch = () => {
+  autoSwitch.switchTimer = null
+  autoSwitch.countdownTimer = null
+  autoSwitch.countdown = settingData.value.h5SwitchIntervalTime
+  autoSwitch.intervals = null
+  autoSwitch.currentIndex = 0
+  autoSwitch.imageList = []
+}
+
+const initFavoriteClick = () => {
+  favoriteClick.lastClickTime = 0
+  favoriteClick.timer = null
+}
+
+const initLongPress = () => {
+  longPress.timer = null
+  longPress.selectedIndex = null
+}
+
+const initFavoriteHold = () => {
+  favoriteHold.timer = null
+  favoriteHold.count = 0
+  favoriteHold.interval = null
+}
+
 // 加载更多图片
 const onLoad = async () => {
-  if (flags.finished || !imageList.value.length) return
+  if (flags.finished || !autoSwitch.imageList.length) return
   flags.loading = true
   pageInfo.startPage += 1
   await loadData()
@@ -143,10 +187,10 @@ const onLoad = async () => {
 // 刷新数据
 const onRefresh = async () => {
   flags.refreshing = true
-  imageList.value = []
-  currentIndex.value = 0
+  autoSwitch.imageList = []
+  autoSwitch.currentIndex = 0
   pageInfo.startPage = 1
-  offsetY.value = 0
+  touchPosition.offsetY = 0
   flags.finished = false
   await loadData(true)
   flags.refreshing = false
@@ -167,14 +211,14 @@ const loadData = async (isRefresh) => {
 
   const res = await api.searchImages(payload)
   if (res?.success && res?.data?.list.length > 0) {
-    imageList.value = (isRefresh ? res.data.list : [...imageList.value, ...res.data.list]).map(
-      (item) => {
-        return {
-          ...item,
-          url: `/api/images/get?src=${encodeURIComponent(item.filePath)}`
-        }
+    autoSwitch.imageList = (
+      isRefresh ? res.data.list : [...autoSwitch.imageList, ...res.data.list]
+    ).map((item) => {
+      return {
+        ...item,
+        url: `/api/images/get?src=${encodeURIComponent(item.filePath)}`
       }
-    )
+    })
     if (res.data.list.length < pageInfo.pageSize) {
       flags.finished = true
     }
@@ -194,7 +238,7 @@ const loadData = async (isRefresh) => {
 // 触摸开始
 const onTouchStart = (event) => {
   if (flags.isAnimating) return
-  startY.value = event.touches[0].clientY
+  touchPosition.startY = event.touches[0].clientY
 
   if (settingData.value.h5AutoSwitch) {
     stopAutoSwitch() // 直接调用停止函数，不改变状态
@@ -205,26 +249,35 @@ const onTouchStart = (event) => {
 const onTouchMove = (event) => {
   if (flags.isAnimating) return
   const clientHeight = imageSliderRef.value.clientHeight
-  const deltaY = event.touches[0].clientY - startY.value
-  offsetY.value = -currentIndex.value * clientHeight + deltaY
+  const deltaY = event.touches[0].clientY - touchPosition.startY
+  touchPosition.offsetY = -autoSwitch.currentIndex * clientHeight + deltaY
 }
 
 // 触摸结束
 const onTouchEnd = (event) => {
   if (flags.isAnimating) return
-  const deltaY = event.changedTouches[0].clientY - startY.value
+  const deltaY = event.changedTouches[0].clientY - touchPosition.startY
 
   // 判断滑动方向
   if (Math.abs(deltaY) > 50) {
-    if (deltaY > 0 && currentIndex.value > 0) {
+    if (deltaY > 0 && autoSwitch.currentIndex === 0) {
+      showNotify({
+        type: 'warning',
+        message: t('messages.noMoreData')
+      })
+    } else if (deltaY > 0 && autoSwitch.currentIndex > 0) {
       // 向下滑动，显示上一张
-      currentIndex.value -= 1
-    } else if (deltaY < 0 && currentIndex.value < imageList.value.length - 1) {
+      autoSwitch.currentIndex -= 1
+    } else if (deltaY < 0 && autoSwitch.currentIndex < autoSwitch.imageList.length - 1) {
       // 向上滑动，显示下一张
-      currentIndex.value += 1
+      autoSwitch.currentIndex += 1
 
       // 如果滑动到倒数第3张，且还有更多数据，则提前加载更多
-      if (currentIndex.value >= imageList.value.length - 3 && !flags.finished && !flags.loading) {
+      if (
+        autoSwitch.currentIndex >= autoSwitch.imageList.length - 3 &&
+        !flags.finished &&
+        !flags.loading
+      ) {
         onLoad()
       }
     }
@@ -233,14 +286,14 @@ const onTouchEnd = (event) => {
   // 滑动到目标位置
   flags.isAnimating = true
   const clientHeight = imageSliderRef.value.clientHeight
-  offsetY.value = -currentIndex.value * clientHeight
+  touchPosition.offsetY = -autoSwitch.currentIndex * clientHeight
   setTimeout(() => {
     flags.isAnimating = false
   }, 300)
 
   // 检查是否已经到达最后一张且已加载完所有数据
   if (
-    currentIndex.value === imageList.value.length - 1 &&
+    autoSwitch.currentIndex === autoSwitch.imageList.length - 1 &&
     flags.finished &&
     settingData.value.h5AutoSwitch
   ) {
@@ -270,7 +323,7 @@ const toggleAutoSwitch = async () => {
 const startAutoSwitch = () => {
   settingData.value.h5AutoSwitch = true
   // 如果已经到达最后一张且已加载完所有数据，则不启动自动翻页
-  if (currentIndex.value === imageList.value.length - 1 && flags.finished) {
+  if (autoSwitch.currentIndex === autoSwitch.imageList.length - 1 && flags.finished) {
     stopAutoSwitch()
     showNotify({
       type: 'warning',
@@ -279,19 +332,23 @@ const startAutoSwitch = () => {
     return
   }
 
-  countdown.value = settingData.value.h5SwitchIntervalTime // 重置倒计时
+  autoSwitch.countdown = settingData.value.h5SwitchIntervalTime // 重置倒计时
   startCountdown() // 启动倒计时
 
-  autoSwitchTimer = setInterval(async () => {
+  autoSwitch.switchTimer = setInterval(async () => {
     const clientHeight = imageSliderRef.value.clientHeight
-    if (currentIndex.value < imageList.value.length - 1) {
-      currentIndex.value += 1
-      offsetY.value = -currentIndex.value * clientHeight
-      countdown.value = settingData.value.h5SwitchIntervalTime // 重置倒计时
+    if (autoSwitch.currentIndex < autoSwitch.imageList.length - 1) {
+      autoSwitch.currentIndex += 1
+      touchPosition.offsetY = -autoSwitch.currentIndex * clientHeight
+      autoSwitch.countdown = settingData.value.h5SwitchIntervalTime // 重置倒计时
       startCountdown() // 重新启动倒计时
 
       // 如果滑动到倒数第3张，且还有更多数据，则提前加载更多
-      if (currentIndex.value >= imageList.value.length - 3 && !flags.finished && !flags.loading) {
+      if (
+        autoSwitch.currentIndex >= autoSwitch.imageList.length - 3 &&
+        !flags.finished &&
+        !flags.loading
+      ) {
         stopCountdown() // 暂停倒计时
         await onLoad() // 等待加载完成
         startCountdown() // 恢复倒计时
@@ -300,10 +357,10 @@ const startAutoSwitch = () => {
       // 如果当前是最后一张且未加载完成，则触发加载更多
       stopCountdown() // 暂停倒计时
       await onLoad()
-      if (currentIndex.value < imageList.value.length - 1) {
-        currentIndex.value += 1
-        offsetY.value = -currentIndex.value * clientHeight
-        countdown.value = settingData.value.h5SwitchIntervalTime // 重置倒计时
+      if (autoSwitch.currentIndex < autoSwitch.imageList.length - 1) {
+        autoSwitch.currentIndex += 1
+        touchPosition.offsetY = -autoSwitch.currentIndex * clientHeight
+        autoSwitch.countdown = settingData.value.h5SwitchIntervalTime // 重置倒计时
         startCountdown() // 重新启动倒计时
       } else {
         startCountdown() // 如果没有新图片，也要恢复倒计时
@@ -321,33 +378,33 @@ const startAutoSwitch = () => {
 // 停止自动翻页
 const stopAutoSwitch = () => {
   settingData.value.h5AutoSwitch = false
-  if (autoSwitchTimer) {
-    clearInterval(autoSwitchTimer)
-    autoSwitchTimer = null
+  if (autoSwitch.switchTimer) {
+    clearInterval(autoSwitch.switchTimer)
+    autoSwitch.switchTimer = null
   }
   stopCountdown()
 }
 
 // 开始倒计时
 const startCountdown = () => {
-  if (countdownTimer) {
-    clearInterval(countdownTimer) // 清除之前的倒计时
+  if (autoSwitch.countdownTimer) {
+    clearInterval(autoSwitch.countdownTimer) // 清除之前的倒计时
   }
-  countdownTimer = setInterval(() => {
-    if (countdown.value > 0) {
-      countdown.value -= 1
+  autoSwitch.countdownTimer = setInterval(() => {
+    if (autoSwitch.countdown > 0) {
+      autoSwitch.countdown -= 1
     } else {
-      clearInterval(countdownTimer)
-      countdownTimer = null
+      clearInterval(autoSwitch.countdownTimer)
+      autoSwitch.countdownTimer = null
     }
   }, 1000)
 }
 
 // 停止倒计时
 const stopCountdown = () => {
-  if (countdownTimer) {
-    clearInterval(countdownTimer)
-    countdownTimer = null
+  if (autoSwitch.countdownTimer) {
+    clearInterval(autoSwitch.countdownTimer)
+    autoSwitch.countdownTimer = null
   }
 }
 
@@ -360,28 +417,28 @@ const changeSwitchIntervalTime = async () => {
   const currentTime = settingData.value.h5SwitchIntervalTime
 
   // 初始化扩展间隔数组
-  if (!extendedIntervals.value) {
+  if (!autoSwitch.intervals) {
     // 第一次初始化扩展间隔数组
-    extendedIntervals.value = [...fixedIntervals]
+    autoSwitch.intervals = [...fixedIntervals]
 
     // 如果当前值不在固定数组中，则添加到扩展数组
     if (!fixedIntervals.includes(currentTime)) {
-      extendedIntervals.value.push(currentTime)
-      extendedIntervals.value.sort((a, b) => a - b) // 按数值大小排序
+      autoSwitch.intervals.push(currentTime)
+      autoSwitch.intervals.sort((a, b) => a - b) // 按数值大小排序
     }
   }
 
   // 找到当前值的索引
-  const currentIndex = extendedIntervals.value.indexOf(currentTime)
+  const currentIndex = autoSwitch.intervals.indexOf(currentTime)
 
   // 计算下一个值的索引（循环）
-  const nextIndex = (currentIndex + 1) % extendedIntervals.value.length
+  const nextIndex = (currentIndex + 1) % autoSwitch.intervals.length
 
   // 获取下一个间隔时间
-  const h5SwitchIntervalTime = extendedIntervals.value[nextIndex]
+  const h5SwitchIntervalTime = autoSwitch.intervals[nextIndex]
 
   // 重置倒计时
-  countdown.value = h5SwitchIntervalTime
+  autoSwitch.countdown = h5SwitchIntervalTime
 
   settingData.value.h5SwitchIntervalTime = h5SwitchIntervalTime
 
@@ -399,32 +456,92 @@ const changeSwitchIntervalTime = async () => {
 // 处理收藏按钮点击
 const handleFavoriteClick = async () => {
   const currentTime = new Date().getTime()
-  const timeDiff = currentTime - lastClickTime.value
+  const timeDiff = currentTime - favoriteClick.lastClickTime
 
   // 清除任何现有的定时器
-  if (clickTimer.value) {
-    clearTimeout(clickTimer.value)
-    clickTimer.value = null
+  if (favoriteClick.timer) {
+    clearTimeout(favoriteClick.timer)
+    favoriteClick.timer = null
   }
 
   if (timeDiff < 300) {
     // 双击 - 取消收藏
     await onRemoveFavorites()
-    lastClickTime.value = 0 // 重置点击时间
+    favoriteClick.lastClickTime = 0 // 重置点击时间
   } else {
     // 第一次点击 - 设置定时器等待可能的第二次点击
-    lastClickTime.value = currentTime
-    clickTimer.value = setTimeout(async () => {
+    favoriteClick.lastClickTime = currentTime
+    favoriteClick.timer = setTimeout(async () => {
       // 如果没有第二次点击，执行单击操作（添加收藏）
       await onAddToFavorites()
-      clickTimer.value = null
+      favoriteClick.timer = null
     }, 300)
   }
 }
 
+// 开始长按收藏按钮
+const startFavoriteHold = (event) => {
+  // 防止触发其他事件
+  event.preventDefault()
+
+  // 重置计数
+  favoriteHold.count = 0
+  flags.isFavoriteHolding = true
+
+  // 设置长按定时器
+  favoriteHold.timer = setTimeout(() => {
+    // 长按开始后，启动计数间隔
+    favoriteHold.interval = setInterval(() => {
+      // 添加最大值限制
+      if (favoriteHold.count < 100) {
+        favoriteHold.count++
+        vibrate() // 每次计数增加时震动反馈
+      } else {
+        // 达到最大值时停止计数并提示用户
+        clearInterval(favoriteHold.interval)
+        favoriteHold.interval = null
+        showNotify({
+          type: 'warning',
+          message: t('messages.maxFavoriteCountReached')
+        })
+      }
+    }, 500) // 每500毫秒增加一次计数
+  }, 800) // 800毫秒后开始计数
+}
+
+// 结束长按收藏按钮
+const endFavoriteHold = async () => {
+  // 清除定时器
+  if (favoriteHold.timer) {
+    clearTimeout(favoriteHold.timer)
+    favoriteHold.timer = null
+  }
+
+  if (favoriteHold.interval) {
+    clearInterval(favoriteHold.interval)
+    favoriteHold.interval = null
+  }
+
+  // 如果是长按状态且计数大于0，则更新收藏数据
+  if (flags.isFavoriteHolding && favoriteHold.count > 0) {
+    const currentImage = autoSwitch.imageList[autoSwitch.currentIndex]
+    if (!currentImage) return
+    const res = await api.updateFavoriteCount(currentImage.id, favoriteHold.count)
+    if (res.success) {
+      // 更新本地数据
+      currentImage.favoriteCount = (currentImage.favoriteCount || 0) + favoriteHold.count
+      currentImage.isFavorite = true
+    }
+  }
+
+  // 重置状态
+  flags.isFavoriteHolding = false
+  favoriteHold.count = 0
+}
+
 // 单击加入收藏
 const onAddToFavorites = async () => {
-  const currentImage = imageList.value[currentIndex.value]
+  const currentImage = autoSwitch.imageList[autoSwitch.currentIndex]
   if (!currentImage) {
     return
   }
@@ -437,7 +554,7 @@ const onAddToFavorites = async () => {
 
 // 双击取消收藏
 const onRemoveFavorites = async () => {
-  const currentImage = imageList.value[currentIndex.value]
+  const currentImage = autoSwitch.imageList[autoSwitch.currentIndex]
   if (!currentImage) {
     return
   }
@@ -479,7 +596,7 @@ const onPreviewImage = async (index) => {
   // 关闭自动翻页
   stopAutoSwitch()
   showImagePreview({
-    images: imageList.value.map((item) => item.url),
+    images: autoSwitch.imageList.map((item) => item.url),
     startPosition: index,
     maxZoom: 100,
     minZoom: 1 / 3
@@ -493,27 +610,27 @@ const onLongPressStart = (index, event) => {
   event.preventDefault()
 
   // 设置长按定时器
-  longPressTimer.value = setTimeout(() => {
-    selectedImageIndex.value = index
-    showActionPopup.value = true
+  longPress.timer = setTimeout(() => {
+    longPress.selectedIndex = index
+    flags.showActionPopup = true
     vibrate() // 触发震动反馈
   }, 500) // 500毫秒长按触发
 }
 
 // 长按结束
 const onLongPressEnd = () => {
-  if (longPressTimer.value) {
-    clearTimeout(longPressTimer.value)
-    longPressTimer.value = null
+  if (longPress.timer) {
+    clearTimeout(longPress.timer)
+    longPress.timer = null
   }
 }
 
 // 保存图片
 const saveImage = async () => {
-  if (selectedImageIndex.value === null) return
+  if (longPress.selectedIndex === null) return
 
   try {
-    const currentImage = imageList.value[selectedImageIndex.value]
+    const currentImage = autoSwitch.imageList[longPress.selectedIndex]
     // 创建一个隐藏的a标签
     const link = document.createElement('a')
 
@@ -544,16 +661,16 @@ const saveImage = async () => {
       message: t('messages.saveFail')
     })
   } finally {
-    showActionPopup.value = false
+    flags.showActionPopup = false
   }
 }
 
 // 删除图片
 const deleteImage = async () => {
-  if (selectedImageIndex.value === null) return
+  if (longPress.selectedIndex === null) return
 
   // 关闭操作弹层
-  showActionPopup.value = false
+  flags.showActionPopup = false
 
   // 显示确认对话框
   try {
@@ -567,26 +684,26 @@ const deleteImage = async () => {
     })
 
     // 用户点击确认后执行删除操作
-    const currentImage = imageList.value[selectedImageIndex.value]
+    const currentImage = autoSwitch.imageList[longPress.selectedIndex]
     const res = await api.deleteImage(toRaw(currentImage))
     if (res.success) {
       // 从列表中移除该图片
-      imageList.value.splice(selectedImageIndex.value, 1)
+      autoSwitch.imageList.splice(longPress.selectedIndex, 1)
 
       // 如果删除的是当前显示的图片，需要调整当前索引
-      if (selectedImageIndex.value === currentIndex.value) {
-        if (currentIndex.value >= imageList.value.length) {
-          currentIndex.value = Math.max(0, imageList.value.length - 1)
+      if (longPress.selectedIndex === autoSwitch.currentIndex) {
+        if (autoSwitch.currentIndex >= autoSwitch.imageList.length) {
+          autoSwitch.currentIndex = Math.max(0, autoSwitch.imageList.length - 1)
         }
         // 更新偏移量
         const clientHeight = imageSliderRef.value.clientHeight
-        offsetY.value = -currentIndex.value * clientHeight
-      } else if (selectedImageIndex.value < currentIndex.value) {
+        touchPosition.offsetY = -autoSwitch.currentIndex * clientHeight
+      } else if (longPress.selectedIndex < autoSwitch.currentIndex) {
         // 如果删除的是当前图片之前的图片，当前索引需要减1
-        currentIndex.value--
+        autoSwitch.currentIndex--
         // 更新偏移量
         const clientHeight = imageSliderRef.value.clientHeight
-        offsetY.value = -currentIndex.value * clientHeight
+        touchPosition.offsetY = -autoSwitch.currentIndex * clientHeight
       }
 
       showNotify({
@@ -609,7 +726,7 @@ const deleteImage = async () => {
       })
     }
   } finally {
-    selectedImageIndex.value = null
+    longPress.selectedIndex = null
   }
 }
 
@@ -637,13 +754,13 @@ onMounted(() => {
 // 组件卸载时停止自动翻页并移除事件监听
 onUnmounted(() => {
   // 确保清除所有定时器
-  if (autoSwitchTimer) {
-    clearInterval(autoSwitchTimer)
-    autoSwitchTimer = null
+  if (autoSwitch.switchTimer) {
+    clearInterval(autoSwitch.switchTimer)
+    autoSwitch.switchTimer = null
   }
-  if (countdownTimer) {
-    clearInterval(countdownTimer)
-    countdownTimer = null
+  if (autoSwitch.countdownTimer) {
+    clearInterval(autoSwitch.countdownTimer)
+    autoSwitch.countdownTimer = null
   }
 
   // 移除事件监听
@@ -684,7 +801,7 @@ const handlePageShow = () => {}
       @touchend="onTouchEnd"
     >
       <!-- 图片列表 -->
-      <div class="image-container" :style="{ transform: `translateY(${offsetY}px)` }">
+      <div class="image-container" :style="{ transform: `translateY(${touchPosition.offsetY}px)` }">
         <!-- 使用 List 组件加载更多 -->
         <van-list
           v-model:loading="flags.loading"
@@ -694,7 +811,7 @@ const handlePageShow = () => {}
         >
           <!-- 每张图片 -->
           <div
-            v-for="(item, index) in imageList"
+            v-for="(item, index) in autoSwitch.imageList"
             :key="item.id"
             v-lazy:background-image="item.url"
             class="image-item"
@@ -726,7 +843,7 @@ const handlePageShow = () => {}
 
     <!-- 切换翻页等待时长 -->
     <div class="floating-button" @click="changeSwitchIntervalTime">
-      {{ settingData.h5AutoSwitch ? countdown : settingData.h5SwitchIntervalTime }}s
+      {{ settingData.h5AutoSwitch ? autoSwitch.countdown : settingData.h5SwitchIntervalTime }}s
     </div>
 
     <!-- 切换随机模式 -->
@@ -738,12 +855,21 @@ const handlePageShow = () => {}
     </div>
 
     <!-- 收藏图片 -->
-    <div class="floating-button" @click="handleFavoriteClick">
+    <div
+      class="floating-button"
+      @click="handleFavoriteClick"
+      @touchstart="startFavoriteHold"
+      @touchend="endFavoriteHold"
+      @touchmove="endFavoriteHold"
+    >
       <IconifyIcon
         class="floating-button-icon"
         :icon="currentImage?.isFavorite ? 'ri:star-fill' : 'ri:star-line'"
         :style="{ color: isFavorite ? 'gold' : '' }"
       />
+      <span v-if="flags.isFavoriteHolding && favoriteHold.count > 0" class="favorite-count"
+        >+{{ favoriteHold.count }}</span
+      >
     </div>
 
     <!-- 切换背景大小 -->
@@ -761,7 +887,7 @@ const handlePageShow = () => {}
 
   <!-- 长按操作弹层 -->
   <van-popup
-    v-model:show="showActionPopup"
+    v-model:show="flags.showActionPopup"
     destroy-on-close
     position="bottom"
     :style="{ padding: '16px' }"
@@ -822,7 +948,6 @@ const handlePageShow = () => {}
   border: none;
   border-radius: 50%;
   position: relative;
-  overflow: hidden;
   cursor: pointer;
 
   &:active {
@@ -866,6 +991,22 @@ const handlePageShow = () => {}
   100% {
     transform: rotate(360deg);
   }
+}
+
+.favorite-count {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background-color: #ff4d4f;
+  color: white;
+  border-radius: 50%;
+  min-width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  padding: 0;
 }
 
 /* 操作弹层样式 */
