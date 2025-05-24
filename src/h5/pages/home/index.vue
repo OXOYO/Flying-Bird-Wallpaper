@@ -59,7 +59,10 @@ const autoSwitch = reactive({
 // 收藏双击相关状态
 const favoriteClick = reactive({
   lastClickTime: 0,
-  timer: null
+  timer: null,
+  startTime: 0,
+  startX: 0,
+  startY: 0
 })
 
 // 长按相关状态
@@ -121,6 +124,7 @@ const init = async () => {
   initFavoriteClick()
   initLongPress()
   initFavoriteHold()
+  initImageTouch()
 
   const h5AutoSwitch = settingData.value.h5AutoSwitch
   stopAutoSwitch()
@@ -178,6 +182,14 @@ const initFavoriteHold = () => {
   favoriteHold.interval = null
 }
 
+// 初始化图片触摸状态
+const initImageTouch = () => {
+  imageTouch.lastTapTime = 0
+  imageTouch.startX = 0
+  imageTouch.startY = 0
+  imageTouch.timer = null
+}
+
 // 加载更多图片
 const onLoad = async () => {
   if (flags.finished || !autoSwitch.imageList.length) return
@@ -214,12 +226,15 @@ const loadData = async (isRefresh) => {
 
   const res = await api.searchImages(payload)
   if (res?.success && res?.data?.list.length > 0) {
+    const width = imageSliderRef.value.clientWidth
     autoSwitch.imageList = (
       isRefresh ? res.data.list : [...autoSwitch.imageList, ...res.data.list]
     ).map((item) => {
+      const rawUrl = `/api/images/get?filePath=${encodeURIComponent(item.filePath)}`
       return {
         ...item,
-        url: `/api/images/get?src=${encodeURIComponent(item.filePath)}`
+        rawUrl,
+        src: `${rawUrl}&w=${width}`
       }
     })
     if (res.data.list.length < pageInfo.pageSize) {
@@ -456,43 +471,19 @@ const changeSwitchIntervalTime = async () => {
   }
 }
 
-// 处理收藏按钮点击
-const handleFavoriteClick = async () => {
-  const currentTime = new Date().getTime()
-  const timeDiff = currentTime - favoriteClick.lastClickTime
-
-  // 清除任何现有的定时器
-  if (favoriteClick.timer) {
-    clearTimeout(favoriteClick.timer)
-    favoriteClick.timer = null
-  }
-
-  if (timeDiff < 300) {
-    // 双击 - 取消收藏
-    await onRemoveFavorites()
-    favoriteClick.lastClickTime = 0 // 重置点击时间
-  } else {
-    // 第一次点击 - 设置定时器等待可能的第二次点击
-    favoriteClick.lastClickTime = currentTime
-    favoriteClick.timer = setTimeout(async () => {
-      // 如果没有第二次点击，执行单击操作（添加收藏）
-      await onAddToFavorites()
-      favoriteClick.timer = null
-    }, 300)
-  }
-}
-
-// 开始长按收藏按钮
-const startFavoriteHold = (event) => {
-  // 防止触发其他事件
-  event.preventDefault()
-
-  // 重置计数
-  favoriteHold.count = 0
-  flags.isFavoriteHolding = true
+// 处理收藏按钮触摸事件
+const handleFavoriteTouchStart = (event) => {
+  // 记录触摸开始时间和位置
+  favoriteClick.startTime = new Date().getTime()
+  favoriteClick.startX = event.touches[0].clientX
+  favoriteClick.startY = event.touches[0].clientY
 
   // 设置长按定时器
   favoriteHold.timer = setTimeout(() => {
+    // 标记为长按状态
+    flags.isFavoriteHolding = true
+    // 重置计数
+    favoriteHold.count = 0
     // 长按开始后，启动计数间隔
     favoriteHold.interval = setInterval(() => {
       // 添加最大值限制
@@ -512,17 +503,40 @@ const startFavoriteHold = (event) => {
   }, 800) // 800毫秒后开始计数
 }
 
-// 结束长按收藏按钮
-const endFavoriteHold = async () => {
-  // 清除定时器
+const handleFavoriteTouchMove = (event) => {
+  // 如果手指移动超过一定距离，取消所有操作
+  const moveX = event.touches[0].clientX - favoriteClick.startX
+  const moveY = event.touches[0].clientY - favoriteClick.startY
+  const moveDistance = Math.sqrt(moveX * moveX + moveY * moveY)
+
+  if (moveDistance > 10) {
+    // 10像素的移动阈值
+    // 清除长按定时器
+    if (favoriteHold.timer) {
+      clearTimeout(favoriteHold.timer)
+      favoriteHold.timer = null
+    }
+
+    // 清除长按计数间隔
+    if (favoriteHold.interval) {
+      clearInterval(favoriteHold.interval)
+      favoriteHold.interval = null
+    }
+
+    // 重置状态
+    flags.isFavoriteHolding = false
+    favoriteHold.count = 0
+  }
+}
+
+const handleFavoriteTouchEnd = async () => {
+  // 计算触摸持续时间
+  const touchDuration = new Date().getTime() - favoriteClick.startTime
+
+  // 清除长按定时器
   if (favoriteHold.timer) {
     clearTimeout(favoriteHold.timer)
     favoriteHold.timer = null
-  }
-
-  if (favoriteHold.interval) {
-    clearInterval(favoriteHold.interval)
-    favoriteHold.interval = null
   }
 
   // 如果是长按状态且计数大于0，则更新收藏数据
@@ -535,11 +549,44 @@ const endFavoriteHold = async () => {
       currentImage.favoriteCount = (currentImage.favoriteCount || 0) + favoriteHold.count
       currentImage.isFavorite = true
     }
+
+    // 清除长按计数间隔
+    if (favoriteHold.interval) {
+      clearInterval(favoriteHold.interval)
+      favoriteHold.interval = null
+    }
+
+    // 重置状态
+    flags.isFavoriteHolding = false
+    favoriteHold.count = 0
+    return
   }
 
-  // 重置状态
-  flags.isFavoriteHolding = false
-  favoriteHold.count = 0
+  // 如果不是长按，且触摸时间小于300ms，则处理点击
+  if (touchDuration < 300) {
+    const currentTime = new Date().getTime()
+    const timeDiff = currentTime - favoriteClick.lastClickTime
+
+    // 清除任何现有的定时器
+    if (favoriteClick.timer) {
+      clearTimeout(favoriteClick.timer)
+      favoriteClick.timer = null
+    }
+
+    if (timeDiff < 300) {
+      // 双击 - 取消收藏
+      await onRemoveFavorites()
+      favoriteClick.lastClickTime = 0 // 重置点击时间
+    } else {
+      // 第一次点击 - 设置定时器等待可能的第二次点击
+      favoriteClick.lastClickTime = currentTime
+      favoriteClick.timer = setTimeout(async () => {
+        // 如果没有第二次点击，执行单击操作（添加收藏）
+        await onAddToFavorites()
+        favoriteClick.timer = null
+      }, 300)
+    }
+  }
 }
 
 // 单击加入收藏
@@ -599,7 +646,7 @@ const onPreviewImage = async (index) => {
   // 关闭自动翻页
   stopAutoSwitch()
   showImagePreview({
-    images: autoSwitch.imageList.map((item) => item.url),
+    images: autoSwitch.imageList.map((item) => item.rawUrl),
     startPosition: index,
     maxZoom: 100,
     minZoom: 1 / 3
@@ -607,10 +654,19 @@ const onPreviewImage = async (index) => {
   vibrate()
 }
 
-// 长按开始
-const onLongPressStart = (index, event) => {
-  // 防止触发其他事件
-  event.preventDefault()
+// 图片项触摸相关状态
+const imageTouch = reactive({
+  lastTapTime: 0,
+  startX: 0,
+  startY: 0,
+  timer: null
+})
+
+// 图片项触摸开始 - 统一处理函数
+const handleImageTouchStart = (index, event) => {
+  // 记录触摸开始时间和位置
+  imageTouch.startX = event.touches[0].clientX
+  imageTouch.startY = event.touches[0].clientY
 
   // 设置长按定时器
   longPress.timer = setTimeout(() => {
@@ -620,11 +676,66 @@ const onLongPressStart = (index, event) => {
   }, 500) // 500毫秒长按触发
 }
 
-// 长按结束
-const onLongPressEnd = () => {
+// 图片项触摸移动 - 统一处理函数
+const handleImageTouchMove = (event) => {
+  // 计算移动距离
+  const moveX = event.touches[0].clientX - imageTouch.startX
+  const moveY = event.touches[0].clientY - imageTouch.startY
+  const moveDistance = Math.sqrt(moveX * moveX + moveY * moveY)
+
+  // 如果移动距离超过阈值，取消长按和双击操作
+  if (moveDistance > 10) {
+    // 清除长按定时器
+    if (longPress.timer) {
+      clearTimeout(longPress.timer)
+      longPress.timer = null
+    }
+
+    // 清除双击定时器
+    if (imageTouch.timer) {
+      clearTimeout(imageTouch.timer)
+      imageTouch.timer = null
+    }
+  }
+}
+
+// 图片项触摸结束 - 统一处理函数
+const handleImageTouchEnd = (index, event) => {
+  // 清除长按定时器
   if (longPress.timer) {
     clearTimeout(longPress.timer)
     longPress.timer = null
+  }
+
+  // 计算移动距离
+  const moveX = event.changedTouches[0].clientX - imageTouch.startX
+  const moveY = event.changedTouches[0].clientY - imageTouch.startY
+  const moveDistance = Math.sqrt(moveX * moveX + moveY * moveY)
+
+  // 只有在移动距离很小的情况下才处理点击/双击事件
+  if (moveDistance < 10) {
+    // 计算触摸持续时间
+    const currentTime = new Date().getTime()
+    const timeDiff = currentTime - imageTouch.lastTapTime
+
+    // 检查是否是双击（两次点击间隔小于300ms）
+    if (timeDiff < 300) {
+      // 双击 - 预览图片
+      onPreviewImage(index)
+      imageTouch.lastTapTime = 0 // 重置点击时间
+
+      // 清除任何现有的定时器
+      if (imageTouch.timer) {
+        clearTimeout(imageTouch.timer)
+        imageTouch.timer = null
+      }
+
+      // 注意：不要阻止事件冒泡，这样滑动容器也能接收到事件
+      // event.stopPropagation()
+    } else {
+      // 第一次点击 - 记录时间，等待可能的第二次点击
+      imageTouch.lastTapTime = currentTime
+    }
   }
 }
 
@@ -639,7 +750,7 @@ const saveImage = async () => {
 
     // 设置下载链接为图片URL
     // 注意：如果图片URL是相对路径，需要转换为绝对路径
-    link.href = currentImage.url
+    link.href = currentImage.rawUrl
 
     // 从URL中提取文件名，或者使用自定义文件名
     const fileName = currentImage.filePath.split('/').pop() || `image-${Date.now()}.jpg`
@@ -825,13 +936,12 @@ const handlePageShow = () => {}
           <div
             v-for="(item, index) in autoSwitch.imageList"
             :key="item.id"
-            v-lazy:background-image="item.url"
+            v-lazy:background-image="item.src"
             class="image-item"
             :style="imageItemStyle"
-            @dblclick="onPreviewImage(index)"
-            @touchstart="(e) => onLongPressStart(index, e)"
-            @touchend="onLongPressEnd"
-            @touchmove="onLongPressEnd"
+            @touchstart="(e) => handleImageTouchStart(index, e)"
+            @touchmove="handleImageTouchMove"
+            @touchend="(e) => handleImageTouchEnd(index, e)"
           ></div>
         </van-list>
       </div>
@@ -879,14 +989,13 @@ const handlePageShow = () => {}
     <div
       v-if="settingData.h5EnabledFloatingButtons.includes('favorites')"
       class="floating-button"
-      @click="handleFavoriteClick"
-      @touchstart="startFavoriteHold"
-      @touchend="endFavoriteHold"
-      @touchmove="endFavoriteHold"
+      @touchstart="handleFavoriteTouchStart"
+      @touchmove="handleFavoriteTouchMove"
+      @touchend="handleFavoriteTouchEnd"
     >
       <IconifyIcon
         class="floating-button-icon"
-        :icon="currentImage?.isFavorite ? 'ri:star-fill' : 'ri:star-line'"
+        :icon="isFavorite ? 'ri:star-fill' : 'ri:star-line'"
         :style="{ color: isFavorite ? 'gold' : '' }"
       />
       <span v-if="flags.isFavoriteHolding && favoriteHold.count > 0" class="favorite-count"

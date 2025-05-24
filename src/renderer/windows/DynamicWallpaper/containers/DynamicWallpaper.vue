@@ -18,7 +18,7 @@ const handleSetVideoSource = (event, source) => {
     if (!source.startsWith('fbwtp://') && !source.startsWith('http')) {
       // 替换反斜杠为正斜杠，并确保路径格式正确
       const formattedPath = source.replace(/\\/g, '/')
-      videoSrc.value = `fbwtp://${formattedPath}`
+      videoSrc.value = `fbwtp://fbw/api/videos/get?filePath=${formattedPath}`
     } else {
       videoSrc.value = source
     }

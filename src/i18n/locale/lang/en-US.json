@@ -378,6 +378,9 @@
     "wordFilter": {
       "placeholder": "Filter keywords"
     },
+    "tagItem": {
+      "favorited": "Favorited"
+    },
     "totalText": "Total {current} / {total} items"
   },
   "autoRefreshList": {

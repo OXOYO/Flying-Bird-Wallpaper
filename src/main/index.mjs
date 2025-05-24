@@ -1,5 +1,4 @@
 import path from 'path'
-import fs from 'fs'
 import {
   app,
   Tray,
@@ -17,7 +16,6 @@ import {
 import { electronApp, optimizer } from '@electron-toolkit/utils'
 import installExtension, { VUEJS3_DEVTOOLS } from 'electron-devtools-installer'
 import localShortcut from 'electron-localshortcut'
-import sharp from 'sharp'
 import logger from './logger.mjs'
 import Store from './store/index.mjs'
 import {
@@ -33,12 +31,13 @@ import {
   calculateImageOrientation,
   calculateImageQuality
 } from './utils/utils.mjs'
+import { handleFileRsponse } from './utils/file.mjs'
 import ApiBase from './ApiBase.js'
 import setDynamicWallpaper from './utils/setDynamicWallpaper.mjs'
 // import setMacDynamicWallpaper from './utils/setMacDynamicWallpaper.mjs'
 import { t } from '../i18n/server.js'
 import cache from './cache.mjs'
-import { menuList, mimeTypes } from '../common/publicData'
+import { menuList } from '../common/publicData'
 import axios from 'axios'
 import Updater from './updater.mjs'
 import { appInfo } from '../common/config.js'
@@ -845,106 +844,29 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
   // 处理自定义协议
   const handleProtocol = () => {
     protocol.handle('fbwtp', async (request) => {
-      let T1, T2, T3, T4
-      T1 = Date.now()
+      const url = new URL(request.url)
+      switch (url.pathname) {
+        // 处理图片请求
+        case '/api/images/get': {
+          const filePath = url.searchParams.get('filePath')
+          const w = url.searchParams.get('w')
+          const h = url.searchParams.get('h')
 
-      // 使用不带query的url作为缓存的key
-      const [cacheKey, queryStr] = request.url.split('?')
-      let url = cacheKey.replace(/^fbwtp:\/\//, '') // 去除自定义协议前缀
-      // 处理 Windows 上的绝对路径（例如 'E:/xx/yy'）
-      if (process.platform === 'win32') {
-        url = url.replace(/\//g, '\\') // 将所有斜杠替换为反斜杠
-        // 修复丢失的冒号（:），假设路径是 e\xx\yy 应该是 e:\xx\yy
-        url = url.replace(/^([a-zA-Z])\\/, '$1:\\') // 在盘符后面补上冒号
-      } else {
-        // macOS 和 Linux 确保是绝对路径
-        if (!url.startsWith('/')) {
-          url = '/' + url
-        }
-      }
-
-      const filePath = decodeURIComponent(url)
-      // 获取宽高参数，例如 "w=800&h=600"
-      const query = new URLSearchParams(queryStr)
-      const w = query.get('w')
-      // 定义默认图片尺寸
-      const width = w ? parseInt(w, 10) : null
-      try {
-        // 检查缓存
-        if (cache.has(cacheKey)) {
-          const cacheData = cache.get(cacheKey)
-          // 返回文件内容和 MIME 类型
-          return new Response(cacheData.data, {
-            status: 200,
-            headers: {
-              ...cacheData.headers,
-              'Server-Timing': `cache-hit;dur=${Date.now() - T1}`
-            }
+          const res = await handleFileRsponse({ filePath, w, h })
+          return new Response(res.data, {
+            status: res.status,
+            headers: res.headers
           })
         }
-        T2 = Date.now()
+        case '/api/videos/get': {
+          const filePath = url.searchParams.get('filePath')
 
-        const stats = await fs.promises.stat(filePath) // 获取文件大小
-        const originalFileSize = stats.size
-        const extension = path.extname(filePath).toLowerCase()
-        const mimeType = mimeTypes[extension] || 'application/octet-stream'
-        T3 = Date.now()
-
-        // 读取文件并处理
-        let fileBuffer
-        // 只对图片进行调整大小，视频文件直接读取
-        // 文件大小超过指定大小才进行调整，单位bytes
-        const limitSize = 5 * 1024 * 1024
-        if (
-          ['.png', '.jpg', '.jpeg', '.avif', '.webp', '.gif'].includes(extension) &&
-          width &&
-          originalFileSize > limitSize
-        ) {
-          fileBuffer = await sharp(filePath)
-            .resize({
-              width,
-              fit: 'inside', // 保持宽高比
-              withoutEnlargement: true, // 避免放大小图片
-              kernel: 'lanczos3', // 使用最好的缩放算法
-              fastShrinkOnLoad: true // 启用快速缩小
-            })
-            .toBuffer()
-        } else {
-          fileBuffer = await fs.promises.readFile(filePath)
+          const res = await handleFileRsponse({ filePath })
+          return new Response(res.data, {
+            status: res.status,
+            headers: res.headers
+          })
         }
-        const fileSize = fileBuffer.length.toString()
-        T4 = Date.now()
-
-        const headers = {
-          'Accept-Ranges': 'bytes',
-          'Content-Type': mimeType,
-          'Original-Size': originalFileSize,
-          'Content-Length': fileSize,
-          'Compressed-Size': fileSize,
-          'Cache-Control': 'max-age=3600',
-          ETag: `"${stats.mtimeMs}-${originalFileSize}"`,
-          'Last-Modified': stats.mtime.toUTCString(),
-          'Server-Timing': `file-check;dur=${T2 - T1}, file-stat;dur=${T3 - T2}, resize;dur=${T4 - T3}, total;dur=${T4 - T1}`,
-          'X-File-Check-Time': T2 - T1 + 'ms',
-          'X-File-Stat-Time': T3 - T2 + 'ms',
-          'X-Resize-Time': T4 - T3 + 'ms',
-          'X-Total-Time': T4 - T1 + 'ms'
-        }
-        // 缓存文件内容
-        cache.set(cacheKey, {
-          data: fileBuffer,
-          headers
-        })
-        // 返回文件内容
-        return new Response(fileBuffer, {
-          status: 200,
-          headers
-        })
-      } catch (err) {
-        global.logger.error(
-          `File not found: url => ${url}, filePath => ${filePath}, error => ${err}`
-        )
-        return new Response('', { status: 404 })
       }
     })
   }
@@ -1290,7 +1212,7 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
         return { success: result, msg: result ? '关闭动态壁纸成功' : '没有正在运行的动态壁纸' }
       })
 
-      // 处理fbwtp://协议
+      // 处理自定义协议
       handleProtocol()
       // 初始化Store
       store = new Store({

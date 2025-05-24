@@ -376,16 +376,24 @@ onBeforeUnmount(() => {
               href="#divider-localResource"
               :title="t('pages.Setting.divider.localResource')"
             />
-            <el-anchor-link
-              class="anchor-sub-link"
-              href="#divider-webResource"
-              :title="t('pages.Setting.divider.webResource')"
-            />
-            <el-anchor-link
-              class="anchor-sub-link"
-              href="#divider-dynamicWallpaper"
-              :title="t('pages.Setting.divider.dynamicWallpaper')"
-            />
+            <el-anchor-link class="anchor-sub-link" href="#divider-webResource">
+              <span style="vertical-align: middle">{{
+                t('pages.Setting.divider.webResource')
+              }}</span>
+              <IconifyIcon
+                icon="material-symbols:experiment-outline-sharp"
+                style="vertical-align: middle"
+              />
+            </el-anchor-link>
+            <el-anchor-link class="anchor-sub-link" href="#divider-dynamicWallpaper">
+              <span style="vertical-align: middle">{{
+                t('pages.Setting.divider.dynamicWallpaper')
+              }}</span>
+              <IconifyIcon
+                icon="material-symbols:experiment-outline-sharp"
+                style="vertical-align: middle"
+              />
+            </el-anchor-link>
             <el-anchor-link
               class="anchor-sub-link"
               href="#divider-remoteResource"
@@ -721,11 +729,17 @@ onBeforeUnmount(() => {
               />
             </el-form-item>
             <div id="divider-webResource" class="divider-sub">
-              {{ t('pages.Setting.divider.webResource') }}
+              <span style="vertical-align: middle">{{
+                t('pages.Setting.divider.webResource')
+              }}</span>
+              <IconifyIcon
+                icon="material-symbols:experiment-outline-sharp"
+                style="vertical-align: middle"
+              />
             </div>
             <el-form-item
               :label="t('pages.Setting.settingDataForm.webWallpaperUrl.label')"
-              prop="filterKeywords"
+              prop="webWallpaperUrl"
             >
               <el-input
                 v-model="settingDataForm.webWallpaperUrl"
@@ -747,7 +761,13 @@ onBeforeUnmount(() => {
               </el-input>
             </el-form-item>
             <div id="divider-dynamicWallpaper" class="divider-sub">
-              {{ t('pages.Setting.divider.dynamicWallpaper') }}
+              <span style="vertical-align: middle">{{
+                t('pages.Setting.divider.dynamicWallpaper')
+              }}</span>
+              <IconifyIcon
+                icon="material-symbols:experiment-outline-sharp"
+                style="vertical-align: middle"
+              />
             </div>
             <el-form-item
               :label="t('pages.Setting.settingDataForm.dynamicAutoPlayOnStartup')"

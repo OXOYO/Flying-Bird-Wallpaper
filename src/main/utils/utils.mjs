@@ -92,7 +92,6 @@ export const readDirRecursive = async (
   }
   // 检查缓存是否存在且有效
   const cacheKey = `${dirPath}_${allowedFileExt.join('_')}`
-  echoDebugLog(`[${new Date().toISOString()}] 读取目录: ${cacheKey}`)
   // 检查缓存是否存在且有效
   if (fsCache.directories[cacheKey] && Date.now() - fsCache.lastUpdate < fsCache.ttl) {
     // 使用缓存数据，但仍然进行增量更新检查
@@ -100,7 +99,6 @@ export const readDirRecursive = async (
 
     // 如果没有现有文件信息，直接返回缓存
     if (!existingFiles || existingFiles.length === 0) {
-      echoDebugLog(`[FileServer] 缓存数据直接返回: ${cacheKey}`)
       return cachedFiles
     }
 
@@ -116,11 +114,9 @@ export const readDirRecursive = async (
       const existingFile = existingFilesMap.get(file.filePath)
       return !existingFile || file.mtimeMs > existingFile.mtimeMs
     })
-    echoDebugLog(`[FileServer] 缓存数据增量更新: ${cacheKey}`)
     return ret
   }
   cacheTime.end = Date.now()
-  echoDebugLog(`[FileServer] 读取目录耗时: ${cacheTime.end - cacheTime.start}ms`)
 
   const existingTime = {
     start: Date.now(),
@@ -134,7 +130,6 @@ export const readDirRecursive = async (
     }
   }
   existingTime.end = Date.now()
-  echoDebugLog(`[FileServer] 过滤现有文件耗时: ${existingTime.end - existingTime.start}ms`)
 
   const patternsTime = {
     start: Date.now(),
@@ -150,7 +145,6 @@ export const readDirRecursive = async (
     followSymbolicLinks: false
   })
   patternsTime.end = Date.now()
-  echoDebugLog(`[FileServer] 构建 patterns 耗时: ${patternsTime.end - patternsTime.start}ms`)
 
   const fileTime = {
     start: Date.now(),
@@ -168,13 +162,11 @@ export const readDirRecursive = async (
           fileExt: path.extname(filePath).toLowerCase()
         }
       } catch (err) {
-        console.error(`获取文件状态失败: ${filePath}`, err)
         return null
       }
     })
   )
   fileTime.end = Date.now()
-  echoDebugLog(`[FileServer] 批量获取文件状态耗时: ${fileTime.end - fileTime.start}ms`)
 
   const filterTime = {
     start: Date.now(),
@@ -189,7 +181,6 @@ export const readDirRecursive = async (
     return !existingFile || file.stats.mtimeMs > existingFile.mtimeMs
   })
   filterTime.end = Date.now()
-  echoDebugLog(`[FileServer] 过滤需要处理的文件耗时: ${filterTime.end - filterTime.start}ms`)
 
   const imageTime = {
     start: Date.now(),
@@ -222,7 +213,6 @@ export const readDirRecursive = async (
     })
   )
   imageTime.end = Date.now()
-  echoDebugLog(`[FileServer] 批量处理文件元数据耗时: ${imageTime.end - imageTime.start}ms`)
 
   // 过滤掉处理失败的文件
   const validImageFiles = imageFiles.filter(Boolean)

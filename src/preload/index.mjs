@@ -169,7 +169,6 @@ const api = {
   checkPrivacyPassword: (...args) => ipcRenderer.invoke('main:checkPrivacyPassword', ...args),
   hasPrivacyPassword: (...args) => ipcRenderer.invoke('main:hasPrivacyPassword', ...args),
   updatePrivacyPassword: (...args) => ipcRenderer.invoke('main:updatePrivacyPassword', ...args),
-  getNextList: (...args) => ipcRenderer.invoke('main:getNextList', ...args),
   searchImages: (...args) => ipcRenderer.invoke('main:searchImages', ...args),
   setAsWallpaperWithDownload: (...args) =>
     ipcRenderer.invoke('main:setAsWallpaperWithDownload', ...args),

@@ -120,21 +120,6 @@ export default async function setupSocketIO(io, { t, logger, postMessage }) {
       }
     })
 
-    // 获取下一页图片
-    socket.on('getNextList', async (params, callback) => {
-      try {
-        const res = await wallpaperManager.getNextList(params)
-        safeCallback(callback, res)
-      } catch (err) {
-        logger.error(`获取下一页图片错误: ${err}`)
-        safeCallback(callback, {
-          success: false,
-          data: null,
-          msg: t('messages.operationFail')
-        })
-      }
-    })
-
     // 切换收藏状态
     socket.on('toggleFavorite', async (id, callback) => {
       try {

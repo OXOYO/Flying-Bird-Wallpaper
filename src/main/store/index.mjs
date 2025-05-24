@@ -560,11 +560,6 @@ export default class Store {
       return await this.wallpaperManager.searchImages(params)
     })
 
-    // 查询图库数据
-    ipcMain.handle('main:getNextList', async (event, params) => {
-      return await this.wallpaperManager.getNextList(params)
-    })
-
     // 设置为壁纸
     ipcMain.handle('main:setAsWallpaperWithDownload', async (event, item) => {
       return await this.wallpaperManager.setAsWallpaperWithDownload(item)

@@ -491,9 +491,9 @@ export default class WallpaperManager {
 
     try {
       // 处理不同的 srcType
-      if (item.srcType === 'file' || (item.src && item.src.startsWith('fbwtp://'))) {
+      if (item.srcType === 'file' && item.filePath) {
         // 处理本地文件
-        const filePath = item.filePath || item.src.replace('fbwtp://', '')
+        const filePath = item.filePath
         const query_stmt = this.db.prepare(`SELECT * FROM fbw_resources WHERE filePath = ?`)
         const query_result = query_stmt.get(filePath)
 
@@ -505,7 +505,7 @@ export default class WallpaperManager {
             msg: t('messages.fileNotExist')
           }
         }
-      } else if (item.srcType === 'url') {
+      } else if (item.srcType === 'url' && item.url) {
         // 下载壁纸
         const { downloadFolder } = this.settingData
         if (!downloadFolder || !fs.existsSync(downloadFolder)) {
@@ -527,12 +527,6 @@ export default class WallpaperManager {
           // 文件已存在，取消写入
           this.logger.warn(`文件 ${filePath} 已存在，跳过写入`)
         } else {
-          if (!item.url) {
-            return {
-              success: false,
-              msg: t('messages.paramsError')
-            }
-          }
           // 下载文件
           const response = await axios({
             method: 'GET',
@@ -738,7 +732,6 @@ export default class WallpaperManager {
           ret.data.list = query_result.map((item) => {
             return {
               ...item,
-              src: `fbwtp://${item.filePath}`,
               srcType: 'file',
               uniqueKey: uuidv4()
             }
@@ -788,7 +781,6 @@ export default class WallpaperManager {
             ret.data.list = res.list.map((item) => {
               return {
                 ...item,
-                src: item.url,
                 srcType: 'url',
                 uniqueKey: uuidv4()
               }
@@ -946,103 +938,6 @@ export default class WallpaperManager {
       this.logger.error(`搜索并下载壁纸失败: error => ${err}`)
       return ret
     }
-  }
-
-  // 获取下一页列表
-  async getNextList(params = {}) {
-    const {
-      resourceName = 'resources',
-      startPage,
-      pageSize,
-      isRandom = false,
-      sortType = -1
-    } = params
-    // FIXME 排序字段固定
-    const sortField = 'created_at'
-    const sortOrder = sortType > 0 ? 'ASC' : 'DESC'
-
-    let ret = {
-      success: false,
-      msg: t('messages.operationFail'),
-      data: {
-        list: [],
-        total: 0,
-        startPage,
-        pageSize
-      }
-    }
-
-    try {
-      if (resourceName && startPage >= 1 && pageSize > 0) {
-        let query_result
-        let count_sql
-        if (['favorites', 'privacy_space', 'history'].includes(resourceName)) {
-          let query_where_str = ''
-          if (resourceName === 'favorites') {
-            // 添加 NOT EXISTS 条件排除隐私表中的数据
-            query_where_str =
-              'WHERE NOT EXISTS (SELECT 1 FROM fbw_privacy_space p WHERE p.resourceId = r.id)'
-          }
-          const order_by_str = isRandom
-            ? 'ORDER BY RANDOM()'
-            : `ORDER BY s.${sortField} ${sortOrder}`
-
-          const query_stmt = this.db.prepare(`
-              SELECT
-              r.*,
-                (SELECT COUNT(*) FROM fbw_favorites f WHERE f.resourceId = r.id) AS isFavorite
-              FROM fbw_${resourceName} s
-              JOIN fbw_resources r ON s.resourceId = r.id
-              ${query_where_str}
-              ${order_by_str}
-              LIMIT ? OFFSET ?
-            `)
-          query_result = query_stmt.all(pageSize, (startPage - 1) * pageSize)
-          count_sql = `SELECT COUNT(*) AS total FROM fbw_${resourceName} s JOIN fbw_resources r ON s.resourceId = r.id ${query_where_str}`
-        } else {
-          const order_by_str = isRandom
-            ? 'ORDER BY RANDOM()'
-            : `ORDER BY r.${sortField} ${sortOrder}`
-
-          const query_stmt = this.db.prepare(`
-              SELECT
-              r.*,
-                (SELECT COUNT(*) FROM fbw_favorites f WHERE f.resourceId = r.id) AS isFavorite
-              FROM fbw_resources r
-              WHERE r.resourceName = '${resourceName}'
-              ${order_by_str}
-              LIMIT ? OFFSET ?
-            `)
-          query_result = query_stmt.all(pageSize, (startPage - 1) * pageSize)
-          count_sql = `SELECT COUNT(*) AS total FROM fbw_resources WHERE resourceName = '${resourceName}'`
-        }
-        if (Array.isArray(query_result) && query_result.length) {
-          ret.data.list = query_result.map((item) => {
-            return {
-              ...item,
-              src: `fbwtp://${item.filePath}`,
-              srcType: 'file',
-              uniqueKey: uuidv4()
-            }
-          })
-          if (count_sql) {
-            const count_stmt = this.db.prepare(count_sql)
-            const count_result = count_stmt.get()
-            if (count_result && count_result.total) {
-              ret.data.total = count_result.total
-            }
-          }
-        }
-        ret.success = true
-        ret.msg = t(ret.data.list.length ? 'messages.querySuccess' : 'messages.queryEmpty')
-      } else {
-        ret.msg = t('messages.paramsError')
-      }
-    } catch (err) {
-      this.logger.error(`获取列表失败: error => ${err}`)
-    }
-
-    return ret
   }
 
   // 下载壁纸

@@ -378,6 +378,9 @@
     "wordFilter": {
       "placeholder": "请输入关键词"
     },
+    "tagItem": {
+      "favorited": "已收藏"
+    },
     "totalText": "共 {current} / {total} 条"
   },
   "autoRefreshList": {

@@ -86,14 +86,14 @@ const cardBlockStyle = computed(() => {
 })
 
 const imgUrlQuery = computed(() => {
-  let query = ''
+  let query = {}
   // 固定宽高
   const w = 1080
   const h = Math.floor(w * gridForm.gridHWRatio)
   if (searchForm.resourceType === 'localResource') {
-    query = `?w=${w}`
+    query = { w }
   } else {
-    query = `?w=${w}&h=${h}`
+    query = { w, h }
   }
   return query
 })
@@ -866,6 +866,24 @@ const getNextList = async () => {
         const list = res.data.list
           .filter((item) => !ids.includes(item.uniqueKey))
           .map((item) => {
+            // 处理图片路径
+            let rawUrl
+            if (item.srcType === 'file') {
+              rawUrl = item.rawUrl = `fbwtp://fbw/api/images/get?filePath=${item.filePath}`
+            } else if (item.srcType === 'url') {
+              rawUrl = item.rawUrl = item.url
+            }
+            if (rawUrl) {
+              const url = new URL(rawUrl)
+              Object.keys(imgUrlQuery.value).forEach((key) => {
+                url.searchParams.set(key, imgUrlQuery.value[key])
+              })
+              item.src = url.toString()
+            } else {
+              item.src = ''
+            }
+
+            // 处理颜色
             item.dominantColorRgb = hexToRGB(item.dominantColor)
             return item
           })
@@ -1484,12 +1502,21 @@ onBeforeUnmount(() => {
                 >
                   <IconifyIcon icon="material-symbols:crop-portrait-outline" />
                 </div>
+                <!-- 收藏 -->
+                <div
+                  v-if="item.isFavorite"
+                  class="tag-item"
+                  :title="t('exploreCommon.tagItem.favorited')"
+                  style="cursor: not-allowed"
+                >
+                  <IconifyIcon icon="ep:star-filled" />
+                </div>
               </div>
               <div class="card-item-image-wrapper">
                 <!-- 高清图 -->
                 <el-image
                   class="card-item-image"
-                  :src="`${item.src}${imgUrlQuery}`"
+                  :src="item.src"
                   loading="lazy"
                   lazy
                   fit="cover"

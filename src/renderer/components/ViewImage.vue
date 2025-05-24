@@ -87,9 +87,6 @@ const createGallery = () => {
     ...props.options,
     container: galleryContainer.value,
     className: 'gallery-viewer-container',
-    url(image) {
-      return image.src.split('?')[0]
-    },
     view: ({ detail }) => {
       const { index } = detail
       if (flags.loading) {
@@ -199,7 +196,7 @@ defineExpose({
 <template>
   <div v-if="flags.visible" class="view-image-wrapper">
     <div ref="imagesContainer" class="images-container">
-      <img v-for="item in imageList" :key="item.uniqueKey" :src="item.src + '?size=100'" />
+      <img v-for="item in imageList" :key="item.uniqueKey" :src="item.rawUrl" />
     </div>
     <div ref="galleryContainer" class="gallery-container"></div>
   </div>

@@ -17,10 +17,6 @@ export const searchImages = async (data) => {
   return await emitAsync('searchImages', data)
 }
 
-export const getNextList = async (params) => {
-  return await emitAsync('getNextList', params)
-}
-
 export const toggleFavorite = async (id) => {
   return await emitAsync('toggleFavorite', id)
 }
