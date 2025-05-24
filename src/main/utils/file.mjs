@@ -30,9 +30,10 @@ export const handleFileRsponse = async (query) => {
       }
     }
     filePath = decodeURIComponent(filePath)
-    const cacheKey = filePath
     // 定义默认图片尺寸
     const width = w ? parseInt(w, 10) : null
+    // 生成缓存键
+    const cacheKey = `filePath=${filePath}&width=${width}`
     // 检查缓存
     if (cache.has(cacheKey)) {
       const cacheData = cache.get(cacheKey)
