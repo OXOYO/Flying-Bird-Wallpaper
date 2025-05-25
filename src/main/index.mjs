@@ -1123,7 +1123,7 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
           success: true,
           data: {
             isRunning: !!dynamicWallpaperWindow,
-            videoPath: dynamicWallpaperWindow ? store.settingData?.dynamicLastVideoPath : null
+            videoPath: dynamicWallpaperWindow ? store?.settingData?.dynamicLastVideoPath : null
           }
         }
       })
@@ -1223,11 +1223,14 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
       await store.waitForInitialization()
 
       // 如果设置了自动播放动态壁纸
-      if (store.settingData?.dynamicAutoPlayOnStartup && store.settingData?.dynamicLastVideoPath) {
+      if (
+        store?.settingData?.dynamicAutoPlayOnStartup &&
+        store?.settingData?.dynamicLastVideoPath
+      ) {
         // 创建动态壁纸窗口并设置上次的视频
         const win = createDynamicWallpaperWindow()
         win.once('ready-to-show', () => {
-          win.webContents.send('main:setVideoSource', store.settingData.dynamicLastVideoPath)
+          win.webContents.send('main:setVideoSource', store?.settingData?.dynamicLastVideoPath)
         })
       }
 
