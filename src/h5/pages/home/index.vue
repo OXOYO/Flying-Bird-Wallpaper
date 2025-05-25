@@ -234,7 +234,7 @@ const loadData = async (isRefresh) => {
       return {
         ...item,
         rawUrl,
-        src: `${rawUrl}&w=${width}`
+        src: settingData.value.h5ImageCompress ? `${rawUrl}&w=${width}` : rawUrl
       }
     })
     if (res.data.list.length < pageInfo.pageSize) {

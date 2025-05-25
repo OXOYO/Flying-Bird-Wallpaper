@@ -13,6 +13,7 @@ import {
   sortTypeOptions,
   imageDisplaySizeOptions,
   h5FloatingButtonPositionOptions,
+  h5FloatingButtonsOptions,
   allowedFileExtList,
   colorList,
   dynamicPerformanceModeOptions,
@@ -405,7 +406,30 @@ onBeforeUnmount(() => {
           class="anchor-link"
           href="#divider-h5Settings"
           :title="t('pages.Setting.divider.h5Settings')"
-        />
+        >
+          <template #sub-link>
+            <el-anchor-link
+              class="anchor-sub-link"
+              href="#divider-h5SwitchSettings"
+              :title="t('pages.Setting.divider.h5SwitchSettings')"
+            />
+            <el-anchor-link
+              class="anchor-sub-link"
+              href="#divider-h5ResourcesSettings"
+              :title="t('pages.Setting.divider.h5ResourcesSettings')"
+            />
+            <el-anchor-link
+              class="anchor-sub-link"
+              href="#divider-h5DisplaySettings"
+              :title="t('pages.Setting.divider.h5DisplaySettings')"
+            />
+            <el-anchor-link
+              class="anchor-sub-link"
+              href="#divider-h5ActionSettings"
+              :title="t('pages.Setting.divider.h5ActionSettings')"
+            />
+          </template>
+        </el-anchor-link>
         <el-anchor-link
           class="anchor-link"
           href="#divider-other"
@@ -498,6 +522,7 @@ onBeforeUnmount(() => {
               />
             </el-form-item>
           </div>
+
           <div class="form-card">
             <div id="divider-wallpaper" class="divider">
               {{ t('pages.Setting.divider.wallpaper') }}
@@ -572,6 +597,7 @@ onBeforeUnmount(() => {
                 />
               </el-select>
             </el-form-item>
+
             <div id="divider-wallpaperResource" class="divider-sub">
               {{ t('pages.Setting.divider.wallpaperResource') }}
             </div>
@@ -636,6 +662,7 @@ onBeforeUnmount(() => {
               />
             </el-form-item>
           </div>
+
           <div class="form-card">
             <div id="divider-resourceSettings" class="divider">
               {{ t('pages.Setting.divider.resourceSettings') }}
@@ -680,6 +707,8 @@ onBeforeUnmount(() => {
               <el-select
                 v-model="settingDataForm.allowedFileExt"
                 multiple
+                collapse-tags
+                collapse-tags-tooltip
                 :placeholder="t('pages.Setting.settingDataForm.allowedFileExt.placeholder')"
                 style="width: 290px"
                 @change="onAllowedFileExtChange"
@@ -728,6 +757,7 @@ onBeforeUnmount(() => {
                 @change="onSettingDataFormChange"
               />
             </el-form-item>
+
             <div id="divider-webResource" class="divider-sub">
               <span style="vertical-align: middle">{{
                 t('pages.Setting.divider.webResource')
@@ -760,6 +790,7 @@ onBeforeUnmount(() => {
                 </template>
               </el-input>
             </el-form-item>
+
             <div id="divider-dynamicWallpaper" class="divider-sub">
               <span style="vertical-align: middle">{{
                 t('pages.Setting.divider.dynamicWallpaper')
@@ -1031,9 +1062,13 @@ onBeforeUnmount(() => {
               />
             </el-form-item>
           </div>
+
           <div class="form-card">
             <div id="divider-h5Settings" class="divider">
               {{ t('pages.Setting.divider.h5Settings') }}
+            </div>
+            <div id="divider-h5SwitchSettings" class="divider-sub">
+              {{ t('pages.Setting.divider.h5SwitchSettings') }}
             </div>
             <el-form-item
               :label="t('pages.Setting.settingDataForm.h5AutoSwitch')"
@@ -1087,6 +1122,24 @@ onBeforeUnmount(() => {
                   />
                 </el-select>
               </el-form-item>
+            </el-form-item>
+
+            <div id="divider-h5ResourcesSettings" class="divider-sub">
+              {{ t('pages.Setting.divider.h5ResourcesSettings') }}
+            </div>
+            <el-form-item :label="t('pages.Setting.settingDataForm.h5Resource')" prop="h5Resource">
+              <el-select
+                v-model="settingDataForm.h5Resource"
+                style="width: 290px"
+                @change="onSettingDataFormChange"
+              >
+                <el-option
+                  v-for="item in resourceMap.wallpaperResourceList"
+                  :key="item.value"
+                  :label="t(item.locale) || item.value"
+                  :value="item.value"
+                />
+              </el-select>
             </el-form-item>
             <el-form-item
               :label="t('pages.Setting.settingDataForm.h5Orientation')"
@@ -1147,6 +1200,10 @@ onBeforeUnmount(() => {
                 />
               </el-select>
             </el-form-item>
+
+            <div id="divider-h5DisplaySettings" class="divider-sub">
+              {{ t('pages.Setting.divider.h5DisplaySettings') }}
+            </div>
             <el-form-item
               :label="t('pages.Setting.settingDataForm.h5ImageDisplaySize')"
               prop="h5ImageDisplaySize"
@@ -1165,6 +1222,19 @@ onBeforeUnmount(() => {
               </el-select>
             </el-form-item>
             <el-form-item
+              :label="t('pages.Setting.settingDataForm.h5ImageCompress')"
+              prop="h5ImageCompress"
+            >
+              <el-checkbox
+                v-model="settingDataForm.h5ImageCompress"
+                @change="onSettingDataFormChange"
+              />
+            </el-form-item>
+
+            <div id="divider-h5ActionSettings" class="divider-sub">
+              {{ t('pages.Setting.divider.h5ActionSettings') }}
+            </div>
+            <el-form-item
               :label="t('pages.Setting.settingDataForm.h5FloatingButtonPosition')"
               prop="h5FloatingButtonPosition"
             >
@@ -1182,7 +1252,31 @@ onBeforeUnmount(() => {
                 </el-radio>
               </el-radio-group>
             </el-form-item>
+            <el-form-item
+              :label="t('pages.Setting.settingDataForm.h5EnabledFloatingButtons.label')"
+              prop="h5EnabledFloatingButtons"
+            >
+              <el-select
+                v-model="settingDataForm.h5EnabledFloatingButtons"
+                multiple
+                collapse-tags
+                collapse-tags-tooltip
+                :placeholder="
+                  t('pages.Setting.settingDataForm.h5EnabledFloatingButtons.placeholder')
+                "
+                style="width: 290px"
+                @change="onSettingDataFormChange"
+              >
+                <el-option
+                  v-for="item in h5FloatingButtonsOptions"
+                  :key="item.value"
+                  :label="t(item.locale)"
+                  :value="item.value"
+                />
+              </el-select>
+            </el-form-item>
           </div>
+
           <div class="form-card">
             <div id="divider-other" class="divider">{{ t('pages.Setting.divider.other') }}</div>
             <el-form-item :label="t('pages.Setting.settingDataForm.sortField')" prop="sortField">

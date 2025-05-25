@@ -191,6 +191,7 @@ export const defaultSettingData = {
   h5SortField: 'created_at',
   h5SortType: -1,
   h5ImageDisplaySize: 1,
+  h5ImageCompress: true,
   h5FloatingButtonPosition: 'left',
   h5EnabledFloatingButtons: [
     'autoSwitch',

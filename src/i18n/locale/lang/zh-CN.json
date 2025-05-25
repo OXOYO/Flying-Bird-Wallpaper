@@ -43,7 +43,11 @@
         "remoteResource": "远程资源",
         "other": "其他设置",
         "privacyPassword": "隐私密码",
-        "h5Settings": "H5设置"
+        "h5Settings": "H5设置",
+        "h5SwitchSettings": "H5切换设置",
+        "h5ResourcesSettings": "H5资源设置",
+        "h5DisplaySettings": "H5显示设置",
+        "h5ActionSettings": "H5操作设置"
       },
       "settingDataForm": {
         "locale": "语言",
@@ -120,12 +124,18 @@
         "h5AutoSwitch": "自动切换",
         "h5SwitchType": "切换方式",
         "h5SwitchIntervalTime": "切换间隔",
+        "h5Resource": "图片资源",
         "h5Orientation": "图片方向",
         "h5Quality": "图片质量",
         "h5SortField": "排序字段",
         "h5SortType": "排序方式",
-        "h5ImageDisplaySize": "图片显示尺寸",
-        "h5FloatingButtonPosition": "悬浮按钮位置"
+        "h5ImageDisplaySize": "显示尺寸",
+        "h5ImageCompress": "图片压缩",
+        "h5FloatingButtonPosition": "悬浮按钮位置",
+        "h5EnabledFloatingButtons": {
+          "label": "启用悬浮按钮",
+          "placeholder": "请选择悬浮按钮"
+        }
       },
       "privacyPasswordForm": {
         "old": {
@@ -445,7 +455,7 @@
       "setting": {
         "title": "设置",
         "form": {
-          "appSetting": "应用设置",
+          "appSettings": "应用设置",
           "locale": {
             "label": "语言",
             "placeholder": "请选择语言"
@@ -456,17 +466,14 @@
               "placeholder": "请选择主题色"
             }
           },
-          "imageSetting": "图片设置",
-          "imageDisplaySize": {
-            "label": "图片显示尺寸",
-            "placeholder": "请选择图片显示尺寸"
-          },
+          "switchSettings": "切换设置",
           "h5AutoSwitch": "自动切换",
           "h5SwitchType": {
             "label": "切换方式",
             "placeholder": "请选择切换方式"
           },
           "h5SwitchIntervalTime": "切换间隔",
+          "resourcesSettings": "资源设置",
           "h5Resource": {
             "label": "图片资源",
             "placeholder": "请选择资源"
@@ -487,17 +494,20 @@
             "label": "排序方式",
             "placeholder": "请选择排序方式"
           },
+          "displaySettings": "显示设置",
           "h5ImageDisplaySize": {
-            "label": "图片显示尺寸",
-            "placeholder": "请选择图片显示尺寸"
+            "label": "显示尺寸",
+            "placeholder": "请选择显示尺寸"
           },
+          "h5ImageCompress": "图片压缩",
+          "actionSettings": "操作设置",
           "h5FloatingButtonPosition": {
             "label": "悬浮按钮位置",
             "placeholder": "请选择悬浮按钮位置"
           },
           "h5EnabledFloatingButtons": {
             "label": "启用悬浮按钮",
-            "placeholder": "请选择启用的悬浮按钮"
+            "placeholder": ""
           }
         },
         "about": "关于",

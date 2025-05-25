@@ -43,7 +43,11 @@
         "remoteResource": "Remote resources",
         "other": "Other settings",
         "privacyPassword": "Privacy password",
-        "h5Settings": "H5 settings"
+        "h5Settings": "H5 settings",
+        "h5SwitchSettings": "H5 switch settings",
+        "h5ResourcesSettings": "H5 resources settings",
+        "h5DisplaySettings": "H5 display settings",
+        "h5ActionSettings": "H5 action settings"
       },
       "settingDataForm": {
         "locale": "Language",
@@ -119,13 +123,19 @@
         "enableSegmentationTask": "Enable segmentation task",
         "h5AutoSwitch": "Automatic switching",
         "h5SwitchType": "Switching mode",
+        "h5Resource": "H5 resource",
         "h5SwitchIntervalTime": "Switching interval",
         "h5Orientation": "Image orientation",
         "h5Quality": "Image quality",
         "h5SortField": "Sort field",
         "h5SortType": "Sort mode",
-        "h5ImageDisplaySize": "Image display size",
-        "h5FloatingButtonPosition": "Floating button position"
+        "h5ImageDisplaySize": "Display size",
+        "h5ImageCompress": "Image compress",
+        "h5FloatingButtonPosition": "Floating button position",
+        "h5EnabledFloatingButtons": {
+          "label": "Enabled Floating Buttons",
+          "placeholder": "Please select enabled floating buttons"
+        }
       },
       "privacyPasswordForm": {
         "old": {
@@ -445,7 +455,7 @@
       "setting": {
         "title": "Settings",
         "form": {
-          "appSetting": "App Settings",
+          "appSettings": "App Settings",
           "locale": {
             "label": "Language",
             "placeholder": "Select language"
@@ -456,17 +466,14 @@
               "placeholder": "Select theme color"
             }
           },
-          "imageSetting": "Image Settings",
-          "imageDisplaySize": {
-            "label": "Image Display Size",
-            "placeholder": "Select image display size"
-          },
+          "switchSettings": "Switch Settings",
           "h5AutoSwitch": "Auto Switch",
           "h5SwitchType": {
             "label": "Switch Mode",
             "placeholder": "Select switch mode"
           },
           "h5SwitchIntervalTime": "Switch Interval",
+          "resourcesSettings": "Resources Settings",
           "h5Resource": {
             "label": "Resource",
             "placeholder": "Select resource"
@@ -487,17 +494,20 @@
             "label": "Sort Order",
             "placeholder": "Select sort order"
           },
+          "displaySettings": "Display Settings",
           "h5ImageDisplaySize": {
-            "label": "Image Display Size",
-            "placeholder": "Select image display size"
+            "label": "Display Size",
+            "placeholder": "Select display size"
           },
+          "h5ImageCompress": "Image Compress",
+          "actionSettings": "Action Settings",
           "h5FloatingButtonPosition": {
             "label": "Floating Button Position",
             "placeholder": "Select floating button position"
           },
           "h5EnabledFloatingButtons": {
             "label": "Enabled Floating Buttons",
-            "placeholder": "Select enabled floating buttons"
+            "placeholder": ""
           }
         },
         "about": "About",

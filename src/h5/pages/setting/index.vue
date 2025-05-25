@@ -89,15 +89,13 @@ const fieldsData = computed(() => {
   let ret = {
     locale: '',
     h5SwitchType: '',
-    h5SwitchIntervalUnit: '',
     h5Resource: '',
     h5Orientation: '',
     h5Quality: '',
     h5SortField: '',
     h5SortType: '',
     h5ImageDisplaySize: '',
-    h5FloatingButtonPosition: '',
-    h5EnabledFloatingButtons: []
+    h5FloatingButtonPosition: ''
   }
   Object.keys(ret).forEach((key) => {
     const target = pickerColumns.value[key].find((item) => item.value === settingDataForm[key])
@@ -186,7 +184,7 @@ onMounted(() => {
   <div class="setting-container">
     <van-nav-bar :title="t('h5.pages.setting.title')" left-arrow @click-left="goBack" />
 
-    <van-cell-group inset :title="t('h5.pages.setting.form.appSetting')">
+    <van-cell-group inset :title="t('h5.pages.setting.form.appSettings')">
       <van-field
         v-model="fieldsData.locale"
         is-link
@@ -215,7 +213,7 @@ onMounted(() => {
       />
     </van-cell-group>
 
-    <van-cell-group inset :title="t('h5.pages.setting.form.imageSetting')">
+    <van-cell-group inset :title="t('h5.pages.setting.form.switchSettings')">
       <van-cell :title="t('h5.pages.setting.form.h5AutoSwitch')">
         <template #right-icon>
           <van-switch
@@ -270,7 +268,9 @@ onMounted(() => {
           </div>
         </template>
       </van-field>
+    </van-cell-group>
 
+    <van-cell-group inset :title="t('h5.pages.setting.form.resourcesSettings')">
       <van-field
         v-model="fieldsData.h5Resource"
         is-link
@@ -360,7 +360,9 @@ onMounted(() => {
           @cancel="(...args) => onCancelPicker('h5SortType', ...args)"
         />
       </van-popup>
+    </van-cell-group>
 
+    <van-cell-group inset :title="t('h5.pages.setting.form.displaySettings')">
       <van-field
         v-model="fieldsData.h5ImageDisplaySize"
         is-link
@@ -379,6 +381,18 @@ onMounted(() => {
         />
       </van-popup>
 
+      <van-cell :title="t('h5.pages.setting.form.h5ImageCompress')">
+        <template #right-icon>
+          <van-switch
+            v-model="settingDataForm.h5ImageCompress"
+            size="20px"
+            @change="onSettingDataChange('h5ImageCompress')"
+          />
+        </template>
+      </van-cell>
+    </van-cell-group>
+
+    <van-cell-group inset :title="t('h5.pages.setting.form.actionSettings')">
       <van-field
         v-model="fieldsData.h5FloatingButtonPosition"
         is-link
@@ -402,7 +416,6 @@ onMounted(() => {
       </van-popup>
 
       <van-field
-        v-model="fieldsData.h5EnabledFloatingButtons"
         is-link
         readonly
         name="h5EnabledFloatingButtons"
