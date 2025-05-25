@@ -105,6 +105,15 @@ const fieldsData = computed(() => {
   return ret
 })
 
+watch(
+  () => settingStore.settingData,
+  (newValue) => {
+    Object.keys(newValue).forEach((key) => {
+      settingDataForm[key] = newValue[key]
+    })
+  }
+)
+
 const init = () => {
   initFloatingButtonsChecked()
 }

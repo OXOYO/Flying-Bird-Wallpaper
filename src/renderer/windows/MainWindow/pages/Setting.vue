@@ -80,16 +80,13 @@ const anchorContainer = computed(() => {
 })
 
 watch(
-  () => settingData.value.autoSwitchWallpaper,
+  () => settingData.value,
   (newValue) => {
-    settingDataForm.autoSwitchWallpaper = newValue
-  }
-)
-
-watch(
-  () => settingData.value.suspensionBallVisible,
-  (newValue) => {
-    settingDataForm.suspensionBallVisible = newValue
+    if (newValue) {
+      Object.keys(newValue).forEach((key) => {
+        settingDataForm[key] = newValue[key]
+      })
+    }
   }
 )
 

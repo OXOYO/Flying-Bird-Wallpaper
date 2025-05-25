@@ -11,7 +11,6 @@ const { settingData } = storeToRefs(settingStore)
 const onSetDynamicWallpaper = async () => {
   const selectFileRes = await window.FBW.selectFile('video')
   const videoPath = selectFileRes && !selectFileRes.canceled ? selectFileRes.filePaths[0] : null
-  console.log('videoPath', videoPath)
   if (!videoPath) {
     ElMessage({
       type: 'error',
@@ -20,7 +19,6 @@ const onSetDynamicWallpaper = async () => {
     return
   }
   const setRes = await window.FBW.setDynamicWallpaper(videoPath)
-  console.log('setRes', setRes)
   ElMessage({
     type: setRes.success ? 'success' : 'error',
     message: setRes.message

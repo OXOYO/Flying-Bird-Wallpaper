@@ -92,10 +92,7 @@ const onTabbarTrigger = (name) => {
 const requestWakeLock = async () => {
   try {
     wakeLock = await navigator.wakeLock.request('screen')
-    wakeLock.addEventListener('release', () => {
-      console.log('Screen Wake Lock released:', wakeLock.released)
-    })
-    console.log('Screen Wake Lock is active:', !wakeLock.released)
+    wakeLock.addEventListener('release', () => {})
   } catch (err) {
     console.error(`${err.name}, ${err.message}`)
   }
@@ -105,7 +102,6 @@ const releaseWakeLock = () => {
   if (wakeLock !== null) {
     wakeLock.release().then(() => {
       wakeLock = null
-      console.log('Screen Wake Lock released')
     })
   }
 }

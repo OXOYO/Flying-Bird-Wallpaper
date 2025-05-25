@@ -111,8 +111,14 @@ const floatingButtonsStyle = computed(() => {
 
 watch(
   () => settingStore.settingData,
-  (newVal) => {
-    settingData.value = newVal
+  (newValue) => {
+    settingData.value = newValue
+    if (settingData.value.h5AutoSwitch) {
+      stopAutoSwitch()
+      startAutoSwitch()
+    } else {
+      stopAutoSwitch()
+    }
   }
 )
 

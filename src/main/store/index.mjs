@@ -317,8 +317,20 @@ export default class Store {
               data.receiveMsgTime = Date.now()
               this.onRefreshDirectoryFail(data)
               break
+            case 'SERVER_LOG': {
+              const type = data.level
+              if (type && typeof global.logger[type] === 'function') {
+                global.logger[type](data.msg)
+              } else {
+                global.logger.info(`[FileServer] INFO => ${data.msg}`)
+              }
+              break
+            }
             case 'HANDLE_IMAGE_QUALITY::SUCCESS':
               this.fileManager.onHandleImageQualitySuccess(data, this.locks)
+              break
+            case 'HANDLE_IMAGE_QUALITY::FAIL':
+              this.fileManager.onHandleImageQualityFail(this.locks)
               break
           }
         }
@@ -394,55 +406,64 @@ export default class Store {
           options: {
             env: process.env
           },
-          onMessage: ({ data }) => {
-            // console.log('H5服务器收到消息:', data)
-            if (data.event === 'SERVER_START::SUCCESS') {
-              this.h5ServerUrl = data.url
+          onMessage: async ({ data }) => {
+            switch (data.event) {
+              case 'SERVER_START::SUCCESS': {
+                this.h5ServerUrl = data.url
 
-              // 检查IP是否有效
-              const urlObj = new URL(data.url)
-              const ip = urlObj.hostname
+                // 检查IP是否有效
+                const urlObj = new URL(data.url)
+                const ip = urlObj.hostname
 
-              if (ip === '0.0.0.0' || ip === '127.0.0.1') {
-                global.logger.warn(`H5服务器IP无效: ${ip}，尝试重启服务`)
+                if (ip === '0.0.0.0' || ip === '127.0.0.1') {
+                  global.logger.warn(`H5服务器IP无效: ${ip}，尝试重启服务`)
 
-                // 停止当前服务
-                this.h5Server?.stop(() => {
-                  if (retryCount < maxRetries) {
-                    retryCount++
-                    global.logger.info(`重试启动H5服务 (${retryCount}/${maxRetries})...`)
-                    setTimeout(attemptStart, retryInterval)
-                  } else {
-                    global.logger.error(`H5服务器无法获取有效IP，已达到最大重试次数`)
-                  }
-                })
-                return
+                  // 停止当前服务
+                  this.h5Server?.stop(() => {
+                    if (retryCount < maxRetries) {
+                      retryCount++
+                      global.logger.info(`重试启动H5服务 (${retryCount}/${maxRetries})...`)
+                      setTimeout(attemptStart, retryInterval)
+                    } else {
+                      global.logger.error(`H5服务器无法获取有效IP，已达到最大重试次数`)
+                    }
+                  })
+                  return
+                }
+
+                global.logger.info(`H5服务器启动成功: ${this.h5ServerUrl}`)
+
+                // 发送消息到主窗口
+                if (this.mainWindow) {
+                  this.sendCommonData(this.mainWindow)
+                  this.sendMsg(this.mainWindow, {
+                    type: 'success',
+                    msg: t('messages.h5ServerStartSuccess')
+                  })
+                } else {
+                  global.logger.warn('主窗口未初始化，无法发送H5服务器URL')
+                }
+                break
               }
-
-              global.logger.info(`H5服务器启动成功: ${this.h5ServerUrl}`)
-
-              // 发送消息到主窗口
-              if (this.mainWindow) {
-                this.sendCommonData(this.mainWindow)
-                this.sendMsg(this.mainWindow, {
-                  type: 'success',
-                  msg: t('messages.h5ServerStartSuccess')
-                })
-              } else {
-                global.logger.warn('主窗口未初始化，无法发送H5服务器URL')
+              case 'SERVER_START::FAIL': {
+                global.logger.error(`H5服务器启动失败: ${data}`)
+                break
               }
-            } else if (data.event === 'H5_SETTING_UPDATED') {
-              // 处理从子进程收到的设置更新
-              // 发送更新消息
-              this.sendSettingDataUpdate()
-            } else if (data.event === 'SERVER_START::FAIL') {
-              global.logger.error(`H5服务器启动失败: ${data}`)
-            } else if (data.event === 'SERVER_LOG') {
-              const type = data.level
-              if (type && typeof global.logger[type] === 'function') {
-                global.logger[type](data.msg)
-              } else {
-                global.logger.info(`H5服务器日志: ${data.msg}`)
+              case 'SERVER_LOG': {
+                const type = data.level
+                if (type && typeof global.logger[type] === 'function') {
+                  global.logger[type](data.msg)
+                } else {
+                  global.logger.info(`[H5Server] INFO => ${data.msg}`)
+                }
+                break
+              }
+              case 'H5_SETTING_UPDATED': {
+                // 获取最新设置数据
+                await this.settingManager.getSettingData()
+                // 发送更新消息
+                this.sendSettingDataUpdate()
+                break
               }
             }
           }
@@ -657,6 +678,11 @@ export default class Store {
     const res = await this.settingManager.updateSettingData(data)
     if (res.success) {
       const newData = JSON.parse(JSON.stringify(this.settingData))
+      // 向H5子进程发送设置更新
+      this.h5Server?.postMessage({
+        event: 'APP_SETTING_UPDATED',
+        data: this.settingData
+      })
       // 发送更新消息
       this.sendSettingDataUpdate()
 

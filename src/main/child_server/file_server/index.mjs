@@ -6,6 +6,29 @@ import { readDirRecursive, calculateImageByPath } from '../../utils/utils.mjs'
 process.parentPort.on('message', (e) => {
   const [port] = e.ports
 
+  const handleLogger = (type = 'info') => {
+    return (data) => {
+      if (!data) {
+        return
+      }
+      const postData = {
+        event: 'SERVER_LOG',
+        level: type,
+        msg: ''
+      }
+      if (typeof data === 'string') {
+        postData.msg = data
+      } else if (typeof data === 'object') {
+        postData.msg = JSON.stringify(data)
+      }
+      port.postMessage(postData)
+    }
+  }
+  const logger = {
+    info: handleLogger('info'),
+    warn: handleLogger('warn'),
+    error: handleLogger('error')
+  }
   // 监听消息
   port.on('message', async (e) => {
     const { data } = e
@@ -101,7 +124,7 @@ process.parentPort.on('message', (e) => {
           })
         }
       } catch (err) {
-        global.logger.error(`[FileServer] 刷新资源目录失败: ${err}`)
+        logger.error(`[FileServer] ERROR => 刷新资源目录失败: ${err}`)
         readDirTime.end = Date.now()
         port.postMessage({
           event: 'REFRESH_DIRECTORY::FAIL',
@@ -129,7 +152,7 @@ process.parentPort.on('message', (e) => {
           list: ret
         })
       } catch (err) {
-        global.logger.error(`[FileServer] 处理图片质量失败: ${err}`)
+        logger.error(`[FileServer] ERROR => 处理图片质量失败: ${err}`)
         port.postMessage({
           event: 'HANDLE_IMAGE_QUALITY::FAIL',
           resourceName: data.resourceName,

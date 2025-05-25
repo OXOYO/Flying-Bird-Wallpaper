@@ -1,50 +1,28 @@
-import DatabaseManager from '../../../store/DatabaseManager.mjs'
-import SettingManager from '../../../store/SettingManager.mjs'
-import WallpaperManager from '../../../store/WallpaperManager.mjs'
-import FileManager from '../../../store/FileManager.mjs'
-
-// 添加一个安全调用回调的辅助函数
-const safeCallback = (callback, response) => {
-  if (typeof callback === 'function') {
-    try {
-      callback(response)
-    } catch (err) {
-      console.error('回调函数执行错误:', err)
+export default async function setupSocketIO(
+  ioServer,
+  { t, dbManager, settingManager, wallpaperManager, fileManager, logger, postMessage }
+) {
+  // 添加一个安全调用回调的辅助函数
+  const safeCallback = (callback, response) => {
+    if (typeof callback === 'function') {
+      try {
+        callback(response)
+      } catch (err) {
+        logger.error('[H5Server] ERROR => 回调函数执行错误:', err)
+      }
+    } else {
+      logger.error('[H5Server] ERROR => 回调函数不是一个函数')
     }
-  } else {
-    console.error('回调函数不是一个函数')
   }
-}
 
-export default async function setupSocketIO(io, { t, logger, postMessage }) {
-  // 初始化数据库管理器
-  const dbManager = DatabaseManager.getInstance(logger)
-  await dbManager.waitForInitialization()
-
-  // 初始化各种管理器并等待它们初始化完成
-  const settingManager = SettingManager.getInstance(logger, dbManager)
-  await settingManager.waitForInitialization()
-
-  const fileManager = FileManager.getInstance(logger, dbManager, settingManager)
-  const wallpaperManager = WallpaperManager.getInstance(
-    logger,
-    dbManager,
-    settingManager,
-    fileManager
-  )
-
-  logger.info('Socket.IO 管理器初始化完成')
-
-  io.on('connection', (socket) => {
-    // console.log('客户端连接成功:', socket.id)
-
+  ioServer.on('connection', (socket) => {
     // 获取设置
     socket.on('getSettingData', async (params, callback) => {
       try {
         const res = await settingManager.getSettingData()
         safeCallback(callback, res)
       } catch (err) {
-        logger.error(`获取设置错误: ${err}`)
+        logger.error(`[H5Server] ERROR => 获取设置错误: ${err}`)
         safeCallback(callback, {
           success: false,
           data: null,
@@ -66,7 +44,7 @@ export default async function setupSocketIO(io, { t, logger, postMessage }) {
           })
 
           // 广播设置更新给所有客户端
-          io.emit('settingUpdated', res)
+          ioServer.emit('settingUpdated', res)
 
           safeCallback(callback, {
             success: true,
@@ -81,7 +59,7 @@ export default async function setupSocketIO(io, { t, logger, postMessage }) {
           })
         }
       } catch (err) {
-        logger.error(`更新设置错误: ${err}`)
+        logger.error(`[H5Server] ERROR => 更新设置错误: ${err}`)
         safeCallback(callback, {
           success: false,
           data: null,
@@ -96,7 +74,7 @@ export default async function setupSocketIO(io, { t, logger, postMessage }) {
         const res = await dbManager.getResourceMap()
         safeCallback(callback, res)
       } catch (err) {
-        logger.error(`获取资源数据错误: ${err}`)
+        logger.error(`[H5Server] ERROR => 获取资源数据错误: ${err}`)
         safeCallback(callback, {
           success: false,
           data: null,
@@ -111,7 +89,7 @@ export default async function setupSocketIO(io, { t, logger, postMessage }) {
         const res = await wallpaperManager.searchImages(params)
         safeCallback(callback, res)
       } catch (err) {
-        logger.error(`搜索图片错误: ${err}`)
+        logger.error(`[H5Server] ERROR => 搜索图片错误: ${err}`)
         safeCallback(callback, {
           success: false,
           data: null,
@@ -150,7 +128,7 @@ export default async function setupSocketIO(io, { t, logger, postMessage }) {
           })
         }
       } catch (err) {
-        logger.error(`切换收藏状态错误: ${err}`)
+        logger.error(`[H5Server] ERROR => 切换收藏状态错误: ${err}`)
         safeCallback(callback, {
           success: false,
           msg: t('messages.operationFail')
@@ -174,7 +152,7 @@ export default async function setupSocketIO(io, { t, logger, postMessage }) {
           msg: res.success ? t('messages.operationSuccess') : t('messages.operationFail')
         })
       } catch (err) {
-        logger.error(`加入收藏错误: ${err}`)
+        logger.error(`[H5Server] ERROR => 加入收藏错误: ${err}`)
         safeCallback(callback, {
           success: false,
           msg: t('messages.operationFail')
@@ -197,7 +175,7 @@ export default async function setupSocketIO(io, { t, logger, postMessage }) {
           msg: res.success ? t('messages.operationSuccess') : t('messages.operationFail')
         })
       } catch (err) {
-        logger.error(`更新收藏数量错误: ${err}`)
+        logger.error(`[H5Server] ERROR => 更新收藏数量错误: ${err}`)
         safeCallback(callback, {
           success: false,
           msg: t('messages.operationFail')
@@ -220,7 +198,7 @@ export default async function setupSocketIO(io, { t, logger, postMessage }) {
           msg: res.success ? t('messages.operationSuccess') : t('messages.operationFail')
         })
       } catch (err) {
-        logger.error(`取消收藏错误: ${err}`)
+        logger.error(`[H5Server] ERROR => 取消收藏错误: ${err}`)
         safeCallback(callback, {
           success: false,
           msg: t('messages.operationFail')
@@ -243,7 +221,7 @@ export default async function setupSocketIO(io, { t, logger, postMessage }) {
           msg: res.success ? t('messages.operationSuccess') : t('messages.operationFail')
         })
       } catch (err) {
-        logger.error(`删除图片错误: ${err}`)
+        logger.error(`[H5Server] ERROR => 删除图片错误: ${err}`)
         safeCallback(callback, {
           success: false,
           msg: t('messages.operationFail')
@@ -253,8 +231,9 @@ export default async function setupSocketIO(io, { t, logger, postMessage }) {
 
     // 断开连接
     socket.on('disconnect', () => {
-      logger.info(`客户端断开连接: ${socket.id}`)
-      // console.log('客户端断开连接:', socket.id)
+      logger.info(`[H5Server] INFO => 客户端断开连接: ${socket.id}`)
     })
   })
+
+  logger.info('[H5Server] INFO => Socket.IO 管理器初始化完成')
 }

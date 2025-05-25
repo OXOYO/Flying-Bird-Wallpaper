@@ -303,6 +303,15 @@ export default class FileManager {
   }
 
   /**
+   * 处理图片质量失败
+   * @param {Object} locks - 锁对象
+   */
+  onHandleImageQualityFail(locks) {
+    locks.handleQuality = false
+    this.logger.error(`处理图片质量失败`)
+  }
+
+  /**
    * 删除文件
    * @param {Object} item - 资源项
    * @returns {Object} 删除结果
