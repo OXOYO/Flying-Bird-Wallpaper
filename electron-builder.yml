@@ -30,6 +30,7 @@ asarUnpack:
   - h5/**
   - '**/*.{node,dll,exe,png,ico}'
   - '**/node_modules/@iconify-json/**'
+  - '**/node_modules/wallpaper/source/**' # 添加这一行
 win:
   executableName: Flying Bird Wallpaper
   target:
