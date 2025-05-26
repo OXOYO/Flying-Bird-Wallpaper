@@ -1,5 +1,5 @@
 #define MyAppName "飞鸟壁纸"
-#define MyAppVersion "1.0.8"
+#define MyAppVersion "1.0.9"
 #define MyAppPublisher "OXOYO"
 #define MyAppURL "https://github.com/OXOYO/Flying-Bird-Wallpaper"
 #define MyAppExeName "Flying Bird Wallpaper.exe"
