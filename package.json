@@ -1,7 +1,7 @@
 {
   "name": "flying-bird-wallpaper",
   "productName": "Flying Bird Wallpaper",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "飞鸟壁纸是一款精美图片浏览器，让你轻松浏览、收藏心动美图，并一键设置壁纸，打造独一无二的桌面风格。",
   "type": "module",
   "main": "./out/main/index.js",
@@ -77,6 +77,7 @@
     "@vitejs/plugin-vue": "^5.0.5",
     "@vue/eslint-config-prettier": "^9.0.0",
     "concurrently": "^9.1.2",
+    "conventional-changelog-angular": "^8.0.0",
     "conventional-changelog-cli": "^5.0.0",
     "electron": "^33.4.1",
     "electron-builder": "^24.13.3",
