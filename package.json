@@ -31,7 +31,9 @@
     "build:unpack": "npm run build && electron-builder --dir",
     "build:win": "npm run build && electron-builder --win",
     "build:mac": "npm run build && electron-builder --mac",
-    "build:linux": "npm run build && electron-builder --linux"
+    "build:linux": "npm run build && electron-builder --linux",
+    "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
+    "changelog:first": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0"
   },
   "dependencies": {
     "@electron-toolkit/utils": "^3.0.0",
@@ -75,6 +77,7 @@
     "@vitejs/plugin-vue": "^5.0.5",
     "@vue/eslint-config-prettier": "^9.0.0",
     "concurrently": "^9.1.2",
+    "conventional-changelog-cli": "^5.0.0",
     "electron": "^33.4.1",
     "electron-builder": "^24.13.3",
     "electron-devtools-installer": "^3.2.0",
