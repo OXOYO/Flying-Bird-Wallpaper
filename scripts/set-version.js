@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-// import { execSync } from 'child_process'
+import { execSync } from 'child_process'
 import { fileURLToPath } from 'url'
 
 // 获取当前文件的目录
@@ -37,6 +37,20 @@ if (fs.existsSync(issPath)) {
 }
 
 console.log(`版本已更新至 ${newVersion}`)
+// 安装依赖
+try {
+  execSync('npm install')
+  console.log('依赖已安装')
+} catch (error) {
+  console.error('安装依赖失败:', error.message)
+}
+// 更新Changelog
+try {
+  execSync('npm run changelog:first')
+  console.log('Changelog已更新')
+} catch (error) {
+  console.error('更新Changelog失败:', error.message)
+}
 
 // 创建Git标签
 // try {
