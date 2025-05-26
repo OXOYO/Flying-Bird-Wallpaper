@@ -20,7 +20,7 @@ export default async ({
   useHttps = true, // 添加HTTPS选项
   dbManager,
   settingManager,
-  wallpaperManager,
+  resourcesManager,
   fileManager,
   logger = () => {},
   postMessage = () => {},
@@ -146,7 +146,7 @@ export default async ({
         t,
         dbManager,
         settingManager,
-        wallpaperManager,
+        resourcesManager,
         fileManager,
         logger,
         postMessage: safePostMessage

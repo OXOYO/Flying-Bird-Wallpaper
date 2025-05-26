@@ -1,6 +1,6 @@
 export default async function setupSocketIO(
   ioServer,
-  { t, dbManager, settingManager, wallpaperManager, fileManager, logger, postMessage }
+  { t, dbManager, settingManager, resourcesManager, fileManager, logger, postMessage }
 ) {
   // 添加一个安全调用回调的辅助函数
   const safeCallback = (callback, response) => {
@@ -86,7 +86,7 @@ export default async function setupSocketIO(
     // 搜索图片
     socket.on('searchImages', async (params, callback) => {
       try {
-        const res = await wallpaperManager.searchImages(params)
+        const res = await resourcesManager.searchImages(params)
         safeCallback(callback, res)
       } catch (err) {
         logger.error(`[H5Server] ERROR => 搜索图片错误: ${err}`)
@@ -110,18 +110,18 @@ export default async function setupSocketIO(
         }
 
         // 检查是否已经收藏
-        const isFavorite = await wallpaperManager.checkFavorite(id)
+        const isFavorite = await resourcesManager.checkFavorite(id)
 
         if (isFavorite) {
           // 如果已经收藏，则取消收藏
-          const res = await wallpaperManager.removeFavorites(id)
+          const res = await resourcesManager.removeFavorites(id)
           safeCallback(callback, {
             success: res.success,
             msg: res.success ? t('messages.operationSuccess') : t('messages.operationFail')
           })
         } else {
           // 如果没有收藏，则添加收藏
-          const res = await wallpaperManager.addToFavorites(id)
+          const res = await resourcesManager.addToFavorites(id)
           safeCallback(callback, {
             success: res.success,
             msg: res.success ? t('messages.operationSuccess') : t('messages.operationFail')
@@ -146,7 +146,7 @@ export default async function setupSocketIO(
           })
           return
         }
-        const res = await wallpaperManager.addToFavorites(id)
+        const res = await resourcesManager.addToFavorites(id)
         safeCallback(callback, {
           success: res.success,
           msg: res.success ? t('messages.operationSuccess') : t('messages.operationFail')
@@ -169,7 +169,7 @@ export default async function setupSocketIO(
           })
           return
         }
-        const res = await wallpaperManager.updateFavoriteCount(id, count)
+        const res = await resourcesManager.updateFavoriteCount(id, count)
         safeCallback(callback, {
           success: res.success,
           msg: res.success ? t('messages.operationSuccess') : t('messages.operationFail')
@@ -192,7 +192,7 @@ export default async function setupSocketIO(
           })
           return
         }
-        const res = await wallpaperManager.removeFavorites(id)
+        const res = await resourcesManager.removeFavorites(id)
         safeCallback(callback, {
           success: res.success,
           msg: res.success ? t('messages.operationSuccess') : t('messages.operationFail')

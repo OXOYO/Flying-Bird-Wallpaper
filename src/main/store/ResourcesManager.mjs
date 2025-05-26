@@ -1,21 +1,24 @@
-import fs from 'fs'
-import path from 'path'
-import ApiBase from '../ApiBase.js'
-import { commonResourceMap, defaultResourceMap } from '../../common/publicData.js'
+import { v4 as uuidv4 } from 'uuid'
+import { t } from '../../i18n/server.js'
 
 export default class ResourcesManager {
   // 单例实例
   static _instance = null
 
   // 获取单例实例
-  static getInstance(logger, dbManager) {
+  static getInstance(logger, dbManager, settingManager, apiManager) {
     if (!ResourcesManager._instance) {
-      ResourcesManager._instance = new ResourcesManager(logger, dbManager)
+      ResourcesManager._instance = new ResourcesManager(
+        logger,
+        dbManager,
+        settingManager,
+        apiManager
+      )
     }
     return ResourcesManager._instance
   }
 
-  constructor(logger, dbManager) {
+  constructor(logger, dbManager, settingManager, apiManager) {
     // 防止直接实例化
     if (ResourcesManager._instance) {
       return ResourcesManager._instance
@@ -23,185 +26,345 @@ export default class ResourcesManager {
 
     this.logger = logger
     this.dbManager = dbManager
-    // API插件列表
-    this.apiMap = {}
-
-    // API目录 - 内置API
-    this.sysApiDir = path.join(process.env.FBW_RESOURCES_PATH, 'api')
-    // API目录 - 用户API
-    this.userApiDir = path.join(process.env.FBW_PLUGINS_PATH, 'api')
-    // 确保用户API目录存在
-    if (!fs.existsSync(this.userApiDir)) {
-      fs.mkdirSync(this.userApiDir, { recursive: true })
-    }
-
-    this._initialized = false
-    this._initPromise = this._init()
+    this.db = dbManager.db
+    this.settingManager = settingManager
+    this.apiManager = apiManager
 
     ResourcesManager._instance = this
   }
 
-  async _init() {
+  // 使用 settingManager 获取设置
+  get settingData() {
+    return this.settingManager.settingData
+  }
+
+  // 搜索
+  async searchImages(params = {}) {
+    const {
+      resourceType = 'localResource',
+      resourceName = 'resources',
+      filterKeywords,
+      quality: qualityStr,
+      orientation: orientationStr,
+      startPage,
+      pageSize,
+      isRandom = false,
+      sortField = 'created_at',
+      sortType = -1
+    } = params
+
+    let ret = {
+      success: false,
+      msg: t('messages.operationFail'),
+      data: {
+        list: [],
+        total: 0,
+        startPage,
+        pageSize
+      }
+    }
+
     try {
-      await this.loadApi()
-      this._initialized = true
-      return true
+      const { remoteResourceSecretKeys } = this.settingData
+
+      const sortOrder = sortType > 0 ? 'ASC' : 'DESC'
+      const orientation = orientationStr ? orientationStr.split(',') : []
+
+      if (resourceType === 'localResource') {
+        const isResources = resourceName === 'resources'
+        const isFavorites = resourceName === 'favorites'
+        const isPrivacySpace = resourceName === 'privacy_space'
+        const isHistory = resourceName === 'history'
+
+        const keywords = `%${filterKeywords}%`
+        const quality = qualityStr ? qualityStr.split(',') : []
+
+        let query_where_str = ''
+        const query_where = []
+        const query_params = []
+        let query_sql
+        let count_sql
+
+        // 非历史记录、非隐私空间需排除隐私表中的数据
+        if (!(isHistory || isPrivacySpace)) {
+          // 添加 NOT EXISTS 条件排除隐私表中的数据
+          query_where.push(
+            'NOT EXISTS (SELECT 1 FROM fbw_privacy_space p WHERE p.resourceId = r.id)'
+          )
+        }
+
+        // 筛选资源类型
+        if (!isResources && !isFavorites && !isHistory && !isPrivacySpace) {
+          query_where.push(`r.resourceName = ?`)
+          query_params.push(resourceName)
+        }
+
+        if (filterKeywords) {
+          query_where.push(`(r.filePath LIKE ? OR r.title LIKE ? OR r.desc LIKE ?)`)
+          query_params.push(keywords, keywords, keywords)
+        }
+
+        if (orientation.length === 1) {
+          query_where.push(`r.isLandscape = ?`)
+          query_params.push(orientation[0])
+        }
+
+        if (quality.length) {
+          const placeholders = quality.map(() => '?').join(',')
+          query_where.push(`r.quality IN (${placeholders})`)
+          query_params.push(...quality)
+        }
+
+        if (query_where.length) {
+          query_where_str = `WHERE ${query_where.join(' AND ')}`
+        }
+
+        if (isFavorites || isHistory || isPrivacySpace) {
+          // FIXME 按顺序查询时排序字段固定
+          const order_by_str = isRandom ? 'ORDER BY RANDOM()' : `ORDER BY s.created_at ${sortOrder}`
+
+          query_sql = `
+            SELECT
+            r.*,
+              (SELECT COUNT(*) FROM fbw_favorites f WHERE f.resourceId = r.id) AS isFavorite
+            FROM fbw_${resourceName} s
+            JOIN fbw_resources r ON s.resourceId = r.id
+            ${query_where_str}
+            ${order_by_str}
+            LIMIT ? OFFSET ?
+          `
+          count_sql = `SELECT COUNT(*) AS total FROM fbw_${resourceName} s JOIN fbw_resources r ON s.resourceId = r.id ${query_where_str}`
+        } else {
+          const order_by_str = isRandom
+            ? 'ORDER BY RANDOM()'
+            : `ORDER BY r.${sortField} ${sortOrder}`
+
+          query_sql = `
+            SELECT
+            r.*,
+            (SELECT COUNT(*) FROM fbw_favorites f WHERE f.resourceId = r.id) AS isFavorite
+            FROM fbw_resources r
+            ${query_where_str}
+            ${order_by_str}
+            LIMIT ? OFFSET ?
+          `
+          count_sql = `SELECT COUNT(*) AS total FROM fbw_resources r ${query_where_str}`
+        }
+
+        const query_stmt = this.db.prepare(query_sql)
+        const query_result = query_stmt.all(...query_params, pageSize, (startPage - 1) * pageSize)
+        if (Array.isArray(query_result) && query_result.length) {
+          ret.data.list = query_result.map((item) => {
+            return {
+              ...item,
+              srcType: 'file',
+              uniqueKey: uuidv4()
+            }
+          })
+          if (count_sql) {
+            const count_stmt = this.db.prepare(count_sql)
+            const count_result = count_stmt.get(...query_params)
+            if (count_result && count_result.total) {
+              ret.data.total = count_result.total
+            }
+          }
+        }
+        ret.success = true
+        ret.msg = t(ret.data.list.length ? 'messages.querySuccess' : 'messages.queryEmpty')
+      } else {
+        if (!filterKeywords) {
+          ret.msg = t('messages.enterKeywords')
+          return ret
+        }
+
+        // 先获取资源数据
+        const resourceMapRes = await this.dbManager.getResourceMap()
+        if (!resourceMapRes.success) {
+          ret.msg = resourceMapRes.msg
+          return ret
+        }
+        const resourceMap = resourceMapRes.data
+        if (
+          resourceMap.remoteResourceKeyNames.includes(resourceName) &&
+          !remoteResourceSecretKeys[resourceName]
+        ) {
+          ret.msg = t('messages.resourceSecretKeyUnset')
+          return ret
+        }
+        const res = await this.apiManager.call(resourceName, 'search', {
+          keywords: filterKeywords,
+          orientation,
+          startPage: startPage,
+          pageSize,
+          secretKey: resourceMap.remoteResourceKeyNames.includes(resourceName)
+            ? remoteResourceSecretKeys[resourceName]
+            : ''
+        })
+        if (res) {
+          if (Array.isArray(res.list) && res.list.length) {
+            ret.data.total = res.total
+            ret.data.list = res.list.map((item) => {
+              return {
+                ...item,
+                srcType: 'url',
+                uniqueKey: uuidv4()
+              }
+            })
+          }
+          ret.success = true
+          ret.msg = t(ret.data.list.length ? 'messages.querySuccess' : 'messages.queryEmpty')
+        }
+      }
     } catch (err) {
-      this.logger.error(`初始化API插件失败: ${err}`)
+      this.logger.error(`搜索失败: error => ${err}`)
+    }
+
+    return ret
+  }
+
+  /**
+   * 检查资源是否已收藏
+   * @param {number|string} resourceId - 资源ID
+   * @param {boolean} isPrivacySpace - 是否为隐私空间
+   * @returns {boolean} - 是否已收藏
+   */
+  async checkFavorite(resourceId, isPrivacySpace = false) {
+    try {
+      const tableName = isPrivacySpace ? 'fbw_privacy_space' : 'fbw_favorites'
+      const query_stmt = this.db.prepare(`SELECT * FROM ${tableName} WHERE resourceId = ?`)
+      const result = query_stmt.get(resourceId)
+      return !!result
+    } catch (err) {
+      this.logger.error(`检查收藏状态失败: ${err}`)
       return false
     }
   }
 
-  // 等待初始化完成的方法
-  async waitForInitialization() {
-    if (this._initialized) {
-      return true
-    }
-    return this._initPromise
-  }
-
-  // 加载API
-  async loadApi() {
-    const apiMap = {}
-    const resourceMap = JSON.parse(JSON.stringify(defaultResourceMap))
-
-    // 加载内置API
-    await this.loadApiFromDir(this.sysApiDir, apiMap)
-
-    // 加载用户API
-    await this.loadApiFromDir(this.userApiDir, apiMap)
-
-    this.apiMap = apiMap
-
-    const count = Object.keys(apiMap).length
-    if (count === 0) {
-      this.logger.error(`未加载任何API插件`)
-      return
-    } else {
-      this.logger.info(`成功加载 ${count} 个API插件`)
-    }
-    // 处理API信息，写入数据库
-    for (const [resourceName, api] of Object.entries(apiMap)) {
-      const apiInfo = api.info()
-      resourceMap.remoteResourceMap[resourceName] = apiInfo
-    }
-    // 计算各种资源数据
-    // 启用的远程资源
-    const enabledRemoteResourceList = Object.values(resourceMap.remoteResourceMap).filter(
-      (item) => item.enabled
-    )
-    // 支持搜索的远程资源
-    const supportSearchRemoteResourceList = enabledRemoteResourceList.filter(
-      (item) => item.supportSearch
-    )
-    // 支持下载的远程资源
-    resourceMap.supportDownloadRemoteResourceList = enabledRemoteResourceList.filter(
-      (item) => item.supportDownload
-    )
-    // 需要密钥的远程资源
-    resourceMap.remoteResourceKeyNames = enabledRemoteResourceList
-      .filter((item) => item.requireSecretKey)
-      .map((item) => item.value)
-
-    // 支持搜索的本地资源
-    const supportSearchLocalResourceList = [
-      commonResourceMap.resources,
-      commonResourceMap.local,
-      ...resourceMap.supportDownloadRemoteResourceList
-    ].filter((item) => item.enabled)
-    // 资源列表按资源类型分类
-    resourceMap.resourceListByResourceType = {
-      localResource: supportSearchLocalResourceList,
-      remoteResource: supportSearchRemoteResourceList
-    }
-    // 壁纸资源列表
-    resourceMap.wallpaperResourceList = [
-      commonResourceMap.resources,
-      commonResourceMap.local,
-      commonResourceMap.favorites,
-      ...supportSearchRemoteResourceList
-    ].filter((item) => item.enabled)
-
-    // 直接将整个resourceMap写入数据库
-    const res = await this.dbManager.setSysRecord('resourceMap', resourceMap, 'object')
-    if (res.success) {
-      this.logger.info('写入resourceMap信息成功')
-    } else {
-      this.logger.error(`写入resourceMap信息失败: ${res.message}`)
-    }
-  }
-
-  // 从指定目录加载插件
-  async loadApiFromDir(dir, plugins) {
-    this.logger.info(`开始加载API插件，目录: ${dir}`)
-    if (!fs.existsSync(dir)) return
-
-    const files = fs.readdirSync(dir)
-
-    // 使用Promise.all等待所有插件加载完成
-    await Promise.all(
-      files.map(async (file) => {
-        if (file.endsWith('.js') || file.endsWith('.mjs')) {
-          try {
-            const pluginPath = path.join(dir, file)
-
-            // 使用await直接等待插件加载
-            const module = await import(/* @vite-ignore */ `file://${pluginPath}`)
-            const PluginClass = module.default
-
-            // 检查是否是有效的插件类
-            if (PluginClass && PluginClass.prototype instanceof ApiBase) {
-              const pluginInstance = new PluginClass()
-              const resourceName = pluginInstance.resourceName
-
-              if (resourceName) {
-                // 如果已存在同名插件，用户插件优先
-                if (plugins[resourceName]) {
-                  this.logger.warn(`发现重复的API插件: ${resourceName}，将使用新加载的版本`)
-                }
-
-                plugins[resourceName] = pluginInstance
-                this.logger.info(`成功加载API插件: ${resourceName}`)
-              } else {
-                this.logger.warn(`插件 ${file} 未提供resourceName，已跳过`)
-              }
-            } else {
-              this.logger.warn(`${file} 不是有效的API插件类，已跳过`)
-            }
-          } catch (err) {
-            this.logger.error(`加载插件 ${file} 失败: ${err}`)
-          }
-        }
-      })
-    )
-  }
-
-  // 获取API列表
-  async getApiList() {
+  // 加入收藏夹
+  async addToFavorites(resourceId, isPrivacySpace = false) {
     let ret = {
       success: false,
-      message: '',
-      data: []
+      msg: t('messages.operationFail')
     }
-    const res = await this.dbManager.getSysRecord('api')
-    if (res.success && res.data?.storeData) {
-      ret.success = true
-      ret.data = res.data.storeData
-    } else {
-      ret.message = res.message
+
+    try {
+      if (isPrivacySpace) {
+        const insert_stmt = this.db.prepare(
+          `INSERT OR IGNORE INTO fbw_privacy_space (resourceId) VALUES (?)`
+        )
+        const insert_result = insert_stmt.run(resourceId)
+
+        if (insert_result.changes > 0) {
+          ret = {
+            success: true,
+            msg: t('messages.operationSuccess')
+          }
+        }
+      } else {
+        // 检查资源是否已收藏，如果已收藏则num+1, 未收藏则插入
+        const check_stmt = this.db.prepare(`SELECT * FROM fbw_favorites WHERE resourceId =?`)
+        const check_result = check_stmt.get(resourceId)
+        if (check_result) {
+          // 更新收藏数量
+          const update_stmt = this.db.prepare(
+            `UPDATE fbw_favorites SET num = num + 1 WHERE resourceId =?`
+          )
+          const update_result = update_stmt.run(resourceId)
+          if (update_result.changes > 0) {
+            ret = {
+              success: true,
+              msg: t('messages.operationSuccess')
+            }
+          }
+        } else {
+          const insert_stmt = this.db.prepare(
+            `INSERT INTO fbw_favorites (resourceId, num) VALUES (?, 1)`
+          )
+          const insert_result = insert_stmt.run(resourceId)
+          if (insert_result.changes > 0) {
+            ret = {
+              success: true,
+              msg: t('messages.operationSuccess')
+            }
+          }
+        }
+      }
+    } catch (err) {
+      this.logger.error(`加入收藏夹失败: ${err}`)
+    }
+
+    return ret
+  }
+
+  // 更新收藏数量
+  async updateFavoriteCount(resourceId, count) {
+    let ret = {
+      success: false,
+      msg: t('messages.operationFail')
+    }
+    try {
+      if (!resourceId || count === undefined || count <= 0) {
+        ret.msg = t('messages.paramsError')
+        return ret
+      }
+      // 当没有资源时插入，当有资源时num加count
+      const check_stmt = this.db.prepare(`SELECT * FROM fbw_favorites WHERE resourceId =?`)
+      const check_result = check_stmt.get(resourceId)
+      if (!check_result) {
+        const insert_stmt = this.db.prepare(
+          `INSERT INTO fbw_favorites (resourceId, num) VALUES (?, ?)`
+        )
+        const insert_result = insert_stmt.run(resourceId, count)
+        if (insert_result.changes > 0) {
+          ret = {
+            success: true,
+            msg: t('messages.operationSuccess')
+          }
+          return ret
+        }
+      } else {
+        count += check_result.num
+        if (count <= 0) {
+          return ret
+        }
+        // 更新收藏数量
+        const update_stmt = this.db.prepare(`UPDATE fbw_favorites SET num =? WHERE resourceId =?`)
+        const update_result = update_stmt.run(count, resourceId)
+        if (update_result.changes > 0) {
+          ret = {
+            success: true,
+            msg: t('messages.operationSuccess')
+          }
+        }
+      }
+    } catch (err) {
+      this.logger.error(`更新收藏数量失败: ${err}`)
     }
     return ret
   }
 
-  // 调用API
-  async call(resourceName, funcName, params) {
-    const api = this.apiMap[resourceName]
-    if (!api) {
-      throw new Error(`未找到API插件: ${resourceName}`)
+  // 移出收藏夹
+  async removeFavorites(resourceId, isPrivacySpace = false) {
+    let ret = {
+      success: false,
+      msg: t('messages.operationFail')
     }
-    if (!api[funcName] || typeof api[funcName] !== 'function') {
-      throw new Error(`API插件 ${resourceName} 未提供函数: ${funcName}`)
+
+    try {
+      const tableName = isPrivacySpace ? 'fbw_privacy_space' : 'fbw_favorites'
+      const delete_stmt = this.db.prepare(`DELETE FROM ${tableName} WHERE resourceId = ?`)
+      const delete_result = delete_stmt.run(resourceId)
+
+      if (delete_result.changes > 0) {
+        ret = {
+          success: true,
+          msg: t('messages.operationSuccess')
+        }
+      }
+    } catch (err) {
+      this.logger.error(`移出收藏夹失败: ${err}`)
     }
-    return await api[funcName](params)
+
+    return ret
   }
 }

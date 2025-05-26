@@ -3,7 +3,7 @@
  * */
 import DatabaseManager from '../../store/DatabaseManager.mjs'
 import SettingManager from '../../store/SettingManager.mjs'
-import WallpaperManager from '../../store/WallpaperManager.mjs'
+import ResourcesManager from '../../store/ResourcesManager.mjs'
 import FileManager from '../../store/FileManager.mjs'
 import server from './server.mjs'
 
@@ -41,7 +41,7 @@ process.parentPort.on('message', (e) => {
   }
   let dbManager
   let settingManager
-  let wallpaperManager
+  let resourcesManager
   let fileManager
   let ioServer
   // 监听消息
@@ -59,7 +59,7 @@ process.parentPort.on('message', (e) => {
         await settingManager.waitForInitialization()
 
         fileManager = FileManager.getInstance(logger, dbManager, settingManager)
-        wallpaperManager = WallpaperManager.getInstance(
+        resourcesManager = ResourcesManager.getInstance(
           logger,
           dbManager,
           settingManager,
@@ -68,7 +68,7 @@ process.parentPort.on('message', (e) => {
         const serverRes = await server({
           dbManager,
           settingManager,
-          wallpaperManager,
+          resourcesManager,
           fileManager,
           logger,
           postMessage,

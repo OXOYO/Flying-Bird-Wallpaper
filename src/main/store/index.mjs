@@ -4,6 +4,7 @@ import fs from 'fs'
 import { createFileServer, createH5Server } from '../child_server/index.mjs'
 import { t } from '../../i18n/server.js'
 import DatabaseManager from './DatabaseManager.mjs'
+import ApiManager from './ApiManager.mjs'
 import ResourcesManager from './ResourcesManager.mjs'
 import WallpaperManager from './WallpaperManager.mjs'
 import TaskScheduler from './TaskScheduler.mjs'
@@ -58,10 +59,10 @@ export default class Store {
       this.settingManager = SettingManager.getInstance(global.logger, this.dbManager)
       // 等待设置管理器初始化完成
       await this.settingManager.waitForInitialization()
-      // 初始化资源管理器
-      this.resourcesManager = ResourcesManager.getInstance(global.logger, this.dbManager)
-      // 等待资源管理器初始化完成
-      await this.resourcesManager.waitForInitialization()
+      // 初始化API管理器
+      this.apiManager = ApiManager.getInstance(global.logger, this.dbManager)
+      // 等待API管理器初始化完成
+      await this.apiManager.waitForInitialization()
 
       // 文件服务子进程
       this.fileServer = createFileServer()
@@ -84,12 +85,18 @@ export default class Store {
         this.fileServer,
         this.wordsManager
       )
+      this.resourcesManager = ResourcesManager.getInstance(
+        global.logger,
+        this.dbManager,
+        this.settingManager,
+        this.apiManager
+      )
       this.wallpaperManager = WallpaperManager.getInstance(
         global.logger,
         this.dbManager,
         this.settingManager,
         this.fileManager,
-        this.resourcesManager
+        this.apiManager
       )
 
       // 处理IPC通信
@@ -563,12 +570,12 @@ export default class Store {
 
     // 加入收藏夹
     ipcMain.handle('main:addToFavorites', async (event, resourceId, isPrivacySpace = false) => {
-      return await this.wallpaperManager.addToFavorites(resourceId, isPrivacySpace)
+      return await this.resourcesManager.addToFavorites(resourceId, isPrivacySpace)
     })
 
     // 移出收藏夹
     ipcMain.handle('main:removeFavorites', async (event, resourceId, isPrivacySpace = false) => {
-      return await this.wallpaperManager.removeFavorites(resourceId, isPrivacySpace)
+      return await this.resourcesManager.removeFavorites(resourceId, isPrivacySpace)
     })
 
     // 删除文件
@@ -578,7 +585,7 @@ export default class Store {
 
     // 搜索资源数据
     ipcMain.handle('main:searchImages', async (event, params) => {
-      return await this.wallpaperManager.searchImages(params)
+      return await this.resourcesManager.searchImages(params)
     })
 
     // 设置为壁纸
