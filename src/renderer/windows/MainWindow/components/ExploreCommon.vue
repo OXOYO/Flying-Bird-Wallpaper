@@ -1117,8 +1117,14 @@ const addToFavorites = async (item, index, isPrivacySpace = false) => {
   if (res.success) {
     item.isFavorite = 1
     if (isPrivacySpace) {
-      callback = async () => {
-        await removeFavorites(item, index)
+      if (isFavoritesMenu.value) {
+        callback = async () => {
+          await removeFavorites(item, index)
+        }
+      } else {
+        callback = async () => {
+          await onRefresh(true)
+        }
       }
     }
   }
