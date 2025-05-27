@@ -79,6 +79,7 @@
     "concurrently": "^9.1.2",
     "conventional-changelog-angular": "^8.0.0",
     "conventional-changelog-cli": "^5.0.0",
+    "cz-conventional-changelog": "^3.3.0",
     "electron": "^33.4.1",
     "electron-builder": "^24.13.3",
     "electron-devtools-installer": "^3.2.0",
@@ -99,5 +100,10 @@
   },
   "engines": {
     "node": ">=20.18.0"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
   }
 }
