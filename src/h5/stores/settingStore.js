@@ -32,6 +32,11 @@ const UseSettingStore = defineStore('setting', {
           this.settingData = Object.assign({}, this.settingData, res.data)
         }
       })
+    },
+    vibrate(duration = 50) {
+      if (this.settingData.h5Vibration && navigator.vibrate) {
+        navigator.vibrate(duration)
+      }
     }
   }
 })

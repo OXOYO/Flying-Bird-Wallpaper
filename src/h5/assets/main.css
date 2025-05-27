@@ -2,6 +2,11 @@
   --fbw-tabbar-height: var(--van-tabbar-height);
 }
 
+html,
+body {
+  user-select: none;
+}
+
 .page-wrapper {
   width: 100vw;
   height: calc(100vh - var(--fbw-tabbar-height));

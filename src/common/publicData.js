@@ -201,7 +201,8 @@ export const defaultSettingData = {
     'displaySize',
     'toggleTabbar',
     'backtop'
-  ]
+  ],
+  h5Vibration: true
 }
 
 export const colorList = [

@@ -135,7 +135,8 @@
         "h5EnabledFloatingButtons": {
           "label": "Enabled Floating Buttons",
           "placeholder": "Please select enabled floating buttons"
-        }
+        },
+        "h5Vibration": "Vibration"
       },
       "privacyPasswordForm": {
         "old": {
@@ -508,7 +509,8 @@
           "h5EnabledFloatingButtons": {
             "label": "Enabled Floating Buttons",
             "placeholder": ""
-          }
+          },
+          "h5Vibration": "Vibration"
         },
         "about": "About",
         "version": "Version"

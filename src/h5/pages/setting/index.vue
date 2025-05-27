@@ -453,6 +453,16 @@ onMounted(() => {
           </template>
         </van-picker>
       </van-popup>
+
+      <van-cell :title="t('h5.pages.setting.form.h5Vibration')">
+        <template #right-icon>
+          <van-switch
+            v-model="settingDataForm.h5Vibration"
+            size="20px"
+            @change="onSettingDataChange('h5Vibration')"
+          />
+        </template>
+      </van-cell>
     </van-cell-group>
 
     <van-cell-group inset :title="t('h5.pages.setting.about')">

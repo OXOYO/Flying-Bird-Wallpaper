@@ -135,7 +135,8 @@
         "h5EnabledFloatingButtons": {
           "label": "启用悬浮按钮",
           "placeholder": "请选择悬浮按钮"
-        }
+        },
+        "h5Vibration": "震动反馈"
       },
       "privacyPasswordForm": {
         "old": {
@@ -508,7 +509,8 @@
           "h5EnabledFloatingButtons": {
             "label": "启用悬浮按钮",
             "placeholder": ""
-          }
+          },
+          "h5Vibration": "震动反馈"
         },
         "about": "关于",
         "version": "版本"

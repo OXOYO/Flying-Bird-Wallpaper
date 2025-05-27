@@ -2,7 +2,6 @@
 import UseCommonStore from '@h5/stores/commonStore.js'
 import UseSettingStore from '@h5/stores/settingStore.js'
 import * as api from '@h5/api/index.js'
-import { vibrate } from '@h5/utils/index.js'
 import { showImagePreview, showNotify, showConfirmDialog } from 'vant'
 import { useTranslation } from 'i18next-vue'
 
@@ -495,7 +494,7 @@ const handleFavoriteTouchStart = (event) => {
       // 添加最大值限制
       if (favoriteHold.count < 100) {
         favoriteHold.count++
-        vibrate() // 每次计数增加时震动反馈
+        settingStore.vibrate() // 每次计数增加时震动反馈
       } else {
         // 达到最大值时停止计数并提示用户
         clearInterval(favoriteHold.interval)
@@ -604,7 +603,7 @@ const onAddToFavorites = async () => {
   const res = await api.addToFavorites(currentImage.id)
   if (res.success) {
     currentImage.isFavorite = true
-    vibrate()
+    settingStore.vibrate()
   }
 }
 
@@ -617,7 +616,7 @@ const onRemoveFavorites = async () => {
   const res = await api.removeFavorites(currentImage.id)
   if (res.success) {
     currentImage.isFavorite = false
-    vibrate()
+    settingStore.vibrate()
   }
 }
 
@@ -657,7 +656,6 @@ const onPreviewImage = async (index) => {
     maxZoom: 100,
     minZoom: 1 / 3
   })
-  vibrate()
 }
 
 // 图片项触摸相关状态
@@ -678,7 +676,6 @@ const handleImageTouchStart = (index, event) => {
   longPress.timer = setTimeout(() => {
     longPress.selectedIndex = index
     flags.showActionPopup = true
-    vibrate() // 触发震动反馈
   }, 500) // 500毫秒长按触发
 }
 
@@ -774,7 +771,7 @@ const saveImage = async () => {
       type: 'success',
       message: t('messages.saveSuccess')
     })
-    vibrate()
+    settingStore.vibrate()
   } catch (error) {
     showNotify({
       type: 'danger',
@@ -830,7 +827,7 @@ const deleteImage = async () => {
         type: 'success',
         message: t('messages.deleteSuccess')
       })
-      vibrate()
+      settingStore.vibrate()
     } else {
       showNotify({
         type: 'danger',

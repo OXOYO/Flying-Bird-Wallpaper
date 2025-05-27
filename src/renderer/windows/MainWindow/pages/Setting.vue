@@ -705,7 +705,6 @@ onBeforeUnmount(() => {
                 v-model="settingDataForm.allowedFileExt"
                 multiple
                 collapse-tags
-                collapse-tags-tooltip
                 :placeholder="t('pages.Setting.settingDataForm.allowedFileExt.placeholder')"
                 style="width: 290px"
                 @change="onAllowedFileExtChange"
@@ -917,7 +916,6 @@ onBeforeUnmount(() => {
                 v-model="settingDataForm.downloadSources"
                 multiple
                 collapse-tags
-                collapse-tags-tooltip
                 style="width: 290px"
                 @change="onSettingDataFormChange"
               >
@@ -1257,7 +1255,6 @@ onBeforeUnmount(() => {
                 v-model="settingDataForm.h5EnabledFloatingButtons"
                 multiple
                 collapse-tags
-                collapse-tags-tooltip
                 :placeholder="
                   t('pages.Setting.settingDataForm.h5EnabledFloatingButtons.placeholder')
                 "
@@ -1271,6 +1268,15 @@ onBeforeUnmount(() => {
                   :value="item.value"
                 />
               </el-select>
+            </el-form-item>
+            <el-form-item
+              :label="t('pages.Setting.settingDataForm.h5Vibration')"
+              prop="h5Vibration"
+            >
+              <el-checkbox
+                v-model="settingDataForm.h5Vibration"
+                @change="onSettingDataFormChange"
+              />
             </el-form-item>
           </div>
 
