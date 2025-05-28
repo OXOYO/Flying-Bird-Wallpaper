@@ -22,6 +22,10 @@
   <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/releases">
     <img src="https://img.shields.io/github/actions/workflow/status/OXOYO/Flying-Bird-Wallpaper/release.yml" alt="release status">
   </a>
+  <!-- Commitizen friendly -->
+  <a href="http://commitizen.github.io/cz-cli/">
+    <img src="https://img.shields.io/badge/commitizen-friendly-brightgreen.svg" alt="Commitizen friendly">
+  </a>
   <!-- DeepWiki -->
   <a href="https://deepwiki.com/OXOYO/Flying-Bird-Wallpaper">
     <img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki">
