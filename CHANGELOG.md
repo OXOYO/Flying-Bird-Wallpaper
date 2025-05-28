@@ -1,3 +1,19 @@
+## [1.0.13](https://github.com/OXOYO/Flying-Bird-Wallpaper/compare/v1.0.12...v1.0.13) (2025-05-28)
+
+
+### Bug Fixes
+
+* 修复加入隐私空间未刷新问题 ([9c2154d](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/9c2154d7648363d0d3857b214b8424d55ca5b7b9))
+
+
+### Features
+
+* 新增收藏动效 ([33f37ec](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/33f37ec861fd5ae6c9567160a0fdc02c242eb107))
+* 优化日志输出 ([5556cae](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/5556cae6a4b1b6ae4a176b7802edbfd1d8b2184e))
+* 支持H5震动反馈设置 ([8152e9d](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/8152e9deca6fe0f8175b93cb08fea8aa8577b91a))
+
+
+
 ## [1.0.12](https://github.com/OXOYO/Flying-Bird-Wallpaper/compare/v1.0.11...v1.0.12) (2025-05-26)
 
 
