@@ -33,9 +33,16 @@ const UseSettingStore = defineStore('setting', {
         }
       })
     },
-    vibrate(duration = 50) {
+    vibrate(duration = 10, callback = null) {
+      if (typeof duration === 'function') {
+        callback = duration
+        duration = 10
+      }
       if (this.settingData.h5Vibration && navigator.vibrate) {
         navigator.vibrate(duration)
+      }
+      if (callback) {
+        setTimeout(callback, duration)
       }
     }
   }

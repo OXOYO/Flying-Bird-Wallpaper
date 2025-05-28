@@ -25,6 +25,8 @@ const flags = reactive({
   isAnimating: false,
   // 是否正在长按收藏
   isFavoriteHolding: false,
+  // 长按收藏显示提示动效
+  showFavoriteToast: false,
   // 是否操作弹层
   showActionPopup: false
 })
@@ -149,6 +151,7 @@ const initFlag = () => {
   flags.finished = false
   flags.isAnimating = false
   flags.isFavoriteHolding = false
+  flags.showFavoriteToast = false
   flags.showActionPopup = false
 }
 
@@ -494,17 +497,19 @@ const handleFavoriteTouchStart = (event) => {
       // 添加最大值限制
       if (favoriteHold.count < 100) {
         favoriteHold.count++
-        settingStore.vibrate() // 每次计数增加时震动反馈
+        flags.showFavoriteToast = true
+        settingStore.vibrate(Math.min(Math.max(10, favoriteHold.count), 100))
       } else {
         // 达到最大值时停止计数并提示用户
         clearInterval(favoriteHold.interval)
         favoriteHold.interval = null
+        flags.showFavoriteToast = false
         showNotify({
           type: 'warning',
           message: t('messages.maxFavoriteCountReached')
         })
       }
-    }, 500) // 每500毫秒增加一次计数
+    }, 200) // 每200毫秒增加一次计数
   }, 800) // 800毫秒后开始计数
 }
 
@@ -530,6 +535,7 @@ const handleFavoriteTouchMove = (event) => {
 
     // 重置状态
     flags.isFavoriteHolding = false
+    flags.showFavoriteToast = false
     favoriteHold.count = 0
   }
 }
@@ -563,6 +569,7 @@ const handleFavoriteTouchEnd = async () => {
 
     // 重置状态
     flags.isFavoriteHolding = false
+    flags.showFavoriteToast = false
     favoriteHold.count = 0
     return
   }
@@ -603,7 +610,10 @@ const onAddToFavorites = async () => {
   const res = await api.addToFavorites(currentImage.id)
   if (res.success) {
     currentImage.isFavorite = true
-    settingStore.vibrate()
+    flags.showFavoriteToast = true
+    settingStore.vibrate(() => {
+      flags.showFavoriteToast = false
+    })
   }
 }
 
@@ -676,6 +686,7 @@ const handleImageTouchStart = (index, event) => {
   longPress.timer = setTimeout(() => {
     longPress.selectedIndex = index
     flags.showActionPopup = true
+    settingStore.vibrate()
   }, 500) // 500毫秒长按触发
 }
 
@@ -1062,6 +1073,17 @@ const handlePageShow = () => {}
       </div>
     </div>
   </van-popup>
+
+  <!-- 收藏提示 -->
+  <van-toast
+    v-model:show="flags.showFavoriteToast"
+    :overlay="false"
+    style="background-color: transparent"
+  >
+    <template #message>
+      <img src="@h5/assets/images/star.gif" style="width: 50vw; max-width: 200px; padding: 0" />
+    </template>
+  </van-toast>
 </template>
 
 <style scoped lang="scss">

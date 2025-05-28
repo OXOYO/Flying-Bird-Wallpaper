@@ -191,7 +191,7 @@ onMounted(() => {
 
 <template>
   <div class="page-wrapper page-setting">
-    <van-nav-bar :title="t('h5.pages.setting.title')" left-arrow fixed @click-left="goBack" />
+    <van-nav-bar :title="t('h5.pages.setting.title')" fixed />
 
     <div class="page-setting-inner">
       <van-cell-group inset :title="t('h5.pages.setting.form.appSettings')">
