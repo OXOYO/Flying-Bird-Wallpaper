@@ -4,7 +4,7 @@
 
 <div align="center">
 
-# Flying Bird Wallpaper
+# 飞鸟壁纸 (Flying Bird Wallpaper)
 
   <!-- License -->
   <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/blob/master/LICENSE">
@@ -27,51 +27,63 @@
     <img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki">
   </a>
 
-  <h3>English | <a href="README-zh.md">简体中文</a></h3>
+  <h3>简体中文 | <a href="README-en.md">English</a></h3>
   
 </div>
 
-## Project Introduction
+## 项目简介
 
-Flying Bird Wallpaper is a cross-platform desktop wallpaper application that allows you to easily browse, favorite, and set beautiful images as your desktop wallpaper with one click.
+飞鸟壁纸是一款跨平台桌面壁纸应用，让您轻松浏览、收藏美图，一键设置桌面壁纸。
 
-## [Preview](./docs/preview.md)
+## [预览效果](./docs/preview.md)
 
-## Core Features
+## 核心功能
 
-1. **Multiple Wallpaper Sources** - Integrates high-quality wallpaper sources such as NASA, Unsplash, Pixabay, supports custom wallpaper source plugins, and local directory images.
-2. **Smart Search** - Supports keyword search and intelligent classification for quick access to your favorite wallpapers.
-3. **One-Click Management** - Set wallpaper, favorite images, and save locally with one click for efficient operation.
-4. **Desktop Floating Ball** - Quickly switch wallpapers without opening the main interface.
-5. **H5 Version** - Supports mobile access, browse wallpapers anytime, anywhere.
-6. **Multi-language Support** - Built-in multilingual interface to meet international needs.
-7. **Auto Update** - Automatically checks for updates to keep the application up to date.
-8. **Cross-Platform Compatibility** - Perfectly supports Windows and macOS systems.
-9. **Scheduled Tasks** - Set scheduled wallpaper changes, directory refresh, resource downloads, and automatic desktop background switching.
-10. **Word Bank Function** - Automatically generates a word bank through word segmentation for quick keyword search.
-11. **History** - Records used wallpapers for easy review and reuse.
-12. **Favorites** - Collect your favorite wallpapers and build a personal wallpaper library.
-13. **Private Space** - Provides a privacy-protected wallpaper storage space to ensure personal privacy.
-14. **Image Preview** - Supports wallpaper preview to view details and effects.
+1. **多源壁纸** - 集成NASA、Unsplash、Pixabay等多个优质壁纸源，支持自定义壁纸源插件，同时支持本地目录图片。
 
-## Experimental Features
+2. **智能搜索** - 支持关键词搜索与智能分类，快速定位心仪壁纸。
 
-1. **Dynamic Wallpaper** - Supports dynamic wallpapers to add vivid effects to your desktop.
-2. **Webpage Wallpaper** - Supports setting web pages as wallpapers for unlimited creativity.
+3. **一键管理** - 一键设置壁纸、收藏图片、本地保存，操作简便高效。
 
-## Tech Stack
+4. **桌面悬浮球** - 快速切换壁纸功能，无需打开主界面。
+5. **H5端** - 支持手机端访问，随时随地浏览壁纸。
 
-- **Electron Framework** - Ensures cross-platform compatibility
-- **Vue 3 Frontend** - Builds a modern user interface
-- **Modular Design** - Improves application stability
-- **Plugin System** - Supports extending new wallpaper sources
-- **SQLite Database** - Local storage for user data
-- **WebSocket Communication** - Enables real-time interaction between frontend and backend
+6. **多语言支持** - 内置多语言界面，满足国际化需求。
 
-## System Requirements
+7. **自动更新** - 自动检测更新，保持应用最新状态。
 
-- Windows 10 or above
-- macOS 10.13 or above
+8. **跨平台兼容** - 完美支持Windows和macOS系统。
+
+9. **定时任务** - 支持设置定时更换壁纸、刷新目录、下载资源，自动切换桌面背景。
+
+10. **词库功能** - 通过分词自动生成词库，方便用户快速搜索关键词。
+
+11. **历史记录** - 记录使用过的壁纸，方便回顾和重复使用。
+
+12. **收藏功能** - 收藏喜爱的壁纸，建立个人壁纸库。
+
+13. **隐私空间** - 提供隐私保护的壁纸存储空间，确保个人隐私。
+
+14. **图片预览** - 支持壁纸预览功能，查看壁纸细节和效果。
+
+## 实验室功能
+
+1. **动态壁纸** - 支持动态壁纸，为桌面增添生动效果。
+2. **网页壁纸** - 支持将网页设置为壁纸，创意无限。
+
+## 技术栈
+
+- **Electron框架** - 确保跨平台兼容性
+- **Vue 3前端** - 构建现代化用户界面
+- **模块化设计** - 提高应用稳定性
+- **插件系统** - 支持扩展新壁纸源
+- **SQLite数据库** - 本地存储用户数据
+- **WebSocket通信** - 实现前后端实时交互
+
+## 系统要求
+
+- Windows 10及以上版本
+- macOS 10.13及以上版本
 
 ## LICENSE
 
@@ -89,9 +101,9 @@ Copyright (c) 2025-present OXOYO
 
 <div align="left">
     <img src="https://raw.githubusercontent.com/OXOYO/OXOYO/refs/heads/master/contact_me_wx.png" width="200px"/>
-    <div>Add me to the group, remark [Project Name]</div>
+    <div>加我进群，备注【项目名称】</div>
 </div>
 
 ---
 
-Flying Bird Wallpaper, make your desktop brand new!
+飞鸟壁纸，让您的桌面焕然一新！
