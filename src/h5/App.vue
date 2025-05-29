@@ -77,6 +77,18 @@ watch(
   }
 )
 
+watch(
+  () => settingData.value.h5WeekScreen,
+  (val) => {
+    // 处理屏幕常亮
+    if (val) {
+      requestWakeLock()
+    } else {
+      releaseWakeLock()
+    }
+  }
+)
+
 const onTabbarChange = (name) => {
   commonStore.setActiveTabbar(name)
 }
@@ -91,6 +103,7 @@ const onTabbarTrigger = (name) => {
 // 保持屏幕常亮
 const requestWakeLock = async () => {
   try {
+    if (!settingData.value.h5WeekScreen) return
     wakeLock = await navigator.wakeLock.request('screen')
     wakeLock.addEventListener('release', () => {})
   } catch (err) {

@@ -464,6 +464,16 @@ onMounted(() => {
             />
           </template>
         </van-cell>
+
+        <van-cell :title="t('h5.pages.setting.form.h5WeekScreen')">
+          <template #right-icon>
+            <van-switch
+              v-model="settingDataForm.h5WeekScreen"
+              size="20px"
+              @change="onSettingDataChange('h5WeekScreen')"
+            />
+          </template>
+        </van-cell>
       </van-cell-group>
 
       <van-cell-group inset :title="t('h5.pages.setting.about')">

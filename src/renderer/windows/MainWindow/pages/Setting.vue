@@ -1278,6 +1278,15 @@ onBeforeUnmount(() => {
                 @change="onSettingDataFormChange"
               />
             </el-form-item>
+            <el-form-item
+              :label="t('pages.Setting.settingDataForm.h5WeekScreen')"
+              prop="h5WeekScreen"
+            >
+              <el-checkbox
+                v-model="settingDataForm.h5WeekScreen"
+                @change="onSettingDataFormChange"
+              />
+            </el-form-item>
           </div>
 
           <div class="form-card">

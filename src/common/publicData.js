@@ -202,7 +202,8 @@ export const defaultSettingData = {
     'toggleTabbar',
     'backtop'
   ],
-  h5Vibration: true
+  h5Vibration: true,
+  h5WeekScreen: true
 }
 
 export const colorList = [
