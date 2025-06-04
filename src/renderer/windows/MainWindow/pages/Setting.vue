@@ -374,6 +374,11 @@ onBeforeUnmount(() => {
               href="#divider-localResource"
               :title="t('pages.Setting.divider.localResource')"
             />
+            <el-anchor-link
+              class="anchor-sub-link"
+              href="#divider-remoteResource"
+              :title="t('pages.Setting.divider.remoteResource')"
+            />
             <el-anchor-link class="anchor-sub-link" href="#divider-webResource">
               <span style="vertical-align: middle">{{
                 t('pages.Setting.divider.webResource')
@@ -392,11 +397,6 @@ onBeforeUnmount(() => {
                 style="vertical-align: middle"
               />
             </el-anchor-link>
-            <el-anchor-link
-              class="anchor-sub-link"
-              href="#divider-remoteResource"
-              :title="t('pages.Setting.divider.remoteResource')"
-            />
           </template>
         </el-anchor-link>
         <el-anchor-link
@@ -754,133 +754,6 @@ onBeforeUnmount(() => {
               />
             </el-form-item>
 
-            <div id="divider-webResource" class="divider-sub">
-              <span style="vertical-align: middle">{{
-                t('pages.Setting.divider.webResource')
-              }}</span>
-              <IconifyIcon
-                icon="material-symbols:experiment-outline-sharp"
-                style="vertical-align: middle"
-              />
-            </div>
-            <el-form-item
-              :label="t('pages.Setting.settingDataForm.webWallpaperUrl.label')"
-              prop="webWallpaperUrl"
-            >
-              <el-input
-                v-model="settingDataForm.webWallpaperUrl"
-                :disabled="flags.settingWebWallpaper"
-                clearable
-                :placeholder="t('pages.Setting.settingDataForm.webWallpaperUrl.placeholder')"
-                style="max-width: 450px"
-                @change="onSettingDataFormChange"
-              >
-                <template #append>
-                  <el-button
-                    :disabled="!settingDataForm.webWallpaperUrl"
-                    :loading="flags.settingWebWallpaper"
-                    @click="onSetWebWallpaper"
-                  >
-                    <IconifyIcon icon="ep:check" />
-                  </el-button>
-                </template>
-              </el-input>
-            </el-form-item>
-
-            <div id="divider-dynamicWallpaper" class="divider-sub">
-              <span style="vertical-align: middle">{{
-                t('pages.Setting.divider.dynamicWallpaper')
-              }}</span>
-              <IconifyIcon
-                icon="material-symbols:experiment-outline-sharp"
-                style="vertical-align: middle"
-              />
-            </div>
-            <el-form-item
-              :label="t('pages.Setting.settingDataForm.dynamicAutoPlayOnStartup')"
-              prop="dynamicAutoPlayOnStartup"
-            >
-              <el-checkbox
-                v-model="settingDataForm.dynamicAutoPlayOnStartup"
-                @change="onSettingDataFormChange"
-              />
-            </el-form-item>
-            <el-form-item
-              :label="t('pages.Setting.settingDataForm.dynamicMuteAudio')"
-              prop="dynamicMuteAudio"
-            >
-              <el-checkbox
-                v-model="settingDataForm.dynamicMuteAudio"
-                @change="onSettingDataFormChange"
-              />
-            </el-form-item>
-            <el-form-item
-              :label="t('pages.Setting.settingDataForm.dynamicBrightness')"
-              prop="dynamicBrightness"
-            >
-              <el-slider
-                v-model="settingDataForm.dynamicBrightness"
-                :min="0"
-                :max="100"
-                :step="1"
-                show-input
-                show-input-controls
-                style="width: 450px"
-                @change="(val) => onDynamicSettingChange('dynamicBrightness', val)"
-              />
-            </el-form-item>
-            <el-form-item
-              :label="t('pages.Setting.settingDataForm.dynamicContrast')"
-              prop="dynamicContrast"
-            >
-              <el-slider
-                v-model="settingDataForm.dynamicContrast"
-                :min="0"
-                :max="100"
-                :step="1"
-                show-input
-                show-input-controls
-                style="width: 450px"
-                @change="(val) => onDynamicSettingChange('dynamicContrast', val)"
-              />
-            </el-form-item>
-            <el-form-item
-              :label="t('pages.Setting.settingDataForm.dynamicPerformanceMode.label')"
-              prop="dynamicPerformanceMode"
-            >
-              <el-select
-                v-model="settingDataForm.dynamicPerformanceMode"
-                :placeholder="t('pages.Setting.settingDataForm.dynamicPerformanceMode.placeholder')"
-                style="width: 290px"
-                @change="(val) => onDynamicSettingChange('dynamicPerformanceMode', val)"
-              >
-                <el-option
-                  v-for="item in dynamicPerformanceModeOptions"
-                  :key="item.value"
-                  :label="t(item.locale)"
-                  :value="item.value"
-                />
-              </el-select>
-            </el-form-item>
-            <el-form-item
-              :label="t('pages.Setting.settingDataForm.dynamicScaleMode.label')"
-              prop="dynamicScaleMode"
-            >
-              <el-select
-                v-model="settingDataForm.dynamicScaleMode"
-                :placeholder="t('pages.Setting.settingDataForm.dynamicScaleMode.placeholder')"
-                style="width: 290px"
-                @change="(val) => onDynamicSettingChange('dynamicScaleMode', val)"
-              >
-                <el-option
-                  v-for="item in dynamicScaleModeOptions"
-                  :key="item.value"
-                  :label="t(item.locale)"
-                  :value="item.value"
-                />
-              </el-select>
-            </el-form-item>
-
             <div id="divider-remoteResource" class="divider-sub">
               {{ t('pages.Setting.divider.remoteResource') }}
             </div>
@@ -1055,6 +928,133 @@ onBeforeUnmount(() => {
                 :disabled="!settingDataForm.downloadFolder"
                 @change="onSettingDataFormChange"
               />
+            </el-form-item>
+
+            <div id="divider-webResource" class="divider-sub">
+              <span style="vertical-align: middle">{{
+                t('pages.Setting.divider.webResource')
+              }}</span>
+              <IconifyIcon
+                icon="material-symbols:experiment-outline-sharp"
+                style="vertical-align: middle"
+              />
+            </div>
+            <el-form-item
+              :label="t('pages.Setting.settingDataForm.webWallpaperUrl.label')"
+              prop="webWallpaperUrl"
+            >
+              <el-input
+                v-model="settingDataForm.webWallpaperUrl"
+                :disabled="flags.settingWebWallpaper"
+                clearable
+                :placeholder="t('pages.Setting.settingDataForm.webWallpaperUrl.placeholder')"
+                style="max-width: 450px"
+                @change="onSettingDataFormChange"
+              >
+                <template #append>
+                  <el-button
+                    :disabled="!settingDataForm.webWallpaperUrl"
+                    :loading="flags.settingWebWallpaper"
+                    @click="onSetWebWallpaper"
+                  >
+                    <IconifyIcon icon="ep:check" />
+                  </el-button>
+                </template>
+              </el-input>
+            </el-form-item>
+
+            <div id="divider-dynamicWallpaper" class="divider-sub">
+              <span style="vertical-align: middle">{{
+                t('pages.Setting.divider.dynamicWallpaper')
+              }}</span>
+              <IconifyIcon
+                icon="material-symbols:experiment-outline-sharp"
+                style="vertical-align: middle"
+              />
+            </div>
+            <el-form-item
+              :label="t('pages.Setting.settingDataForm.dynamicAutoPlayOnStartup')"
+              prop="dynamicAutoPlayOnStartup"
+            >
+              <el-checkbox
+                v-model="settingDataForm.dynamicAutoPlayOnStartup"
+                @change="onSettingDataFormChange"
+              />
+            </el-form-item>
+            <el-form-item
+              :label="t('pages.Setting.settingDataForm.dynamicMuteAudio')"
+              prop="dynamicMuteAudio"
+            >
+              <el-checkbox
+                v-model="settingDataForm.dynamicMuteAudio"
+                @change="onSettingDataFormChange"
+              />
+            </el-form-item>
+            <el-form-item
+              :label="t('pages.Setting.settingDataForm.dynamicBrightness')"
+              prop="dynamicBrightness"
+            >
+              <el-slider
+                v-model="settingDataForm.dynamicBrightness"
+                :min="0"
+                :max="100"
+                :step="1"
+                show-input
+                show-input-controls
+                style="width: 450px"
+                @change="(val) => onDynamicSettingChange('dynamicBrightness', val)"
+              />
+            </el-form-item>
+            <el-form-item
+              :label="t('pages.Setting.settingDataForm.dynamicContrast')"
+              prop="dynamicContrast"
+            >
+              <el-slider
+                v-model="settingDataForm.dynamicContrast"
+                :min="0"
+                :max="100"
+                :step="1"
+                show-input
+                show-input-controls
+                style="width: 450px"
+                @change="(val) => onDynamicSettingChange('dynamicContrast', val)"
+              />
+            </el-form-item>
+            <el-form-item
+              :label="t('pages.Setting.settingDataForm.dynamicPerformanceMode.label')"
+              prop="dynamicPerformanceMode"
+            >
+              <el-select
+                v-model="settingDataForm.dynamicPerformanceMode"
+                :placeholder="t('pages.Setting.settingDataForm.dynamicPerformanceMode.placeholder')"
+                style="width: 290px"
+                @change="(val) => onDynamicSettingChange('dynamicPerformanceMode', val)"
+              >
+                <el-option
+                  v-for="item in dynamicPerformanceModeOptions"
+                  :key="item.value"
+                  :label="t(item.locale)"
+                  :value="item.value"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item
+              :label="t('pages.Setting.settingDataForm.dynamicScaleMode.label')"
+              prop="dynamicScaleMode"
+            >
+              <el-select
+                v-model="settingDataForm.dynamicScaleMode"
+                :placeholder="t('pages.Setting.settingDataForm.dynamicScaleMode.placeholder')"
+                style="width: 290px"
+                @change="(val) => onDynamicSettingChange('dynamicScaleMode', val)"
+              >
+                <el-option
+                  v-for="item in dynamicScaleModeOptions"
+                  :key="item.value"
+                  :label="t(item.locale)"
+                  :value="item.value"
+                />
+              </el-select>
             </el-form-item>
           </div>
 
