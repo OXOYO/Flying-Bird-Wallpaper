@@ -11,6 +11,7 @@ import {
   autoRefreshListOptions
 } from '@common/publicData.js'
 import { hexToRGB } from '@renderer/utils/gen-color.js'
+import { debounce } from '@renderer/utils/index.js'
 
 const { t } = useTranslation()
 const commonStore = UseCommonStore()
@@ -85,11 +86,15 @@ const cardBlockStyle = computed(() => {
       }
 })
 
-const imgUrlQuery = computed(() => {
-  let query = {}
-  // 固定宽高
+const imgSize = computed(() => {
   const w = 1080
   const h = Math.floor(w * gridForm.gridHWRatio)
+  return { w, h }
+})
+
+const imgUrlQuery = computed(() => {
+  let query = {}
+  const { w, h } = imgSize.value
   if (searchForm.resourceType === 'localResource') {
     query = { w }
   } else {
@@ -208,15 +213,6 @@ const searchForm = reactive({
 const resizeObserver = new ResizeObserver((entries) => {
   for (let entry of entries) {
     handleGridSize(entry.contentRect.width, entry.contentRect.height)
-  }
-})
-
-const itemStyle = computed(() => {
-  const gap = cardForm.cardGap
-  return {
-    width: `${cardForm.cardWidth - gap * 2}px`,
-    height: `${cardForm.cardHeight - gap * 2}px`,
-    margin: `${gap}px`
   }
 })
 
@@ -631,9 +627,13 @@ const onSwitchGridRatio = async (childVal) => {
     gridHWRatio: gridForm.gridHWRatio
   }
 
-  const res = await window.FBW.updateSettingData(gridFormData)
-  if (res && res.success) {
-    settingStore.updateSettingData(res.data)
+  try {
+    const res = await window.FBW.updateSettingData(gridFormData)
+    if (res?.success) {
+      settingStore.updateSettingData(res.data)
+    }
+  } catch (err) {
+    console.error('Failed to update grid settings:', err)
   }
 }
 
@@ -665,49 +665,60 @@ const onSwitchGridSize = async (childVal) => {
 
 const handleGridSize = (blockWidth = 900, blockHeight = 600) => {
   if (!blockWidth || !blockHeight) return
-  if (gridForm.gridSize === 'auto') {
+  const { gridSize, gridHWRatio } = gridForm
+  // 批量计算所有需要更新的值
+  const updates = {}
+  if (gridSize === 'auto') {
     for (let i = 0; i < 10; i++) {
       const size = gridSizeRange.size * Math.pow(1.5, i)
       const minWidth = gridSizeRange.wrapperWidth * Math.pow(1.5, i)
       const maxWidth = gridSizeRange.wrapperWidth * Math.pow(1.5, i + 1)
       if (blockWidth >= minWidth && blockWidth < maxWidth) {
-        cardForm.gridItems = size
-        cardForm.cardWidth = Math.floor(blockWidth / cardForm.gridItems)
-        cardForm.cardHeight = Math.floor(cardForm.cardWidth * gridForm.gridHWRatio)
+        updates.gridItems = size
+        updates.cardWidth = Math.floor(blockWidth / updates.gridItems)
+        updates.cardHeight = Math.floor(updates.cardWidth * gridHWRatio)
         break
       }
     }
   } else {
-    cardForm.gridItems = gridForm.gridSize
-    cardForm.cardWidth = Math.floor(blockWidth / cardForm.gridItems)
-    cardForm.cardHeight = Math.floor(cardForm.cardWidth * gridForm.gridHWRatio)
+    updates.gridItems = gridSize
+    updates.cardWidth = Math.floor(blockWidth / updates.gridItems)
+    updates.cardHeight = Math.floor(updates.cardWidth * gridHWRatio)
   }
-  // 优化 buffer 设置 - 根据滚动速度和设备性能动态调整
-  const calculateOptimalBuffer = () => {
-    const baseBuffer = cardForm.cardHeight * 2 // 基础缓冲区为两行高度
-    const screenRows = Math.ceil(blockHeight / cardForm.cardHeight) // 屏幕可见行数
-
-    // 根据设备性能调整缓冲区大小
-    const performanceMultiplier = window.navigator.hardwareConcurrency > 4 ? 1.5 : 1
-
-    // 计算最终缓冲区大小，确保至少有一屏的缓冲
-    return Math.min(
-      Math.max(baseBuffer, screenRows * cardForm.cardHeight * performanceMultiplier),
-      blockHeight * 0.5 // 最大不超过视口高度的50%
-    )
-  }
-
-  cardForm.buffer = parseInt(calculateOptimalBuffer())
+  // 计算最优缓冲区大小
+  updates.buffer = calculateOptimalBuffer(blockHeight, updates.cardHeight)
   // FIXME 动态计算pageSize
   // 计算当前卡片大小下，block容器可以包含多少个卡片
   const allCardSize = Math.floor(
-    (blockWidth * blockHeight) / (cardForm.cardWidth * cardForm.cardHeight)
+    (blockWidth * blockHeight) / (updates.cardWidth * updates.cardHeight)
   )
   // 计算当前卡片大小下，block容器可以包含行
-  const rows = Math.floor(allCardSize / cardForm.gridItems)
+  const rows = Math.floor(allCardSize / updates.gridItems)
   // 在当前block容器可以包含的行数基础上再加1行，乘以每行grid数量得出新的分页量
-  searchForm.pageSize = Math.floor((rows + 2) * cardForm.gridItems)
+  updates.pageSize = Math.floor((rows + 2) * updates.gridItems)
+
+  // 一次性应用所有更新，减少重排次数
+  Object.assign(cardForm, updates)
+  searchForm.pageSize = updates.pageSize
+
   doCompleteList()
+}
+
+// 优化 buffer 设置 - 根据滚动速度和设备性能动态调整
+const calculateOptimalBuffer = (blockHeight, cardHeight) => {
+  const baseBuffer = cardHeight * 2 // 基础缓冲区为两行高度
+  const screenRows = Math.ceil(blockHeight / cardHeight) // 屏幕可见行数
+
+  // 根据设备性能调整缓冲区大小
+  const performanceMultiplier = window.navigator.hardwareConcurrency > 4 ? 1.5 : 1
+
+  // 计算最终缓冲区大小，确保至少有一屏的缓冲
+  return parseInt(
+    Math.min(
+      Math.max(baseBuffer, screenRows * cardHeight * performanceMultiplier),
+      blockHeight * 0.5 // 最大不超过视口高度的50%
+    )
+  )
 }
 
 // 补齐列表
@@ -807,6 +818,10 @@ const onLoadMore = async () => {
     })
   }
 }
+// 防抖
+const debouncedGetNextList = debounce(() => {
+  getNextList()
+}, 300)
 
 const onScroll = (event) => {
   const { scrollTop, scrollHeight, clientHeight } = event.target
@@ -815,15 +830,7 @@ const onScroll = (event) => {
   if (!isCloseBottom || flags.loading || !flags.hasMore) {
     return
   }
-  // 添加防抖处理，避免频繁触发
-  if (flags.scrollDebounce) {
-    return
-  }
-  flags.scrollDebounce = true
-  setTimeout(() => {
-    flags.scrollDebounce = false
-  }, 300)
-  getNextList()
+  debouncedGetNextList()
 }
 
 const getNextList = async () => {
@@ -929,17 +936,13 @@ const getNextList = async () => {
   } finally {
     flags.loading = false
     flags.loadMoreClicked = false
+    flags.empty = !cardList.value.length
 
     // 强制更新可视区域的项目
-    setTimeout(() => {
+    nextTick(() => {
       scrollRef.value?.updateVisibleItems(true)
     })
-
-    flags.empty = !cardList.value.length
   }
-  nextTick(() => {
-    scrollRef.value?.updateVisibleItems(true)
-  })
 }
 
 // 将筛选条件同步到壁纸设置
@@ -1288,6 +1291,15 @@ onMounted(() => {
 onBeforeUnmount(() => {
   // 取消主进程事件监听
   window.FBW.offTriggerAction()
+
+  // 清理ResizeObserver
+  if (cardBlockRef.value) {
+    resizeObserver.unobserve(cardBlockRef.value)
+  }
+  resizeObserver.disconnect()
+
+  // 清空大型数据结构
+  cardList.value = []
 })
 </script>
 
@@ -1472,7 +1484,15 @@ onBeforeUnmount(() => {
                   ? 'card-item__' + cardItemStatus.status
                   : ''
               ]"
-              :style="itemStyle"
+              :style="{
+                '--card-width': `${cardForm.cardWidth - cardForm.cardGap * 2}px`,
+                '--card-height': `${cardForm.cardHeight - cardForm.cardGap * 2}px`,
+                '--card-gap': `${cardForm.cardGap}px`,
+                '--dominant-color': item.dominantColor || 'transparent',
+                '--dominant-color-rgba': item.dominantColorRgb
+                  ? `rgba(${item.dominantColorRgb.r}, ${item.dominantColorRgb.g}, ${item.dominantColorRgb.b}, .5)`
+                  : 'rgba(255, 255, 255, 0.5)'
+              }"
               @mouseenter="onOverCard(index)"
             >
               <div v-if="isShowTag(item)" class="card-item-tags">
@@ -1526,9 +1546,6 @@ onBeforeUnmount(() => {
                   loading="lazy"
                   lazy
                   fit="cover"
-                  :style="{
-                    backgroundColor: item.dominantColor || 'transparent'
-                  }"
                   @dblclick="doViewImage(item, index, true)"
                 >
                   <!-- <template #placeholder>
@@ -1541,14 +1558,7 @@ onBeforeUnmount(() => {
                   </template>
                 </el-image>
               </div>
-              <div
-                class="card-item-btns"
-                :style="{
-                  backgroundColor: item.dominantColorRgb
-                    ? `rgba(${item.dominantColorRgb.r}, ${item.dominantColorRgb.g}, ${item.dominantColorRgb.b}, .5)`
-                    : ''
-                }"
-              >
+              <div class="card-item-btns">
                 <el-button
                   v-for="btn in cardItemBtns"
                   :key="btn.action"
@@ -1779,6 +1789,9 @@ onBeforeUnmount(() => {
 
 .card-item {
   contain: content;
+  width: var(--card-width);
+  height: var(--card-height);
+  margin: var(--card-gap);
   background-color: rgba(0, 0, 0, 0.2);
   position: relative;
   cursor: pointer;
@@ -1852,6 +1865,7 @@ onBeforeUnmount(() => {
     left: 0;
     color: rgba(255, 255, 255, 0.7);
     font-size: 12px;
+    background-color: var(--dominant-color);
     will-change: transform;
     transform: translateZ(0);
     backface-visibility: hidden;
@@ -1903,7 +1917,7 @@ onBeforeUnmount(() => {
   /* 网格间距 */
   gap: 4px;
   backdrop-filter: blur(6px);
-  background-color: rgba(255, 255, 255, 0.5);
+  background-color: var(--dominant-color-rgba);
 
   .card-item-btn {
     margin: 0;
