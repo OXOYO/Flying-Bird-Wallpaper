@@ -37,7 +37,8 @@ export default class WallpaperManager {
     this.apiManager = apiManager
 
     // 重置参数
-    this.resetParams()
+    this.resetSwitchParams()
+    this.resetDownloadParams()
 
     WallpaperManager._instance = this
   }
@@ -47,25 +48,72 @@ export default class WallpaperManager {
     return this.settingManager.settingData
   }
 
-  resetParams(keys = ['switchToPrevWallpaper', 'autoDownload']) {
-    keys = Array.isArray(keys) ? keys : keys ? [keys] : []
-    this.params = this.params || {}
-
-    if (keys.includes('switchToPrevWallpaper')) {
-      this.params.switchToPrevWallpaper = {
-        // 切换上一个壁纸时，默认索引为0
-        index: 0,
-        count: 0
-      }
+  resetSwitchParams() {
+    this.switchParams = {
+      // 切换上一个壁纸时，默认索引为0
+      index: 0,
+      count: 0
     }
-    if (keys.includes('autoDownload')) {
-      this.params.autoDownload = {
-        // 记录下载的页数，用于顺序下载时查找索引
-        startPage: 1,
-        pageSize: 10,
-        // 添加当前下载源索引
-        currentSourceIndex: 0
+  }
+
+  async resetDownloadParams() {
+    const settingData = this.settingData
+    const downloadParams = {
+      downloadSources: settingData.downloadSources,
+      downloadKeywords: settingData.downloadKeywords,
+      downloadOrientation: settingData.downloadOrientation,
+      // 记录下载的页数，用于顺序下载时查找索引
+      startPage: 1,
+      pageSize: 10,
+      // 添加当前下载源索引
+      currentSourceIndex: 0,
+      // 任务是否已完成
+      isTaskCompleted: false
+    }
+    try {
+      const storeData = await this.getDownloadParams()
+      // 判断存储的下载参数中的下载源、关键词、方向是否与当前设置一致，一致则使用存储的参数实现接续下载
+      if (
+        storeData &&
+        storeData.downloadSources.toString() === settingData.downloadSources.toString() &&
+        storeData.downloadKeywords === settingData.downloadKeywords &&
+        storeData.downloadOrientation.toString() === settingData.downloadOrientation.toString()
+      ) {
+        downloadParams.startPage = storeData.startPage
+        downloadParams.pageSize = storeData.pageSize
+        downloadParams.currentSourceIndex = storeData.currentSourceIndex
+        downloadParams.isTaskCompleted = storeData.isTaskCompleted
       }
+    } catch (err) {
+      this.logger.error(`加载下载参数失败: ${err}`)
+    }
+
+    this.downloadParams = downloadParams
+  }
+
+  async getDownloadParams() {
+    try {
+      const res = await this.dbManager.getSysRecord('downloadParams')
+      if (res.success && res.data?.storeData) {
+        return res.data.storeData
+      }
+      return null
+    } catch (err) {
+      this.logger.error(`加载下载参数失败: ${err}`)
+      return null
+    }
+  }
+  // 保存下载参数到数据库
+  async saveDownloadParams() {
+    try {
+      if (this.downloadParams) {
+        await this.dbManager.setSysRecord('downloadParams', this.downloadParams, 'object')
+        return true
+      }
+      return false
+    } catch (err) {
+      this.logger.error(`保存下载参数失败: ${err}`)
+      return false
     }
   }
 
@@ -383,16 +431,15 @@ export default class WallpaperManager {
 
   // 切换到上一个壁纸
   async doSwitchToPrevWallpaper() {
-    const { index } = this.params.switchToPrevWallpaper
+    const { index } = this.switchParams
     // 查询历史记录总数
     const count_stmt = this.db.prepare(`SELECT COUNT(*) AS total FROM fbw_history`)
     const count_result = count_stmt.get()
-    this.params.switchToPrevWallpaper.count =
-      count_result && count_result.total ? count_result.total : 0
+    this.switchParams.count = count_result && count_result.total ? count_result.total : 0
 
     // 支持循环切换
-    if (this.params.switchToPrevWallpaper.count) {
-      const nextIndex = index + 1 < this.params.switchToPrevWallpaper.count ? index + 1 : 0
+    if (this.switchParams.count) {
+      const nextIndex = index + 1 < this.switchParams.count ? index + 1 : 0
       // 查询历史记录
       const query_stmt = this.db.prepare(
         `SELECT h.id as hid, r.* FROM fbw_history h LEFT JOIN fbw_resources r ON h.resourceId = r.id ORDER BY h.id DESC LIMIT ? OFFSET ?`
@@ -401,7 +448,7 @@ export default class WallpaperManager {
 
       if (query_result) {
         // 更新索引
-        this.params.switchToPrevWallpaper.index = nextIndex
+        this.switchParams.index = nextIndex
 
         return await this.setAsWallpaper(query_result, false, false)
       }
@@ -436,7 +483,7 @@ export default class WallpaperManager {
 
       // 重置参数
       if (isResetParams) {
-        this.resetParams('switchToPrevWallpaper')
+        this.resetSwitchParams()
       }
 
       return {
@@ -514,10 +561,6 @@ export default class WallpaperManager {
           }
         }
 
-        // 确保下载目录存在
-        if (!fs.existsSync(downloadFolder)) {
-          fs.mkdirSync(downloadFolder, { recursive: true })
-        }
         // 生成文件名
         const fileName = `${item.fileName}.${item.fileExt}`
         const filePath = path.join(downloadFolder, fileName)
@@ -649,11 +692,6 @@ export default class WallpaperManager {
     }
 
     try {
-      // 确保下载目录存在
-      if (!fs.existsSync(downloadFolder)) {
-        fs.mkdirSync(downloadFolder, { recursive: true })
-      }
-
       const res = await this.apiManager.call(resourceName, 'search', {
         keywords,
         orientation,
@@ -756,17 +794,40 @@ export default class WallpaperManager {
   }
 
   // 下载壁纸
-  async downloadWallpaper() {
-    const { downloadSources, downloadKeywords, downloadOrientation, downloadFolder, autoDownload } =
-      this.settingData
+  async downloadWallpaper(stopDownloadTask) {
+    // 每次下载前重置参数
+    await this.resetDownloadParams()
+    const { downloadFolder, autoDownload } = this.settingData
+    const {
+      downloadSources,
+      downloadKeywords,
+      downloadOrientation,
+      startPage,
+      pageSize,
+      currentSourceIndex,
+      isTaskCompleted
+    } = this.downloadParams
+
+    const isOutSource = currentSourceIndex > downloadSources.length - 1
 
     if (
       !autoDownload ||
       !downloadSources ||
       !downloadSources.length ||
       !downloadKeywords ||
-      !downloadFolder
+      !downloadFolder ||
+      isTaskCompleted ||
+      isOutSource
     ) {
+      if (isOutSource) {
+        this.logger.info('下载任务已完成')
+        this.downloadParams.isTaskCompleted = true
+        await this.saveDownloadParams()
+      }
+      // 条件不满足，停止下载任务
+      if (typeof stopDownloadTask === 'function') {
+        stopDownloadTask()
+      }
       return false
     }
 
@@ -778,11 +839,9 @@ export default class WallpaperManager {
 
       // 获取当前要使用的下载源
       // 如果是数组，则按顺序轮流使用每个下载源
-      const currentSourceIndex =
-        (this.params.autoDownload.currentSourceIndex || 0) % downloadSources.length
-      const currentSource = downloadSources[currentSourceIndex]
+      const sourceIndex = (currentSourceIndex || 0) % downloadSources.length
+      const currentSource = downloadSources[sourceIndex]
 
-      const { startPage, pageSize } = this.params.autoDownload
       const res = await this.searchWallpaperWithDownload({
         resourceName: currentSource,
         keywords: downloadKeywords,
@@ -793,13 +852,16 @@ export default class WallpaperManager {
 
       // 查询有结果时向下翻页，否则切换到下一个下载源
       if (res.success) {
-        this.params.autoDownload.startPage = startPage + 1
+        this.downloadParams.startPage = startPage + 1
+        // 保存参数
+        await this.saveDownloadParams()
         return true
       } else {
         // 切换到下一个下载源，并重置页码
-        this.params.autoDownload.currentSourceIndex =
-          (currentSourceIndex + 1) % downloadSources.length
-        this.params.autoDownload.startPage = 1
+        this.downloadParams.currentSourceIndex = (currentSourceIndex + 1) % downloadSources.length
+        this.downloadParams.startPage = 1
+        // 保存参数
+        await this.saveDownloadParams()
         return false
       }
     } catch (err) {

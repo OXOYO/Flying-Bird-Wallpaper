@@ -173,19 +173,17 @@ export default class Store {
 
   // 开启定时任务
   startScheduledTasks() {
-    this.startMonitorMemoryTask()
-    this.startHandleQualityTask()
-    this.startHandleWordsTask()
-
-    // 处理定时任务
-    this.intervalSwitchWallpaper()
-    this.intervalRefreshDirectory()
-    this.intervalDownload()
-    this.intervalClearDownloaded()
+    this.initMonitorMemoryTask()
+    this.initRefreshDirectoryTask()
+    this.initHandleQualityTask()
+    this.initHandleWordsTask()
+    this.initSwitchWallpaperTask()
+    this.initDownloadTask()
+    this.initClearDownloadedTask()
   }
 
-  // 启动内存监控任务
-  startMonitorMemoryTask() {
+  // 内存监控任务
+  initMonitorMemoryTask() {
     const key = 'monitorMemory'
     // 清理任务
     this.taskScheduler.clearTask(key)
@@ -207,8 +205,8 @@ export default class Store {
     })
   }
 
-  // 启动图片质量处理任务
-  startHandleQualityTask() {
+  // 图片质量处理任务
+  initHandleQualityTask() {
     const key = 'handleQuality'
     // 清理任务
     this.taskScheduler.clearTask(key)
@@ -223,22 +221,38 @@ export default class Store {
     )
   }
 
-  // 启动处理分词任务
+  // 处理分词任务
+  initHandleWordsTask() {
+    this.stopHandleWordsTask()
+    this.startHandleWordsTask()
+  }
+
   startHandleWordsTask() {
-    const key = 'handleWords'
-    // 清理任务
-    this.taskScheduler.clearTask(key)
     // 检查是否启用词库处理任务
     if (this.settingData.enableSegmentationTask) {
       // 开启定时处理词库
       this.taskScheduler.scheduleTask(
-        key,
+        'handleWords',
         11 * 60 * 1000,
         () => {
           this.wordsManager.intervalHandleWords(this.locks)
         },
         10 * 60 * 1000
       )
+    }
+  }
+
+  stopHandleWordsTask() {
+    this.taskScheduler.clearTask('handleWords')
+  }
+
+  restartHandleWordsTask(oldData, newData) {
+    if (oldData.enableSegmentationTask !== newData.enableSegmentationTask) {
+      if (newData.enableSegmentationTask) {
+        this.startHandleWordsTask()
+      } else {
+        this.stopHandleWordsTask()
+      }
     }
   }
 
@@ -294,15 +308,16 @@ export default class Store {
 
       if (this.powerState.wasAutoSwitchEnabled) {
         // 暂停自动切换壁纸，但不更新设置
-        this.taskScheduler.clearTask('autoSwitchWallpaper')
+        this.stopSwitchWallpaperTask()
       }
     } else if (!isIdle && this.powerState.isSystemIdle) {
       // 系统恢复活跃状态，恢复之前的自动切换状态
       this.powerState.isSystemIdle = false
 
       if (this.powerState.wasAutoSwitchEnabled) {
-        // 恢复自动切换壁纸
-        this.intervalSwitchWallpaper()
+        // 恢复自动切换壁纸，先停止当前任务，然后重新启动
+        this.stopSwitchWallpaperTask()
+        this.startSwitchWallpaperTask()
       }
     }
   }
@@ -693,34 +708,12 @@ export default class Store {
       // 发送更新消息
       this.sendSettingDataUpdate()
 
-      // 处理定时任务，仅当设置项发生变化时触发
-      if (
-        oldData.autoSwitchWallpaper !== newData.autoSwitchWallpaper ||
-        oldData.switchIntervalUnit !== newData.switchIntervalUnit ||
-        oldData.switchIntervalTime !== newData.switchIntervalTime
-      ) {
-        this.intervalSwitchWallpaper()
-      }
-      if (
-        oldData.autoRefreshDirectory !== newData.autoRefreshDirectory ||
-        oldData.refreshDirectoryIntervalUnit !== newData.refreshDirectoryIntervalUnit ||
-        oldData.refreshDirectoryIntervalTime !== newData.refreshDirectoryIntervalTime
-      ) {
-        this.intervalRefreshDirectory()
-      }
-      if (
-        oldData.autoDownload !== newData.autoDownload ||
-        oldData.downloadIntervalUnit !== newData.downloadIntervalUnit ||
-        oldData.downloadIntervalTime !== newData.downloadIntervalTime
-      ) {
-        this.intervalDownload()
-      }
-      if (oldData.autoClearDownloaded !== newData.autoClearDownloaded) {
-        this.intervalClearDownloaded()
-      }
-
-      // 处理分词任务
-      this.startHandleWordsTask()
+      // 重启相关定时任务，仅当设置项发生变化时触发
+      this.restartRefreshDirectoryTask(oldData, newData)
+      this.restartHandleWordsTask(oldData, newData)
+      this.restartSwitchWallpaperTask(oldData, newData)
+      this.restartDownloadTask(oldData, newData)
+      this.restartClearDownloadedTask(oldData, newData)
       // 处理应用打包后开机自启
       this.handleStartup()
     }
@@ -745,13 +738,14 @@ export default class Store {
     return ret
   }
 
-  // 定时切换壁纸
-  intervalSwitchWallpaper() {
+  // 定时切换壁纸任务
+  initSwitchWallpaperTask() {
+    this.stopSwitchWallpaperTask()
+    this.startSwitchWallpaperTask()
+  }
+
+  startSwitchWallpaperTask() {
     const key = 'autoSwitchWallpaper'
-    // 取消之前的定时任务
-    this.taskScheduler.clearTask(key)
-    // 重置切换壁纸参数
-    this.wallpaperManager.resetParams(key)
     // 如果开启了自动切换壁纸
     if (this.settingData[key] && !this.powerState.isSystemIdle) {
       // 设置定时切换壁纸
@@ -760,6 +754,23 @@ export default class Store {
         // 触发动作
         this.triggerAction('setWallpaper', res)
       })
+    }
+  }
+
+  stopSwitchWallpaperTask() {
+    this.taskScheduler.clearTask('autoSwitchWallpaper')
+  }
+
+  restartSwitchWallpaperTask(oldData, newData) {
+    if (
+      oldData.autoSwitchWallpaper !== newData.autoSwitchWallpaper ||
+      oldData.switchIntervalUnit !== newData.switchIntervalUnit ||
+      oldData.switchIntervalTime !== newData.switchIntervalTime
+    ) {
+      this.stopSwitchWallpaperTask()
+      if (newData.autoSwitchWallpaper) {
+        this.startSwitchWallpaperTask()
+      }
     }
   }
 
@@ -869,12 +880,14 @@ export default class Store {
     })
   }
 
-  // 定时刷新目录
-  intervalRefreshDirectory() {
-    const key = 'autoRefreshDirectory'
-    // 取消之前的定时任务
-    this.taskScheduler.clearTask(key)
+  // 定时刷新目录任务
+  initRefreshDirectoryTask() {
+    this.stopRefreshDirectoryTask()
+    this.startRefreshDirectoryTask()
+  }
 
+  startRefreshDirectoryTask() {
+    const key = 'autoRefreshDirectory'
     // 如果开启了自动刷新目录
     if (this.settingData[key]) {
       // 设置定时刷新目录
@@ -884,34 +897,86 @@ export default class Store {
     }
   }
 
-  // 定时下载壁纸
-  intervalDownload() {
+  stopRefreshDirectoryTask() {
+    this.taskScheduler.clearTask('autoRefreshDirectory')
+  }
+
+  restartRefreshDirectoryTask(oldData, newData) {
+    if (
+      oldData.autoRefreshDirectory !== newData.autoRefreshDirectory ||
+      oldData.refreshDirectoryIntervalUnit !== newData.refreshDirectoryIntervalUnit ||
+      oldData.refreshDirectoryIntervalTime !== newData.refreshDirectoryIntervalTime
+    ) {
+      this.stopRefreshDirectoryTask()
+      if (newData.autoRefreshDirectory) {
+        this.startRefreshDirectoryTask()
+      }
+    }
+  }
+
+  // 定时下载壁纸任务
+  initDownloadTask() {
+    this.stopDownloadTask()
+    this.startDownloadTask()
+  }
+
+  startDownloadTask() {
     const key = 'autoDownload'
-    // 取消之前的定时任务
-    this.taskScheduler.clearTask(key)
-    // 重置下载壁纸参数
-    this.wallpaperManager.resetParams(key)
     // 如果开启了自动下载壁纸
     if (this.settingData[key]) {
       // 设置定时下载壁纸
       this.taskScheduler.scheduleTask(key, this.handleInterval(key), async () => {
-        await this.wallpaperManager.downloadWallpaper()
+        await this.wallpaperManager.downloadWallpaper(() => {
+          this.stopDownloadTask()
+        })
       })
     }
   }
 
-  // 定时清理下载资源
-  intervalClearDownloaded() {
-    const key = 'autoClearDownloaded'
-    // 取消之前的定时任务
-    this.taskScheduler.clearTask(key)
+  stopDownloadTask() {
+    this.taskScheduler.clearTask('autoDownload')
+  }
 
+  restartDownloadTask(oldData, newData) {
+    if (
+      oldData.autoDownload !== newData.autoDownload ||
+      oldData.downloadIntervalUnit !== newData.downloadIntervalUnit ||
+      oldData.downloadIntervalTime !== newData.downloadIntervalTime
+    ) {
+      this.stopDownloadTask()
+      if (newData.autoDownload) {
+        this.startDownloadTask()
+      }
+    }
+  }
+
+  // 定时清理下载资源任务
+  initClearDownloadedTask() {
+    this.stopClearDownloadedTask()
+    this.startClearDownloadedTask()
+  }
+
+  startClearDownloadedTask() {
+    const key = 'autoClearDownloaded'
     // 如果开启了自动清理下载资源
     if (this.settingData[key]) {
       // 设置定时清理过期的下载的壁纸，每小时执行一次
       this.taskScheduler.scheduleTask(key, 60 * 60 * 1000, async () => {
         await this.wallpaperManager.clearDownloadedExpired()
       })
+    }
+  }
+
+  stopClearDownloadedTask() {
+    this.taskScheduler.clearTask('autoClearDownloaded')
+  }
+
+  restartClearDownloadedTask(oldData, newData) {
+    if (oldData.autoClearDownloaded !== newData.autoClearDownloaded) {
+      this.stopClearDownloadedTask()
+      if (newData.autoClearDownloaded) {
+        this.startClearDownloadedTask()
+      }
     }
   }
 
