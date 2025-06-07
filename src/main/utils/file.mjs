@@ -18,18 +18,8 @@ export const handleFileRsponse = async (query) => {
     if (!filePath) {
       return ret
     }
-    // 处理 Windows 上的绝对路径（例如 'E:/xx/yy'）
-    if (process.platform === 'win32') {
-      filePath = filePath.replace(/\//g, '\\') // 将所有斜杠替换为反斜杠
-      // 修复丢失的冒号（:），假设路径是 e\xx\yy 应该是 e:\xx\yy
-      filePath = filePath.replace(/^([a-zA-Z])\\/, '$1:\\') // 在盘符后面补上冒号
-    } else {
-      // macOS 和 Linux 确保是绝对路径
-      if (!filePath.startsWith('/')) {
-        filePath = '/' + filePath
-      }
-    }
-    filePath = decodeURIComponent(filePath)
+    // 转换文件路径
+    filePath = transFilePath(filePath)
     // 定义默认图片尺寸
     const width = w ? parseInt(w, 10) : null
     // 生成缓存键
@@ -108,4 +98,20 @@ export const handleFileRsponse = async (query) => {
   } catch (err) {
     return ret
   }
+}
+
+export const transFilePath = (filePath) => {
+  // 处理 Windows 上的绝对路径（例如 'E:/xx/yy'）
+  if (process.platform === 'win32') {
+    filePath = filePath.replace(/\//g, '\\') // 将所有斜杠替换为反斜杠
+    // 修复丢失的冒号（:），假设路径是 e\xx\yy 应该是 e:\xx\yy
+    filePath = filePath.replace(/^([a-zA-Z])\\/, '$1:\\') // 在盘符后面补上冒号
+  } else {
+    // macOS 和 Linux 确保是绝对路径
+    if (!filePath.startsWith('/')) {
+      filePath = '/' + filePath
+    }
+  }
+  filePath = decodeURIComponent(filePath)
+  return filePath
 }

@@ -1,5 +1,7 @@
 import fs from 'fs'
+import cache from '../cache.mjs'
 import { t } from '../../i18n/server.js'
+import { transFilePath } from '../utils/file.mjs'
 
 export default class FileManager {
   // 单例实例
@@ -347,9 +349,15 @@ export default class FileManager {
         // 删除文件
         if (filePath && fs.existsSync(filePath)) {
           fs.unlinkSync(filePath)
-        } else {
-          ret.msg = t('messages.fileNotExist')
-          return ret
+          // 删除缓存
+          const cacheKeys = cache.keys()
+          const newFilePath = transFilePath(filePath)
+          for (const key of cacheKeys) {
+            if (key.startsWith(`filePath=${newFilePath}`)) {
+              cache.delete(key)
+              global.logger.info(`删除缓存成功: id => ${id}, cacheKey => ${key}`)
+            }
+          }
         }
 
         // 使用事务删除数据库记录
