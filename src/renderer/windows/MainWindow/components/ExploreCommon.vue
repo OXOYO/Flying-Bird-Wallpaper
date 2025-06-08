@@ -363,13 +363,11 @@ const cardItemBtns = computed(() => {
   const ret = [
     {
       title: t('exploreCommon.setAsWallpaperWithDownload'),
-      type: 'setAsWallpaperWithDownload' === hoverBtnName.value ? 'primary' : '',
       action: 'setAsWallpaperWithDownload',
       icon: 'ep:check'
     },
     {
       title: t('exploreCommon.doViewImage'),
-      type: 'doViewImage' === hoverBtnName.value ? 'primary' : '',
       action: 'doViewImage',
       icon: 'material-symbols:preview'
     }
@@ -377,14 +375,12 @@ const cardItemBtns = computed(() => {
   if (item.isFavorite) {
     ret.push({
       title: t('exploreCommon.removeFavorites'),
-      type: 'removeFavorites' === hoverBtnName.value ? 'primary' : '',
       action: 'removeFavorites',
       icon: 'ep:star-filled'
     })
   } else {
     ret.push({
       title: t('exploreCommon.addToFavorites'),
-      type: 'addToFavorites' === hoverBtnName.value ? 'primary' : '',
       action: 'addToFavorites',
       icon: 'ep:star'
     })
@@ -392,7 +388,6 @@ const cardItemBtns = computed(() => {
   if (!flags.inPrivacySpace) {
     ret.push({
       title: t('exploreCommon.addToPrivacySpace'),
-      type: 'addToPrivacySpace' === hoverBtnName.value ? 'primary' : '',
       action: 'addToPrivacySpace',
       icon: 'material-symbols:privacy-tip-outline'
     })
@@ -400,7 +395,6 @@ const cardItemBtns = computed(() => {
   if (isFavoritesMenu.value && flags.inPrivacySpace) {
     ret.push({
       title: t('exploreCommon.removePrivacySpace'),
-      type: 'removePrivacySpace' === hoverBtnName.value ? 'primary' : '',
       action: 'removePrivacySpace',
       icon: 'material-symbols:privacy-tip'
     })
@@ -409,19 +403,16 @@ const cardItemBtns = computed(() => {
   if (item.filePath && (!isSearchMenu.value || (isSearchMenu.value && isLocalResource.value))) {
     ret.push({
       title: t('exploreCommon.onCopyFilePath'),
-      type: 'onCopyFilePath' === hoverBtnName.value ? 'primary' : '',
       action: 'onCopyFilePath',
       icon: 'ep:document-copy'
     })
     ret.push({
       title: t('exploreCommon.onDeleteFile'),
-      type: 'onDeleteFile' === hoverBtnName.value ? 'primary' : '',
       action: 'onDeleteFile',
       icon: 'ep:close'
     })
     ret.push({
       title: t('exploreCommon.showItemInFolder'),
-      type: 'showItemInFolder' === hoverBtnName.value ? 'primary' : '',
       action: 'showItemInFolder',
       icon: 'ep:folder-opened'
     })
@@ -429,7 +420,6 @@ const cardItemBtns = computed(() => {
   if (item.link) {
     ret.push({
       title: t('exploreCommon.openLink'),
-      type: 'openLink' === hoverBtnName.value ? 'primary' : '',
       action: 'openLink',
       icon: 'ep:link'
     })
@@ -437,7 +427,6 @@ const cardItemBtns = computed(() => {
 
   ret.push({
     title: t('exploreCommon.viewInfo'),
-    type: 'onViewInfo' === hoverBtnName.value ? 'primary' : '',
     action: 'onViewInfo',
     icon: 'material-symbols:info-outline-rounded'
   })
@@ -1563,7 +1552,7 @@ onBeforeUnmount(() => {
                   v-for="btn in cardItemBtns"
                   :key="btn.action"
                   class="card-item-btn"
-                  :type="btn.type"
+                  type="primary"
                   link
                   :title="btn.title"
                   @click="onCardItemBtnClick(btn.action, item, index)"
