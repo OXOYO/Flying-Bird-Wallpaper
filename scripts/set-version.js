@@ -10,8 +10,11 @@ const __dirname = path.dirname(__filename)
 // 获取命令行参数中的版本号
 const newVersion = process.argv[2]
 
-if (!newVersion) {
-  console.error('请提供版本号，例如: npm run version 1.0.0')
+// 验证版本号格式
+const versionRegex =
+  /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/
+if (!versionRegex.test(newVersion)) {
+  console.error('版本号格式无效，请使用语义化版本格式，例如: 1.0.0, 1.0.0-alpha, 1.0.0-beta.1')
   process.exit(1)
 }
 
