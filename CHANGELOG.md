@@ -1,3 +1,18 @@
+## [1.0.14](https://github.com/OXOYO/Flying-Bird-Wallpaper/compare/v1.0.13...v1.0.14) (2025-06-08)
+
+
+### Bug Fixes
+
+* 修复删除文件时缓存未清理问题 ([92545dc](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/92545dcbc5982941de619472a179305200be2d22))
+
+
+### Features
+
+* 优化定时任务,支持接续下载 ([286686e](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/286686e15398ec2602df2e608eeb0644eb2ce1a8))
+* 支持设置屏幕常亮 ([6de2ebe](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/6de2ebe81ac08c533579cbb57a01f0ced450b663))
+
+
+
 ## [1.0.13](https://github.com/OXOYO/Flying-Bird-Wallpaper/compare/v1.0.12...v1.0.13) (2025-05-28)
 
 
