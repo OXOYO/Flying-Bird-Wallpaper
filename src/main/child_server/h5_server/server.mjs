@@ -4,7 +4,7 @@ import staticServe from 'koa-static'
 import { bodyParser } from '@koa/bodyparser'
 import { Server } from 'socket.io'
 import http from 'http'
-import https from 'https' // 添加https模块
+import http2 from 'http2'
 import fs from 'fs' // 添加fs模块用于读取证书文件
 import path from 'path'
 import { fileURLToPath } from 'url'
@@ -70,7 +70,7 @@ export default async ({
       }
 
       // 创建HTTPS服务器
-      httpServer = https.createServer(sslOptions, app.callback())
+      httpServer = http2.createSecureServer(sslOptions, app.callback())
       logger.info('[H5Server] INFO => 已创建HTTPS服务器')
     } else {
       // 创建HTTP服务器
