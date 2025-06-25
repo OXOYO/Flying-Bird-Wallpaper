@@ -1,7 +1,6 @@
 import fs from 'fs'
 import path from 'path'
 import ApiBase from '../ApiBase.js'
-import { commonResourceMap, defaultResourceMap } from '../../common/publicData.js'
 
 export default class ApiManager {
   // 单例实例
@@ -63,7 +62,6 @@ export default class ApiManager {
   // 加载API
   async loadApi() {
     const apiMap = {}
-    const resourceMap = JSON.parse(JSON.stringify(defaultResourceMap))
 
     // 加载内置API
     await this.loadApiFromDir(this.sysApiDir, apiMap)
@@ -81,53 +79,18 @@ export default class ApiManager {
       this.logger.info(`成功加载 ${count} 个API插件`)
     }
     // 处理API信息，写入数据库
+    const remoteResourceMap = {}
     for (const [resourceName, api] of Object.entries(apiMap)) {
       const apiInfo = api.info()
-      resourceMap.remoteResourceMap[resourceName] = apiInfo
+      remoteResourceMap[resourceName] = apiInfo
     }
-    // 计算各种资源数据
-    // 启用的远程资源
-    const enabledRemoteResourceList = Object.values(resourceMap.remoteResourceMap).filter(
-      (item) => item.enabled
-    )
-    // 支持搜索的远程资源
-    const supportSearchRemoteResourceList = enabledRemoteResourceList.filter(
-      (item) => item.supportSearch
-    )
-    // 支持下载的远程资源
-    resourceMap.supportDownloadRemoteResourceList = enabledRemoteResourceList.filter(
-      (item) => item.supportDownload
-    )
-    // 需要密钥的远程资源
-    resourceMap.remoteResourceKeyNames = enabledRemoteResourceList
-      .filter((item) => item.requireSecretKey)
-      .map((item) => item.value)
 
-    // 支持搜索的本地资源
-    const supportSearchLocalResourceList = [
-      commonResourceMap.resources,
-      commonResourceMap.local,
-      ...resourceMap.supportDownloadRemoteResourceList
-    ].filter((item) => item.enabled)
-    // 资源列表按资源类型分类
-    resourceMap.resourceListByResourceType = {
-      localResource: supportSearchLocalResourceList,
-      remoteResource: supportSearchRemoteResourceList
-    }
-    // 壁纸资源列表
-    resourceMap.wallpaperResourceList = [
-      commonResourceMap.resources,
-      commonResourceMap.local,
-      commonResourceMap.favorites,
-      ...supportSearchRemoteResourceList
-    ].filter((item) => item.enabled)
-
-    // 直接将整个resourceMap写入数据库
-    const res = await this.dbManager.setSysRecord('resourceMap', resourceMap, 'object')
+    // 写入数据库
+    const res = await this.dbManager.setSysRecord('remoteResourceMap', remoteResourceMap, 'object')
     if (res.success) {
-      this.logger.info('写入resourceMap信息成功')
+      this.logger.info('写入remoteResourceMap信息成功')
     } else {
-      this.logger.error(`写入resourceMap信息失败: ${res.message}`)
+      this.logger.error(`写入remoteResourceMap信息失败: ${res.message}`)
     }
   }
 

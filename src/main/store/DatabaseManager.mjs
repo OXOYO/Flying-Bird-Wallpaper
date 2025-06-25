@@ -1,6 +1,10 @@
 import Database from 'better-sqlite3'
 import { t } from '../../i18n/server.js'
-import { defaultSettingData, defaultResourceMap } from '../../common/publicData.js'
+import {
+  defaultSettingData,
+  defaultResourceMap,
+  commonResourceMap
+} from '../../common/publicData.js'
 import { createTables, createIndexes } from './sql.mjs'
 
 // 删除指定表
@@ -328,14 +332,53 @@ export default class DatabaseManager {
       data: JSON.parse(JSON.stringify(defaultResourceMap))
     }
     try {
-      const res = await this.getSysRecord('resourceMap')
+      const res = await this.getSysRecord('remoteResourceMap')
       if (res.success) {
         ret.success = true
         ret.msg = t('messages.operationSuccess')
-        ret.data = res.data.storeData || JSON.parse(JSON.stringify(defaultResourceMap))
+        const resourceMap = JSON.parse(JSON.stringify(defaultResourceMap))
+        // 计算各种资源数据
+        // 远程资源对象
+        resourceMap.remoteResourceMap = res.data.storeData
+        // 启用的远程资源
+        const enabledRemoteResourceList = Object.values(resourceMap.remoteResourceMap).filter(
+          (item) => item.enabled
+        )
+        // 支持搜索的远程资源
+        const supportSearchRemoteResourceList = enabledRemoteResourceList.filter(
+          (item) => item.supportSearch
+        )
+        // 支持下载的远程资源
+        resourceMap.supportDownloadRemoteResourceList = enabledRemoteResourceList.filter(
+          (item) => item.supportDownload
+        )
+        // 需要密钥的远程资源
+        resourceMap.remoteResourceKeyNames = enabledRemoteResourceList
+          .filter((item) => item.requireSecretKey)
+          .map((item) => item.value)
+
+        // 支持搜索的本地资源
+        const supportSearchLocalResourceList = [
+          commonResourceMap.resources,
+          commonResourceMap.local,
+          ...resourceMap.supportDownloadRemoteResourceList
+        ].filter((item) => item.enabled)
+        // 资源列表按资源类型分类
+        resourceMap.resourceListByResourceType = {
+          localResource: supportSearchLocalResourceList,
+          remoteResource: supportSearchRemoteResourceList
+        }
+        // 壁纸资源列表
+        resourceMap.wallpaperResourceList = [
+          commonResourceMap.resources,
+          commonResourceMap.local,
+          commonResourceMap.favorites,
+          ...supportSearchRemoteResourceList
+        ].filter((item) => item.enabled)
+        ret.data = resourceMap
       }
     } catch (err) {
-      this.logger.error(`获取resourceMap信息失败: ${err}`)
+      this.logger.error(`获取remoteResourceMap信息失败: ${err}`)
     }
     return ret
   }

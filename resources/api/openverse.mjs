@@ -32,8 +32,18 @@ export default class ResourceOpenverse extends ApiBase {
       secretKey: '',
       // 是否支持搜索
       supportSearch: true,
+      // 搜索必要条件
+      searchRequired: {
+        keywords: false,
+        orientation: false
+      },
       // 是否支持下载
-      supportDownload: true
+      supportDownload: true,
+      // 下载必要条件
+      downloadRequired: {
+        keywords: false,
+        orientation: false
+      }
     }
   }
 

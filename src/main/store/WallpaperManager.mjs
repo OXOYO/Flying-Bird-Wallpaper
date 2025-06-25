@@ -670,11 +670,6 @@ export default class WallpaperManager {
       return ret
     }
 
-    if (!keywords) {
-      ret.msg = t('messages.enterKeywords')
-      return ret
-    }
-
     // 先获取资源数据
     const resourceMapRes = await this.dbManager.getResourceMap()
     if (!resourceMapRes.success) {
@@ -683,11 +678,17 @@ export default class WallpaperManager {
     }
     const resourceMap = resourceMapRes.data
 
-    if (
-      resourceMap.remoteResourceKeyNames.includes(resourceName) &&
-      !remoteResourceSecretKeys[resourceName]
-    ) {
+    const resourceInfo = resourceMap.remoteResourceMap[resourceName]
+    if (!resourceInfo) {
+      ret.msg = t('messages.resourceNotFound')
+      return ret
+    }
+    if (resourceInfo.requireSecretKey && !remoteResourceSecretKeys[resourceName]) {
       ret.msg = t('messages.resourceSecretKeyUnset')
+      return ret
+    }
+    if (resourceInfo.downloadRequired.keywords && !keywords) {
+      ret.msg = t('messages.enterKeywords')
       return ret
     }
 

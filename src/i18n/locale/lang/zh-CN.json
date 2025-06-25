@@ -231,6 +231,7 @@
     "enterKeywords": "请输入关键词！",
     "pleaseSetDownloadFolder": "请先设置下载目录！",
     "downloadFolderNotExistOrNotSet": "下载目录不存在或未设置！",
+    "resourceNotFound": "资源不存在！",
     "resourceSecretKeyUnset": "请先设置远程资源密钥！",
     "h5ServerStartSuccess": "H5服务启动成功！",
     "h5ServerStartFail": "H5服务启动失败！",

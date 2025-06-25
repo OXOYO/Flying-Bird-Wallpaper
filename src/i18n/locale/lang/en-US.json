@@ -231,6 +231,7 @@
     "enterKeywords": "Please enter keywords!",
     "pleaseSetDownloadFolder": "Please set the download directory first!",
     "downloadFolderNotExistOrNotSet": "Download directory does not exist or not set!",
+    "resourceNotFound": "Resource not found!",
     "resourceSecretKeyUnset": "Please set the remote resource secret key first!",
     "h5ServerStartSuccess": "Start H5 server successfully!",
     "h5ServerStartFail": "Start H5 server failed!",

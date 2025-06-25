@@ -172,11 +172,6 @@ export default class ResourcesManager {
         ret.success = true
         ret.msg = t(ret.data.list.length ? 'messages.querySuccess' : 'messages.queryEmpty')
       } else {
-        if (!filterKeywords) {
-          ret.msg = t('messages.enterKeywords')
-          return ret
-        }
-
         // 先获取资源数据
         const resourceMapRes = await this.dbManager.getResourceMap()
         if (!resourceMapRes.success) {
@@ -184,11 +179,17 @@ export default class ResourcesManager {
           return ret
         }
         const resourceMap = resourceMapRes.data
-        if (
-          resourceMap.remoteResourceKeyNames.includes(resourceName) &&
-          !remoteResourceSecretKeys[resourceName]
-        ) {
+        const resourceInfo = resourceMap.remoteResourceMap[resourceName]
+        if (!resourceInfo) {
+          ret.msg = t('messages.resourceNotFound')
+          return ret
+        }
+        if (resourceInfo.requireSecretKey && !remoteResourceSecretKeys[resourceName]) {
           ret.msg = t('messages.resourceSecretKeyUnset')
+          return ret
+        }
+        if (resourceInfo.searchRequired.keywords && !filterKeywords) {
+          ret.msg = t('messages.enterKeywords')
           return ret
         }
         const res = await this.apiManager.call(resourceName, 'search', {
