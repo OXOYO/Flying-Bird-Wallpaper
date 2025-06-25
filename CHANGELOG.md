@@ -1,3 +1,16 @@
+## [1.0.15](https://github.com/OXOYO/Flying-Bird-Wallpaper/compare/v1.0.14...v1.0.15) (2025-06-25)
+
+
+### Features
+
+* 新增openverse资源API ([9888bf1](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/9888bf1a8f6010aea6b848a8a23f6615102b8493))
+* 新增smms图床资源API ([947620d](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/947620d3c7c967f1bb2f909a427b7bcddea0ca6a))
+* 新增wallhaven资源API ([ccbef95](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/ccbef9577e6ef9c2b749cc6cac3220604998ab8a))
+* 优化资源数据管理 ([2789dbd](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/2789dbd96efdcb9082ec030beefb9feaa4e4223c))
+* h5服务支持HTTP2 ([bf73d64](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/bf73d64477795942ee24f72f509ec6e1b71e1287))
+
+
+
 ## [1.0.14](https://github.com/OXOYO/Flying-Bird-Wallpaper/compare/v1.0.13...v1.0.14) (2025-06-08)
 
 
