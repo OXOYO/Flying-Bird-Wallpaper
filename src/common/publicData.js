@@ -308,7 +308,8 @@ export const sortFieldOptions = [
   { label: '记录修改时间', value: 'updated_at', locale: 'sortFieldOptions.updated_at' },
   { label: '资源创建时间', value: 'ctimeMs', locale: 'sortFieldOptions.ctimeMs' },
   { label: '资源修改时间', value: 'mtimeMs', locale: 'sortFieldOptions.mtimeMs' },
-  { label: '资源文件名', value: 'fileName', locale: 'sortFieldOptions.fileName' }
+  { label: '资源文件名', value: 'fileName', locale: 'sortFieldOptions.fileName' },
+  { label: '资源文件大小', value: 'fileSize', locale: 'sortFieldOptions.fileSize' }
 ]
 
 export const sortTypeOptions = [

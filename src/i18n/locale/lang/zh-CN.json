@@ -306,7 +306,8 @@
     "updated_at": "记录修改时间",
     "ctimeMs": "资源创建时间",
     "mtimeMs": "资源修改时间",
-    "fileName": "资源文件名"
+    "fileName": "资源文件名",
+    "fileSize": "资源文件大小"
   },
   "sortTypeOptions": {
     "asc": "升序",

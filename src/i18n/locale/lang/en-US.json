@@ -306,7 +306,8 @@
     "updated_at": "Record modification time",
     "ctimeMs": "Resource creation time",
     "mtimeMs": "Resource modification time",
-    "fileName": "Resource file name"
+    "fileName": "Resource file name",
+    "fileSize": "Resource file size"
   },
   "sortTypeOptions": {
     "asc": "asc",
