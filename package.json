@@ -51,6 +51,7 @@
     "i18next": "^23.16.8",
     "i18next-vue": "^5.2.0",
     "koa": "^2.15.3",
+    "koa-compress": "^5.1.1",
     "koa-static": "^5.0.0",
     "koffi": "^2.10.1",
     "lru-cache": "^11.0.2",
@@ -95,6 +96,7 @@
     "unplugin-icons": "^22.1.0",
     "unplugin-vue-components": "^0.27.5",
     "vite": "^5.4.11",
+    "vite-plugin-compression2": "^2.2.0",
     "vite-plugin-live-reload": "^3.0.4",
     "vue": "^3.5.13",
     "vue-eslint-parser": "^10.1.3"

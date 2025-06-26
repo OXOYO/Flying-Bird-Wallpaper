@@ -1,12 +1,14 @@
 import Koa from 'koa'
 import KoaRouter from '@koa/router'
 import staticServe from 'koa-static'
+import compress from 'koa-compress'
 import { bodyParser } from '@koa/bodyparser'
 import { Server } from 'socket.io'
 import http from 'http'
 import http2 from 'http2'
 import fs from 'fs' // 添加fs模块用于读取证书文件
 import path from 'path'
+import zlib from 'zlib'
 import { fileURLToPath } from 'url'
 import { getLocalIP, findAvailablePort, generateSelfSignedCert } from '../../utils/utils.mjs' // 添加证书生成函数
 import useApi from './api/index.mjs'
@@ -111,6 +113,23 @@ export default async ({
 
       await next()
     })
+    app.use(
+      compress({
+        filter(content_type) {
+          return /text|javascript|css/i.test(content_type)
+        },
+        threshold: 2048,
+        gzip: {
+          flush: zlib.constants.Z_SYNC_FLUSH
+        },
+        deflate: {
+          flush: zlib.constants.Z_SYNC_FLUSH
+        },
+        br: {
+          flush: zlib.constants.Z_SYNC_FLUSH
+        }
+      })
+    )
 
     // 解析请求体
     app.use(bodyParser())

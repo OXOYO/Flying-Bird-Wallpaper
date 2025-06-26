@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import AutoImport from 'unplugin-auto-import/vite'
 import liveReload from 'vite-plugin-live-reload'
+import viteCompression from 'vite-plugin-compression2'
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
 // 图标按需加载
@@ -39,7 +40,8 @@ export default defineConfig({
     Icons({
       compiler: 'vue3',
       autoInstall: true
-    })
+    }),
+    viteCompression()
   ],
   build: {
     emptyOutDir: true, // 清空 outDir
