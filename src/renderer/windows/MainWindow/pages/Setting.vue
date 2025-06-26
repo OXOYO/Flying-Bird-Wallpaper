@@ -1225,6 +1225,24 @@ onBeforeUnmount(() => {
                 @change="onSettingDataFormChange"
               />
             </el-form-item>
+            <el-form-item
+              :label="t('pages.Setting.settingDataForm.h5ImageCompressStartSize')"
+              prop="h5ImageCompressStartSize"
+            >
+              <el-input-number
+                v-model="settingDataForm.h5ImageCompressStartSize"
+                :disabled="!settingDataForm.h5ImageCompress"
+                :min="1"
+                :max="10"
+                controls-position="right"
+                style="width: 140px"
+                @change="onSettingDataFormChange"
+              >
+                <template #suffix>
+                  <span>MB</span>
+                </template>
+              </el-input-number>
+            </el-form-item>
 
             <div id="divider-h5ActionSettings" class="divider-sub">
               {{ t('pages.Setting.divider.h5ActionSettings') }}

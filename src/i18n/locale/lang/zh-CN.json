@@ -131,6 +131,7 @@
         "h5SortType": "排序方式",
         "h5ImageDisplaySize": "显示尺寸",
         "h5ImageCompress": "图片压缩",
+        "h5ImageCompressStartSize": "压缩起始大小",
         "h5FloatingButtonPosition": "悬浮按钮位置",
         "h5EnabledFloatingButtons": {
           "label": "启用悬浮按钮",
@@ -503,6 +504,7 @@
             "placeholder": "请选择显示尺寸"
           },
           "h5ImageCompress": "图片压缩",
+          "h5ImageCompressStartSize": "压缩起始大小",
           "actionSettings": "操作设置",
           "h5FloatingButtonPosition": {
             "label": "悬浮按钮位置",

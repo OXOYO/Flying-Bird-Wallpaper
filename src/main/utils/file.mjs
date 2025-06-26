@@ -14,7 +14,7 @@ export const handleFileRsponse = async (query) => {
     let T1, T2, T3, T4
     T1 = Date.now()
     // 获取图片 URL 和尺寸
-    let { filePath, w } = query
+    let { filePath, w, compressStartSize } = query
     if (!filePath) {
       return ret
     }
@@ -42,18 +42,18 @@ export const handleFileRsponse = async (query) => {
     const stats = await fs.promises.stat(filePath)
     const originalFileSize = stats.size
     const extension = path.extname(filePath).toLowerCase()
-    const mimeType = mimeTypes[extension] || 'application/octet-stream'
+    let mimeType = mimeTypes[extension] || 'application/octet-stream'
     T3 = Date.now()
 
     // 读取文件并处理
     let fileBuffer
     // 只对图片进行调整大小，视频文件直接读取
     // 文件大小超过指定大小才进行调整，单位bytes
-    const limitSize = 5 * 1024 * 1024
+    const startSize = (compressStartSize ? parseInt(compressStartSize, 10) : 0) * 1024 * 1024
     if (
       ['.png', '.jpg', '.jpeg', '.avif', '.webp', '.gif'].includes(extension) &&
       width &&
-      originalFileSize > limitSize
+      originalFileSize > startSize
     ) {
       fileBuffer = await sharp(filePath)
         .resize({
@@ -63,7 +63,12 @@ export const handleFileRsponse = async (query) => {
           kernel: 'lanczos3', // 使用最好的缩放算法
           fastShrinkOnLoad: true // 启用快速缩小
         })
+        .avif({
+          quality: 80,
+          lossless: true
+        })
         .toBuffer()
+      mimeType = 'image/avif'
     } else {
       fileBuffer = await fs.promises.readFile(filePath)
     }

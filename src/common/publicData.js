@@ -192,6 +192,7 @@ export const defaultSettingData = {
   h5SortType: -1,
   h5ImageDisplaySize: 1,
   h5ImageCompress: true,
+  h5ImageCompressStartSize: 2,
   h5FloatingButtonPosition: 'left',
   h5EnabledFloatingButtons: [
     'autoSwitch',

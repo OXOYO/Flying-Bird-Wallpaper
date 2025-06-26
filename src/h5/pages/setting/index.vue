@@ -400,6 +400,25 @@ onMounted(() => {
             />
           </template>
         </van-cell>
+
+        <van-field
+          name="h5ImageCompressStartSize"
+          :label="t('h5.pages.setting.form.h5ImageCompressStartSize')"
+        >
+          <template #input>
+            <van-slider
+              v-model="settingDataForm.h5ImageCompressStartSize"
+              :disabled="!settingDataForm.h5ImageCompress"
+              min="1"
+              max="10"
+              @change="onSettingDataChange('h5ImageCompressStartSize')"
+            >
+              <template #button>
+                <div class="slider-button">{{ settingDataForm.h5ImageCompressStartSize }}MB</div>
+              </template>
+            </van-slider>
+          </template>
+        </van-field>
       </van-cell-group>
 
       <van-cell-group inset :title="t('h5.pages.setting.form.actionSettings')">

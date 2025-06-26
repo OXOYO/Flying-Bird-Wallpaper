@@ -131,6 +131,7 @@
         "h5SortType": "Sort mode",
         "h5ImageDisplaySize": "Display size",
         "h5ImageCompress": "Image compress",
+        "h5ImageCompressStartSize": "Start compress size",
         "h5FloatingButtonPosition": "Floating button position",
         "h5EnabledFloatingButtons": {
           "label": "Enabled Floating Buttons",
@@ -503,6 +504,7 @@
             "placeholder": "Select display size"
           },
           "h5ImageCompress": "Image Compress",
+          "h5ImageCompressStartSize": "Start compress size",
           "actionSettings": "Action Settings",
           "h5FloatingButtonPosition": {
             "label": "Floating Button Position",
