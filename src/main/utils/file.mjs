@@ -42,7 +42,7 @@ export const handleFileRsponse = async (query) => {
     const stats = await fs.promises.stat(filePath)
     const originalFileSize = stats.size
     const extension = path.extname(filePath).toLowerCase()
-    let mimeType = mimeTypes[extension] || 'application/octet-stream'
+    const mimeType = mimeTypes[extension] || 'application/octet-stream'
     T3 = Date.now()
 
     // 读取文件并处理
@@ -63,12 +63,7 @@ export const handleFileRsponse = async (query) => {
           kernel: 'lanczos3', // 使用最好的缩放算法
           fastShrinkOnLoad: true // 启用快速缩小
         })
-        .avif({
-          quality: 80,
-          lossless: true
-        })
         .toBuffer()
-      mimeType = 'image/avif'
     } else {
       fileBuffer = await fs.promises.readFile(filePath)
     }
