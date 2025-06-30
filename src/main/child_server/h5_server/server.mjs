@@ -2,7 +2,6 @@ import Koa from 'koa'
 import KoaRouter from '@koa/router'
 import staticServe from 'koa-static'
 import compress from 'koa-compress'
-import { bodyParser } from '@koa/bodyparser'
 import { Server } from 'socket.io'
 import http from 'http'
 import http2 from 'http2'
@@ -130,9 +129,7 @@ export default async ({
         }
       })
     )
-
-    // 解析请求体
-    app.use(bodyParser())
+    // 处理H5静态资源地址
     const staticPath = isProduction
       ? path.resolve(process.env.FBW_RESOURCES_PATH, './h5')
       : path.resolve(__dirname, '../h5')

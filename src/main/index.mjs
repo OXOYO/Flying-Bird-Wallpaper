@@ -14,7 +14,7 @@ import {
   Notification
 } from 'electron'
 import { electronApp, optimizer } from '@electron-toolkit/utils'
-import installExtension, { VUEJS3_DEVTOOLS } from 'electron-devtools-installer'
+import installExtension, { VUEJS_DEVTOOLS_BETA } from 'electron-devtools-installer'
 import localShortcut from 'electron-localshortcut'
 import logger from './logger.mjs'
 import Store from './store/index.mjs'
@@ -911,8 +911,8 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
     app.whenReady().then(async () => {
       if (isDev()) {
         // 安装vue-devtools
-        installExtension(VUEJS3_DEVTOOLS)
-          .then((name) => console.log(`Added Extension:  ${name}`))
+        installExtension(VUEJS_DEVTOOLS_BETA)
+          .then(({ name }) => console.log(`Added Extension:  ${name}`))
           .catch((err) => console.log('An error occurred: ', err))
 
         // 使用 webContents 捕获自定义协议，用于在devtools中调试

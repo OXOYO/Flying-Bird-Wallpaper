@@ -1,6 +1,6 @@
 import { resolve, join, dirname, sep } from 'path'
 import { fileURLToPath } from 'url'
-import { globSync } from 'glob'
+import fg from 'fast-glob'
 import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
 import vue from '@vitejs/plugin-vue'
 // ELEMENT-PLUS 按需加载
@@ -16,7 +16,7 @@ const __dirname = dirname(__filename)
 // 动态获取多页入口
 const getEntry = () => {
   const pageEntry = {}
-  const entries = globSync('./src/renderer/windows/**/index.html')
+  const entries = fg.globSync('./src/renderer/windows/**/index.html')
   entries.forEach((entry) => {
     const pathArr = entry.split(sep)
     const name = pathArr[pathArr.length - 2]
@@ -86,7 +86,7 @@ export default defineConfig({
     css: {
       preprocessorOptions: {
         scss: {
-          additionalData: '@use "src/renderer/assets/custom.scss" as *;',
+          additionalData: '@use "@renderer/assets/custom.scss" as *;',
           silenceDeprecations: ['legacy-js-api']
         }
       }

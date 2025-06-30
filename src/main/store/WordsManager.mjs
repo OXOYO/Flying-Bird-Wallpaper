@@ -1,4 +1,4 @@
-import * as jieba from '@node-rs/jieba'
+import { Jieba } from '@node-rs/jieba'
 import { t } from '../../i18n/server.js'
 
 export default class WordsManager {
@@ -239,7 +239,7 @@ export default class WordsManager {
     //   .filter((word) => word.length > 1) // 过滤掉长度为1的词
 
     // 方式二：结巴分词
-    return jieba.cutForSearch(content, true)
+    return Jieba.cut(content, true)
   }
 
   /**
