@@ -432,8 +432,10 @@
       "quality": "Quality",
       "dimensions": "Dimensions",
       "fileExt": "File Extension",
-      "created_at": "Created At",
-      "updated_at": "Updated At"
+      "created_at": "Record created at",
+      "updated_at": "Record updated at",
+      "ctimeMs": "Resource created at",
+      "mtimeMs": "Resource updated at"
     }
   },
   "h5": {

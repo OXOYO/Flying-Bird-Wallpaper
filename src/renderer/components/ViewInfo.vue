@@ -22,6 +22,8 @@ const infoKeys = [
   'fileSize',
   'quality',
   'dimensions',
+  'ctimeMs',
+  'mtimeMs',
   'created_at',
   'updated_at'
 ]
@@ -34,6 +36,9 @@ const handleInfoVal = (key) => {
     const width = info.value.width
     const height = info.value.height
     return width && height ? `${width} x ${height}` : '-'
+  } else if (['ctimeMs', 'mtimeMs', 'created_at', 'updated_at'].includes(key)) {
+    const val = info.value[key]
+    return val ? (new Date(val)).toLocaleString() : '-'
   }
   return val || '-'
 }

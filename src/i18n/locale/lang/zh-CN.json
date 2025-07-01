@@ -432,8 +432,10 @@
       "fileSize": "文件大小",
       "quality": "质量",
       "dimensions": "尺寸",
-      "created_at": "创建时间",
-      "updated_at": "更新时间"
+      "created_at": "记录创建时间",
+      "updated_at": "记录更新时间",
+      "ctimeMs": "资源创建时间",
+      "mtimeMs": "资源更新时间"
     }
   },
   "h5": {
