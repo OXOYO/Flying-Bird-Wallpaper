@@ -1,4 +1,5 @@
 <script setup>
+import { h } from 'vue'
 import clipboard from 'clipboardy'
 import UseCommonStore from '@renderer/stores/commonStore.js'
 import UseSettingStore from '@renderer/stores/settingStore.js'
