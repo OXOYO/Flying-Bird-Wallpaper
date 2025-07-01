@@ -204,7 +204,8 @@ export const defaultSettingData = {
     'backtop'
   ],
   h5Vibration: true,
-  h5WeekScreen: true
+  h5WeekScreen: true,
+  powerSaveMode: true
 }
 
 export const colorList = [

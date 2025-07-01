@@ -518,6 +518,15 @@ onBeforeUnmount(() => {
                 @change="onSettingDataFormChange"
               />
             </el-form-item>
+            <el-form-item
+              :label="t('pages.Setting.settingDataForm.powerSaveMode')"
+              prop="powerSaveMode"
+            >
+              <el-checkbox
+                v-model="settingDataForm.powerSaveMode"
+                @change="onSettingDataFormChange"
+              />
+            </el-form-item>
           </div>
 
           <div class="form-card">

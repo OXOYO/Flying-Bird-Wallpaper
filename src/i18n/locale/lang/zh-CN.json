@@ -138,7 +138,8 @@
           "placeholder": "请选择悬浮按钮"
         },
         "h5Vibration": "震动反馈",
-        "h5WeekScreen": "屏幕常亮"
+        "h5WeekScreen": "屏幕常亮",
+        "powerSaveMode": "省电模式"
       },
       "privacyPasswordForm": {
         "old": {
