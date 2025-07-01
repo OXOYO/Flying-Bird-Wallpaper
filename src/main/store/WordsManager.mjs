@@ -1,5 +1,9 @@
 import { Jieba } from '@node-rs/jieba'
+import { dict } from '@node-rs/jieba/dict.js'
+
 import { t } from '../../i18n/server.js'
+
+const jieba = Jieba.withDict(dict)
 
 export default class WordsManager {
   // 单例实例
@@ -239,7 +243,7 @@ export default class WordsManager {
     //   .filter((word) => word.length > 1) // 过滤掉长度为1的词
 
     // 方式二：结巴分词
-    return Jieba.cut(content, true)
+    return jieba.cut(content, true)
   }
 
   /**
