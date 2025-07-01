@@ -35,7 +35,9 @@ export default class Store {
     // 添加电源状态标志
     this.powerState = {
       isSystemIdle: false,
-      wasAutoSwitchEnabled: false
+      wasAutoSwitchEnabled: false,
+      isOnBattery: false,
+      wasPausedByBattery: false
     }
 
     // 初始化时等待设置加载完成
@@ -297,6 +299,26 @@ export default class Store {
         }
       }, 60000)
     }
+
+    // 新增：监听电池模式
+    powerMonitor.on('on-battery', () => {
+      global.logger.info('进入电池模式')
+      this.powerState.isOnBattery = true
+      if (this.settingData.powerSaveMode) {
+        global.logger.info('省电模式下自动暂停所有定时任务')
+        this.taskScheduler.clearAllTasks()
+        this.powerState.wasPausedByBattery = true
+      }
+    })
+    powerMonitor.on('on-ac', () => {
+      global.logger.info('恢复交流电')
+      if (this.powerState.isOnBattery && this.powerState.wasPausedByBattery) {
+        global.logger.info('恢复所有定时任务')
+        this.startScheduledTasks()
+        this.powerState.wasPausedByBattery = false
+      }
+      this.powerState.isOnBattery = false
+    })
   }
 
   // 处理系统空闲状态
@@ -313,6 +335,12 @@ export default class Store {
     } else if (!isIdle && this.powerState.isSystemIdle) {
       // 系统恢复活跃状态，恢复之前的自动切换状态
       this.powerState.isSystemIdle = false
+
+      // 新增：如果当前处于电池模式且设置了自动暂停，则不恢复定时任务
+      if (this.powerState.isOnBattery && this.settingData.powerSaveMode) {
+        global.logger.info('系统恢复活跃，但处于省电模式，不恢复定时任务')
+        return
+      }
 
       if (this.powerState.wasAutoSwitchEnabled) {
         // 恢复自动切换壁纸，先停止当前任务，然后重新启动

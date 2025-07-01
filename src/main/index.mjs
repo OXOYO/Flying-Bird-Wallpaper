@@ -31,7 +31,7 @@ import {
   calculateImageOrientation,
   calculateImageQuality
 } from './utils/utils.mjs'
-import { handleFileRsponse } from './utils/file.mjs'
+import { handleFileResponse } from './utils/file.mjs'
 import ApiBase from './ApiBase.js'
 import setDynamicWallpaper from './utils/setDynamicWallpaper.mjs'
 // import setMacDynamicWallpaper from './utils/setMacDynamicWallpaper.mjs'
@@ -852,7 +852,7 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
           const w = url.searchParams.get('w')
           const h = url.searchParams.get('h')
 
-          const res = await handleFileRsponse({ filePath, w, h })
+          const res = await handleFileResponse({ filePath, w, h })
           return new Response(res.data, {
             status: res.status,
             headers: res.headers
@@ -861,7 +861,7 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
         case '/api/videos/get': {
           const filePath = url.searchParams.get('filePath')
 
-          const res = await handleFileRsponse({ filePath })
+          const res = await handleFileResponse({ filePath })
           return new Response(res.data, {
             status: res.status,
             headers: res.headers
