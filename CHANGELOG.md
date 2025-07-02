@@ -1,3 +1,22 @@
+## [1.0.16](https://github.com/OXOYO/Flying-Bird-Wallpaper/compare/v1.0.15...v1.0.16) (2025-07-02)
+
+
+### Bug Fixes
+
+* 修复分词功能代码报错 ([bcdb13a](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/bcdb13adfa6ca447e310fbae348f19b33e8041a5))
+* 修复删除文件时确认弹窗报错 ([414184c](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/414184c4f924f68311863cb254d4383544ce4c28))
+
+
+### Features
+
+* 支持按文件大小排序 ([e88341c](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/e88341c9db9ed43073f76effdab1d0b6657813a8))
+* 支持设置省电模式 ([db8d886](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/db8d886d515f2a25ab863cf61bf27adcd2299c6f))
+* 支持显示资源时间、记录时间 ([95c591e](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/95c591ebf45b93374f1f1d59a85813ee7c03fd01))
+* h5支持设置压缩起始大小 ([4bf0a6e](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/4bf0a6eb80cd5d27ab8489f3df248be951f944bf))
+* h5支持gzip\br压缩 ([5da35cb](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/5da35cbf006c7cd8bd9e308cb65b5e35612e3f40))
+
+
+
 ## [1.0.15](https://github.com/OXOYO/Flying-Bird-Wallpaper/compare/v1.0.14...v1.0.15) (2025-06-25)
 
 
