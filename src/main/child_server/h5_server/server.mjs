@@ -3,12 +3,12 @@ import KoaRouter from '@koa/router'
 import staticServe from 'koa-static'
 import compress from 'koa-compress'
 import { Server } from 'socket.io'
-import http from 'http'
-import http2 from 'http2'
-import fs from 'fs' // 添加fs模块用于读取证书文件
-import path from 'path'
-import zlib from 'zlib'
-import { fileURLToPath } from 'url'
+import http from 'node:http'
+import http2 from 'node:http2'
+import fs from 'node:fs' // 添加fs模块用于读取证书文件
+import path from 'node:path'
+import zlib from 'node:zlib'
+import { fileURLToPath } from 'node:url'
 import { getLocalIP, findAvailablePort, generateSelfSignedCert } from '../../utils/utils.mjs' // 添加证书生成函数
 import useApi from './api/index.mjs'
 import { t } from '../../../i18n/server.js'

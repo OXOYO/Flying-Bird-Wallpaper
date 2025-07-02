@@ -3,8 +3,8 @@ import vue from '@vitejs/plugin-vue'
 import AutoImport from 'unplugin-auto-import/vite'
 import liveReload from 'vite-plugin-live-reload'
 import viteCompression from 'vite-plugin-compression2'
-import { resolve, dirname } from 'path'
-import { fileURLToPath } from 'url'
+import { resolve, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
 // 图标按需加载
 import Icons from 'unplugin-icons/vite'
 

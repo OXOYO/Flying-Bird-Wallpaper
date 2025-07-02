@@ -1,5 +1,5 @@
 import { app } from 'electron'
-import path from 'path'
+import path from 'node:path'
 
 export default function setMacDynamicWallpaper(handles) {
   if (process.platform !== 'darwin') return false

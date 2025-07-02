@@ -1,7 +1,7 @@
 import { appInfo } from '../../common/config.js'
 import semver from 'semver'
-import fs from 'fs'
-import path from 'path'
+import fs from 'node:fs'
+import path from 'node:path'
 
 export default class VersionManager {
   // 单例实例

@@ -2,9 +2,9 @@
  * 动态壁纸工具
  */
 import { BrowserWindow, screen, app } from 'electron'
-import { exec, execSync } from 'child_process'
-import path from 'path'
-import fs from 'fs'
+import { exec, execSync } from 'node:child_process'
+import path from 'node:path'
+import fs from 'node:fs'
 import { isLinux, isMac, isWin } from './utils.mjs'
 
 // 全局变量，用于跟踪壁纸窗口

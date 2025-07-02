@@ -1,4 +1,4 @@
-import EventEmitter from 'events'
+import EventEmitter from 'node:events'
 import { t, changeLanguage } from '../../i18n/server.js'
 import { defaultSettingData } from '../../common/publicData.js'
 import { generateSalt, hashPassword, verifyPassword } from '../utils/utils.mjs'

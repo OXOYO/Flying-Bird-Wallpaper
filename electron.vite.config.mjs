@@ -1,5 +1,5 @@
-import { resolve, join, dirname, sep } from 'path'
-import { fileURLToPath } from 'url'
+import { resolve, join, dirname, sep } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import fg from 'fast-glob'
 import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
 import vue from '@vitejs/plugin-vue'

@@ -1,5 +1,5 @@
-import fs from 'fs'
-import path from 'path'
+import fs from 'node:fs'
+import path from 'node:path'
 import { setWallpaper } from 'wallpaper'
 import axios from 'axios'
 import { t } from '../../i18n/server.js'

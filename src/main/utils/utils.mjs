@@ -1,11 +1,11 @@
 /**
  * 工具函数
  * */
-import os from 'os'
-import fs from 'fs'
-import path from 'path'
-import net from 'net'
-import crypto from 'crypto'
+import os from 'node:os'
+import fs from 'node:fs'
+import path from 'node:path'
+import net from 'node:net'
+import crypto from 'node:crypto'
 import sharp from 'sharp'
 import forge from 'node-forge'
 import fg from 'fast-glob'

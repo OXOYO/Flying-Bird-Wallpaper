@@ -1,5 +1,5 @@
-import fs from 'fs'
-import { join } from 'path'
+import fs from 'node:fs'
+import { join } from 'node:path'
 import schedule from 'node-schedule'
 
 export default class CleanOldLogs {

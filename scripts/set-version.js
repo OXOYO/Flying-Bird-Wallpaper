@@ -1,7 +1,7 @@
-import fs from 'fs'
-import path from 'path'
-import { execSync } from 'child_process'
-import { fileURLToPath } from 'url'
+import fs from 'node:fs'
+import path from 'node:path'
+import { execSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
 
 // 获取当前文件的目录
 const __filename = fileURLToPath(import.meta.url)

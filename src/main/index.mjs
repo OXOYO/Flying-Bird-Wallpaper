@@ -1,4 +1,4 @@
-import path from 'path'
+import path from 'node:path'
 import {
   app,
   Tray,
@@ -776,7 +776,7 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
         {
           label: t('actions.checkUpdate'),
           click: () => {
-            // “检查更新”功能
+            // "检查更新"功能
             updater.checkUpdate()
           }
         },

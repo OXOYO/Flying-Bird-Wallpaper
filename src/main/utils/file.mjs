@@ -1,9 +1,9 @@
-import fs from 'fs'
-import path from 'path'
+import fs from 'node:fs'
+import path from 'node:path'
+import stream from 'node:stream'
 import sharp from 'sharp'
 import cache from '../cache.mjs'
 import { mimeTypes } from '../../common/publicData'
-import stream from 'stream'
 
 export const handleFileResponse = async (query) => {
   const ret = {

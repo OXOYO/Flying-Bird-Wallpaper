@@ -1,4 +1,4 @@
-import { join } from 'path'
+import { join } from 'node:path'
 import pino from 'pino'
 import { isDev } from './utils/utils.mjs'
 

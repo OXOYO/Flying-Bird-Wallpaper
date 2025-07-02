@@ -1,4 +1,4 @@
-import fs from 'fs'
+import fs from 'node:fs'
 import cache from '../cache.mjs'
 import { t } from '../../i18n/server.js'
 import { transFilePath } from '../utils/file.mjs'

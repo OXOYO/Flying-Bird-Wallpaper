@@ -1,6 +1,6 @@
 import { app, ipcMain, BrowserWindow, screen, powerMonitor } from 'electron'
-import path from 'path'
-import fs from 'fs'
+import path from 'node:path'
+import fs from 'node:fs'
 import { createFileServer, createH5Server } from '../child_server/index.mjs'
 import { t } from '../../i18n/server.js'
 import DatabaseManager from './DatabaseManager.mjs'
