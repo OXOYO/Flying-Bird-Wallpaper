@@ -18,8 +18,8 @@ const getEntry = () => {
   const pageEntry = {}
   const entries = fg.globSync('./src/renderer/windows/**/index.html')
   entries.forEach((entry) => {
-    const pathArr = entry.split(sep)
-    const name = pathArr[pathArr.length - 2]
+    const match = entry.match(/windows\/([^/]+)\/index\.html$/)
+    const name = match ? match[1] : undefined
     if (name) {
       pageEntry[name] = resolve('src/renderer/windows', name, 'index.html')
     }
