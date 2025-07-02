@@ -6,13 +6,14 @@ generateUpdatesFilesForAllChannels: true
 # 全局配置
 forceCodeSigning: false
 buildDependenciesFromSource: true
-compression: store
+compression: maximum
 
 directories:
   buildResources: build
   output: dist
 files:
   - 'out/**/*'
+  - '!out/h5/**'
   - '!**/.vscode/*'
   - '!src/*'
   - '!electron.vite.config.{js,ts,mjs,cjs}'
@@ -28,7 +29,7 @@ extraResources:
 asarUnpack:
   - resources/**
   - h5/**
-  - '**/*.{node,dll,exe,png,ico}'
+  - '**/*.{node,dll,exe}'
   - '**/node_modules/@iconify-json/**'
 win:
   executableName: Flying Bird Wallpaper

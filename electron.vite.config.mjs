@@ -21,7 +21,7 @@ const getEntry = () => {
     const pathArr = entry.split(sep)
     const name = pathArr[pathArr.length - 2]
     if (name) {
-      pageEntry[name] = join(process.cwd(), `/src/renderer/windows/${name}/index.html`)
+      pageEntry[name] = resolve('src/renderer/windows', name, 'index.html')
     }
   })
   delete pageEntry.pages
