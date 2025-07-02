@@ -207,7 +207,7 @@ export const readDirRecursive = async (
           ctimeMs: file.stats.ctimeMs
         }
       } catch (err) {
-        console.error(`处理图片元数据失败: ${file.filePath}`, err)
+        global.logger.error(`处理图片元数据失败: ${file.filePath} error => ${err}`)
         return null
       }
     })
@@ -267,7 +267,7 @@ export const extractDominantColor = async (filePath) => {
     // 返回十六进制颜色值
     return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
   } catch (err) {
-    console.error('提取图片主色调失败:', filePath, err)
+    global.logger.error(`提取图片主色调失败: ${filePath} error => ${err}`)
     // 默认透明色
     return '#00000000'
   }

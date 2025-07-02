@@ -12,7 +12,7 @@ export default class Updater {
       // 开启开发环境调试
       autoUpdater.forceDevUpdateConfig = true
       autoUpdater.logger = global.logger
-      console.log('更新配置路径:', autoUpdater.configOnDisk)
+      global.logger.info(`更新配置路径: ${JSON.stringify(autoUpdater.configOnDisk)}`)
       // 开发环境忽略代码签名检查
       autoUpdater.disableWebInstaller = true
       // 支持降级

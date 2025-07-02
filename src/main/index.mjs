@@ -105,9 +105,6 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
     const errorMessage = err.message // 错误消息
     const errorName = err.name // 错误名称
     const errorStack = err.stack // 堆栈信息
-    console.log(
-      `Uncaught Exception: Name => ${errorName}, Message => ${errorMessage}, Stack => ${errorStack}`
-    )
     // 打印详细错误信息
     global.logger.error(
       `Uncaught Exception: Name => ${errorName}, Message => ${errorMessage}, Stack => ${errorStack}`
@@ -121,14 +118,10 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
       const errorName = reason.name
       const errorMessage = reason.message
       const errorStack = reason.stack
-      console.log(
-        `Uncaught Rejection: Name => ${errorName}, Message => ${errorMessage}, Stack => ${errorStack}`
-      )
       global.logger.warn(
         `Uncaught Rejection: Name => ${errorName}, Message => ${errorMessage}, Stack => ${errorStack}`
       )
     } else {
-      console.log(`Unhandled Rejection: ${reason}`)
       // reason 不是 Error 对象时，直接打印 reason
       global.logger.warn(`Unhandled Rejection: ${reason}`)
     }
@@ -912,8 +905,8 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
       if (isDev()) {
         // 安装vue-devtools
         installExtension(VUEJS_DEVTOOLS_BETA)
-          .then(({ name }) => console.log(`Added Extension:  ${name}`))
-          .catch((err) => console.log('An error occurred: ', err))
+          .then(({ name }) => global.logger.info(`Added Extension:  ${name}`))
+          .catch((err) => global.logger.error(`An error occurred: ${err}`))
 
         // 使用 webContents 捕获自定义协议，用于在devtools中调试
         webContents.getAllWebContents().forEach((wc) => {
@@ -921,16 +914,16 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
           try {
             wc.debugger.attach('1.3') // 指定 DevTools 调试协议版本
           } catch (err) {
-            console.error('Debugger attach failed:', err)
+            global.logger.error(`Debugger attach failed: ${err}`)
           }
 
           // 监听调试器消息
           wc.debugger.on('message', (event, method, params) => {
             if (method === 'Network.requestWillBeSent') {
-              console.log('Request URL:', params.request.url)
+              global.logger.info(`Request URL: ${params.request.url}`)
             }
             if (method === 'Network.responseReceived') {
-              console.log('Response:', params.response)
+              global.logger.info(`Response: ${params.response}`)
             }
           })
 

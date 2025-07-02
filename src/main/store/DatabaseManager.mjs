@@ -88,7 +88,6 @@ export default class DatabaseManager {
       this.logger.info('数据库初始化完成')
       return true
     } catch (err) {
-      console.error(`创建数据库失败: ${err}`)
       this.logger.error(`创建数据库失败: ${err}`)
       throw err
     }

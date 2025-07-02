@@ -390,8 +390,8 @@ export default class Store {
     // 转换成YYYY-MM-DD HH:mm:ss格式
     const timeNow = new Date().toLocaleString()
     // 打印耗时信息
-    console.log(
-      `刷新目录完成 - 时间: ${timeNow}  总耗时: ${totalCoast}ms, 父=>子: ${parentToChildCoast}, 遍历目录耗时: ${readDirCoast}ms, 子=>父: ${childToParentCoast}ms, 插入数据库耗时: ${processDataCost}ms`
+    global.logger.info(
+      `刷新目录完成 - 时间: ${timeNow}  总耗时: ${totalCoast}ms, 父=>子: ${parentToChildCoast}ms, 遍历目录耗时: ${readDirCoast}ms, 子=>父: ${childToParentCoast}ms, 插入数据库耗时: ${processDataCost}ms`
     )
 
     // 清除锁
@@ -805,7 +805,7 @@ export default class Store {
 
       // 保存截图到下载文件
       const downloadFilePath = path.join(process.env.FBW_DOWNLOAD_PATH, 'wallpaper.png')
-      // console.log('downloadFilePath', downloadFilePath)
+      // global.logger.info(`downloadFilePath: ${downloadFilePath}`)
       fs.writeFileSync(downloadFilePath, pngData)
 
       return downloadFilePath

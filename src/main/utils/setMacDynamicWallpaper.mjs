@@ -29,7 +29,6 @@ export default function setMacDynamicWallpaper(handles) {
     setWindowLevelToDesktop(handles)
     return true
   } catch (err) {
-    console.error('加载动态壁纸库失败:', err)
     global.logger.error(`加载动态壁纸库失败: ${err}`)
     return false
   }
