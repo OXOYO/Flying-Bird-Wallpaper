@@ -1,3 +1,7 @@
+## [1.0.18](https://github.com/OXOYO/Flying-Bird-Wallpaper/compare/v1.0.17...v1.0.18) (2025-07-02)
+
+
+
 ## [1.0.17](https://github.com/OXOYO/Flying-Bird-Wallpaper/compare/v1.0.16...v1.0.17) (2025-07-02)
 
 
