@@ -175,36 +175,12 @@ export default class Store {
 
   // 开启定时任务
   startScheduledTasks() {
-    this.initMonitorMemoryTask()
     this.initRefreshDirectoryTask()
     this.initHandleQualityTask()
     this.initHandleWordsTask()
     this.initSwitchWallpaperTask()
     this.initDownloadTask()
     this.initClearDownloadedTask()
-  }
-
-  // 内存监控任务
-  initMonitorMemoryTask() {
-    const key = 'monitorMemory'
-    // 清理任务
-    this.taskScheduler.clearTask(key)
-    // 开启内存监控任务
-    this.taskScheduler.scheduleTask('monitorMemory', 5 * 60 * 1000, () => {
-      const memoryUsage = process.memoryUsage()
-      const heapUsedMB = Math.round((memoryUsage.heapUsed / 1024 / 1024) * 100) / 100
-      const heapTotalMB = Math.round((memoryUsage.heapTotal / 1024 / 1024) * 100) / 100
-
-      global.logger.info(`内存使用情况: ${heapUsedMB}MB / ${heapTotalMB}MB`)
-
-      // 如果堆内存使用超过80%，触发垃圾回收
-      if (heapUsedMB / heapTotalMB > 0.8) {
-        global.logger.info('内存使用率较高，触发垃圾回收')
-        if (global.gc) {
-          global.gc()
-        }
-      }
-    })
   }
 
   // 图片质量处理任务

@@ -25,16 +25,7 @@ export default class TaskScheduler {
     this.tasks = {}
 
     // 添加定时器管理
-    this.timers = {
-      autoSwitchWallpaper: null,
-      autoRefreshDirectory: null,
-      autoDownload: null,
-      autoClearDownloaded: null,
-      handleQuality: null,
-      checkPrivacyPassword: null,
-      handleWords: null,
-      monitorMemory: null
-    }
+    this.timers = {}
 
     // 保存实例
     TaskScheduler._instance = this
