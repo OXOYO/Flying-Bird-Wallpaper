@@ -9,7 +9,7 @@ import fs from 'node:fs' // 添加fs模块用于读取证书文件
 import path from 'node:path'
 import zlib from 'node:zlib'
 import { fileURLToPath } from 'node:url'
-import { getLocalIP, findAvailablePort, generateSelfSignedCert } from '../../utils/utils.mjs' // 添加证书生成函数
+import { getLocalIP, findAvailablePort, generateSelfSignedCert, isDev } from '../../utils/utils.mjs' // 添加证书生成函数
 import useApi from './api/index.mjs'
 import { t } from '../../../i18n/server.js'
 import setupSocketIO from './socket/index.mjs'
@@ -32,7 +32,6 @@ export default async ({
   let ioServer
   try {
     const __dirname = path.dirname(fileURLToPath(import.meta.url))
-    const isProduction = process.env.NODE_ENV === 'production'
     port = await findAvailablePort(port)
     host = getLocalIP()
 
@@ -130,9 +129,9 @@ export default async ({
       })
     )
     // 处理H5静态资源地址
-    const staticPath = isProduction
-      ? path.resolve(process.env.FBW_RESOURCES_PATH, './h5')
-      : path.resolve(__dirname, '../h5')
+    const staticPath = isDev()
+      ? path.resolve(__dirname, '../h5')
+      : path.resolve(process.env.FBW_RESOURCES_PATH, './h5')
     logger.info(`[H5Server] INFO => H5静态资源路径: ${staticPath}`)
     // 提供静态资源服务
     app.use(
