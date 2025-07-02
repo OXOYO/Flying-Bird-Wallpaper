@@ -1,3 +1,12 @@
+## [1.0.17](https://github.com/OXOYO/Flying-Bird-Wallpaper/compare/v1.0.16...v1.0.17) (2025-07-02)
+
+
+### Bug Fixes
+
+* 修复Windows下入口文件名称错误 ([178e054](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/178e0547c3629fa39b74e2333375a2ae65a56250))
+
+
+
 ## [1.0.16](https://github.com/OXOYO/Flying-Bird-Wallpaper/compare/v1.0.15...v1.0.16) (2025-07-02)
 
 
