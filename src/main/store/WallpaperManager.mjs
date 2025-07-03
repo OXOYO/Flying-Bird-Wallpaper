@@ -425,7 +425,7 @@ export default class WallpaperManager {
 
     return {
       success: false,
-      msg: t('messages.operationFail')
+      message: t('messages.operationFail')
     }
   }
 
@@ -455,7 +455,7 @@ export default class WallpaperManager {
     }
     return {
       success: false,
-      msg: t('messages.operationFail')
+      message: t('messages.operationFail')
     }
   }
 
@@ -464,7 +464,7 @@ export default class WallpaperManager {
     if (!item || !item.filePath || !fs.existsSync(item.filePath)) {
       return {
         success: false,
-        msg: t('messages.fileNotExist')
+        message: t('messages.fileNotExist')
       }
     }
 
@@ -488,13 +488,13 @@ export default class WallpaperManager {
 
       return {
         success: true,
-        msg: t('messages.setWallpaperSuccess')
+        message: t('messages.setWallpaperSuccess')
       }
     } catch (err) {
       this.logger.error(`设置壁纸失败: error => ${err}`)
       return {
         success: false,
-        msg: t('messages.setWallpaperFail')
+        message: t('messages.setWallpaperFail')
       }
     }
   }
@@ -504,7 +504,7 @@ export default class WallpaperManager {
     if (!imgPath || !fs.existsSync(imgPath)) {
       return {
         success: false,
-        msg: t('messages.fileNotExist')
+        message: t('messages.fileNotExist')
       }
     }
     try {
@@ -515,13 +515,13 @@ export default class WallpaperManager {
       })
       return {
         success: true,
-        msg: t('messages.setWallpaperSuccess')
+        message: t('messages.setWallpaperSuccess')
       }
     } catch (err) {
       this.logger.error(`设置壁纸失败: error => ${err}`)
       return {
         success: false,
-        msg: t('messages.setWallpaperFail')
+        message: t('messages.setWallpaperFail')
       }
     }
   }
@@ -531,7 +531,7 @@ export default class WallpaperManager {
     if (!item) {
       return {
         success: false,
-        msg: t('messages.paramsError')
+        message: t('messages.paramsError')
       }
     }
 
@@ -548,7 +548,7 @@ export default class WallpaperManager {
         } else {
           return {
             success: false,
-            msg: t('messages.fileNotExist')
+            message: t('messages.fileNotExist')
           }
         }
       } else if (item.srcType === 'url' && item.url) {
@@ -557,7 +557,7 @@ export default class WallpaperManager {
         if (!downloadFolder || !fs.existsSync(downloadFolder)) {
           return {
             success: false,
-            msg: t('messages.downloadFolderNotExistOrNotSet')
+            message: t('messages.downloadFolderNotExistOrNotSet')
           }
         }
 
@@ -644,13 +644,13 @@ export default class WallpaperManager {
       }
       return {
         success: false,
-        msg: t('messages.setWallpaperFail')
+        message: t('messages.setWallpaperFail')
       }
     } catch (err) {
       this.logger.error(`下载壁纸失败: error => ${err}`)
       return {
         success: false,
-        msg: t('messages.setWallpaperFail')
+        message: t('messages.setWallpaperFail')
       }
     }
   }
@@ -662,33 +662,33 @@ export default class WallpaperManager {
 
     let ret = {
       success: false,
-      msg: t('messages.operationFail')
+      message: t('messages.operationFail')
     }
 
     if (!downloadFolder || !fs.existsSync(downloadFolder)) {
-      ret.msg = t('messages.downloadFolderNotExistOrNotSet')
+      ret.message = t('messages.downloadFolderNotExistOrNotSet')
       return ret
     }
 
     // 先获取资源数据
     const resourceMapRes = await this.dbManager.getResourceMap()
     if (!resourceMapRes.success) {
-      ret.msg = resourceMapRes.msg
+      ret.message = resourceMapRes.message
       return ret
     }
     const resourceMap = resourceMapRes.data
 
     const resourceInfo = resourceMap.remoteResourceMap[resourceName]
     if (!resourceInfo) {
-      ret.msg = t('messages.resourceNotFound')
+      ret.message = t('messages.resourceNotFound')
       return ret
     }
     if (resourceInfo.requireSecretKey && !remoteResourceSecretKeys[resourceName]) {
-      ret.msg = t('messages.resourceSecretKeyUnset')
+      ret.message = t('messages.resourceSecretKeyUnset')
       return ret
     }
     if (resourceInfo.downloadRequired.keywords && !keywords) {
-      ret.msg = t('messages.enterKeywords')
+      ret.message = t('messages.enterKeywords')
       return ret
     }
 
@@ -785,7 +785,7 @@ export default class WallpaperManager {
           }
         }
         ret.success = true
-        ret.msg = t(res.list.length ? 'messages.querySuccess' : 'messages.queryEmpty')
+        ret.message = t(res.list.length ? 'messages.querySuccess' : 'messages.queryEmpty')
       }
       return ret
     } catch (err) {
@@ -875,7 +875,7 @@ export default class WallpaperManager {
   async clearDownloadedAll() {
     let ret = {
       success: false,
-      msg: t('messages.operationFail')
+      message: t('messages.operationFail')
     }
     try {
       // 直接从数据库中查询所有非local的资源
@@ -909,7 +909,7 @@ export default class WallpaperManager {
 
       this.logger.info(`清理文件完成，共 ${allCount}，成功 ${successCount}，失败 ${failCount}！`)
       ret.success = true
-      ret.msg = t('messages.clearDownloadedDone', {
+      ret.message = t('messages.clearDownloadedDone', {
         allCount,
         successCount,
         failCount
@@ -924,7 +924,7 @@ export default class WallpaperManager {
   async clearDownloadedExpired() {
     let ret = {
       success: false,
-      msg: t('messages.operationFail')
+      message: t('messages.operationFail')
     }
     try {
       // 获取过期时间
@@ -967,7 +967,7 @@ export default class WallpaperManager {
         `清理过期文件完成，共 ${allCount}，成功 ${successCount}，失败 ${failCount}！`
       )
       ret.success = true
-      ret.msg = t('messages.clearDownloadedDone', {
+      ret.message = t('messages.clearDownloadedDone', {
         allCount,
         successCount,
         failCount

@@ -169,7 +169,7 @@ export default async ({
     } catch (err) {
       typeof onStartFail === 'function' &&
         onStartFail({
-          msg: `Socket.IO 初始化失败: ${err}`
+          message: `Socket.IO 初始化失败: ${err}`
         })
     }
 
@@ -206,20 +206,20 @@ export default async ({
           .catch((err) => {
             typeof onStartFail === 'function' &&
               onStartFail({
-                msg: `查找可用端口失败: ${err}`
+                message: `查找可用端口失败: ${err}`
               })
           })
       } else {
         typeof onStartFail === 'function' &&
           onStartFail({
-            msg: `服务器错误: ${err}`
+            message: `服务器错误: ${err}`
           })
       }
     })
   } catch (err) {
     typeof onStartFail === 'function' &&
       onStartFail({
-        msg: `服务器启动失败: ${err}`
+        message: `服务器启动失败: ${err}`
       })
   }
   return {

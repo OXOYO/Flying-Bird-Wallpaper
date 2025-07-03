@@ -346,9 +346,9 @@ export default class Store {
             case 'SERVER_LOG': {
               const type = data.level
               if (type && typeof global.logger[type] === 'function') {
-                global.logger[type](data.msg)
+                global.logger[type](data.message)
               } else {
-                global.logger.info(`[FileServer] INFO => ${data.msg}`)
+                global.logger.info(`[FileServer] INFO => ${data.message}`)
               }
               break
             }
@@ -400,7 +400,7 @@ export default class Store {
     if (data.isManual) {
       this.sendMsg(this.mainWindow, {
         type: res.success ? (res.data.insertedCount > 0 ? 'success' : 'info') : 'error',
-        msg: res.msg
+        message: res.message
       })
       if (res.success && res.data.insertedCount > 0) {
         // 触发刷新动作
@@ -417,7 +417,7 @@ export default class Store {
     if (data.isManual) {
       this.sendMsg(this.mainWindow, {
         type: 'error',
-        msg: t('messages.refreshDirectoryFail')
+        message: t('messages.refreshDirectoryFail')
       })
     }
   }
@@ -464,7 +464,7 @@ export default class Store {
                   this.sendCommonData(this.mainWindow)
                   this.sendMsg(this.mainWindow, {
                     type: 'success',
-                    msg: t('messages.h5ServerStartSuccess')
+                    message: t('messages.h5ServerStartSuccess')
                   })
                 } else {
                   global.logger.warn('主窗口未初始化，无法发送H5服务器URL')
@@ -478,9 +478,9 @@ export default class Store {
               case 'SERVER_LOG': {
                 const type = data.level
                 if (type && typeof global.logger[type] === 'function') {
-                  global.logger[type](data.msg)
+                  global.logger[type](data.message)
                 } else {
-                  global.logger.info(`[H5Server] INFO => ${data.msg}`)
+                  global.logger.info(`[H5Server] INFO => ${data.message}`)
                 }
                 break
               }
@@ -506,7 +506,7 @@ export default class Store {
           if (this.mainWindow) {
             this.sendMsg(this.mainWindow, {
               type: 'error',
-              msg: t('messages.h5ServerStartFail')
+              message: t('messages.h5ServerStartFail')
             })
           }
         }
@@ -526,13 +526,13 @@ export default class Store {
           this.sendCommonData(this.mainWindow)
           this.sendMsg(this.mainWindow, {
             type: 'success',
-            msg: t('messages.h5ServerStopSuccess')
+            message: t('messages.h5ServerStopSuccess')
           })
         } else {
           // 发送错误消息
           this.sendMsg(this.mainWindow, {
             type: 'error',
-            msg: t('messages.h5ServerStopFail')
+            message: t('messages.h5ServerStopFail')
           })
         }
       })
@@ -646,7 +646,7 @@ export default class Store {
       const res = await this.dbManager.clearDB(tableName, resourceName)
       this.sendMsg(this.mainWindow, {
         type: res.success ? 'success' : 'error',
-        msg: res.msg
+        message: res.message
       })
       return res
     })
@@ -657,7 +657,7 @@ export default class Store {
       if (res && !res.success) {
         this.sendMsg(this.mainWindow, {
           type: 'error',
-          msg: res.msg
+          message: res.message
         })
       }
     })
@@ -681,7 +681,7 @@ export default class Store {
       if (res) {
         this.sendMsg(this.mainWindow, {
           type: res.success ? 'success' : 'error',
-          msg: res.msg
+          message: res.message
         })
       }
     })
@@ -691,7 +691,7 @@ export default class Store {
       if (res) {
         this.sendMsg(this.mainWindow, {
           type: res.success ? 'success' : 'error',
-          msg: res.msg
+          message: res.message
         })
       }
     })
@@ -730,7 +730,7 @@ export default class Store {
     await this.toggleAutoSwitchWallpaper(false)
     let ret = {
       success: false,
-      msg: t('messages.operationFail')
+      message: t('messages.operationFail')
     }
     if (direction === 'next') {
       ret = await this.wallpaperManager.doSwitchToNextWallpaper()
@@ -830,7 +830,7 @@ export default class Store {
       if (!url) {
         return {
           success: false,
-          msg: t('messages.urlEmpty')
+          message: t('messages.urlEmpty')
         }
       }
       try {
@@ -838,13 +838,13 @@ export default class Store {
         if (!['http:', 'https:'].includes(urlObj.protocol)) {
           return {
             success: false,
-            msg: t('messages.invalidUrl')
+            message: t('messages.invalidUrl')
           }
         }
       } catch (err) {
         return {
           success: false,
-          msg: t('messages.invalidUrl')
+          message: t('messages.invalidUrl')
         }
       }
       const imgPath = await this.getWebImage(url)
@@ -853,14 +853,14 @@ export default class Store {
       } else {
         return {
           success: false,
-          msg: t('messages.operationFail')
+          message: t('messages.operationFail')
         }
       }
     } catch (err) {
       global.logger.error(err)
       return {
         success: false,
-        msg: t('messages.operationFail')
+        message: t('messages.operationFail')
       }
     }
   }

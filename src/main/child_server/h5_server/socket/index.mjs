@@ -26,7 +26,7 @@ export default async function setupSocketIO(
         safeCallback(callback, {
           success: false,
           data: null,
-          msg: t('messages.operationFail')
+          message: t('messages.operationFail')
         })
       }
     })
@@ -49,13 +49,13 @@ export default async function setupSocketIO(
           safeCallback(callback, {
             success: true,
             data: res.data,
-            msg: t('messages.operationSuccess')
+            message: t('messages.operationSuccess')
           })
         } else {
           safeCallback(callback, {
             success: false,
             data: null,
-            msg: t('messages.operationFail')
+            message: t('messages.operationFail')
           })
         }
       } catch (err) {
@@ -63,7 +63,7 @@ export default async function setupSocketIO(
         safeCallback(callback, {
           success: false,
           data: null,
-          msg: t('messages.operationFail')
+          message: t('messages.operationFail')
         })
       }
     })
@@ -78,7 +78,7 @@ export default async function setupSocketIO(
         safeCallback(callback, {
           success: false,
           data: null,
-          msg: t('messages.operationFail')
+          message: t('messages.operationFail')
         })
       }
     })
@@ -93,7 +93,7 @@ export default async function setupSocketIO(
         safeCallback(callback, {
           success: false,
           data: null,
-          msg: t('messages.operationFail')
+          message: t('messages.operationFail')
         })
       }
     })
@@ -104,7 +104,7 @@ export default async function setupSocketIO(
         if (!id) {
           safeCallback(callback, {
             success: false,
-            msg: t('messages.operationFail')
+            message: t('messages.operationFail')
           })
           return
         }
@@ -117,21 +117,21 @@ export default async function setupSocketIO(
           const res = await resourcesManager.removeFavorites(id)
           safeCallback(callback, {
             success: res.success,
-            msg: res.success ? t('messages.operationSuccess') : t('messages.operationFail')
+            message: res.success ? t('messages.operationSuccess') : t('messages.operationFail')
           })
         } else {
           // 如果没有收藏，则添加收藏
           const res = await resourcesManager.addToFavorites(id)
           safeCallback(callback, {
             success: res.success,
-            msg: res.success ? t('messages.operationSuccess') : t('messages.operationFail')
+            message: res.success ? t('messages.operationSuccess') : t('messages.operationFail')
           })
         }
       } catch (err) {
         logger.error(`[H5Server] ERROR => 切换收藏状态错误: ${err}`)
         safeCallback(callback, {
           success: false,
-          msg: t('messages.operationFail')
+          message: t('messages.operationFail')
         })
       }
     })
@@ -142,20 +142,20 @@ export default async function setupSocketIO(
         if (!id) {
           safeCallback(callback, {
             success: false,
-            msg: t('messages.operationFail')
+            message: t('messages.operationFail')
           })
           return
         }
         const res = await resourcesManager.addToFavorites(id)
         safeCallback(callback, {
           success: res.success,
-          msg: res.success ? t('messages.operationSuccess') : t('messages.operationFail')
+          message: res.success ? t('messages.operationSuccess') : t('messages.operationFail')
         })
       } catch (err) {
         logger.error(`[H5Server] ERROR => 加入收藏错误: ${err}`)
         safeCallback(callback, {
           success: false,
-          msg: t('messages.operationFail')
+          message: t('messages.operationFail')
         })
       }
     })
@@ -165,20 +165,20 @@ export default async function setupSocketIO(
         if (!id) {
           safeCallback(callback, {
             success: false,
-            msg: t('messages.operationFail')
+            message: t('messages.operationFail')
           })
           return
         }
         const res = await resourcesManager.updateFavoriteCount(id, count)
         safeCallback(callback, {
           success: res.success,
-          msg: res.success ? t('messages.operationSuccess') : t('messages.operationFail')
+          message: res.success ? t('messages.operationSuccess') : t('messages.operationFail')
         })
       } catch (err) {
         logger.error(`[H5Server] ERROR => 更新收藏数量错误: ${err}`)
         safeCallback(callback, {
           success: false,
-          msg: t('messages.operationFail')
+          message: t('messages.operationFail')
         })
       }
     })
@@ -188,20 +188,20 @@ export default async function setupSocketIO(
         if (!id) {
           safeCallback(callback, {
             success: false,
-            msg: t('messages.operationFail')
+            message: t('messages.operationFail')
           })
           return
         }
         const res = await resourcesManager.removeFavorites(id)
         safeCallback(callback, {
           success: res.success,
-          msg: res.success ? t('messages.operationSuccess') : t('messages.operationFail')
+          message: res.success ? t('messages.operationSuccess') : t('messages.operationFail')
         })
       } catch (err) {
         logger.error(`[H5Server] ERROR => 取消收藏错误: ${err}`)
         safeCallback(callback, {
           success: false,
-          msg: t('messages.operationFail')
+          message: t('messages.operationFail')
         })
       }
     })
@@ -211,20 +211,20 @@ export default async function setupSocketIO(
         if (!item) {
           safeCallback(callback, {
             success: false,
-            msg: t('messages.operationFail')
+            message: t('messages.operationFail')
           })
           return
         }
         const res = await fileManager.deleteFile(item)
         safeCallback(callback, {
           success: res.success,
-          msg: res.success ? t('messages.operationSuccess') : t('messages.operationFail')
+          message: res.success ? t('messages.operationSuccess') : t('messages.operationFail')
         })
       } catch (err) {
         logger.error(`[H5Server] ERROR => 删除图片错误: ${err}`)
         safeCallback(callback, {
           success: false,
-          msg: t('messages.operationFail')
+          message: t('messages.operationFail')
         })
       }
     })

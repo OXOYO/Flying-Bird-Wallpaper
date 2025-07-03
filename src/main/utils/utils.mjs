@@ -40,9 +40,9 @@ export const isFunc = (func) => {
   return typeof func === 'function'
 }
 
-export const echoDebugLog = (msg) => {
-  if (isDev() && msg) {
-    fs.appendFileSync('debug.log', msg + '\n')
+export const echoDebugLog = (message) => {
+  if (isDev() && message) {
+    fs.appendFileSync('debug.log', message + '\n')
   }
 }
 

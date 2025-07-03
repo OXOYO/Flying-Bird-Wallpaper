@@ -74,13 +74,13 @@ export default class FileManager {
       this.logger.error('文件服务未初始化')
       return {
         success: false,
-        msg: t('messages.fileServerNotInitialized')
+        message: t('messages.fileServerNotInitialized')
       }
     }
     if (locks.refreshDirectory) {
       return {
         success: false,
-        msg: t('messages.refreshDirectoryFail')
+        message: t('messages.refreshDirectoryFail')
       }
     }
 
@@ -96,13 +96,13 @@ export default class FileManager {
     if (!folderPaths.length) {
       return {
         success: false,
-        msg: t('messages.refreshDirectoryFailNotSettingFolder')
+        message: t('messages.refreshDirectoryFailNotSettingFolder')
       }
     }
     if (!allowedFileExt.length) {
       return {
         success: false,
-        msg: t('messages.refreshDirectoryFailNotSettingFileExt')
+        message: t('messages.refreshDirectoryFailNotSettingFileExt')
       }
     }
 
@@ -131,7 +131,7 @@ export default class FileManager {
       locks.refreshDirectory = false
       return {
         success: false,
-        msg: t('messages.refreshDirectoryFail')
+        message: t('messages.refreshDirectoryFail')
       }
     }
   }
@@ -146,7 +146,7 @@ export default class FileManager {
 
     const ret = {
       success: true,
-      msg: t('messages.refreshDirectorySuccess', {
+      message: t('messages.refreshDirectorySuccess', {
         insertedCount: 0,
         total: 0
       }),
@@ -196,7 +196,7 @@ export default class FileManager {
           `读取目录文件，批量插入资源事务执行成功: tableName => fbw_resources, list.length => ${list.length}`
         )
         ret.success = true
-        ret.msg = t('messages.refreshDirectorySuccess', {
+        ret.message = t('messages.refreshDirectorySuccess', {
           insertedCount,
           total: list.length
         })
@@ -209,7 +209,7 @@ export default class FileManager {
           `读取目录文件，批量插入资源事务执行失败: tableName => fbw_resources, error => ${err}`
         )
         ret.success = false
-        ret.msg = t('messages.refreshDirectoryFail')
+        ret.message = t('messages.refreshDirectoryFail')
       }
     }
     return ret
@@ -322,7 +322,7 @@ export default class FileManager {
   async deleteFile(item) {
     let ret = {
       success: false,
-      msg: t('messages.operationFail')
+      message: t('messages.operationFail')
     }
     if (!item) {
       return ret
@@ -341,7 +341,7 @@ export default class FileManager {
           const query_stmt = this.db.prepare(`SELECT * FROM fbw_resources WHERE id =?`)
           const query_result = query_stmt.get(id)
           if (!query_result) {
-            ret.msg = t('messages.resourceNotExist')
+            ret.message = t('messages.resourceNotExist')
             return ret
           }
           filePath = query_result.filePath
@@ -389,7 +389,7 @@ export default class FileManager {
 
         ret = {
           success: true,
-          msg: t('messages.operationSuccess')
+          message: t('messages.operationSuccess')
         }
         return ret
       } catch (err) {

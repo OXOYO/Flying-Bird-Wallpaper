@@ -1,3 +1,10 @@
+<!--
+ * @Author: OXOYO
+ * @Date: 2025-06-04 10:06:34
+ * @LastEditors: OXOYO
+ * @LastEditTime: 2025-07-03 14:57:03
+ * @Description: file content
+-->
 <script setup>
 import {
   intervalUnits,
@@ -180,7 +187,7 @@ const onSettingDataChange = async (field) => {
   const res = await settingStore.h5UpdateSettingData(payload)
   showNotify({
     type: res.success ? 'success' : 'danger',
-    message: res.msg
+    message: res.message
   })
 }
 

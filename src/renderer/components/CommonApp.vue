@@ -37,10 +37,10 @@ const onCommonDataCallback = (event, data) => {
 }
 
 const onSendMsgCallback = (event, data) => {
-  if (data.type && data.msg) {
+  if (data.type && data.message) {
     ElMessage({
       type: data.type,
-      message: data.msg
+      message: data.message
     })
   }
 }

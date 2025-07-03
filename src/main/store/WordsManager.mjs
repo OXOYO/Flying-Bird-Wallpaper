@@ -256,7 +256,7 @@ export default class WordsManager {
 
     let ret = {
       success: false,
-      msg: t('messages.operationFail'),
+      message: t('messages.operationFail'),
       data: null
     }
 
@@ -277,7 +277,7 @@ export default class WordsManager {
         }
         ret = {
           success: true,
-          msg: t(Object.keys(data).length ? 'messages.querySuccess' : 'messages.queryEmpty'),
+          message: t(Object.keys(data).length ? 'messages.querySuccess' : 'messages.queryEmpty'),
           data
         }
       } else {
@@ -288,7 +288,7 @@ export default class WordsManager {
         if (Array.isArray(query_result)) {
           ret = {
             success: true,
-            msg: t(query_result.length ? 'messages.querySuccess' : 'messages.queryEmpty'),
+            message: t(query_result.length ? 'messages.querySuccess' : 'messages.queryEmpty'),
             data: query_result
           }
         }

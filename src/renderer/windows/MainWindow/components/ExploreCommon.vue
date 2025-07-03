@@ -573,7 +573,7 @@ const onTogglePrivacySpace = async () => {
       } else {
         ElMessage({
           type: 'error',
-          message: res.msg
+          message: res.message
         })
       }
     })
@@ -899,7 +899,7 @@ const getNextList = async () => {
             flags.hasMore = false
             ElMessage({
               type: 'warning',
-              message: res.msg || t('messages.noMoreData')
+              message: res.message || t('messages.noMoreData')
             })
           }
         }
@@ -907,14 +907,14 @@ const getNextList = async () => {
         flags.hasMore = false
         ElMessage({
           type: 'warning',
-          message: res.msg || t('messages.noMoreData')
+          message: res.message || t('messages.noMoreData')
         })
       }
     } else {
       searchForm.total = 0
       ElMessage({
         type: 'error',
-        message: res?.msg || t('messages.getDataFail')
+        message: res?.message || t('messages.getDataFail')
       })
     }
   } catch (err) {
@@ -954,11 +954,11 @@ const onSyncToWallpaperSetting = async () => {
   let options = {}
   if (res && res.success) {
     options.type = 'success'
-    options.message = res.msg
+    options.message = res.message
     settingStore.updateSettingData(res.data)
   } else {
     options.type = 'error'
-    options.message = res.msg
+    options.message = res.message
   }
   ElMessage(options)
 }
@@ -969,11 +969,11 @@ const setAsWallpaperWithDownload = async (item, index) => {
   let options = {}
   if (res && res.success) {
     options.type = 'success'
-    options.message = res.msg
+    options.message = res.message
     setCardItemStatus(index, 'success')
   } else {
     options.type = 'error'
-    options.message = res.msg
+    options.message = res.message
     setCardItemStatus(index, 'error')
   }
   ElMessage(options)

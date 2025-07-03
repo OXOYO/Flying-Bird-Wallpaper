@@ -1059,7 +1059,7 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
         cache.clear()
         sendMsg(mainWindow, {
           type: 'success',
-          msg: t('messages.clearCacheSuccess')
+          message: t('messages.clearCacheSuccess')
         })
       })
 
@@ -1070,7 +1070,7 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
         })
 
         if (canceled || !filePaths.length) {
-          return { success: false, msg: '未选择文件' }
+          return { success: false, message: '未选择文件' }
         }
 
         return { success: true, data: filePaths[0] }
@@ -1090,24 +1090,24 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
             })
           }
 
-          return { success: true, msg: '设置动态壁纸成功' }
+          return { success: true, message: '设置动态壁纸成功' }
         } catch (err) {
           global.logger.error(`设置动态壁纸失败: ${err}`)
-          return { success: false, msg: '设置动态壁纸失败' }
+          return { success: false, message: '设置动态壁纸失败' }
         }
       })
 
       ipcMain.handle('main:setDynamicWallpaperMute', (event, mute) => {
         if (!dynamicWallpaperWindow) {
-          return { success: false, msg: '没有正在运行的动态壁纸' }
+          return { success: false, message: '没有正在运行的动态壁纸' }
         }
 
         try {
           dynamicWallpaperWindow.webContents.send('main:setVideoMute', mute)
-          return { success: true, msg: '设置静音状态成功' }
+          return { success: true, message: '设置静音状态成功' }
         } catch (err) {
           global.logger.error(`设置动态壁纸静音状态失败: ${err}`)
-          return { success: false, msg: '设置静音状态失败' }
+          return { success: false, message: '设置静音状态失败' }
         }
       })
 
@@ -1123,7 +1123,7 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
 
       ipcMain.handle('main:setDynamicWallpaperPerformance', (event, mode) => {
         if (!dynamicWallpaperWindow) {
-          return { success: false, msg: '没有正在运行的动态壁纸' }
+          return { success: false, message: '没有正在运行的动态壁纸' }
         }
 
         try {
@@ -1145,64 +1145,64 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
           // 发送帧率设置到动态壁纸窗口
           dynamicWallpaperWindow.webContents.send('main:setVideoFrameRate', frameRate)
 
-          return { success: true, msg: '设置性能模式成功' }
+          return { success: true, message: '设置性能模式成功' }
         } catch (err) {
           global.logger.error(`设置动态壁纸性能模式失败: ${err}`)
-          return { success: false, msg: '设置性能模式失败' }
+          return { success: false, message: '设置性能模式失败' }
         }
       })
 
       ipcMain.handle('main:setDynamicWallpaperScaleMode', (event, mode) => {
         if (!dynamicWallpaperWindow) {
-          return { success: false, msg: '没有正在运行的动态壁纸' }
+          return { success: false, message: '没有正在运行的动态壁纸' }
         }
 
         try {
           // 发送缩放模式设置到动态壁纸窗口
           dynamicWallpaperWindow.webContents.send('main:setVideoScaleMode', mode)
 
-          return { success: true, msg: '设置缩放模式成功' }
+          return { success: true, message: '设置缩放模式成功' }
         } catch (err) {
           global.logger.error(`设置动态壁纸缩放模式失败: ${err}`)
-          return { success: false, msg: '设置缩放模式失败' }
+          return { success: false, message: '设置缩放模式失败' }
         }
       })
 
       ipcMain.handle('main:setDynamicWallpaperBrightness', (event, value) => {
         if (!dynamicWallpaperWindow) {
-          return { success: false, msg: '没有正在运行的动态壁纸' }
+          return { success: false, message: '没有正在运行的动态壁纸' }
         }
 
         try {
           // 发送亮度设置到动态壁纸窗口
           dynamicWallpaperWindow.webContents.send('main:setVideoBrightness', value)
 
-          return { success: true, msg: '设置亮度成功' }
+          return { success: true, message: '设置亮度成功' }
         } catch (err) {
           global.logger.error(`设置动态壁纸亮度失败: ${err}`)
-          return { success: false, msg: '设置亮度失败' }
+          return { success: false, message: '设置亮度失败' }
         }
       })
 
       ipcMain.handle('main:setDynamicWallpaperContrast', (event, value) => {
         if (!dynamicWallpaperWindow) {
-          return { success: false, msg: '没有正在运行的动态壁纸' }
+          return { success: false, message: '没有正在运行的动态壁纸' }
         }
 
         try {
           // 发送对比度设置到动态壁纸窗口
           dynamicWallpaperWindow.webContents.send('main:setVideoContrast', value)
 
-          return { success: true, msg: '设置对比度成功' }
+          return { success: true, message: '设置对比度成功' }
         } catch (err) {
           global.logger.error(`设置动态壁纸对比度失败: ${err}`)
-          return { success: false, msg: '设置对比度失败' }
+          return { success: false, message: '设置对比度失败' }
         }
       })
 
       ipcMain.handle('main:closeDynamicWallpaper', () => {
         const result = closeDynamicWallpaperWindow()
-        return { success: result, msg: result ? '关闭动态壁纸成功' : '没有正在运行的动态壁纸' }
+        return { success: result, message: result ? '关闭动态壁纸成功' : '没有正在运行的动态壁纸' }
       })
 
       // 处理自定义协议

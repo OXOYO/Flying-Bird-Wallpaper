@@ -61,27 +61,27 @@ export default class SettingManager extends EventEmitter {
   async getSettingData() {
     let ret = {
       success: false,
-      msg: t('messages.operationFail'),
+      message: t('messages.operationFail'),
       data: null
     }
     try {
       const res = await this.dbManager.getSysRecord('settingData')
       if (res.success && res.data?.storeData) {
         ret.success = true
-        ret.msg = t('messages.operationSuccess')
+        ret.message = t('messages.operationSuccess')
         ret.data = this._settingData = res.data.storeData
       } else {
         // 如果获取失败，使用默认设置
         this.logger.warn('从数据库获取设置失败，使用默认设置')
         ret.success = true
-        ret.msg = t('messages.useDefaultSettings')
+        ret.message = t('messages.useDefaultSettings')
         ret.data = this._settingData = { ...defaultSettingData }
       }
     } catch (err) {
       this.logger.error(`获取设置数据失败: ${err.message}`)
       // 发生错误时也使用默认设置
       ret.success = true
-      ret.msg = t('messages.useDefaultSettings')
+      ret.message = t('messages.useDefaultSettings')
       ret.data = this._settingData = { ...defaultSettingData }
     }
     return ret
@@ -91,7 +91,7 @@ export default class SettingManager extends EventEmitter {
   async updateSettingData(data) {
     let ret = {
       success: false,
-      msg: t('messages.operationFail'),
+      message: t('messages.operationFail'),
       data: null
     }
 
@@ -121,7 +121,7 @@ export default class SettingManager extends EventEmitter {
         await changeLanguage(newStoreData.locale)
         ret = {
           success: true,
-          msg: t('messages.operationSuccess'),
+          message: t('messages.operationSuccess'),
           data: newStoreData
         }
       } else {
@@ -140,26 +140,26 @@ export default class SettingManager extends EventEmitter {
   async checkPrivacyPassword(password) {
     let ret = {
       success: false,
-      msg: t('messages.operationFail')
+      message: t('messages.operationFail')
     }
     const res = await this.dbManager.getPrivacyPassword()
     if (res.success) {
       if (!res.data) {
         ret = {
           success: false,
-          msg: t('messages.privacyPasswordNotSet')
+          message: t('messages.privacyPasswordNotSet')
         }
       } else {
         const { hash: storedHash, salt } = res.data
         if (verifyPassword(password, storedHash, salt)) {
           ret = {
             success: true,
-            msg: t('messages.operationSuccess')
+            message: t('messages.operationSuccess')
           }
         } else {
           ret = {
             success: false,
-            msg: t('messages.passwordError')
+            message: t('messages.passwordError')
           }
         }
       }
@@ -171,14 +171,14 @@ export default class SettingManager extends EventEmitter {
   async hasPrivacyPassword() {
     let ret = {
       success: false,
-      msg: t('messages.operationFail'),
+      message: t('messages.operationFail'),
       data: false
     }
     const res = await this.dbManager.getPrivacyPassword()
     if (res.success) {
       ret = {
         success: true,
-        msg: t('messages.operationSuccess'),
+        message: t('messages.operationSuccess'),
         data: !!res.data
       }
     }
@@ -189,7 +189,7 @@ export default class SettingManager extends EventEmitter {
   async updatePrivacyPassword(data) {
     let ret = {
       success: false,
-      msg: t('messages.operationFail')
+      message: t('messages.operationFail')
     }
 
     if (!data) {
@@ -206,7 +206,7 @@ export default class SettingManager extends EventEmitter {
         if (!verifyPassword(data.old, storedHash, salt)) {
           ret = {
             success: false,
-            msg: t('messages.oldPasswordError')
+            message: t('messages.oldPasswordError')
           }
           return ret
         }
@@ -214,7 +214,7 @@ export default class SettingManager extends EventEmitter {
       if (!data.new) {
         ret = {
           success: false,
-          msg: t('messages.newPasswordNotEmpty')
+          message: t('messages.newPasswordNotEmpty')
         }
         return ret
       }
@@ -227,7 +227,7 @@ export default class SettingManager extends EventEmitter {
         'object'
       )
       ret.success = update_res.success
-      ret.msg = update_res.msg
+      ret.message = update_res.message
     } catch (err) {
       this.logger.error(`处理隐私密码失败: ${err}`)
     }

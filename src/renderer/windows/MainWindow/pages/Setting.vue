@@ -145,12 +145,12 @@ const onSettingDataFormConfirm = () => {
       let ret = false
       if (res && res.success) {
         options.type = 'success'
-        options.message = res.msg
+        options.message = res.message
         settingStore.updateSettingData(res.data)
         ret = true
       } else {
         options.type = 'error'
-        options.message = res.msg
+        options.message = res.message
       }
       ElMessage(options)
       return ret
@@ -236,7 +236,7 @@ const onSetWebWallpaper = async () => {
   flags.settingWebWallpaper = false
   ElMessage({
     type: res.success ? 'success' : 'error',
-    message: res.msg
+    message: res.message
   })
 }
 
@@ -300,12 +300,12 @@ const onPrivacyPasswordFormConfirm = (formEl) => {
       }
       if (res && res.success) {
         options.type = 'success'
-        options.message = res.msg
+        options.message = res.message
         // 成功后清除表单数据
         formEl.resetFields()
       } else {
         options.type = 'error'
-        options.message = res.msg || t('messages.operationSuccess')
+        options.message = res.message || t('messages.operationSuccess')
       }
       ElMessage(options)
     } else {

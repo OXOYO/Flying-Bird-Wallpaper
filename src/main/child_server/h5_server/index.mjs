@@ -18,12 +18,12 @@ process.parentPort.on('message', (e) => {
       const postData = {
         event: 'SERVER_LOG',
         level: type,
-        msg: ''
+        message: ''
       }
       if (typeof data === 'string') {
-        postData.msg = data
+        postData.message = data
       } else if (typeof data === 'object') {
-        postData.msg = JSON.stringify(data)
+        postData.message = JSON.stringify(data)
       }
       port.postMessage(postData)
     }

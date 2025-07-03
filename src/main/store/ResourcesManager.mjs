@@ -55,7 +55,7 @@ export default class ResourcesManager {
 
     let ret = {
       success: false,
-      msg: t('messages.operationFail'),
+      message: t('messages.operationFail'),
       data: {
         list: [],
         total: 0,
@@ -170,26 +170,26 @@ export default class ResourcesManager {
           }
         }
         ret.success = true
-        ret.msg = t(ret.data.list.length ? 'messages.querySuccess' : 'messages.queryEmpty')
+        ret.message = t(ret.data.list.length ? 'messages.querySuccess' : 'messages.queryEmpty')
       } else {
         // 先获取资源数据
         const resourceMapRes = await this.dbManager.getResourceMap()
         if (!resourceMapRes.success) {
-          ret.msg = resourceMapRes.msg
+          ret.message = resourceMapRes.message
           return ret
         }
         const resourceMap = resourceMapRes.data
         const resourceInfo = resourceMap.remoteResourceMap[resourceName]
         if (!resourceInfo) {
-          ret.msg = t('messages.resourceNotFound')
+          ret.message = t('messages.resourceNotFound')
           return ret
         }
         if (resourceInfo.requireSecretKey && !remoteResourceSecretKeys[resourceName]) {
-          ret.msg = t('messages.resourceSecretKeyUnset')
+          ret.message = t('messages.resourceSecretKeyUnset')
           return ret
         }
         if (resourceInfo.searchRequired.keywords && !filterKeywords) {
-          ret.msg = t('messages.enterKeywords')
+          ret.message = t('messages.enterKeywords')
           return ret
         }
         const res = await this.apiManager.call(resourceName, 'search', {
@@ -213,7 +213,7 @@ export default class ResourcesManager {
             })
           }
           ret.success = true
-          ret.msg = t(ret.data.list.length ? 'messages.querySuccess' : 'messages.queryEmpty')
+          ret.message = t(ret.data.list.length ? 'messages.querySuccess' : 'messages.queryEmpty')
         }
       }
     } catch (err) {
@@ -245,7 +245,7 @@ export default class ResourcesManager {
   async addToFavorites(resourceId, isPrivacySpace = false) {
     let ret = {
       success: false,
-      msg: t('messages.operationFail')
+      message: t('messages.operationFail')
     }
 
     try {
@@ -258,7 +258,7 @@ export default class ResourcesManager {
         if (insert_result.changes > 0) {
           ret = {
             success: true,
-            msg: t('messages.operationSuccess')
+            message: t('messages.operationSuccess')
           }
         }
       } else {
@@ -274,7 +274,7 @@ export default class ResourcesManager {
           if (update_result.changes > 0) {
             ret = {
               success: true,
-              msg: t('messages.operationSuccess')
+              message: t('messages.operationSuccess')
             }
           }
         } else {
@@ -285,7 +285,7 @@ export default class ResourcesManager {
           if (insert_result.changes > 0) {
             ret = {
               success: true,
-              msg: t('messages.operationSuccess')
+              message: t('messages.operationSuccess')
             }
           }
         }
@@ -301,11 +301,11 @@ export default class ResourcesManager {
   async updateFavoriteCount(resourceId, count) {
     let ret = {
       success: false,
-      msg: t('messages.operationFail')
+      message: t('messages.operationFail')
     }
     try {
       if (!resourceId || count === undefined || count <= 0) {
-        ret.msg = t('messages.paramsError')
+        ret.message = t('messages.paramsError')
         return ret
       }
       // 当没有资源时插入，当有资源时num加count
@@ -319,7 +319,7 @@ export default class ResourcesManager {
         if (insert_result.changes > 0) {
           ret = {
             success: true,
-            msg: t('messages.operationSuccess')
+            message: t('messages.operationSuccess')
           }
           return ret
         }
@@ -334,7 +334,7 @@ export default class ResourcesManager {
         if (update_result.changes > 0) {
           ret = {
             success: true,
-            msg: t('messages.operationSuccess')
+            message: t('messages.operationSuccess')
           }
         }
       }
@@ -348,7 +348,7 @@ export default class ResourcesManager {
   async removeFavorites(resourceId, isPrivacySpace = false) {
     let ret = {
       success: false,
-      msg: t('messages.operationFail')
+      message: t('messages.operationFail')
     }
 
     try {
@@ -359,7 +359,7 @@ export default class ResourcesManager {
       if (delete_result.changes > 0) {
         ret = {
           success: true,
-          msg: t('messages.operationSuccess')
+          message: t('messages.operationSuccess')
         }
       }
     } catch (err) {

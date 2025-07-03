@@ -105,7 +105,7 @@ export default class DatabaseManager {
   async clearDB(tableName, resourceName) {
     let ret = {
       success: false,
-      msg: t('messages.operationFail')
+      message: t('messages.operationFail')
     }
     tableName = tableName.startsWith('fbw_') ? tableName : `fbw_${tableName}`
 
@@ -234,18 +234,18 @@ export default class DatabaseManager {
         if (update_sequence_res.changes > 0) {
           ret = {
             success: true,
-            msg: t('messages.clearTableSuccess')
+            message: t('messages.clearTableSuccess')
           }
         } else {
           ret = {
             success: false,
-            msg: t('messages.clearTableAutoincrementFail')
+            message: t('messages.clearTableAutoincrementFail')
           }
         }
       } else {
         ret = {
           success: false,
-          msg: t('messages.clearTableFail')
+          message: t('messages.clearTableFail')
         }
         this.logger.error(
           `CLEAR DB FAIL:: tableName => ${tableName} resourceName => ${resourceName}`
@@ -270,7 +270,7 @@ export default class DatabaseManager {
   async getSysRecord(storeKey) {
     let ret = {
       success: false,
-      msg: t('messages.operationFail'),
+      message: t('messages.operationFail'),
       data: null
     }
     if (!storeKey) {
@@ -288,7 +288,7 @@ export default class DatabaseManager {
           storeData = query_res.storeData
         }
         ret.success = true
-        ret.msg = t('messages.operationSuccess')
+        ret.message = t('messages.operationSuccess')
         ret.data = {
           storeKey,
           storeData,
@@ -304,14 +304,14 @@ export default class DatabaseManager {
   async getPrivacyPassword() {
     let ret = {
       success: false,
-      msg: t('messages.operationFail'),
+      message: t('messages.operationFail'),
       data: null
     }
     try {
       const query_stmt = this.db.prepare(`SELECT * FROM fbw_sys WHERE storeKey = ?`)
       const query_res = query_stmt.get('privacyPassword')
       ret.success = true
-      ret.msg = t('messages.operationSuccess')
+      ret.message = t('messages.operationSuccess')
       ret.data =
         typeof query_res?.storeData === 'string'
           ? JSON.parse(query_res?.storeData)
@@ -326,7 +326,7 @@ export default class DatabaseManager {
   async getResourceMap() {
     let ret = {
       success: false,
-      msg: t('messages.operationFail'),
+      message: t('messages.operationFail'),
       // FIXME 此次专门设置默认值
       data: JSON.parse(JSON.stringify(defaultResourceMap))
     }
@@ -334,7 +334,7 @@ export default class DatabaseManager {
       const res = await this.getSysRecord('remoteResourceMap')
       if (res.success) {
         ret.success = true
-        ret.msg = t('messages.operationSuccess')
+        ret.message = t('messages.operationSuccess')
         const resourceMap = JSON.parse(JSON.stringify(defaultResourceMap))
         // 计算各种资源数据
         // 远程资源对象
@@ -386,7 +386,7 @@ export default class DatabaseManager {
   async setSysRecord(storeKey, storeData, storeType = 'string') {
     let ret = {
       success: false,
-      msg: t('messages.operationFail'),
+      message: t('messages.operationFail'),
       data: null
     }
     if (!storeKey || !storeData) {
@@ -411,7 +411,7 @@ export default class DatabaseManager {
     if (update_result.changes > 0) {
       ret = {
         success: true,
-        msg: t('messages.operationSuccess'),
+        message: t('messages.operationSuccess'),
         data: {
           storeKey,
           storeData,
