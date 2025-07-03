@@ -1089,6 +1089,8 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
               win.webContents.send('main:setVideoSource', videoPath)
             })
           }
+          // 停止自动切换壁纸
+          await store?.toggleAutoSwitchWallpaper(false)
 
           return { success: true, message: '设置动态壁纸成功' }
         } catch (err) {
