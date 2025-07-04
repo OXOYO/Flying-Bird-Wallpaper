@@ -79,8 +79,7 @@ export default defineConfig({
       }),
       // 图标按需加载
       Icons({
-        compiler: 'vue3',
-        autoInstall: true
+        compiler: 'vue3'
       })
     ],
     css: {

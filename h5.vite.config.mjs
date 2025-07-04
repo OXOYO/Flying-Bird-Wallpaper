@@ -38,8 +38,7 @@ export default defineConfig({
     }),
     liveReload(['src/h5/**/*']), // 监听 src 目录下的文件变化
     Icons({
-      compiler: 'vue3',
-      autoInstall: true
+      compiler: 'vue3'
     }),
     viteCompression()
   ],
