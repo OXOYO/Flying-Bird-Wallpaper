@@ -7,6 +7,7 @@ import UseWordsStore from '@renderer/stores/wordsStore.js'
 import { useTranslation } from 'i18next-vue'
 import {
   resourceTypeList,
+  resourceTypeIcons,
   qualityList,
   orientationOptions,
   autoRefreshListOptions
@@ -69,6 +70,28 @@ const isLocalResource = computed(() => {
 
 const resourceMap = computed(() => {
   return commonStore.resourceMap
+})
+
+// 资源分组列表
+const resourceGroupList = computed(() => {
+  const { resourceListByResourceType } = resourceMap.value
+  return resourceTypeList.map((group) => {
+    const resourceType = group.value
+    const sourceList = JSON.parse(
+      JSON.stringify(toRaw(resourceListByResourceType[resourceType]) || [])
+    )
+    console.log('sourceList', sourceList)
+    group.children = sourceList.map((item) => {
+      const resourceName = item.value
+      item.optionValue = {
+        key: `${resourceType}_${resourceName}`,
+        resourceType,
+        resourceName
+      }
+      return item
+    })
+    return group
+  })
 })
 
 const currentSourceList = computed(() => {
@@ -209,6 +232,15 @@ const searchForm = reactive({
   sortField: settingData.value.sortField || 'created_at',
   sortType: settingData.value.sortType || -1,
   total: 0
+})
+
+const currentResource = computed(() => {
+  const { resourceType, resourceName } = searchForm
+  return {
+    key: `${resourceType}_${resourceName}`,
+    resourceType,
+    resourceName
+  }
 })
 
 const resizeObserver = new ResizeObserver((entries) => {
@@ -752,6 +784,12 @@ const onSourceTypeChange = () => {
     searchForm.resourceName = currentSourceList.value[0].value
     onSearch()
   })
+}
+
+const onResourceChange = (value) => {
+  searchForm.resourceType = value.resourceType
+  searchForm.resourceName = value.resourceName
+  onSearch()
 }
 
 const onRefresh = async (flag = true) => {
@@ -1312,6 +1350,41 @@ onBeforeUnmount(() => {
       >
         <template #prepend>
           <el-select
+            v-model="currentResource"
+            value-key="key"
+            :disabled="flags.loading"
+            :placeholder="t('exploreCommon.searchForm.resourceName.placeholder')"
+            size="large"
+            style="width: 140px"
+            @change="onResourceChange"
+          >
+            <template #label="{ label, value }">
+              <IconifyIcon
+                :icon="resourceTypeIcons[value.resourceType]"
+                style="vertical-align: middle; margin-right: 10px"
+              />
+              <span>{{ label }}</span>
+            </template>
+            <el-option-group
+              v-for="group in resourceGroupList"
+              :key="group.value"
+              :label="t(group.locale)"
+            >
+              <el-option
+                v-for="item in group.children"
+                :key="item.optionValue.key"
+                :label="t(item.locale) || item.value"
+                :value="item.optionValue"
+              >
+                <IconifyIcon
+                  :icon="group.icon"
+                  style="vertical-align: middle; margin-right: 10px"
+                />
+                <span>{{ t(item.locale) || item.value }}</span>
+              </el-option>
+            </el-option-group>
+          </el-select>
+          <!-- <el-select
             v-model="searchForm.resourceType"
             :disabled="flags.loading"
             :placeholder="t('exploreCommon.searchForm.resourceType.placeholder')"
@@ -1340,7 +1413,7 @@ onBeforeUnmount(() => {
               :label="t(item.locale) || item.value"
               :value="item.value"
             />
-          </el-select>
+          </el-select> -->
           <el-select
             v-model="searchForm.orientation"
             :disabled="flags.loading"

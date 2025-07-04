@@ -42,10 +42,25 @@ export const defaultResourceMap = {
   wallpaperResourceList: []
 }
 
+export const resourceTypeIcons = {
+  localResource: 'material-symbols:desktop-windows-outline',
+  remoteResource: 'material-symbols:desktop-cloud-outline'
+}
+
 // 资源类型分类
 export const resourceTypeList = [
-  { label: '本地资源库', value: 'localResource', locale: 'resourceTypeList.localResource' },
-  { label: '远程资源', value: 'remoteResource', locale: 'resourceTypeList.remoteResource' }
+  {
+    label: '本地资源库',
+    value: 'localResource',
+    locale: 'resourceTypeList.localResource',
+    icon: resourceTypeIcons.localResource
+  },
+  {
+    label: '远程资源',
+    value: 'remoteResource',
+    locale: 'resourceTypeList.remoteResource',
+    icon: resourceTypeIcons.remoteResource
+  }
 ]
 
 // 菜单列表
