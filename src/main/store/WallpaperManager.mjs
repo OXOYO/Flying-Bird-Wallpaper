@@ -3,7 +3,7 @@ import path from 'node:path'
 import { setWallpaper } from 'wallpaper'
 import axios from 'axios'
 import { t } from '../../i18n/server.js'
-import { isMac, handleTimeByUnit } from '../utils/utils.mjs'
+import { isMac, handleTimeByUnit, createSolidColorBMP } from '../utils/utils.mjs'
 
 export default class WallpaperManager {
   // 单例实例
@@ -499,8 +499,8 @@ export default class WallpaperManager {
     }
   }
 
-  // 设置静态壁纸
-  async setStaticWallpaper(imgPath) {
+  // 设置图片壁纸
+  async setImageWallpaper(imgPath) {
     if (!imgPath || !fs.existsSync(imgPath)) {
       return {
         success: false,
@@ -517,6 +517,28 @@ export default class WallpaperManager {
         success: true,
         message: t('messages.setWallpaperSuccess')
       }
+    } catch (err) {
+      this.logger.error(`设置壁纸失败: error => ${err}`)
+      return {
+        success: false,
+        message: t('messages.setWallpaperFail')
+      }
+    }
+  }
+
+  // 设置颜色壁纸
+  async setColorWallpaper(color) {
+    if (!color) {
+      return {
+        success: false,
+        message: t('messages.paramsError')
+      }
+    }
+    try {
+      const buffer = createSolidColorBMP(color)
+      const colorImagePath = path.join(process.env.FBW_TEMP_PATH, 'fbw-color-wallpaper.png')
+      fs.writeFileSync(colorImagePath, buffer)
+      return await this.setImageWallpaper(colorImagePath)
     } catch (err) {
       this.logger.error(`设置壁纸失败: error => ${err}`)
       return {

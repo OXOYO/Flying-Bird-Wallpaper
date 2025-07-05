@@ -469,3 +469,51 @@ export const generateSelfSignedCert = (hostname) => {
     cert: certPem
   }
 }
+
+// 创建纯色图片
+export const createSolidColorBMP = (color = '#000000', width = 100, height = 100) => {
+  // 解析颜色
+  const r = parseInt(color.slice(1, 3), 16)
+  const g = parseInt(color.slice(3, 5), 16)
+  const b = parseInt(color.slice(5, 7), 16)
+
+  // BMP 文件头和信息头
+  const fileHeaderSize = 14
+  const infoHeaderSize = 40
+  const rowSize = Math.ceil((24 * width) / 32) * 4
+  const pixelArraySize = rowSize * height
+  const fileSize = fileHeaderSize + infoHeaderSize + pixelArraySize
+
+  const buffer = Buffer.alloc(fileSize)
+
+  // BMP 文件头
+  buffer.write('BM') // Signature
+  buffer.writeUInt32LE(fileSize, 2) // File size
+  buffer.writeUInt32LE(0, 6) // Reserved
+  buffer.writeUInt32LE(fileHeaderSize + infoHeaderSize, 10) // Pixel data offset
+
+  // BMP 信息头
+  buffer.writeUInt32LE(infoHeaderSize, 14) // Info header size
+  buffer.writeInt32LE(width, 18) // Width
+  buffer.writeInt32LE(-height, 22) // Height (负数表示自上而下)
+  buffer.writeUInt16LE(1, 26) // Planes
+  buffer.writeUInt16LE(24, 28) // Bits per pixel
+  buffer.writeUInt32LE(0, 30) // Compression
+  buffer.writeUInt32LE(pixelArraySize, 34) // Image size
+  buffer.writeInt32LE(0, 38) // X pixels per meter
+  buffer.writeInt32LE(0, 42) // Y pixels per meter
+  buffer.writeUInt32LE(0, 46) // Colors used
+  buffer.writeUInt32LE(0, 50) // Important colors
+
+  // 填充像素数据
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const pos = fileHeaderSize + infoHeaderSize + y * rowSize + x * 3
+      buffer[pos] = b
+      buffer[pos + 1] = g
+      buffer[pos + 2] = r
+    }
+  }
+
+  return buffer
+}

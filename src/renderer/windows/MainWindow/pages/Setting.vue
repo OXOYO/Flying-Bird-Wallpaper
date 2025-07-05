@@ -244,6 +244,12 @@ const onDynamicSettingChange = (field, value) => {
   onSettingDataFormChange()
 
   switch (field) {
+    case 'dynamicBackgroundColor':
+      window.FBW.setDynamicWallpaperBackgroundColor(value)
+      break
+    case 'dynamicOpacity':
+      window.FBW.setDynamicWallpaperOpacity(value)
+      break
     case 'dynamicBrightness':
       window.FBW.setDynamicWallpaperBrightness(value)
       break
@@ -997,6 +1003,31 @@ onBeforeUnmount(() => {
               <el-checkbox
                 v-model="settingDataForm.dynamicMuteAudio"
                 @change="onSettingDataFormChange"
+              />
+            </el-form-item>
+            <el-form-item
+              :label="t('pages.Setting.settingDataForm.dynamicBackgroundColor')"
+              prop="dynamicBackgroundColor"
+            >
+              <el-color-picker
+                v-model="settingDataForm.dynamicBackgroundColor"
+                :predefine="colorList"
+                @change="(val) => onDynamicSettingChange('dynamicBackgroundColor', val)"
+              />
+            </el-form-item>
+            <el-form-item
+              :label="t('pages.Setting.settingDataForm.dynamicOpacity')"
+              prop="dynamicOpacity"
+            >
+              <el-slider
+                v-model="settingDataForm.dynamicOpacity"
+                :min="0"
+                :max="100"
+                :step="1"
+                show-input
+                show-input-controls
+                style="width: 450px"
+                @change="(val) => onDynamicSettingChange('dynamicOpacity', val)"
               />
             </el-form-item>
             <el-form-item

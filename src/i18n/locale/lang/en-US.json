@@ -84,6 +84,8 @@
         },
         "dynamicAutoPlayOnStartup": "Automatically play on startup",
         "dynamicMuteAudio": "Mute audio",
+        "dynamicBackgroundColor": "Background Color",
+        "dynamicOpacity": "Opacity",
         "dynamicBrightness": "Brightness",
         "dynamicContrast": "Contrast",
         "dynamicPerformanceMode": {
@@ -258,7 +260,9 @@
     "saveFail": "Save failed!",
     "deleteSuccess": "Delete successfully!",
     "deleteFail": "Delete failed!",
-    "maxFavoriteCountReached": "Maximum number of favorites reached!"
+    "maxFavoriteCountReached": "Maximum number of favorites reached!",
+    "noFileSelected": "No file selected!",
+    "noDynamicWallpaperSet": "No dynamic wallpaper set!"
   },
   "resourceTypeList": {
     "localResource": "Local resources",

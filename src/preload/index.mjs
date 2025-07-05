@@ -188,6 +188,12 @@ const api = {
   // 设置动态壁纸缩放模式
   setDynamicWallpaperScaleMode: (mode) =>
     ipcRenderer.invoke('main:setDynamicWallpaperScaleMode', mode),
+  // 设置动态壁纸背景色
+  setDynamicWallpaperBackgroundColor: (value) =>
+    ipcRenderer.invoke('main:setDynamicWallpaperBackgroundColor', value),
+  // 设置动态壁纸透明度
+  setDynamicWallpaperOpacity: (value) =>
+    ipcRenderer.invoke('main:setDynamicWallpaperOpacity', value),
   // 设置动态壁纸亮度
   setDynamicWallpaperBrightness: (value) =>
     ipcRenderer.invoke('main:setDynamicWallpaperBrightness', value),

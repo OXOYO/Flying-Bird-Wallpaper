@@ -150,6 +150,8 @@ export const defaultSettingData = {
   dynamicAutoPlayOnStartup: false,
   dynamicMuteAudio: true,
   dynamicLastVideoPath: '',
+  dynamicBackgroundColor: '#999999',
+  dynamicOpacity: 30,
   dynamicBrightness: 100,
   dynamicContrast: 100,
   dynamicPerformanceMode: 'balanced',

@@ -84,6 +84,8 @@
         },
         "dynamicAutoPlayOnStartup": "启动时自动播放",
         "dynamicMuteAudio": "静音播放",
+        "dynamicBackgroundColor": "背景色",
+        "dynamicOpacity": "透明度",
         "dynamicBrightness": "亮度",
         "dynamicContrast": "对比度",
         "dynamicPerformanceMode": {
@@ -258,7 +260,9 @@
     "saveFail": "保存失败！",
     "deleteSuccess": "删除成功！",
     "deleteFail": "删除失败！",
-    "maxFavoriteCountReached": "收藏数量已达上限！"
+    "maxFavoriteCountReached": "收藏数量已达上限！",
+    "noFileSelected": "未选择文件！",
+    "noDynamicWallpaperSet": "未设置动态壁纸！"
   },
   "resourceTypeList": {
     "localResource": "本地资源",

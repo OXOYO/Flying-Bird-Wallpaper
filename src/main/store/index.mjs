@@ -849,7 +849,7 @@ export default class Store {
       }
       const imgPath = await this.getWebImage(url)
       if (imgPath) {
-        return await this.wallpaperManager.setStaticWallpaper(imgPath)
+        return await this.wallpaperManager.setImageWallpaper(imgPath)
       } else {
         return {
           success: false,
