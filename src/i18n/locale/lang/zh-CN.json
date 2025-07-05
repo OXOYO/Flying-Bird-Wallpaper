@@ -38,7 +38,8 @@
         "wallpaperResource": "壁纸资源",
         "resourceSettings": "资源设置",
         "localResource": "本地资源",
-        "webResource": "网页资源",
+        "webWallpaper": "网页壁纸",
+        "colorWallpaper": "颜色壁纸",
         "dynamicWallpaper": "动态壁纸",
         "remoteResource": "远程资源",
         "other": "其他设置",
@@ -81,6 +82,10 @@
         "webWallpaperUrl": {
           "label": "网页地址",
           "placeholder": "请输入网页地址"
+        },
+        "colorWallpaperVal": {
+          "label": "颜色",
+          "placeholder": "请选择颜色"
         },
         "dynamicAutoPlayOnStartup": "启动时自动播放",
         "dynamicMuteAudio": "静音播放",
@@ -175,6 +180,7 @@
       "startH5Server": "启动H5服务",
       "stopH5Server": "停止H5服务",
       "setWebWallpaper": "设置网页壁纸",
+      "setColorWallpaper": "设置颜色壁纸",
       "setDynamicWallpaper": "设置动态壁纸",
       "closeDynamicWallpaper": "关闭动态壁纸",
       "openPage": {}

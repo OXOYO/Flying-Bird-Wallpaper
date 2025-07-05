@@ -63,7 +63,8 @@ const maxFolderCount = 5
 const flags = reactive({
   saving: false,
   selectFolder: false,
-  settingWebWallpaper: false
+  settingWebWallpaper: false,
+  settingColorWallpaper: false
 })
 
 // 可以启用/停用的菜单列表
@@ -240,6 +241,16 @@ const onSetWebWallpaper = async () => {
   })
 }
 
+const onSetColorWallpaper = async () => {
+  flags.settingColorWallpaper = true
+  const res = await window.FBW.setColorWallpaper()
+  flags.settingColorWallpaper = false
+  ElMessage({
+    type: res.success ? 'success' : 'error',
+    message: res.message
+  })
+}
+
 const onDynamicSettingChange = (field, value) => {
   onSettingDataFormChange()
 
@@ -385,9 +396,18 @@ onBeforeUnmount(() => {
               href="#divider-remoteResource"
               :title="t('pages.Setting.divider.remoteResource')"
             />
-            <el-anchor-link class="anchor-sub-link" href="#divider-webResource">
+            <el-anchor-link class="anchor-sub-link" href="#divider-webWallpaper">
               <span style="vertical-align: middle">{{
-                t('pages.Setting.divider.webResource')
+                t('pages.Setting.divider.webWallpaper')
+              }}</span>
+              <IconifyIcon
+                icon="material-symbols:experiment-outline-sharp"
+                style="vertical-align: middle"
+              />
+            </el-anchor-link>
+            <el-anchor-link class="anchor-sub-link" href="#divider-colorWallpaper">
+              <span style="vertical-align: middle">{{
+                t('pages.Setting.divider.colorWallpaper')
               }}</span>
               <IconifyIcon
                 icon="material-symbols:experiment-outline-sharp"
@@ -945,9 +965,9 @@ onBeforeUnmount(() => {
               />
             </el-form-item>
 
-            <div id="divider-webResource" class="divider-sub">
+            <div id="divider-webWallpaper" class="divider-sub">
               <span style="vertical-align: middle">{{
-                t('pages.Setting.divider.webResource')
+                t('pages.Setting.divider.webWallpaper')
               }}</span>
               <IconifyIcon
                 icon="material-symbols:experiment-outline-sharp"
@@ -976,6 +996,35 @@ onBeforeUnmount(() => {
                   </el-button>
                 </template>
               </el-input>
+            </el-form-item>
+
+            <div id="divider-colorWallpaper" class="divider-sub">
+              <span style="vertical-align: middle">{{
+                t('pages.Setting.divider.colorWallpaper')
+              }}</span>
+              <IconifyIcon
+                icon="material-symbols:experiment-outline-sharp"
+                style="vertical-align: middle"
+              />
+            </div>
+            <el-form-item
+              :label="t('pages.Setting.settingDataForm.colorWallpaperVal.label')"
+              prop="colorWallpaperVal"
+            >
+              <el-color-picker
+                v-model="settingDataForm.colorWallpaperVal"
+                :disabled="flags.settingColorWallpaper"
+                :predefine="colorList"
+                @change="onSettingDataFormChange"
+              />
+              <el-button
+                :disabled="!settingDataForm.colorWallpaperVal"
+                :loading="flags.settingColorWallpaper"
+                @click="onSetColorWallpaper"
+                style="margin-left: 10px"
+              >
+                <IconifyIcon icon="ep:check" />
+              </el-button>
             </el-form-item>
 
             <div id="divider-dynamicWallpaper" class="divider-sub">

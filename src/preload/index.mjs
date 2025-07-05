@@ -175,6 +175,7 @@ const api = {
   nextWallpaper: (...args) => ipcRenderer.invoke('main:nextWallpaper', ...args),
   prevWallpaper: (...args) => ipcRenderer.invoke('main:prevWallpaper', ...args),
   setWebWallpaper: (...args) => ipcRenderer.invoke('main:setWebWallpaper', ...args),
+  setColorWallpaper: (...args) => ipcRenderer.invoke('main:setColorWallpaper', ...args),
   // 动态壁纸相关API
   selectVideoFile: () => ipcRenderer.invoke('main:selectVideoFile'),
   setDynamicWallpaper: (...args) => ipcRenderer.invoke('main:setDynamicWallpaper', ...args),

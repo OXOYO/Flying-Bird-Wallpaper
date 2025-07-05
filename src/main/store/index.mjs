@@ -627,6 +627,11 @@ export default class Store {
       return this.setWebWallpaper(url)
     })
 
+    // 设置颜色壁纸
+    ipcMain.handle('main:setColorWallpaper', (event, color) => {
+      return this.setColorWallpaper(color)
+    })
+
     // 添加动态壁纸相关的IPC处理程序
     // ipcMain.handle('main:setDynamicWallpaper', async (event, videoPath) => {
     //   return await setDynamicWallpaper(videoPath)
@@ -863,6 +868,14 @@ export default class Store {
         message: t('messages.operationFail')
       }
     }
+  }
+
+  // 设置颜色壁纸
+  async setColorWallpaper(color) {
+    await this.toggleAutoSwitchWallpaper(false)
+    return await this.wallpaperManager.setColorWallpaper(
+      color || this.settingData.colorWallpaperVal
+    )
   }
 
   // 启停定时切换壁纸

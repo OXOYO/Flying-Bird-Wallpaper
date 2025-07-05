@@ -147,6 +147,7 @@ export const defaultSettingData = {
   allowedFileExt: ['.jpg', '.png', '.jpeg'],
   localResourceFolders: [],
   webWallpaperUrl: '',
+  colorWallpaperVal: '#999999',
   dynamicAutoPlayOnStartup: false,
   dynamicMuteAudio: true,
   dynamicLastVideoPath: '',

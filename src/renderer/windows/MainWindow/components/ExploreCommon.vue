@@ -80,7 +80,6 @@ const resourceGroupList = computed(() => {
     const sourceList = JSON.parse(
       JSON.stringify(toRaw(resourceListByResourceType[resourceType]) || [])
     )
-    console.log('sourceList', sourceList)
     group.children = sourceList.map((item) => {
       const resourceName = item.value
       item.optionValue = {

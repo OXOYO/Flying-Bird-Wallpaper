@@ -38,7 +38,8 @@
         "wallpaperResource": "Wallpaper resources",
         "resourceSettings": "Resource settings",
         "localResource": "Local resources",
-        "webResource": "Web resources",
+        "webWallpaper": "Web wallpaper",
+        "colorWallpaper": "Color wallpaper",
         "dynamicWallpaper": "Dynamic wallpaper",
         "remoteResource": "Remote resources",
         "other": "Other settings",
@@ -81,6 +82,10 @@
         "webWallpaperUrl": {
           "label": "Web URL",
           "placeholder": "Please enter URL"
+        },
+        "colorWallpaperVal": {
+          "label": "Color",
+          "placeholder": "Please select a color"
         },
         "dynamicAutoPlayOnStartup": "Automatically play on startup",
         "dynamicMuteAudio": "Mute audio",
@@ -175,6 +180,7 @@
       "startH5Server": "Start H5 server",
       "stopH5Server": "Stop H5 server",
       "setWebWallpaper": "Set web wallpaper",
+      "setColorWallpaper": "Set color wallpaper",
       "setDynamicWallpaper": "Set dynamic wallpaper",
       "closeDynamicWallpaper": "Close dynamic wallpaper",
       "openPage": {}

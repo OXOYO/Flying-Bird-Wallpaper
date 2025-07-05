@@ -126,6 +126,12 @@ const utilList = ref([
     confirm: true
   },
   {
+    name: 'setColorWallpaper',
+    text: '设置颜色壁纸',
+    locale: 'pages.Utils.setColorWallpaper',
+    confirm: true
+  },
+  {
     name: 'setDynamicWallpaper',
     text: '设置动态壁纸',
     locale: 'pages.Utils.setDynamicWallpaper',
@@ -198,6 +204,9 @@ const onExec = (name) => {
       break
     case 'setWebWallpaper':
       funcName = 'setWebWallpaper'
+      break
+    case 'setColorWallpaper':
+      funcName = 'setColorWallpaper'
       break
     case 'setDynamicWallpaper':
       args = []
