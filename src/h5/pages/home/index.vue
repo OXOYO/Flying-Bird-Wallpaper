@@ -1066,12 +1066,16 @@ const handlePageShow = () => {}
   >
     <div class="action-popup-content">
       <div class="action-item" @click="saveImage">
-        <IconifyIcon class="action-icon" icon="ri:download-line" />
-        <span>{{ t('h5.pages.home.actions.saveImage') }}</span>
+        <div class="action-icon-wrapper">
+          <IconifyIcon class="action-icon-inner" icon="ri:download-line" />
+        </div>
+        <span class="action-label">{{ t('h5.pages.home.actions.saveImage') }}</span>
       </div>
       <div class="action-item delete-action" @click="deleteImage">
-        <IconifyIcon class="action-icon" icon="ri:delete-bin-line" />
-        <span>{{ t('h5.pages.home.actions.deleteImage') }}</span>
+        <div class="action-icon-wrapper">
+          <IconifyIcon class="action-icon-inner" icon="ri:delete-bin-line" />
+        </div>
+        <span class="action-label">{{ t('h5.pages.home.actions.deleteImage') }}</span>
       </div>
     </div>
   </van-popup>
@@ -1195,24 +1199,35 @@ const handlePageShow = () => {}
 /* 操作弹层样式 */
 .action-popup-content {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 16px;
 }
 
 .action-item {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  padding: 12px 0;
+  gap: 8px;
   font-size: 16px;
+  
 
   &:active {
     background-color: rgba(0, 0, 0, 0.05);
   }
 }
 
-.action-icon {
-  margin-right: 12px;
+.action-icon-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #eee;
+  border-radius: 10px;
+  padding: 14px;
   font-size: 24px;
+}
+
+.action-label {
+  font-size: 12px;
 }
 
 .delete-action {
