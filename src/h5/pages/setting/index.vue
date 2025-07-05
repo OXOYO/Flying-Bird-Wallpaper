@@ -28,9 +28,10 @@ const { t } = useTranslation()
 
 const commonStore = UseCommonStore()
 const settingStore = UseSettingStore()
-const { settingData } = storeToRefs(settingStore)
+const { settingData, localSetting } = storeToRefs(settingStore)
 
 const settingDataForm = reactive(settingData.value)
+const localSettingForm = reactive(localSetting.value)
 
 const showPickers = reactive({
   locale: false,
@@ -192,7 +193,9 @@ const onSettingDataChange = async (field) => {
 }
 
 const onH5SwitchIntervalTimeUpdate = (value) => {
-  const unitItem = intervalUnits.h5SwitchIntervalUnit.find(item => item.value === settingDataForm.h5SwitchIntervalUnit)
+  const unitItem = intervalUnits.h5SwitchIntervalUnit.find(
+    (item) => item.value === settingDataForm.h5SwitchIntervalUnit
+  )
   const unitLabel = unitItem ? t(unitItem.locale) || unitItem.label : ''
   const message = value + unitLabel
   showToast({
@@ -206,6 +209,17 @@ const onH5ImageCompressStartSizeUpdate = (value) => {
   showToast({
     message,
     position: 'top'
+  })
+}
+
+const onLocalSettingChange = (field) => {
+  const payload = {}
+  payload[field] = localSettingForm[field]
+
+  const success = settingStore.updateLocalSetting(payload)
+  showNotify({
+    type: success ? 'success' : 'danger',
+    message: t(success ? 'messages.operationSuccess' : 'messages.operationFail')
   })
 }
 
@@ -246,6 +260,16 @@ onMounted(() => {
           :placeholder="t('h5.pages.setting.form.themes.primary.placeholder')"
           @update:model-value="onSettingDataChange('themes.primary')"
         />
+
+        <van-cell :title="t('h5.pages.setting.localSetting.multiDeviceSync')">
+          <template #right-icon>
+            <van-switch
+              v-model="localSettingForm.multiDeviceSync"
+              size="20px"
+              @change="onLocalSettingChange('multiDeviceSync')"
+            />
+          </template>
+        </van-cell>
       </van-cell-group>
 
       <van-cell-group inset :title="t('h5.pages.setting.form.switchSettings')">

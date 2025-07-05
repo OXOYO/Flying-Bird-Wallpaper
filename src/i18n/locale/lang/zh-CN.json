@@ -522,7 +522,10 @@
           "h5WeekScreen": "屏幕常亮"
         },
         "about": "关于",
-        "version": "版本"
+        "version": "版本",
+        "localSetting": {
+          "multiDeviceSync": "多设备同步"
+        }
       }
     }
   }

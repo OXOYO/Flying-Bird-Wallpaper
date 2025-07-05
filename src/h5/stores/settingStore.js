@@ -1,12 +1,24 @@
 import { defaultSettingData } from '@common/publicData.js'
 import * as api from '@h5/api/index.js'
+import LocalStore from '../utils/localStore'
+
+const localStore = new LocalStore()
 
 const UseSettingStore = defineStore('setting', {
   state: () => {
+    let localSetting = {
+      // 多设备同步
+      multiDeviceSync: true
+    }
+    const localSettingRes = localStore.get('localSetting')
+    if (localSettingRes.success && localSettingRes.data) {
+      localSetting = Object.assign({}, localSetting, localSettingRes.data)
+    }
     return {
       settingData: {
         ...JSON.parse(JSON.stringify(defaultSettingData))
-      }
+      },
+      localSetting
     }
   },
   actions: {
@@ -24,11 +36,22 @@ const UseSettingStore = defineStore('setting', {
       }
       return res
     },
+    updateLocalSetting(data) {
+      try {
+        if (typeof data !== 'object' || !data) return false
+        this.localSetting = Object.assign({}, this.localSetting, data)
+        localStore.set('localSetting', this.localSetting)
+        return true
+      } catch (err) {
+        return false
+      }
+    },
     // 初始化 Socket.IO 监听
     initSocketListeners() {
-      // 监听设置更新事件
+      // 监听多设备设置更新事件
       api.socketInstance.on('settingUpdated', (res) => {
-        if (res.success) {
+        // 本地可控制多设备数据是否同步
+        if (res.success && this.localSetting.multiDeviceSync) {
           this.settingData = Object.assign({}, this.settingData, res.data)
         }
       })
