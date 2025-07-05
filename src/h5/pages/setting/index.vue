@@ -21,7 +21,7 @@ import { localeOptions } from '@i18n/locale/index.js'
 import { appInfo } from '@common/config.js'
 import UseCommonStore from '@h5/stores/commonStore.js'
 import UseSettingStore from '@h5/stores/settingStore.js'
-import { showNotify } from 'vant'
+import { showNotify, showToast } from 'vant'
 import { useTranslation } from 'i18next-vue'
 
 const { t } = useTranslation()
@@ -191,6 +191,24 @@ const onSettingDataChange = async (field) => {
   })
 }
 
+const onH5SwitchIntervalTimeUpdate = (value) => {
+  const unitItem = intervalUnits.h5SwitchIntervalUnit.find(item => item.value === settingDataForm.h5SwitchIntervalUnit)
+  const unitLabel = unitItem ? t(unitItem.locale) || unitItem.label : ''
+  const message = value + unitLabel
+  showToast({
+    message,
+    position: 'top'
+  })
+}
+
+const onH5ImageCompressStartSizeUpdate = (value) => {
+  const message = value + 'MB'
+  showToast({
+    message,
+    position: 'top'
+  })
+}
+
 onMounted(() => {
   init()
 })
@@ -269,6 +287,7 @@ onMounted(() => {
                 v-model="settingDataForm.h5SwitchIntervalTime"
                 min="2"
                 max="60"
+                @update:model-value="onH5SwitchIntervalTimeUpdate"
                 @change="onSettingDataChange('h5SwitchIntervalTime')"
               >
                 <template #button>
@@ -418,6 +437,7 @@ onMounted(() => {
               :disabled="!settingDataForm.h5ImageCompress"
               min="1"
               max="10"
+              @update:model-value="onH5ImageCompressStartSizeUpdate"
               @change="onSettingDataChange('h5ImageCompressStartSize')"
             >
               <template #button>
