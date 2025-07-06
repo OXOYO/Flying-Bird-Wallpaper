@@ -312,6 +312,11 @@ export const unitToValField = {
 
 export const qualityList = ['2K', '4K', '5k', '8K']
 
+export const filterTypeOptions = [
+  { label: '图片', value: 'images', locale: 'filterTypeOptions.images' },
+  { label: '视频', value: 'videos', locale: 'filterTypeOptions.videos' }
+]
+
 export const orientationOptions = [
   { label: '纵向', value: 0, locale: 'orientationOptions.portrait' },
   { label: '横向', value: 1, locale: 'orientationOptions.landscape' }

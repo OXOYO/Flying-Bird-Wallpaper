@@ -1,5 +1,5 @@
 <script setup>
-import { h } from 'vue'
+import { computed, h, toRaw } from 'vue'
 import clipboard from 'clipboardy'
 import UseCommonStore from '@renderer/stores/commonStore.js'
 import UseSettingStore from '@renderer/stores/settingStore.js'
@@ -9,6 +9,7 @@ import {
   resourceTypeList,
   resourceTypeIcons,
   qualityList,
+  filterTypeOptions,
   orientationOptions,
   autoRefreshListOptions
 } from '@common/publicData.js'
@@ -223,6 +224,7 @@ const searchForm = reactive({
   resourceNameIndex: -1,
   resourceName: '',
   filterKeywords: '',
+  filterType: 'images',
   quality: [],
   orientation: [],
   startPage: 1,
@@ -233,13 +235,26 @@ const searchForm = reactive({
   total: 0
 })
 
-const currentResource = computed(() => {
+const selectedResource = computed(() => {
   const { resourceType, resourceName } = searchForm
   return {
     key: `${resourceType}_${resourceName}`,
     resourceType,
     resourceName
   }
+})
+
+const currentResource = computed(() => {
+  const { resourceType, resourceName } = searchForm
+  const list = resourceMap.value.resourceListByResourceType[resourceType] || []
+  const item = list.find((item) => item.value === resourceName)
+  return item
+})
+
+const supportSearchTypes = computed(() => {
+  console.log('currentResource', currentResource)
+  const types = currentResource.value?.supportSearchTypes
+  return Array.isArray(types) && types.length ? types : ['images']
 })
 
 const resizeObserver = new ResizeObserver((entries) => {
@@ -774,20 +789,18 @@ const onRefreshDirectory = () => {
   window.FBW.refreshDirectory()
 }
 
-const onSourceTypeChange = () => {
-  nextTick(() => {
-    if (searchForm.resourceType === 'localResource') {
-      searchForm.isRandom = false
-    }
-    searchForm.resourceNameIndex = 0
-    searchForm.resourceName = currentSourceList.value[0].value
-    onSearch()
-  })
-}
-
 const onResourceChange = (value) => {
   searchForm.resourceType = value.resourceType
   searchForm.resourceName = value.resourceName
+  // 检查是否支持当前的过滤类型
+  const types = toRaw(supportSearchTypes)
+  const isArray = Array.isArray(types)
+  const includes = isArray && types.includes(searchForm.filterType)
+  if (!isArray) {
+    searchForm.filterType = 'images'
+  } else if (isArray && !includes) {
+    searchForm.filterType = types[0] || 'images'
+  }
   onSearch()
 }
 
@@ -870,6 +883,7 @@ const getNextList = async () => {
     resourceType,
     resourceName,
     filterKeywords,
+    filterType,
     quality,
     orientation,
     startPage,
@@ -887,12 +901,14 @@ const getNextList = async () => {
     sortField,
     sortType,
     filterKeywords,
+    filterType,
     quality: quality.toString(),
     orientation: orientation.toString()
   }
   let res
   try {
     res = await window.FBW.searchImages(payload)
+    console.log('res', res, currentResource.value)
     if (res && res.success && Array.isArray(res.data.list)) {
       if (res.data.list.length) {
         // 去重
@@ -903,18 +919,29 @@ const getNextList = async () => {
             // 处理图片路径
             let rawUrl
             if (item.srcType === 'file') {
-              rawUrl = item.rawUrl = `fbwtp://fbw/api/images/get?filePath=${item.filePath}`
+              if (item.fileType === 'video') {
+                rawUrl = item.rawUrl = `fbwtp://fbw/api/videos/get?filePath=${item.filePath}`
+              } else {
+                rawUrl = item.rawUrl = `fbwtp://fbw/api/images/get?filePath=${item.filePath}`
+              }
             } else if (item.srcType === 'url') {
-              rawUrl = item.rawUrl = item.url
+              rawUrl = item.rawUrl = item.imageUrl
             }
             if (rawUrl) {
-              const url = new URL(rawUrl)
+              const urlObj = new URL(rawUrl)
               Object.keys(imgUrlQuery.value).forEach((key) => {
-                url.searchParams.set(key, imgUrlQuery.value[key])
+                urlObj.searchParams.set(key, imgUrlQuery.value[key])
               })
-              item.src = url.toString()
+              item.src = urlObj.toString()
             } else {
               item.src = ''
+            }
+
+            // 处理视频URL
+            if (item.fileType === 'video' && item.videoUrl) {
+              if (item.srcType === 'file') {
+                item.videoUrl = `fbwtp://fbw/api/videos/get?filePath=${item.filePath}`
+              }
             }
 
             // 处理颜色
@@ -1274,6 +1301,23 @@ const onOutBtn = () => {
   hoverBtnName.value = null
 }
 
+// 视频鼠标悬停事件处理
+const onVideoMouseEnter = (event) => {
+  const video = event.target
+  if (video && video.tagName === 'VIDEO') {
+    video.play().catch((err) => {
+      console.log('视频播放失败:', err)
+    })
+  }
+}
+
+const onVideoMouseLeave = (event) => {
+  const video = event.target
+  if (video && video.tagName === 'VIDEO') {
+    video.pause()
+  }
+}
+
 const isShowTag = (item) => {
   return (
     settingData.value.showImageTag &&
@@ -1349,7 +1393,7 @@ onBeforeUnmount(() => {
       >
         <template #prepend>
           <el-select
-            v-model="currentResource"
+            v-model="selectedResource"
             value-key="key"
             :disabled="flags.loading"
             :placeholder="t('exploreCommon.searchForm.resourceName.placeholder')"
@@ -1383,36 +1427,24 @@ onBeforeUnmount(() => {
               </el-option>
             </el-option-group>
           </el-select>
-          <!-- <el-select
-            v-model="searchForm.resourceType"
-            :disabled="flags.loading"
-            :placeholder="t('exploreCommon.searchForm.resourceType.placeholder')"
-            size="large"
-            style="width: 120px"
-            @change="onSourceTypeChange"
-          >
-            <el-option
-              v-for="item in resourceTypeList"
-              :key="item.value"
-              :label="t(item.locale)"
-              :value="item.value"
-            />
-          </el-select>
+
           <el-select
-            v-model="searchForm.resourceName"
+            v-if="supportSearchTypes.length > 1"
+            v-model="searchForm.filterType"
             :disabled="flags.loading"
-            :placeholder="t('exploreCommon.searchForm.resourceName.placeholder')"
+            :placeholder="t('exploreCommon.searchForm.filterType.placeholder')"
             size="large"
             style="width: 140px; margin-left: 20px"
             @change="onSearch"
           >
             <el-option
-              v-for="item in currentSourceList"
+              v-for="item in filterTypeOptions"
               :key="item.value"
-              :label="t(item.locale) || item.value"
+              :label="t(item.locale)"
               :value="item.value"
             />
-          </el-select> -->
+          </el-select>
+
           <el-select
             v-model="searchForm.orientation"
             :disabled="flags.loading"
@@ -1603,6 +1635,7 @@ onBeforeUnmount(() => {
               <div class="card-item-image-wrapper">
                 <!-- 高清图 -->
                 <el-image
+                  v-if="item.fileType === 'image'"
                   class="card-item-image"
                   :src="item.src"
                   loading="lazy"
@@ -1619,6 +1652,22 @@ onBeforeUnmount(() => {
                     </div>
                   </template>
                 </el-image>
+
+                <!-- 视频 -->
+                <video
+                  v-else-if="item.fileType === 'video'"
+                  class="card-item-video"
+                  :src="item.videoUrl"
+                  :poster="item.src"
+                  preload="metadata"
+                  muted
+                  loop
+                  @dblclick="doViewImage(item, index, true)"
+                  @mouseenter="onVideoMouseEnter"
+                  @mouseleave="onVideoMouseLeave"
+                >
+                  <source :src="item.videoUrl" type="video/mp4" />
+                </video>
               </div>
               <div class="card-item-btns">
                 <el-button
@@ -1954,6 +2003,19 @@ onBeforeUnmount(() => {
       font-size: 50px;
       color: #ffffff;
     }
+  }
+
+  .card-item-video {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    object-fit: cover;
+    background-color: var(--dominant-color);
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
   }
 }
 

@@ -238,6 +238,11 @@
     "paramsError": "参数错误！",
     "setWallpaperSuccess": "设置壁纸成功！",
     "setWallpaperFail": "设置壁纸失败！",
+    "setDynamicWallpaperSuccess": "设置动态壁纸成功！",
+    "setDynamicWallpaperFail": "设置动态壁纸失败！",
+    "closeDynamicWallpaperSuccess": "关闭动态壁纸成功！",
+    "closeDynamicWallpaperFail": "关闭动态壁纸失败！",
+    "fileTypeNotSupported": "不支持的文件类型！",
     "enterKeywords": "请输入关键词！",
     "pleaseSetDownloadFolder": "请先设置下载目录！",
     "downloadFolderNotExistOrNotSet": "下载目录不存在或未设置！",
@@ -303,6 +308,10 @@
     "m": "分钟",
     "h": "小时",
     "d": "天"
+  },
+  "filterTypeOptions": {
+    "images": "图片",
+    "videos": "视频"
   },
   "orientationOptions": {
     "landscape": "横向",
@@ -393,8 +402,11 @@
       "resourceName": {
         "placeholder": "资源名称"
       },
+      "filterType": {
+        "placeholder": "类型"
+      },
       "orientation": {
-        "placeholder": "图片方向"
+        "placeholder": "方向"
       },
       "quality": {
         "placeholder": "图片质量"

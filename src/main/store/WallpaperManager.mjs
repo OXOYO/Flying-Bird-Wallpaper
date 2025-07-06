@@ -4,6 +4,7 @@ import { setWallpaper } from 'wallpaper'
 import axios from 'axios'
 import { t } from '../../i18n/server.js'
 import { isMac, handleTimeByUnit, createSolidColorBMP } from '../utils/utils.mjs'
+import { setDynamicWallpaper } from '../utils/setDynamicWallpaper.mjs'
 
 export default class WallpaperManager {
   // 单例实例
@@ -469,7 +470,12 @@ export default class WallpaperManager {
     }
 
     try {
-      // 设置壁纸
+      // 检查文件类型，如果是视频则设置为动态壁纸
+      if (item.fileType === 'video') {
+        return await this.setDynamicWallpaper(item, isAddToHistory, isResetParams)
+      }
+
+      // 设置静态壁纸
       await setWallpaper(item.filePath, {
         screen: this.settingData.allScreen && isMac() ? 'all' : 'main',
         scale: this.settingData.scaleType
@@ -548,6 +554,58 @@ export default class WallpaperManager {
     }
   }
 
+  // 设置动态壁纸
+  async setDynamicWallpaper(item, isAddToHistory = false, isResetParams = false) {
+    if (!item || !item.filePath || !fs.existsSync(item.filePath)) {
+      return {
+        success: false,
+        message: t('messages.fileNotExist')
+      }
+    }
+
+    try {
+      // 检查文件类型
+      if (item.fileType !== 'video') {
+        return {
+          success: false,
+          message: t('messages.fileTypeNotSupported')
+        }
+      }
+
+      // 记录到历史记录
+      if (isAddToHistory) {
+        const insert_stmt = this.db.prepare(`INSERT INTO fbw_history (resourceId) VALUES (?)`)
+        insert_stmt.run(item.id)
+      }
+
+      // 重置参数
+      if (isResetParams) {
+        this.resetSwitchParams()
+      }
+
+      // 调用动态壁纸设置功能
+      const result = await setDynamicWallpaper(item.filePath)
+
+      if (result.success) {
+        return {
+          success: true,
+          message: t('messages.setDynamicWallpaperSuccess')
+        }
+      } else {
+        return {
+          success: false,
+          message: result.message || t('messages.setDynamicWallpaperFail')
+        }
+      }
+    } catch (err) {
+      this.logger.error(`设置动态壁纸失败: error => ${err}`)
+      return {
+        success: false,
+        message: t('messages.setDynamicWallpaperFail')
+      }
+    }
+  }
+
   // 下载并设置为壁纸
   async setAsWallpaperWithDownload(item) {
     if (!item) {
@@ -573,8 +631,8 @@ export default class WallpaperManager {
             message: t('messages.fileNotExist')
           }
         }
-      } else if (item.srcType === 'url' && item.url) {
-        // 下载壁纸
+      } else if (item.srcType === 'url' && (item.imageUrl || item.videoUrl)) {
+        // 下载壁纸或视频
         const { downloadFolder } = this.settingData
         if (!downloadFolder || !fs.existsSync(downloadFolder)) {
           return {
@@ -582,6 +640,11 @@ export default class WallpaperManager {
             message: t('messages.downloadFolderNotExistOrNotSet')
           }
         }
+
+        // 判断是图片还是视频
+        const isVideo = item.fileType === 'video'
+        const downloadUrl = isVideo ? item.videoUrl : item.imageUrl
+        const posterUrl = item.imageUrl // 视频的封面图片
 
         // 生成文件名
         const fileName = `${item.fileName}.${item.fileExt}`
@@ -594,7 +657,7 @@ export default class WallpaperManager {
           // 下载文件
           const response = await axios({
             method: 'GET',
-            url: item.url,
+            url: downloadUrl,
             responseType: 'stream'
           })
 
@@ -614,16 +677,18 @@ export default class WallpaperManager {
         try {
           const insert_stmt = this.db.prepare(
             `INSERT INTO fbw_resources
-              (resourceName, fileName, filePath, fileExt, fileSize, url, author, link, title, desc, quality, width, height, isLandscape, atimeMs, mtimeMs, ctimeMs) VALUES
-              (@resourceName, @fileName, @filePath, @fileExt, @fileSize, @url, @author, @link, @title, @desc, @quality, @width, @height, @isLandscape, @atimeMs, @mtimeMs, @ctimeMs)`
+              (resourceName, fileName, filePath, fileExt, fileType, fileSize, imageUrl, videoUrl, author, link, title, desc, quality, width, height, isLandscape, atimeMs, mtimeMs, ctimeMs) VALUES
+              (@resourceName, @fileName, @filePath, @fileExt, @fileType, @fileSize, @imageUrl, @videoUrl, @author, @link, @title, @desc, @quality, @width, @height, @isLandscape, @atimeMs, @mtimeMs, @ctimeMs)`
           )
           const insert_result = insert_stmt.run({
             resourceName: item.resourceName,
             fileName: item.fileName,
             filePath: filePath,
             fileExt: item.fileExt,
+            fileType: item.fileType || 'image',
             fileSize: stats.size,
-            url: item.url,
+            imageUrl: posterUrl || '',
+            videoUrl: isVideo ? downloadUrl : '',
             author: item.author || '',
             link: item.link || '',
             title: item.title || '',
@@ -643,8 +708,13 @@ export default class WallpaperManager {
             const query_result = query_stmt.get(insert_result.lastInsertRowid)
 
             if (query_result) {
-              // 设置为壁纸
-              return await this.setAsWallpaper(query_result, true, true)
+              // 如果是视频，设置为动态壁纸
+              if (isVideo) {
+                return await this.setDynamicWallpaper(query_result, true, true)
+              } else {
+                // 设置为静态壁纸
+                return await this.setAsWallpaper(query_result, true, true)
+              }
             }
           }
         } catch (err) {
@@ -656,8 +726,13 @@ export default class WallpaperManager {
             const query_result = query_stmt.get(filePath)
 
             if (query_result) {
-              // 设置为壁纸
-              return await this.setAsWallpaper(query_result, true, true)
+              // 如果是视频，设置为动态壁纸
+              if (isVideo) {
+                return await this.setDynamicWallpaper(query_result, true, true)
+              } else {
+                // 设置为静态壁纸
+                return await this.setAsWallpaper(query_result, true, true)
+              }
             }
           } else {
             throw err // 重新抛出非唯一键约束的错误
@@ -739,7 +814,7 @@ export default class WallpaperManager {
                 this.logger.warn(`文件 ${filePath} 已存在，跳过写入`)
               } else {
                 // 方式一：同步写入
-                const fileRes = await axios.get(item.url, { responseType: 'arraybuffer' })
+                const fileRes = await axios.get(item.imageUrl, { responseType: 'arraybuffer' })
                 fs.writeFileSync(filePath, fileRes.data)
               }
               const stats = fs.statSync(filePath)
@@ -759,8 +834,8 @@ export default class WallpaperManager {
             try {
               const insert_stmt = this.db.prepare(
                 `INSERT OR IGNORE INTO fbw_resources
-                 (resourceName, fileName, filePath, fileExt, fileSize, url, author, link, title, desc, quality, width, height, isLandscape, atimeMs, mtimeMs, ctimeMs) VALUES
-                 (@resourceName, @fileName, @filePath, @fileExt, @fileSize, @url, @author, @link, @title, @desc, @quality, @width, @height, @isLandscape, @atimeMs, @mtimeMs, @ctimeMs)`
+                 (resourceName, fileName, filePath, fileExt, fileSize, imageUrl, author, link, title, desc, quality, width, height, isLandscape, atimeMs, mtimeMs, ctimeMs) VALUES
+                 (@resourceName, @fileName, @filePath, @fileExt, @fileSize, @imageUrl, @author, @link, @title, @desc, @quality, @width, @height, @isLandscape, @atimeMs, @mtimeMs, @ctimeMs)`
               )
               const transaction = this.db.transaction((docs) => {
                 for (let i = 0; i < docs.length; i++) {
@@ -772,7 +847,7 @@ export default class WallpaperManager {
                       filePath: item.filePath,
                       fileExt: item.fileExt,
                       fileSize: item.fileSize,
-                      url: item.url,
+                      imageUrl: item.imageUrl,
                       author: item.author,
                       link: item.link,
                       title: item.title,

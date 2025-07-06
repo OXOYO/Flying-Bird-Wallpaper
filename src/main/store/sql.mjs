@@ -41,8 +41,10 @@ export const createTables = [
     fileName TEXT NOT NULL DEFAULT '', -- 文件名
     filePath TEXT NOT NULL DEFAULT '', -- 文件路径
     fileExt TEXT NOT NULL DEFAULT '', -- 文件扩展名
+    fileType TEXT NOT NULL DEFAULT 'image', -- 文件类型
     fileSize INTEGER NOT NULL DEFAULT 0, -- 文件大小
-    url TEXT NOT NULl DEFAULT '', -- 远程资源网址
+    imageUrl TEXT NOT NULl DEFAULT '', -- 远程资源图片网址
+    videoUrl TEXT NOT NULl DEFAULT '', -- 远程资源视频网址
     author TEXT NOT NULL DEFAULT '', -- 作者
     link TEXT NOT NULL DEFAULT '', -- 页面链接
     title TEXT NOT NULL DEFAULT '', -- 标题

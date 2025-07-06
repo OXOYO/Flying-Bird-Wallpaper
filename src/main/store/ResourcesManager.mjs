@@ -44,6 +44,7 @@ export default class ResourcesManager {
       resourceType = 'localResource',
       resourceName = 'resources',
       filterKeywords,
+      filterType,
       quality: qualityStr,
       orientation: orientationStr,
       startPage,
@@ -194,6 +195,7 @@ export default class ResourcesManager {
         }
         const res = await this.apiManager.call(resourceName, 'search', {
           keywords: filterKeywords,
+          filterType,
           orientation,
           startPage: startPage,
           pageSize,

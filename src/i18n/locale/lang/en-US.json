@@ -238,6 +238,11 @@
     "paramsError": "Parameter error!",
     "setWallpaperSuccess": "Set wallpaper successfully!",
     "setWallpaperFail": "Set wallpaper failed!",
+    "setDynamicWallpaperSuccess": "Set dynamic wallpaper successfully!",
+    "setDynamicWallpaperFail": "Set dynamic wallpaper failed!",
+    "closeDynamicWallpaperSuccess": "Close dynamic wallpaper successfully!",
+    "closeDynamicWallpaperFail": "Close dynamic wallpaper failed!",
+    "fileTypeNotSupported": "File type not supported!",
     "enterKeywords": "Please enter keywords!",
     "pleaseSetDownloadFolder": "Please set the download directory first!",
     "downloadFolderNotExistOrNotSet": "Download directory does not exist or not set!",
@@ -303,6 +308,10 @@
     "m": "minute",
     "h": "hour",
     "d": "day"
+  },
+  "filterTypeOptions": {
+    "images": "images",
+    "videos": "videos"
   },
   "orientationOptions": {
     "landscape": "landscape",
@@ -393,8 +402,11 @@
       "resourceName": {
         "placeholder": "Resource Name"
       },
+      "filterType": {
+        "placeholder": "type"
+      },
       "orientation": {
-        "placeholder": "Image orientation"
+        "placeholder": "orientation"
       },
       "quality": {
         "placeholder": "Image quality"

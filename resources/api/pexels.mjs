@@ -31,8 +31,10 @@ export default class ResourcePexels extends ApiBase {
       requireSecretKey: true,
       // 密钥
       secretKey: '',
-      // 是否支持搜索 true | false | 'images' | 'videos'
+      // 是否支持搜索
       supportSearch: true,
+      // 支持的搜索类型
+      supportSearchTypes: ['images', 'videos'],
       // 搜索必要条件
       searchRequired: {
         keywords: true,
@@ -67,9 +69,10 @@ export default class ResourcePexels extends ApiBase {
       params.orientation = orientation[0] === '1' ? 'landscape' : 'portrait'
     }
     // 查询类型 images || videos
-    const type = query.type || 'images'
-    const isImages = type === 'images'
-    const isVideos = type === 'videos'
+    console.log('query.filterType', query.filterType)
+    const filterType = query.filterType || 'images'
+    const isImages = filterType === 'images'
+    const isVideos = filterType === 'videos'
     const apiPath = isVideos
       ? 'https://api.pexels.com/videos/search'
       : 'https://api.pexels.com/v1/search'
@@ -84,18 +87,19 @@ export default class ResourcePexels extends ApiBase {
       if (isImages) {
         if (Array.isArray(resData.photos)) {
           ret.list = resData.photos.map((item) => {
-            let url = item.src.original.split('?')[0]
+            let imageUrl = item.src.original.split('?')[0]
             const quality = calculateImageQuality(item.width, item.height)
             const isLandscape = calculateImageOrientation(item.width, item.height)
             return {
               resourceName: this.resourceName,
               fileName: [this.resourceName, item.id].join('_'),
-              fileExt: url.split('.').pop(),
+              fileExt: imageUrl.split('.').pop(),
+              fileType: 'image',
               link: item.url,
               author: item.photographer,
               title: item.alt,
               desc: '',
-              url,
+              imageUrl,
               quality,
               width: item.width,
               height: item.height,
@@ -115,11 +119,12 @@ export default class ResourcePexels extends ApiBase {
               resourceName: this.resourceName,
               fileName: [this.resourceName, item.id].join('_'),
               fileExt: videoItem.link.split('.').pop(),
+              fileType: 'video',
               link: item.url,
               author: item.user.name,
               title: item.alt,
               desc: '',
-              url: imageUrl,
+              imageUrl,
               videoUrl: videoItem.link,
               quality,
               width: videoItem.width,

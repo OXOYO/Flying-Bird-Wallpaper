@@ -843,13 +843,13 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
   // 处理自定义协议
   const handleProtocol = () => {
     protocol.handle('fbwtp', async (request) => {
-      const url = new URL(request.url)
-      switch (url.pathname) {
+      const urlObj = new URL(request.url)
+      switch (urlObj.pathname) {
         // 处理图片请求
         case '/api/images/get': {
-          const filePath = url.searchParams.get('filePath')
-          const w = url.searchParams.get('w')
-          const h = url.searchParams.get('h')
+          const filePath = urlObj.searchParams.get('filePath')
+          const w = urlObj.searchParams.get('w')
+          const h = urlObj.searchParams.get('h')
 
           const res = await handleFileResponse({ filePath, w, h })
           return new Response(res.data, {
@@ -858,7 +858,7 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
           })
         }
         case '/api/videos/get': {
-          const filePath = url.searchParams.get('filePath')
+          const filePath = urlObj.searchParams.get('filePath')
 
           const res = await handleFileResponse({ filePath })
           return new Response(res.data, {
