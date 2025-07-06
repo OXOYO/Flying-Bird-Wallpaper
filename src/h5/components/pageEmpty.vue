@@ -28,7 +28,7 @@ const description = computed(() => {
 <style scoped>
 .page-empty {
   width: 100%;
-  height: 100vh;
+  height: calc(100vh - var(--fbw-tabbar-height));
   display: flex;
   justify-content: center;
   align-items: center;

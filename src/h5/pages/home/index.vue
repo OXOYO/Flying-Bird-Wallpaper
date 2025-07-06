@@ -317,7 +317,7 @@ const onTouchEnd = (event) => {
   touchPosition.offsetY = -autoSwitch.currentIndex * clientHeight
   setTimeout(() => {
     flags.isAnimating = false
-  }, 300)
+  }, 200)
 
   // 检查是否已经到达最后一张且已加载完所有数据
   if (
@@ -662,6 +662,61 @@ const toggleRandom = async () => {
 const onPreviewImage = async (index) => {
   // 关闭自动翻页
   stopAutoSwitch()
+
+  // 禁用浏览器长按菜单
+  const disableContextMenu = () => {
+    // 等待预览组件挂载完成
+    setTimeout(() => {
+      // 查找预览组件
+      const previewContainer = document.querySelector('.van-image-preview')
+
+      if (previewContainer) {
+        // 阻止右键菜单
+        const preventContextMenu = (e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          return false
+        }
+
+        // 阻止长按菜单
+        const preventLongPress = (e) => {
+          const longPressTimer = setTimeout(() => {
+            e.preventDefault()
+            e.stopPropagation()
+            return false
+          }, 500)
+
+          const clearTimer = () => {
+            clearTimeout(longPressTimer)
+          }
+
+          previewContainer.addEventListener('touchend', clearTimer, { once: true })
+          previewContainer.addEventListener('touchcancel', clearTimer, { once: true })
+        }
+
+        // 添加事件监听器
+        previewContainer.addEventListener('contextmenu', preventContextMenu, { passive: false })
+        previewContainer.addEventListener('touchstart', preventLongPress, { passive: false })
+        previewContainer.addEventListener('selectstart', preventContextMenu, { passive: false })
+        previewContainer.addEventListener('dragstart', preventContextMenu, { passive: false })
+
+        // 为所有图片元素添加样式
+        const previewImages = previewContainer.querySelectorAll('img')
+        previewImages.forEach((img) => {
+          img.style.webkitTouchCallout = 'none'
+          img.style.webkitTapHighlightColor = 'transparent'
+          img.style.webkitUserSelect = 'none'
+          img.style.userSelect = 'none'
+          img.style.webkitUserDrag = 'none'
+          img.style.userDrag = 'none'
+        })
+      }
+    }, 100)
+  }
+
+  // 启用禁用功能
+  disableContextMenu()
+
   showImagePreview({
     images: autoSwitch.imageList.map((item) => item.rawUrl),
     startPosition: index,
@@ -882,6 +937,9 @@ defineExpose({
 
 // 初始化加载数据
 onMounted(() => {
+  // 禁用下拉刷新
+  disablePullToRefresh()
+
   // 监听页面可见性变化
   document.addEventListener('visibilitychange', handleVisibilityChange)
 
@@ -889,6 +947,23 @@ onMounted(() => {
   window.addEventListener('pagehide', handlePageHide)
   window.addEventListener('pageshow', handlePageShow)
 })
+
+// 禁用下拉刷新功能
+const disablePullToRefresh = () => {
+  // 阻止双击缩放
+  let lastTouchEnd = 0
+  document.addEventListener(
+    'touchend',
+    (e) => {
+      const now = new Date().getTime()
+      if (now - lastTouchEnd <= 300) {
+        e.preventDefault()
+      }
+      lastTouchEnd = now
+    },
+    { passive: false }
+  )
+}
 
 // 组件卸载时停止自动翻页并移除事件监听
 onUnmounted(() => {
@@ -1104,7 +1179,7 @@ const handlePageShow = () => {}
 }
 
 .image-container {
-  transition: transform 0.3s ease;
+  transition: transform 0.2s ease;
 }
 
 .image-item {
@@ -1209,7 +1284,6 @@ const handlePageShow = () => {}
   align-items: center;
   gap: 8px;
   font-size: 16px;
-  
 
   &:active {
     background-color: rgba(0, 0, 0, 0.05);

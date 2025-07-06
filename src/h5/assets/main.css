@@ -5,6 +5,19 @@
 html,
 body {
   user-select: none;
+  /* 禁用下拉刷新 */
+  overscroll-behavior: none;
+  /* 禁用触摸选择 */
+  -webkit-touch-callout: none;
+  /* 禁用长按菜单 */
+  -webkit-tap-highlight-color: transparent;
+  /* 禁用文本选择 */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  /* 防止页面弹性滚动，但允许正常滚动 */
+  overscroll-behavior: none;
 }
 
 .page-wrapper {
@@ -12,4 +25,110 @@ body {
   height: calc(100vh - var(--fbw-tabbar-height));
   /* 禁止下拉刷新 */
   overscroll-behavior: none;
+  /* 允许正常滚动 */
+  overflow: auto;
+  position: relative;
+}
+
+/* 针对图片滑动容器的特殊处理 */
+.image-slider {
+  /* 允许垂直滑动但禁用水平滑动 */
+  touch-action: pan-y;
+  /* 禁止下拉刷新 */
+  overscroll-behavior: none;
+  /* 保持图片滑动功能 */
+  overflow: hidden;
+  position: relative;
+}
+
+/* 针对图片项的触摸处理 */
+.image-item {
+  /* 禁用默认的触摸行为 */
+  touch-action: none;
+  /* 禁止下拉刷新 */
+  overscroll-behavior: none;
+}
+
+/* 禁用图片预览中的长按菜单 */
+.van-image-preview__image {
+  /* 禁用长按菜单 */
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  /* 禁用文本选择 */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  /* 禁用拖拽 */
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  user-drag: none;
+  /* 禁用触摸选择 */
+  -webkit-touch-callout: none;
+}
+
+/* 禁用所有图片的长按菜单 */
+img {
+  /* 禁用长按菜单 */
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  /* 禁用文本选择 */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  /* 禁用拖拽 */
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  user-drag: none;
+  /* 禁用触摸选择 */
+  -webkit-touch-callout: none;
+  /* 禁用指针事件（如果需要的话） */
+  pointer-events: auto;
+}
+
+/* 禁用 Vant 图片预览组件的长按菜单 */
+.van-image-preview {
+  /* 禁用长按菜单 */
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  /* 禁用文本选择 */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* 禁用图片预览中的所有元素 */
+.van-image-preview * {
+  /* 禁用长按菜单 */
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  /* 禁用文本选择 */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  /* 禁用拖拽 */
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  user-drag: none;
+}
+
+/* 禁用所有可能触发长按菜单的元素 */
+* {
+  /* 禁用长按菜单 */
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  /* 禁用文本选择 */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
