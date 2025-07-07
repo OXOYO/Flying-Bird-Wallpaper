@@ -27,13 +27,12 @@ import {
   isDev,
   isFunc,
   getDirPathByName,
-  getIconPath,
   calculateImageOrientation,
-  calculateImageQuality
+  calculateImageQuality,
+  getIconPath
 } from './utils/utils.mjs'
 import { handleFileResponse } from './utils/file.mjs'
 import ApiBase from './ApiBase.js'
-import { setDynamicWallpaper, setDynamicWallpaperOpacity } from './utils/setDynamicWallpaper.mjs'
 // import setMacDynamicWallpaper from './utils/setMacDynamicWallpaper.mjs'
 import { t } from '../i18n/server.js'
 import cache from './cache.mjs'
@@ -41,6 +40,11 @@ import { menuList } from '../common/publicData'
 import axios from 'axios'
 import Updater from './updater.mjs'
 import { appInfo } from '../common/config.js'
+import LoadingWindow from './windows/LoadingWindow.mjs'
+import MainWindow from './windows/MainWindow.mjs'
+import ViewImageWindow from './windows/ViewImageWindow.mjs'
+import SuspensionBall from './windows/SuspensionBall.mjs'
+import DynamicWallpaperWindow from './windows/DynamicWallpaperWindow.mjs'
 
 const userDataPath = app.getPath('userData')
 // 目录
@@ -56,10 +60,6 @@ process.env.FBW_TEMP_PATH = getDirPathByName(userDataPath, 'temp')
 process.env.FBW_RESOURCES_PATH = app.isPackaged
   ? path.join(process.resourcesPath, 'resources')
   : path.join(__dirname, '../../resources')
-
-// 定义图标路径变量
-const iconLogo = getIconPath('icon_512x512.png')
-const iconTray = getIconPath('icon_32x32.png')
 
 // 在 app.whenReady() 之前
 protocol.registerSchemesAsPrivileged([
@@ -89,13 +89,18 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
     calculateImageOrientation,
     calculateImageQuality
   }
+
+  // 定义图标路径变量
+  global.FBW.iconLogo = getIconPath('icon_512x512.png')
+  global.FBW.iconTray = getIconPath('icon_32x32.png')
+
   // 初始化日志
   logger()
   global.logger.info(`isDev: ${isDev()} process.env.NODE_ENV: ${process.env.NODE_ENV}`)
   global.logger.info(`getIconPath FBW_RESOURCES_PATH: ${process.env.FBW_RESOURCES_PATH}`)
   global.logger.info(`getIconPath resourcesPath: ${process.resourcesPath}`)
   // 标识
-  const flags = {
+  global.FBW.flags = {
     isQuitting: false
   }
 
@@ -127,268 +132,18 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
     }
   })
 
-  let loadingWindow
-  let mainWindow
-  let viewImageWindow
-  let suspensionBall
-  let dynamicWallpaperWindow = null
-  let store
+  global.FBW.loadingWindow = LoadingWindow.getInstance()
+  global.FBW.mainWindow = MainWindow.getInstance()
+  global.FBW.viewImageWindow = ViewImageWindow.getInstance()
+  global.FBW.suspensionBall = SuspensionBall.getInstance()
+  global.FBW.dynamicWallpaperWindow = DynamicWallpaperWindow.getInstance()
   let tray
   let updater
 
-  // 加载动画页面地址
-  const loadingURL = `${path.join(process.env.FBW_RESOURCES_PATH, '/loading.html')}`
-  const getWindowURL = (name) => {
-    let url = isDev()
-      ? `${process.env['ELECTRON_RENDERER_URL']}/windows/${name}/index.html`
-      : `${path.join(__dirname, `../renderer/windows/${name}/index.html`)}`
-    return url
-  }
-  // 窗口根地址
-  const MainWindowURL = getWindowURL('MainWindow')
-  const ViewImageWindowURL = getWindowURL('ViewImageWindow')
-  const SuspensionBallURL = getWindowURL('SuspensionBall')
-  const DynamicWallpaperURL = getWindowURL('DynamicWallpaper')
-
-  const showLoading = (callback) => {
-    if (!isFunc(callback)) {
-      return
-    }
-
-    // 确保之前的 loadingWindow 被清理
-    if (loadingWindow) {
-      loadingWindow.destroy()
-      loadingWindow = null
-    }
-
-    loadingWindow = new BrowserWindow({
-      width: 200,
-      height: 200,
-      minWidth: 200,
-      minHeight: 200,
-      show: false,
-      frame: false,
-      resizable: false,
-      transparent: true
-    })
-
-    // 设置加载超时
-    const timeout = setTimeout(() => {
-      if (loadingWindow) {
-        loadingWindow.destroy()
-        loadingWindow = null
-        callback() // 超时后仍然执行回调
-      }
-    }, 10000) // 10秒超时
-
-    // 处理加载失败
-    loadingWindow.webContents.on('did-fail-load', () => {
-      clearTimeout(timeout)
-      if (loadingWindow) {
-        loadingWindow.destroy()
-        loadingWindow = null
-        callback() // 加载失败后仍然执行回调
-      }
-    })
-
-    loadingWindow.once('show', () => {
-      clearTimeout(timeout)
-      callback()
-    })
-
-    loadingWindow.once('ready-to-show', () => {
-      if (loadingWindow) {
-        loadingWindow.show()
-      }
-    })
-
-    // 加载动画页面
-    loadingWindow.loadFile(loadingURL).catch((err) => {
-      global.logger.error(`加载动画页面失败: ${err}`)
-      clearTimeout(timeout)
-      if (loadingWindow) {
-        loadingWindow.destroy()
-        loadingWindow = null
-        callback() // 加载失败后仍然执行回调
-      }
-    })
-  }
-
-  // 窗口通用配置
-  const commonWindowOptions = {
-    width: 1020,
-    height: 700,
-    minWidth: 1020,
-    minHeight: 700,
-    show: false,
-    frame: false,
-    // FIXME 设置 transparent: true 后会导致窗口最大化按钮不可用
-    // transparent: true,
-    backgroundColor: '#efefef',
-    autoHideMenuBar: true,
-    titleBarStyle: 'hidden',
-    // titleBarOverlay: {
-    //   color: 'transparent',
-    //   height: 35,
-    //   symbolColor: 'rgb(96, 98, 102)'
-    // },
-    // ...(process.platform === 'linux' ? { icon: iconLogo } : {}),
-    icon: iconLogo,
-    webPreferences: {
-      preload: path.join(__dirname, '../preload/index.mjs'),
-      sandbox: false,
-      webSecurity: false,
-      // devTools: isDev()
-      devTools: true
-    }
-  }
-
-  // 创建主窗口
-  const createMainWindow = (callback) => {
-    // 创建浏览器窗口
-    mainWindow = new BrowserWindow({
-      ...commonWindowOptions,
-      width: 1020,
-      height: 700,
-      minWidth: 1020,
-      minHeight: 700
-    })
-
-    store?.setMainWindow(mainWindow)
-
-    if (process.platform === 'darwin') {
-      app.dock.setIcon(iconLogo)
-    }
-
-    mainWindow.once('ready-to-show', () => {
-      if (store?.settingData?.openMainWindowOnStartup) {
-        if (loadingWindow) {
-          loadingWindow.hide()
-          loadingWindow.close()
-        }
-        mainWindow.show()
-        mainWindow.focus()
-      } else {
-        // 在 macOS 上隐藏 Dock 图标
-        if (isMac() && app.dock) {
-          app.dock.hide()
-        }
-      }
-      // 发送公共信息
-      sendCommonData(mainWindow)
-      isFunc(callback) && callback()
-    })
-
-    preventContextMenu(mainWindow)
-
-    mainWindow.on('did-finish-load', () => {
-      // 发送公共信息
-      sendCommonData(mainWindow)
-      isFunc(callback) && callback()
-    })
-
-    mainWindow.on('close', (event) => {
-      // 非退出时，阻止窗口关闭并隐藏主窗口
-      if (!flags.isQuitting) {
-        // 阻止默认的窗口关闭行为
-        event.preventDefault()
-        // 在这里执行你想要的操作，比如隐藏窗口
-        mainWindow && mainWindow.hide()
-
-        // 在 macOS 上隐藏 Dock 图标
-        if (isMac() && app.dock) {
-          app.dock.hide()
-        }
-      }
-    })
-
-    mainWindow.on('closed', () => {
-      mainWindow = null
-      store?.setMainWindow(null)
-    })
-
-    mainWindow.webContents.setWindowOpenHandler((details) => {
-      shell.openExternal(details.url)
-      return { action: 'deny' }
-    })
-
-    // 加载应用的 index.html
-    if (isDev()) {
-      mainWindow.loadURL(MainWindowURL)
-    } else {
-      mainWindow.loadFile(MainWindowURL)
-    }
-  }
-
-  // 重新打开主窗口
-  const reopenMainWindow = (callback) => {
-    // 可以在这里执行相应的操作，例如恢复窗口的显示等
-    if (!mainWindow || !BrowserWindow.getAllWindows().length) {
-      createMainWindow(callback)
-    } else {
-      // 在 macOS 上显示 Dock 图标
-      if (isMac() && app.dock) {
-        app.dock.show()
-      }
-
-      isFunc(callback) && callback()
-      if (mainWindow.isMinimized()) {
-        mainWindow.restore()
-      }
-      if (!mainWindow.isVisible()) {
-        mainWindow.show()
-      }
-      mainWindow.focus()
-    }
-  }
-  // 切换主窗口显示隐藏
-  const toggleMainWindow = () => {
-    if (!mainWindow || !BrowserWindow.getAllWindows().length) {
-      createMainWindow()
-    } else {
-      if (mainWindow.isVisible()) {
-        mainWindow.hide()
-
-        // 在 macOS 上隐藏 Dock 图标
-        if (isMac() && app.dock) {
-          app.dock.hide()
-        }
-      } else {
-        // 在 macOS 上显示 Dock 图标
-        if (isMac() && app.dock) {
-          app.dock.show()
-        }
-
-        mainWindow.show()
-        mainWindow.focus()
-      }
-    }
-  }
-
-  // 阻止窗口右键菜单事件
-  const preventContextMenu = (win) => {
-    if (!win) {
-      return
-    }
-    win.webContents.on('context-menu', (event) => {
-      event.preventDefault() // 阻止默认右键菜单行为
-    })
-    if (isWin()) {
-      // 监听 278 消息，关闭因为css: -webkit-app-region: drag 引起的默认右键菜单
-      win.hookWindowMessage(278, () => {
-        // 阻止默认的窗口关闭行为
-        win.setEnabled(false)
-        setTimeout(() => {
-          win.setEnabled(true)
-        }, 100)
-        return true
-      })
-    }
-  }
-
   // 获取窗口位置
   const getWindowPosition = (name) => {
-    const win = { mainWindow, viewImageWindow, suspensionBall }[name]
+    const window = global.FBW[name]
+    const win = window?.win
     if (win) {
       const [x, y] = win.getPosition()
       return { x, y }
@@ -398,7 +153,8 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
 
   // 设置窗口位置
   const setWindowPosition = (name, position) => {
-    const win = { mainWindow, viewImageWindow, suspensionBall }[name]
+    const window = global.FBW[name]
+    const win = window?.win
     if (win) {
       win.setPosition(parseInt(position.x), parseInt(position.y), false)
       // 如果是悬浮球，确保大小不变
@@ -408,247 +164,44 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
     }
   }
 
-  // 创建预览图片窗口
-  const createOrOpenViewImageWindow = (data) => {
-    if (viewImageWindow) {
-      if (data) {
-        viewImageWindow.webContents.send('main:sendPostData', data)
-      }
-      viewImageWindow.show()
-      return
-    }
-
-    viewImageWindow = new BrowserWindow({
-      ...commonWindowOptions,
-      width: 1200,
-      height: 800
-    })
-
-    if (isDev()) {
-      viewImageWindow.loadURL(ViewImageWindowURL)
-    } else {
-      viewImageWindow.loadFile(ViewImageWindowURL)
-    }
-
-    viewImageWindow.on('ready-to-show', () => {
-      viewImageWindow.show()
-      // 发送公共信息
-      sendCommonData(viewImageWindow)
-    })
-
-    viewImageWindow.on('did-finish-load', () => {
-      // 发送公共信息
-      sendCommonData(viewImageWindow)
-    })
-
-    preventContextMenu(viewImageWindow)
-
-    ipcMain.handle('main:getPostData', () => {
-      return data
-    })
-
-    viewImageWindow.on('closed', () => {
-      ipcMain.removeHandler('main:getPostData')
-      viewImageWindow = null
-    })
-  }
-
-  // 创建悬浮球口
-  const createOrOpenSuspensionBall = () => {
-    if (suspensionBall) {
-      suspensionBall.show()
-      return
-    }
-    // 处理窗口配置
-    suspensionBall = new BrowserWindow({
-      ...commonWindowOptions,
-      width: 60,
-      height: 220,
-      minWidth: 60,
-      minHeight: 220,
-      maxWidth: 60, // 添加最大宽度限制
-      maxHeight: 220, // 添加最大高度限制
-      frame: false,
-      resizable: false,
-      show: false,
-      transparent: true,
-      backgroundColor: '#00000000',
-      titleBarStyle: false,
-      hasShadow: false,
-      alwaysOnTop: true,
-      acceptFirstMouse: true, // 添加此配置，使窗口能立即响应鼠标事件
-      webPreferences: {
-        ...commonWindowOptions.webPreferences,
-        // 禁用原生拖放
-        enableDragAndDrop: false
-      }
-    })
-
-    // 通过获取用户屏幕的宽高来设置悬浮球的初始位置
-    const { width } = screen.getPrimaryDisplay().workAreaSize
-    const { left, top } = {
-      left: width - 100,
-      top: 200
-    }
-    suspensionBall.setPosition(left, top) //设置悬浮球位置
-    suspensionBall.setVisibleOnAllWorkspaces(true) // 设置悬浮球可见于所有窗口
-    if (isWin() || isMac()) {
-      suspensionBall.setSkipTaskbar(true) // 设置悬浮球不显示在任务栏
-    }
-
-    store?.setSuspensionBall(suspensionBall)
-
-    if (isDev()) {
-      suspensionBall.loadURL(SuspensionBallURL)
-    } else {
-      suspensionBall.loadFile(SuspensionBallURL)
-    }
-
-    suspensionBall.on('ready-to-show', () => {
-      suspensionBall.show()
-    })
-
-    preventContextMenu(suspensionBall)
-
-    suspensionBall.on('closed', async () => {
-      suspensionBall = null
-      store?.setSuspensionBall(null)
-      // 关闭时更新标识
-      await store?.toggleSuspensionBallVisible(false)
-    })
-  }
-
-  // 切换悬浮球显示隐藏
-  const toggleSuspensionBall = async () => {
-    await store?.toggleSuspensionBallVisible()
-    if (!suspensionBall) {
-      createOrOpenSuspensionBall()
-    } else {
-      if (suspensionBall.isVisible()) {
-        suspensionBall.hide()
-      } else {
-        suspensionBall.show()
-        suspensionBall.focus()
+  const resizeWindow = (name, action) => {
+    const window = global.FBW[name]
+    const win = window?.win
+    if (win) {
+      switch (action) {
+        case 'minimize':
+          win.minimize()
+          break
+        case 'maximize':
+          if (win.isMaximized()) {
+            win.unmaximize()
+          } else {
+            win.maximize()
+          }
+          break
+        case 'unmaximize':
+          win.unmaximize()
+          break
+        case 'restore':
+          win.restore()
+          break
+        case 'close':
+          win.close()
+          break
       }
     }
-  }
-
-  // 打开悬浮球
-  const openSuspensionBall = async (flag = true) => {
-    if (flag) {
-      await store?.toggleSuspensionBallVisible(true)
-    }
-    if (!suspensionBall) {
-      createOrOpenSuspensionBall()
-    } else {
-      suspensionBall.show()
-      suspensionBall.focus()
-    }
-  }
-
-  // 关闭悬浮球
-  const closeSuspensionBall = async (flag = true) => {
-    if (flag) {
-      await store?.toggleSuspensionBallVisible(false)
-    }
-    if (suspensionBall) {
-      suspensionBall.close()
-    }
-  }
-
-  // 创建动态壁纸窗口
-  const createDynamicWallpaperWindow = () => {
-    if (dynamicWallpaperWindow) {
-      dynamicWallpaperWindow.show()
-      return dynamicWallpaperWindow
-    }
-
-    const { x, y, width, height } = screen.getPrimaryDisplay().bounds
-    dynamicWallpaperWindow = new BrowserWindow({
-      width: width,
-      height: isMac() ? height + 40 : height,
-      x,
-      y,
-      frame: false,
-      show: false,
-      transparent: true,
-      skipTaskbar: true,
-      type: isMac() ? 'desktop' : '',
-      autoHideMenuBar: true,
-      enableLargerThanScreen: true,
-      hasShadow: false,
-      webPreferences: {
-        preload: path.join(__dirname, '../preload/index.mjs'),
-        sandbox: false,
-        webSecurity: false,
-        contextIsolation: true,
-        nodeIntegration: false,
-        allowRunningInsecureContent: true
-      }
-    })
-
-    if (isDev()) {
-      dynamicWallpaperWindow.loadURL(DynamicWallpaperURL)
-    } else {
-      dynamicWallpaperWindow.loadFile(DynamicWallpaperURL)
-    }
-
-    preventContextMenu(dynamicWallpaperWindow)
-
-    // 设置点击穿透
-    dynamicWallpaperWindow.setIgnoreMouseEvents(true, { forward: true })
-
-    // Mac 上设置窗口为所有工作区可见
-    if (isMac()) {
-      dynamicWallpaperWindow.setHasShadow(false)
-      dynamicWallpaperWindow.setVisibleOnAllWorkspaces(true)
-      dynamicWallpaperWindow.setFullScreenable(false)
-      // 隐藏 dock 图标
-      app.dock.hide()
-    }
-
-    dynamicWallpaperWindow.once('ready-to-show', async () => {
-      // 设置为桌面级别
-      if (isWin()) {
-        // 同时设置纯色背景壁纸图片，提高视角体验
-        const dynamicBackgroundColor = store?.settingData?.dynamicBackgroundColor || '#FFFFFF'
-        await store?.wallpaperManager.setColorWallpaper(dynamicBackgroundColor)
-        setDynamicWallpaper(dynamicWallpaperWindow.getNativeWindowHandle().readInt32LE(0))
-      }
-      dynamicWallpaperWindow.show()
-    })
-
-    dynamicWallpaperWindow.on('closed', () => {
-      dynamicWallpaperWindow = null
-      // Mac 上恢复 dock 图标
-      if (isMac()) {
-        app.dock.show()
-      }
-    })
-
-    return dynamicWallpaperWindow
-  }
-
-  // 关闭动态壁纸窗口
-  const closeDynamicWallpaperWindow = () => {
-    if (dynamicWallpaperWindow) {
-      dynamicWallpaperWindow.close()
-      dynamicWallpaperWindow = null
-      return true
-    }
-    return false
   }
 
   const handleJumpToPage = (key) => {
     if (!key) {
       return
     }
-    reopenMainWindow(() => {
-      mainWindow.webContents.send('main:jumpToPage', key)
+    global.FBW.mainWindow.reopen(() => {
+      global.FBW.mainWindow.win.webContents.send('main:jumpToPage', key)
     })
   }
 
-  const sendCommonData = (win) => {
+  global.FBW.sendCommonData = (win) => {
     if (!win) {
       return
     }
@@ -659,12 +212,12 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
       isWin: isWin(),
       isDev: isDev(),
       isProd: isProd(),
-      h5ServerUrl: store?.h5ServerUrl
+      h5ServerUrl: global.FBW.store?.h5ServerUrl
     }
     win.webContents.send('main:commonData', data)
   }
 
-  const sendMsg = (win, msgOption) => {
+  global.FBW.sendMsg = (win, msgOption) => {
     if (!win) {
       return
     }
@@ -673,7 +226,9 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
 
   // 创建托盘
   const createTray = () => {
-    const trayIcon = nativeImage.createFromPath(iconTray).resize({ width: 20, height: 20 })
+    const trayIcon = nativeImage
+      .createFromPath(global.FBW.iconTray)
+      .resize({ width: 20, height: 20 })
     trayIcon.setTemplateImage(true) // 设置为模板图标
 
     tray = new Tray(trayIcon)
@@ -682,38 +237,38 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
 
     // 监听托盘图标点击事件
     tray.on('click', () => {
-      toggleMainWindow()
+      global.FBW.mainWindow.toggle()
     })
     // 监听托盘图标点击事件右键点击事件
     tray.on('right-click', () => {
       // 托盘右键菜单
       const contextMenuList = [
         {
-          label: store?.settingData?.autoSwitchWallpaper
+          label: global.FBW.store?.settingData?.autoSwitchWallpaper
             ? t('actions.autoSwitchWallpaper.stop')
             : t('actions.autoSwitchWallpaper.start'),
           click: () => {
-            store?.toggleAutoSwitchWallpaper()
+            global.FBW.store?.toggleAutoSwitchWallpaper()
           }
         },
         {
           label: t('actions.nextWallpaper'),
           click: () => {
-            store?.doManualSwitchWallpaper('next')
+            global.FBW.store?.doManualSwitchWallpaper('next')
           }
         },
         {
           label: t('actions.prevWallpaper'),
           click: () => {
-            store?.doManualSwitchWallpaper('prev')
+            global.FBW.store?.doManualSwitchWallpaper('prev')
           }
         },
         {
-          label: store?.settingData?.suspensionBallVisible
+          label: global.FBW.store?.settingData?.suspensionBallVisible
             ? t('actions.closeSuspensionBall')
             : t('actions.openSuspensionBall'),
           click: () => {
-            toggleSuspensionBall()
+            global.FBW.suspensionBall.toggle()
           }
         }
       ]
@@ -723,12 +278,12 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
       // 动态计算托盘菜单启用的菜单项
       // let enabledMenuList = menuList
       // if (
-      //   Array.isArray(store?.settingData?.enabledMenus) &&
-      //   store?.settingData?.enabledMenus.length
+      //   Array.isArray(global.FBW.store?.settingData?.enabledMenus) &&
+      //   global.FBW.store?.settingData?.enabledMenus.length
       // ) {
       //   enabledMenuList = menuList.filter((item) => {
       //     if (item.canBeEnabled) {
-      //       return store?.settingData?.enabledMenus.includes(item.name)
+      //       return global.FBW.store?.settingData?.enabledMenus.includes(item.name)
       //     }
       //     return true
       //   })
@@ -785,7 +340,7 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
         {
           label: t('actions.quit'),
           click: () => {
-            flags.isQuitting = true
+            global.FBW.flags.isQuitting = true
             app.quit()
           }
         }
@@ -797,47 +352,6 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
 
   const showItemInFolder = (filePath) => {
     shell.showItemInFolder(filePath)
-  }
-
-  const closeViewImageWindow = () => {
-    if (viewImageWindow) {
-      viewImageWindow.close()
-    }
-  }
-
-  const resizeWindow = (windowName, action) => {
-    let _window = null
-    switch (windowName) {
-      case 'mainWindow':
-        _window = mainWindow
-        break
-      case 'viewImageWindow':
-        _window = viewImageWindow
-        break
-    }
-    if (_window) {
-      switch (action) {
-        case 'minimize':
-          _window.minimize()
-          break
-        case 'maximize':
-          if (_window.isMaximized()) {
-            _window.unmaximize()
-          } else {
-            _window.maximize()
-          }
-          break
-        case 'unmaximize':
-          _window.unmaximize()
-          break
-        case 'restore':
-          _window.restore()
-          break
-        case 'close':
-          _window.close()
-          break
-      }
-    }
   }
 
   // 处理自定义协议
@@ -879,15 +393,7 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
   } else {
     app.on('second-instance', () => {
       // 当运行第二个实例时，这里将会被调用
-      if (mainWindow) {
-        if (mainWindow.isMinimized()) {
-          mainWindow.restore()
-        }
-        if (!mainWindow.isVisible()) {
-          mainWindow.show()
-        }
-        mainWindow.focus()
-      }
+      global.FBW.mainWindow.reopen()
     })
 
     app.on('browser-window-created', (_, window) => {
@@ -895,9 +401,7 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
     })
 
     app.on('before-quit', async () => {
-      mainWindow = null
-      viewImageWindow = null
-      store = null
+      global.logger('APP BEFORE QUIT!')
     })
 
     app.on('window-all-closed', () => {
@@ -987,13 +491,13 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
       // 注册快捷键
       if (isMac()) {
         localShortcut.register('CommandOrControl+A', () => {
-          mainWindow.webContents.selectAll()
+          global.FBW.mainWindow.win.webContents.selectAll()
         })
         localShortcut.register('CommandOrControl+C', () => {
-          mainWindow.webContents.copy()
+          global.FBW.mainWindow.win.webContents.copy()
         })
         localShortcut.register('CommandOrControl+V', () => {
-          mainWindow.webContents.paste()
+          global.FBW.mainWindow.win.webContents.paste()
         })
       }
 
@@ -1025,10 +529,6 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
         shell.openExternal(url)
       })
 
-      ipcMain.handle('main:openViewImageWindow', (event, data) => {
-        createOrOpenViewImageWindow(data)
-      })
-
       ipcMain.handle('main:setWindowPosition', (event, name, position) => {
         setWindowPosition(name, position)
       })
@@ -1037,33 +537,17 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
         return getWindowPosition(name)
       })
 
-      ipcMain.handle('main:toggleMainWindow', () => {
-        toggleMainWindow()
-      })
-
-      ipcMain.handle('main:openSuspensionBall', (event, params) => {
-        openSuspensionBall(params)
-      })
-
-      ipcMain.handle('main:closeSuspensionBall', (event, params) => {
-        closeSuspensionBall(params)
+      ipcMain.handle('main:resizeWindow', (event, name, action) => {
+        resizeWindow(name, action)
       })
 
       ipcMain.handle('main:showItemInFolder', (event, filePath) => {
         showItemInFolder(filePath)
       })
 
-      ipcMain.handle('main:closeViewImageWindow', () => {
-        closeViewImageWindow()
-      })
-
-      ipcMain.handle('main:resizeWindow', (event, windowName, action) => {
-        resizeWindow(windowName, action)
-      })
-
       ipcMain.handle('main:clearCache', () => {
         cache.clear()
-        sendMsg(mainWindow, {
+        global.FBW.sendMsg(global.FBW.mainWindow.win, {
           type: 'success',
           message: t('messages.clearCacheSuccess')
         })
@@ -1082,189 +566,20 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
         return { success: true, data: filePaths[0] }
       })
 
-      ipcMain.handle('main:setDynamicWallpaper', async (event, videoPath) => {
-        try {
-          // 创建动态壁纸窗口
-          const win = createDynamicWallpaperWindow()
-
-          // 等待窗口准备好
-          if (win.isVisible()) {
-            win.webContents.send('main:setVideoSource', videoPath)
-          } else {
-            win.once('ready-to-show', () => {
-              win.webContents.send('main:setVideoSource', videoPath)
-            })
-          }
-          // 停止自动切换壁纸
-          await store?.toggleAutoSwitchWallpaper(false)
-
-          return { success: true, message: t('messages.operationSuccess') }
-        } catch (err) {
-          global.logger.error(`设置动态壁纸失败: ${err}`)
-          return { success: false, message: t('messages.operationFail') }
-        }
-      })
-
-      ipcMain.handle('main:setDynamicWallpaperMute', (event, mute) => {
-        if (!dynamicWallpaperWindow) {
-          return { success: false, message: t('messages.noDynamicWallpaperSet') }
-        }
-
-        try {
-          dynamicWallpaperWindow.webContents.send('main:setVideoMute', mute)
-          return { success: true, message: t('messages.operationSuccess') }
-        } catch (err) {
-          global.logger.error(`设置动态壁纸静音状态失败: ${err}`)
-          return { success: false, message: t('messages.operationFail') }
-        }
-      })
-
-      ipcMain.handle('main:checkDynamicWallpaperStatus', () => {
-        return {
-          success: true,
-          data: {
-            isRunning: !!dynamicWallpaperWindow,
-            videoPath: dynamicWallpaperWindow ? store?.settingData?.dynamicLastVideoPath : null
-          }
-        }
-      })
-
-      ipcMain.handle('main:setDynamicWallpaperPerformance', (event, mode) => {
-        if (!dynamicWallpaperWindow) {
-          return { success: false, message: t('messages.noDynamicWallpaperSet') }
-        }
-
-        try {
-          // 根据性能模式设置帧率限制
-          let frameRate = 60 // 默认帧率
-
-          switch (mode) {
-            case 'high':
-              frameRate = 60
-              break
-            case 'balanced':
-              frameRate = 30
-              break
-            case 'powersave':
-              frameRate = 15
-              break
-          }
-
-          // 发送帧率设置到动态壁纸窗口
-          dynamicWallpaperWindow.webContents.send('main:setVideoFrameRate', frameRate)
-
-          return { success: true, message: t('messages.operationSuccess') }
-        } catch (err) {
-          global.logger.error(`设置动态壁纸性能模式失败: ${err}`)
-          return { success: false, message: t('messages.operationFail') }
-        }
-      })
-
-      ipcMain.handle('main:setDynamicWallpaperScaleMode', (event, mode) => {
-        if (!dynamicWallpaperWindow) {
-          return { success: false, message: t('messages.noDynamicWallpaperSet') }
-        }
-
-        try {
-          // 发送缩放模式设置到动态壁纸窗口
-          dynamicWallpaperWindow.webContents.send('main:setVideoScaleMode', mode)
-
-          return { success: true, message: t('messages.operationSuccess') }
-        } catch (err) {
-          global.logger.error(`设置动态壁纸缩放模式失败: ${err}`)
-          return { success: false, message: t('messages.operationSuccess') }
-        }
-      })
-
-      ipcMain.handle('main:setDynamicWallpaperOpacity', (event, value) => {
-        if (!dynamicWallpaperWindow) {
-          return { success: false, message: t('messages.noDynamicWallpaperSet') }
-        }
-        try {
-          // 0~100 转为 0~255
-          const alpha = Math.round((value / 100) * 255)
-          // 通过 koffi 或 ffi 调用 SetLayeredWindowAttributes
-          setDynamicWallpaperOpacity(
-            dynamicWallpaperWindow.getNativeWindowHandle().readInt32LE(0),
-            alpha
-          )
-          return { success: true }
-        } catch (err) {
-          return { success: false, message: err.message }
-        }
-      })
-
-      ipcMain.handle('main:setDynamicWallpaperBrightness', (event, value) => {
-        if (!dynamicWallpaperWindow) {
-          return { success: false, message: t('messages.noDynamicWallpaperSet') }
-        }
-
-        try {
-          // 发送亮度设置到动态壁纸窗口
-          dynamicWallpaperWindow.webContents.send('main:setVideoBrightness', value)
-
-          return { success: true, message: t('messages.operationSuccess') }
-        } catch (err) {
-          global.logger.error(`设置动态壁纸亮度失败: ${err}`)
-          return { success: false, message: t('messages.operationFail') }
-        }
-      })
-
-      ipcMain.handle('main:setDynamicWallpaperContrast', (event, value) => {
-        if (!dynamicWallpaperWindow) {
-          return { success: false, message: t('messages.noDynamicWallpaperSet') }
-        }
-
-        try {
-          // 发送对比度设置到动态壁纸窗口
-          dynamicWallpaperWindow.webContents.send('main:setVideoContrast', value)
-
-          return { success: true, message: t('messages.operationSuccess') }
-        } catch (err) {
-          global.logger.error(`设置动态壁纸对比度失败: ${err}`)
-          return { success: false, message: t('messages.operationFail') }
-        }
-      })
-
-      ipcMain.handle('main:closeDynamicWallpaper', () => {
-        const success = closeDynamicWallpaperWindow()
-        return {
-          success,
-          message: success ? t('messages.operationSuccess') : t('messages.operationFail')
-        }
-      })
-
-      ipcMain.handle('main:setDynamicWallpaperBackgroundColor', async (event, color) => {
-        if (!dynamicWallpaperWindow) {
-          return { success: false, message: t('messages.noDynamicWallpaperSet') }
-        }
-        try {
-          return await store?.wallpaperManager.setColorWallpaper(color)
-        } catch (err) {
-          return { success: false, message: err.message }
-        }
-      })
-
       // 处理自定义协议
       handleProtocol()
       // 初始化Store
-      store = new Store({
-        sendCommonData,
-        sendMsg
-      })
+      global.FBW.store = new Store()
       // 等待 Store 初始化完成
-      await store.waitForInitialization()
+      await global.FBW.store?.waitForInitialization()
 
       // 如果设置了自动播放动态壁纸
       if (
-        store?.settingData?.dynamicAutoPlayOnStartup &&
-        store?.settingData?.dynamicLastVideoPath
+        global.FBW.store?.settingData?.dynamicAutoPlayOnStartup &&
+        global.FBW.store?.settingData?.dynamicLastVideoPath
       ) {
         // 创建动态壁纸窗口并设置上次的视频
-        const win = createDynamicWallpaperWindow()
-        win.once('ready-to-show', () => {
-          win.webContents.send('main:setVideoSource', store?.settingData?.dynamicLastVideoPath)
-        })
+        global.FBW.dynamicWallpaperWindow.create()
       }
 
       // 创建托盘
@@ -1272,26 +587,21 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
       // 启动时打开主窗口
       if (process.argv.includes('--autoStart')) {
         // 开机自启动时，根据设置决定是否显示窗口
-        if (store?.settingData?.openMainWindowOnStartup) {
-          showLoading(createMainWindow)
+        if (global.FBW.store?.settingData?.openMainWindowOnStartup) {
+          global.FBW.loadingWindow.create(global.FBW.mainWindow.create)
         } else {
-          createMainWindow()
+          global.FBW.mainWindow.create()
         }
       } else {
-        createMainWindow()
+        global.FBW.mainWindow.create()
       }
       // 启动时开启悬浮球
-      if (store?.settingData?.suspensionBallVisible) {
-        createOrOpenSuspensionBall()
+      if (global.FBW.store?.settingData?.suspensionBallVisible) {
+        global.FBW.suspensionBall.createOrOpen()
       }
 
       app.on('activate', () => {
-        if (!BrowserWindow.getAllWindows().length || !mainWindow) {
-          createMainWindow()
-        } else {
-          mainWindow.show()
-          mainWindow.focus()
-        }
+        global.FBW.mainWindow.reopen()
       })
     })
   }

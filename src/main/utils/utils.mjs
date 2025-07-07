@@ -517,3 +517,32 @@ export const createSolidColorBMP = (color = '#000000', width = 100, height = 100
 
   return buffer
 }
+
+// 加载动画页面地址
+export const getWindowURL = (name) => {
+  let url = isDev()
+    ? `${process.env['ELECTRON_RENDERER_URL']}/windows/${name}/index.html`
+    : `${path.join(__dirname, `../renderer/windows/${name}/index.html`)}`
+  return url
+}
+
+// 阻止窗口右键菜单事件
+export const preventContextMenu = (win) => {
+  if (!win) {
+    return
+  }
+  win.webContents.on('context-menu', (event) => {
+    event.preventDefault() // 阻止默认右键菜单行为
+  })
+  if (isWin()) {
+    // 监听 278 消息，关闭因为css: -webkit-app-region: drag 引起的默认右键菜单
+    win.hookWindowMessage(278, () => {
+      // 阻止默认的窗口关闭行为
+      win.setEnabled(false)
+      setTimeout(() => {
+        win.setEnabled(true)
+      }, 100)
+      return true
+    })
+  }
+}

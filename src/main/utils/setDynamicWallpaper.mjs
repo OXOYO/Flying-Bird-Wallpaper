@@ -1,15 +1,6 @@
 const koffi = require('koffi')
-const lib = koffi.load('user32.dll')
 
-const SetLayeredWindowAttributes = lib.func('SetLayeredWindowAttributes', 'bool', [
-  'int32',
-  'uint32',
-  'uint8',
-  'uint32'
-])
 const LWA_ALPHA = 0x2
-
-const callbackProto2 = koffi.proto('__stdcall', 'callbackProto2', 'bool', ['int32', 'int32'])
 
 const TEXT = (text) => {
   return Buffer.from(`${text}\0`, 'ucs2')
@@ -17,6 +8,7 @@ const TEXT = (text) => {
 
 export const setDynamicWallpaper = (handlers) => {
   if (!handlers || process.platform !== 'win32') return false
+  const lib = koffi.load('user32.dll')
 
   const FindWindowW = lib.func('FindWindowW', 'int32', ['string', 'string'])
   const SendMessageTimeoutW = lib.func('SendMessageTimeoutW', 'int32', [
@@ -39,6 +31,12 @@ export const setDynamicWallpaper = (handlers) => {
     'int32',
     'int32',
     'int32',
+    'uint32'
+  ])
+  const SetLayeredWindowAttributes = lib.func('SetLayeredWindowAttributes', 'bool', [
+    'int32',
+    'uint32',
+    'uint8',
     'uint32'
   ])
   const HWND_BOTTOM = 1
@@ -78,6 +76,7 @@ export const setDynamicWallpaper = (handlers) => {
   }
 
   // 注册一个回调函数指针
+  const callbackProto2 = koffi.proto('__stdcall', 'callbackProto2', 'bool', ['int32', 'int32'])
   const EnumWindows = lib.func('EnumWindows', 'bool', [koffi.pointer(callbackProto2), 'int32'])
   EnumWindows(callback, 0)
 
@@ -99,5 +98,12 @@ export const setDynamicWallpaper = (handlers) => {
 }
 
 export const setDynamicWallpaperOpacity = (hwnd, alpha) => {
+  const lib = koffi.load('user32.dll')
+  const SetLayeredWindowAttributes = lib.func('SetLayeredWindowAttributes', 'bool', [
+    'int32',
+    'uint32',
+    'uint8',
+    'uint32'
+  ])
   SetLayeredWindowAttributes(hwnd, 0, alpha, LWA_ALPHA)
 }

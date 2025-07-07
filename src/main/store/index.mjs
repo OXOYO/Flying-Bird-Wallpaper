@@ -17,13 +17,9 @@ import VersionManager from './VersionManager.mjs'
 import { handleTimeByUnit } from '../utils/utils.mjs'
 
 export default class Store {
-  constructor({ sendCommonData, sendMsg } = {}) {
+  constructor() {
     // 初始化完成标志
     this._initialized = false
-    this.sendCommonData = sendCommonData
-    this.sendMsg = sendMsg
-    this.mainWindow = null
-    this.suspensionBall = null
 
     // 锁
     this.locks = {
@@ -148,16 +144,6 @@ export default class Store {
 
   get settingData() {
     return this.settingManager.settingData
-  }
-
-  // 设置主窗口
-  setMainWindow(mainWindow) {
-    this.mainWindow = mainWindow
-  }
-
-  // 设置悬浮球
-  setSuspensionBall(suspensionBall) {
-    this.suspensionBall = suspensionBall
   }
 
   // 更新开机自启动设置
@@ -398,7 +384,7 @@ export default class Store {
     this.locks.refreshDirectory = false
     // 手动刷新完成后发送消息
     if (data.isManual) {
-      this.sendMsg(this.mainWindow, {
+      global.FBW.sendMsg(global.FBW.mainWindow.win, {
         type: res.success ? (res.data.insertedCount > 0 ? 'success' : 'info') : 'error',
         message: res.message
       })
@@ -415,7 +401,7 @@ export default class Store {
     this.locks.refreshDirectory = false
     // 手动刷新完成后发送消息
     if (data.isManual) {
-      this.sendMsg(this.mainWindow, {
+      global.FBW.sendMsg(global.FBW.mainWindow.win, {
         type: 'error',
         message: t('messages.refreshDirectoryFail')
       })
@@ -460,9 +446,9 @@ export default class Store {
                 global.logger.info(`H5服务器启动成功: ${this.h5ServerUrl}`)
 
                 // 发送消息到主窗口
-                if (this.mainWindow) {
-                  this.sendCommonData(this.mainWindow)
-                  this.sendMsg(this.mainWindow, {
+                if (global.FBW.mainWindow.win) {
+                  global.FBW.sendCommonData(global.FBW.mainWindow.win)
+                  global.FBW.sendMsg(global.FBW.mainWindow.win, {
                     type: 'success',
                     message: t('messages.h5ServerStartSuccess')
                   })
@@ -503,8 +489,8 @@ export default class Store {
           setTimeout(attemptStart, retryInterval)
         } else {
           // 发送错误消息
-          if (this.mainWindow) {
-            this.sendMsg(this.mainWindow, {
+          if (global.FBW.mainWindow.win) {
+            global.FBW.sendMsg(global.FBW.mainWindow.win, {
               type: 'error',
               message: t('messages.h5ServerStartFail')
             })
@@ -523,14 +509,14 @@ export default class Store {
       this.h5Server?.stop((isSuccess) => {
         if (isSuccess) {
           this.h5ServerUrl = null
-          this.sendCommonData(this.mainWindow)
-          this.sendMsg(this.mainWindow, {
+          global.FBW.sendCommonData(global.FBW.mainWindow.win)
+          global.FBW.sendMsg(global.FBW.mainWindow.win, {
             type: 'success',
             message: t('messages.h5ServerStopSuccess')
           })
         } else {
           // 发送错误消息
-          this.sendMsg(this.mainWindow, {
+          global.FBW.sendMsg(global.FBW.mainWindow.win, {
             type: 'error',
             message: t('messages.h5ServerStopFail')
           })
@@ -543,16 +529,16 @@ export default class Store {
 
   // 触发动作
   triggerAction(action, data) {
-    this.mainWindow.webContents.send('main:triggerAction', action, data)
+    global.FBW.mainWindow.win.webContents.send('main:triggerAction', action, data)
   }
 
   // 发送设置数据更新
   sendSettingDataUpdate() {
-    if (this.mainWindow) {
-      this.mainWindow.webContents.send('main:settingDataUpdate', this.settingData)
+    if (global.FBW.mainWindow.win) {
+      global.FBW.mainWindow.win.webContents.send('main:settingDataUpdate', this.settingData)
     }
-    if (this.suspensionBall) {
-      this.suspensionBall.webContents.send('main:settingDataUpdate', this.settingData)
+    if (global.FBW.suspensionBall.win) {
+      global.FBW.suspensionBall.win.webContents.send('main:settingDataUpdate', this.settingData)
     }
   }
 
@@ -649,7 +635,7 @@ export default class Store {
     // 清空当前资源DB
     ipcMain.handle('main:doClearDB', async (event, tableName, resourceName) => {
       const res = await this.dbManager.clearDB(tableName, resourceName)
-      this.sendMsg(this.mainWindow, {
+      global.FBW.sendMsg(global.FBW.mainWindow.win, {
         type: res.success ? 'success' : 'error',
         message: res.message
       })
@@ -660,7 +646,7 @@ export default class Store {
     ipcMain.handle('main:refreshDirectory', async () => {
       const res = this.fileManager.refreshDirectory(this.locks, true)
       if (res && !res.success) {
-        this.sendMsg(this.mainWindow, {
+        global.FBW.sendMsg(global.FBW.mainWindow.win, {
           type: 'error',
           message: res.message
         })
@@ -684,7 +670,7 @@ export default class Store {
     ipcMain.handle('main:clearDownloadedAll', async () => {
       const res = await this.wallpaperManager.clearDownloadedAll()
       if (res) {
-        this.sendMsg(this.mainWindow, {
+        global.FBW.sendMsg(global.FBW.mainWindow.win, {
           type: res.success ? 'success' : 'error',
           message: res.message
         })
@@ -694,7 +680,7 @@ export default class Store {
     ipcMain.handle('main:clearDownloadedExpired', async () => {
       const res = await this.wallpaperManager.clearDownloadedExpired()
       if (res) {
-        this.sendMsg(this.mainWindow, {
+        global.FBW.sendMsg(global.FBW.mainWindow.win, {
           type: res.success ? 'success' : 'error',
           message: res.message
         })
@@ -1071,10 +1057,6 @@ export default class Store {
         }
       }
 
-      // 清理其他资源
-      this.mainWindow = null
-      this.suspensionBall = null
-
       // 移除电源监听器
       if (powerMonitor.removeAllListeners) {
         powerMonitor.removeAllListeners('suspend')
@@ -1087,9 +1069,6 @@ export default class Store {
     } catch (err) {
       global.logger.error(`清理资源失败: ${err}`)
     } finally {
-      // 确保这些引用被清空
-      this.mainWindow = null
-      this.suspensionBall = null
       this.db = null
     }
   }
