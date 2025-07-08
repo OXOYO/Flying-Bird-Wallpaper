@@ -401,7 +401,7 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
     })
 
     app.on('before-quit', async () => {
-      global.logger('APP BEFORE QUIT!')
+      global.logger.info('APP BEFORE QUIT!')
     })
 
     app.on('window-all-closed', () => {

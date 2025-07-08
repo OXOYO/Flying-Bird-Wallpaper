@@ -37,6 +37,8 @@ const viewSize = 5
 
 const viewInfoRef = ref(null)
 
+const videoRefs = ref([])
+
 const cardItemStatus = reactive({
   index: -1,
   status: null
@@ -932,15 +934,18 @@ const getNextList = async () => {
               Object.keys(imgUrlQuery.value).forEach((key) => {
                 urlObj.searchParams.set(key, imgUrlQuery.value[key])
               })
-              item.src = urlObj.toString()
+              item.imageSrc = urlObj.toString()
             } else {
-              item.src = ''
+              item.imageSrc = ''
             }
 
             // 处理视频URL
-            if (item.fileType === 'video' && item.videoUrl) {
+            if (item.fileType === 'video') {
+              item.isPlaying = false
               if (item.srcType === 'file') {
-                item.videoUrl = `fbwtp://fbw/api/videos/get?filePath=${item.filePath}`
+                item.videoSrc = `fbwtp://fbw/api/videos/get?filePath=${item.filePath}`
+              } else {
+                item.videoSrc = item.videoUrl
               }
             }
 
@@ -1301,19 +1306,14 @@ const onOutBtn = () => {
   hoverBtnName.value = null
 }
 
-// 视频鼠标悬停事件处理
-const onVideoMouseEnter = (event) => {
-  const video = event.target
-  if (video && video.tagName === 'VIDEO') {
-    video.play().catch((err) => {
-      console.log('视频播放失败:', err)
-    })
-  }
-}
-
-const onVideoMouseLeave = (event) => {
-  const video = event.target
-  if (video && video.tagName === 'VIDEO') {
+const toggleVideo = (item, index) => {
+  const video = videoRefs.value[index]
+  if (!video) return
+  if (video.paused) {
+    item.isPlaying = true
+    video.play()
+  } else {
+    item.isPlaying = false
     video.pause()
   }
 }
@@ -1632,12 +1632,11 @@ onBeforeUnmount(() => {
                   <IconifyIcon icon="ep:star-filled" />
                 </div>
               </div>
-              <div class="card-item-image-wrapper">
+              <div v-if="item.fileType === 'image'" class="card-item-image-wrapper">
                 <!-- 高清图 -->
                 <el-image
-                  v-if="item.fileType === 'image'"
-                  class="card-item-image"
-                  :src="item.src"
+                  class="card-item-image-inner"
+                  :src="item.imageSrc"
                   loading="lazy"
                   lazy
                   fit="cover"
@@ -1652,22 +1651,30 @@ onBeforeUnmount(() => {
                     </div>
                   </template>
                 </el-image>
-
-                <!-- 视频 -->
+              </div>
+              <!-- 视频 -->
+              <div v-else-if="item.fileType === 'video'" class="card-item-video-wrapper">
                 <video
-                  v-else-if="item.fileType === 'video'"
-                  class="card-item-video"
-                  :src="item.videoUrl"
-                  :poster="item.src"
+                  :ref="(el) => (videoRefs[index] = el)"
+                  class="card-item-video-player"
+                  :src="item.videoSrc"
+                  :poster="item.imageSrc"
                   preload="metadata"
                   muted
                   loop
                   @dblclick="doViewImage(item, index, true)"
-                  @mouseenter="onVideoMouseEnter"
-                  @mouseleave="onVideoMouseLeave"
                 >
-                  <source :src="item.videoUrl" type="video/mp4" />
+                  <source :src="item.videoSrc" type="video/mp4" />
                 </video>
+                <IconifyIcon
+                  class="card-item-video-btn"
+                  :icon="
+                    item.isPlaying
+                      ? 'material-symbols:pause-circle'
+                      : 'material-symbols:play-circle'
+                  "
+                  @click="toggleVideo(item, index)"
+                />
               </div>
               <div class="card-item-btns">
                 <el-button
@@ -1968,7 +1975,7 @@ onBeforeUnmount(() => {
   position: relative;
   overflow: hidden;
 
-  .card-item-image {
+  .card-item-image-inner {
     width: 100%;
     height: 100%;
     position: absolute;
@@ -2004,8 +2011,21 @@ onBeforeUnmount(() => {
       color: #ffffff;
     }
   }
+}
 
-  .card-item-video {
+.card-item-video-wrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+
+  &:hover {
+    .card-item-video-btn {
+      display: inline-block;
+    }
+  }
+
+  .card-item-video-player {
     width: 100%;
     height: 100%;
     position: absolute;
@@ -2016,6 +2036,16 @@ onBeforeUnmount(() => {
     will-change: transform;
     transform: translateZ(0);
     backface-visibility: hidden;
+  }
+  .card-item-video-btn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    display: none;
+    transition: all 0.3s ease-in-out;
+    font-size: 50px;
   }
 }
 
