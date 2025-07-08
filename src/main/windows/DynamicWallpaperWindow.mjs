@@ -1,6 +1,6 @@
 import path from 'node:path'
 import { screen, app, BrowserWindow, ipcMain } from 'electron'
-import { isMac, isFunc, preventContextMenu } from '../utils/utils.mjs'
+import { getWindowURL, preventContextMenu, isDev, isMac, isWin } from '../utils/utils.mjs'
 import { setDynamicWallpaper, setDynamicWallpaperOpacity } from '../utils/setDynamicWallpaper.mjs'
 import { t } from '../../i18n/server'
 
@@ -21,7 +21,7 @@ export default class DynamicWallpaperWindow {
       return DynamicWallpaperWindow._instance
     }
 
-    this.url = path.join(process.env.FBW_RESOURCES_PATH, '/loading.html')
+    this.url = getWindowURL('DynamicWallpaperWindow')
     this.win = null
     this.options = {
       frame: false,
@@ -86,67 +86,73 @@ export default class DynamicWallpaperWindow {
     DynamicWallpaperWindow._instance = this
   }
 
-  create() {
-    if (this.win) {
-      this.win.show()
-      return
-    }
+  async create() {
+    return await new Promise((resolve) => {
+      global.logger.info(`create 001 => ${this.win}`)
+      if (this.win) {
+        global.logger.info('create 002 => this.win.show()')
+        this.win.show()
+        resolve()
+      } else {
+        const { x, y, width, height } = screen.getPrimaryDisplay().bounds
+        // 创建新的窗口
+        this.win = new BrowserWindow({
+          ...this.options,
+          width: width,
+          height: isMac() ? height + 40 : height,
+          x,
+          y
+        })
 
-    const { x, y, width, height } = screen.getPrimaryDisplay().bounds
-    // 创建新的窗口
-    this.win = new BrowserWindow({
-      ...this.options,
-      width: width,
-      height: isMac() ? height + 40 : height,
-      x,
-      y
-    })
+        preventContextMenu(this.win)
 
-    preventContextMenu(this.win)
+        if (isWin()) {
+          // 设置点击穿透
+          this.win.setIgnoreMouseEvents(true, { forward: true })
+        }
 
-    if (isWin()) {
-      // 设置点击穿透
-      this.win.setIgnoreMouseEvents(true, { forward: true })
-    }
+        // Mac 上设置窗口为所有工作区可见
+        if (isMac()) {
+          this.win.setHasShadow(false)
+          this.win.setVisibleOnAllWorkspaces(true)
+          this.win.setFullScreenable(false)
+          // 隐藏 dock 图标
+          app.dock.hide()
+        }
 
-    // Mac 上设置窗口为所有工作区可见
-    if (isMac()) {
-      this.win.setHasShadow(false)
-      this.win.setVisibleOnAllWorkspaces(true)
-      this.win.setFullScreenable(false)
-      // 隐藏 dock 图标
-      app.dock.hide()
-    }
+        this.win.once('ready-to-show', async () => {
+          global.logger.info('create 003 => ready-to-show')
+          // 设置为桌面级别
+          // if (isWin()) {
+          //   // 同时设置纯色背景壁纸图片，提高视角体验
+          //   const dynamicBackgroundColor =
+          //     global.FBW.store?.settingData?.dynamicBackgroundColor || '#FFFFFF'
+          //   await global.FBW.store?.wallpaperManager.setColorWallpaper(dynamicBackgroundColor)
+          //   setDynamicWallpaper(this.win.getNativeWindowHandle().readInt32LE(0))
+          // }
+          // this.win.webContents.send(
+          //   'main:setVideoSource',
+          //   global.FBW.store?.settingData?.dynamicLastVideoPath
+          // )
+          this.win.show()
+          resolve()
+        })
 
-    this.win.once('ready-to-show', async () => {
-      // 设置为桌面级别
-      if (isWin()) {
-        // 同时设置纯色背景壁纸图片，提高视角体验
-        const dynamicBackgroundColor =
-          global.FBW.store?.settingData?.dynamicBackgroundColor || '#FFFFFF'
-        await global.FBW.store?.wallpaperManager.setColorWallpaper(dynamicBackgroundColor)
-        setDynamicWallpaper(this.win.getNativeWindowHandle().readInt32LE(0))
+        this.win.on('closed', () => {
+          this.win = null
+          // Mac 上恢复 dock 图标
+          if (isMac()) {
+            app.dock.show()
+          }
+        })
+
+        if (isDev()) {
+          this.win.loadURL(this.url)
+        } else {
+          this.win.loadFile(this.url)
+        }
       }
-      this.win.webContents.send(
-        'main:setVideoSource',
-        global.FBW.store?.settingData?.dynamicLastVideoPath
-      )
-      this.win.show()
     })
-
-    this.win.on('closed', () => {
-      this.win = null
-      // Mac 上恢复 dock 图标
-      if (isMac()) {
-        app.dock.show()
-      }
-    })
-
-    if (isDev()) {
-      this.win.loadURL(this.url)
-    } else {
-      this.win.loadFile(this.url)
-    }
   }
 
   close() {
@@ -161,16 +167,22 @@ export default class DynamicWallpaperWindow {
   async setDynamicWallpaper(videoPath) {
     try {
       // 创建动态壁纸窗口
-      this.create()
+      await this.create()
 
       // 等待窗口准备好
       if (this.win.isVisible()) {
+        global.logger.info(`send videoPath 001 => ${videoPath}`)
         this.win.webContents.send('main:setVideoSource', videoPath)
       } else {
         this.win.once('ready-to-show', () => {
+          global.logger.info(`send videoPath 002 => ${videoPath}`)
           this.win.webContents.send('main:setVideoSource', videoPath)
         })
       }
+
+      global.logger.info(`send videoPath 003 => ${videoPath}`)
+      // this.win.webContents.send('main:setVideoSource', videoPath)
+
       // 停止自动切换壁纸
       await global.FBW.store?.toggleAutoSwitchWallpaper(false)
 

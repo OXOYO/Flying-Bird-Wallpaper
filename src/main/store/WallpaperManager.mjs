@@ -4,7 +4,6 @@ import { setWallpaper } from 'wallpaper'
 import axios from 'axios'
 import { t } from '../../i18n/server.js'
 import { isMac, handleTimeByUnit, createSolidColorBMP } from '../utils/utils.mjs'
-import { setDynamicWallpaper } from '../utils/setDynamicWallpaper.mjs'
 
 export default class WallpaperManager {
   // 单例实例
@@ -470,16 +469,20 @@ export default class WallpaperManager {
     }
 
     try {
+      let res
       // 检查文件类型，如果是视频则设置为动态壁纸
       if (item.fileType === 'video') {
-        return await this.setDynamicWallpaper(item, isAddToHistory, isResetParams)
+        res = await this.setDynamicWallpaper(item.filePath)
+      } else {
+        // 设置静态壁纸
+        res = await this.setImageWallpaper(item.filePath)
       }
-
-      // 设置静态壁纸
-      await setWallpaper(item.filePath, {
-        screen: this.settingData.allScreen && isMac() ? 'all' : 'main',
-        scale: this.settingData.scaleType
-      })
+      if (!res?.success) {
+        return {
+          success: false,
+          messages: res?.message || t('messages.setWallpaperFail')
+        }
+      }
 
       // 记录到历史记录
       if (isAddToHistory) {
@@ -555,8 +558,8 @@ export default class WallpaperManager {
   }
 
   // 设置动态壁纸
-  async setDynamicWallpaper(item, isAddToHistory = false, isResetParams = false) {
-    if (!item || !item.filePath || !fs.existsSync(item.filePath)) {
+  async setDynamicWallpaper(videoPath) {
+    if (!videoPath || !fs.existsSync(videoPath)) {
       return {
         success: false,
         message: t('messages.fileNotExist')
@@ -564,29 +567,9 @@ export default class WallpaperManager {
     }
 
     try {
-      // 检查文件类型
-      if (item.fileType !== 'video') {
-        return {
-          success: false,
-          message: t('messages.fileTypeNotSupported')
-        }
-      }
-
-      // 记录到历史记录
-      if (isAddToHistory) {
-        const insert_stmt = this.db.prepare(`INSERT INTO fbw_history (resourceId) VALUES (?)`)
-        insert_stmt.run(item.id)
-      }
-
-      // 重置参数
-      if (isResetParams) {
-        this.resetSwitchParams()
-      }
-
       // 调用动态壁纸设置功能
-      const result = await setDynamicWallpaper(item.filePath)
-
-      if (result.success) {
+      const res = await global.FBW.dynamicWallpaperWindow?.setDynamicWallpaper(videoPath)
+      if (res?.success) {
         return {
           success: true,
           message: t('messages.setDynamicWallpaperSuccess')
@@ -594,7 +577,7 @@ export default class WallpaperManager {
       } else {
         return {
           success: false,
-          message: result.message || t('messages.setDynamicWallpaperFail')
+          message: res?.message || t('messages.setDynamicWallpaperFail')
         }
       }
     } catch (err) {
@@ -708,13 +691,7 @@ export default class WallpaperManager {
             const query_result = query_stmt.get(insert_result.lastInsertRowid)
 
             if (query_result) {
-              // 如果是视频，设置为动态壁纸
-              if (isVideo) {
-                return await this.setDynamicWallpaper(query_result, true, true)
-              } else {
-                // 设置为静态壁纸
-                return await this.setAsWallpaper(query_result, true, true)
-              }
+              return await this.setAsWallpaper(query_result, true, true)
             }
           }
         } catch (err) {
@@ -726,13 +703,7 @@ export default class WallpaperManager {
             const query_result = query_stmt.get(filePath)
 
             if (query_result) {
-              // 如果是视频，设置为动态壁纸
-              if (isVideo) {
-                return await this.setDynamicWallpaper(query_result, true, true)
-              } else {
-                // 设置为静态壁纸
-                return await this.setAsWallpaper(query_result, true, true)
-              }
+              return await this.setAsWallpaper(query_result, true, true)
             }
           } else {
             throw err // 重新抛出非唯一键约束的错误

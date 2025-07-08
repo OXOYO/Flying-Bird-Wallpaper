@@ -918,10 +918,11 @@ const getNextList = async () => {
         const list = res.data.list
           .filter((item) => !ids.includes(item.uniqueKey))
           .map((item) => {
+            const isVideo = item.fileType === 'video'
             // 处理图片路径
             let rawUrl
             if (item.srcType === 'file') {
-              if (item.fileType === 'video') {
+              if (isVideo) {
                 rawUrl = item.rawUrl = `fbwtp://fbw/api/videos/get?filePath=${item.filePath}`
               } else {
                 rawUrl = item.rawUrl = `fbwtp://fbw/api/images/get?filePath=${item.filePath}`
@@ -940,7 +941,7 @@ const getNextList = async () => {
             }
 
             // 处理视频URL
-            if (item.fileType === 'video') {
+            if (isVideo) {
               item.isPlaying = false
               if (item.srcType === 'file') {
                 item.videoSrc = `fbwtp://fbw/api/videos/get?filePath=${item.filePath}`
@@ -1035,6 +1036,7 @@ const onSyncToWallpaperSetting = async () => {
 // 设置为壁纸
 const setAsWallpaperWithDownload = async (item, index) => {
   const res = await window.FBW.setAsWallpaperWithDownload(toRaw(item))
+  console.log('res_333', res)
   let options = {}
   if (res && res.success) {
     options.type = 'success'

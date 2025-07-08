@@ -375,6 +375,7 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
           const filePath = urlObj.searchParams.get('filePath')
 
           const res = await handleFileResponse({ filePath })
+          console.log('api/videos/get', filePath, res.status)
           return new Response(res.data, {
             status: res.status,
             headers: res.headers
@@ -579,7 +580,9 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
         global.FBW.store?.settingData?.dynamicLastVideoPath
       ) {
         // 创建动态壁纸窗口并设置上次的视频
-        global.FBW.dynamicWallpaperWindow.create()
+        global.FBW.dynamicWallpaperWindow?.setDynamicWallpaper(
+          global.FBW.store?.settingData?.dynamicLastVideoPath
+        )
       }
 
       // 创建托盘
