@@ -128,7 +128,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="dynamic-wallpaper">
+  <div class="window-container">
     <video
       v-if="videoSrc"
       ref="videoElement"
@@ -146,7 +146,7 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.dynamic-wallpaper {
+.window-container {
   width: 100vw;
   height: 100vh;
   overflow: hidden;

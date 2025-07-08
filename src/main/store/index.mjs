@@ -12,8 +12,6 @@ import FileManager from './FileManager.mjs'
 import WordsManager from './WordsManager.mjs'
 import SettingManager from './SettingManager.mjs'
 import VersionManager from './VersionManager.mjs'
-// 导入动态壁纸工具
-// import { setDynamicWallpaper, closeDynamicWallpaper } from '../utils/wallpaper.mjs'
 import { handleTimeByUnit } from '../utils/utils.mjs'
 
 export default class Store {
@@ -617,15 +615,6 @@ export default class Store {
     ipcMain.handle('main:setColorWallpaper', (event, color) => {
       return this.setColorWallpaper(color)
     })
-
-    // 添加动态壁纸相关的IPC处理程序
-    // ipcMain.handle('main:setDynamicWallpaper', async (event, videoPath) => {
-    //   return await setDynamicWallpaper(videoPath)
-    // })
-
-    // ipcMain.handle('main:closeDynamicWallpaper', () => {
-    //   return closeDynamicWallpaper()
-    // })
 
     // 启停定时切换壁纸
     ipcMain.handle('main:toggleAutoSwitchWallpaper', async () => {

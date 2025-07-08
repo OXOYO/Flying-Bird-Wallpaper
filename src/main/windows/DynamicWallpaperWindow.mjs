@@ -1,7 +1,10 @@
 import path from 'node:path'
 import { screen, app, BrowserWindow, ipcMain } from 'electron'
 import { getWindowURL, preventContextMenu, isDev, isMac, isWin } from '../utils/utils.mjs'
-import { setDynamicWallpaper, setDynamicWallpaperOpacity } from '../utils/setDynamicWallpaper.mjs'
+import {
+  setWindowsDynamicWallpaper,
+  setWindowsDynamicWallpaperOpacity
+} from '../utils/dynamicWallpaper.mjs'
 import { t } from '../../i18n/server'
 
 export default class DynamicWallpaperWindow {
@@ -38,7 +41,8 @@ export default class DynamicWallpaperWindow {
         webSecurity: false,
         contextIsolation: true,
         nodeIntegration: false,
-        allowRunningInsecureContent: true
+        allowRunningInsecureContent: true,
+        devTools: true
       }
     }
 
@@ -88,9 +92,7 @@ export default class DynamicWallpaperWindow {
 
   async create() {
     return await new Promise((resolve) => {
-      global.logger.info(`create 001 => ${this.win}`)
       if (this.win) {
-        global.logger.info('create 002 => this.win.show()')
         this.win.show()
         resolve()
       } else {
@@ -120,20 +122,20 @@ export default class DynamicWallpaperWindow {
           app.dock.hide()
         }
 
+        // 监听渲染进程console消息
+        this.win.webContents.on('console-message', (event, level, message, line, sourceId) => {
+          global.logger.info(`[Renderer Console][${level}] ${message} (${sourceId}:${line})`)
+        })
+
         this.win.once('ready-to-show', async () => {
-          global.logger.info('create 003 => ready-to-show')
           // 设置为桌面级别
-          // if (isWin()) {
-          //   // 同时设置纯色背景壁纸图片，提高视角体验
-          //   const dynamicBackgroundColor =
-          //     global.FBW.store?.settingData?.dynamicBackgroundColor || '#FFFFFF'
-          //   await global.FBW.store?.wallpaperManager.setColorWallpaper(dynamicBackgroundColor)
-          //   setDynamicWallpaper(this.win.getNativeWindowHandle().readInt32LE(0))
-          // }
-          // this.win.webContents.send(
-          //   'main:setVideoSource',
-          //   global.FBW.store?.settingData?.dynamicLastVideoPath
-          // )
+          if (isWin()) {
+            // 同时设置纯色背景壁纸图片，提高视角体验
+            const dynamicBackgroundColor =
+              global.FBW.store?.settingData?.dynamicBackgroundColor || '#FFFFFF'
+            await global.FBW.store?.wallpaperManager.setColorWallpaper(dynamicBackgroundColor)
+            setWindowsDynamicWallpaper(this.win.getNativeWindowHandle().readInt32LE(0))
+          }
           this.win.show()
           resolve()
         })
@@ -145,8 +147,8 @@ export default class DynamicWallpaperWindow {
             app.dock.show()
           }
         })
-
         if (isDev()) {
+          this.win.webContents.openDevTools()
           this.win.loadURL(this.url)
         } else {
           this.win.loadFile(this.url)
@@ -171,20 +173,19 @@ export default class DynamicWallpaperWindow {
 
       // 等待窗口准备好
       if (this.win.isVisible()) {
-        global.logger.info(`send videoPath 001 => ${videoPath}`)
         this.win.webContents.send('main:setVideoSource', videoPath)
       } else {
         this.win.once('ready-to-show', () => {
-          global.logger.info(`send videoPath 002 => ${videoPath}`)
           this.win.webContents.send('main:setVideoSource', videoPath)
         })
       }
 
-      global.logger.info(`send videoPath 003 => ${videoPath}`)
-      // this.win.webContents.send('main:setVideoSource', videoPath)
-
       // 停止自动切换壁纸
       await global.FBW.store?.toggleAutoSwitchWallpaper(false)
+      // 更新设置数据中“最后视频地址”
+      await global.FBW.store?.updateSettingData({
+        dynamicLastVideoPath: videoPath
+      })
 
       return { success: true, message: t('messages.operationSuccess') }
     } catch (err) {
@@ -271,7 +272,7 @@ export default class DynamicWallpaperWindow {
     try {
       // 0~100 转为 0~255
       const alpha = Math.round((opacity / 100) * 255)
-      setDynamicWallpaperOpacity(this.win.getNativeWindowHandle().readInt32LE(0), alpha)
+      setWindowsDynamicWallpaperOpacity(this.win.getNativeWindowHandle().readInt32LE(0), alpha)
       return { success: true, message: t('messages.operationSuccess') }
     } catch (err) {
       return { success: false, message: err.message }

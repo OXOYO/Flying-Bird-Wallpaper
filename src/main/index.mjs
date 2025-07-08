@@ -358,10 +358,10 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
   const handleProtocol = () => {
     protocol.handle('fbwtp', async (request) => {
       const urlObj = new URL(request.url)
+      const filePath = urlObj.searchParams.get('filePath')
       switch (urlObj.pathname) {
         // 处理图片请求
         case '/api/images/get': {
-          const filePath = urlObj.searchParams.get('filePath')
           const w = urlObj.searchParams.get('w')
           const h = urlObj.searchParams.get('h')
 
@@ -372,8 +372,6 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
           })
         }
         case '/api/videos/get': {
-          const filePath = urlObj.searchParams.get('filePath')
-
           const res = await handleFileResponse({ filePath })
           console.log('api/videos/get', filePath, res.status)
           return new Response(res.data, {

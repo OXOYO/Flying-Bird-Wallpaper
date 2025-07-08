@@ -6,7 +6,7 @@ const TEXT = (text) => {
   return Buffer.from(`${text}\0`, 'ucs2')
 }
 
-export const setDynamicWallpaper = (handlers) => {
+export const setWindowsDynamicWallpaper = (handlers) => {
   if (!handlers || process.platform !== 'win32') return false
   const lib = koffi.load('user32.dll')
 
@@ -97,7 +97,7 @@ export const setDynamicWallpaper = (handlers) => {
   return true
 }
 
-export const setDynamicWallpaperOpacity = (hwnd, alpha) => {
+export const setWindowsDynamicWallpaperOpacity = (hwnd, alpha) => {
   const lib = koffi.load('user32.dll')
   const SetLayeredWindowAttributes = lib.func('SetLayeredWindowAttributes', 'bool', [
     'int32',

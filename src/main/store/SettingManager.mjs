@@ -106,12 +106,12 @@ export default class SettingManager extends EventEmitter {
       let storeData = { ...defaultSettingData }
 
       if (query_res.success && query_res.data?.storeData) {
-        // 合并数据
         storeData = query_res.data.storeData
       } else {
         this.logger.warn(`未找到设置数据，将创建新的设置记录`)
       }
 
+      // 合并数据
       const newStoreData = Object.assign({}, storeData, data)
       // 更新或插入数据到sys表
       const update_res = await this.dbManager.setSysRecord(storeKey, newStoreData, 'object')
