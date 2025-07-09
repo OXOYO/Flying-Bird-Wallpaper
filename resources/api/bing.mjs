@@ -9,12 +9,12 @@ const getImageInfo = (url) => {
   if (match) {
     const width = parseInt(match[1], 10)
     const height = parseInt(match[2], 10)
-    const format = match[3]
+    const fileExt = match[3]
 
     return {
       width: width,
       height: height,
-      format: format
+      fileExt: fileExt
     }
   } else {
     return null // 如果没有匹配到，返回null
@@ -53,6 +53,8 @@ export default class ResourceBing extends ApiBase {
       secretKey: '',
       // 是否支持搜索
       supportSearch: false,
+      // 支持的搜索类型
+      supportSearchTypes: [],
       // 搜索必要条件
       searchRequired: {
         keywords: false,
@@ -89,8 +91,8 @@ export default class ResourceBing extends ApiBase {
       ret.total = res.data.images.length
       if (Array.isArray(res.data.images)) {
         res.data.images.forEach((item) => {
-          const url = 'https://cn.bing.com' + item.url
-          const imageInfo = getImageInfo(url)
+          const imageUrl = 'https://cn.bing.com' + item.url
+          const imageInfo = getImageInfo(imageUrl)
 
           let quality = ''
           let isLandscape = 1
@@ -102,15 +104,16 @@ export default class ResourceBing extends ApiBase {
           ret.list.push({
             resourceName: this.resourceName,
             fileName: [this.resourceName, item.hash].join('_'),
-            fileExt: imageInfo.format,
+            fileExt: imageInfo?.fileExt,
+            fileType: 'image',
             link: '',
             author: '',
             title: item.title,
-            desc: '',
-            url,
+            desc: item.copyright,
+            imageUrl,
             quality,
-            width: imageInfo.width,
-            height: imageInfo.height,
+            width: imageInfo?.width,
+            height: imageInfo?.height,
             isLandscape
           })
         })

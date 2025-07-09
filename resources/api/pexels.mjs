@@ -69,7 +69,6 @@ export default class ResourcePexels extends ApiBase {
       params.orientation = orientation[0] === '1' ? 'landscape' : 'portrait'
     }
     // 查询类型 images || videos
-    console.log('query.filterType', query.filterType)
     const filterType = query.filterType || 'images'
     const isImages = filterType === 'images'
     const isVideos = filterType === 'videos'
@@ -87,13 +86,15 @@ export default class ResourcePexels extends ApiBase {
       if (isImages) {
         if (Array.isArray(resData.photos)) {
           ret.list = resData.photos.map((item) => {
-            let imageUrl = item.src.original.split('?')[0]
+            const url = new URL(item.src.original)
+            const imageUrl = url.href()
+            const fileExt = url.pathname.split('.').pop()
             const quality = calculateImageQuality(item.width, item.height)
             const isLandscape = calculateImageOrientation(item.width, item.height)
             return {
               resourceName: this.resourceName,
               fileName: [this.resourceName, item.id].join('_'),
-              fileExt: imageUrl.split('.').pop(),
+              fileExt,
               fileType: 'image',
               link: item.url,
               author: item.photographer,
@@ -110,19 +111,20 @@ export default class ResourcePexels extends ApiBase {
       } else if (isVideos) {
         if (Array.isArray(resData.videos)) {
           ret.list = resData.videos.map((item) => {
-            let imageUrl = item.image
+            const imageUrl = item.image
             const videoItem = item.video_files[0]
+            const fileExt = videoItem.file_type.split('/')[1]
             // TODO 此处应该改成处理Video的方法
             const quality = calculateImageQuality(videoItem.width, videoItem.height)
             const isLandscape = calculateImageOrientation(videoItem.width, videoItem.height)
             return {
               resourceName: this.resourceName,
               fileName: [this.resourceName, item.id].join('_'),
-              fileExt: videoItem.link.split('.').pop(),
+              fileExt,
               fileType: 'video',
               link: item.url,
               author: item.user.name,
-              title: item.alt,
+              title: '',
               desc: '',
               imageUrl,
               videoUrl: videoItem.link,

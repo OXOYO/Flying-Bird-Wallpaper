@@ -69,6 +69,8 @@ export default class ResourceBirdPaper extends ApiBase {
       secretKey: '',
       // 是否支持搜索
       supportSearch: true,
+      // 支持的搜索类型
+      supportSearchTypes: ['images'],
       // 搜索必要条件
       searchRequired: {
         keywords: true,
@@ -103,17 +105,21 @@ export default class ResourceBirdPaper extends ApiBase {
     if (res.status === 200 && res.data) {
       ret.total = res.data.data.total_count
       ret.list = res.data.data.list.map((item) => {
+        const url = new URL(item.url)
+        const imageUrl = url.href
+        const fileExt = url.pathname.split('.').pop()
         const quality = calculateImageQuality(item.width, item.height)
         const isLandscape = calculateImageOrientation(item.width, item.height)
         return {
           resourceName: this.resourceName,
           fileName: [this.resourceName, item.id].join('_'),
-          fileExt: item.url.split('.').pop(),
+          fileExt,
+          fileType: 'image',
           link: '',
           author: '',
           title: '',
           desc: '',
-          url: item.url,
+          imageUrl,
           quality,
           width: item.width,
           height: item.height,

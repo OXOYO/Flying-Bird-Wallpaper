@@ -33,6 +33,8 @@ export default class ResourcePexels extends ApiBase {
       secretKey: '',
       // 是否支持搜索
       supportSearch: true,
+      // 支持的搜索类型
+      supportSearchTypes: ['images'],
       // 搜索必要条件
       searchRequired: {
         keywords: false,
@@ -76,18 +78,21 @@ export default class ResourcePexels extends ApiBase {
       ret.total = resData.total
       if (Array.isArray(resData.hits)) {
         ret.list = resData.hits.map((item) => {
-          let url = (item.imageURL || item.largeImageURL).split('?')[0]
+          const url = new URL(item.largeImageURL)
+          const imageUrl = url.href
+          const fileExt = url.pathname.split('.').pop()
           const quality = calculateImageQuality(item.imageWidth, item.imageHeight)
           const isLandscape = calculateImageOrientation(item.imageWidth, item.imageHeight)
           return {
             resourceName: this.resourceName,
             fileName: [this.resourceName, item.id].join('_'),
-            fileExt: url.split('.').pop(),
+            fileExt,
+            fileType: 'image',
             link: item.pageURL,
             author: item.user,
             title: '',
             desc: '',
-            url,
+            imageUrl,
             quality,
             width: item.imageWidth,
             height: item.imageHeight,

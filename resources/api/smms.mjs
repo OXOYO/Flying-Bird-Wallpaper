@@ -32,6 +32,8 @@ export default class ResourceSMMS extends ApiBase {
       secretKey: '',
       // 是否支持搜索
       supportSearch: true,
+      // 支持的搜索类型
+      supportSearchTypes: ['images'],
       // 搜索必要条件
       searchRequired: {
         keywords: false,
@@ -79,18 +81,21 @@ export default class ResourceSMMS extends ApiBase {
       }
       if (Array.isArray(resData.data)) {
         ret.list = resData.data.map((item) => {
-          let url = item.url.split('?')[0]
+          const url = new URL(item.url)
+          const imageUrl = url.href
+          const fileExt = url.pathname.split('.').pop()
           const quality = calculateImageQuality(item.width, item.height)
           const isLandscape = calculateImageOrientation(item.width, item.height)
           return {
             resourceName: this.resourceName,
             fileName: [this.resourceName, item.hash].join('_'),
-            fileExt: url.split('.').pop(),
-            link: item.url,
+            fileExt,
+            fileType: 'image',
+            link: item.page,
             author: '',
             title: '',
             desc: '',
-            url,
+            imageUrl,
             quality,
             width: item.width,
             height: item.height,

@@ -33,6 +33,8 @@ export default class ResourceUnsplash extends ApiBase {
       secretKey: '',
       // 是否支持搜索
       supportSearch: true,
+      // 支持的搜索类型
+      supportSearchTypes: ['images'],
       // 搜索必要条件
       searchRequired: {
         keywords: true,
@@ -76,18 +78,20 @@ export default class ResourceUnsplash extends ApiBase {
       ret.total = resData.total
       if (Array.isArray(resData.results)) {
         ret.list = resData.results.map((item) => {
-          const url = item.urls.raw.split('?')[0]
+          const url = new URL(item.urls.raw)
+          const imageUrl = url.href
           const quality = calculateImageQuality(item.width, item.height)
           const isLandscape = calculateImageOrientation(item.width, item.height)
           return {
             resourceName: this.resourceName,
             fileName: [this.resourceName, item.id].join('_'),
             fileExt: 'jpg',
+            fileType: 'image',
             link: item.links.html,
-            author: item.user.name,
-            title: item.slug,
+            author: item.user.username,
+            title: '',
             desc: item.description,
-            url,
+            imageUrl,
             quality,
             width: item.width,
             height: item.height,

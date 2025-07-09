@@ -32,6 +32,8 @@ export default class ResourceOpenverse extends ApiBase {
       secretKey: '',
       // 是否支持搜索
       supportSearch: true,
+      // 支持的搜索类型
+      supportSearchTypes: ['images'],
       // 搜索必要条件
       searchRequired: {
         keywords: false,
@@ -76,18 +78,20 @@ export default class ResourceOpenverse extends ApiBase {
       ret.total = resData.result_count
       if (Array.isArray(resData.results)) {
         ret.list = resData.results.map((item) => {
-          let url = item.url.split('?')[0]
+          const url = new URL(item.url)
+          const imageUrl = url.href
           const quality = calculateImageQuality(item.width, item.height)
           const isLandscape = calculateImageOrientation(item.width, item.height)
           return {
             resourceName: this.resourceName,
             fileName: [this.resourceName, item.id].join('_'),
-            fileExt: url.split('.').pop(),
-            link: item.url,
+            fileExt: item.filetype,
+            fleType: 'image',
+            link: '',
             author: item.creator,
             title: item.title,
             desc: '',
-            url,
+            imageUrl,
             quality,
             width: item.width,
             height: item.height,

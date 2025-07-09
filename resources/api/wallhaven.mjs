@@ -1,3 +1,10 @@
+/*
+ * @Author: OXOYO
+ * @Date: 2025-06-25 16:15:51
+ * @LastEditors: OXOYO
+ * @LastEditTime: 2025-07-09 16:51:10
+ * @Description: file content
+ */
 const { axios, ApiBase, calculateImageOrientation, calculateImageQuality } = global.FBW.apiHelpers
 const RESOURCE_NAME = 'wallhaven'
 
@@ -32,6 +39,8 @@ export default class ResourceWallhaven extends ApiBase {
       secretKey: '',
       // 是否支持搜索
       supportSearch: true,
+      // 支持的搜索类型
+      supportSearchTypes: ['images'],
       // 搜索必要条件
       searchRequired: {
         keywords: false,
@@ -68,18 +77,21 @@ export default class ResourceWallhaven extends ApiBase {
       ret.pageSize = resData.meta.per_page
       if (Array.isArray(resData.data)) {
         ret.list = resData.data.map((item) => {
-          let url = item.path
+          const url = new URL(item.path)
+          const imageUrl = url.href
+          const fileExt = item.file_type.split('/')[1] || url.pathname.split('.').pop()
           const quality = calculateImageQuality(item.dimension_x, item.dimension_y)
           const isLandscape = calculateImageOrientation(item.dimension_x, item.dimension_y)
           return {
             resourceName: this.resourceName,
             fileName: [this.resourceName, item.id].join('_'),
-            fileExt: url.split('.').pop(),
+            fileExt,
+            fileType: 'image',
             link: item.url,
             author: '',
             title: '',
             desc: '',
-            url,
+            imageUrl,
             quality,
             width: item.dimension_x,
             height: item.dimension_y,

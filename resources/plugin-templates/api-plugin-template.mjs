@@ -68,7 +68,17 @@ export default class YourApiPlugin extends ApiBase {
         page: query.startPage
       }
 
-      const res = await axios.get('https://your-api-endpoint.com/search', {
+      // 查询类型 images || videos
+      const filterType = query.filterType || 'images'
+      const isImages = filterType === 'images'
+      const isVideos = filterType === 'videos'
+
+      // 接口地址
+      const apiPath = isVideos
+        ? 'https://your-api-endpoint.com/videos/search'
+        : 'https://your-api-endpoint.com/images/search'
+
+      const res = await axios.get(apiPath, {
         params,
         // 如果需要认证
         headers: { Authorization: `Bearer ${query.secretKey}` }
@@ -79,27 +89,58 @@ export default class YourApiPlugin extends ApiBase {
         const resData = res.data
         ret.total = resData.total || 0
 
-        if (Array.isArray(resData.results)) {
-          ret.list = resData.results.map((item) => {
-            const url = item.image_url
-            const quality = calculateImageQuality(item.width, item.height)
-            const isLandscape = calculateImageOrientation(item.width, item.height)
+        if (isImages) {
+          if (Array.isArray(resData.images)) {
+            ret.list = resData.images.map((item) => {
+              const imageUrl = item.image_url
+              const fileExt = item.file_ext
+              const quality = calculateImageQuality(item.width, item.height)
+              const isLandscape = calculateImageOrientation(item.width, item.height)
 
-            return {
-              resourceName: this.resourceName,
-              fileName: [this.resourceName, item.id].join('_'),
-              fileExt: url.split('.').pop() || 'jpg',
-              link: item.page_url || '',
-              author: item.author || '',
-              title: item.title || '',
-              desc: item.description || '',
-              url,
-              quality,
-              width: item.width,
-              height: item.height,
-              isLandscape
-            }
-          })
+              return {
+                resourceName: this.resourceName,
+                fileName: [this.resourceName, item.id].join('_'),
+                fileExt,
+                fileType: 'image',
+                link: item.page_url || '',
+                author: item.author || '',
+                title: item.title || '',
+                desc: item.description || '',
+                imageUrl,
+                quality,
+                width: item.width,
+                height: item.height,
+                isLandscape
+              }
+            })
+          }
+        } else if (isVideos) {
+          if (Array.isArray(resData.videos)) {
+            ret.list = resData.videos.map((item) => {
+              const imageUrl = item.image_url
+              const videoUrl = item.video_url
+              const fileExt = item.file_ext
+              const quality = calculateImageQuality(item.width, item.height)
+              const isLandscape = calculateImageOrientation(item.width, item.height)
+
+              return {
+                resourceName: this.resourceName,
+                fileName: [this.resourceName, item.id].join('_'),
+                fileExt,
+                fileType: 'video',
+                link: item.page_url || '',
+                author: item.author || '',
+                title: item.title || '',
+                desc: item.description || '',
+                imageUrl,
+                videoUrl,
+                quality,
+                width: item.width,
+                height: item.height,
+                isLandscape
+              }
+            })
+          }
         }
       }
     } catch (error) {

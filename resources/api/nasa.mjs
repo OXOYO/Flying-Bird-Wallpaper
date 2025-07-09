@@ -33,6 +33,8 @@ export default class ResourceNasa extends ApiBase {
       secretKey: '',
       // 是否支持搜索
       supportSearch: true,
+      // 支持的搜索类型
+      supportSearchTypes: ['images'],
       // 搜索必要条件
       searchRequired: {
         keywords: false,
@@ -72,22 +74,29 @@ export default class ResourceNasa extends ApiBase {
       if (Array.isArray(resData.items)) {
         resData.items.forEach((item) => {
           const infoData = item.data[0]
-          const imgData = item.links.find((linkItem) => linkItem.rel === 'canonical')
+          const sizeList = item.links
+            .map((linkItem) => linkItem.size)
+            .filter((size) => !isNaN(size))
+          const maxSize = Math.max(...sizeList) + ''
+          const imgData = item.links.find((linkItem) => linkItem.size + '' === maxSize)
 
           if (infoData && imgData) {
-            let url = imgData.href.split('?')[0]
+            const url = new URL(imgData.href)
+            const imageUrl = url.href
+            const fileExt = url.pathname.split('.').pop()
             const quality = calculateImageQuality(imgData.width, imgData.height)
             const isLandscape = calculateImageOrientation(imgData.width, imgData.height)
 
             ret.list.push({
               resourceName: this.resourceName,
               fileName: [this.resourceName, infoData?.nasa_id].join('_'),
-              fileExt: url.split('.').pop(),
+              fileExt,
+              fileType: 'image',
               link: '',
               author: '',
               title: infoData?.title,
               desc: infoData?.description,
-              url,
+              imageUrl,
               quality,
               width: imgData.width,
               height: imgData.height,
