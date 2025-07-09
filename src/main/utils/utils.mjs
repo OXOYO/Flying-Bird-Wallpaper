@@ -9,7 +9,7 @@ import crypto from 'node:crypto'
 import sharp from 'sharp'
 import forge from 'node-forge'
 import fg from 'fast-glob'
-import { allowedImageExtList, allowedVideoExtList } from '@common/publicData.js'
+import { allowedImageExtList, allowedVideoExtList } from '../../common/publicData.js'
 
 const OS_TYPES = {
   Linux: 'linux',
