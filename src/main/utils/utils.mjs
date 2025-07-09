@@ -9,6 +9,7 @@ import crypto from 'node:crypto'
 import sharp from 'sharp'
 import forge from 'node-forge'
 import fg from 'fast-glob'
+import { allowedImageExtList, allowedVideoExtList } from '@common/publicData.js'
 
 const OS_TYPES = {
   Linux: 'linux',
@@ -187,15 +188,23 @@ export const readDirRecursive = async (
     end: Date.now()
   }
   // 批量处理文件元数据
-  const imageFiles = await Promise.all(
+  const rows = await Promise.all(
     filesToProcess.map(async (file) => {
       try {
+        const fileExt = file.fileExt.toLowerCase()
         // const imgData = await calculateImageByPath(file.filePath)
+        let fileType = ''
+        if (allowedImageExtList.includes(fileExt)) {
+          fileType = 'image'
+        } else if (allowedVideoExtList.includes(fileExt)) {
+          fileType = 'video'
+        }
         return {
           resourceName,
           fileName: file.fileName,
           filePath: file.filePath,
-          fileExt: file.fileExt,
+          fileExt,
+          fileType,
           fileSize: file.stats.size,
           // quality: imgData.quality,
           // width: imgData.width,
@@ -207,7 +216,7 @@ export const readDirRecursive = async (
           ctimeMs: file.stats.ctimeMs
         }
       } catch (err) {
-        global.logger.error(`处理图片元数据失败: ${file.filePath} error => ${err}`)
+        global.logger.error(`处理文件元数据失败: ${file.filePath} error => ${err}`)
         return null
       }
     })
@@ -215,13 +224,13 @@ export const readDirRecursive = async (
   imageTime.end = Date.now()
 
   // 过滤掉处理失败的文件
-  const validImageFiles = imageFiles.filter(Boolean)
+  const validRows = rows.filter(Boolean)
 
   // 更新缓存
-  fsCache.directories[cacheKey] = validImageFiles
+  fsCache.directories[cacheKey] = validRows
   fsCache.lastUpdate = Date.now()
 
-  return validImageFiles
+  return validRows
 }
 
 export const formatFileSize = (bytes = 0) => {

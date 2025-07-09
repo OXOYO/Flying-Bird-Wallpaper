@@ -78,6 +78,7 @@ export default class ResourcesManager {
         const isHistory = resourceName === 'history'
 
         const keywords = `%${filterKeywords}%`
+        const fileType = filterType === 'videos' ? 'video' : 'image'
         const quality = qualityStr ? qualityStr.split(',') : []
 
         let query_where_str = ''
@@ -108,6 +109,11 @@ export default class ResourcesManager {
         if (orientation.length === 1) {
           query_where.push(`r.isLandscape = ?`)
           query_params.push(orientation[0])
+        }
+
+        if (fileType) {
+          query_where.push(`r.fileType = ?`)
+          query_params.push(fileType)
         }
 
         if (quality.length) {

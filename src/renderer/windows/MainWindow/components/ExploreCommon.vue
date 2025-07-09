@@ -250,6 +250,7 @@ const currentResource = computed(() => {
   const { resourceType, resourceName } = searchForm
   const list = resourceMap.value.resourceListByResourceType[resourceType] || []
   const item = list.find((item) => item.value === resourceName)
+  console.log('currentResource', item)
   return item
 })
 
@@ -657,7 +658,9 @@ const onSwitchGridRatio = async (childVal) => {
   }
 
   const entry = cardBlockRef.value
-  handleGridSize(entry.clientWidth, entry.clientHeight)
+  if (entry) {
+    handleGridSize(entry.clientWidth, entry.clientHeight)
+  }
   // 创建纯数据对象
   const gridFormData = {
     gridSize: gridForm.gridSize,
@@ -687,7 +690,10 @@ const onSwitchGridSize = async (childVal) => {
   }
 
   const entry = cardBlockRef.value
-  handleGridSize(entry.clientWidth, entry.clientHeight)
+  if (entry) {
+    handleGridSize(entry.clientWidth, entry.clientHeight)
+  }
+
   // 创建纯数据对象
   const gridFormData = {
     gridSize: gridForm.gridSize,
@@ -1355,7 +1361,10 @@ onBeforeMount(() => {
 
 onMounted(() => {
   // 监听元素宽度变化
-  resizeObserver.observe(cardBlockRef.value)
+  const entry = cardBlockRef.value
+  if (entry) {
+    resizeObserver.observe(entry)
+  }
   handleMenuParams()
   getWords()
 
@@ -1369,8 +1378,9 @@ onBeforeUnmount(() => {
   window.FBW.offTriggerAction()
 
   // 清理ResizeObserver
-  if (cardBlockRef.value) {
-    resizeObserver.unobserve(cardBlockRef.value)
+  const entry = cardBlockRef.value
+  if (entry) {
+    resizeObserver.unobserve(entry)
   }
   resizeObserver.disconnect()
 

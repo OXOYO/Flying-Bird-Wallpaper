@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 
 const videoSrc = ref('')
-const videoElement = ref(null)
+const videoRef = ref(null)
 const isMuted = ref(true) // 默认静音
 const frameRate = ref(30) // 默认帧率
 const scaleMode = ref('cover') // 默认缩放模式
@@ -28,8 +28,8 @@ const handleSetVideoSource = (event, source) => {
 // 处理静音控制
 const handleSetVideoMute = (event, mute) => {
   isMuted.value = mute
-  if (videoElement.value) {
-    videoElement.value.muted = mute
+  if (videoRef.value) {
+    videoRef.value.muted = mute
   }
 }
 
@@ -40,29 +40,33 @@ const handleSetVideoFrameRate = (event, rate) => {
 
 // 控制视频播放帧率
 const controlFrameRate = (timestamp) => {
-  if (!videoElement.value) {
+  if (!videoRef.value) {
     rafId = requestAnimationFrame(controlFrameRate)
     return
   }
 
-  const video = videoElement.value
-  const frameInterval = 1000 / frameRate.value
+  try {
+    const video = videoRef.value
+    const frameInterval = 1000 / frameRate.value
 
-  if (timestamp - lastFrameTime >= frameInterval) {
-    // 如果视频暂停，则播放
-    if (video.paused) {
-      video.play()
+    if (timestamp - lastFrameTime >= frameInterval) {
+      // 如果视频暂停，则播放
+      if (video.paused) {
+        video.play()
+      }
+
+      lastFrameTime = timestamp
+    } else {
+      // 如果帧率需要限制，则暂停视频
+      if (!video.paused) {
+        video.pause()
+      }
     }
 
-    lastFrameTime = timestamp
-  } else {
-    // 如果帧率需要限制，则暂停视频
-    if (!video.paused) {
-      video.pause()
-    }
+    rafId = requestAnimationFrame(controlFrameRate)
+  } catch (err) {
+    console.error(err)
   }
-
-  rafId = requestAnimationFrame(controlFrameRate)
 }
 
 // 处理缩放模式控制
@@ -131,7 +135,7 @@ onBeforeUnmount(() => {
   <div class="window-container">
     <video
       v-if="videoSrc"
-      ref="videoElement"
+      ref="videoRef"
       :src="videoSrc"
       autoplay
       loop

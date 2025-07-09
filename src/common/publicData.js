@@ -11,7 +11,8 @@ export const commonResourceMap = {
     site: '',
     enabled: true,
     remote: false,
-    requireSecretKey: false
+    requireSecretKey: false,
+    supportSearchTypes: ['images', 'videos']
   },
   local: {
     label: '本地资源',
@@ -20,7 +21,8 @@ export const commonResourceMap = {
     site: '',
     enabled: true,
     remote: false,
-    requireSecretKey: false
+    requireSecretKey: false,
+    supportSearchTypes: ['images', 'videos']
   },
   favorites: {
     label: '收藏夹',
@@ -29,7 +31,8 @@ export const commonResourceMap = {
     site: '',
     enabled: true,
     remote: false,
-    requireSecretKey: false
+    requireSecretKey: false,
+    supportSearchTypes: ['images', 'videos']
   }
 }
 
@@ -361,7 +364,9 @@ export const h5FloatingButtonsOptions = [
   { label: '返回顶部', value: 'backtop', locale: 'h5FloatingButtonsOptions.backtop' }
 ]
 
-export const allowedFileExtList = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']
+export const allowedImageExtList = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']
+export const allowedVideoExtList = ['.mp4']
+export const allowedFileExtList = [...allowedImageExtList, ...allowedVideoExtList]
 
 // 性能模式选项
 export const dynamicPerformanceModeOptions = [
