@@ -829,6 +829,8 @@ export default class Store {
       }
       const imgPath = await this.getWebImage(url)
       if (imgPath) {
+        // 关闭视频壁纸
+        this.wallpaperManager.closeDynamicWallpaper()
         return await this.wallpaperManager.setImageWallpaper(imgPath)
       } else {
         return {
@@ -848,6 +850,8 @@ export default class Store {
   // 设置颜色壁纸
   async setColorWallpaper(color) {
     await this.toggleAutoSwitchWallpaper(false)
+    // 关闭视频壁纸
+    this.wallpaperManager.closeDynamicWallpaper()
     return await this.wallpaperManager.setColorWallpaper(
       color || this.settingData.colorWallpaperVal
     )

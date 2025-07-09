@@ -251,7 +251,7 @@ export const colorList = [
 
 export const scaleTypesByOS = {
   // FIXME LINUX支持的填充方式存疑
-  // Mac: 'auto' | 'fill' | 'fit' | 'stretch' | 'center'
+  // Linux: 'auto' | 'fill' | 'fit' | 'stretch' | 'center'
   linux: [
     { label: '自动', value: 'auto', locale: 'scaleTypes.auto' },
     { label: '填充', value: 'fill', locale: 'scaleTypes.fill' },

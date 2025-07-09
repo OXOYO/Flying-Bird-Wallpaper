@@ -254,7 +254,6 @@ const currentResource = computed(() => {
 })
 
 const supportSearchTypes = computed(() => {
-  console.log('currentResource', currentResource)
   const types = currentResource.value?.supportSearchTypes
   return Array.isArray(types) && types.length ? types : ['images']
 })
@@ -910,7 +909,6 @@ const getNextList = async () => {
   let res
   try {
     res = await window.FBW.searchImages(payload)
-    console.log('res', res, currentResource.value)
     if (res && res.success && Array.isArray(res.data.list)) {
       if (res.data.list.length) {
         // 去重
@@ -920,18 +918,19 @@ const getNextList = async () => {
           .map((item) => {
             const isVideo = item.fileType === 'video'
             // 处理图片路径
-            let rawUrl
+            let rawImageUrl
             if (item.srcType === 'file') {
               if (isVideo) {
-                rawUrl = item.rawUrl = `fbwtp://fbw/api/videos/get?filePath=${item.filePath}`
+                rawImageUrl = item.rawImageUrl = item.imageUrl
               } else {
-                rawUrl = item.rawUrl = `fbwtp://fbw/api/images/get?filePath=${item.filePath}`
+                rawImageUrl =
+                  item.rawImageUrl = `fbwtp://fbw/api/images/get?filePath=${item.filePath}`
               }
             } else if (item.srcType === 'url') {
-              rawUrl = item.rawUrl = item.imageUrl
+              rawImageUrl = item.rawImageUrl = item.imageUrl
             }
-            if (rawUrl) {
-              const urlObj = new URL(rawUrl)
+            if (rawImageUrl) {
+              const urlObj = new URL(rawImageUrl)
               Object.keys(imgUrlQuery.value).forEach((key) => {
                 urlObj.searchParams.set(key, imgUrlQuery.value[key])
               })
@@ -939,7 +938,6 @@ const getNextList = async () => {
             } else {
               item.imageSrc = ''
             }
-
             // 处理视频URL
             if (isVideo) {
               item.isPlaying = false
@@ -1036,7 +1034,6 @@ const onSyncToWallpaperSetting = async () => {
 // 设置为壁纸
 const setAsWallpaperWithDownload = async (item, index) => {
   const res = await window.FBW.setAsWallpaperWithDownload(toRaw(item))
-  console.log('res_333', res)
   let options = {}
   if (res && res.success) {
     options.type = 'success'
@@ -1310,13 +1307,19 @@ const onOutBtn = () => {
 
 const toggleVideo = (item, index) => {
   const video = videoRefs.value[index]
+  window.videoSrc = video?.src
+  console.log('video src', video?.src)
   if (!video) return
-  if (video.paused) {
-    item.isPlaying = true
-    video.play()
-  } else {
-    item.isPlaying = false
-    video.pause()
+  try {
+    if (video.paused) {
+      item.isPlaying = true
+      video.play()
+    } else {
+      item.isPlaying = false
+      video.pause()
+    }
+  } catch (err) {
+    console.error(err)
   }
 }
 
@@ -1665,9 +1668,7 @@ onBeforeUnmount(() => {
                   muted
                   loop
                   @dblclick="doViewImage(item, index, true)"
-                >
-                  <source :src="item.videoSrc" type="video/mp4" />
-                </video>
+                ></video>
                 <IconifyIcon
                   class="card-item-video-btn"
                   :icon="

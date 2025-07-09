@@ -196,7 +196,7 @@ defineExpose({
 <template>
   <div v-if="flags.visible" class="view-image-wrapper">
     <div ref="imagesContainer" class="images-container">
-      <img v-for="item in imageList" :key="item.uniqueKey" :src="item.rawUrl" />
+      <img v-for="item in imageList" :key="item.uniqueKey" :src="item.rawImageUrl" />
     </div>
     <div ref="galleryContainer" class="gallery-container"></div>
   </div>

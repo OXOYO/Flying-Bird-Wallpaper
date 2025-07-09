@@ -232,7 +232,7 @@ export const formatFileSize = (bytes = 0) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
 }
 
-export const calculateImageQuality = (width, height) => {
+export const calculateImageQuality = (width = 0, height = 0) => {
   if (width > 7680 && height > 4320) {
     return '8K'
   } else if (width > 5120 && height > 2880) {
@@ -247,7 +247,7 @@ export const calculateImageQuality = (width, height) => {
 }
 
 // 计算图片是否横屏 横屏: 1 竖屏: 0
-export const calculateImageOrientation = (width, height) => {
+export const calculateImageOrientation = (width = 0, height = 0) => {
   return width > height ? 1 : 0
 }
 

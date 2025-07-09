@@ -474,6 +474,8 @@ export default class WallpaperManager {
       if (item.fileType === 'video') {
         res = await this.setDynamicWallpaper(item.filePath)
       } else {
+        // 关闭视频壁纸
+        this.closeDynamicWallpaper()
         // 设置静态壁纸
         res = await this.setImageWallpaper(item.filePath)
       }
@@ -522,6 +524,7 @@ export default class WallpaperManager {
         screen: this.settingData.allScreen && isMac() ? 'all' : 'main',
         scale: this.settingData.scaleType
       })
+
       return {
         success: true,
         message: t('messages.setWallpaperSuccess')
@@ -585,6 +588,26 @@ export default class WallpaperManager {
       return {
         success: false,
         message: t('messages.setDynamicWallpaperFail')
+      }
+    }
+  }
+
+  // 关闭视频壁纸
+  closeDynamicWallpaper() {
+    try {
+      global.FBW.dynamicWallpaperWindow?.closeDynamicWallpaper()
+      // 清理“最后视频地址”
+      global.FBW.store?.updateSettingData({
+        dynamicLastVideoPath: ''
+      })
+      return {
+        success: false,
+        message: t('messages.operationSuccess')
+      }
+    } catch (err) {
+      return {
+        success: false,
+        message: t('messages.operationFail')
       }
     }
   }

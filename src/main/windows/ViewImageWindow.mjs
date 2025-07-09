@@ -36,6 +36,9 @@ export default class ViewImageWindow {
         preload: path.join(__dirname, '../preload/index.mjs'),
         sandbox: false,
         webSecurity: false,
+        contextIsolation: true,
+        nodeIntegration: false,
+        allowRunningInsecureContent: true,
         devTools: true
       }
     }

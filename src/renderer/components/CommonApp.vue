@@ -20,6 +20,25 @@ const elGlobalConfig = reactive({
   }
 })
 
+const isReady = ref(false)
+
+const init = async () => {
+  isReady.value = false
+  // 获取或设置数据
+  const res = await window.FBW.getSettingData()
+  if (res.success && res.data) {
+    settingStore.updateSettingData(res.data)
+    updateElLocale(res.data.locale)
+    updateThemeColorVar(res.data.themes)
+  }
+  // 获取资源数据
+  const resourceRes = await window.FBW.getResourceMap()
+  if (resourceRes.success && resourceRes.data) {
+    commonStore.setResourceMap(resourceRes.data)
+  }
+  isReady.value = true
+}
+
 const updateElLocale = (locale) => {
   // 更新 Element Plus 语言
   i18next.changeLanguage(locale)
@@ -45,28 +64,15 @@ const onSendMsgCallback = (event, data) => {
   }
 }
 
-onBeforeMount(() => {
+onBeforeMount(async () => {
   // 监听设置数据更新事件
   window.FBW.onSettingDataUpdate(onSettingDataUpdateCallback)
   // 监听主进程通用数据
   window.FBW.onCommonData(onCommonDataCallback)
   // 监听主进程消息
   window.FBW.onSendMsg(onSendMsgCallback)
-})
 
-onMounted(async () => {
-  // 获取或设置数据
-  const res = await window.FBW.getSettingData()
-  if (res.success && res.data) {
-    settingStore.updateSettingData(res.data)
-    updateElLocale(res.data.locale)
-    updateThemeColorVar(res.data.themes)
-  }
-  // 获取资源数据
-  const resourceRes = await window.FBW.getResourceMap()
-  if (resourceRes.success && resourceRes.data) {
-    commonStore.setResourceMap(resourceRes.data)
-  }
+  await init()
 })
 
 onBeforeUnmount(() => {
@@ -82,7 +88,7 @@ onBeforeUnmount(() => {
 <template>
   <el-config-provider v-bind="elGlobalConfig">
     <div class="common-app">
-      <slot />
+      <slot v-if="isReady" />
     </div>
   </el-config-provider>
 </template>
