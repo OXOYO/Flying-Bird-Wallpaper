@@ -13,7 +13,6 @@ export const createTables = [
   `CREATE TABLE IF NOT EXISTS fbw_favorites (
     id INTEGER PRIMARY KEY AUTOINCREMENT, -- 收藏记录自增ID
     resourceId INTEGER NOT NULL, -- 资源记录ID
-    num INTEGER NOT NULL DEFAULT 1, -- 收藏次数
     created_at DATETIME DEFAULT (datetime('now', 'localtime')), -- 记录创建时间
     updated_at DATETIME DEFAULT (datetime('now', 'localtime')), -- 记录修改时间
     UNIQUE (resourceId) -- 唯一键
@@ -34,7 +33,19 @@ export const createTables = [
     updated_at DATETIME DEFAULT (datetime('now', 'localtime')), -- 记录修改时间
     UNIQUE (resourceId) -- 唯一键
   )`,
-  // 数据表: resources 用于存储图片资源数据
+  // 数据表: fbw_statistics 用于存储资源统计数据
+  `CREATE TABLE IF NOT EXISTS fbw_statistics (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, -- 统计记录自增ID
+    resourceId INTEGER NOT NULL, -- 资源记录ID
+    views INTEGER NOT NULL DEFAULT 0, -- 曝光次数
+    downloads INTEGER NOT NULL DEFAULT 0, -- 下载次数
+    favorites INTEGER NOT NULL DEFAULT 0, -- 收藏次数
+    wallpapers INTEGER NOT NULL DEFAULT 0, -- 设置为壁纸次数
+    created_at DATETIME DEFAULT (datetime('now', 'localtime')), -- 记录创建时间
+    updated_at DATETIME DEFAULT (datetime('now', 'localtime')), -- 记录修改时间
+    UNIQUE (resourceId) -- 唯一键
+  )`,
+  // 数据表: fbw_resources 用于存储图片资源数据
   `CREATE TABLE IF NOT EXISTS fbw_resources (
     id INTEGER PRIMARY KEY AUTOINCREMENT, -- 资源记录自增ID
     resourceName TEXT NOT NULL DEFAULT '', -- 资源名称
