@@ -34,7 +34,7 @@ export default class ResourcePexels extends ApiBase {
       // 是否支持搜索
       supportSearch: true,
       // 支持的搜索类型
-      supportSearchTypes: ['images'],
+      supportSearchTypes: ['images', 'videos'],
       // 搜索必要条件
       searchRequired: {
         keywords: false,
@@ -70,35 +70,75 @@ export default class ResourcePexels extends ApiBase {
       params.orientation = orientation[0] === '1' ? 'horizontal' : 'vertical'
     }
 
-    const res = await axios.get('https://pixabay.com/api', {
+    // 查询类型 images || videos
+    const filterType = query.filterType || 'images'
+    const isImages = filterType === 'images'
+    const isVideos = filterType === 'videos'
+    const apiPath = isVideos ? 'https://pixabay.com/api/videos' : 'https://pixabay.com/api'
+
+    const res = await axios.get(apiPath, {
       params
     })
     if (res.status === 200 && res.data) {
       const resData = res.data
       ret.total = resData.total
       if (Array.isArray(resData.hits)) {
-        ret.list = resData.hits.map((item) => {
-          const url = new URL(item.largeImageURL)
-          const imageUrl = url.href
-          const fileExt = url.pathname.split('.').pop()
-          const quality = calculateImageQuality(item.imageWidth, item.imageHeight)
-          const isLandscape = calculateImageOrientation(item.imageWidth, item.imageHeight)
-          return {
-            resourceName: this.resourceName,
-            fileName: [this.resourceName, item.id].join('_'),
-            fileExt,
-            fileType: 'image',
-            link: item.pageURL,
-            author: item.user,
-            title: '',
-            desc: '',
-            imageUrl,
-            quality,
-            width: item.imageWidth,
-            height: item.imageHeight,
-            isLandscape
-          }
-        })
+        if (isImages) {
+          ret.list = resData.hits.map((item) => {
+            const url = new URL(item.largeImageURL)
+            const imageUrl = url.href
+            const fileExt = url.pathname.split('.').pop()
+            const quality = calculateImageQuality(item.imageWidth, item.imageHeight)
+            const isLandscape = calculateImageOrientation(item.imageWidth, item.imageHeight)
+            return {
+              resourceName: this.resourceName,
+              fileName: [this.resourceName, item.id].join('_'),
+              fileExt,
+              fileType: 'image',
+              link: item.pageURL,
+              author: item.user,
+              title: '',
+              desc: '',
+              imageUrl,
+              quality,
+              width: item.imageWidth,
+              height: item.imageHeight,
+              isLandscape
+            }
+          })
+        } else if (isVideos) {
+          ret.list = resData.hits.map((item) => {
+            let maxSize = 0
+            const videos = Object.values(item.videos)
+            videos.forEach((videoItem) => {
+              if (videoItem.size > maxSize) {
+                maxSize = videoItem.size
+              }
+            })
+            const videoItem = videos.find((videoItem) => videoItem.size === maxSize)
+            const imageUrl = videoItem?.thumbnail
+            const videoUrl = videoItem?.url
+            const fileExt = videoUrl.split('.').pop()
+            const quality = calculateImageQuality(item.width, item.height)
+            const isLandscape = calculateImageOrientation(item.width, item.height)
+            return {
+              resourceName: this.resourceName,
+              fileName: [this.resourceName, item.id].join('_'),
+              fileExt,
+              fileType: 'video',
+              link: item.pageURL,
+              author: item.user,
+              title: '',
+              desc: '',
+              imageUrl,
+              videoUrl,
+              quality,
+              width: item.width,
+              height: item.height,
+              isLandscape
+            }
+          })
+        }
       }
     }
 
