@@ -169,7 +169,7 @@ const api = {
   checkPrivacyPassword: (...args) => ipcRenderer.invoke('main:checkPrivacyPassword', ...args),
   hasPrivacyPassword: (...args) => ipcRenderer.invoke('main:hasPrivacyPassword', ...args),
   updatePrivacyPassword: (...args) => ipcRenderer.invoke('main:updatePrivacyPassword', ...args),
-  searchImages: (...args) => ipcRenderer.invoke('main:searchImages', ...args),
+  search: (...args) => ipcRenderer.invoke('main:search', ...args),
   setAsWallpaperWithDownload: (...args) =>
     ipcRenderer.invoke('main:setAsWallpaperWithDownload', ...args),
   nextWallpaper: (...args) => ipcRenderer.invoke('main:nextWallpaper', ...args),

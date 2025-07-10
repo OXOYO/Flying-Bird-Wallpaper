@@ -86,7 +86,7 @@ export default async function setupSocketIO(
     // 搜索图片
     socket.on('searchImages', async (params, callback) => {
       try {
-        const res = await resourcesManager.searchImages(params)
+        const res = await resourcesManager.search(params)
         safeCallback(callback, res)
       } catch (err) {
         logger.error(`[H5Server] ERROR => 搜索图片错误: ${err}`)

@@ -914,7 +914,7 @@ const getNextList = async () => {
   }
   let res
   try {
-    res = await window.FBW.searchImages(payload)
+    res = await window.FBW.search(payload)
     if (res && res.success && Array.isArray(res.data.list)) {
       if (res.data.list.length) {
         // 去重

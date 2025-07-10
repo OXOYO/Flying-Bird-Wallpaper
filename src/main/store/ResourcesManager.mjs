@@ -39,7 +39,7 @@ export default class ResourcesManager {
   }
 
   // 搜索
-  async searchImages(params = {}) {
+  async search(params = {}) {
     const {
       resourceType = 'localResource',
       resourceName = 'resources',

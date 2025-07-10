@@ -587,8 +587,8 @@ export default class Store {
     })
 
     // 搜索资源数据
-    ipcMain.handle('main:searchImages', async (event, params) => {
-      return await this.resourcesManager.searchImages(params)
+    ipcMain.handle('main:search', async (event, params) => {
+      return await this.resourcesManager.search(params)
     })
 
     // 设置为壁纸
