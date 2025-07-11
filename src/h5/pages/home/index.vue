@@ -1053,7 +1053,7 @@ const handlePageShow = () => {}
     >
       <IconifyIcon
         class="floating-button-icon"
-        :icon="settingData.h5AutoSwitch ? 'ri:pause-fill' : 'ri:play-fill'"
+        :icon="settingData.h5AutoSwitch ? 'ri:pause-large-fill' : 'ri:play-large-fill'"
       />
     </div>
 
@@ -1075,6 +1075,7 @@ const handlePageShow = () => {}
       <IconifyIcon
         class="floating-button-icon"
         :icon="isRandom ? 'ri:shuffle-line' : 'ri:repeat-line'"
+        style="transform: scale(0.9)"
       />
     </div>
 
@@ -1194,15 +1195,15 @@ const handlePageShow = () => {}
 
 .floating-buttons {
   position: fixed;
-  bottom: calc(50px + var(--fbw-tabbar-height));
+  bottom: 100px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 25px;
 }
 
 .floating-button {
-  width: 40px;
-  height: 40px;
+  width: 46px;
+  height: 46px;
   line-height: 1;
   display: flex;
   align-items: center;
@@ -1224,7 +1225,7 @@ const handlePageShow = () => {}
 .floating-button-icon {
   transition: transform 0.3s ease-out;
   color: white;
-  font-size: 24px;
+  font-size: 30px;
 }
 
 /* 自定义按钮样式 */
