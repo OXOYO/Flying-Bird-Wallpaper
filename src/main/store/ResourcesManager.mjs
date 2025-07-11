@@ -128,14 +128,18 @@ export default class ResourcesManager {
 
         if (isFavorites || isHistory || isPrivacySpace) {
           // FIXME 按顺序查询时排序字段固定
-          const order_by_str = isRandom ? 'ORDER BY RANDOM()' : `ORDER BY s.created_at ${sortOrder}`
+          const order_by_str = isRandom
+            ? 'ORDER BY s.views ASC, RANDOM()'
+            : `ORDER BY s.created_at ${sortOrder}`
 
           query_sql = `
             SELECT
             r.*,
+            stats.views,
               (SELECT COUNT(*) FROM fbw_favorites f WHERE f.resourceId = r.id) AS isFavorite
             FROM fbw_${resourceName} s
             JOIN fbw_resources r ON s.resourceId = r.id
+            LEFT JOIN fbw_statistics stats ON r.id = stats.resourceId
             ${query_where_str}
             ${order_by_str}
             LIMIT ? OFFSET ?
@@ -143,14 +147,16 @@ export default class ResourcesManager {
           count_sql = `SELECT COUNT(*) AS total FROM fbw_${resourceName} s JOIN fbw_resources r ON s.resourceId = r.id ${query_where_str}`
         } else {
           const order_by_str = isRandom
-            ? 'ORDER BY RANDOM()'
+            ? 'ORDER BY stats.views ASC, RANDOM()'
             : `ORDER BY r.${sortField} ${sortOrder}`
 
           query_sql = `
             SELECT
             r.*,
+            stats.views,
             (SELECT COUNT(*) FROM fbw_favorites f WHERE f.resourceId = r.id) AS isFavorite
             FROM fbw_resources r
+            LEFT JOIN fbw_statistics stats ON r.id = stats.resourceId
             ${query_where_str}
             ${order_by_str}
             LIMIT ? OFFSET ?
@@ -168,6 +174,14 @@ export default class ResourcesManager {
               uniqueKey: uuidv4()
             }
           })
+          // 曝光量+1（批量）
+          const updateParams = ret.data.list.map((item) => {
+            return {
+              resourceId: item.id,
+              views: 1
+            }
+          })
+          await this.batchUpdateStatistics(updateParams)
           if (count_sql) {
             const count_stmt = this.db.prepare(count_sql)
             const count_result = count_stmt.get(...query_params)
@@ -275,7 +289,7 @@ export default class ResourcesManager {
         )
         insert_stmt.run(resourceId)
         // 更新统计表
-        await this.updateStatistics(resourceId, { favorites: 1 })
+        await this.updateStatistics({ resourceId, favorites: 1 })
         ret = {
           success: true,
           message: t('messages.operationSuccess')
@@ -303,7 +317,7 @@ export default class ResourcesManager {
       if (delete_result.changes > 0) {
         if (!isPrivacySpace) {
           // 更新统计表
-          await this.updateStatistics(resourceId, { favorites: -1 })
+          await this.updateStatistics({ resourceId, favorites: -1 })
         }
         ret = {
           success: true,
@@ -318,24 +332,23 @@ export default class ResourcesManager {
   }
 
   // 更新统计数据
-  async updateStatistics(resourceId, data) {
+  async updateStatistics(params = {}) {
     let ret = {
       success: false,
       message: t('messages.operationFail')
     }
-
+    if (!params || typeof params !== 'object' || !params.resourceId) {
+      ret.message = t('messages.paramsError')
+      return ret
+    }
+    const resourceId = params.resourceId
+    const allowedFields = ['views', 'downloads', 'favorites', 'wallpapers']
+    const updateFields = Object.keys(params).filter((key) => allowedFields.includes(key))
+    if (updateFields.length === 0) {
+      ret.message = t('messages.paramsError')
+      return ret
+    }
     try {
-      if (!resourceId || !data || typeof data !== 'object') {
-        ret.message = t('messages.paramsError')
-        return ret
-      }
-      // 允许更新的字段
-      const allowedFields = ['views', 'downloads', 'favorites', 'wallpapers']
-      const updateFields = Object.keys(data).filter((key) => allowedFields.includes(key))
-      if (updateFields.length === 0) {
-        ret.message = t('messages.paramsError')
-        return ret
-      }
       // 检查是否存在
       const check_stmt = this.db.prepare('SELECT * FROM fbw_statistics WHERE resourceId = ?')
       const check_result = check_stmt.get(resourceId)
@@ -345,7 +358,7 @@ export default class ResourcesManager {
         const update_stmt = this.db.prepare(
           `UPDATE fbw_statistics SET ${setStr}, updated_at = datetime('now', 'localtime') WHERE resourceId = ?`
         )
-        const params = updateFields.map((f) => data[f])
+        const params = updateFields.map((f) => params[f])
         params.push(resourceId)
         const update_result = update_stmt.run(...params)
         if (update_result.changes > 0) {
@@ -359,7 +372,7 @@ export default class ResourcesManager {
         const insertFields = ['resourceId', ...allowedFields]
         const insertValues = [resourceId]
         for (const f of allowedFields) {
-          insertValues.push(data[f] || 0)
+          insertValues.push(params[f] || 0)
         }
         const insert_stmt = this.db.prepare(
           `INSERT INTO fbw_statistics (${insertFields.join(',')}) VALUES (${insertFields.map(() => '?').join(',')})`
@@ -375,7 +388,67 @@ export default class ResourcesManager {
     } catch (err) {
       this.logger.error(`更新统计数据失败: ${err}`)
     }
+    return ret
+  }
 
+  // 批量更新统计字段
+  async batchUpdateStatistics(updateParams = []) {
+    let ret = {
+      success: false,
+      message: t('messages.operationFail')
+    }
+    if (!Array.isArray(updateParams) || !updateParams.length) {
+      return ret
+    }
+    const allowedFields = ['views', 'downloads', 'favorites', 'wallpapers']
+    const BATCH_SIZE = 500
+    try {
+      for (let i = 0; i < updateParams.length; i += BATCH_SIZE) {
+        const batch = updateParams.slice(i, i + BATCH_SIZE)
+        this.db.transaction(() => {
+          // 1. 查找已存在的 resourceId
+          const batchIds = batch.map((item) => item.resourceId)
+          const placeholders = batchIds.map(() => '?').join(',')
+          const existRows = this.db
+            .prepare(`SELECT resourceId FROM fbw_statistics WHERE resourceId IN (${placeholders})`)
+            .all(...batchIds)
+          const existIds = existRows.map((row) => row.resourceId)
+          const notExistIds = batchIds.filter((id) => !existIds.includes(id))
+          // 2. 批量插入不存在的记录
+          if (notExistIds.length) {
+            const insertFields = ['resourceId', ...allowedFields]
+            const insertPlaceholders = insertFields.map(() => '?').join(',')
+            const insert_stmt = this.db.prepare(
+              `INSERT INTO fbw_statistics (${insertFields.join(',')}) VALUES (${insertPlaceholders})`
+            )
+            for (const id of notExistIds) {
+              const values = [id]
+              for (const f of allowedFields) {
+                // 查找该id在batch中的参数
+                const param = batch.find((item) => item.resourceId === id)
+                values.push(param && param[f] ? param[f] : 0)
+              }
+              insert_stmt.run(...values)
+            }
+          }
+          // 3. 只对已存在的 resourceId 执行 update
+          for (const param of batch) {
+            if (!existIds.includes(param.resourceId)) continue
+            const { resourceId, ...fields } = param
+            const updateFields = Object.keys(fields).filter((key) => allowedFields.includes(key))
+            if (!updateFields.length) continue
+            const setStr = updateFields.map((f) => `${f} = MAX(${f} + ?, 0)`).join(', ')
+            const update_sql = `UPDATE fbw_statistics SET ${setStr}, updated_at = datetime('now', 'localtime') WHERE resourceId = ?`
+            const updateParamsArr = updateFields.map((f) => fields[f]).concat([resourceId])
+            this.db.prepare(update_sql).run(...updateParamsArr)
+          }
+        })()
+      }
+      ret.success = true
+      ret.message = t('messages.operationSuccess')
+    } catch (err) {
+      this.logger.error(`批量更新统计数据失败: ${err}`)
+    }
     return ret
   }
 }

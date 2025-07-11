@@ -835,6 +835,8 @@ const saveImage = async () => {
 
     // 移除链接
     document.body.removeChild(link)
+    // 更新下载数量
+    await api.updateDownloadCount(currentImage.id, 1)
     showNotify({
       type: 'success',
       message: t('messages.saveSuccess')

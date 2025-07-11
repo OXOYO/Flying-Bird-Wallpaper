@@ -57,6 +57,12 @@ const utilList = ref([
     confirm: true
   },
   {
+    name: 'clearStatisticsDB',
+    text: '清空统计数据',
+    locale: 'pages.Utils.clearStatisticsDB',
+    confirm: true
+  },
+  {
     name: 'clearCache',
     text: '清空缓存数据',
     locale: 'pages.Utils.clearCache',
@@ -171,6 +177,10 @@ const onExec = (name) => {
     case 'clearFavoritesDB':
       funcName = 'doClearDB'
       args = ['favorites']
+      break
+    case 'clearStatisticsDB':
+      funcName = 'doClearDB'
+      args = ['statistics']
       break
     case 'clearCache':
       funcName = 'clearCache'

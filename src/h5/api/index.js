@@ -37,6 +37,10 @@ export const deleteImage = async (item) => {
   return await emitAsync('deleteImage', item)
 }
 
+export const updateDownloadCount = async (id, count) => {
+  return await emitAsync('updateDownloadCount', { id, count })
+}
+
 // 设置接口
 export const getSettingData = async () => {
   return await emitAsync('getSettingData')

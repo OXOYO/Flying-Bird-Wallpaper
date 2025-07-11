@@ -78,6 +78,7 @@ export const createTables = [
     resourceId INTEGER NOT NULL, -- 资源ID
     wordId INTEGER NOT NULL, -- 分词ID
     created_at DATETIME DEFAULT (datetime('now', 'localtime')), -- 记录创建时间
+    updated_at DATETIME DEFAULT (datetime('now', 'localtime')), -- 记录修改时间
     UNIQUE (resourceId, wordId) -- 确保资源和分词的组合唯一
   )`,
   // 数据表：分词数据
@@ -117,6 +118,9 @@ export const createIndexes = [
   'CREATE INDEX IF NOT EXISTS idx_history_created_at ON fbw_history(created_at)',
   'CREATE INDEX IF NOT EXISTS idx_privacy_space_resourceid ON fbw_privacy_space(resourceId)',
   'CREATE INDEX IF NOT EXISTS idx_privacy_space_created_at ON fbw_privacy_space(created_at)',
+
+  // 统计表索引
+  'CREATE INDEX IF NOT EXISTS idx_statistics_views ON fbw_statistics(views)',
 
   // 分词表索引
   'CREATE INDEX IF NOT EXISTS idx_words_type_count ON fbw_words(type, count)',

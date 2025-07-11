@@ -169,7 +169,7 @@ export default async function setupSocketIO(
           })
           return
         }
-        const res = await resourcesManager.updateStatistics(id, { favorites: count })
+        const res = await resourcesManager.updateStatistics({ resourceId: id, favorites: count })
         safeCallback(callback, {
           success: res.success,
           message: res.success ? t('messages.operationSuccess') : t('messages.operationFail')
@@ -222,6 +222,30 @@ export default async function setupSocketIO(
         })
       } catch (err) {
         logger.error(`[H5Server] ERROR => 删除图片错误: ${err}`)
+        safeCallback(callback, {
+          success: false,
+          message: t('messages.operationFail')
+        })
+      }
+    })
+
+    // 更新下载数量
+    socket.on('updateDownloadCount', async ({ id, count }, callback) => {
+      try {
+        if (!id) {
+          safeCallback(callback, {
+            success: false,
+            message: t('messages.operationFail')
+          })
+          return
+        }
+        const res = await resourcesManager.updateStatistics({ resourceId: id, downloads: count })
+        safeCallback(callback, {
+          success: res.success,
+          message: res.success ? t('messages.operationSuccess') : t('messages.operationFail')
+        })
+      } catch (err) {
+        logger.error(`[H5Server] ERROR => 更新下载数量错误: ${err}`)
         safeCallback(callback, {
           success: false,
           message: t('messages.operationFail')

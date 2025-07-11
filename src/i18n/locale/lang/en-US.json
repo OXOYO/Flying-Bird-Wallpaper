@@ -168,6 +168,7 @@
       "clearWordsDB": "Clear the word data",
       "clearFavoritesDB": "Clear the favorites data",
       "clearHistoryDB": "Clear the history data",
+      "clearStatisticsDB": "Clear the statistics data",
       "clearCache": "Clear the cache data",
       "clearDownloadedAll": "Clean up all downloaded",
       "clearDownloadedExpired": "Clean up expired downloaded",

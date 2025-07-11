@@ -168,6 +168,7 @@
       "clearWordsDB": "清空词库数据",
       "clearFavoritesDB": "清空收藏数据",
       "clearHistoryDB": "清空回忆数据",
+      "clearStatisticsDB": "清空统计数据",
       "clearCache": "清空缓存数据",
       "clearDownloadedAll": "清空所有下载",
       "clearDownloadedExpired": "清理过期下载",
