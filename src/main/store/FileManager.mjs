@@ -284,7 +284,7 @@ export default class FileManager {
     try {
       // 更新图片质量
       const update_stmt = this.db.prepare(
-        `UPDATE fbw_resources SET quality = @quality, width = @width, height = @height, isLandscape = @isLandscape, dominantColor = @dominantColor WHERE id = @id`
+        `UPDATE fbw_resources SET quality = @quality, width = @width, height = @height, isLandscape = @isLandscape, dominantColor = @dominantColor, updated_at = datetime('now', 'localtime') WHERE id = @id`
       )
 
       const transaction = this.db.transaction(() => {
@@ -380,6 +380,11 @@ export default class FileManager {
           `DELETE FROM fbw_privacy_space WHERE resourceId = ?`
         )
         delete_privacy_stmt.run(id)
+
+        const delete_statistics_stmt = this.db.prepare(
+          `DELETE FROM fbw_statistics WHERE resourceId = ?`
+        )
+        delete_statistics_stmt.run(id)
 
         // 提交事务
         this.db.exec('COMMIT')

@@ -106,7 +106,7 @@ export default class WordsManager {
 
       // 更新分词计数
       const update_word_stmt = this.db.prepare(
-        `UPDATE fbw_words SET count = count + 1 WHERE word = ?`
+        `UPDATE fbw_words SET count = count + 1, updated_at = datetime('now', 'localtime') WHERE word = ?`
       )
 
       // 获取分词ID
@@ -190,7 +190,7 @@ export default class WordsManager {
 
       // 更新分词计数
       const update_word_stmt = this.db.prepare(
-        `UPDATE fbw_words SET count = count - 1 WHERE word = ?`
+        `UPDATE fbw_words SET count = MAX(count - 1, 0), updated_at = datetime('now', 'localtime') WHERE word = ?`
       )
 
       // 删除计数为0的分词

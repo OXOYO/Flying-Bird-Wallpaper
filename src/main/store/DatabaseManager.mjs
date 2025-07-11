@@ -144,6 +144,12 @@ export default class DatabaseManager {
               )
               delete_privacy_stmt.run(id)
 
+              // 清除统计表中的关联数据
+              const delete_statistics_stmt = this.db.prepare(
+                `DELETE FROM fbw_statistics WHERE resourceId = ?`
+              )
+              delete_statistics_stmt.run(id)
+
               // 清除资源分词关联表中的数据
               const delete_resource_words_stmt = this.db.prepare(
                 `DELETE FROM fbw_resource_words WHERE resourceId = ?`
@@ -162,7 +168,7 @@ export default class DatabaseManager {
             if (wordIds.length > 0) {
               // 更新词条计数
               const update_word_count_stmt = this.db.prepare(`
-                UPDATE fbw_words SET count = count - 1
+                UPDATE fbw_words SET count = MAX(count - 1, 0), updated_at = datetime('now', 'localtime')
                 WHERE id IN (${wordIds.map(() => '?').join(',')})
               `)
               update_word_count_stmt.run(...wordIds)
@@ -180,6 +186,7 @@ export default class DatabaseManager {
           this.db.prepare(`DELETE FROM fbw_favorites`).run()
           this.db.prepare(`DELETE FROM fbw_history`).run()
           this.db.prepare(`DELETE FROM fbw_privacy_space`).run()
+          this.db.prepare(`DELETE FROM fbw_statistics`).run()
           this.db.prepare(`DELETE FROM fbw_resource_words`).run()
           this.db.prepare(`DELETE FROM fbw_words`).run()
 
@@ -195,9 +202,13 @@ export default class DatabaseManager {
         const delete_stmt = this.db.prepare(`DELETE FROM ${tableName}`)
         delete_res = delete_stmt.run()
       } else if (
-        ['fbw_favorites', 'fbw_history', 'fbw_privacy_space', 'fbw_resource_words'].includes(
-          tableName
-        )
+        [
+          'fbw_favorites',
+          'fbw_history',
+          'fbw_privacy_space',
+          'fbw_statistics',
+          'fbw_resource_words'
+        ].includes(tableName)
       ) {
         // 清空指定表下所有记录
         const delete_stmt = this.db.prepare(`DELETE FROM ${tableName}`)
@@ -219,6 +230,7 @@ export default class DatabaseManager {
           this.db
             .prepare(`UPDATE sqlite_sequence SET seq = 0 WHERE name = 'fbw_privacy_space'`)
             .run()
+          this.db.prepare(`UPDATE sqlite_sequence SET seq = 0 WHERE name = 'fbw_statistics'`).run()
           this.db
             .prepare(`UPDATE sqlite_sequence SET seq = 0 WHERE name = 'fbw_resource_words'`)
             .run()
@@ -401,7 +413,8 @@ export default class DatabaseManager {
 
     // 更新或插入数据到sys表
     const update_stmt = this.db.prepare(
-      `INSERT OR REPLACE INTO fbw_sys (storeKey, storeData, storeType) VALUES (@storeKey, @storeData, @storeType)`
+      `INSERT INTO fbw_sys (storeKey, storeData, storeType, updated_at) VALUES (@storeKey, @storeData, @storeType, datetime('now', 'localtime'))
+      ON CONFLICT(storeKey) DO UPDATE SET storeData=excluded.storeData, storeType=excluded.storeType, updated_at=datetime('now', 'localtime')`
     )
     const update_result = update_stmt.run({
       storeKey,

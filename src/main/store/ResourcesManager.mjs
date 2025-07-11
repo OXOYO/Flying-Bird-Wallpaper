@@ -270,85 +270,21 @@ export default class ResourcesManager {
           }
         }
       } else {
-        // 检查资源是否已收藏，如果已收藏则num+1, 未收藏则插入
-        const check_stmt = this.db.prepare(`SELECT * FROM fbw_favorites WHERE resourceId =?`)
-        const check_result = check_stmt.get(resourceId)
-        if (check_result) {
-          // 更新收藏数量
-          const update_stmt = this.db.prepare(
-            `UPDATE fbw_favorites SET num = num + 1 WHERE resourceId =?`
-          )
-          const update_result = update_stmt.run(resourceId)
-          if (update_result.changes > 0) {
-            ret = {
-              success: true,
-              message: t('messages.operationSuccess')
-            }
-          }
-        } else {
-          const insert_stmt = this.db.prepare(
-            `INSERT INTO fbw_favorites (resourceId, num) VALUES (?, 1)`
-          )
-          const insert_result = insert_stmt.run(resourceId)
-          if (insert_result.changes > 0) {
-            ret = {
-              success: true,
-              message: t('messages.operationSuccess')
-            }
-          }
+        const insert_stmt = this.db.prepare(
+          `INSERT OR IGNORE INTO fbw_favorites (resourceId) VALUES (?)`
+        )
+        insert_stmt.run(resourceId)
+        // 更新统计表
+        await this.updateStatistics(resourceId, { favorites: 1 })
+        ret = {
+          success: true,
+          message: t('messages.operationSuccess')
         }
       }
     } catch (err) {
       this.logger.error(`加入收藏夹失败: ${err}`)
     }
 
-    return ret
-  }
-
-  // 更新收藏数量
-  async updateFavoriteCount(resourceId, count) {
-    let ret = {
-      success: false,
-      message: t('messages.operationFail')
-    }
-    try {
-      if (!resourceId || count === undefined || count <= 0) {
-        ret.message = t('messages.paramsError')
-        return ret
-      }
-      // 当没有资源时插入，当有资源时num加count
-      const check_stmt = this.db.prepare(`SELECT * FROM fbw_favorites WHERE resourceId =?`)
-      const check_result = check_stmt.get(resourceId)
-      if (!check_result) {
-        const insert_stmt = this.db.prepare(
-          `INSERT INTO fbw_favorites (resourceId, num) VALUES (?, ?)`
-        )
-        const insert_result = insert_stmt.run(resourceId, count)
-        if (insert_result.changes > 0) {
-          ret = {
-            success: true,
-            message: t('messages.operationSuccess')
-          }
-          return ret
-        }
-      } else {
-        count += check_result.num
-        if (count <= 0) {
-          return ret
-        }
-        // 更新收藏数量
-        const update_stmt = this.db.prepare(`UPDATE fbw_favorites SET num =? WHERE resourceId =?`)
-        const update_result = update_stmt.run(count, resourceId)
-        if (update_result.changes > 0) {
-          ret = {
-            success: true,
-            message: t('messages.operationSuccess')
-          }
-        }
-      }
-    } catch (err) {
-      this.logger.error(`更新收藏数量失败: ${err}`)
-    }
     return ret
   }
 
@@ -365,6 +301,10 @@ export default class ResourcesManager {
       const delete_result = delete_stmt.run(resourceId)
 
       if (delete_result.changes > 0) {
+        if (!isPrivacySpace) {
+          // 更新统计表
+          await this.updateStatistics(resourceId, { favorites: -1 })
+        }
         ret = {
           success: true,
           message: t('messages.operationSuccess')
@@ -372,6 +312,68 @@ export default class ResourcesManager {
       }
     } catch (err) {
       this.logger.error(`移出收藏夹失败: ${err}`)
+    }
+
+    return ret
+  }
+
+  // 更新统计数据
+  async updateStatistics(resourceId, data) {
+    let ret = {
+      success: false,
+      message: t('messages.operationFail')
+    }
+
+    try {
+      if (!resourceId || !data || typeof data !== 'object') {
+        ret.message = t('messages.paramsError')
+        return ret
+      }
+      // 允许更新的字段
+      const allowedFields = ['views', 'downloads', 'favorites', 'wallpapers']
+      const updateFields = Object.keys(data).filter((key) => allowedFields.includes(key))
+      if (updateFields.length === 0) {
+        ret.message = t('messages.paramsError')
+        return ret
+      }
+      // 检查是否存在
+      const check_stmt = this.db.prepare('SELECT * FROM fbw_statistics WHERE resourceId = ?')
+      const check_result = check_stmt.get(resourceId)
+      if (check_result) {
+        // 构造更新语句，所有字段都做下限保护
+        const setStr = updateFields.map((f) => `${f} = MAX(${f} + ?, 0)`).join(', ')
+        const update_stmt = this.db.prepare(
+          `UPDATE fbw_statistics SET ${setStr}, updated_at = datetime('now', 'localtime') WHERE resourceId = ?`
+        )
+        const params = updateFields.map((f) => data[f])
+        params.push(resourceId)
+        const update_result = update_stmt.run(...params)
+        if (update_result.changes > 0) {
+          ret = {
+            success: true,
+            message: t('messages.operationSuccess')
+          }
+        }
+      } else {
+        // 插入新记录，未提供的字段用默认值
+        const insertFields = ['resourceId', ...allowedFields]
+        const insertValues = [resourceId]
+        for (const f of allowedFields) {
+          insertValues.push(data[f] || 0)
+        }
+        const insert_stmt = this.db.prepare(
+          `INSERT INTO fbw_statistics (${insertFields.join(',')}) VALUES (${insertFields.map(() => '?').join(',')})`
+        )
+        const insert_result = insert_stmt.run(...insertValues)
+        if (insert_result.changes > 0) {
+          ret = {
+            success: true,
+            message: t('messages.operationSuccess')
+          }
+        }
+      }
+    } catch (err) {
+      this.logger.error(`更新统计数据失败: ${err}`)
     }
 
     return ret

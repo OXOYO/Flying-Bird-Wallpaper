@@ -169,7 +169,7 @@ export default async function setupSocketIO(
           })
           return
         }
-        const res = await resourcesManager.updateFavoriteCount(id, count)
+        const res = await resourcesManager.updateStatistics(id, { favorites: count })
         safeCallback(callback, {
           success: res.success,
           message: res.success ? t('messages.operationSuccess') : t('messages.operationFail')
