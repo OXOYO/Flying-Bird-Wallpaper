@@ -154,22 +154,45 @@ const api = {
     }
   },
   // 双向通信
+  // 文件操作
   selectFolder: (...args) => ipcRenderer.invoke('main:selectFolder', ...args),
   selectFile: (...args) => ipcRenderer.invoke('main:selectFile', ...args),
   showItemInFolder: (...args) => ipcRenderer.invoke('main:showItemInFolder', ...args),
+  deleteFile: (...args) => ipcRenderer.invoke('main:deleteFile', ...args),
   openDir: (...args) => ipcRenderer.invoke('main:openDir', ...args),
   openUrl: (...args) => ipcRenderer.invoke('main:openUrl', ...args),
-  openViewImageWindow: (...args) => ipcRenderer.invoke('main:openViewImageWindow', ...args),
-  getWindowPosition: (name) => ipcRenderer.invoke('main:getWindowPosition', name),
-  setWindowPosition: (...args) => ipcRenderer.invoke('main:setWindowPosition', ...args),
-  toggleMainWindow: (...args) => ipcRenderer.invoke('main:toggleMainWindow', ...args),
+  refreshDirectory: (...args) => ipcRenderer.invoke('main:refreshDirectory', ...args),
+
+  // 数据操作
   getSettingData: (...args) => ipcRenderer.invoke('main:getSettingData', ...args),
   updateSettingData: (...args) => ipcRenderer.invoke('main:updateSettingData', ...args),
   getResourceMap: (...args) => ipcRenderer.invoke('main:getResourceMap', ...args),
+  getPostData: (...args) => ipcRenderer.invoke('main:getPostData', ...args),
   checkPrivacyPassword: (...args) => ipcRenderer.invoke('main:checkPrivacyPassword', ...args),
   hasPrivacyPassword: (...args) => ipcRenderer.invoke('main:hasPrivacyPassword', ...args),
   updatePrivacyPassword: (...args) => ipcRenderer.invoke('main:updatePrivacyPassword', ...args),
+  addToFavorites: (...args) => ipcRenderer.invoke('main:addToFavorites', ...args),
+  removeFavorites: (...args) => ipcRenderer.invoke('main:removeFavorites', ...args),
+  getWords: (...args) => ipcRenderer.invoke('main:getWords', ...args),
+
+  // 窗口操作
+  resizeWindow: (...args) => ipcRenderer.invoke('main:resizeWindow', ...args),
+  getWindowPosition: (name) => ipcRenderer.invoke('main:getWindowPosition', name),
+  setWindowPosition: (...args) => ipcRenderer.invoke('main:setWindowPosition', ...args),
+  toggleMainWindow: (...args) => ipcRenderer.invoke('main:toggleMainWindow', ...args),
+  openViewImageWindow: (...args) => ipcRenderer.invoke('main:openViewImageWindow', ...args),
+  closeViewImageWindow: (...args) => ipcRenderer.invoke('main:closeViewImageWindow', ...args),
+  openSuspensionBall: (...args) => ipcRenderer.invoke('main:openSuspensionBall', ...args),
+  closeSuspensionBall: (...args) => ipcRenderer.invoke('main:closeSuspensionBall', ...args),
+  openRhythmWallpaperWindow: (...args) =>
+    ipcRenderer.invoke('main:openRhythmWallpaperWindow', ...args),
+  closeRhythmWallpaperWindow: (...args) =>
+    ipcRenderer.invoke('main:closeRhythmWallpaperWindow', ...args),
+
+  // 壁纸操作
   search: (...args) => ipcRenderer.invoke('main:search', ...args),
+  toggleAutoSwitchWallpaper: (...args) =>
+    ipcRenderer.invoke('main:toggleAutoSwitchWallpaper', ...args),
   setAsWallpaperWithDownload: (...args) =>
     ipcRenderer.invoke('main:setAsWallpaperWithDownload', ...args),
   nextWallpaper: (...args) => ipcRenderer.invoke('main:nextWallpaper', ...args),
@@ -179,6 +202,7 @@ const api = {
   // 动态壁纸相关API
   selectVideoFile: () => ipcRenderer.invoke('main:selectVideoFile'),
   setDynamicWallpaper: (...args) => ipcRenderer.invoke('main:setDynamicWallpaper', ...args),
+  closeDynamicWallpaper: (...args) => ipcRenderer.invoke('main:closeDynamicWallpaper', ...args),
   // 设置动态壁纸静音状态
   setDynamicWallpaperMute: (...args) => ipcRenderer.invoke('main:setDynamicWallpaperMute', ...args),
   // 检查动态壁纸状态
@@ -198,29 +222,20 @@ const api = {
   // 设置动态壁纸亮度
   setDynamicWallpaperBrightness: (value) =>
     ipcRenderer.invoke('main:setDynamicWallpaperBrightness', value),
-
   // 设置动态壁纸对比度
   setDynamicWallpaperContrast: (value) =>
     ipcRenderer.invoke('main:setDynamicWallpaperContrast', value),
-  closeDynamicWallpaper: (...args) => ipcRenderer.invoke('main:closeDynamicWallpaper', ...args),
-  getPostData: (...args) => ipcRenderer.invoke('main:getPostData', ...args),
-  addToFavorites: (...args) => ipcRenderer.invoke('main:addToFavorites', ...args),
-  removeFavorites: (...args) => ipcRenderer.invoke('main:removeFavorites', ...args),
-  deleteFile: (...args) => ipcRenderer.invoke('main:deleteFile', ...args),
-  toggleAutoSwitchWallpaper: (...args) =>
-    ipcRenderer.invoke('main:toggleAutoSwitchWallpaper', ...args),
+
+  // 数据库操作
   doClearDB: (...args) => ipcRenderer.invoke('main:doClearDB', ...args),
-  refreshDirectory: (...args) => ipcRenderer.invoke('main:refreshDirectory', ...args),
-  openSuspensionBall: (...args) => ipcRenderer.invoke('main:openSuspensionBall', ...args),
-  closeSuspensionBall: (...args) => ipcRenderer.invoke('main:closeSuspensionBall', ...args),
-  getWords: (...args) => ipcRenderer.invoke('main:getWords', ...args),
-  closeViewImageWindow: (...args) => ipcRenderer.invoke('main:closeViewImageWindow', ...args),
-  resizeWindow: (...args) => ipcRenderer.invoke('main:resizeWindow', ...args),
   clearCache: (...args) => ipcRenderer.invoke('main:clearCache', ...args),
   clearDownloadedAll: (...args) => ipcRenderer.invoke('main:clearDownloadedAll', ...args),
   clearDownloadedExpired: (...args) => ipcRenderer.invoke('main:clearDownloadedExpired', ...args),
+
+  // 服务操作
   startH5Server: (...args) => ipcRenderer.invoke('main:startH5Server', ...args),
   stopH5Server: (...args) => ipcRenderer.invoke('main:stopH5Server', ...args),
+
   // 检查更新
   checkUpdate: (...args) => ipcRenderer.invoke('main:checkUpdate', ...args)
 }
