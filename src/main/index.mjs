@@ -45,6 +45,7 @@ import MainWindow from './windows/MainWindow.mjs'
 import ViewImageWindow from './windows/ViewImageWindow.mjs'
 import SuspensionBall from './windows/SuspensionBall.mjs'
 import DynamicWallpaperWindow from './windows/DynamicWallpaperWindow.mjs'
+import RhythmWallpaperWindow from './windows/RhythmWallpaperWindow.mjs'
 
 const userDataPath = app.getPath('userData')
 // 目录
@@ -137,6 +138,7 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
   global.FBW.viewImageWindow = ViewImageWindow.getInstance()
   global.FBW.suspensionBall = SuspensionBall.getInstance()
   global.FBW.dynamicWallpaperWindow = DynamicWallpaperWindow.getInstance()
+  global.FBW.rhythmWallpaperWindow = RhythmWallpaperWindow.getInstance()
   let tray
   let updater
 

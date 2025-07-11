@@ -42,6 +42,14 @@ export default class RhythmWallpaperWindow {
       }
     }
 
+    ipcMain.handle('main:openRhythmWallpaperWindow', (event) => {
+      this.create()
+    })
+
+    ipcMain.handle('main:closeRhythmWallpaperWindow', (event) => {
+      this.close()
+    })
+
     // 保存实例
     RhythmWallpaperWindow._instance = this
   }
