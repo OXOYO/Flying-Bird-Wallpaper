@@ -87,10 +87,6 @@ export const readDirRecursive = async (
   allowedFileExt,
   existingFiles = []
 ) => {
-  const cacheTime = {
-    start: Date.now(),
-    end: Date.now()
-  }
   // 检查缓存是否存在且有效
   const cacheKey = `${dirPath}_${allowedFileExt.join('_')}`
   // 检查缓存是否存在且有效
@@ -117,12 +113,7 @@ export const readDirRecursive = async (
     })
     return ret
   }
-  cacheTime.end = Date.now()
 
-  const existingTime = {
-    start: Date.now(),
-    end: Date.now()
-  }
   // 构建现有文件的映射，用于快速查找
   const existingFilesMap = new Map()
   for (const file of existingFiles) {
@@ -130,12 +121,7 @@ export const readDirRecursive = async (
       existingFilesMap.set(file.filePath, file)
     }
   }
-  existingTime.end = Date.now()
 
-  const patternsTime = {
-    start: Date.now(),
-    end: Date.now()
-  }
   // 使用 fast-glob 快速获取所有匹配的文件
   const patterns = allowedFileExt.map((ext) => `**/*${ext}`)
   const entries = await fg(patterns, {
@@ -145,12 +131,7 @@ export const readDirRecursive = async (
     stats: false,
     followSymbolicLinks: false
   })
-  patternsTime.end = Date.now()
 
-  const fileTime = {
-    start: Date.now(),
-    end: Date.now()
-  }
   // 批量获取文件状态
   const fileStats = await Promise.all(
     entries.map(async (filePath) => {
@@ -167,12 +148,7 @@ export const readDirRecursive = async (
       }
     })
   )
-  fileTime.end = Date.now()
 
-  const filterTime = {
-    start: Date.now(),
-    end: Date.now()
-  }
   // 过滤掉获取状态失败的文件
   const validFiles = fileStats.filter(Boolean)
 
@@ -181,12 +157,7 @@ export const readDirRecursive = async (
     const existingFile = existingFilesMap.get(file.filePath)
     return !existingFile || file.stats.mtimeMs > existingFile.mtimeMs
   })
-  filterTime.end = Date.now()
 
-  const imageTime = {
-    start: Date.now(),
-    end: Date.now()
-  }
   // 批量处理文件元数据
   const rows = await Promise.all(
     filesToProcess.map(async (file) => {
@@ -221,7 +192,6 @@ export const readDirRecursive = async (
       }
     })
   )
-  imageTime.end = Date.now()
 
   // 过滤掉处理失败的文件
   const validRows = rows.filter(Boolean)
