@@ -317,7 +317,7 @@ export default class ResourcesManager {
       if (delete_result.changes > 0) {
         if (!isPrivacySpace) {
           // 更新统计表
-          await this.updateStatistics({ resourceId, favorites: -1 })
+          await this.updateStatistics({ resourceId, favorites: 0 })
         }
         ret = {
           success: true,
@@ -353,14 +353,31 @@ export default class ResourcesManager {
       const check_stmt = this.db.prepare('SELECT * FROM fbw_statistics WHERE resourceId = ?')
       const check_result = check_stmt.get(resourceId)
       if (check_result) {
-        // 构造更新语句，所有字段都做下限保护
-        const setStr = updateFields.map((f) => `${f} = MAX(${f} + ?, 0)`).join(', ')
+        const gtZeroFields = updateFields.filter((f) => params[f] > 0)
+        const leZeroFields = updateFields.filter((f) => params[f] <= 0)
+
+        let setStrArr = []
+        let updateValues = []
+
+        // 大于0的字段
+        gtZeroFields.forEach((f) => {
+          setStrArr.push(`${f} = MAX(${f} + ?, 0)`)
+          updateValues.push(params[f])
+        })
+        // 小于等于0的字段
+        leZeroFields.forEach((f) => {
+          setStrArr.push(`${f} = 0`)
+          // 不需要push参数
+        })
+
+        setStrArr.push(`updated_at = datetime('now', 'localtime')`)
+        updateValues.push(resourceId)
+
+        const setStr = setStrArr.join(', ')
         const update_stmt = this.db.prepare(
-          `UPDATE fbw_statistics SET ${setStr}, updated_at = datetime('now', 'localtime') WHERE resourceId = ?`
+          `UPDATE fbw_statistics SET ${setStr} WHERE resourceId = ?`
         )
-        const params = updateFields.map((f) => params[f])
-        params.push(resourceId)
-        const update_result = update_stmt.run(...params)
+        const update_result = update_stmt.run(...updateValues)
         if (update_result.changes > 0) {
           ret = {
             success: true,
