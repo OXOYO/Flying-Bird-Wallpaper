@@ -33,7 +33,7 @@ export default class SuspensionBall {
       show: false,
       transparent: true,
       backgroundColor: '#00000000',
-      titleBarStyle: false,
+      titleBarStyle: 'hidden',
       hasShadow: false,
       alwaysOnTop: true,
       acceptFirstMouse: true, // 添加此配置，使窗口能立即响应鼠标事件
