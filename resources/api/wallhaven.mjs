@@ -1,10 +1,3 @@
-/*
- * @Author: OXOYO
- * @Date: 2025-06-25 16:15:51
- * @LastEditors: OXOYO
- * @LastEditTime: 2025-07-09 16:51:10
- * @Description: file content
- */
 const { axios, ApiBase, calculateImageOrientation, calculateImageQuality } = global.FBW.apiHelpers
 const RESOURCE_NAME = 'wallhaven'
 

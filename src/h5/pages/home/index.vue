@@ -2,7 +2,7 @@
 import UseCommonStore from '@h5/stores/commonStore.js'
 import UseSettingStore from '@h5/stores/settingStore.js'
 import * as api from '@h5/api/index.js'
-import { showImagePreview, showNotify, showConfirmDialog } from 'vant'
+import { showNotify, showConfirmDialog } from 'vant'
 import { useTranslation } from 'i18next-vue'
 
 const { t } = useTranslation()
@@ -54,7 +54,9 @@ const autoSwitch = reactive({
   // 当前显示的图片索引
   currentIndex: 0,
   // 图片列表
-  imageList: []
+  imageList: [],
+  // 总数
+  total: 0
 })
 
 // 收藏双击相关状态
@@ -172,6 +174,7 @@ const initAutoSwitch = () => {
   autoSwitch.intervals = null
   autoSwitch.currentIndex = 0
   autoSwitch.imageList = []
+  autoSwitch.total = 0
 }
 
 const initFavoriteClick = () => {
@@ -247,6 +250,8 @@ const loadData = async (isRefresh) => {
           : rawUrl
       }
     })
+    // 保存 total
+    autoSwitch.total = res.data.total || autoSwitch.imageList.length
     if (res.data.list.length < pageInfo.pageSize) {
       flags.finished = true
     }
@@ -266,6 +271,8 @@ const loadData = async (isRefresh) => {
 // 触摸开始
 const onTouchStart = (event) => {
   if (flags.isAnimating) return
+  const index = autoSwitch.currentIndex
+  if (imageScales[index]?.count > 0) return // 放大时禁止滑动
   touchPosition.startY = event.touches[0].clientY
 
   if (settingData.value.h5AutoSwitch) {
@@ -276,6 +283,8 @@ const onTouchStart = (event) => {
 // 触摸移动
 const onTouchMove = (event) => {
   if (flags.isAnimating) return
+  const index = autoSwitch.currentIndex
+  if (imageScales[index]?.count > 0) return
   const clientHeight = imageSliderRef.value.clientHeight
   const deltaY = event.touches[0].clientY - touchPosition.startY
   touchPosition.offsetY = -autoSwitch.currentIndex * clientHeight + deltaY
@@ -284,6 +293,8 @@ const onTouchMove = (event) => {
 // 触摸结束
 const onTouchEnd = (event) => {
   if (flags.isAnimating) return
+  const index = autoSwitch.currentIndex
+  if (imageScales[index]?.count > 0) return
   const deltaY = event.changedTouches[0].clientY - touchPosition.startY
 
   // 判断滑动方向
@@ -658,73 +669,6 @@ const toggleRandom = async () => {
   await onRefresh()
 }
 
-// 双击预览图片
-const onPreviewImage = async (index) => {
-  // 关闭自动翻页
-  stopAutoSwitch()
-
-  // 禁用浏览器长按菜单
-  const disableContextMenu = () => {
-    // 等待预览组件挂载完成
-    setTimeout(() => {
-      // 查找预览组件
-      const previewContainer = document.querySelector('.van-image-preview')
-
-      if (previewContainer) {
-        // 阻止右键菜单
-        const preventContextMenu = (e) => {
-          e.preventDefault()
-          e.stopPropagation()
-          return false
-        }
-
-        // 阻止长按菜单
-        const preventLongPress = (e) => {
-          const longPressTimer = setTimeout(() => {
-            e.preventDefault()
-            e.stopPropagation()
-            return false
-          }, 500)
-
-          const clearTimer = () => {
-            clearTimeout(longPressTimer)
-          }
-
-          previewContainer.addEventListener('touchend', clearTimer, { once: true })
-          previewContainer.addEventListener('touchcancel', clearTimer, { once: true })
-        }
-
-        // 添加事件监听器
-        previewContainer.addEventListener('contextmenu', preventContextMenu, { passive: false })
-        previewContainer.addEventListener('touchstart', preventLongPress, { passive: false })
-        previewContainer.addEventListener('selectstart', preventContextMenu, { passive: false })
-        previewContainer.addEventListener('dragstart', preventContextMenu, { passive: false })
-
-        // 为所有图片元素添加样式
-        const previewImages = previewContainer.querySelectorAll('img')
-        previewImages.forEach((img) => {
-          img.style.webkitTouchCallout = 'none'
-          img.style.webkitTapHighlightColor = 'transparent'
-          img.style.webkitUserSelect = 'none'
-          img.style.userSelect = 'none'
-          img.style.webkitUserDrag = 'none'
-          img.style.userDrag = 'none'
-        })
-      }
-    }, 100)
-  }
-
-  // 启用禁用功能
-  disableContextMenu()
-
-  showImagePreview({
-    images: autoSwitch.imageList.map((item) => item.rawUrl),
-    startPosition: index,
-    maxZoom: 100,
-    minZoom: 1 / 3
-  })
-}
-
 // 图片项触摸相关状态
 const imageTouch = reactive({
   lastTapTime: 0,
@@ -733,27 +677,78 @@ const imageTouch = reactive({
   timer: null
 })
 
+// 记录每个图片的缩放状态、中心点和拖动偏移
+// 新增 pinchScale、pinchStartDist、pinchLastScale
+const imageScales = reactive({}) // { [index]: { count, origin, offsetX, offsetY, lastX, lastY, dragging, pinchScale, pinchStartDist, pinchLastScale } }
+
 // 图片项触摸开始 - 统一处理函数
 const handleImageTouchStart = (index, event) => {
-  // 记录触摸开始时间和位置
+  const touches = event.touches
+  // 放大状态下
+  if (imageScales[index]?.count > 0) {
+    if (touches.length === 2) {
+      // 双指缩放
+      const dx = touches[0].clientX - touches[1].clientX
+      const dy = touches[0].clientY - touches[1].clientY
+      imageScales[index].pinchStartDist = Math.sqrt(dx * dx + dy * dy)
+      imageScales[index].pinchLastScale =
+        imageScales[index].pinchScale || 1 + imageScales[index].count
+    } else {
+      // 单指拖动
+      const touch = touches[0]
+      imageScales[index].dragging = true
+      imageScales[index].lastX = touch.clientX
+      imageScales[index].lastY = touch.clientY
+      imageTouch.startX = touch.clientX
+      imageTouch.startY = touch.clientY
+    }
+    return
+  }
+  // 普通点击
   imageTouch.startX = event.touches[0].clientX
   imageTouch.startY = event.touches[0].clientY
-
   // 设置长按定时器
   longPress.timer = setTimeout(() => {
     longPress.selectedIndex = index
     flags.showActionPopup = true
     settingStore.vibrate()
-  }, 500) // 500毫秒长按触发
+  }, 500)
 }
 
 // 图片项触摸移动 - 统一处理函数
-const handleImageTouchMove = (event) => {
+const handleImageTouchMove = (index, event) => {
+  const touches = event.touches
+  if (imageScales[index]?.count > 0) {
+    if (touches.length === 2) {
+      // 双指缩放
+      const dx = touches[0].clientX - touches[1].clientX
+      const dy = touches[0].clientY - touches[1].clientY
+      const dist = Math.sqrt(dx * dx + dy * dy)
+      const startDist = imageScales[index].pinchStartDist || dist
+      let scale =
+        (dist / startDist) * (imageScales[index].pinchLastScale || 1 + imageScales[index].count)
+      // 限制缩放范围
+      scale = Math.max(1, Math.min(4, scale))
+      imageScales[index].pinchScale = scale
+      event.preventDefault()
+      return
+    } else if (imageScales[index].dragging) {
+      // 单指拖动
+      const touch = touches[0]
+      const dx = touch.clientX - imageScales[index].lastX
+      const dy = touch.clientY - imageScales[index].lastY
+      imageScales[index].offsetX = (imageScales[index].offsetX || 0) + dx
+      imageScales[index].offsetY = (imageScales[index].offsetY || 0) + dy
+      imageScales[index].lastX = touch.clientX
+      imageScales[index].lastY = touch.clientY
+      event.preventDefault()
+      return
+    }
+  }
   // 计算移动距离
   const moveX = event.touches[0].clientX - imageTouch.startX
   const moveY = event.touches[0].clientY - imageTouch.startY
   const moveDistance = Math.sqrt(moveX * moveX + moveY * moveY)
-
   // 如果移动距离超过阈值，取消长按和双击操作
   if (moveDistance > 10) {
     // 清除长按定时器
@@ -761,7 +756,6 @@ const handleImageTouchMove = (event) => {
       clearTimeout(longPress.timer)
       longPress.timer = null
     }
-
     // 清除双击定时器
     if (imageTouch.timer) {
       clearTimeout(imageTouch.timer)
@@ -772,39 +766,52 @@ const handleImageTouchMove = (event) => {
 
 // 图片项触摸结束 - 统一处理函数
 const handleImageTouchEnd = (index, event) => {
-  // 清除长按定时器
+  if (imageScales[index]?.count > 0) {
+    imageScales[index].dragging = false
+    imageScales[index].pinchStartDist = undefined
+    imageScales[index].pinchLastScale = undefined
+  }
   if (longPress.timer) {
     clearTimeout(longPress.timer)
     longPress.timer = null
   }
-
-  // 计算移动距离
   const moveX = event.changedTouches[0].clientX - imageTouch.startX
   const moveY = event.changedTouches[0].clientY - imageTouch.startY
   const moveDistance = Math.sqrt(moveX * moveX + moveY * moveY)
-
-  // 只有在移动距离很小的情况下才处理点击/双击事件
-  if (moveDistance < 10) {
-    // 计算触摸持续时间
+  if (moveDistance < 30) {
     const currentTime = new Date().getTime()
     const timeDiff = currentTime - imageTouch.lastTapTime
-
-    // 检查是否是双击（两次点击间隔小于300ms）
     if (timeDiff < 300) {
-      // 双击 - 预览图片
-      onPreviewImage(index)
-      imageTouch.lastTapTime = 0 // 重置点击时间
-
-      // 清除任何现有的定时器
-      if (imageTouch.timer) {
-        clearTimeout(imageTouch.timer)
-        imageTouch.timer = null
+      // 双击 - 缩放
+      const el = event.currentTarget
+      const rect = el.getBoundingClientRect()
+      const touch = event.changedTouches[0]
+      const x = touch.clientX - rect.left
+      const y = touch.clientY - rect.top
+      const xPercent = ((x / rect.width) * 100).toFixed(2)
+      const yPercent = ((y / rect.height) * 100).toFixed(2)
+      let prevCount = imageScales[index]?.count || 0
+      let nextCount = prevCount + 1
+      if (nextCount > 3) {
+        imageScales[index] = {
+          count: 0,
+          origin: '50% 50%',
+          offsetX: 0,
+          offsetY: 0,
+          pinchScale: undefined
+        }
+      } else {
+        imageScales[index] = {
+          count: nextCount,
+          origin: prevCount === 0 ? `${xPercent}% ${yPercent}%` : imageScales[index].origin,
+          offsetX: imageScales[index]?.offsetX || 0,
+          offsetY: imageScales[index]?.offsetY || 0,
+          pinchScale: undefined
+        }
+        if (prevCount === 0) stopAutoSwitch()
       }
-
-      // 注意：不要阻止事件冒泡，这样滑动容器也能接收到事件
-      // event.stopPropagation()
+      imageTouch.lastTapTime = 0
     } else {
-      // 第一次点击 - 记录时间，等待可能的第二次点击
       imageTouch.lastTapTime = currentTime
     }
   }
@@ -1031,13 +1038,25 @@ const handlePageShow = () => {}
             :key="item.id"
             v-lazy:background-image="item.src"
             class="image-item"
-            :style="imageItemStyle"
+            :style="{
+              ...imageItemStyle,
+              transition: imageScales[index]?.dragging ? 'none' : 'transform 0.3s',
+              transform: imageScales[index]?.count
+                ? `scale(${imageScales[index]?.pinchScale || 1 + imageScales[index].count}) translate(${imageScales[index]?.offsetX || 0}px, ${imageScales[index]?.offsetY || 0}px)`
+                : 'scale(1) translate(0,0)',
+              transformOrigin: imageScales[index]?.origin || '50% 50%',
+              cursor: imageScales[index]?.count ? 'grab' : 'zoom-in'
+            }"
             @touchstart="(e) => handleImageTouchStart(index, e)"
-            @touchmove="handleImageTouchMove"
+            @touchmove="(e) => handleImageTouchMove(index, e)"
             @touchend="(e) => handleImageTouchEnd(index, e)"
           ></div>
         </van-list>
       </div>
+    </div>
+    <!-- 指示器 -->
+    <div v-if="autoSwitch.total > 0" class="number-indicator">
+      {{ autoSwitch.currentIndex + 1 }} / {{ autoSwitch.total }}
     </div>
   </div>
 
@@ -1314,5 +1333,20 @@ const handlePageShow = () => {}
 .cancel-action {
   border-top: 1px solid #eee;
   padding-top: 16px;
+}
+
+.number-indicator {
+  position: absolute;
+  left: 50%;
+  top: 18px;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 16px;
+  font-size: 14px;
+  letter-spacing: 1px;
+  z-index: 20;
+  pointer-events: none;
 }
 </style>
