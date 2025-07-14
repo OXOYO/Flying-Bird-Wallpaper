@@ -82,6 +82,12 @@ const favoriteHold = reactive({
   interval: null
 })
 
+// 标签栏切换相关状态
+const tabbarBtnTouch = reactive({
+  lastTapTime: 0,
+  timer: null
+})
+
 // 是否随机
 const isRandom = computed(() => {
   // 1:随机 2:顺序
@@ -944,8 +950,26 @@ const onSettingDataChange = async (payload) => {
   await settingStore.h5UpdateSettingData(payload)
 }
 
-const onToggleTabbar = () => {
-  commonStore.toggleTabbarVisible()
+const handleTabbarButtonTouchEnd = (e) => {
+  const now = Date.now()
+  const timeDiff = now - tabbarBtnTouch.lastTapTime
+  if (tabbarBtnTouch.timer) {
+    clearTimeout(tabbarBtnTouch.timer)
+    tabbarBtnTouch.timer = null
+  }
+  if (timeDiff < 300) {
+    // 双击
+    tabbarBtnTouch.lastTapTime = 0
+    onRefresh()
+  } else {
+    // 单击，等待是否有第二次点击
+    tabbarBtnTouch.lastTapTime = now
+    tabbarBtnTouch.timer = setTimeout(() => {
+      commonStore.toggleTabbarVisible()
+      tabbarBtnTouch.timer = null
+      tabbarBtnTouch.lastTapTime = 0
+    }, 300)
+  }
 }
 
 const onBackTop = () => {
@@ -1151,7 +1175,7 @@ const handlePageShow = () => {}
     <div
       v-if="settingData.h5EnabledFloatingButtons.includes('toggleTabbar')"
       class="floating-button"
-      @click="onToggleTabbar"
+      @touchend="handleTabbarButtonTouchEnd"
     >
       <IconifyIcon
         class="floating-button-icon"
