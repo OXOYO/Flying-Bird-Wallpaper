@@ -4,6 +4,7 @@ import UseSettingStore from '@h5/stores/settingStore.js'
 import * as api from '@h5/api/index.js'
 import { showNotify, showConfirmDialog } from 'vant'
 import { useTranslation } from 'i18next-vue'
+import { toRaw } from 'vue'
 
 const { t } = useTranslation()
 const commonStore = UseCommonStore()
@@ -109,6 +110,11 @@ const floatingButtonsStyle = computed(() => {
       left: '20px'
     }
   }
+  const index = autoSwitch.currentIndex
+  if (imageScales[index]?.scaling) {
+    ret.display = 'none'
+  }
+
   return ret
 })
 
@@ -272,7 +278,7 @@ const loadData = async (isRefresh) => {
 const onTouchStart = (event) => {
   if (flags.isAnimating) return
   const index = autoSwitch.currentIndex
-  if (imageScales[index]?.count > 0) return // 放大时禁止滑动
+  if (imageScales[index]?.scaling) return // 放大时禁止滑动
   touchPosition.startY = event.touches[0].clientY
 
   if (settingData.value.h5AutoSwitch) {
@@ -284,7 +290,7 @@ const onTouchStart = (event) => {
 const onTouchMove = (event) => {
   if (flags.isAnimating) return
   const index = autoSwitch.currentIndex
-  if (imageScales[index]?.count > 0) return
+  if (imageScales[index]?.scaling) return
   const clientHeight = imageSliderRef.value.clientHeight
   const deltaY = event.touches[0].clientY - touchPosition.startY
   touchPosition.offsetY = -autoSwitch.currentIndex * clientHeight + deltaY
@@ -294,7 +300,7 @@ const onTouchMove = (event) => {
 const onTouchEnd = (event) => {
   if (flags.isAnimating) return
   const index = autoSwitch.currentIndex
-  if (imageScales[index]?.count > 0) return
+  if (imageScales[index]?.scaling) return
   const deltaY = event.changedTouches[0].clientY - touchPosition.startY
 
   // 判断滑动方向
@@ -685,7 +691,7 @@ const imageScales = reactive({}) // { [index]: { count, origin, offsetX, offsetY
 const handleImageTouchStart = (index, event) => {
   const touches = event.touches
   // 放大状态下
-  if (imageScales[index]?.count > 0) {
+  if (imageScales[index]?.scaling) {
     if (touches.length === 2) {
       // 双指缩放
       const dx = touches[0].clientX - touches[1].clientX
@@ -704,21 +710,23 @@ const handleImageTouchStart = (index, event) => {
     }
     return
   }
-  // 普通点击
-  imageTouch.startX = event.touches[0].clientX
-  imageTouch.startY = event.touches[0].clientY
   // 设置长按定时器
-  longPress.timer = setTimeout(() => {
-    longPress.selectedIndex = index
-    flags.showActionPopup = true
-    settingStore.vibrate()
-  }, 500)
+  if (touches.length === 1) {
+    // 普通点击
+    imageTouch.startX = event.touches[0].clientX
+    imageTouch.startY = event.touches[0].clientY
+    longPress.timer = setTimeout(() => {
+      longPress.selectedIndex = index
+      flags.showActionPopup = true
+      settingStore.vibrate()
+    }, 500)
+  }
 }
 
 // 图片项触摸移动 - 统一处理函数
 const handleImageTouchMove = (index, event) => {
   const touches = event.touches
-  if (imageScales[index]?.count > 0) {
+  if (imageScales[index]?.scaling) {
     if (touches.length === 2) {
       // 双指缩放
       const dx = touches[0].clientX - touches[1].clientX
@@ -728,7 +736,7 @@ const handleImageTouchMove = (index, event) => {
       let scale =
         (dist / startDist) * (imageScales[index].pinchLastScale || 1 + imageScales[index].count)
       // 限制缩放范围
-      scale = Math.max(1, Math.min(4, scale))
+      scale = Math.max(0.5, Math.min(4, scale))
       imageScales[index].pinchScale = scale
       event.preventDefault()
       return
@@ -766,7 +774,7 @@ const handleImageTouchMove = (index, event) => {
 
 // 图片项触摸结束 - 统一处理函数
 const handleImageTouchEnd = (index, event) => {
-  if (imageScales[index]?.count > 0) {
+  if (imageScales[index]?.scaling) {
     imageScales[index].dragging = false
     imageScales[index].pinchStartDist = undefined
     imageScales[index].pinchLastScale = undefined
@@ -792,16 +800,21 @@ const handleImageTouchEnd = (index, event) => {
       const yPercent = ((y / rect.height) * 100).toFixed(2)
       let prevCount = imageScales[index]?.count || 0
       let nextCount = prevCount + 1
-      if (nextCount > 3) {
+      if (nextCount > 1) {
         imageScales[index] = {
+          scaling: true,
           count: 0,
           origin: '50% 50%',
           offsetX: 0,
           offsetY: 0,
           pinchScale: undefined
         }
+        setTimeout(() => {
+          imageScales[index].scaling = false
+        }, 300)
       } else {
         imageScales[index] = {
+          scaling: true,
           count: nextCount,
           origin: prevCount === 0 ? `${xPercent}% ${yPercent}%` : imageScales[index].origin,
           offsetX: imageScales[index]?.offsetX || 0,
@@ -1044,8 +1057,7 @@ const handlePageShow = () => {}
               transform: imageScales[index]?.count
                 ? `scale(${imageScales[index]?.pinchScale || 1 + imageScales[index].count}) translate(${imageScales[index]?.offsetX || 0}px, ${imageScales[index]?.offsetY || 0}px)`
                 : 'scale(1) translate(0,0)',
-              transformOrigin: imageScales[index]?.origin || '50% 50%',
-              cursor: imageScales[index]?.count ? 'grab' : 'zoom-in'
+              transformOrigin: imageScales[index]?.origin || '50% 50%'
             }"
             @touchstart="(e) => handleImageTouchStart(index, e)"
             @touchmove="(e) => handleImageTouchMove(index, e)"
@@ -1055,7 +1067,10 @@ const handlePageShow = () => {}
       </div>
     </div>
     <!-- 指示器 -->
-    <div v-if="autoSwitch.total > 0" class="number-indicator">
+    <div
+      v-if="autoSwitch.total > 0 && !imageScales[autoSwitch.currentIndex]?.scaling"
+      class="number-indicator"
+    >
       {{ autoSwitch.currentIndex + 1 }} / {{ autoSwitch.total }}
     </div>
   </div>
@@ -1336,13 +1351,14 @@ const handlePageShow = () => {}
 }
 
 .number-indicator {
+  display: inline-block;
   position: absolute;
   left: 50%;
-  top: 18px;
+  top: 4px;
   transform: translateX(-50%);
   background: rgba(0, 0, 0, 0.5);
   color: #fff;
-  padding: 8px 14px;
+  padding: 6px 10px;
   border-radius: 16px;
   font-size: 14px;
   letter-spacing: 1px;
