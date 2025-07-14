@@ -742,7 +742,7 @@ const handleImageTouchMove = (index, event) => {
       let scale =
         (dist / startDist) * (imageScales[index].pinchLastScale || 1 + imageScales[index].count)
       // 限制缩放范围
-      scale = Math.max(0.5, Math.min(4, scale))
+      scale = Math.max(0.5, Math.min(10, scale))
       imageScales[index].pinchScale = scale
       event.preventDefault()
       return
@@ -1077,7 +1077,6 @@ const handlePageShow = () => {}
             class="image-item"
             :style="{
               ...imageItemStyle,
-              transition: imageScales[index]?.dragging ? 'none' : 'transform 0.3s',
               transform: imageScales[index]?.count
                 ? `scale(${imageScales[index]?.pinchScale || 1 + imageScales[index].count}) translate(${imageScales[index]?.offsetX || 0}px, ${imageScales[index]?.offsetY || 0}px)`
                 : 'scale(1) translate(0,0)',
@@ -1240,7 +1239,9 @@ const handlePageShow = () => {}
 }
 
 .image-container {
-  transition: transform 0.2s ease;
+  transition: transform 0.2s ease-in;
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 .image-item {
@@ -1249,6 +1250,7 @@ const handlePageShow = () => {}
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  will-change: transform;
 }
 
 .floating-buttons {
@@ -1284,6 +1286,7 @@ const handlePageShow = () => {}
   transition: transform 0.3s ease-out;
   color: white;
   font-size: 30px;
+  will-change: transform;
 }
 
 /* 自定义按钮样式 */
@@ -1304,6 +1307,7 @@ const handlePageShow = () => {}
   opacity: 1;
   transform: translate(0, 0);
   animation: rotate var(--animation-duration, 3s) linear infinite;
+  will-change: transform;
 }
 
 /* 动画类 */
@@ -1378,11 +1382,11 @@ const handlePageShow = () => {}
   display: inline-block;
   position: absolute;
   left: 50%;
-  top: 4px;
+  top: 12px;
   transform: translateX(-50%);
   background: rgba(0, 0, 0, 0.5);
   color: #fff;
-  padding: 6px 10px;
+  padding: 4px 8px;
   border-radius: 16px;
   font-size: 14px;
   letter-spacing: 1px;
