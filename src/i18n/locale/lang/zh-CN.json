@@ -184,7 +184,8 @@
       "setColorWallpaper": "设置颜色壁纸",
       "setDynamicWallpaper": "设置动态壁纸",
       "closeDynamicWallpaper": "关闭动态壁纸",
-      "openPage": {}
+      "openRhythmWallpaperWindow": "打开律动壁纸",
+      "closeRhythmWallpaperWindow": "关闭律动壁纸"
     },
     "About": {
       "name": "名称",

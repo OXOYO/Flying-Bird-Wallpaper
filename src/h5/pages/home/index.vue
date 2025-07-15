@@ -4,7 +4,6 @@ import UseSettingStore from '@h5/stores/settingStore.js'
 import * as api from '@h5/api/index.js'
 import { showNotify, showConfirmDialog } from 'vant'
 import { useTranslation } from 'i18next-vue'
-import { toRaw } from 'vue'
 
 const { t } = useTranslation()
 const commonStore = UseCommonStore()

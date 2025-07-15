@@ -40,24 +40,28 @@ const utilList = ref([
   },
   {
     name: 'clearWordsDB',
+    value: 'words',
     text: '清空词库数据',
     locale: 'pages.Utils.clearWordsDB',
     confirm: true
   },
   {
     name: 'clearFavoritesDB',
+    value: 'favorites',
     text: '清空收藏数据',
     locale: 'pages.Utils.clearFavoritesDB',
     confirm: true
   },
   {
     name: 'clearHistoryDB',
+    value: 'history',
     text: '清空回忆数据',
     locale: 'pages.Utils.clearHistoryDB',
     confirm: true
   },
   {
     name: 'clearStatisticsDB',
+    value: 'statistics',
     text: '清空统计数据',
     locale: 'pages.Utils.clearStatisticsDB',
     confirm: true
@@ -148,11 +152,23 @@ const utilList = ref([
     text: '关闭动态壁纸',
     locale: 'pages.Utils.closeDynamicWallpaper',
     confirm: true
+  },
+  {
+    name: 'openRhythmWallpaperWindow',
+    text: '打开律动壁纸',
+    locale: 'pages.Utils.openRhythmWallpaperWindow',
+    confirm: true
+  },
+  {
+    name: 'closeRhythmWallpaperWindow',
+    text: '关闭律动壁纸',
+    locale: 'pages.Utils.closeRhythmWallpaperWindow',
+    confirm: true
   }
 ])
 
 const onExec = (name) => {
-  let funcName
+  let funcName = name
   let args = []
   const util = utilList.value.find((item) => item.name === name)
   switch (name) {
@@ -167,62 +183,17 @@ const onExec = (name) => {
       break
     }
     case 'clearWordsDB':
-      funcName = 'doClearDB'
-      args = ['words']
-      break
     case 'clearHistoryDB':
-      funcName = 'doClearDB'
-      args = ['history']
-      break
     case 'clearFavoritesDB':
-      funcName = 'doClearDB'
-      args = ['favorites']
-      break
     case 'clearStatisticsDB':
       funcName = 'doClearDB'
-      args = ['statistics']
-      break
-    case 'clearCache':
-      funcName = 'clearCache'
-      break
-    case 'clearDownloadedAll':
-      funcName = 'clearDownloadedAll'
-      break
-    case 'clearDownloadedExpired':
-      funcName = 'clearDownloadedExpired'
-      break
-    case 'refreshDirectory':
-      funcName = 'refreshDirectory'
-      break
-    case 'nextWallpaper':
-      funcName = 'nextWallpaper'
-      break
-    case 'prevWallpaper':
-      funcName = 'prevWallpaper'
+      args = [util.value]
       break
     case 'openDatabaseDir':
     case 'openLogsDir':
     case 'openPluginsDir':
       funcName = 'openDir'
       args = [util.value]
-      break
-    case 'startH5Server':
-      funcName = 'startH5Server'
-      break
-    case 'stopH5Server':
-      funcName = 'stopH5Server'
-      break
-    case 'setWebWallpaper':
-      funcName = 'setWebWallpaper'
-      break
-    case 'setColorWallpaper':
-      funcName = 'setColorWallpaper'
-      break
-    case 'setDynamicWallpaper':
-      args = []
-      break
-    case 'closeDynamicWallpaper':
-      funcName = 'closeDynamicWallpaper'
       break
   }
   if (!util.handle && typeof window.FBW[funcName] !== 'function') {

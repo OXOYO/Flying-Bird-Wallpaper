@@ -1,6 +1,4 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
-
 const videoSrc = ref('')
 const videoRef = ref(null)
 const isMuted = ref(true) // 默认静音

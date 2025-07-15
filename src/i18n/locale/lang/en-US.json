@@ -184,7 +184,8 @@
       "setColorWallpaper": "Set color wallpaper",
       "setDynamicWallpaper": "Set dynamic wallpaper",
       "closeDynamicWallpaper": "Close dynamic wallpaper",
-      "openPage": {}
+      "openRhythmWallpaperWindow": "Open Rhythm wallpaper",
+      "closeRhythmWallpaperWindow": "Close Rhythm wallpaper"
     },
     "About": {
       "name": "Name",

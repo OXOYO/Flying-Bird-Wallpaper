@@ -1,54 +1,105 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { Leafer } from 'leafer-ui'
+import * as Effects from '../effects'
 
-const canvasRef = ref(null)
-let audioContext, analyser, dataArray, source, animationId
+const leaferRef = ref(null)
+let leafer, effectInstance, analyser, dataArray, source, audioContext, animationId
 
-const draw = () => {
-  const canvas = canvasRef.value
-  if (!canvas || !analyser) return
-  const ctx = canvas.getContext('2d')
-  const width = canvas.width
-  const height = canvas.height
+const config = ref({
+  type: 'bar', // 可选 'bar' | 'wave' | 'ball' | 'disco'
+  widthRatio: 1,
+  heightRatio: 0.8,
+  color: '#00ffcc',
+  gradient: ['#00ffcc', '#ff00cc'],
+  shadow: true,
+  amplitude: 1 // 仅 wave 用
+})
 
-  analyser.getByteTimeDomainData(dataArray)
-  ctx.clearRect(0, 0, width, height)
-  ctx.beginPath()
-  for (let i = 0; i < dataArray.length; i++) {
-    const x = (i / dataArray.length) * width
-    const y = (dataArray[i] / 255.0) * height
-    if (i === 0) ctx.moveTo(x, y)
-    else ctx.lineTo(x, y)
+function switchEffect() {
+  if (effectInstance) effectInstance.destroy()
+  const typeName = config.value.type.charAt(0).toUpperCase() + config.value.type.slice(1) + 'Effect'
+  console.log('typeName', typeName)
+  const EffectClass = Effects[typeName]
+  if (EffectClass) {
+    effectInstance = new EffectClass(leafer, config.value)
   }
-  ctx.strokeStyle = '#00ffcc'
-  ctx.lineWidth = 2
-  ctx.stroke()
+}
 
+function draw() {
+  if (!analyser || !effectInstance) return
+  analyser.getByteFrequencyData(dataArray)
+  effectInstance.render(dataArray)
   animationId = requestAnimationFrame(draw)
 }
 
 onMounted(async () => {
+  leafer = new Leafer({ view: leaferRef.value, autoRender: true })
   audioContext = new (window.AudioContext || window.webkitAudioContext)()
-  const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-  source = audioContext.createMediaStreamSource(stream)
-  analyser = audioContext.createAnalyser()
-  analyser.fftSize = 2048
-  dataArray = new Uint8Array(analyser.fftSize)
-  source.connect(analyser)
-  draw()
+  // 方案一
+  // 获取所有音频输入设备
+  const devices = await navigator.mediaDevices.enumerateDevices()
+  const audioInputs = devices.filter((d) => d.kind === 'audioinput')
+  console.log('audioInputs', audioInputs)
+  // 查找虚拟声卡设备
+  const virtualDevice = audioInputs.find(
+    (d) => d.label.includes('VB-Audio') || d.label.includes('BlackHole')
+  )
+  console.log('virtualDevice', virtualDevice)
+  // 用虚拟声卡 deviceId 采集音频
+  if (virtualDevice) {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: { deviceId: virtualDevice.deviceId }
+    })
+    source = audioContext.createMediaStreamSource(stream)
+    analyser = audioContext.createAnalyser()
+    analyser.fftSize = 256
+    dataArray = new Uint8Array(analyser.frequencyBinCount)
+    source.connect(analyser)
+    switchEffect()
+    draw()
+  } else {
+    console.log('请先安装并切换系统音频输出到虚拟声卡（如 VB-Audio/BlackHole）')
+  }
+
+  // 方案二
+  // navigator.mediaDevices
+  //   .getUserMedia({
+  //     audio: true
+  //     // audio: {
+  //     //   mandatory: { chromeMediaSource: 'desktop' }
+  //     // },
+  //     // video: {
+  //     //   mandatory: { chromeMediaSource: 'desktop' }
+  //     // }
+  //   })
+  //   .then((stream) => {
+  //     const hasAudio = stream.getAudioTracks().length > 0
+  //     console.log('音频轨道数量:', hasAudio)
+  //     source = audioContext.createMediaStreamSource(stream)
+  //     analyser = audioContext.createAnalyser()
+  //     analyser.fftSize = 256
+  //     dataArray = new Uint8Array(analyser.frequencyBinCount)
+  //     source.connect(analyser)
+  //     switchEffect()
+  //     draw()
+  //   })
 })
+
+watch(
+  () => config.value.type,
+  () => {
+    switchEffect()
+  }
+)
 
 onBeforeUnmount(() => {
   if (animationId) cancelAnimationFrame(animationId)
   if (audioContext) audioContext.close()
+  leafer?.destroy()
+  effectInstance?.destroy()
 })
 </script>
 
 <template>
-  <canvas
-    ref="canvasRef"
-    width="800"
-    height="300"
-    style="width: 100vw; height: 100vh; display: block; background: #000"
-  ></canvas>
+  <div ref="leaferRef" style="width: 100vw; height: 100vh; background: #000"></div>
 </template>
