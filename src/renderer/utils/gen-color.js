@@ -218,4 +218,29 @@ function genMixColor(base) {
   }
 }
 
-export { genMixColor, rgbToHsl, rgbToHex, hslToRgb, hslToHex, hexToRGB, hexToHsl }
+function lightenColor(hex, amount = 0.2) {
+  const rgb = hexToRGB(hex)
+  const newR = Math.round(rgb.r + (255 - rgb.r) * amount)
+  const newG = Math.round(rgb.g + (255 - rgb.g) * amount)
+  const newB = Math.round(rgb.b + (255 - rgb.b) * amount)
+  return rgbToHex({ r: newR, g: newG, b: newB })
+}
+function darkenColor(hex, amount = 0.2) {
+  const rgb = hexToRGB(hex)
+  const newR = Math.round(rgb.r * (1 - amount))
+  const newG = Math.round(rgb.g * (1 - amount))
+  const newB = Math.round(rgb.b * (1 - amount))
+  return rgbToHex({ r: newR, g: newG, b: newB })
+}
+
+export {
+  genMixColor,
+  rgbToHsl,
+  rgbToHex,
+  hslToRgb,
+  hslToHex,
+  hexToRGB,
+  hexToHsl,
+  lightenColor,
+  darkenColor
+}

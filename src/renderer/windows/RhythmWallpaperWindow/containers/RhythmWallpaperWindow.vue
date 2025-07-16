@@ -72,6 +72,7 @@ const config = ref({
     segments: 32, // 环形分段数，越多越细腻，建议16~64
     radius: 120, // 内半径，单位px
     width: 32, // 柱状宽度，单位px
+    heightRatio: 2, // 新增或调大
     gradient: ['#00ffcc', '#ff00cc'], // 环形渐变色数组，支持多色
     shadow: true, // 是否显示阴影
     renderType: 'parabola' // 柱高映射类型，可选：
@@ -79,11 +80,13 @@ const config = ref({
     // 'exp'（指数，爆发感）、'sin'（正弦，弹性）、'bounce'（弹跳回弹）、'step'（阶梯/像素跳跃）
   },
   particleFountain: {
-    particleCount: 64, // 粒子数量，建议32~128
+    widthRatio: 1,
+    heightRatio: 0.3,
     gradient: ['#00ffcc', '#ff00cc', '#ffb347', '#43cea2'], // 粒子颜色数组
     shadow: true, // 是否显示阴影
-    renderType: 'exp' // 粒子喷射幅度映射类型，可选：
+    renderType: 'exp', // 粒子喷射幅度映射类型，可选：
     // 'linear'、'log'、'parabola'、'sqrt'、'exp'、'sin'、'bounce'、'step'
+    particleCount: 640 // 粒子数量，建议32~128
   },
   breathingHalo: {
     gradient: ['#00ffcc', '#ff00cc'], // 光圈渐变色
@@ -92,15 +95,15 @@ const config = ref({
     // 'linear'、'log'、'parabola'、'sqrt'、'exp'、'sin'、'bounce'、'step'
   },
   dynamicGrid: {
-    rows: 8, // 网格行数
-    cols: 16, // 网格列数
-    gradient: ['#00ffcc', '#ff00cc', '#ffb347', '#43cea2'], // 格子颜色
-    shadow: false, // 是否显示阴影
-    renderType: 'step' // 格子高度/亮度映射类型，可选：
-    // 'linear'、'log'、'parabola'、'sqrt'、'exp'、'sin'、'bounce'、'step'
+    cellWidth: 120, // 单个格子的宽度
+    cellHeight: 120, // 单个格子的高度
+    color: '#00ffcc',
+    shadow: true,
+    renderType: 'step'
   },
   flowingLines: {
     lineCount: 5, // 线条数量
+    lineWidth: 10, // 线条宽度
     pointCount: 64, // 每条线的采样点数
     gradient: ['#00ffcc', '#ff00cc', '#ffb347', '#43cea2'], // 线条颜色
     shadow: false, // 是否显示阴影
@@ -108,7 +111,7 @@ const config = ref({
     // 'linear'、'log'、'parabola'、'sqrt'、'exp'、'sin'、'bounce'、'step'
   },
   musicNoteRain: {
-    noteCount: 32, // 音符/泡泡数量
+    noteCount: 100, // 音符/泡泡数量
     gradient: ['#00ffcc', '#ff00cc', '#ffb347', '#43cea2'], // 音符颜色
     shadow: false, // 是否显示阴影
     renderType: 'exp' // 音符下落速度律动类型，可选：
@@ -122,11 +125,12 @@ const config = ref({
     // 'linear'、'log'、'parabola'、'sqrt'、'exp'、'sin'、'bounce'、'step'
   },
   bars3D: {
-    barCount: 32, // 3D 柱子数量
-    gradient: ['#00ffcc', '#ff00cc', '#ffb347', '#43cea2'], // 柱子颜色
-    shadow: false, // 是否显示阴影
-    renderType: 'parabola' // 柱高律动类型，可选：
-    // 'linear'、'log'、'parabola'、'sqrt'、'exp'、'sin'、'bounce'、'step'
+    barCount: 32,
+    widthRatio: 1, // 横向占比（如0.8为80%宽度）
+    heightRatio: 0.3, // 最大高度占比（如0.5为50%高度）
+    gradient: ['#00ffcc', '#ff00cc', '#ffb347', '#43cea2'],
+    shadow: false,
+    renderType: 'parabola'
   },
   liquidRipple: {
     rippleCount: 6, // 波纹数量
@@ -172,7 +176,11 @@ onMounted(async () => {
   // console.log('audioInputs', audioInputs)
   // 查找虚拟声卡设备
   const virtualDevice = audioInputs.find(
-    (d) => d.label.includes('VB-Audio') || d.label.includes('BlackHole')
+    (d) =>
+      d.label.includes('VB-Audio') ||
+      d.label.includes('BlackHole') ||
+      d.label.includes('立体声混音') || // 新增
+      d.label.toLowerCase().includes('stereo mix') // 英文系统
   )
   // console.log('virtualDevice', virtualDevice)
   // 用虚拟声卡 deviceId 采集音频

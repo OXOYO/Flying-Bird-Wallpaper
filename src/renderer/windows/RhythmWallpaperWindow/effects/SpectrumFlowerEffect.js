@@ -42,7 +42,7 @@ export class SpectrumFlowerEffect extends BaseEffect {
       const y3 = centerY + Math.sin(angle2) * baseR
       const d = `M${centerX},${centerY} Q${x2},${y2} ${x1},${y1} Q${x3},${y3} ${centerX},${centerY} Z`
       const path = this.petals[i]
-      path.d = d
+      path.path = d
       path.fill = this.getFill(i)
       path.opacity = 0.5 + mapped * 0.5
     }

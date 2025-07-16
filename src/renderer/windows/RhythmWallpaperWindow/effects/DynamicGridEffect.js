@@ -1,46 +1,106 @@
 import { BaseEffect } from './BaseEffect'
 import { Rect } from 'leafer-ui'
+import { hexToRGB, rgbToHex, lightenColor, darkenColor } from '@renderer/utils/gen-color.js'
 
 export class DynamicGridEffect extends BaseEffect {
   constructor(leafer, config) {
     super(leafer, config)
-    this.rows = config.rows || 8
-    this.cols = config.cols || 16
+    this.baseColor = this.config.color || '#00ffcc'
     this.cells = []
     this.initGrid()
   }
 
   initGrid() {
-    for (let r = 0; r < this.rows; r++) {
-      for (let c = 0; c < this.cols; c++) {
-        const cell = new Rect({
-          width: 24,
-          height: 24,
-          fill: this.getFill(r * this.cols + c),
-          opacity: 0.7
+    // 清空旧格子
+    this.cells.forEach((cell) => cell.remove())
+    this.cells = []
+    // 先创建足够多的格子（多余的隐藏/不渲染也可）
+    const { width, height } = this.leafer
+    const cellWidth = this.config.cellWidth
+    const cellHeight = this.config.cellHeight
+    const cols = Math.ceil(width / cellWidth)
+    const rows = Math.ceil(height / cellHeight)
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        const rect = new Rect({
+          width: cellWidth,
+          height: cellHeight,
+          x: col * cellWidth,
+          y: row * cellHeight,
+          fill: this.getFill(row * cols + col, 0),
+          shadow: this.config.shadow ? { color: '#000', blur: 0, x: 0, y: 0 } : null,
+          opacity: 1
         })
-        this.leafer.add(cell)
-        this.cells.push(cell)
+        this.leafer.add(rect)
+        this.cells.push(rect)
       }
     }
+    this.cols = cols
+    this.rows = rows
+  }
+
+  getFill(idx, mapped = 0) {
+    const rgb = hexToRGB(this.baseColor)
+    if (!rgb) return this.baseColor
+
+    // mapped 越大，颜色越亮（可调节 0.6 为其它系数）
+    const factor = 0.6
+    const newR = Math.round(rgb.r + (255 - rgb.r) * mapped * factor)
+    const newG = Math.round(rgb.g + (255 - rgb.g) * mapped * factor)
+    const newB = Math.round(rgb.b + (255 - rgb.b) * mapped * factor)
+
+    // 保证在 0~255
+    const clamp = (v) => Math.max(0, Math.min(255, v))
+    return rgbToHex({ r: clamp(newR), g: clamp(newG), b: clamp(newB) })
   }
 
   render(dataArray) {
     const { width, height } = this.leafer
-    const cellW = width / this.cols
-    const cellH = height / this.rows
-    for (let r = 0; r < this.rows; r++) {
-      for (let c = 0; c < this.cols; c++) {
-        const idx = r * this.cols + c
+    const cellWidth = this.config.cellWidth
+    const cellHeight = this.config.cellHeight
+    const cols = Math.ceil(width / cellWidth)
+    const rows = Math.ceil(height / cellHeight)
+
+    // 如果窗口大小变了，重新生成格子
+    if (cols !== this.cols || rows !== this.rows) {
+      this.initGrid()
+    }
+
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        const idx = row * cols + col
         const value = dataArray[idx % dataArray.length] || 0
         const mapped = this.getMappedValue(value)
         const cell = this.cells[idx]
-        cell.width = cellW * 0.8
-        cell.height = cellH * (0.5 + mapped * 0.5)
-        cell.x = c * cellW + cellW / 2
-        cell.y = r * cellH + cellH / 2
-        cell.opacity = 0.4 + mapped * 0.6
-        cell.fill = this.getFill(idx)
+        // 默认宽高
+        let w = cellWidth
+        let h = cellHeight
+        // 最后一列
+        if (col === cols - 1) w = width - col * cellWidth
+        // 最后一行
+        if (row === rows - 1) h = height - row * cellHeight
+        // 位置
+        const x = col * cellWidth
+        const y = row * cellHeight
+        // 固定宽高，无缝排列
+        cell.width = w
+        cell.height = h
+        cell.x = x
+        cell.y = y
+        // 颜色深浅随 mapped 变化
+        cell.fill = this.getFill(idx, mapped)
+        // 透明度可选（如需更明显可调高基数）
+        cell.opacity = 0.9
+        // 阴影强度随 mapped 变化
+        if (this.config.shadow) {
+          cell.innerShadow = {
+            color: 'rgba(0,0,0,0.5)', // 更淡
+            blur: cellWidth / 4 + mapped * cellWidth,
+            spread: mapped * cellWidth * 0.3,
+            x: 0,
+            y: 0
+          }
+        }
       }
     }
   }

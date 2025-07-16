@@ -1,10 +1,3 @@
-/*
- * @Author: OXOYO
- * @Date: 2025-07-16 20:21:06
- * @LastEditors: OXOYO
- * @LastEditTime: 2025-07-16 20:26:25
- * @Description: file content
- */
 import { BaseEffect } from './BaseEffect'
 import { Ellipse } from 'leafer-ui'
 
@@ -31,8 +24,8 @@ export class BreathingHaloEffect extends BaseEffect {
     const radius = baseRadius + mapped * baseRadius * 0.7
     this.halo.width = radius * 2
     this.halo.height = radius * 2
-    this.halo.x = centerX
-    this.halo.y = centerY
+    this.halo.x = centerX - this.halo.width / 2
+    this.halo.y = centerY - this.halo.height / 2
     this.halo.opacity = 0.3 + mapped * 0.7
     this.halo.shadow = this.config.shadow
       ? { color: '#00ffcc', blur: 40 + mapped * 40, x: 0, y: 0 }

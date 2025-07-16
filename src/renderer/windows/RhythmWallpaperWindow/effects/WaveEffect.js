@@ -66,20 +66,20 @@ export class WaveEffect extends BaseEffect {
     if (points.length < 2) return // 没有足够点不渲染
     const isSilent = dataArray.every((v) => v === 0)
     if (isSilent) {
-      let pathStr = `M0,${height / 2} L${width},${height / 2}`
-      this.path.path = pathStr
-      this.path.stroke = this.config.color || '#00ffcc'
-      this.path.strokeWidth = 3
-      this.path.fill = 'none'
-      this.path.shadow = this.config.shadow ? { color: '#000', blur: 8, x: 0, y: 2 } : undefined
+      // let d = `M0,${height / 2} L${width},${height / 2}`
+      // this.path.path = d
+      // this.path.stroke = this.config.color || '#00ffcc'
+      // this.path.strokeWidth = 3
+      // this.path.fill = 'none'
+      // this.path.shadow = this.config.shadow ? { color: '#000', blur: 8, x: 0, y: 2 } : undefined
       return
     }
     // 生成平滑曲线路径
-    let pathStr = this.catmullRom2bezier(points)
+    let d = this.catmullRom2bezier(points)
     // 闭合路径
-    pathStr += ` L${points[points.length - 1][0]},${height}`
-    pathStr += ` L${points[0][0]},${height} Z`
-    this.path.path = pathStr
+    d += ` L${points[points.length - 1][0]},${height}`
+    d += ` L${points[0][0]},${height} Z`
+    this.path.path = d
 
     // 填充色
     const newFill = this.getFill()

@@ -34,20 +34,28 @@ export class ParticleFountainEffect extends BaseEffect {
       const value = dataArray[i % dataArray.length] || 0
       const mapped = this.getMappedValue(value)
       const p = this.particles[i]
-      // 音乐能量驱动速度
-      if (Math.random() < mapped * 0.2) {
-        p.x = width / 2 + (Math.random() - 0.5) * 40
+      const spreadX = width * this.config.widthRatio
+      const maxHeight = height * this.config.heightRatio
+
+      if (Math.random() < mapped * 0.4) {
+        // 横向分布
+        p.x = width / 2 + (Math.random() - 0.5) * spreadX
+        // 纵向分布（喷射起点在底部，最大喷射高度受 heightRatio 控制）
         p.y = height - 20
-        p.vx = (Math.random() - 0.5) * 2
-        p.vy = -Math.random() * 8 * mapped - 2
+        p.vx = (Math.random() - 0.5) * 6 * (0.5 + mapped)
+        // 竖直速度最大值受 heightRatio 控制
+        p.vy = -Math.random() * maxHeight * 0.45 * mapped - 6
+        p.shape.width = p.shape.height = 8 + mapped * 16
+        p.shape.fill = this.getFill(i, mapped)
       }
-      p.vy += 0.25 // 重力
+      p.vy += 0.35 // 重力略增
       p.x += p.vx
       p.y += p.vy
       if (p.y > height) p.y = height - 20
       p.shape.x = p.x
       p.shape.y = p.y
-      p.shape.opacity = 0.5 + mapped * 0.5
+      // 透明度更有层次
+      p.shape.opacity = 0.3 + mapped * 0.7
     }
   }
 

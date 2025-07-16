@@ -38,8 +38,8 @@ export class LiquidRippleEffect extends BaseEffect {
       const ripple = this.ripples[i]
       ripple.shape.width = r * 2
       ripple.shape.height = r * 2
-      ripple.shape.x = centerX
-      ripple.shape.y = centerY
+      ripple.shape.x = centerX - r
+      ripple.shape.y = centerY - r
       ripple.shape.opacity = 0.2 + mapped * 0.5
       ripple.shape.stroke = this.getFill(i)
     }

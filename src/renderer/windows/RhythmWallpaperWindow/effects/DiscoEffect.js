@@ -64,9 +64,9 @@ export class DiscoEffect extends BaseEffect {
       const y2 = centerY + Math.sin(angle + angleWidth) * radius
       const x3 = centerX + Math.cos(angle) * lightLength
       const y3 = centerY + Math.sin(angle) * lightLength
-      const pathStr = `M${centerX},${centerY} L${x1},${y1} L${x3},${y3} L${x2},${y2} Z`
+      const d = `M${centerX},${centerY} L${x1},${y1} L${x3},${y3} L${x2},${y2} Z`
       const path = this.lights[i]
-      path.path = pathStr
+      path.path = d
       path.fill = this.getFill(i)
       path.opacity = 0.5 + mapped * 0.5
       path.shadow = this.config.shadow ? { color: '#fff', blur: 20, x: 0, y: 0 } : undefined

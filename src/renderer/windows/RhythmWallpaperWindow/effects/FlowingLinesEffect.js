@@ -14,7 +14,7 @@ export class FlowingLinesEffect extends BaseEffect {
     for (let i = 0; i < this.lineCount; i++) {
       const path = new Path({
         stroke: this.getFill(i),
-        strokeWidth: 2 + i,
+        strokeWidth: this.config.lineWidth + i,
         opacity: 0.7
       })
       this.leafer.add(path)
@@ -34,7 +34,7 @@ export class FlowingLinesEffect extends BaseEffect {
         const y = baseY - mapped * 60
         points.push([x, y])
       }
-      this.paths[l].d = this.catmullRom2bezier(points)
+      this.paths[l].path = this.catmullRom2bezier(points)
       this.paths[l].stroke = this.getFill(l)
       this.paths[l].opacity = 0.5 + 0.5 * Math.abs(Math.sin(Date.now() / 1000 + l))
     }

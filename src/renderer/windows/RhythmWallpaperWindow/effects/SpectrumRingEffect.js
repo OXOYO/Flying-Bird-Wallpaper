@@ -1,25 +1,15 @@
-/*
- * @Author: OXOYO
- * @Date: 2025-07-16 20:15:02
- * @LastEditors: OXOYO
- * @LastEditTime: 2025-07-16 20:21:26
- * @Description: file content
- */
 import { BaseEffect } from './BaseEffect'
 import { Path } from 'leafer-ui'
 
 export class SpectrumRingEffect extends BaseEffect {
   constructor(leafer, config) {
     super(leafer, config)
-    this.segments = config.segments || 32
-    this.radius = config.radius || 120
-    this.width = config.width || 16
     this.paths = []
     this.initSegments()
   }
 
   initSegments() {
-    for (let i = 0; i < this.segments; i++) {
+    for (let i = 0; i < this.config.segments; i++) {
       const path = new Path({
         fill: this.getFill(i),
         opacity: 0.8
@@ -33,12 +23,13 @@ export class SpectrumRingEffect extends BaseEffect {
     const { width, height } = this.leafer
     const centerX = width / 2
     const centerY = height / 2
-    const angleStep = (2 * Math.PI) / this.segments
-    for (let i = 0; i < this.segments; i++) {
+    const angleStep = (2 * Math.PI) / this.config.segments
+    for (let i = 0; i < this.config.segments; i++) {
       const value = dataArray[i] || 0
       const mapped = this.getMappedValue(value)
-      const innerR = this.radius
-      const outerR = this.radius + mapped * this.width
+      const innerR = this.config.radius
+      const outerR =
+        this.config.radius + mapped * (this.config.heightRatio || 1) * this.config.radius
       const startAngle = i * angleStep
       const endAngle = startAngle + angleStep * 0.9
       const x1 = centerX + Math.cos(startAngle) * innerR
@@ -51,7 +42,7 @@ export class SpectrumRingEffect extends BaseEffect {
       const y4 = centerY + Math.sin(startAngle) * outerR
       const d = `M${x1},${y1} L${x2},${y2} L${x3},${y3} L${x4},${y4} Z`
       const path = this.paths[i]
-      path.d = d
+      path.path = d
       path.fill = this.getFill(i)
       path.opacity = 0.7 + mapped * 0.3
     }
