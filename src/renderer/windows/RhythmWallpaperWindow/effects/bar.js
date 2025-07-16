@@ -32,8 +32,8 @@ export class BarEffect {
           color,
           offset: i / (this.config.gradient.length - 1)
         })),
-        from: { x: 0, y: 1 },
-        to: { x: 0, y: 0 }
+        from: 'top',
+        to: 'bottom'
       }
     }
     return this.config.color || '#00ffcc'
@@ -43,9 +43,27 @@ export class BarEffect {
     const { width, height } = this.leafer
     const barWidth = (width * (this.config.widthRatio || 1)) / this.barCount
     const maxBarHeight = height * (this.config.heightRatio || 0.8)
+    const renderType = this.config.renderType || 'linear'
+
     for (let i = 0; i < this.barCount; i++) {
-      const value = dataArray[i] || 0
-      const barHeight = (value / 255) * maxBarHeight
+      let value
+      // 1. 频谱下标映射
+      if (renderType === 'log') {
+        const index = Math.floor(Math.pow(i / this.barCount, 2) * (dataArray.length - 1))
+        value = dataArray[index] || 0
+      } else {
+        value = dataArray[i] || 0
+      }
+
+      // 2. 柱子高度权重
+      let weight = 1
+      if (renderType === 'parabola') {
+        const center = (this.barCount - 1) / 2
+        const distance = (i - center) / center
+        weight = 1 - distance * distance // 抛物线分布
+      }
+
+      const barHeight = (value / 255) * maxBarHeight * weight
       const rect = this.bars[i]
       rect.width = barWidth * 0.8
       rect.height = barHeight

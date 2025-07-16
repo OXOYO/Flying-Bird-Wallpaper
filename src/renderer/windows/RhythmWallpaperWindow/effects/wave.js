@@ -5,8 +5,8 @@ export class WaveEffect {
     this.leafer = leafer
     this.config = config
     this.path = new Path({
-      fill: 'none',
-      stroke: this.getStroke(),
+      fill: this.getFill(), // 只需初始化一次
+      stroke: this.config.color || '#00ffcc',
       strokeWidth: 3,
       shadow: this.config.shadow ? { color: '#000', blur: 8, x: 0, y: 2 } : undefined
     })
@@ -14,7 +14,23 @@ export class WaveEffect {
     this.pointCount = 128
   }
 
-  getStroke() {
+  catmullRom2bezier(points) {
+    let d = `M${points[0][0]},${points[0][1]}`
+    for (let i = 0; i < points.length - 1; i++) {
+      const p0 = points[i - 1] || points[0]
+      const p1 = points[i]
+      const p2 = points[i + 1]
+      const p3 = points[i + 2] || p2
+      const cp1x = p1[0] + (p2[0] - p0[0]) / 6
+      const cp1y = p1[1] + (p2[1] - p0[1]) / 6
+      const cp2x = p2[0] - (p3[0] - p1[0]) / 6
+      const cp2y = p2[1] - (p3[1] - p1[1]) / 6
+      d += ` C${cp1x},${cp1y} ${cp2x},${cp2y} ${p2[0]},${p2[1]}`
+    }
+    return d
+  }
+
+  getFill() {
     if (this.config.gradient && this.config.gradient.length > 1) {
       return {
         type: 'linear',
@@ -22,8 +38,8 @@ export class WaveEffect {
           color,
           offset: i / (this.config.gradient.length - 1)
         })),
-        from: { x: 0, y: 1 },
-        to: { x: 1, y: 1 }
+        from: 'top',
+        to: 'bottom'
       }
     }
     return this.config.color || '#00ffcc'
@@ -31,22 +47,64 @@ export class WaveEffect {
 
   render(dataArray) {
     const { width, height } = this.leafer
+    const waveWidth = width * (this.config.widthRatio || 1)
     const maxWaveHeight = height * (this.config.heightRatio || 0.5)
+    const offsetX = (width - waveWidth) / 2 // 居中
     const points = []
     const len = Math.min(this.pointCount, dataArray.length)
+    const renderType = this.config.renderType || 'linear'
     for (let i = 0; i < len; i++) {
-      const x = (i / (len - 1)) * width
-      const y =
-        height / 2 - ((dataArray[i] - 128) / 128) * maxWaveHeight * (this.config.amplitude || 1)
+      let index
+      if (renderType === 'log') {
+        index = Math.floor(Math.pow(i / (len - 1), 2) * (dataArray.length - 1))
+      } else {
+        index = i
+      }
+      let value = dataArray[index] || 0
+
+      // 振幅权重
+      let weight = 1
+      if (renderType === 'parabola') {
+        const center = (len - 1) / 2
+        const distance = (i - center) / center
+        weight = 1 - distance * distance
+      }
+
+      const x = offsetX + (i / (len - 1)) * waveWidth
+      const y = height - (value / 255) * maxWaveHeight * (this.config.amplitude || 1) * weight
       points.push([x, y])
     }
-    // 生成平滑曲线路径
-    let d = `M${points[0][0]},${points[0][1]}`
-    for (let i = 1; i < points.length; i++) {
-      d += ` L${points[i][0]},${points[i][1]}`
+    if (points.length >= 2) {
+      points[0][1] = height
+      points[points.length - 1][1] = height
     }
-    this.path.d = d
-    this.path.stroke = this.getStroke()
+    if (points.length < 2) return // 没有足够点不渲染
+    const isSilent = dataArray.every((v) => v === 0)
+    if (isSilent) {
+      let pathStr = `M0,${height / 2} L${width},${height / 2}`
+      this.path.path = pathStr
+      this.path.stroke = this.config.color || '#00ffcc'
+      this.path.strokeWidth = 3
+      this.path.fill = 'none'
+      this.path.shadow = this.config.shadow ? { color: '#000', blur: 8, x: 0, y: 2 } : undefined
+      return
+    }
+    // 生成平滑曲线路径
+    let pathStr = this.catmullRom2bezier(points)
+    // 闭合路径
+    pathStr += ` L${points[points.length - 1][0]},${height}`
+    pathStr += ` L${points[0][0]},${height} Z`
+    this.path.path = pathStr
+
+    // 填充色
+    const newFill = this.getFill()
+    if (this.path.fill !== newFill) {
+      this.path.fill = newFill
+    }
+
+    // 描边色
+    this.path.stroke = this.config.color || '#00ffcc'
+    this.path.strokeWidth = 3
     this.path.shadow = this.config.shadow ? { color: '#000', blur: 8, x: 0, y: 2 } : undefined
   }
 

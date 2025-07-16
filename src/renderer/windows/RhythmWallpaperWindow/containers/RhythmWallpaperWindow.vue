@@ -5,14 +5,36 @@ import * as Effects from '../effects'
 const leaferRef = ref(null)
 let leafer, effectInstance, analyser, dataArray, source, audioContext, animationId
 
+// 配置对象，按类型分组
 const config = ref({
-  type: 'bar', // 可选 'bar' | 'wave' | 'ball' | 'disco'
-  widthRatio: 1,
-  heightRatio: 0.8,
-  color: '#00ffcc',
-  gradient: ['#00ffcc', '#ff00cc'],
-  shadow: true,
-  amplitude: 1 // 仅 wave 用
+  type: 'bar', // 当前可视化类型，可选值：'bar'（柱状）、'wave'（波形）、'ball'（小球）、'disco'（迪斯科）
+  bar: {
+    widthRatio: 1, // 柱状图宽度占画布宽度的比例，范围 0~1
+    heightRatio: 0.3, // 柱状图最大高度占画布高度的比例，范围 0~1
+    color: '#00ffcc', // 柱子默认颜色，未设置渐变时生效，支持任意合法 CSS 颜色
+    gradient: ['#00ffcc', '#ff00cc'], // 柱子渐变色数组，支持多色渐变，数组元素为合法 CSS 颜色
+    shadow: true, // 是否显示柱子阴影，可选值：true（显示）、false（不显示）
+    renderType: 'parabola' // 柱子高度映射类型，可选值：'linear'（线性）、'log'（对数）、'parabola'（抛物线）
+  },
+  wave: {
+    amplitude: 1, // 波形幅度，数值越大波动越大，建议范围 0~2
+    widthRatio: 1, // 波形宽度占画布宽度的比例，范围 0~1，1为铺满
+    heightRatio: 0.3, // 波形最大高度占画布高度的比例，范围 0~1
+    color: '#00ffcc', // 波形颜色
+    gradient: ['#00ffcc', '#ff00cc'], // 渐变色
+    shadow: true, // 是否显示阴影
+    renderType: 'parabola' // 可选 'linear' | 'log' | 'parabola'
+  },
+  ball: {
+    color: '#00ffcc', // 小球颜色，支持任意合法 CSS 颜色
+    shadow: true // 是否显示小球阴影，可选值：true、false
+    // ...可扩展 ball 专属配置
+  },
+  disco: {
+    color: '#00ffcc', // 迪斯科效果颜色，支持任意合法 CSS 颜色
+    shadow: true // 是否显示阴影，可选值：true、false
+    // ...可扩展 disco 专属配置
+  }
 })
 
 function switchEffect() {
@@ -21,7 +43,8 @@ function switchEffect() {
   console.log('typeName', typeName)
   const EffectClass = Effects[typeName]
   if (EffectClass) {
-    effectInstance = new EffectClass(leafer, config.value)
+    // 只传递当前类型的配置
+    effectInstance = new EffectClass(leafer, config.value[config.value.type])
   }
 }
 
@@ -39,12 +62,12 @@ onMounted(async () => {
   // 获取所有音频输入设备
   const devices = await navigator.mediaDevices.enumerateDevices()
   const audioInputs = devices.filter((d) => d.kind === 'audioinput')
-  console.log('audioInputs', audioInputs)
+  // console.log('audioInputs', audioInputs)
   // 查找虚拟声卡设备
   const virtualDevice = audioInputs.find(
     (d) => d.label.includes('VB-Audio') || d.label.includes('BlackHole')
   )
-  console.log('virtualDevice', virtualDevice)
+  // console.log('virtualDevice', virtualDevice)
   // 用虚拟声卡 deviceId 采集音频
   if (virtualDevice) {
     const stream = await navigator.mediaDevices.getUserMedia({
@@ -101,5 +124,5 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div ref="leaferRef" style="width: 100vw; height: 100vh; background: #000"></div>
+  <div ref="leaferRef" style="width: 100vw; height: 100vh; background: transparent"></div>
 </template>
