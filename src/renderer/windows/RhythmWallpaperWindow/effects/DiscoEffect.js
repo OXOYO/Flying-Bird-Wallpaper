@@ -1,17 +1,16 @@
+import { BaseEffect } from './BaseEffect'
 import { Path } from 'leafer-ui'
 
-export class DiscoEffect {
+export class DiscoEffect extends BaseEffect {
   constructor(leafer, config) {
-    this.leafer = leafer
-    this.config = config
+    super(leafer, config)
     this.lights = []
-    this.lightCount = 12
     this.angle = 0
     this.initLights()
   }
 
   initLights() {
-    for (let i = 0; i < this.lightCount; i++) {
+    for (let i = 0; i < this.config.lightCount; i++) {
       const path = new Path({
         fill: this.getFill(i),
         opacity: 0.7,
@@ -23,18 +22,12 @@ export class DiscoEffect {
   }
 
   getFill(i) {
-    if (this.config.gradient && this.config.gradient.length > 1) {
-      return {
-        type: 'linear',
-        stops: this.config.gradient.map((color, idx) => ({
-          color,
-          offset: idx / (this.config.gradient.length - 1)
-        })),
-        from: { x: 0, y: 1 },
-        to: { x: 0, y: 0 }
-      }
+    // 优先使用 config.gradient（多色渐变数组），每个灯单独取色
+    if (this.config.gradient && this.config.gradient.length > 0) {
+      // 如果 gradient 数组比灯数多，循环使用
+      return this.config.gradient[i % this.config.gradient.length]
     }
-    // 多彩灯光
+    // fallback 到内置多彩色数组
     const colors = [
       '#ff3cac',
       '#784ba0',
@@ -58,23 +51,24 @@ export class DiscoEffect {
     const centerY = height / 2
     const radius = Math.min(width, height) * 0.3
     this.angle += 0.01
-    for (let i = 0; i < this.lightCount; i++) {
+    for (let i = 0; i < this.config.lightCount; i++) {
       const value = dataArray[i * 2] || 0
-      const angle = this.angle + (i * (2 * Math.PI)) / this.lightCount
-      const lightLength = radius + (value / 255) * radius * 0.7
+      const mapped = this.getMappedValue(value)
+      const angle = this.angle + (i * (2 * Math.PI)) / this.config.lightCount
+      const lightLength = radius + mapped * radius * 0.7
       // 扇形光束
-      const angleWidth = Math.PI / this.lightCount
+      const angleWidth = Math.PI / this.config.lightCount
       const x1 = centerX + Math.cos(angle - angleWidth) * radius
       const y1 = centerY + Math.sin(angle - angleWidth) * radius
       const x2 = centerX + Math.cos(angle + angleWidth) * radius
       const y2 = centerY + Math.sin(angle + angleWidth) * radius
       const x3 = centerX + Math.cos(angle) * lightLength
       const y3 = centerY + Math.sin(angle) * lightLength
-      const d = `M${centerX},${centerY} L${x1},${y1} L${x3},${y3} L${x2},${y2} Z`
+      const pathStr = `M${centerX},${centerY} L${x1},${y1} L${x3},${y3} L${x2},${y2} Z`
       const path = this.lights[i]
-      path.d = d
+      path.path = pathStr
       path.fill = this.getFill(i)
-      path.opacity = 0.5 + (value / 255) * 0.5
+      path.opacity = 0.5 + mapped * 0.5
       path.shadow = this.config.shadow ? { color: '#fff', blur: 20, x: 0, y: 0 } : undefined
     }
   }

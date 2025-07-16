@@ -1,9 +1,9 @@
+import { BaseEffect } from './BaseEffect'
 import { Path } from 'leafer-ui'
 
-export class WaveEffect {
+export class WaveEffect extends BaseEffect {
   constructor(leafer, config) {
-    this.leafer = leafer
-    this.config = config
+    super(leafer, config)
     this.path = new Path({
       fill: this.getFill(), // 只需初始化一次
       stroke: this.config.color || '#00ffcc',
@@ -11,9 +11,9 @@ export class WaveEffect {
       shadow: this.config.shadow ? { color: '#000', blur: 8, x: 0, y: 2 } : undefined
     })
     this.leafer.add(this.path)
-    this.pointCount = 128
   }
 
+  // 生成平滑曲线路径
   catmullRom2bezier(points) {
     let d = `M${points[0][0]},${points[0][1]}`
     for (let i = 0; i < points.length - 1; i++) {
@@ -30,28 +30,13 @@ export class WaveEffect {
     return d
   }
 
-  getFill() {
-    if (this.config.gradient && this.config.gradient.length > 1) {
-      return {
-        type: 'linear',
-        stops: this.config.gradient.map((color, i) => ({
-          color,
-          offset: i / (this.config.gradient.length - 1)
-        })),
-        from: 'top',
-        to: 'bottom'
-      }
-    }
-    return this.config.color || '#00ffcc'
-  }
-
   render(dataArray) {
     const { width, height } = this.leafer
     const waveWidth = width * (this.config.widthRatio || 1)
     const maxWaveHeight = height * (this.config.heightRatio || 0.5)
     const offsetX = (width - waveWidth) / 2 // 居中
     const points = []
-    const len = Math.min(this.pointCount, dataArray.length)
+    const len = Math.min(this.config.pointCount, dataArray.length)
     const renderType = this.config.renderType || 'linear'
     for (let i = 0; i < len; i++) {
       let index
