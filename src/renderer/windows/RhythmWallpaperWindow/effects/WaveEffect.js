@@ -3,7 +3,17 @@ import { Path } from 'leafer-ui'
 
 export class WaveEffect extends BaseEffect {
   constructor(leafer, config) {
-    super(leafer, config)
+    super(leafer, {
+      // 振幅
+      amplitude: 1,
+      ...config
+    })
+    this.densityCount = {
+      sparse: 64,
+      normal: 128,
+      dense: 256
+    }
+    this.pointCount = this.densityCount[this.config.densityType] || this.densityCount.normal
     this.path = new Path({
       fill: this.getFill(), // 只需初始化一次
       stroke: this.config.color || '#00ffcc',
@@ -36,7 +46,7 @@ export class WaveEffect extends BaseEffect {
     const maxWaveHeight = height * (this.config.heightRatio || 0.5)
     const offsetX = (width - waveWidth) / 2 // 居中
     const points = []
-    const len = Math.min(this.config.pointCount, dataArray.length)
+    const len = Math.min(this.pointCount, dataArray.length)
     const renderType = this.config.renderType || 'linear'
     for (let i = 0; i < len; i++) {
       let index
@@ -66,12 +76,6 @@ export class WaveEffect extends BaseEffect {
     if (points.length < 2) return // 没有足够点不渲染
     const isSilent = dataArray.every((v) => v === 0)
     if (isSilent) {
-      // let d = `M0,${height / 2} L${width},${height / 2}`
-      // this.path.path = d
-      // this.path.stroke = this.config.color || '#00ffcc'
-      // this.path.strokeWidth = 3
-      // this.path.fill = 'none'
-      // this.path.shadow = this.config.shadow ? { color: '#000', blur: 8, x: 0, y: 2 } : undefined
       return
     }
     // 生成平滑曲线路径

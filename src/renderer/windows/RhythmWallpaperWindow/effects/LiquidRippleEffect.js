@@ -4,8 +4,13 @@ import { Ellipse } from 'leafer-ui'
 export class LiquidRippleEffect extends BaseEffect {
   constructor(leafer, config) {
     super(leafer, config)
+    this.densityCount = {
+      sparse: 3,
+      normal: 6,
+      dense: 12
+    }
+    this.rippleCount = this.densityCount[this.config.densityType] || this.densityCount.normal
     this.ripples = []
-    this.rippleCount = config.rippleCount || 6
     this.initRipples()
   }
 

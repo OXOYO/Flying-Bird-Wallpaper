@@ -4,13 +4,19 @@ import { Path } from 'leafer-ui'
 export class DiscoEffect extends BaseEffect {
   constructor(leafer, config) {
     super(leafer, config)
+    this.densityCount = {
+      sparse: 6,
+      normal: 12,
+      dense: 24
+    }
+    this.lightCount = this.densityCount[this.config.densityType] || this.densityCount.normal
     this.lights = []
     this.angle = 0
     this.initLights()
   }
 
   initLights() {
-    for (let i = 0; i < this.config.lightCount; i++) {
+    for (let i = 0; i < this.lightCount; i++) {
       const path = new Path({
         fill: this.getFill(i),
         opacity: 0.7,
@@ -51,13 +57,13 @@ export class DiscoEffect extends BaseEffect {
     const centerY = height / 2
     const radius = Math.min(width, height) * 0.3
     this.angle += 0.01
-    for (let i = 0; i < this.config.lightCount; i++) {
+    for (let i = 0; i < this.lightCount; i++) {
       const value = dataArray[i * 2] || 0
       const mapped = this.getMappedValue(value)
-      const angle = this.angle + (i * (2 * Math.PI)) / this.config.lightCount
+      const angle = this.angle + (i * (2 * Math.PI)) / this.lightCount
       const lightLength = radius + mapped * radius * 0.7
       // 扇形光束
-      const angleWidth = Math.PI / this.config.lightCount
+      const angleWidth = Math.PI / this.lightCount
       const x1 = centerX + Math.cos(angle - angleWidth) * radius
       const y1 = centerY + Math.sin(angle - angleWidth) * radius
       const x2 = centerX + Math.cos(angle + angleWidth) * radius

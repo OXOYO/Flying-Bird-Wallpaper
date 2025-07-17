@@ -5,13 +5,19 @@ export class BallEffect extends BaseEffect {
   constructor(leafer, config) {
     super(leafer, config)
     this.balls = []
-    this.velocities = Array(this.config.ballCount).fill(0)
-    this.positions = Array(this.config.ballCount).fill(0)
+    this.densityCount = {
+      sparse: 8,
+      normal: 16,
+      dense: 32
+    }
+    this.ballCount = this.densityCount[this.config.densityType] || this.densityCount.normal
+    this.velocities = Array(this.ballCount).fill(0)
+    this.positions = Array(this.ballCount).fill(0)
     this.initBalls()
   }
 
   initBalls() {
-    for (let i = 0; i < this.config.ballCount; i++) {
+    for (let i = 0; i < this.ballCount; i++) {
       const circle = new Ellipse({
         width: 20,
         height: 20,
@@ -30,11 +36,11 @@ export class BallEffect extends BaseEffect {
   render(dataArray) {
     const { width, height } = this.leafer
     const maxBallHeight = height * this.config.heightRatio
-    const ballSpacing = (width * this.config.widthRatio) / (this.config.ballCount + 1)
     const margin = 4 // 小球之间的最小间隔
+    const ballSpacing = (width * this.config.widthRatio) / (this.ballCount + 1)
     const maxRadius = Math.max(8, (ballSpacing - margin) / 2.2)
     const minRadius = Math.max(4, maxRadius * 0.3) // 最小半径更小
-    for (let i = 0; i < this.config.ballCount; i++) {
+    for (let i = 0; i < this.ballCount; i++) {
       const value = dataArray[i * 4] || 0
       const mapped = this.getMappedValue(value) // 0~1
       const enhancedMapped = Math.pow(mapped, 0.7) // 拉大动态

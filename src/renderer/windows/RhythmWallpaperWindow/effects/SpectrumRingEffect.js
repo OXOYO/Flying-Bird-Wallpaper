@@ -3,13 +3,24 @@ import { Path } from 'leafer-ui'
 
 export class SpectrumRingEffect extends BaseEffect {
   constructor(leafer, config) {
-    super(leafer, config)
+    super(leafer, {
+      radius: 120,
+      width: 32,
+      heightRatio: 2,
+      ...config
+    })
+    this.densityCount = {
+      sparse: 16,
+      normal: 32,
+      dense: 64
+    }
+    this.segments = this.densityCount[this.config.densityType] || this.densityCount.normal
     this.paths = []
     this.initSegments()
   }
 
   initSegments() {
-    for (let i = 0; i < this.config.segments; i++) {
+    for (let i = 0; i < this.segments; i++) {
       const path = new Path({
         fill: this.getFill(i),
         opacity: 0.8
@@ -23,8 +34,8 @@ export class SpectrumRingEffect extends BaseEffect {
     const { width, height } = this.leafer
     const centerX = width / 2
     const centerY = height / 2
-    const angleStep = (2 * Math.PI) / this.config.segments
-    for (let i = 0; i < this.config.segments; i++) {
+    const angleStep = (2 * Math.PI) / this.segments
+    for (let i = 0; i < this.segments; i++) {
       const value = dataArray[i] || 0
       const mapped = this.getMappedValue(value)
       const innerR = this.config.radius

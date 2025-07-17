@@ -5,11 +5,17 @@ export class BarEffect extends BaseEffect {
   constructor(leafer, config) {
     super(leafer, config)
     this.bars = []
+    this.densityCount = {
+      sparse: 32,
+      normal: 64,
+      dense: 128
+    }
+    this.barCount = this.densityCount[this.config.densityType] || this.densityCount.normal
     this.initBars()
   }
 
   initBars() {
-    for (let i = 0; i < this.config.barCount; i++) {
+    for (let i = 0; i < this.barCount; i++) {
       const rect = new Rect({
         width: 10,
         height: 10,
@@ -25,15 +31,15 @@ export class BarEffect extends BaseEffect {
 
   render(dataArray) {
     const { width, height } = this.leafer
-    const barWidth = (width * (this.config.widthRatio || 1)) / this.config.barCount
+    const barWidth = (width * (this.config.widthRatio || 1)) / this.barCount
     const maxBarHeight = height * (this.config.heightRatio || 0.8)
     const renderType = this.config.renderType || 'linear'
 
-    for (let i = 0; i < this.config.barCount; i++) {
+    for (let i = 0; i < this.barCount; i++) {
       let value
       // 1. 频谱下标映射
       if (renderType === 'log') {
-        const index = Math.floor(Math.pow(i / this.config.barCount, 2) * (dataArray.length - 1))
+        const index = Math.floor(Math.pow(i / this.barCount, 2) * (dataArray.length - 1))
         value = dataArray[index] || 0
       } else {
         value = dataArray[i] || 0
@@ -42,7 +48,7 @@ export class BarEffect extends BaseEffect {
       // 2. 柱子高度权重
       let weight = 1
       if (renderType === 'parabola') {
-        const center = (this.config.barCount - 1) / 2
+        const center = (this.barCount - 1) / 2
         const distance = (i - center) / center
         weight = 1 - distance * distance // 抛物线分布
       }

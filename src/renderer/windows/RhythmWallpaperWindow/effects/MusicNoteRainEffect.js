@@ -6,7 +6,12 @@ const NOTE_CHARS = ['♪', '♫', '♬', '♩', '♭', '♯', '★', '✦', '✧
 export class MusicNoteRainEffect extends BaseEffect {
   constructor(leafer, config) {
     super(leafer, config)
-    this.noteCount = config.noteCount || 32
+    this.densityCount = {
+      sparse: 32,
+      normal: 100,
+      dense: 200
+    }
+    this.noteCount = this.densityCount[this.config.densityType] || this.densityCount.normal
     this.notes = []
     this.initNotes()
   }

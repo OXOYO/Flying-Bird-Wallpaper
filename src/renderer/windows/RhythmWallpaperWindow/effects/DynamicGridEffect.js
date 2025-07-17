@@ -1,11 +1,18 @@
 import { BaseEffect } from './BaseEffect'
 import { Rect } from 'leafer-ui'
-import { hexToRGB, rgbToHex, lightenColor, darkenColor } from '@renderer/utils/gen-color.js'
+import { hex2RGB, rgb2HEX, lightenColor, darkenColor } from '@renderer/utils/gen-color.js'
 
 export class DynamicGridEffect extends BaseEffect {
   constructor(leafer, config) {
     super(leafer, config)
     this.baseColor = this.config.color || '#00ffcc'
+    this.densityCount = {
+      sparse: 180,
+      normal: 120,
+      dense: 60
+    }
+    this.cellWidth = this.densityCount[this.config.densityType] || this.densityCount.normal
+    this.cellHeight = this.cellWidth
     this.cells = []
     this.initGrid()
   }
@@ -16,17 +23,15 @@ export class DynamicGridEffect extends BaseEffect {
     this.cells = []
     // 先创建足够多的格子（多余的隐藏/不渲染也可）
     const { width, height } = this.leafer
-    const cellWidth = this.config.cellWidth
-    const cellHeight = this.config.cellHeight
-    const cols = Math.ceil(width / cellWidth)
-    const rows = Math.ceil(height / cellHeight)
+    const cols = Math.ceil(width / this.cellWidth)
+    const rows = Math.ceil(height / this.cellHeight)
     for (let row = 0; row < rows; row++) {
       for (let col = 0; col < cols; col++) {
         const rect = new Rect({
-          width: cellWidth,
-          height: cellHeight,
-          x: col * cellWidth,
-          y: row * cellHeight,
+          width: this.cellWidth,
+          height: this.cellHeight,
+          x: col * this.cellWidth,
+          y: row * this.cellHeight,
           fill: this.getFill(row * cols + col, 0),
           shadow: this.config.shadow ? { color: '#000', blur: 0, x: 0, y: 0 } : null,
           opacity: 1
@@ -40,7 +45,7 @@ export class DynamicGridEffect extends BaseEffect {
   }
 
   getFill(idx, mapped = 0) {
-    const rgb = hexToRGB(this.baseColor)
+    const rgb = hex2RGB(this.baseColor)
     if (!rgb) return this.baseColor
 
     // mapped 越大，颜色越亮（可调节 0.6 为其它系数）
@@ -51,15 +56,13 @@ export class DynamicGridEffect extends BaseEffect {
 
     // 保证在 0~255
     const clamp = (v) => Math.max(0, Math.min(255, v))
-    return rgbToHex({ r: clamp(newR), g: clamp(newG), b: clamp(newB) })
+    return rgb2HEX({ r: clamp(newR), g: clamp(newG), b: clamp(newB) })
   }
 
   render(dataArray) {
     const { width, height } = this.leafer
-    const cellWidth = this.config.cellWidth
-    const cellHeight = this.config.cellHeight
-    const cols = Math.ceil(width / cellWidth)
-    const rows = Math.ceil(height / cellHeight)
+    const cols = Math.ceil(width / this.cellWidth)
+    const rows = Math.ceil(height / this.cellHeight)
 
     // 如果窗口大小变了，重新生成格子
     if (cols !== this.cols || rows !== this.rows) {
@@ -73,15 +76,15 @@ export class DynamicGridEffect extends BaseEffect {
         const mapped = this.getMappedValue(value)
         const cell = this.cells[idx]
         // 默认宽高
-        let w = cellWidth
-        let h = cellHeight
+        let w = this.cellWidth
+        let h = this.cellHeight
         // 最后一列
-        if (col === cols - 1) w = width - col * cellWidth
+        if (col === cols - 1) w = width - col * this.cellWidth
         // 最后一行
-        if (row === rows - 1) h = height - row * cellHeight
+        if (row === rows - 1) h = height - row * this.cellHeight
         // 位置
-        const x = col * cellWidth
-        const y = row * cellHeight
+        const x = col * this.cellWidth
+        const y = row * this.cellHeight
         // 固定宽高，无缝排列
         cell.width = w
         cell.height = h
@@ -95,8 +98,8 @@ export class DynamicGridEffect extends BaseEffect {
         if (this.config.shadow) {
           cell.innerShadow = {
             color: 'rgba(0,0,0,0.5)', // 更淡
-            blur: cellWidth / 4 + mapped * cellWidth,
-            spread: mapped * cellWidth * 0.3,
+            blur: this.cellWidth / 4 + mapped * this.cellWidth,
+            spread: mapped * this.cellWidth * 0.3,
             x: 0,
             y: 0
           }

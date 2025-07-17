@@ -4,7 +4,12 @@ import { Path } from 'leafer-ui'
 export class RotatingStarburstEffect extends BaseEffect {
   constructor(leafer, config) {
     super(leafer, config)
-    this.rayCount = config.rayCount || 24
+    this.densityCount = {
+      sparse: 12,
+      normal: 24,
+      dense: 48
+    }
+    this.rayCount = this.densityCount[this.config.densityType] || this.densityCount.normal
     this.rays = []
     this.angle = 0
     this.initRays()

@@ -3,9 +3,18 @@ import { Path } from 'leafer-ui'
 
 export class FlowingLinesEffect extends BaseEffect {
   constructor(leafer, config) {
-    super(leafer, config)
-    this.lineCount = config.lineCount || 5
-    this.pointCount = config.pointCount || 64
+    super(leafer, {
+      lineWidth: 10,
+      ...config
+    })
+    this.densityCount = {
+      sparse: { line: 3, point: 32 },
+      normal: { line: 5, point: 64 },
+      dense: { line: 9, point: 128 }
+    }
+    const density = this.densityCount[this.config.densityType] || this.densityCount.normal
+    this.lineCount = density.line
+    this.pointCount = density.point
     this.paths = []
     this.initLines()
   }

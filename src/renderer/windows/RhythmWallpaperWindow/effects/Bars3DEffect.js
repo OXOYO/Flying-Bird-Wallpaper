@@ -4,7 +4,12 @@ import { Rect } from 'leafer-ui'
 export class Bars3DEffect extends BaseEffect {
   constructor(leafer, config) {
     super(leafer, config)
-    this.barCount = config.barCount || 32
+    this.densityCount = {
+      sparse: 16,
+      normal: 32,
+      dense: 64
+    }
+    this.barCount = this.densityCount[this.config.densityType] || this.densityCount.normal
     this.bars = []
     this.initBars()
   }
@@ -24,7 +29,7 @@ export class Bars3DEffect extends BaseEffect {
 
   render(dataArray) {
     const { width, height } = this.leafer
-    const barCount = this.config.barCount || 32
+    const barCount = this.barCount
     const widthRatio = this.config.widthRatio ?? 1
     const heightRatio = this.config.heightRatio ?? 1
 
