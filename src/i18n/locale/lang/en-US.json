@@ -394,7 +394,8 @@
     "liquidRipple": "liquid ripple",
     "spectrumFlower": "spectrum flower",
     "rainbow": "rainbow",
-    "windmill": "windmill"
+    "windmill": "windmill",
+    "taiji": "taiji"
   },
   "rhythmAnimationOptions": {
     "linear": "Linear (direct mapping)",
