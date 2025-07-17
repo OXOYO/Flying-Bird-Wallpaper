@@ -13,7 +13,7 @@ import {
   orientationOptions,
   autoRefreshListOptions
 } from '@common/publicData.js'
-import { hexToRGB } from '@renderer/utils/gen-color.js'
+import { hex2RGB } from '@renderer/utils/gen-color.js'
 import { debounce } from '@renderer/utils/index.js'
 
 const { t } = useTranslation()
@@ -955,7 +955,7 @@ const getNextList = async () => {
             }
 
             // 处理颜色
-            item.dominantColorRgb = hexToRGB(item.dominantColor)
+            item.dominantColorRgb = hex2RGB(item.dominantColor)
             return item
           })
 
