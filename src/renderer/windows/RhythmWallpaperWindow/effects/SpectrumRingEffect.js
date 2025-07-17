@@ -9,12 +9,12 @@ export class SpectrumRingEffect extends BaseEffect {
       heightRatio: 2,
       ...config
     })
-    this.densityCount = {
+    this.densityOptions = {
       sparse: 16,
       normal: 32,
       dense: 64
     }
-    this.segments = this.densityCount[this.config.densityType] || this.densityCount.normal
+    this.segments = this.densityOptions[this.config.density] || this.densityOptions.normal
     this.paths = []
     this.initSegments()
   }

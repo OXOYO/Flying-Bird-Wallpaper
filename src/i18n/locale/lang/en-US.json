@@ -393,7 +393,8 @@
     "bars3D": "bars 3D",
     "liquidRipple": "liquid ripple",
     "spectrumFlower": "spectrum flower",
-    "rainbow": "rainbow"
+    "rainbow": "rainbow",
+    "windmill": "windmill"
   },
   "rhythmAnimationOptions": {
     "linear": "Linear (direct mapping)",

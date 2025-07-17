@@ -8,15 +8,15 @@ export class WaveEffect extends BaseEffect {
       amplitude: 1,
       ...config
     })
-    this.densityCount = {
+    this.densityOptions = {
       sparse: 64,
       normal: 128,
       dense: 256
     }
-    this.pointCount = this.densityCount[this.config.densityType] || this.densityCount.normal
+    this.pointCount = this.densityOptions[this.config.density] || this.densityOptions.normal
     this.path = new Path({
-      fill: this.getFill(), // 只需初始化一次
-      stroke: this.config.colors[0] || '#00ffcc',
+      fill: this.getFill(),
+      stroke: (this.config.colors && this.config.colors[0]) || '#00ffcc',
       strokeWidth: 3,
       shadow: this.config.shadow ? { color: '#000', blur: 8, x: 0, y: 2 } : undefined
     })
@@ -47,10 +47,10 @@ export class WaveEffect extends BaseEffect {
     const offsetX = (width - waveWidth) / 2 // 居中
     const points = []
     const len = Math.min(this.pointCount, dataArray.length)
-    const renderType = this.config.renderType || 'linear'
+    const animation = this.config.animation || 'linear'
     for (let i = 0; i < len; i++) {
       let index
-      if (renderType === 'log') {
+      if (animation === 'log') {
         index = Math.floor(Math.pow(i / (len - 1), 2) * (dataArray.length - 1))
       } else {
         index = i
@@ -59,7 +59,7 @@ export class WaveEffect extends BaseEffect {
 
       // 振幅权重
       let weight = 1
-      if (renderType === 'parabola') {
+      if (animation === 'parabola') {
         const center = (len - 1) / 2
         const distance = (i - center) / center
         weight = 1 - distance * distance
@@ -91,8 +91,7 @@ export class WaveEffect extends BaseEffect {
       this.path.fill = newFill
     }
 
-    // 描边色
-    this.path.stroke = this.config.colors[0] || '#00ffcc'
+    this.path.stroke = (this.config.colors && this.config.colors[0]) || '#00ffcc'
     this.path.strokeWidth = 3
     this.path.shadow = this.config.shadow ? { color: '#000', blur: 8, x: 0, y: 2 } : undefined
   }

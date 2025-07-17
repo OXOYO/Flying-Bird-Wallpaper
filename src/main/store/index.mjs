@@ -535,8 +535,23 @@ export default class Store {
     if (global.FBW.mainWindow.win) {
       global.FBW.mainWindow.win.webContents.send('main:settingDataUpdate', this.settingData)
     }
+    if (global.FBW.viewImageWindow.win) {
+      global.FBW.viewImageWindow.win.webContents.send('main:settingDataUpdate', this.settingData)
+    }
     if (global.FBW.suspensionBall.win) {
       global.FBW.suspensionBall.win.webContents.send('main:settingDataUpdate', this.settingData)
+    }
+    if (global.FBW.dynamicWallpaperWindow.win) {
+      global.FBW.dynamicWallpaperWindow.win.webContents.send(
+        'main:settingDataUpdate',
+        this.settingData
+      )
+    }
+    if (global.FBW.rhythmWallpaperWindow.win) {
+      global.FBW.rhythmWallpaperWindow.win.webContents.send(
+        'main:settingDataUpdate',
+        this.settingData
+      )
     }
   }
 

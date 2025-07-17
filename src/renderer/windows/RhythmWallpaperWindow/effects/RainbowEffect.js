@@ -13,17 +13,17 @@ export class RainbowEffect extends BaseEffect {
       ...config
     })
 
-    this.densityCount = {
+    this.densityOptions = {
       sparse: { rainbowCount: 24, glowCount: 6 },
       normal: { rainbowCount: 48, glowCount: 12 },
       dense: { rainbowCount: 60, glowCount: 20 }
     }
 
     this.rainbowCount =
-      this.densityCount[this.config.renderType]?.rainbowCount ||
-      this.densityCount.normal.rainbowCount
+      this.densityOptions[this.config.density]?.rainbowCount ||
+      this.densityOptions.normal.rainbowCount
     this.glowCount =
-      this.densityCount[this.config.renderType]?.glowCount || this.densityCount.normal.glowCount
+      this.densityOptions[this.config.density]?.glowCount || this.densityOptions.normal.glowCount
 
     this.arcs = []
     this.lastScale = 1
@@ -33,7 +33,7 @@ export class RainbowEffect extends BaseEffect {
   initArcs() {
     this.arcs.forEach((p) => p.remove())
     this.arcs = []
-    // 主彩虹+光晕（主弧80条，光晕40条）
+    // 主彩虹+光晕
     const count = this.rainbowCount + this.glowCount
     for (let i = 0; i < count; i++) {
       const path = new Path({
@@ -49,62 +49,52 @@ export class RainbowEffect extends BaseEffect {
 
   getArcColor(t) {
     // t: 0(外)~1(内)，HSL插值
-    if (!this.config.gradient || this.config.gradient.length === 0) return '#fff'
-    if (this.config.gradient.length === 1) return this.config.gradient[0]
-    const seg = this.config.gradient.length - 1
+    if (!this.config.colors || this.config.colors.length === 0) return '#fff'
+    if (this.config.colors.length === 1) return this.config.colors[0]
+    const seg = this.config.colors.length - 1
     const pos = t * seg
     const idx = Math.floor(pos)
     const t2 = pos - idx
-    const colorA = this.config.gradient[idx]
-    const colorB =
-      this.config.gradient[idx + 1] || this.config.gradient[this.config.gradient.length - 1]
+    const colorA = this.config.colors[idx]
+    const colorB = this.config.colors[idx + 1] || this.config.colors[this.config.colors.length - 1]
     return lerpHSL(colorA, colorB, t2)
   }
 
-  getMappedValue(dataArray) {
-    const type = this.config.renderType
-    const max = Math.max(...dataArray) / 255
-    if (type === 'linear') {
-      // 线性律动
-      return max
-    } else if (type === 'log') {
-      // 对数律动，低能量更敏感
-      return Math.log2(1 + max * 255) / Math.log2(256)
-    } else if (type === 'parabola') {
-      // 抛物线律动，柔和中带爆发
-      return Math.pow(max, 2)
-    } else if (type === 'sqrt') {
-      // 平方根律动，柔和
-      return Math.sqrt(max)
-    } else if (type === 'exp') {
-      // 指数律动，爆发感
-      return Math.pow(max, 1.5)
-    } else if (type === 'sin') {
-      // 正弦律动，弹性周期感
-      const t = Date.now() / 500
-      return 0.5 + 0.5 * Math.sin(t)
-    } else if (type === 'bounce') {
-      // 弹跳回弹律动
-      const t = Date.now() / 400
-      let y = 0
-      if (max < 1 / 2.75) {
-        y = 7.5625 * max * max
-      } else if (max < 2 / 2.75) {
-        y = 7.5625 * (max - 1.5 / 2.75) * (max - 1.5 / 2.75) + 0.75
-      } else if (max < 2.5 / 2.75) {
-        y = 7.5625 * (max - 2.25 / 2.75) * (max - 2.25 / 2.75) + 0.9375
-      } else {
-        y = 7.5625 * (max - 2.625 / 2.75) * (max - 2.625 / 2.75) + 0.984375
-      }
-      return Math.min(1, Math.max(0, y))
-    } else if (type === 'step') {
-      // 阶梯/像素跳跃律动
-      return Math.floor(max * 5) / 5
-    } else {
-      // 默认：线性
-      return max
-    }
-  }
+  // getMappedValue(dataArray) {
+  //   const type = this.config.animation
+  //   const max = Math.max(...dataArray) / 255
+  //   if (type === 'linear') {
+  //     return max
+  //   } else if (type === 'log') {
+  //     return Math.log2(1 + max * 255) / Math.log2(256)
+  //   } else if (type === 'parabola') {
+  //     return Math.pow(max, 2)
+  //   } else if (type === 'sqrt') {
+  //     return Math.sqrt(max)
+  //   } else if (type === 'exp') {
+  //     return Math.pow(max, 1.5)
+  //   } else if (type === 'sin') {
+  //     const t = Date.now() / 500
+  //     return 0.5 + 0.5 * Math.sin(t)
+  //   } else if (type === 'bounce') {
+  //     const t = Date.now() / 400
+  //     let y = 0
+  //     if (max < 1 / 2.75) {
+  //       y = 7.5625 * max * max
+  //     } else if (max < 2 / 2.75) {
+  //       y = 7.5625 * (max - 1.5 / 2.75) * (max - 1.5 / 2.75) + 0.75
+  //     } else if (max < 2.5 / 2.75) {
+  //       y = 7.5625 * (max - 2.25 / 2.75) * (max - 2.25 / 2.75) + 0.9375
+  //     } else {
+  //       y = 7.5625 * (max - 2.625 / 2.75) * (max - 2.625 / 2.75) + 0.984375
+  //     }
+  //     return Math.min(1, Math.max(0, y))
+  //   } else if (type === 'step') {
+  //     return Math.floor(max * 5) / 5
+  //   } else {
+  //     return max
+  //   }
+  // }
 
   render(dataArray) {
     const { width, height } = this.leafer
@@ -120,8 +110,7 @@ export class RainbowEffect extends BaseEffect {
       this.arcs.forEach((arc) => (arc.path = ''))
       return
     }
-    // 音乐能量律动风格
-    const energy = this.getMappedValue(dataArray)
+    const energy = this.getMappedValue(Math.max(...dataArray))
     // scale变化范围更大，弹性平滑
     const targetScale = 0.8 + energy * 1.1
     this.lastScale = this.lastScale * 0.7 + targetScale * 0.3

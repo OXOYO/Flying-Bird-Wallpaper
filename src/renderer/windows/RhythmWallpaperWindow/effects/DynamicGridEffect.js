@@ -6,12 +6,12 @@ export class DynamicGridEffect extends BaseEffect {
   constructor(leafer, config) {
     super(leafer, config)
     this.baseColor = this.config.colors[0] || '#00ffcc'
-    this.densityCount = {
+    this.densityOptions = {
       sparse: 180,
       normal: 120,
       dense: 60
     }
-    this.cellWidth = this.densityCount[this.config.densityType] || this.densityCount.normal
+    this.cellWidth = this.densityOptions[this.config.density] || this.densityOptions.normal
     this.cellHeight = this.cellWidth
     this.cells = []
     this.initGrid()

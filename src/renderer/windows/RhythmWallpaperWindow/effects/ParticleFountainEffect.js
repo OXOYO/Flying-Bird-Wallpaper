@@ -4,12 +4,12 @@ import { Ellipse } from 'leafer-ui'
 export class ParticleFountainEffect extends BaseEffect {
   constructor(leafer, config) {
     super(leafer, config)
-    this.densityCount = {
+    this.densityOptions = {
       sparse: 128,
       normal: 320,
       dense: 640
     }
-    this.particleCount = this.densityCount[this.config.densityType] || this.densityCount.normal
+    this.particleCount = this.densityOptions[this.config.density] || this.densityOptions.normal
     this.particles = []
     this.initParticles()
   }

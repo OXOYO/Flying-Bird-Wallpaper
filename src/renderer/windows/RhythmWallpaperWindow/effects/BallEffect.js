@@ -5,12 +5,12 @@ export class BallEffect extends BaseEffect {
   constructor(leafer, config) {
     super(leafer, config)
     this.balls = []
-    this.densityCount = {
+    this.densityOptions = {
       sparse: 8,
       normal: 16,
       dense: 32
     }
-    this.ballCount = this.densityCount[this.config.densityType] || this.densityCount.normal
+    this.ballCount = this.densityOptions[this.config.density] || this.densityOptions.normal
     this.velocities = Array(this.ballCount).fill(0)
     this.positions = Array(this.ballCount).fill(0)
     this.initBalls()
@@ -50,7 +50,6 @@ export class BallEffect extends BaseEffect {
       this.velocities[i] *= 0.7
       this.positions[i] += this.velocities[i]
       const circle = this.balls[i]
-      // circle.radius = radius
       circle.width = radius * 2 // 按 Leafer 文档，width/height 控制圆的大小
       circle.height = radius * 2
       circle.x = (i + 1) * ballSpacing

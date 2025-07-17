@@ -7,12 +7,12 @@ export class FlowingLinesEffect extends BaseEffect {
       lineWidth: 10,
       ...config
     })
-    this.densityCount = {
+    this.densityOptions = {
       sparse: { line: 3, point: 32 },
       normal: { line: 5, point: 64 },
       dense: { line: 9, point: 128 }
     }
-    const density = this.densityCount[this.config.densityType] || this.densityCount.normal
+    const density = this.densityOptions[this.config.density] || this.densityOptions.normal
     this.lineCount = density.line
     this.pointCount = density.point
     this.paths = []

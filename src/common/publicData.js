@@ -438,7 +438,7 @@ export const rhythmEffectOptions = [
   { label: '频谱环', locale: 'rhythmEffectOptions.spectrumRing', value: 'spectrumRing' },
   { label: '粒子喷泉', locale: 'rhythmEffectOptions.particleFountain', value: 'particleFountain' },
   { label: '呼吸光圈', locale: 'rhythmEffectOptions.breathingHalo', value: 'breathingHalo' },
-  { label: '动态网格', locale: 'rhythmEffectOptions.dynamicGrid', value: 'dynamicGrid' },
+  // { label: '动态网格', locale: 'rhythmEffectOptions.dynamicGrid', value: 'dynamicGrid' },
   { label: '流动线条', locale: 'rhythmEffectOptions.flowingLines', value: 'flowingLines' },
   { label: '音符雨', locale: 'rhythmEffectOptions.musicNoteRain', value: 'musicNoteRain' },
   {
@@ -449,7 +449,8 @@ export const rhythmEffectOptions = [
   { label: '3D柱状', locale: 'rhythmEffectOptions.bars3D', value: 'bars3D' },
   { label: '液体波纹', locale: 'rhythmEffectOptions.liquidRipple', value: 'liquidRipple' },
   { label: '频谱花朵', locale: 'rhythmEffectOptions.spectrumFlower', value: 'spectrumFlower' },
-  { label: '彩虹', locale: 'rhythmEffectOptions.rainbow', value: 'rainbow' }
+  { label: '彩虹', locale: 'rhythmEffectOptions.rainbow', value: 'rainbow' },
+  { label: '风车', locale: 'rhythmEffectOptions.windmill', value: 'windmill' }
 ]
 
 // 律动动效
@@ -461,9 +462,7 @@ export const rhythmAnimationOptions = [
   { label: '指数', locale: 'rhythmAnimationOptions.exp', value: 'exp' },
   { label: '正弦', locale: 'rhythmAnimationOptions.sin', value: 'sin' },
   { label: '弹跳', locale: 'rhythmAnimationOptions.bounce', value: 'bounce' },
-  { label: '阶梯', locale: 'rhythmAnimationOptions.step', value: 'step' },
-  { label: '最大值', local: 'rhythmAnimationOptions.max', value: 'max' },
-  { label: '平均值', local: 'rhythmAnimationOptions.avg', value: 'avg' }
+  { label: '阶梯', locale: 'rhythmAnimationOptions.step', value: 'step' }
 ]
 
 // 律动密集度

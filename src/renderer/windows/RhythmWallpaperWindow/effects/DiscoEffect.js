@@ -4,12 +4,12 @@ import { Path } from 'leafer-ui'
 export class DiscoEffect extends BaseEffect {
   constructor(leafer, config) {
     super(leafer, config)
-    this.densityCount = {
+    this.densityOptions = {
       sparse: 6,
       normal: 12,
       dense: 24
     }
-    this.lightCount = this.densityCount[this.config.densityType] || this.densityCount.normal
+    this.lightCount = this.densityOptions[this.config.density] || this.densityOptions.normal
     this.lights = []
     this.angle = 0
     this.initLights()
@@ -28,10 +28,10 @@ export class DiscoEffect extends BaseEffect {
   }
 
   getFill(i) {
-    // 优先使用 config.gradient（多色渐变数组），每个灯单独取色
-    if (this.config.gradient && this.config.gradient.length > 0) {
-      // 如果 gradient 数组比灯数多，循环使用
-      return this.config.gradient[i % this.config.gradient.length]
+    // 优先使用 config.colors（多色渐变数组），每个灯单独取色
+    if (this.config.colors && this.config.colors.length > 0) {
+      // 如果 colors 数组比灯数多，循环使用
+      return this.config.colors[i % this.config.colors.length]
     }
     // fallback 到内置多彩色数组
     const colors = [

@@ -393,7 +393,8 @@
     "bars3D": "3D柱状",
     "liquidRipple": "液体波纹",
     "spectrumFlower": "频谱花朵",
-    "rainbow": "彩虹"
+    "rainbow": "彩虹",
+    "windmill": "风车"
   },
   "rhythmAnimationOptions": {
     "linear": "线性（直接映射）",

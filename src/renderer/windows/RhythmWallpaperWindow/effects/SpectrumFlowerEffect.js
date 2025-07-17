@@ -4,12 +4,12 @@ import { Path } from 'leafer-ui'
 export class SpectrumFlowerEffect extends BaseEffect {
   constructor(leafer, config) {
     super(leafer, config)
-    this.densityCount = {
+    this.densityOptions = {
       sparse: 8,
       normal: 16,
       dense: 32
     }
-    this.petalCount = this.densityCount[this.config.densityType] || this.densityCount.normal
+    this.petalCount = this.densityOptions[this.config.density] || this.densityOptions.normal
     this.petals = []
     this.initPetals()
   }
