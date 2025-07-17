@@ -17,7 +17,10 @@ import {
   allowedFileExtList,
   colorList,
   dynamicPerformanceModeOptions,
-  dynamicScaleModeOptions
+  dynamicScaleModeOptions,
+  rhythmEffectOptions,
+  rhythmAnimationOptions,
+  rhythmDensityOptions
 } from '@common/publicData.js'
 import { localeOptions } from '@i18n/locale/index.js'
 import { useTranslation } from 'i18next-vue'
@@ -59,6 +62,8 @@ const osType = commonData.value?.osType || 'win'
 const scaleTypes = scaleTypesByOS[osType]
 
 const maxFolderCount = 5
+
+const maxColorCount = 20
 
 const flags = reactive({
   saving: false,
@@ -276,6 +281,24 @@ const onDynamicSettingChange = (field, value) => {
   }
 }
 
+const onRhythmColorsChange = (index, val) => {
+  if (!val) {
+    onDeleteRhythmColors(index)
+  } else {
+    onSettingDataFormChange()
+  }
+}
+
+const onDeleteRhythmColors = (index) => {
+  settingDataForm.rhythmColors.splice(index, 1)
+  onSettingDataFormChange()
+}
+
+const onAddRhythmColors = (index) => {
+  settingDataForm.rhythmColors.push(colorList[0])
+  onSettingDataFormChange()
+}
+
 const onThemeColorChange = () => {
   onSettingDataFormChange()
 }
@@ -417,6 +440,15 @@ onBeforeUnmount(() => {
             <el-anchor-link class="anchor-sub-link" href="#divider-dynamicWallpaper">
               <span style="vertical-align: middle">{{
                 t('pages.Setting.divider.dynamicWallpaper')
+              }}</span>
+              <IconifyIcon
+                icon="material-symbols:experiment-outline-sharp"
+                style="vertical-align: middle"
+              />
+            </el-anchor-link>
+            <el-anchor-link class="anchor-sub-link" href="#divider-rhythmWallpaper">
+              <span style="vertical-align: middle">{{
+                t('pages.Setting.divider.rhythmWallpaper')
               }}</span>
               <IconifyIcon
                 icon="material-symbols:experiment-outline-sharp"
@@ -1145,6 +1177,122 @@ onBeforeUnmount(() => {
                 />
               </el-select>
             </el-form-item>
+
+            <div id="divider-rhythmWallpaper" class="divider-sub">
+              <span style="vertical-align: middle">{{
+                t('pages.Setting.divider.rhythmWallpaper')
+              }}</span>
+              <IconifyIcon
+                icon="material-symbols:experiment-outline-sharp"
+                style="vertical-align: middle"
+              />
+            </div>
+            <el-form-item
+              :label="t('pages.Setting.settingDataForm.rhythmEffect.label')"
+              prop="rhythmEffect"
+            >
+              <el-select
+                v-model="settingDataForm.rhythmEffect"
+                :placeholder="t('pages.Setting.settingDataForm.rhythmEffect.placeholder')"
+                style="width: 290px"
+                @change="onSettingDataFormChange"
+              >
+                <el-option
+                  v-for="item in rhythmEffectOptions"
+                  :key="item.value"
+                  :label="t(item.locale)"
+                  :value="item.value"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item
+              :label="t('pages.Setting.settingDataForm.rhythmWidthRatio')"
+              prop="rhythmWidthRatio"
+            >
+              <el-slider
+                v-model="settingDataForm.rhythmWidthRatio"
+                :min="1"
+                :max="100"
+                :step="1"
+                show-input
+                show-input-controls
+                style="width: 450px"
+                @change="onSettingDataFormChange"
+              />
+            </el-form-item>
+            <el-form-item
+              :label="t('pages.Setting.settingDataForm.rhythmHeightRatio')"
+              prop="rhythmHeightRatio"
+            >
+              <el-slider
+                v-model="settingDataForm.rhythmHeightRatio"
+                :min="1"
+                :max="100"
+                :step="1"
+                show-input
+                show-input-controls
+                style="width: 450px"
+                @change="onSettingDataFormChange"
+              />
+            </el-form-item>
+            <el-form-item
+              :label="t('pages.Setting.settingDataForm.rhythmColors')"
+              prop="rhythmColors"
+            >
+              <div class="color-picker-block">
+                <el-color-picker
+                  v-for="(color, index) in settingDataForm.rhythmColors"
+                  :key="index"
+                  class="color-picker-inner"
+                  v-model="settingDataForm.rhythmColors[index]"
+                  :predefine="colorList"
+                  @change="(val) => onRhythmColorsChange(index, val)"
+                />
+                <el-button
+                  v-if="settingDataForm.rhythmColors.length < maxColorCount"
+                  class="color-picker-btn"
+                  @click="onAddRhythmColors"
+                >
+                  <IconifyIcon icon="ep:plus" />
+                </el-button>
+              </div>
+            </el-form-item>
+            <el-form-item
+              :label="t('pages.Setting.settingDataForm.rhythmAnimation.label')"
+              prop="rhythmAnimation"
+            >
+              <el-select
+                v-model="settingDataForm.rhythmAnimation"
+                :placeholder="t('pages.Setting.settingDataForm.rhythmAnimation.placeholder')"
+                style="width: 290px"
+                @change="onSettingDataFormChange"
+              >
+                <el-option
+                  v-for="item in rhythmAnimationOptions"
+                  :key="item.value"
+                  :label="t(item.locale)"
+                  :value="item.value"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item
+              :label="t('pages.Setting.settingDataForm.rhythmDensity.label')"
+              prop="rhythmDensity"
+            >
+              <el-select
+                v-model="settingDataForm.rhythmDensity"
+                :placeholder="t('pages.Setting.settingDataForm.rhythmDensity.placeholder')"
+                style="width: 290px"
+                @change="onSettingDataFormChange"
+              >
+                <el-option
+                  v-for="item in rhythmDensityOptions"
+                  :key="item.value"
+                  :label="t(item.locale)"
+                  :value="item.value"
+                />
+              </el-select>
+            </el-form-item>
           </div>
 
           <div class="form-card">
@@ -1588,6 +1736,14 @@ onBeforeUnmount(() => {
   gap: 20px;
   height: calc(100vh - 110px);
   overflow: hidden;
+}
+
+.color-picker-block {
+  display: inline-flex;
+  justify-content: flex-start;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 </style>
 

@@ -7,7 +7,7 @@ let leafer, effectInstance, analyser, dataArray, source, audioContext, animation
 
 // 配置对象，按类型分组
 const config = ref({
-  type: 'rainbow', // 当前可视化类型，可选值：
+  rhythmEffect: 'rainbow', // 当前可视化类型，可选值：
   // 'bar'（柱状）、'wave'（波形）、'ball'（小球）、'disco'（迪斯科）、
   // 'spectrumRing'（频谱环）、'particleFountain'（粒子喷泉）、'breathingHalo'（呼吸光圈）、'dynamicGrid'（动态网格）、
   // 'flowingLines'（流动线条）、'musicNoteRain'（音符雨）、'rotatingStarburst'（旋转星芒）、'bars3D'（3D柱状）、
@@ -39,8 +39,11 @@ const config = ref({
 
 function switchEffect() {
   if (effectInstance) effectInstance.destroy()
-  const typeName = config.value.type.charAt(0).toUpperCase() + config.value.type.slice(1) + 'Effect'
-  const EffectClass = Effects[typeName]
+  const effectName =
+    config.value.rhythmEffect.charAt(0).toUpperCase() +
+    config.value.rhythmEffect.slice(1) +
+    'Effect'
+  const EffectClass = Effects[effectName]
   if (EffectClass) {
     // 只传递当前类型的配置
     effectInstance = new EffectClass(leafer, config.value)
@@ -112,7 +115,7 @@ onMounted(async () => {
 })
 
 watch(
-  () => config.value.type,
+  () => config.value.rhythmEffect,
   () => {
     switchEffect()
   }

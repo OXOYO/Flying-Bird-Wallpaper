@@ -16,7 +16,7 @@ export class WaveEffect extends BaseEffect {
     this.pointCount = this.densityCount[this.config.densityType] || this.densityCount.normal
     this.path = new Path({
       fill: this.getFill(), // 只需初始化一次
-      stroke: this.config.color || '#00ffcc',
+      stroke: this.config.colors[0] || '#00ffcc',
       strokeWidth: 3,
       shadow: this.config.shadow ? { color: '#000', blur: 8, x: 0, y: 2 } : undefined
     })
@@ -92,7 +92,7 @@ export class WaveEffect extends BaseEffect {
     }
 
     // 描边色
-    this.path.stroke = this.config.color || '#00ffcc'
+    this.path.stroke = this.config.colors[0] || '#00ffcc'
     this.path.strokeWidth = 3
     this.path.shadow = this.config.shadow ? { color: '#000', blur: 8, x: 0, y: 2 } : undefined
   }

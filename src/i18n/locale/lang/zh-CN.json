@@ -41,6 +41,7 @@
         "webWallpaper": "网页壁纸",
         "colorWallpaper": "颜色壁纸",
         "dynamicWallpaper": "动态壁纸",
+        "rhythmWallpaper": "律动壁纸",
         "remoteResource": "远程资源",
         "other": "其他设置",
         "privacyPassword": "隐私密码",
@@ -100,6 +101,21 @@
         "dynamicScaleMode": {
           "label": "缩放模式",
           "placeholder": "请选择缩放模式"
+        },
+        "rhythmEffect": {
+          "label": "律动效果",
+          "placeholder": "请现在律动效果"
+        },
+        "rhythmWidthRatio": "宽度占比",
+        "rhythmHeightRatio": "高度占比",
+        "rhythmColors": "律动颜色",
+        "rhythmAnimation": {
+          "label": "动效",
+          "placeholder": "请选择动效"
+        },
+        "rhythmDensity": {
+          "label": "密集程度",
+          "placeholder": "请选择密集程度"
         },
         "remoteResourceSecretKeys": {
           "label": "资源密钥",
@@ -361,6 +377,40 @@
     "cover": "填充",
     "contain": "适应",
     "stretch": "拉伸"
+  },
+  "rhythmEffectOptions": {
+    "bar": "柱状",
+    "wave": "波形",
+    "ball": "小球",
+    "disco": "迪斯科",
+    "spectrumRing": "频谱环",
+    "particleFountain": "粒子喷泉",
+    "breathingHalo": "呼吸光圈",
+    "dynamicGrid": "动态网格",
+    "flowingLines": "流动线条",
+    "musicNoteRain": "音符雨",
+    "rotatingStarburst": "旋转星芒",
+    "bars3D": "3D柱状",
+    "liquidRipple": "液体波纹",
+    "spectrumFlower": "频谱花朵",
+    "rainbow": "彩虹"
+  },
+  "rhythmAnimationOptions": {
+    "linear": "线性（直接映射）",
+    "log": "对数（低能量更敏感）",
+    "parabola": "抛物线（柔和中带爆发）",
+    "sqrt": "平方根（更柔和）",
+    "exp": "指数（爆发感）",
+    "sin": "正弦（弹性周期）",
+    "bounce": "弹跳回弹",
+    "step": "阶梯/像素跳跃",
+    "max": "最大值",
+    "avg": "平均值"
+  },
+  "rhythmDensityOptions": {
+    "sparse": "稀疏",
+    "normal": "正常",
+    "dense": "密集"
   },
   "wordTypeList": {
     "chinese": "中文",

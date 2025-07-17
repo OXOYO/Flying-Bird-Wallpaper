@@ -5,7 +5,7 @@ import { hex2RGB, rgb2HEX, lightenColor, darkenColor } from '@renderer/utils/gen
 export class DynamicGridEffect extends BaseEffect {
   constructor(leafer, config) {
     super(leafer, config)
-    this.baseColor = this.config.color || '#00ffcc'
+    this.baseColor = this.config.colors[0] || '#00ffcc'
     this.densityCount = {
       sparse: 180,
       normal: 120,

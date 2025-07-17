@@ -160,6 +160,25 @@ export const defaultSettingData = {
   dynamicContrast: 100,
   dynamicPerformanceMode: 'balanced',
   dynamicScaleMode: 'contain',
+  rhythmEffect: 'bar',
+  rhythmWidthRatio: 100,
+  rhythmHeightRatio: 30,
+  rhythmColors: [
+    '#ff3cac',
+    '#784ba0',
+    '#2b86c5',
+    '#42e695',
+    '#ffb347',
+    '#ffcc33',
+    '#f7971e',
+    '#ffd200',
+    '#f44369',
+    '#43cea2',
+    '#185a9d',
+    '#f857a6'
+  ],
+  rhythmAnimation: 'parabola',
+  rhythmDensity: 'normal',
   remoteResourceSecretKeys: {},
   autoDownload: false,
   downloadSources: [],
@@ -409,3 +428,47 @@ export const mimeTypes = {
   '.wmv': 'video/x-ms-wmv',
   '.flv': 'video/x-flv'
 }
+
+// 律动壁纸效果类型
+export const rhythmEffectOptions = [
+  { label: '柱状', locale: 'rhythmEffectOptions.bar', value: 'bar' },
+  { label: '波形', locale: 'rhythmEffectOptions.wave', value: 'wave' },
+  { label: '小球', locale: 'rhythmEffectOptions.ball', value: 'ball' },
+  { label: '迪斯科', locale: 'rhythmEffectOptions.disco', value: 'disco' },
+  { label: '频谱环', locale: 'rhythmEffectOptions.spectrumRing', value: 'spectrumRing' },
+  { label: '粒子喷泉', locale: 'rhythmEffectOptions.particleFountain', value: 'particleFountain' },
+  { label: '呼吸光圈', locale: 'rhythmEffectOptions.breathingHalo', value: 'breathingHalo' },
+  { label: '动态网格', locale: 'rhythmEffectOptions.dynamicGrid', value: 'dynamicGrid' },
+  { label: '流动线条', locale: 'rhythmEffectOptions.flowingLines', value: 'flowingLines' },
+  { label: '音符雨', locale: 'rhythmEffectOptions.musicNoteRain', value: 'musicNoteRain' },
+  {
+    label: '旋转星芒',
+    locale: 'rhythmEffectOptions.rotatingStarburst',
+    value: 'rotatingStarburst'
+  },
+  { label: '3D柱状', locale: 'rhythmEffectOptions.bars3D', value: 'bars3D' },
+  { label: '液体波纹', locale: 'rhythmEffectOptions.liquidRipple', value: 'liquidRipple' },
+  { label: '频谱花朵', locale: 'rhythmEffectOptions.spectrumFlower', value: 'spectrumFlower' },
+  { label: '彩虹', locale: 'rhythmEffectOptions.rainbow', value: 'rainbow' }
+]
+
+// 律动动效
+export const rhythmAnimationOptions = [
+  { label: '线型', locale: 'rhythmAnimationOptions.linear', value: 'linear' },
+  { label: '对数', locale: 'rhythmAnimationOptions.log', value: 'log' },
+  { label: '抛物线', locale: 'rhythmAnimationOptions.parabola', value: 'parabola' },
+  { label: '平方根', locale: 'rhythmAnimationOptions.sqrt', value: 'sqrt' },
+  { label: '指数', locale: 'rhythmAnimationOptions.exp', value: 'exp' },
+  { label: '正弦', locale: 'rhythmAnimationOptions.sin', value: 'sin' },
+  { label: '弹跳', locale: 'rhythmAnimationOptions.bounce', value: 'bounce' },
+  { label: '阶梯', locale: 'rhythmAnimationOptions.step', value: 'step' },
+  { label: '最大值', local: 'rhythmAnimationOptions.max', value: 'max' },
+  { label: '平均值', local: 'rhythmAnimationOptions.avg', value: 'avg' }
+]
+
+// 律动密集度
+export const rhythmDensityOptions = [
+  { label: '稀疏', locale: 'rhythmDensityOptions.sparse', value: 'sparse' },
+  { label: '正常', locale: 'rhythmDensityOptions.normal', value: 'normal' },
+  { label: '密集', locale: 'rhythmDensityOptions.dense', value: 'dense' }
+]

@@ -50,7 +50,7 @@ export class BaseEffect {
         to: 'bottom'
       }
     }
-    return this.config.color || '#00ffcc'
+    return '#00ffcc'
   }
 
   destroy() {

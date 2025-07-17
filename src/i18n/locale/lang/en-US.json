@@ -41,6 +41,7 @@
         "webWallpaper": "Web wallpaper",
         "colorWallpaper": "Color wallpaper",
         "dynamicWallpaper": "Dynamic wallpaper",
+        "rhythmWallpaper": "Rhythm wallpaper",
         "remoteResource": "Remote resources",
         "other": "Other settings",
         "privacyPassword": "Privacy password",
@@ -100,6 +101,21 @@
         "dynamicScaleMode": {
           "label": "Filling mode",
           "placeholder": "Please select filling mode"
+        },
+        "rhythmEffect": {
+          "label": "Rhythm effect",
+          "placeholder": "Please select rhythm effect"
+        },
+        "rhythmWidthRatio": "Width ratio",
+        "rhythmHeightRatio": "Height ratio",
+        "rhythmColors": "Rhythm Colors",
+        "rhythmAnimation": {
+          "label": "Animation",
+          "placeholder": "Please select animation"
+        },
+        "rhythmDensity": {
+          "label": "Density",
+          "placeholder": "Please select density"
         },
         "remoteResourceSecretKeys": {
           "label": "Resource key",
@@ -361,6 +377,40 @@
     "cover": "cover",
     "contain": "contain",
     "stretch": "stretch"
+  },
+  "rhythmEffectOptions": {
+    "bar": "bar",
+    "wave": "wave",
+    "ball": "ball",
+    "disco": "disco",
+    "spectrumRing": "spectrum ring",
+    "particleFountain": "particle fountain",
+    "breathingHalo": "breathing halo",
+    "dynamicGrid": "dynamic grid",
+    "flowingLines": "flowing lines",
+    "musicNoteRain": "music note rain",
+    "rotatingStarburst": "rotating starburst",
+    "bars3D": "bars 3D",
+    "liquidRipple": "liquid ripple",
+    "spectrumFlower": "spectrum flower",
+    "rainbow": "rainbow"
+  },
+  "rhythmAnimationOptions": {
+    "linear": "Linear (direct mapping)",
+    "log": "Logarithmic (sensitive to low energy)",
+    "parabola": "Parabola (soft with burst)",
+    "sqrt": "Square root (softer)",
+    "exp": "Exponential (explosive)",
+    "sin": "Sine (elastic periodic)",
+    "bounce": "Bounce (bouncing rebound)",
+    "step": "Step (pixel jump)",
+    "max": "Maximum value",
+    "avg": "Average value"
+  },
+  "rhythmDensityOptions": {
+    "sparse": "Sparse",
+    "normal": "Normal",
+    "dense": "Dense"
   },
   "wordTypeList": {
     "chinese": "中文",
