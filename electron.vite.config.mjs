@@ -31,7 +31,12 @@ const getEntry = () => {
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin()]
+    plugins: [externalizeDepsPlugin()],
+    build: {
+      rollupOptions: {
+        external: ['sharp']
+      }
+    }
   },
   preload: {
     plugins: [externalizeDepsPlugin()]
