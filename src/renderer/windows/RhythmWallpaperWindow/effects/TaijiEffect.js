@@ -63,7 +63,8 @@ export class TaijiEffect extends BaseEffect {
       this.initTaiji()
     }
     // 音频控制旋转
-    const speed = dataArray.reduce((a, b) => a + b, 0) / dataArray.length / 255
+    const avgValue = dataArray.reduce((a, b) => a + b, 0) / dataArray.length
+    const speed = this.getMappedValue(avgValue)
     if (this.taijiImage) {
       this.taijiImage.rotateOf('center', (speed * 180) / Math.PI)
     }
