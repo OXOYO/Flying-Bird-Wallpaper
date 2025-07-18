@@ -451,7 +451,8 @@ export const rhythmEffectOptions = [
   { label: '频谱花朵', locale: 'rhythmEffectOptions.spectrumFlower', value: 'spectrumFlower' },
   { label: '彩虹', locale: 'rhythmEffectOptions.rainbow', value: 'rainbow' },
   { label: '风车', locale: 'rhythmEffectOptions.windmill', value: 'windmill' },
-  { label: '太极', locale: 'rhythmEffectOptions.taiji', value: 'taiji' }
+  { label: '太极', locale: 'rhythmEffectOptions.taiji', value: 'taiji' },
+  { label: '木鱼', locale: 'rhythmEffectOptions.muyu', value: 'muyu' }
 ]
 
 // 律动动效

@@ -395,7 +395,8 @@
     "spectrumFlower": "spectrum flower",
     "rainbow": "rainbow",
     "windmill": "windmill",
-    "taiji": "taiji"
+    "taiji": "taiji",
+    "muyu": "muyu"
   },
   "rhythmAnimationOptions": {
     "linear": "Linear (direct mapping)",
