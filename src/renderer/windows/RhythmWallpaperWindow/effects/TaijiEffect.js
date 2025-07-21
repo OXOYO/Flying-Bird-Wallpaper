@@ -4,21 +4,14 @@ import { Image, Platform } from 'leafer-ui'
 export class TaijiEffect extends BaseEffect {
   constructor(leafer, config) {
     super(leafer, config)
-    this.center = { x: 0, y: 0 }
-    this.radius = 80
-    this.imageCenter = { x: 0, y: 0 }
+    const { x, y, width, height } = this.bodySize
+    this.radius = Math.min(width, height) / 2
+    this.center = { x: x - this.radius, y: y - this.radius }
     this.taijiImage = null
-    this.initTaiji()
+    this.init()
   }
 
-  initTaiji() {
-    const { width, height } = this.leafer
-    this.center.x = width / 2
-    this.center.y = height / 2
-    this.radius = Math.min(width * this.config.widthRatio, height * this.config.heightRatio)
-    this.imageCenter.x = this.center.x - this.radius
-    this.imageCenter.y = this.center.y - this.radius
-
+  init() {
     if (this.taijiImage) {
       this.taijiImage.remove()
       this.taijiImage = null
@@ -43,8 +36,8 @@ export class TaijiEffect extends BaseEffect {
       url: Platform.toURL(taijiSVG, 'svg'),
       width: this.radius * 2,
       height: this.radius * 2,
-      x: this.imageCenter.x,
-      y: this.imageCenter.y,
+      x: this.center.x,
+      y: this.center.y,
       origin: 'center',
       draggable: false,
       shadow: {
@@ -58,13 +51,9 @@ export class TaijiEffect extends BaseEffect {
   }
 
   render(dataArray) {
-    const { width, height } = this.leafer
-    if (width !== this.center.x * 2 || height !== this.center.y * 2) {
-      this.initTaiji()
-    }
-    // 音频控制旋转
-    const avgValue = dataArray.reduce((a, b) => a + b, 0) / dataArray.length
-    const speed = this.getMappedValue(avgValue)
+    const mappedValues = this.getMappedValues(dataArray)
+    const avgValue = mappedValues.reduce((a, b) => a + b, 0) / mappedValues.length
+    const speed = avgValue
     if (this.taijiImage) {
       this.taijiImage.rotateOf('center', (speed * 180) / Math.PI)
     }

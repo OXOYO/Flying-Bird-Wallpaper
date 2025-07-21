@@ -8,21 +8,21 @@ export class FlowingLinesEffect extends BaseEffect {
       ...config
     })
     this.densityOptions = {
-      sparse: { line: 3, point: 32 },
-      normal: { line: 5, point: 64 },
-      dense: { line: 9, point: 128 }
+      sparse: { line: 4, point: 32 },
+      normal: { line: 8, point: 64 },
+      dense: { line: 16, point: 128 }
     }
     const density = this.densityOptions[this.config.density] || this.densityOptions.normal
     this.lineCount = density.line
     this.pointCount = density.point
     this.paths = []
-    this.initLines()
+    this.init()
   }
 
-  initLines() {
+  init() {
     for (let i = 0; i < this.lineCount; i++) {
       const path = new Path({
-        stroke: this.getFill(i),
+        stroke: this.getFill(),
         strokeWidth: this.config.lineWidth + i,
         opacity: 0.7
       })
@@ -32,38 +32,23 @@ export class FlowingLinesEffect extends BaseEffect {
   }
 
   render(dataArray) {
-    const { width, height } = this.leafer
+    const { x, y, width, height } = this.bodySize
+    const mappedValues = this.getMappedValues(this.getReducedValues(dataArray, this.pointCount))
+
     for (let l = 0; l < this.lineCount; l++) {
       const points = []
+
       for (let i = 0; i < this.pointCount; i++) {
-        const x = (width / (this.pointCount - 1)) * i
-        const baseY = (height / (this.lineCount + 1)) * (l + 1)
-        const value = dataArray[(i + l * 7) % dataArray.length] || 0
-        const mapped = this.getMappedValue(value)
-        const y = baseY - mapped * 60
-        points.push([x, y])
+        const px = x - width / 2 + (width / (this.pointCount - 1)) * i
+        const baseY = y - height / 2 + (height / (this.lineCount + 1)) * (l + 1)
+        const mapped = mappedValues[(i + l * 7) % mappedValues.length]
+        const py = baseY - mapped * (height / 4)
+        points.push([px, py])
       }
       this.paths[l].path = this.catmullRom2bezier(points)
-      this.paths[l].stroke = this.getFill(l)
+      this.paths[l].stroke = this.getFill()
       this.paths[l].opacity = 0.5 + 0.5 * Math.abs(Math.sin(Date.now() / 1000 + l))
     }
-  }
-
-  // 生成平滑曲线路径
-  catmullRom2bezier(points) {
-    let d = `M${points[0][0]},${points[0][1]}`
-    for (let i = 0; i < points.length - 1; i++) {
-      const p0 = points[i === 0 ? i : i - 1]
-      const p1 = points[i]
-      const p2 = points[i + 1]
-      const p3 = points[i + 2 < points.length ? i + 2 : i + 1]
-      const cp1x = p1[0] + (p2[0] - p0[0]) / 6
-      const cp1y = p1[1] + (p2[1] - p0[1]) / 6
-      const cp2x = p2[0] - (p3[0] - p1[0]) / 6
-      const cp2y = p2[1] - (p3[1] - p1[1]) / 6
-      d += ` C${cp1x},${cp1y} ${cp2x},${cp2y} ${p2[0]},${p2[1]}`
-    }
-    return d
   }
 
   destroy() {

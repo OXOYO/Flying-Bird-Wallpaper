@@ -17,6 +17,7 @@ const config = computed(() => {
     colors: toRaw(settingData.value.rhythmColors),
     animation: settingData.value.rhythmAnimation,
     density: settingData.value.rhythmDensity,
+    position: settingData.value.rhythmPosition,
     shadow: true
   }
 })
@@ -44,7 +45,7 @@ const init = async () => {
     })
     source = audioContext.createMediaStreamSource(stream)
     analyser = audioContext.createAnalyser()
-    analyser.fftSize = 256
+    analyser.fftSize = 2048
     dataArray = new Uint8Array(analyser.frequencyBinCount)
     source.connect(analyser)
     runEffect()

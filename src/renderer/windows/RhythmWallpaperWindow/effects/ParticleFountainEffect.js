@@ -6,20 +6,20 @@ export class ParticleFountainEffect extends BaseEffect {
     super(leafer, config)
     this.densityOptions = {
       sparse: 128,
-      normal: 320,
-      dense: 640
+      normal: 256,
+      dense: 512
     }
     this.particleCount = this.densityOptions[this.config.density] || this.densityOptions.normal
     this.particles = []
-    this.initParticles()
+    this.init()
   }
 
-  initParticles() {
+  init() {
     for (let i = 0; i < this.particleCount; i++) {
       const particle = new Ellipse({
         width: 8,
         height: 8,
-        fill: this.getFill(i),
+        fill: this.getFill(),
         opacity: 0.8
       })
       this.leafer.add(particle)
@@ -34,29 +34,30 @@ export class ParticleFountainEffect extends BaseEffect {
   }
 
   render(dataArray) {
-    const { width, height } = this.leafer
+    const { x, y, width, height } = this.bodySize
+    const mappedValues = this.getMappedValues(this.getReducedValues(dataArray, this.particleCount))
+
     for (let i = 0; i < this.particleCount; i++) {
-      const value = dataArray[i % dataArray.length] || 0
-      const mapped = this.getMappedValue(value)
+      const mapped = mappedValues[i]
       const p = this.particles[i]
-      const spreadX = width * this.config.widthRatio
-      const maxHeight = height * this.config.heightRatio
+      const spreadX = width
+      const maxHeight = height
 
       if (Math.random() < mapped * 0.4) {
         // 横向分布
-        p.x = width / 2 + (Math.random() - 0.5) * spreadX
-        // 纵向分布（喷射起点在底部，最大喷射高度受 heightRatio 控制）
-        p.y = height - 20
+        p.x = x - width / 2 + Math.random() * width
+        // 垂直分布（喷射起点在底部，最大喷射高度受 height 控制）
+        p.y = y + height / 2 - 20
         p.vx = (Math.random() - 0.5) * 6 * (0.5 + mapped)
-        // 竖直速度最大值受 heightRatio 控制
+        // 垂直速度最大值受 height 控制
         p.vy = -Math.random() * maxHeight * 0.45 * mapped - 6
         p.shape.width = p.shape.height = 8 + mapped * 16
-        p.shape.fill = this.getFill(i, mapped)
+        p.shape.fill = this.getFill()
       }
       p.vy += 0.35 // 重力略增
       p.x += p.vx
       p.y += p.vy
-      if (p.y > height) p.y = height - 20
+      if (p.y > y + height / 2) p.y = y + height / 2 - 20
       p.shape.x = p.x
       p.shape.y = p.y
       // 透明度更有层次

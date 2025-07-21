@@ -7,24 +7,23 @@ export class DynamicGridEffect extends BaseEffect {
     super(leafer, config)
     this.baseColor = this.config.colors[0] || '#00ffcc'
     this.densityOptions = {
-      sparse: 180,
-      normal: 120,
-      dense: 60
+      sparse: 256,
+      normal: 128,
+      dense: 64
     }
     this.cellWidth = this.densityOptions[this.config.density] || this.densityOptions.normal
     this.cellHeight = this.cellWidth
     this.cells = []
-    this.initGrid()
+    this.init()
   }
 
-  initGrid() {
+  init() {
     // 清空旧格子
     this.cells.forEach((cell) => cell.remove())
     this.cells = []
     // 先创建足够多的格子（多余的隐藏/不渲染也可）
-    const { width, height } = this.leafer
-    const cols = Math.ceil(width / this.cellWidth)
-    const rows = Math.ceil(height / this.cellHeight)
+    const cols = Math.ceil(this.bodySize.width / this.cellWidth)
+    const rows = Math.ceil(this.bodySize.height / this.cellHeight)
     for (let row = 0; row < rows; row++) {
       for (let col = 0; col < cols; col++) {
         const rect = new Rect({
@@ -60,44 +59,32 @@ export class DynamicGridEffect extends BaseEffect {
   }
 
   render(dataArray) {
-    const { width, height } = this.leafer
+    const { x, y, width, height } = this.bodySize
     const cols = Math.ceil(width / this.cellWidth)
     const rows = Math.ceil(height / this.cellHeight)
-
-    // 如果窗口大小变了，重新生成格子
-    if (cols !== this.cols || rows !== this.rows) {
-      this.initGrid()
-    }
+    const mappedValues = this.getMappedValues(this.getReducedValues(dataArray, cols * rows))
 
     for (let row = 0; row < rows; row++) {
       for (let col = 0; col < cols; col++) {
         const idx = row * cols + col
-        const value = dataArray[idx % dataArray.length] || 0
-        const mapped = this.getMappedValue(value)
+        const mapped = mappedValues[idx]
         const cell = this.cells[idx]
-        // 默认宽高
+        // 位置
         let w = this.cellWidth
         let h = this.cellHeight
-        // 最后一列
         if (col === cols - 1) w = width - col * this.cellWidth
-        // 最后一行
         if (row === rows - 1) h = height - row * this.cellHeight
-        // 位置
-        const x = col * this.cellWidth
-        const y = row * this.cellHeight
-        // 固定宽高，无缝排列
+        const cellX = x - width / 2 + col * this.cellWidth
+        const cellY = y - height / 2 + row * this.cellHeight
         cell.width = w
         cell.height = h
-        cell.x = x
-        cell.y = y
-        // 颜色深浅随 mapped 变化
+        cell.x = cellX
+        cell.y = cellY
         cell.fill = this.getFill(idx, mapped)
-        // 透明度可选（如需更明显可调高基数）
         cell.opacity = 0.9
-        // 阴影强度随 mapped 变化
         if (this.config.shadow) {
           cell.innerShadow = {
-            color: 'rgba(0,0,0,0.5)', // 更淡
+            color: 'rgba(0,0,0,0.5)',
             blur: this.cellWidth / 4 + mapped * this.cellWidth,
             spread: mapped * this.cellWidth * 0.3,
             x: 0,

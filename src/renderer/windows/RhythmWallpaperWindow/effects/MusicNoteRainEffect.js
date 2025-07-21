@@ -8,20 +8,20 @@ export class MusicNoteRainEffect extends BaseEffect {
     super(leafer, config)
     this.densityOptions = {
       sparse: 32,
-      normal: 100,
-      dense: 200
+      normal: 64,
+      dense: 128
     }
     this.noteCount = this.densityOptions[this.config.density] || this.densityOptions.normal
     this.notes = []
-    this.initNotes()
+    this.init()
   }
 
-  initNotes() {
+  init() {
     for (let i = 0; i < this.noteCount; i++) {
       const note = new Text({
         text: NOTE_CHARS[i % NOTE_CHARS.length],
         fontSize: 24 + Math.random() * 16,
-        fill: this.getFill(i),
+        fill: this.getFill(),
         opacity: 0.8
       })
       this.leafer.add(note)
@@ -35,22 +35,23 @@ export class MusicNoteRainEffect extends BaseEffect {
   }
 
   render(dataArray) {
-    const { width, height } = this.leafer
+    const { x, y, width, height } = this.bodySize
+    const mappedValues = this.getMappedValues(this.getReducedValues(dataArray, this.noteCount))
+
     for (let i = 0; i < this.noteCount; i++) {
-      const value = dataArray[i % dataArray.length] || 0
-      const mapped = this.getMappedValue(value)
+      const mapped = mappedValues[i]
       const n = this.notes[i]
       n.vy += 0.1 + mapped * 1.5
       n.y += n.vy
-      if (n.y > height + 40) {
-        n.y = -40
-        n.x = Math.random() * width
+      if (n.y > y + height / 2 + 40) {
+        n.y = y - height / 2 - 40
+        n.x = x - width / 2 + Math.random() * width
         n.vy = 0
       }
       n.shape.x = n.x
       n.shape.y = n.y
       n.shape.opacity = 0.5 + mapped * 0.5
-      n.shape.fill = this.getFill(i)
+      n.shape.fill = this.getFill()
     }
   }
 

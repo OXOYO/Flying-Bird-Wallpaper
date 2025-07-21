@@ -11,10 +11,10 @@ export class BarEffect extends BaseEffect {
       dense: 128
     }
     this.barCount = this.densityOptions[this.config.density] || this.densityOptions.normal
-    this.initBars()
+    this.init()
   }
 
-  initBars() {
+  init() {
     for (let i = 0; i < this.barCount; i++) {
       const rect = new Rect({
         width: 10,
@@ -30,37 +30,18 @@ export class BarEffect extends BaseEffect {
   }
 
   render(dataArray) {
-    const { width, height } = this.leafer
-    const totalBarWidth = width * (this.config.widthRatio || 1)
-    const barWidth = totalBarWidth / this.barCount
-    const offsetX = (width - totalBarWidth) / 2 // 居中
-    const maxBarHeight = height * (this.config.heightRatio || 0.8)
-    const animation = this.config.animation || 'linear'
+    const barWidth = this.bodySize.width / this.barCount
+    const offsetX = this.bodySize.x - this.bodySize.width / 2
+    const offsetY = this.bodySize.y - this.bodySize.height / 2
+    const mappedValues = this.getMappedValues(this.getReducedValues(dataArray, this.barCount))
 
     for (let i = 0; i < this.barCount; i++) {
-      let value
-      // 1. 频谱下标映射
-      if (animation === 'log') {
-        const index = Math.floor(Math.pow(i / this.barCount, 2) * (dataArray.length - 1))
-        value = dataArray[index] || 0
-      } else {
-        value = dataArray[i] || 0
-      }
-
-      // 2. 柱子高度权重
-      let weight = 1
-      if (animation === 'parabola') {
-        const center = (this.barCount - 1) / 2
-        const distance = (i - center) / center
-        weight = 1 - distance * distance // 抛物线分布
-      }
-
-      const barHeight = (value / 255) * maxBarHeight * weight
+      const value = mappedValues[i]
       const rect = this.bars[i]
       rect.width = barWidth * 0.8
-      rect.height = barHeight
+      rect.height = value * this.bodySize.height
       rect.x = offsetX + i * barWidth
-      rect.y = height - barHeight
+      rect.y = offsetY + (this.bodySize.height - rect.height)
       rect.fill = this.getFill()
       rect.shadow = this.config.shadow ? { color: '#000', blur: 10, x: 0, y: 2 } : undefined
     }

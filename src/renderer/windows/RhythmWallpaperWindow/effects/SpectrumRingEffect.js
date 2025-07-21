@@ -16,13 +16,13 @@ export class SpectrumRingEffect extends BaseEffect {
     }
     this.segments = this.densityOptions[this.config.density] || this.densityOptions.normal
     this.paths = []
-    this.initSegments()
+    this.init()
   }
 
-  initSegments() {
+  init() {
     for (let i = 0; i < this.segments; i++) {
       const path = new Path({
-        fill: this.getFill(i),
+        fill: this.getFill(),
         opacity: 0.8
       })
       this.leafer.add(path)
@@ -31,16 +31,18 @@ export class SpectrumRingEffect extends BaseEffect {
   }
 
   render(dataArray) {
-    const { width, height } = this.leafer
-    const centerX = width / 2
-    const centerY = height / 2
+    const { x, y, width, height } = this.bodySize
+    const centerX = x
+    const centerY = y
     const angleStep = (2 * Math.PI) / this.segments
+    const minR = Math.min(width, height) * 0.18
+    const maxR = Math.min(width, height) * 0.48
+    const mappedValues = this.getMappedValues(this.getReducedValues(dataArray, this.segments))
+
     for (let i = 0; i < this.segments; i++) {
-      const value = dataArray[i] || 0
-      const mapped = this.getMappedValue(value)
-      const innerR = this.config.radius
-      const outerR =
-        this.config.radius + mapped * (this.config.heightRatio || 1) * this.config.radius
+      const mapped = mappedValues[i]
+      const innerR = minR
+      const outerR = minR + mapped * (maxR - minR)
       const startAngle = i * angleStep
       const endAngle = startAngle + angleStep * 0.9
       const x1 = centerX + Math.cos(startAngle) * innerR
@@ -54,7 +56,7 @@ export class SpectrumRingEffect extends BaseEffect {
       const d = `M${x1},${y1} L${x2},${y2} L${x3},${y3} L${x4},${y4} Z`
       const path = this.paths[i]
       path.path = d
-      path.fill = this.getFill(i)
+      path.fill = this.getFill()
       path.opacity = 0.7 + mapped * 0.3
     }
   }

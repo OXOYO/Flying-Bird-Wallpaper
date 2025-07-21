@@ -5,20 +5,20 @@ export class RotatingStarburstEffect extends BaseEffect {
   constructor(leafer, config) {
     super(leafer, config)
     this.densityOptions = {
-      sparse: 12,
-      normal: 24,
-      dense: 48
+      sparse: 16,
+      normal: 32,
+      dense: 64
     }
     this.rayCount = this.densityOptions[this.config.density] || this.densityOptions.normal
     this.rays = []
     this.angle = 0
-    this.initRays()
+    this.init()
   }
 
-  initRays() {
+  init() {
     for (let i = 0; i < this.rayCount; i++) {
       const path = new Path({
-        stroke: this.getFill(i),
+        stroke: this.getFill(),
         strokeWidth: 3,
         opacity: 0.7
       })
@@ -28,23 +28,22 @@ export class RotatingStarburstEffect extends BaseEffect {
   }
 
   render(dataArray) {
-    const { width, height } = this.leafer
-    const centerX = width / 2
-    const centerY = height / 2
+    const { x, y, width, height } = this.bodySize
     const baseRadius = Math.min(width, height) * 0.18
     const maxLength = baseRadius * 2.2
     this.angle += 0.01
+    const mappedValues = this.getMappedValues(this.getReducedValues(dataArray, this.rayCount))
+
     for (let i = 0; i < this.rayCount; i++) {
-      const value = dataArray[i % dataArray.length] || 0
-      const mapped = this.getMappedValue(value)
+      const mapped = mappedValues[i]
       const angle = this.angle + (i * (2 * Math.PI)) / this.rayCount
       const length = baseRadius + mapped * (maxLength - baseRadius)
-      const x1 = centerX
-      const y1 = centerY
-      const x2 = centerX + Math.cos(angle) * length
-      const y2 = centerY + Math.sin(angle) * length
+      const x1 = x
+      const y1 = y
+      const x2 = x + Math.cos(angle) * length
+      const y2 = y + Math.sin(angle) * length
       this.rays[i].path = `M${x1},${y1} L${x2},${y2}`
-      this.rays[i].stroke = this.getFill(i)
+      this.rays[i].stroke = this.getFill()
       this.rays[i].opacity = 0.5 + mapped * 0.5
     }
   }

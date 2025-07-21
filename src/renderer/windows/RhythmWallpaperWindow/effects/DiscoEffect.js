@@ -5,17 +5,17 @@ export class DiscoEffect extends BaseEffect {
   constructor(leafer, config) {
     super(leafer, config)
     this.densityOptions = {
-      sparse: 6,
-      normal: 12,
-      dense: 24
+      sparse: 8,
+      normal: 16,
+      dense: 32
     }
     this.lightCount = this.densityOptions[this.config.density] || this.densityOptions.normal
     this.lights = []
     this.angle = 0
-    this.initLights()
+    this.init()
   }
 
-  initLights() {
+  init() {
     for (let i = 0; i < this.lightCount; i++) {
       const path = new Path({
         fill: this.getFill(i),
@@ -52,14 +52,15 @@ export class DiscoEffect extends BaseEffect {
   }
 
   render(dataArray) {
-    const { width, height } = this.leafer
-    const centerX = width / 2
-    const centerY = height / 2
+    const { x, y, width, height } = this.bodySize
+    const centerX = x
+    const centerY = y
     const radius = Math.min(width, height) * 0.3
     this.angle += 0.01
+    const mappedValues = this.getMappedValues(this.getReducedValues(dataArray, this.lightCount))
+
     for (let i = 0; i < this.lightCount; i++) {
-      const value = dataArray[i * 2] || 0
-      const mapped = this.getMappedValue(value)
+      const mapped = mappedValues[i]
       const angle = this.angle + (i * (2 * Math.PI)) / this.lightCount
       const lightLength = radius + mapped * radius * 0.7
       // 扇形光束

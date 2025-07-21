@@ -11,50 +11,42 @@ export class BallEffect extends BaseEffect {
       dense: 32
     }
     this.ballCount = this.densityOptions[this.config.density] || this.densityOptions.normal
-    this.velocities = Array(this.ballCount).fill(0)
-    this.positions = Array(this.ballCount).fill(0)
-    this.initBalls()
+    this.init()
   }
 
-  initBalls() {
+  init() {
     for (let i = 0; i < this.ballCount; i++) {
       const circle = new Ellipse({
         width: 20,
         height: 20,
         x: 0,
         y: 0,
-        fill: this.getFill(i),
+        fill: this.getFill(),
         shadow: this.config.shadow ? { color: '#000', blur: 10, x: 0, y: 2 } : undefined
       })
       this.leafer.add(circle)
       this.balls.push(circle)
-      this.positions[i] = 0
-      this.velocities[i] = 0
     }
   }
 
   render(dataArray) {
-    const { width, height } = this.leafer
-    const maxBallHeight = height * this.config.heightRatio
-    const margin = 4 // 小球之间的最小间隔
-    const ballSpacing = (width * this.config.widthRatio) / (this.ballCount + 1)
-    const maxRadius = Math.max(8, (ballSpacing - margin) / 2.2)
-    const minRadius = Math.max(4, maxRadius * 0.3) // 最小半径更小
+    const mappedValues = this.getMappedValues(this.getReducedValues(dataArray, this.ballCount))
+    const ballSpacing = this.bodySize.width / (this.ballCount + 1)
+    const minRadius = Math.max(4, (ballSpacing * 0.3) / 2)
+    const maxRadius = Math.max(8, (ballSpacing * 0.9) / 2)
+
     for (let i = 0; i < this.ballCount; i++) {
-      const value = dataArray[i * 4] || 0
-      const mapped = this.getMappedValue(value) // 0~1
-      const enhancedMapped = Math.pow(mapped, 0.7) // 拉大动态
-      const radius = minRadius + enhancedMapped * (maxRadius - minRadius)
-      const targetY = height - enhancedMapped * maxBallHeight - radius
-      this.velocities[i] += (targetY - this.positions[i]) * 0.2
-      this.velocities[i] *= 0.7
-      this.positions[i] += this.velocities[i]
+      const value = mappedValues[i]
+      const radius = minRadius + value * (maxRadius - minRadius)
+      // 直接根据 value 计算 y 坐标
+      const y = this.bodySize.y + this.bodySize.height / 2 - radius - value * this.bodySize.height
+
       const circle = this.balls[i]
-      circle.width = radius * 2 // 按 Leafer 文档，width/height 控制圆的大小
+      circle.width = radius * 2
       circle.height = radius * 2
-      circle.x = (i + 1) * ballSpacing
-      circle.y = this.positions[i]
-      circle.fill = this.getFill(i)
+      circle.x = this.bodySize.x - this.bodySize.width / 2 + (i + 1) * ballSpacing
+      circle.y = y
+      circle.fill = this.getFill()
       circle.shadow = this.config.shadow ? { color: '#000', blur: 10, x: 0, y: 2 } : undefined
     }
   }

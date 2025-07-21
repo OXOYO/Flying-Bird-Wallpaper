@@ -23,66 +23,36 @@ export class WaveEffect extends BaseEffect {
     this.leafer.add(this.path)
   }
 
-  // 生成平滑曲线路径
-  catmullRom2bezier(points) {
-    let d = `M${points[0][0]},${points[0][1]}`
-    for (let i = 0; i < points.length - 1; i++) {
-      const p0 = points[i - 1] || points[0]
-      const p1 = points[i]
-      const p2 = points[i + 1]
-      const p3 = points[i + 2] || p2
-      const cp1x = p1[0] + (p2[0] - p0[0]) / 6
-      const cp1y = p1[1] + (p2[1] - p0[1]) / 6
-      const cp2x = p2[0] - (p3[0] - p1[0]) / 6
-      const cp2y = p2[1] - (p3[1] - p1[1]) / 6
-      d += ` C${cp1x},${cp1y} ${cp2x},${cp2y} ${p2[0]},${p2[1]}`
-    }
-    return d
-  }
-
   render(dataArray) {
-    const { width, height } = this.leafer
-    const waveWidth = width * (this.config.widthRatio || 1)
-    const maxWaveHeight = height * (this.config.heightRatio || 0.5)
-    const offsetX = (width - waveWidth) / 2 // 居中
+    const { x, y, width, height } = this.bodySize
+    const left = x - width / 2
+    const top = y - height / 2
     const points = []
-    const len = Math.min(this.pointCount, dataArray.length)
-    const animation = this.config.animation || 'linear'
-    for (let i = 0; i < len; i++) {
-      let index
-      if (animation === 'log') {
-        index = Math.floor(Math.pow(i / (len - 1), 2) * (dataArray.length - 1))
-      } else {
-        index = i
-      }
-      let value = dataArray[index] || 0
 
-      // 振幅权重
-      let weight = 1
-      if (animation === 'parabola') {
-        const center = (len - 1) / 2
-        const distance = (i - center) / center
-        weight = 1 - distance * distance
-      }
+    const mappedValues = this.getMappedValues(this.getReducedValues(dataArray, this.pointCount))
 
-      const x = offsetX + (i / (len - 1)) * waveWidth
-      const y = height - (value / 255) * maxWaveHeight * (this.config.amplitude || 1) * weight
-      points.push([x, y])
+    for (let i = 0; i < this.pointCount; i++) {
+      // 横坐标：bodySize 区域内均匀分布
+      const px = left + (i / (this.pointCount - 1)) * width
+      // 纵坐标：bodySize 区域底部为基线，向上跳动
+      const py = top + height - mappedValues[i] * height * (this.config.amplitude || 1)
+      points.push([px, py])
     }
+
+    // 波形两端落到底部
     if (points.length >= 2) {
-      points[0][1] = height
-      points[points.length - 1][1] = height
+      points[0][1] = top + height
+      points[points.length - 1][1] = top + height
     }
-    if (points.length < 2) return // 没有足够点不渲染
-    const isSilent = dataArray.every((v) => v === 0)
-    if (isSilent) {
-      return
-    }
+    if (points.length < 2) return
+    const isSilent = mappedValues.every((v) => v === 0)
+    if (isSilent) return
+
     // 生成平滑曲线路径
     let d = this.catmullRom2bezier(points)
     // 闭合路径
-    d += ` L${points[points.length - 1][0]},${height}`
-    d += ` L${points[0][0]},${height} Z`
+    d += ` L${points[points.length - 1][0]},${top + height}`
+    d += ` L${points[0][0]},${top + height} Z`
     this.path.path = d
 
     // 填充色
