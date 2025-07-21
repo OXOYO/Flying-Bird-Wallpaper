@@ -117,6 +117,10 @@
           "label": "密集程度",
           "placeholder": "请选择密集程度"
         },
+        "rhythmPosition": {
+          "label": "显示位置",
+          "placeholder": "请选择显示位置"
+        },
         "remoteResourceSecretKeys": {
           "label": "资源密钥",
           "placeholder": "请输入密钥"
@@ -414,6 +418,17 @@
     "sparse": "稀疏",
     "normal": "正常",
     "dense": "密集"
+  },
+  "positionOptions": {
+    "topLeft": "左上",
+    "top": "上",
+    "topRight": "右上",
+    "right": "右",
+    "bottomRight": "右下",
+    "bottom": "下",
+    "bottomLeft": "左下",
+    "left": "左",
+    "center": "居中"
   },
   "wordTypeList": {
     "chinese": "中文",

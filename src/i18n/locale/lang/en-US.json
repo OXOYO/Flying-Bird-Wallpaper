@@ -117,6 +117,10 @@
           "label": "Density",
           "placeholder": "Please select density"
         },
+        "rhythmPosition": {
+          "label": "Position",
+          "placeholder": "Please select position"
+        },
         "remoteResourceSecretKeys": {
           "label": "Resource key",
           "placeholder": "Please enter key"
@@ -414,6 +418,17 @@
     "sparse": "Sparse",
     "normal": "Normal",
     "dense": "Dense"
+  },
+  "positionOptions": {
+    "topLeft": "Top left",
+    "top": "Top",
+    "topRight": "Top right",
+    "right": "Right",
+    "bottomRight": "Bottom right",
+    "bottom": "Bottom",
+    "bottomLeft": "Bottom left",
+    "left": "left",
+    "center": "Center"
   },
   "wordTypeList": {
     "chinese": "中文",

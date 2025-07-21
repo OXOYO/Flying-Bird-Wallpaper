@@ -179,6 +179,7 @@ export const defaultSettingData = {
   ],
   rhythmAnimation: 'parabola',
   rhythmDensity: 'normal',
+  rhythmPosition: 'bottom',
   remoteResourceSecretKeys: {},
   autoDownload: false,
   downloadSources: [],
@@ -472,4 +473,17 @@ export const rhythmDensityOptions = [
   { label: '稀疏', locale: 'rhythmDensityOptions.sparse', value: 'sparse' },
   { label: '正常', locale: 'rhythmDensityOptions.normal', value: 'normal' },
   { label: '密集', locale: 'rhythmDensityOptions.dense', value: 'dense' }
+]
+
+// 位置
+export const positionOptions = [
+  { label: '', locale: 'positionOptions.topLeft', value: 'top-left' },
+  { label: '', locale: 'positionOptions.top', value: 'top' },
+  { label: '', locale: 'positionOptions.topRight', value: 'top-right' },
+  { label: '', locale: 'positionOptions.right', value: 'right' },
+  { label: '', locale: 'positionOptions.bottomRight', value: 'bottom-right' },
+  { label: '', locale: 'positionOptions.bottom', value: 'bottom' },
+  { label: '', locale: 'positionOptions.bottomLeft', value: 'bottom-left' },
+  { label: '', locale: 'positionOptions.left', value: 'left' },
+  { label: '', locale: 'positionOptions.center', value: 'center' }
 ]

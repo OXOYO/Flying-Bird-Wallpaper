@@ -20,7 +20,8 @@ import {
   dynamicScaleModeOptions,
   rhythmEffectOptions,
   rhythmAnimationOptions,
-  rhythmDensityOptions
+  rhythmDensityOptions,
+  positionOptions
 } from '@common/publicData.js'
 import { localeOptions } from '@i18n/locale/index.js'
 import { useTranslation } from 'i18next-vue'
@@ -1287,6 +1288,24 @@ onBeforeUnmount(() => {
               >
                 <el-option
                   v-for="item in rhythmDensityOptions"
+                  :key="item.value"
+                  :label="t(item.locale)"
+                  :value="item.value"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item
+              :label="t('pages.Setting.settingDataForm.rhythmPosition.label')"
+              prop="rhythmPosition"
+            >
+              <el-select
+                v-model="settingDataForm.rhythmPosition"
+                :placeholder="t('pages.Setting.settingDataForm.rhythmPosition.placeholder')"
+                style="width: 290px"
+                @change="onSettingDataFormChange"
+              >
+                <el-option
+                  v-for="item in positionOptions"
                   :key="item.value"
                   :label="t(item.locale)"
                   :value="item.value"
