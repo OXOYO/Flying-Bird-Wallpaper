@@ -35,15 +35,7 @@ export class WindmillEffect extends BaseEffect {
         y: this.bodySize.y - r * 0.084,
         width: r * 0.168,
         height: r * 0.168,
-        fill: {
-          type: 'linear',
-          from: { x: 0, y: 0 },
-          to: { x: r * 0.24, y: r * 0.24 },
-          stops: [
-            { offset: 0, color: '#fff' },
-            { offset: 1, color: '#bbb' }
-          ]
-        },
+        fill: '#333',
         stroke: '#888',
         strokeWidth: 2,
         opacity: 0.85
@@ -58,9 +50,9 @@ export class WindmillEffect extends BaseEffect {
     const avgValue = mappedValues.reduce((a, b) => a + b, 0) / mappedValues.length
     const speed = 0.008 + avgValue * 0.1
     this.angle += speed
-    const r = Math.min(width, height) * 0.22
-    const bladeLength = r * 1.1
-    const bladeWidth = r * 0.7
+    const r = Math.min(width, height) * 0.5
+    const bladeLength = r * 0.95
+    const bladeWidth = r * 0.6
     for (let i = 0; i < this.bladeCount; i++) {
       const baseAngle = this.angle + (i * 2 * Math.PI) / this.bladeCount
       const x0 = x
@@ -77,11 +69,10 @@ export class WindmillEffect extends BaseEffect {
       path.path = d
       path.fill = {
         type: 'linear',
-        from: { x: x0, y: y0 },
-        to: { x: x1, y: y1 },
+        from: 'center',
         stops: [
           { offset: 0, color: mainColor },
-          { offset: 1, color: '#fff', opacity: 0.18 }
+          { offset: 1, color: 'rgba(255,255,255,0.18)' }
         ]
       }
       path.opacity = 0.92
