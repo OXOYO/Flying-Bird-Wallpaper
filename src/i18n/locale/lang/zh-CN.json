@@ -561,6 +561,10 @@
             "placeholder": "请选择语言"
           },
           "themes": {
+            "dark": {
+              "label": "深色模式",
+              "placeholder": "是否开启深色模式"
+            },
             "primary": {
               "label": "主题色",
               "placeholder": "请选择主题色"

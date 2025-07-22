@@ -561,6 +561,10 @@
             "placeholder": "Select language"
           },
           "themes": {
+            "dark": {
+              "label": "Dark Mode",
+              "placeholder": "Whether to enable dark mode"
+            },
             "primary": {
               "label": "Theme Color",
               "placeholder": "Select theme color"

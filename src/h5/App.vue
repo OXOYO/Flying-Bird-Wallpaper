@@ -154,7 +154,11 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <van-config-provider :theme-vars="themeVars" theme-vars-scope="global">
+  <van-config-provider
+    :theme="settingData.themes.dark ? 'dark' : 'light'"
+    :theme-vars="themeVars"
+    theme-vars-scope="global"
+  >
     <div id="app">
       <component :is="currentPage || pageEmpty" ref="pageRef"></component>
       <van-tabbar v-if="tabbarVisible" v-model="activeTabbar" @change="onTabbarChange">

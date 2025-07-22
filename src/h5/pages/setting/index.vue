@@ -174,6 +174,12 @@ const onSettingDataChange = async (field) => {
         primary: settingDataForm.themes.primary
       }
     }
+  } else if (field === 'themes.dark') {
+    payload = {
+      themes: {
+        dark: settingDataForm.themes.dark
+      }
+    }
   } else {
     payload[field] = settingDataForm[field]
   }
@@ -253,6 +259,16 @@ onMounted(() => {
           :placeholder="t('h5.pages.setting.form.themes.primary.placeholder')"
           @update:model-value="onSettingDataChange('themes.primary')"
         />
+
+        <van-cell :title="t('h5.pages.setting.form.themes.dark.label')">
+          <template #right-icon>
+            <van-switch
+              v-model="settingDataForm.themes.dark"
+              size="20px"
+              @change="onSettingDataChange('themes.dark')"
+            />
+          </template>
+        </van-cell>
 
         <van-cell :title="t('h5.pages.setting.localSetting.multiDeviceSync')">
           <template #right-icon>
