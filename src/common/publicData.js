@@ -204,6 +204,7 @@ export const defaultSettingData = {
   autoRefreshList: false,
   // 主题配置
   themes: {
+    dark: false,
     primary: '#71956C'
   },
   // 启用展开侧边菜单
