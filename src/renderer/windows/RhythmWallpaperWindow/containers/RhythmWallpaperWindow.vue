@@ -19,7 +19,8 @@ const config = computed(() => {
     density: settingData.value.rhythmDensity,
     position: settingData.value.rhythmPosition,
     sampleRange: settingData.value.rhythmSampleRange,
-    shadow: true
+    shadow: true,
+    debug: false
   }
 })
 
@@ -46,7 +47,7 @@ const init = async () => {
     })
     source = audioContext.createMediaStreamSource(stream)
     analyser = audioContext.createAnalyser()
-    analyser.fftSize = 2048
+    analyser.fftSize = 1024
     dataArray = new Uint8Array(analyser.frequencyBinCount)
     source.connect(analyser)
     runEffect()
@@ -115,6 +116,7 @@ onBeforeUnmount(() => {
   if (audioContext) audioContext.close()
   leafer?.destroy()
   effectInstance?.destroy()
+  effectInstance?.destroyDebug()
 })
 </script>
 
