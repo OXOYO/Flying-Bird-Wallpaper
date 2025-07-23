@@ -121,6 +121,7 @@
           "label": "显示位置",
           "placeholder": "请选择显示位置"
         },
+        "rhythmSampleRange": "采样范围",
         "remoteResourceSecretKeys": {
           "label": "资源密钥",
           "placeholder": "请输入密钥"

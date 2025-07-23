@@ -1312,6 +1312,20 @@ onBeforeUnmount(() => {
                 />
               </el-select>
             </el-form-item>
+            <el-form-item
+              :label="t('pages.Setting.settingDataForm.rhythmSampleRange')"
+              prop="rhythmSampleRange"
+            >
+              <el-slider
+                v-model="settingDataForm.rhythmSampleRange"
+                range
+                :min="0"
+                :max="100"
+                :step="1"
+                style="width: 290px"
+                @change="onSettingDataFormChange"
+              />
+            </el-form-item>
           </div>
 
           <div class="form-card">

@@ -18,6 +18,7 @@ const config = computed(() => {
     animation: settingData.value.rhythmAnimation,
     density: settingData.value.rhythmDensity,
     position: settingData.value.rhythmPosition,
+    sampleRange: settingData.value.rhythmSampleRange,
     shadow: true
   }
 })
@@ -77,7 +78,11 @@ function draw() {
     return
   }
   analyser.getByteFrequencyData(dataArray)
-  effectInstance.render(dataArray)
+  // 采样范围
+  const [start, end] = config.value.sampleRange
+  const startIndex = Math.floor((start * dataArray.length) / 100)
+  const endIndex = Math.floor((end * dataArray.length) / 100)
+  effectInstance.render(dataArray.slice(startIndex, endIndex))
   animationId = requestAnimationFrame(draw)
 }
 
@@ -92,7 +97,9 @@ watch(
     settingData.value.rhythmHeightRatio,
     settingData.value.rhythmColors,
     settingData.value.rhythmAnimation,
-    settingData.value.rhythmDensity
+    settingData.value.rhythmDensity,
+    settingData.value.rhythmPosition,
+    settingData.value.rhythmSampleRange
   ],
   () => {
     runEffect()

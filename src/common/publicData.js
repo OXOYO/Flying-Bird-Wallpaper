@@ -180,6 +180,7 @@ export const defaultSettingData = {
   rhythmAnimation: 'parabola',
   rhythmDensity: 'normal',
   rhythmPosition: 'bottom',
+  rhythmSampleRange: [0, 100],
   remoteResourceSecretKeys: {},
   autoDownload: false,
   downloadSources: [],

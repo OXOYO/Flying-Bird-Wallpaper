@@ -121,6 +121,7 @@
           "label": "Position",
           "placeholder": "Please select position"
         },
+        "rhythmSampleRange": "Sample range",
         "remoteResourceSecretKeys": {
           "label": "Resource key",
           "placeholder": "Please enter key"
