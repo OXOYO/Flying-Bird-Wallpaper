@@ -80,16 +80,22 @@ export class BaseEffect {
   }
 
   // 数据降维
-  getReducedValues(list, count = 8) {
+  getReducedValues(list, count = 8, type = 'max') {
     const ret = []
     for (let i = 0; i < count; i++) {
       const start = Math.floor((i * list.length) / count)
       const end = Math.floor(((i + 1) * list.length) / count)
-      let sum = 0
-      for (let j = start; j < end; j++) {
-        sum += list[j]
+      if (type === 'average') {
+        let sum = 0
+        for (let j = start; j < end; j++) {
+          sum += list[j]
+        }
+        ret[i] = sum / (end - start)
+      } else if (type === 'max') {
+        ret[i] = Math.max(...list.slice(start, end))
+      } else if (type === 'min') {
+        ret[i] = Math.min(...list.slice(start, end))
       }
-      ret[i] = sum / (end - start)
     }
     return ret
   }
