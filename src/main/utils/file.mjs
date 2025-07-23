@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import sharp from 'sharp'
 import cache from '../cache.mjs'
-import { mimeTypes } from '../../common/publicData'
+import { mimeTypes } from '../../common/publicData.js'
 
 export const handleFileResponse = async (query) => {
   const ret = {
