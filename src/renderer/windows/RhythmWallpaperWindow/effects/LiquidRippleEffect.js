@@ -20,7 +20,7 @@ export class LiquidRippleEffect extends BaseEffect {
         width: 100,
         height: 100,
         fill: null,
-        stroke: this.getFill(),
+        stroke: this.getFill('loop', i),
         strokeWidth: 3,
         opacity: 0.5
       })
@@ -50,7 +50,7 @@ export class LiquidRippleEffect extends BaseEffect {
       ripple.shape.x = x - r
       ripple.shape.y = y - r
       ripple.shape.opacity = 0.2 + mapped * 0.5
-      ripple.shape.stroke = this.getFill(i)
+      ripple.shape.stroke = this.getFill('loop', i)
     }
   }
 

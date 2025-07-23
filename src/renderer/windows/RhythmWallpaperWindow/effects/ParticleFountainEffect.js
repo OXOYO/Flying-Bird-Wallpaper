@@ -19,7 +19,7 @@ export class ParticleFountainEffect extends BaseEffect {
       const particle = new Ellipse({
         width: 8,
         height: 8,
-        fill: this.getFill(),
+        fill: this.getFill('random'),
         opacity: 0.8
       })
       this.leafer.add(particle)
@@ -52,7 +52,7 @@ export class ParticleFountainEffect extends BaseEffect {
         // 垂直速度最大值受 height 控制
         p.vy = -Math.random() * maxHeight * 0.45 * mapped - 6
         p.shape.width = p.shape.height = 8 + mapped * 16
-        p.shape.fill = this.getFill()
+        p.shape.fill = this.getFill('random')
       }
       p.vy += 0.35 // 重力略增
       p.x += p.vx

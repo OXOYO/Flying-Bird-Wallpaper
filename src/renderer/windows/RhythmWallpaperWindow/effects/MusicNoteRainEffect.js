@@ -21,7 +21,7 @@ export class MusicNoteRainEffect extends BaseEffect {
       const note = new Text({
         text: NOTE_CHARS[i % NOTE_CHARS.length],
         fontSize: 24 + Math.random() * 16,
-        fill: this.getFill(),
+        fill: this.getFill('random'),
         opacity: 0.8
       })
       this.leafer.add(note)
@@ -51,7 +51,7 @@ export class MusicNoteRainEffect extends BaseEffect {
       n.shape.x = n.x
       n.shape.y = n.y
       n.shape.opacity = 0.5 + mapped * 0.5
-      n.shape.fill = this.getFill()
+      n.shape.fill = this.getFill('random')
     }
   }
 

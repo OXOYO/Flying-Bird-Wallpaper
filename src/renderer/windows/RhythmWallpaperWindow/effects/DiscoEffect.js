@@ -18,37 +18,13 @@ export class DiscoEffect extends BaseEffect {
   init() {
     for (let i = 0; i < this.lightCount; i++) {
       const path = new Path({
-        fill: this.getFill(i),
+        fill: this.getFill('loop', i),
         opacity: 0.7,
         shadow: this.config.shadow ? { color: '#fff', blur: 20, x: 0, y: 0 } : undefined
       })
       this.leafer.add(path)
       this.lights.push(path)
     }
-  }
-
-  getFill(i) {
-    // 优先使用 config.colors（多色渐变数组），每个灯单独取色
-    if (this.config.colors && this.config.colors.length > 0) {
-      // 如果 colors 数组比灯数多，循环使用
-      return this.config.colors[i % this.config.colors.length]
-    }
-    // fallback 到内置多彩色数组
-    const colors = [
-      '#ff3cac',
-      '#784ba0',
-      '#2b86c5',
-      '#42e695',
-      '#ffb347',
-      '#ffcc33',
-      '#f7971e',
-      '#ffd200',
-      '#f44369',
-      '#43cea2',
-      '#185a9d',
-      '#f857a6'
-    ]
-    return colors[i % colors.length]
   }
 
   render(dataArray) {
@@ -74,7 +50,7 @@ export class DiscoEffect extends BaseEffect {
       const d = `M${centerX},${centerY} L${x1},${y1} L${x3},${y3} L${x2},${y2} Z`
       const path = this.lights[i]
       path.path = d
-      path.fill = this.getFill(i)
+      path.fill = this.getFill('loop', i)
       path.opacity = 0.5 + mapped * 0.5
       path.shadow = this.config.shadow ? { color: '#fff', blur: 20, x: 0, y: 0 } : undefined
     }

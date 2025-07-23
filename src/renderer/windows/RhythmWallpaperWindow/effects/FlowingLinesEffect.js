@@ -22,7 +22,7 @@ export class FlowingLinesEffect extends BaseEffect {
   init() {
     for (let i = 0; i < this.lineCount; i++) {
       const path = new Path({
-        stroke: this.getFill(),
+        stroke: this.getFill('linear'),
         strokeWidth: this.config.lineWidth + i,
         opacity: 0.7
       })
@@ -46,7 +46,7 @@ export class FlowingLinesEffect extends BaseEffect {
         points.push([px, py])
       }
       this.paths[l].path = this.catmullRom2bezier(points)
-      this.paths[l].stroke = this.getFill()
+      this.paths[l].stroke = this.getFill('linear')
       this.paths[l].opacity = 0.5 + 0.5 * Math.abs(Math.sin(Date.now() / 1000 + l))
     }
   }

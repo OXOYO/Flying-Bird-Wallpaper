@@ -21,7 +21,7 @@ export class BarEffect extends BaseEffect {
         height: 10,
         x: 0,
         y: 0,
-        fill: this.getFill(),
+        fill: this.getFill('linear'),
         shadow: this.config.shadow ? { color: '#000', blur: 10, x: 0, y: 2 } : undefined
       })
       this.leafer.add(rect)
@@ -42,7 +42,7 @@ export class BarEffect extends BaseEffect {
       rect.height = value * this.bodySize.height
       rect.x = offsetX + i * barWidth
       rect.y = offsetY + (this.bodySize.height - rect.height)
-      rect.fill = this.getFill()
+      rect.fill = this.getFill('linear')
       rect.shadow = this.config.shadow ? { color: '#000', blur: 10, x: 0, y: 2 } : undefined
     }
   }

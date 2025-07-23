@@ -28,7 +28,7 @@ export class MuyuEffect extends BaseEffect {
 
     this.bodyPath = new Path({
       path: d,
-      fill: this.getFill(),
+      fill: this.getFill('single'),
       stroke: null,
       scale: this.scale,
       x: left,

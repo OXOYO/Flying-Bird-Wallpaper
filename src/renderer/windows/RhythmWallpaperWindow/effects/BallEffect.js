@@ -21,7 +21,7 @@ export class BallEffect extends BaseEffect {
         height: 20,
         x: 0,
         y: 0,
-        fill: this.getFill(),
+        fill: this.getFill('random'),
         shadow: this.config.shadow ? { color: '#000', blur: 10, x: 0, y: 2 } : undefined
       })
       this.leafer.add(circle)
@@ -46,7 +46,7 @@ export class BallEffect extends BaseEffect {
       circle.height = radius * 2
       circle.x = this.bodySize.x - this.bodySize.width / 2 + (i + 1) * ballSpacing
       circle.y = y
-      circle.fill = this.getFill()
+      circle.fill = this.getFill('random')
       circle.shadow = this.config.shadow ? { color: '#000', blur: 10, x: 0, y: 2 } : undefined
     }
   }

@@ -17,7 +17,7 @@ export class SpectrumFlowerEffect extends BaseEffect {
   init() {
     for (let i = 0; i < this.petalCount; i++) {
       const path = new Path({
-        fill: this.getFill(i),
+        fill: this.getFill('loop', i),
         opacity: 0.7
       })
       this.leafer.add(path)
@@ -47,7 +47,7 @@ export class SpectrumFlowerEffect extends BaseEffect {
       const d = `M${x},${y} Q${x2},${y2} ${x1},${y1} Q${x3},${y3} ${x},${y} Z`
       const path = this.petals[i]
       path.path = d
-      path.fill = this.getFill(i)
+      path.fill = this.getFill('loop', i)
       path.opacity = 0.5 + mapped * 0.5
     }
   }

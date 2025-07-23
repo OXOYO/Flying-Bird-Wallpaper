@@ -74,7 +74,7 @@ export class Bars3DEffect extends BaseEffect {
       }
       const sideColor = '#222222' // 右侧面用深色
       this.bars[i].front.path = frontPath
-      this.bars[i].front.fill = this.getFill()
+      this.bars[i].front.fill = this.getFill('linear')
       this.bars[i].front.opacity = 0.9
       this.bars[i].side.path = sidePath
       this.bars[i].side.fill = sideColor

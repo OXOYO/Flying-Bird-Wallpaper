@@ -18,7 +18,7 @@ export class RotatingStarburstEffect extends BaseEffect {
   init() {
     for (let i = 0; i < this.rayCount; i++) {
       const path = new Path({
-        stroke: this.getFill(),
+        stroke: this.getFill('linear'),
         strokeWidth: 3,
         opacity: 0.7
       })
@@ -43,7 +43,7 @@ export class RotatingStarburstEffect extends BaseEffect {
       const x2 = x + Math.cos(angle) * length
       const y2 = y + Math.sin(angle) * length
       this.rays[i].path = `M${x1},${y1} L${x2},${y2}`
-      this.rays[i].stroke = this.getFill()
+      this.rays[i].stroke = this.getFill('linear')
       this.rays[i].opacity = 0.5 + mapped * 0.5
     }
   }

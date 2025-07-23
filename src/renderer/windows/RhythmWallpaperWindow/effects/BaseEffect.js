@@ -1,8 +1,43 @@
+import { colorList } from '@common/publicData.js'
+import { Rect } from 'leafer-ui'
+
 export class BaseEffect {
   constructor(leafer, config) {
     this.leafer = leafer
     this.config = config
+    this.debugRect = null
     this.bodySize = this.getBodySize()
+    this.renderDebug()
+  }
+
+  renderDebug() {
+    if (!this.config.debug) return
+    const { x, y, width, height } = this.bodySize
+    // 绘制调试红框
+    if (!this.debugRect) {
+      this.debugRect = new Rect({
+        x: x - width / 2,
+        y: y - height / 2,
+        width,
+        height,
+        stroke: 'red',
+        strokeWidth: 2,
+        fill: null
+      })
+      this.leafer.add(this.debugRect)
+    } else {
+      this.debugRect.x = x - width / 2
+      this.debugRect.y = y - height / 2
+      this.debugRect.width = width
+      this.debugRect.height = height
+    }
+  }
+
+  destroyDebug() {
+    if (this.debugRect) {
+      this.debugRect.remove()
+      this.debugRect = null
+    }
   }
 
   getBodySize() {
@@ -108,22 +143,36 @@ export class BaseEffect {
     }
   }
 
-  getFill() {
-    if (this.config.colors && this.config.colors.length > 1) {
+  getFill(type = 'linear', index = 0) {
+    const colors = this.config.colors || colorList
+    if (type === 'linear') {
       return {
         type: 'linear',
-        stops: this.config.colors.map((color, idx) => ({
+        stops: colors.map((color, idx) => ({
           color,
-          offset: idx / (this.config.colors.length - 1)
+          offset: idx / (colors.length - 1)
         })),
         from: 'top',
         to: 'bottom'
       }
+    } else if (type === 'radial') {
+      return {
+        type: 'radial',
+        stops: colors.map((color, idx) => ({
+          color,
+          offset: idx / (colors.length - 1)
+        })),
+        from: 'center'
+      }
+    } else if (type === 'random') {
+      return colors[Math.floor(Math.random() * colors.length)]
+    } else if (type === 'loop') {
+      return colors[index % colors.length]
+    } else if (type === 'single') {
+      return colors[index]
+    } else {
+      return colors[index]
     }
-    if (this.config.colors && this.config.colors.length > 0) {
-      return this.config.colors[0]
-    }
-    return '#00ffcc'
   }
 
   // 生成平滑曲线路径

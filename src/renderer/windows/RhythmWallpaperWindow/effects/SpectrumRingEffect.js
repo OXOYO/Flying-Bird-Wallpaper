@@ -22,7 +22,7 @@ export class SpectrumRingEffect extends BaseEffect {
   init() {
     for (let i = 0; i < this.segments; i++) {
       const path = new Path({
-        fill: this.getFill(),
+        fill: this.getFill('linear'),
         opacity: 0.8
       })
       this.leafer.add(path)
@@ -56,7 +56,7 @@ export class SpectrumRingEffect extends BaseEffect {
       const d = `M${x1},${y1} L${x2},${y2} L${x3},${y3} L${x4},${y4} Z`
       const path = this.paths[i]
       path.path = d
-      path.fill = this.getFill()
+      path.fill = this.getFill('linear')
       path.opacity = 0.7 + mapped * 0.3
     }
   }

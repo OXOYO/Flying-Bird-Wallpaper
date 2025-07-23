@@ -14,7 +14,7 @@ export class BreathingHaloEffect extends BaseEffect {
     this.halo = new Ellipse({
       width: 100,
       height: 100,
-      fill: this.getFill(),
+      fill: this.getFill('radial'),
       opacity: 0.5,
       shadow: this.config.shadow ? { color: '#00ffcc', blur: 40, x: 0, y: 0 } : undefined
     })

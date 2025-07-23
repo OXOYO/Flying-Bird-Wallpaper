@@ -15,7 +15,7 @@ export class WaveEffect extends BaseEffect {
     }
     this.pointCount = this.densityOptions[this.config.density] || this.densityOptions.normal
     this.path = new Path({
-      fill: this.getFill(),
+      fill: this.getFill('linear'),
       stroke: (this.config.colors && this.config.colors[0]) || '#00ffcc',
       strokeWidth: 3,
       shadow: this.config.shadow ? { color: '#000', blur: 8, x: 0, y: 2 } : undefined
@@ -56,7 +56,7 @@ export class WaveEffect extends BaseEffect {
     this.path.path = d
 
     // 填充色
-    const newFill = this.getFill()
+    const newFill = this.getFill('linear')
     if (this.path.fill !== newFill) {
       this.path.fill = newFill
     }
