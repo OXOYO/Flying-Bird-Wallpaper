@@ -1350,7 +1350,9 @@ const handlePageShow = () => {}
   font-size: 16px;
 
   &:active {
-    background-color: rgba(0, 0, 0, 0.05);
+    .action-icon-inner {
+      transform: scale(1.2);
+    }
   }
 }
 
@@ -1362,6 +1364,10 @@ const handlePageShow = () => {}
   border-radius: 10px;
   padding: 14px;
   font-size: 24px;
+}
+
+.action-icon-inner {
+  transition: transform 0.3s ease-out;
 }
 
 .action-label {
@@ -1391,5 +1397,12 @@ const handlePageShow = () => {}
   letter-spacing: 1px;
   z-index: 20;
   pointer-events: none;
+}
+
+/* 深色模式 */
+.van-theme-dark {
+  .action-icon-wrapper {
+    background-color: black;
+  }
 }
 </style>
