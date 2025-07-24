@@ -249,18 +249,24 @@ const loadData = async (isRefresh) => {
   const res = await api.searchImages(payload)
   if (res?.success && res?.data?.list.length > 0) {
     const width = imageSliderRef.value.clientWidth
-    autoSwitch.imageList = (
-      isRefresh ? res.data.list : [...autoSwitch.imageList, ...res.data.list]
-    ).map((item) => {
-      const rawUrl = `/api/images/get?filePath=${encodeURIComponent(item.filePath)}`
-      return {
-        ...item,
-        rawUrl,
-        src: settingData.value.h5ImageCompress
-          ? `${rawUrl}&w=${width}&compressStartSize=${settingData.value.h5ImageCompressStartSize}`
-          : rawUrl
+    // 拼接后用 id 去重
+    const newList = isRefresh ? res.data.list : [...autoSwitch.imageList, ...res.data.list]
+    const uniqueList = []
+    const idSet = new Set()
+    for (const item of newList) {
+      if (!idSet.has(item.id)) {
+        const rawUrl = `/api/images/get?filePath=${encodeURIComponent(item.filePath)}`
+        uniqueList.push({
+          ...item,
+          rawUrl,
+          src: settingData.value.h5ImageCompress
+            ? `${rawUrl}&w=${width}&compressStartSize=${settingData.value.h5ImageCompressStartSize}`
+            : rawUrl
+        })
+        idSet.add(item.id)
       }
-    })
+    }
+    autoSwitch.imageList = uniqueList
     // 保存 total
     autoSwitch.total = res.data.total || autoSwitch.imageList.length
     if (res.data.list.length < pageInfo.pageSize) {
