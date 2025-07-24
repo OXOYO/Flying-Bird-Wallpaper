@@ -490,3 +490,22 @@ export const positionOptions = [
   { label: '', locale: 'positionOptions.left', value: 'left' },
   { label: '', locale: 'positionOptions.center', value: 'center' }
 ]
+
+// 支持显示的信息字段
+export const infoKeys = [
+  'title',
+  'desc',
+  'author',
+  'link',
+  'resourceName',
+  'fileName',
+  'filePath',
+  'fileExt',
+  'fileSize',
+  'quality',
+  'dimensions',
+  'ctimeMs',
+  'mtimeMs',
+  'created_at',
+  'updated_at'
+]

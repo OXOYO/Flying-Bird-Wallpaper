@@ -1,6 +1,7 @@
 <script setup>
 import { useTranslation } from 'i18next-vue'
-import { formatFileSize } from '../utils/index.js'
+import { infoKeys } from '@common/publicData.js'
+import { handleInfoVal } from '@common/utils.js'
 
 const { t } = useTranslation()
 
@@ -9,39 +10,6 @@ const flags = reactive({
 })
 
 const info = ref({})
-// 支持显示的信息字段
-const infoKeys = [
-  'title',
-  'desc',
-  'author',
-  'link',
-  'resourceName',
-  'fileName',
-  'filePath',
-  'fileExt',
-  'fileSize',
-  'quality',
-  'dimensions',
-  'ctimeMs',
-  'mtimeMs',
-  'created_at',
-  'updated_at'
-]
-
-const handleInfoVal = (key) => {
-  const val = info.value[key]
-  if (key === 'fileSize') {
-    return formatFileSize(val || 0)
-  } else if (key === 'dimensions') {
-    const width = info.value.width
-    const height = info.value.height
-    return width && height ? `${width} x ${height}` : '-'
-  } else if (['ctimeMs', 'mtimeMs', 'created_at', 'updated_at'].includes(key)) {
-    const val = info.value[key]
-    return val ? (new Date(val)).toLocaleString() : '-'
-  }
-  return val || '-'
-}
 
 const view = (item) => {
   flags.visible = true
@@ -74,7 +42,7 @@ defineExpose({
       <el-scrollbar class="info-block">
         <div v-for="key in infoKeys" :key="key" class="info-row">
           <div class="info-key">{{ t(`viewInfo.row.${key}`) }}:</div>
-          <div class="info-value">{{ handleInfoVal(key) }}</div>
+          <div class="info-value">{{ handleInfoVal(info, key) }}</div>
         </div>
       </el-scrollbar>
     </div>

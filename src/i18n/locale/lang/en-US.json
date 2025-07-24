@@ -543,12 +543,30 @@
       "home": {
         "title": "Home",
         "actions": {
+          "imageInfo": "Image Info",
           "saveImage": "Save Image",
           "deleteImage": "Delete Image",
           "confirmDelete": "Confirm Delete",
           "confirmDeleteMessage": "Are you sure you want to delete this image?",
           "confirmDeleteBtn": "Confirm",
           "cancelDeleteBtn": "Cancel"
+        },
+        "imageInfo": {
+          "title": "Title",
+          "desc": "Description",
+          "author": "Author",
+          "link": "Link",
+          "resourceName": "Resource Name",
+          "fileName": "File Name",
+          "filePath": "File Path",
+          "fileSize": "File Size",
+          "quality": "Quality",
+          "dimensions": "Dimensions",
+          "fileExt": "File Extension",
+          "created_at": "Record created at",
+          "updated_at": "Record updated at",
+          "ctimeMs": "Resource created at",
+          "mtimeMs": "Resource updated at"
         }
       },
       "search": {

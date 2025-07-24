@@ -4,6 +4,8 @@ import UseSettingStore from '@h5/stores/settingStore.js'
 import * as api from '@h5/api/index.js'
 import { showNotify, showConfirmDialog } from 'vant'
 import { useTranslation } from 'i18next-vue'
+import { infoKeys } from '@common/publicData.js'
+import { handleInfoVal } from '@common/utils.js'
 
 const { t } = useTranslation()
 const commonStore = UseCommonStore()
@@ -28,7 +30,9 @@ const flags = reactive({
   // 长按收藏显示提示动效
   showFavoriteToast: false,
   // 是否操作弹层
-  showActionPopup: false
+  showActionPopup: false,
+  // 是否显示图片信息弹层
+  showImageInfoPopup: false
 })
 
 const pageInfo = {
@@ -166,6 +170,7 @@ const initFlag = () => {
   flags.isFavoriteHolding = false
   flags.showFavoriteToast = false
   flags.showActionPopup = false
+  flags.showImageInfoPopup = false
 }
 
 const initPageInfo = () => {
@@ -841,6 +846,15 @@ const handleImageTouchEnd = (index, event) => {
   }
 }
 
+// 显示图片信息
+const showImageInfo = () => {
+  if (longPress.selectedIndex === null) return
+  const currentImage = autoSwitch.imageList[longPress.selectedIndex]
+  if (!currentImage) return
+  flags.showActionPopup = false
+  flags.showImageInfoPopup = true
+}
+
 // 保存图片
 const saveImage = async () => {
   if (longPress.selectedIndex === null) return
@@ -1205,6 +1219,12 @@ const handlePageShow = () => {}
     :style="{ padding: '16px' }"
   >
     <div class="action-popup-content">
+      <div class="action-item" @click="showImageInfo">
+        <div class="action-icon-wrapper">
+          <IconifyIcon class="action-icon-inner" icon="ri:information-line" />
+        </div>
+        <span class="action-label">{{ t('h5.pages.home.actions.imageInfo') }}</span>
+      </div>
       <div class="action-item" @click="saveImage">
         <div class="action-icon-wrapper">
           <IconifyIcon class="action-icon-inner" icon="ri:download-line" />
@@ -1217,6 +1237,26 @@ const handlePageShow = () => {}
         </div>
         <span class="action-label">{{ t('h5.pages.home.actions.deleteImage') }}</span>
       </div>
+    </div>
+  </van-popup>
+
+  <!-- 图片信息弹层 -->
+  <van-popup
+    v-model:show="flags.showImageInfoPopup"
+    position="bottom"
+    :style="{ padding: '16px', height: '50%' }"
+  >
+    <div class="image-info-content">
+      <van-cell-group
+        v-if="longPress.selectedIndex !== null && autoSwitch.imageList[longPress.selectedIndex]"
+      >
+        <van-cell
+          v-for="key in infoKeys"
+          :key="key"
+          :title="t(`h5.pages.home.imageInfo.${key}`)"
+          :value="handleInfoVal(autoSwitch.imageList[longPress.selectedIndex], key)"
+        />
+      </van-cell-group>
     </div>
   </van-popup>
 

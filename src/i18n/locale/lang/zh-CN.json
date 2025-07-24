@@ -543,12 +543,30 @@
       "home": {
         "title": "首页",
         "actions": {
+          "imageInfo": "图片信息",
           "saveImage": "保存图片",
           "deleteImage": "删除图片",
           "confirmDelete": "确认删除",
           "confirmDeleteMessage": "确认要删除图片吗？",
           "confirmDeleteBtn": "确认",
           "cancelDeleteBtn": "取消"
+        },
+        "imageInfo": {
+          "title": "标题",
+          "desc": "描述",
+          "author": "作者",
+          "link": "链接",
+          "resourceName": "资源名称",
+          "fileName": "文件名",
+          "filePath": "文件路径",
+          "fileExt": "扩展名",
+          "fileSize": "文件大小",
+          "quality": "质量",
+          "dimensions": "尺寸",
+          "created_at": "记录创建时间",
+          "updated_at": "记录更新时间",
+          "ctimeMs": "资源创建时间",
+          "mtimeMs": "资源更新时间"
         }
       },
       "search": {
