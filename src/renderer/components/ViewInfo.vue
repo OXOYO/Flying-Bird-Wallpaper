@@ -37,7 +37,7 @@ defineExpose({
     </div>
     <div class="view-info-container" @click="onContainerClick">
       <div class="image-block">
-        <el-image :src="info.src" style="pointer-events: auto" />
+        <el-image :src="info.imageSrc" style="pointer-events: auto" />
       </div>
       <el-scrollbar class="info-block">
         <div v-for="key in infoKeys" :key="key" class="info-row">

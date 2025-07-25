@@ -250,7 +250,6 @@ const currentResource = computed(() => {
   const { resourceType, resourceName } = searchForm
   const list = resourceMap.value.resourceListByResourceType[resourceType] || []
   const item = list.find((item) => item.value === resourceName)
-  console.log('currentResource', item)
   return item
 })
 
@@ -1314,7 +1313,6 @@ const onOutBtn = () => {
 const toggleVideo = (item, index) => {
   const video = videoRefs.value[index]
   window.videoSrc = video?.src
-  console.log('video src', video?.src)
   if (!video) return
   try {
     if (video.paused) {

@@ -129,13 +129,16 @@ export default class ResourcesManager {
         if (isFavorites || isHistory || isPrivacySpace) {
           // FIXME 按顺序查询时排序字段固定
           const order_by_str = isRandom
-            ? 'ORDER BY s.views ASC, RANDOM()'
+            ? 'ORDER BY stats.views ASC, RANDOM()'
             : `ORDER BY s.created_at ${sortOrder}`
 
           query_sql = `
             SELECT
             r.*,
             stats.views,
+            stats.downloads,
+            stats.favorites,
+            stats.wallpapers,
               (SELECT COUNT(*) FROM fbw_favorites f WHERE f.resourceId = r.id) AS isFavorite
             FROM fbw_${resourceName} s
             JOIN fbw_resources r ON s.resourceId = r.id
@@ -154,6 +157,9 @@ export default class ResourcesManager {
             SELECT
             r.*,
             stats.views,
+            stats.downloads,
+            stats.favorites,
+            stats.wallpapers,
             (SELECT COUNT(*) FROM fbw_favorites f WHERE f.resourceId = r.id) AS isFavorite
             FROM fbw_resources r
             LEFT JOIN fbw_statistics stats ON r.id = stats.resourceId
