@@ -1,6 +1,7 @@
 import { defaultSettingData } from '@common/publicData.js'
 import * as api from '@h5/api/index.js'
 import LocalStore from '../utils/localStore'
+import i18next from '@i18n/i18next.js'
 
 const localStore = new LocalStore()
 
@@ -30,6 +31,13 @@ const UseSettingStore = defineStore('setting', {
       return res
     },
     async h5UpdateSettingData(data) {
+      if (!this.localSetting.multiDeviceSync) {
+        this.settingData = Object.assign({}, this.settingData, data)
+        return {
+          success: false,
+          message: i18next.t('messages.multiDeviceSyncWarning')
+        }
+      }
       const res = await api.h5UpdateSettingData(data)
       if (res.success) {
         this.settingData = Object.assign({}, this.settingData, res.data)

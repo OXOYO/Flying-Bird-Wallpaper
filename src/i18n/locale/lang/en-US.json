@@ -296,7 +296,8 @@
     "deleteFail": "Delete failed!",
     "maxFavoriteCountReached": "Maximum number of favorites reached!",
     "noFileSelected": "No file selected!",
-    "noDynamicWallpaperSet": "No dynamic wallpaper set!"
+    "noDynamicWallpaperSet": "No dynamic wallpaper set!",
+    "multiDeviceSyncWarning": "Multi-device synchronization is disabled, modifications are only effective on the current device!"
   },
   "resourceTypeList": {
     "localResource": "Local resources",
