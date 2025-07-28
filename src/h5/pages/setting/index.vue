@@ -229,7 +229,7 @@ onMounted(() => {
 
 <template>
   <div class="page-wrapper page-setting">
-    <van-nav-bar :title="t('h5.pages.setting.title')" fixed />
+    <van-nav-bar :title="t('h5.pages.setting.title')" fixed safe-area-inset-top />
 
     <div class="page-setting-inner">
       <van-cell-group inset :title="t('h5.pages.setting.form.appSettings')">

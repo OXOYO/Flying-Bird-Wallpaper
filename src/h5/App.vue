@@ -161,7 +161,12 @@ onUnmounted(() => {
   >
     <div id="app">
       <component :is="currentPage || pageEmpty" ref="pageRef"></component>
-      <van-tabbar v-if="tabbarVisible" v-model="activeTabbar" @change="onTabbarChange">
+      <van-tabbar
+        v-if="tabbarVisible"
+        v-model="activeTabbar"
+        safe-area-inset-bottom
+        @change="onTabbarChange"
+      >
         <van-tabbar-item
           v-for="item in tabbarList"
           :key="item.name"

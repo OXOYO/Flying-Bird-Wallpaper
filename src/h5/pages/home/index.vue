@@ -1297,10 +1297,11 @@ const handlePageShow = () => {}
 
 .floating-buttons {
   position: fixed;
-  bottom: 100px;
+  bottom: 120px;
   display: flex;
   flex-direction: column;
-  gap: 25px;
+  gap: 16px;
+  z-index: 100;
 }
 
 .floating-button {
@@ -1316,8 +1317,13 @@ const handlePageShow = () => {}
   border-radius: 50%;
   position: relative;
   cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
 
   &:active {
+    transform: scale(0.95);
+    background-color: rgba(0, 0, 0, 0.7);
+
     .floating-button-icon {
       transform: scale(1.2);
     }
@@ -1325,7 +1331,7 @@ const handlePageShow = () => {}
 }
 
 .floating-button-icon {
-  transition: transform 0.3s ease-out;
+  transition: transform 0.2s ease-out;
   color: white;
   font-size: 30px;
   will-change: transform;
