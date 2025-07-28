@@ -1109,10 +1109,7 @@ const handlePageShow = () => {}
       </div>
     </div>
     <!-- 指示器 -->
-    <div
-      v-if="autoSwitch.total > 0 && !imageScales[autoSwitch.currentIndex]?.scaling"
-      class="number-indicator"
-    >
+    <div v-if="autoSwitch.total" class="number-indicator">
       {{ autoSwitch.currentIndex + 1 }} / {{ autoSwitch.total }}
     </div>
   </div>
