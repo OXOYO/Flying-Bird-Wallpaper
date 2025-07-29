@@ -6,6 +6,7 @@
 - [功能模块](./docs/module.md)
 - [主进程](./docs/main_process.md)
 - [子进程](./docs//child_process.md)
+- [渲染进程](./docs/renderer_process.md)
 - [图片壁纸](./docs/image_wallpaper.md)
 - [颜色壁纸](./docs/color_wallpaper.md)
 - [动态壁纸](./docs/dynamic_wallpaper.md)
