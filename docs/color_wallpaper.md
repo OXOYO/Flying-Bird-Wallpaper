@@ -29,7 +29,7 @@
 
 **主进程 Store 中的设置方法：**
 
-```js
+```js:src/main/store/index.mjs
 // 设置颜色壁纸
 async setColorWallpaper(color) {
   await this.toggleAutoSwitchWallpaper(false)
@@ -43,7 +43,7 @@ async setColorWallpaper(color) {
 
 **WallpaperManager 中的核心实现：**
 
-```js
+```js:src/main/store/WallpaperManager.mjs
 // 设置颜色壁纸
 async setColorWallpaper(color) {
   if (!color) {
@@ -71,7 +71,7 @@ async setColorWallpaper(color) {
 
 **createSolidColorBMP 函数实现：**
 
-```js
+```js:src/main/utils/utils.mjs
 export const createSolidColorBMP = (color = '#000000', width = 100, height = 100) => {
   // 解析颜色
   const r = parseInt(color.slice(1, 3), 16)
@@ -149,7 +149,7 @@ BMP（Bitmap）文件由以下几个部分组成：
 
 **代码实现：**
 
-```js
+```js:src/main/utils/utils.mjs
 // BMP 文件头
 buffer.write('BM') // Signature
 buffer.writeUInt32LE(fileSize, 2) // File size
@@ -175,7 +175,7 @@ buffer.writeUInt32LE(fileHeaderSize + infoHeaderSize, 10) // Pixel data offset
 
 **代码实现：**
 
-```js
+```js:src/main/utils/utils.mjs
 // BMP 信息头
 buffer.writeUInt32LE(infoHeaderSize, 14) // Info header size
 buffer.writeInt32LE(width, 18) // Width
@@ -194,7 +194,7 @@ buffer.writeUInt32LE(0, 50) // Important colors
 
 **行对齐计算：**
 
-```js
+```js:src/main/utils/utils.mjs
 const rowSize = Math.ceil((24 * width) / 32) * 4
 ```
 
@@ -206,7 +206,7 @@ BMP 格式要求每行的字节数必须是 4 的倍数。对于 24 位真彩色
 
 **像素数据填充：**
 
-```js
+```js:src/main/utils/utils.mjs
 // 填充像素数据
 for (let y = 0; y < height; y++) {
   for (let x = 0; x < width; x++) {
@@ -229,7 +229,7 @@ BMP 格式使用 BGR（蓝-绿-红）颜色顺序，而不是常见的 RGB 顺�
 
 **colorList 定义：**
 
-```js
+```js:src/renderer/windows/MainWindow/pages/Setting.vue
 export const colorList = [
   '#71956C', // 深绿色
   '#E6A23C', // 橙黄色

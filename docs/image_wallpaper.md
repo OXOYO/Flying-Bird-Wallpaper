@@ -27,7 +27,7 @@
 
 **单例模式管理：**
 
-```js
+```js:src/main/store/WallpaperManager.mjs
 export default class WallpaperManager {
   static _instance = null
 
@@ -48,7 +48,7 @@ export default class WallpaperManager {
 
 **壁纸设置功能：**
 
-```js
+```js:src/main/store/WallpaperManager.mjs
 async setAsWallpaper(item, isAddToHistory = false, isResetParams = false) {
   if (!item || !item.filePath || !fs.existsSync(item.filePath)) {
     return { success: false, message: t('messages.fileNotExist') }
@@ -83,7 +83,7 @@ async setAsWallpaper(item, isAddToHistory = false, isResetParams = false) {
 
 **使用 wallpaper 库设置壁纸：**
 
-```js
+```js:src/main/store/WallpaperManager.mjs
 async setImageWallpaper(imgPath) {
   if (!imgPath || !fs.existsSync(imgPath)) {
     return { success: false, message: t('messages.fileNotExist') }
@@ -106,7 +106,7 @@ async setImageWallpaper(imgPath) {
 
 **创建纯色 BMP 图片：**
 
-```js
+```js:src/main/store/WallpaperManager.mjs
 async setColorWallpaper(color) {
   if (!color) {
     return { success: false, message: t('messages.paramsError') }
@@ -125,7 +125,7 @@ async setColorWallpaper(color) {
 
 **BMP 图片生成算法：**
 
-```js
+```js:src/main/utils/utils.mjs
 export const createSolidColorBMP = (color = '#000000', width = 100, height = 100) => {
   // 解析颜色
   const r = parseInt(color.slice(1, 3), 16)
@@ -159,7 +159,7 @@ export const createSolidColorBMP = (color = '#000000', width = 100, height = 100
 
 **网页截图功能：**
 
-```js
+```js:src/main/store/WallpaperManager.mjs
 async getWebImage(url) {
   let tempWindow = null
   try {
@@ -200,7 +200,7 @@ async getWebImage(url) {
 
 **设置页面壁纸操作：**
 
-```js
+```js:src/renderer/windows/MainWindow/pages/Setting.vue
 // 设置网页壁纸
 const onSetWebWallpaper = async () => {
   flags.settingWebWallpaper = true
@@ -228,7 +228,7 @@ const onSetColorWallpaper = async () => {
 
 **图片卡片壁纸设置：**
 
-```js
+```js:src/renderer/windows/MainWindow/pages/Explore.vue
 // 设置为壁纸
 const setAsWallpaperWithDownload = async (item, index) => {
   const res = await window.FBW.setAsWallpaperWithDownload(toRaw(item))
@@ -250,7 +250,7 @@ const setAsWallpaperWithDownload = async (item, index) => {
 
 **动态壁纸设置：**
 
-```js
+```js:src/renderer/windows/MainWindow/pages/Utils.vue
 const onSetDynamicWallpaper = async () => {
   const selectFileRes = await window.FBW.selectFile('video')
   const videoPath = selectFileRes && !selectFileRes.canceled ? selectFileRes.filePaths[0] : null
@@ -274,7 +274,7 @@ const onSetDynamicWallpaper = async () => {
 
 **壁纸相关 IPC 处理：**
 
-```js
+```js:src/main/store/index.mjs
 // 设置为壁纸
 ipcMain.handle('main:setAsWallpaperWithDownload', async (event, item) => {
   return await this.wallpaperManager.setAsWallpaperWithDownload(item)
@@ -310,7 +310,7 @@ ipcMain.handle('main:toggleAutoSwitchWallpaper', async () => {
 
 **预加载脚本 API：**
 
-```js
+```js:src/preload/index.mjs
 const api = {
   // 壁纸操作
   search: (...args) => ipcRenderer.invoke('main:search', ...args),
@@ -337,12 +337,12 @@ const api = {
 
 **随机切换逻辑：**
 
-```js
+```js:src/main/store/WallpaperManager.mjs
 // 如果有最近使用记录，尝试排除这些记录
 if (recentIds.length > 0) {
   // 先检查排除最近记录后是否还有壁纸可用
   const check_stmt = this.db.prepare(
-    `SELECT COUNT(*) AS count FROM fbw_resources 
+    `SELECT COUNT(*) AS count FROM fbw_resources
      ${query_where_str ? query_where_str + ' AND' : 'WHERE'}
      id NOT IN (${recentIds.map(() => '?').join(',')})`
   )

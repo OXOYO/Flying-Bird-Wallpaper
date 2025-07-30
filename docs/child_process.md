@@ -16,7 +16,7 @@ H5 Server 负责启动本地 HTTP/HTTPS Web 服务，运行 H5 前端页面、�
 
 **关键代码片段：**
 
-```js
+```js:src/main/child_server/h5_server/server.mjs
 if (useHttps) {
   // 检查证书文件，不存在则自动生成
   // ...
@@ -37,7 +37,7 @@ httpServer.listen(port, host, ...)
 
 **关键代码片段：**
 
-```js
+```js:src/main/child_server/h5_server/server.mjs
 app.use(
   staticServe(staticPath, {
     maxage: 86400000,
@@ -61,7 +61,7 @@ app.use(
 
 **关键代码片段：**
 
-```js
+```js:src/main/child_server/h5_server/api/index.mjs
 // api/index.mjs
 router.get('/api/images/get', getImage)
 
@@ -86,7 +86,7 @@ export const getImage = async (ctx) => {
 
 **关键代码片段：**
 
-```js
+```js:src/main/child_server/h5_server/socket/index.mjs
 ioServer.on('connection', (socket) => {
   socket.on('getSettingData', async (params, callback) => { ... })
   socket.on('h5UpdateSettingData', async (data, callback) => { ... })
@@ -108,7 +108,7 @@ ioServer.on('connection', (socket) => {
 
 **关键代码片段：**
 
-```js
+```js:src/main/child_server/h5_server/socket/index.mjs
 // 以设置为例
 socket.on('h5UpdateSettingData', async (data, callback) => {
   const res = await settingManager.updateSettingData(data)
@@ -134,7 +134,7 @@ File Server 负责文件扫描、目录递归、批量处理和图片质量计�
 
 **关键代码片段：**
 
-```js
+```js:src/main/child_server/ChildServer.mjs
 // ChildServer.mjs
 const { port1, port2 } = new MessageChannelMain()
 this.#child = utilityProcess.fork(this.#serverPath, options)
@@ -161,7 +161,7 @@ process.parentPort.on('message', (e) => {
 
 **关键代码片段：**
 
-```js
+```js:src/main/child_server/file_server/index.mjs
 // 并行处理多个目录
 const dirPromises = data.folderPaths.map((folderPath) =>
   readDirRecursive(data.resourceName, folderPath, data.allowedFileExt, existingFiles)
@@ -190,7 +190,7 @@ const processBatch = async (files, batchSize = 1000) => {
 
 **关键代码片段：**
 
-```js
+```js:src/main/child_server/file_server/index.mjs
 const fsCache = {
   directories: {},
   lastUpdate: Date.now(),
@@ -214,7 +214,7 @@ if (fsCache.directories[cacheKey] && Date.now() - fsCache.lastUpdate < fsCache.t
 
 **关键代码片段：**
 
-```js
+```js:src/main/child_server/file_server/index.mjs
 const patterns = allowedFileExt.map((ext) => `**/*${ext}`)
 const entries = await fg(patterns, {
   cwd: dirPath,
@@ -248,7 +248,7 @@ const fileStats = await Promise.all(
 
 **关键代码片段：**
 
-```js
+```js:src/main/utils/utils.mjs
 export const calculateImageByPath = async (filePath) => {
   const { width, height } = await sharp(filePath).metadata()
   const quality = calculateImageQuality(width, height)
@@ -268,7 +268,7 @@ export const calculateImageByPath = async (filePath) => {
 
 **关键代码片段：**
 
-```js
+```js:src/main/child_server/file_server/index.mjs
 if (data.event === 'REFRESH_DIRECTORY') {
   // 处理目录刷新
   port.postMessage({
@@ -300,7 +300,7 @@ if (data.event === 'REFRESH_DIRECTORY') {
 
 **关键代码片段：**
 
-```js
+```js:src/main/child_server/file_server/index.mjs
 const handleLogger = (type = 'info') => {
   return (data) => {
     const postData = {

@@ -96,7 +96,7 @@ src/main/
 
 **环境变量初始化：**
 
-```js
+```js:src/main/index.mjs
 // 获取用户数据路径
 const userDataPath = app.getPath('userData')
 
@@ -118,7 +118,7 @@ process.env.FBW_RESOURCES_PATH = app.isPackaged
 
 **目录创建工具：**
 
-```js
+```js:src/main/utils/utils.mjs
 // 获取应用相关目录地址
 export const getDirPathByName = (userDataPath = '', dirName = '') => {
   let dirPath = ''
@@ -141,7 +141,7 @@ export const getDirPathByName = (userDataPath = '', dirName = '') => {
 
 **环境检测工具：**
 
-```js
+```js:src/main/utils/utils.mjs
 // 环境检测函数
 export const isDev = () => {
   return process.env.NODE_ENV === 'development'
@@ -167,28 +167,28 @@ export const isFunc = (func) => {
 
 **数据库管理：**
 
-```js
+```js:src/main/store/DatabaseManager.mjs
 // 数据库文件路径
 this.db = new Database(process.env.FBW_DATABASE_FILE_PATH)
 ```
 
 **日志管理：**
 
-```js
+```js:src/main/logger.mjs
 // 日志文件路径
 const logFilePath = join(process.env.FBW_LOGS_PATH, fileName)
 ```
 
 **文件下载：**
 
-```js
+```js:src/main/store/FileManager.mjs
 // 下载文件路径
 const downloadFilePath = path.join(process.env.FBW_DOWNLOAD_PATH, 'wallpaper.png')
 ```
 
 **插件管理：**
 
-```js
+```js:src/main/store/ApiManager.mjs
 // 插件目录路径
 this.sysApiDir = path.join(process.env.FBW_RESOURCES_PATH, 'api')
 this.userApiDir = path.join(process.env.FBW_PLUGINS_PATH, 'api')
@@ -196,14 +196,14 @@ this.userApiDir = path.join(process.env.FBW_PLUGINS_PATH, 'api')
 
 **证书管理：**
 
-```js
+```js:src/main/utils/utils.mjs
 // 证书路径
 const certPath = process.env.FBW_CERTS_PATH
 ```
 
 **资源访问：**
 
-```js
+```js:src/main/utils/utils.mjs
 // 资源文件路径
 const resourcePath = path.resolve(process.env.FBW_RESOURCES_PATH, './h5')
 ```
@@ -267,7 +267,7 @@ const resourcePath = path.resolve(process.env.FBW_RESOURCES_PATH, './h5')
 
 **global.FBW 对象结构：**
 
-```js
+```js:src/main/index.mjs
 global.FBW = {
   // API 开发辅助工具
   apiHelpers: {
@@ -305,7 +305,7 @@ global.FBW = {
 
 **全局变量初始化：**
 
-```js
+```js:src/main/index.mjs
 // 全局变量初始化
 global.FBW = global.FBW || {}
 
@@ -337,7 +337,7 @@ global.FBW.rhythmWallpaperWindow = RhythmWallpaperWindow.getInstance()
 
 **全局工具函数：**
 
-```js
+```js:src/main/index.mjs
 // 发送通用数据到渲染进程
 global.FBW.sendCommonData = (win) => {
   if (!win) {
@@ -366,8 +366,7 @@ global.FBW.sendMsg = (win, msgOption) => {
 
 **应用信息配置：**
 
-```js
-// src/common/config.js
+```js:src/common/config.js
 export const appInfo = {
   appName: 'Flying Bird Wallpaper',
   version,
@@ -380,7 +379,7 @@ export const appInfo = {
 
 **图标路径管理：**
 
-```js
+```js:src/main/utils/utils.mjs
 // 获取图标路径
 export const getIconPath = (iconName) => {
   return path.resolve(path.join(process.env.FBW_RESOURCES_PATH, 'icons', iconName))
@@ -396,7 +395,7 @@ const windowIcon = global.FBW.iconLogo
 
 项目中的全局状态通过 `global.FBW.flags` 对象进行管理，包含应用退出标志等状态信息：
 
-```js
+```js:src/main/index.mjs
 // 全局状态标志
 global.FBW.flags = {
   isQuitting: false // 应用退出标志
@@ -407,7 +406,7 @@ global.FBW.flags = {
 
 **窗口管理：**
 
-```js
+```js:src/main/index.mjs
 // 窗口实例访问
 const mainWindow = global.FBW.mainWindow
 const suspensionBall = global.FBW.suspensionBall
@@ -419,7 +418,7 @@ global.FBW.suspensionBall.createOrOpen()
 
 **数据管理：**
 
-```js
+```js:src/main/index.mjs
 // 数据管理器访问
 const store = global.FBW.store
 const wallpaperManager = global.FBW.store?.wallpaperManager
@@ -431,7 +430,7 @@ await global.FBW.store?.doManualSwitchWallpaper('next')
 
 **消息通信：**
 
-```js
+```js:src/main/index.mjs
 // 发送消息到渲染进程
 global.FBW.sendMsg(global.FBW.mainWindow.win, {
   type: 'main:wallpaperUpdate',
@@ -444,7 +443,7 @@ global.FBW.sendCommonData(global.FBW.mainWindow.win)
 
 **API 开发：**
 
-```js
+```js:src/main/index.mjs
 // API 辅助工具访问
 const { axios, ApiBase } = global.FBW.apiHelpers
 
@@ -454,7 +453,7 @@ const { calculateImageOrientation, calculateImageQuality } = global.FBW.apiHelpe
 
 **图标资源：**
 
-```js
+```js:src/main/index.mjs
 // 图标路径访问
 const logoIcon = global.FBW.iconLogo
 const trayIcon = global.FBW.iconTray
@@ -572,7 +571,7 @@ const tray = new Tray(nativeImage.createFromPath(global.FBW.iconTray))
 
 **关键代码：**
 
-```js
+```js:src/main/index.mjs
 // 确保单实例
 const gotTheLock = app.requestSingleInstanceLock()
 
@@ -842,7 +841,7 @@ setupPowerMonitor() {
 
 **关键代码：**
 
-```js
+```js:src/main/index.mjs
 // 窗口实例管理（单例模式）
 global.FBW.loadingWindow = LoadingWindow.getInstance()
 global.FBW.mainWindow = MainWindow.getInstance()
@@ -1017,8 +1016,6 @@ const createTray = () => {
         }
       }
     ]
-    const contextMenu = Menu.buildFromTemplate(contextMenuList)
-    tray.popUpContextMenu(contextMenu)
   })
 }
 
@@ -1068,6 +1065,7 @@ const savedPosition = global.FBW.store?.settingData?.windowPositions?.[name]
 if (savedPosition) {
   this.win.setPosition(savedPosition.x, savedPosition.y, false)
 }
+
 ```
 
 **设计模式与最佳实践：**

@@ -48,7 +48,7 @@
 
 **DynamicWallpaperWindow 单例模式：**
 
-```js
+```js:src/main/windows/DynamicWallpaperWindow.mjs
 export default class DynamicWallpaperWindow {
   // 单例实例
   static _instance = null
@@ -95,7 +95,7 @@ export default class DynamicWallpaperWindow {
 
 **create 方法实现：**
 
-```js
+```js:src/main/windows/DynamicWallpaperWindow.mjs
 async create() {
   return await new Promise((resolve) => {
     if (this.win) {
@@ -162,7 +162,7 @@ async create() {
 
 **setDynamicWallpaper 方法：**
 
-```js
+```js:src/main/windows/DynamicWallpaperWindow.mjs
 async setDynamicWallpaper(videoPath) {
   try {
     // 创建动态壁纸窗口
@@ -196,7 +196,7 @@ async setDynamicWallpaper(videoPath) {
 
 **WallpaperManager 中的动态壁纸设置：**
 
-```js
+```js:src/main/store/WallpaperManager.mjs
 // 设置动态壁纸
 async setDynamicWallpaper(videoPath) {
   if (!videoPath || !fs.existsSync(videoPath)) {

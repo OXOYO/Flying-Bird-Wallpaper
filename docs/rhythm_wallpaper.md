@@ -48,7 +48,7 @@
 
 **RhythmWallpaperWindow 单例模式：**
 
-```js
+```js:src/main/windows/RhythmWallpaperWindow.mjs
 export default class RhythmWallpaperWindow {
   // 单例实例
   static _instance = null
@@ -95,7 +95,7 @@ export default class RhythmWallpaperWindow {
 
 **create 方法实现：**
 
-```js
+```js:src/main/windows/RhythmWallpaperWindow.mjs
 async create() {
   return await new Promise((resolve) => {
     if (this.win) {
@@ -156,6 +156,7 @@ async create() {
     }
   })
 }
+
 ```
 
 ---
@@ -166,7 +167,7 @@ async create() {
 
 **音频上下文创建：**
 
-```js
+```js:src/renderer/windows/RhythmWallpaperWindow/containers/RhythmWallpaperWindow.vue
 const init = async () => {
   leafer = new Leafer({ view: leaferRef.value, autoRender: true })
   audioContext = new (window.AudioContext || window.webkitAudioContext)()
@@ -205,7 +206,7 @@ const init = async () => {
 
 **实时频谱分析：**
 
-```js
+```js:src/renderer/windows/RhythmWallpaperWindow/containers/RhythmWallpaperWindow.vue
 function draw() {
   if (!analyser || !effectInstance) {
     return
@@ -228,7 +229,7 @@ function draw() {
 
 **渲染引擎创建：**
 
-```js
+```js:src/renderer/windows/RhythmWallpaperWindow/containers/RhythmWallpaperWindow.vue
 const init = async () => {
   leafer = new Leafer({ view: leaferRef.value, autoRender: true })
   // ... 其他初始化代码
@@ -239,7 +240,7 @@ const init = async () => {
 
 **动态配置计算：**
 
-```js
+```js:src/renderer/windows/RhythmWallpaperWindow/containers/RhythmWallpaperWindow.vue
 const config = computed(() => {
   return {
     effect: settingData.value.rhythmEffect,

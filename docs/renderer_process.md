@@ -16,7 +16,7 @@
 
 **关键代码片段：**
 
-```vue
+```vue:src/renderer/windows/MainWindow/containers/MainWindow.vue
 <el-container class="window-container">
   <el-aside class="window-side-wrapper" :width="settingData.expandSideMenu ? '70px' : '0'">
     <SideMenu v-if="settingData.expandSideMenu" />
@@ -43,7 +43,7 @@
 
 **关键代码片段：**
 
-```js
+```js:src/renderer/windows/MainWindow/containers/MainWindow.vue
 const componentDict = {
   Explore,
   Search,
@@ -65,7 +65,7 @@ const componentDict = {
 
 **关键代码片段：**
 
-```js
+```js:src/renderer/stores/menuStore.js
 const enabledMenus = computed(() => {
   const list = menuList.value.filter((item) => item.placement.includes('sideMenu'))
   if (!settingData.value?.enabledMenus?.length) {
@@ -94,7 +94,7 @@ const enabledMenus = computed(() => {
 
 **关键代码片段：**
 
-```js
+```js:src/renderer/windows/SuspensionBall/containers/SuspensionBall.vue
 const onMouseMove = (e) => {
   if (!startPos.value || !windowStartPos.value) return
 
@@ -119,7 +119,7 @@ const onMouseMove = (e) => {
 
 **关键代码片段：**
 
-```js
+```js:src/renderer/windows/SuspensionBall/containers/SuspensionBall.vue
 const onMouseUp = () => {
   if (!isDragging.value) {
     // 如果没有拖拽，则认为是点击事件
@@ -148,7 +148,7 @@ const onToolClick = async (funcName) => {
 
 **关键代码片段：**
 
-```vue
+```vue:src/renderer/windows/ViewImageWindow/containers/ViewImageWindow.vue
 <template>
   <div class="window-container">
     <custom-title-bar :resize-window="true" window-name="viewImageWindow" />
@@ -167,7 +167,7 @@ const onToolClick = async (funcName) => {
 
 **关键代码片段：**
 
-```js
+```js:src/renderer/windows/ViewImageWindow/containers/ViewImageWindow.vue
 const doView = (activeIndex = -1, list = []) => {
   viewImageRef.value.view(activeIndex, list)
 }
@@ -195,7 +195,7 @@ onBeforeMount(() => {
 
 **关键代码片段：**
 
-```js
+```js:src/renderer/windows/DynamicWallpaperWindow/containers/DynamicWallpaperWindow.vue
 const handleSetVideoSource = (event, source) => {
   if (source) {
     if (!source.startsWith('fbwtp://') && !source.startsWith('http')) {
@@ -217,7 +217,7 @@ const handleSetVideoSource = (event, source) => {
 
 **关键代码片段：**
 
-```js
+```js:src/renderer/windows/DynamicWallpaperWindow/containers/DynamicWallpaperWindow.vue
 const controlFrameRate = (timestamp) => {
   if (!videoRef.value) return
 
