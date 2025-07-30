@@ -502,6 +502,22 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
         })
       }
 
+      ipcMain.handle('main:sendNotification', async (event, options) => {
+        const notice = new Notification({
+          title: options.title || t('appInfo.name'),
+          body: options.body || '',
+          icon: global.FBW.iconLogo,
+          silent: options.silent || false
+        })
+
+        if (options.onClick) {
+          notice.on('click', options.onClick)
+        }
+
+        notice.show()
+        return { success: true }
+      })
+
       ipcMain.handle('main:selectFolder', async () => {
         return await dialog.showOpenDialog({
           properties: ['openDirectory']

@@ -297,7 +297,8 @@
     "maxFavoriteCountReached": "收藏数量已达上限！",
     "noFileSelected": "未选择文件！",
     "noDynamicWallpaperSet": "未设置动态壁纸！",
-    "multiDeviceSyncWarning": "多设备同步功能已关闭，修改仅在当前设备生效！"
+    "multiDeviceSyncWarning": "多设备同步功能已关闭，修改仅在当前设备生效！",
+    "rhythmWallpaperNeedVirtualAudio": "请先安装并配置虚拟声卡（如 VB-Audio/BlackHole）才能使用律动壁纸功能"
   },
   "resourceTypeList": {
     "localResource": "本地资源",

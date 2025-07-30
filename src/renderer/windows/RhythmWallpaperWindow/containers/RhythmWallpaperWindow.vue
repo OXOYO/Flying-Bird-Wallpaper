@@ -2,6 +2,9 @@
 import { Leafer } from 'leafer-ui'
 import * as Effects from '../effects'
 import UseSettingStore from '@renderer/stores/settingStore'
+import { useTranslation } from 'i18next-vue'
+
+const { t } = useTranslation()
 
 const settingStore = UseSettingStore()
 const { settingData } = storeToRefs(settingStore)
@@ -52,7 +55,13 @@ const init = async () => {
     source.connect(analyser)
     runEffect()
   } else {
-    console.log('请先安装并切换系统音频输出到虚拟声卡（如 VB-Audio/BlackHole）')
+    // console.log('请先安装并切换系统音频输出到虚拟声卡（如 VB-Audio/BlackHole）')
+    // 发送系统通知
+    window.FBW.sendNotification({
+      title: t('appInfo.name'),
+      body: t('messages.rhythmWallpaperNeedVirtualAudio'),
+      silent: false
+    })
   }
 }
 

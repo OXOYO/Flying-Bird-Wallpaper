@@ -237,7 +237,10 @@ const api = {
   stopH5Server: (...args) => ipcRenderer.invoke('main:stopH5Server', ...args),
 
   // 检查更新
-  checkUpdate: (...args) => ipcRenderer.invoke('main:checkUpdate', ...args)
+  checkUpdate: (...args) => ipcRenderer.invoke('main:checkUpdate', ...args),
+
+  // 发送系统通知
+  sendNotification: (...args) => ipcRenderer.invoke('main:sendNotification', ...args)
 }
 
 if (process.contextIsolated) {
