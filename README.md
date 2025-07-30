@@ -38,7 +38,7 @@
 
 ## 项目简介
 
-飞鸟壁纸是一款跨平台桌面壁纸应用，让您轻松浏览、收藏美图，一键设置桌面壁纸。
+飞鸟壁纸是一款功能丰富的桌面壁纸软件，支持图片、视频、律动、纯色等多种壁纸类型，让您的桌面焕发独特魅力。
 
 ## [预览效果](./docs/preview.md)
 ## [文档](https://github.com/OXOYO/Flying-Bird-Wallpaper/blob/dev/README.md)

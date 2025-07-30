@@ -37,7 +37,7 @@
 
 ## Project Introduction
 
-Flying Bird Wallpaper is a cross-platform desktop wallpaper application that allows you to easily browse, favorite, and set beautiful images as your desktop wallpaper with one click.
+Flying Bird Wallpaper is a feature-rich desktop wallpaper application that supports multiple wallpaper types including images, videos, rhythm wallpapers, and solid colors, making your desktop unique and vibrant.
 
 ## [Preview](./docs/preview.md)
 ## [Docs](https://github.com/OXOYO/Flying-Bird-Wallpaper/blob/dev/README.md)
