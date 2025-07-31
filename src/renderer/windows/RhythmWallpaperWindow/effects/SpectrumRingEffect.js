@@ -57,7 +57,7 @@ export class SpectrumRingEffect extends BaseEffect {
       const path = this.paths[i]
       path.path = d
       path.fill = this.getFill('linear')
-      path.opacity = 0.7 + mapped * 0.3
+      path.opacity = 1 - mapped * 0.3 // 能量大时更不透明（透明度低）
     }
   }
 

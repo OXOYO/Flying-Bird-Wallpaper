@@ -32,13 +32,22 @@ export class DiscoEffect extends BaseEffect {
     const centerX = x
     const centerY = y
     const radius = Math.min(width, height) * 0.3
-    this.angle += 0.01
+    // 计算整体音乐能量，影响旋转速度和灯光亮度
     const mappedValues = this.getMappedValues(this.getReducedValues(dataArray, this.lightCount))
+    const energy = mappedValues.reduce((a, b) => a + b, 0) / mappedValues.length
+
+    // 检查是否有音频，没有音频时不显示
+    if (energy < 0.02) {
+      this.lights.forEach((light) => (light.opacity = 0))
+      return
+    }
+
+    this.angle += 0.005 + energy * 0.02 // 能量大时旋转更快
 
     for (let i = 0; i < this.lightCount; i++) {
       const mapped = mappedValues[i]
       const angle = this.angle + (i * (2 * Math.PI)) / this.lightCount
-      const lightLength = radius + mapped * radius * 0.7
+      const lightLength = radius + mapped * radius * 0.7 * (1 + energy * 0.3) // 能量大时光束更长
       // 扇形光束
       const angleWidth = Math.PI / this.lightCount
       const x1 = centerX + Math.cos(angle - angleWidth) * radius
@@ -51,7 +60,7 @@ export class DiscoEffect extends BaseEffect {
       const path = this.lights[i]
       path.path = d
       path.fill = this.getFill('loop', i)
-      path.opacity = 0.5 + mapped * 0.5
+      path.opacity = (1 - mapped * 0.4) * (1 - energy * 0.3) // 能量大时更不透明（透明度低）
       path.shadow = this.config.shadow ? { color: '#fff', blur: 20, x: 0, y: 0 } : undefined
     }
   }

@@ -30,7 +30,15 @@ export class BallEffect extends BaseEffect {
   }
 
   render(dataArray) {
+    // 混合使用：频率对应 + 整体能量
     const mappedValues = this.getMappedValues(this.getReducedValues(dataArray, this.ballCount))
+    const energy = mappedValues.reduce((a, b) => a + b, 0) / mappedValues.length
+
+    // 检查是否有音频，没有音频时不显示
+    if (energy < 0.02) {
+      this.balls.forEach((ball) => (ball.opacity = 0))
+      return
+    }
     const ballSpacing = this.bodySize.width / (this.ballCount + 1)
     const minRadius = Math.max(4, (ballSpacing * 0.3) / 2)
     const maxRadius = Math.max(8, (ballSpacing * 0.9) / 2)
@@ -42,12 +50,15 @@ export class BallEffect extends BaseEffect {
       const y = this.bodySize.y + this.bodySize.height / 2 - radius - value * this.bodySize.height
 
       const circle = this.balls[i]
-      circle.width = radius * 2
-      circle.height = radius * 2
+      circle.width = radius * 2 * (1 + energy * 0.2) // 能量大时球稍大
+      circle.height = radius * 2 * (1 + energy * 0.2)
       circle.x = this.bodySize.x - this.bodySize.width / 2 + (i + 1) * ballSpacing
       circle.y = y
       circle.fill = this.getFill('random')
-      circle.shadow = this.config.shadow ? { color: '#000', blur: 10, x: 0, y: 2 } : undefined
+      circle.opacity = 1 - energy * 0.4 // 能量大时更不透明（透明度低）
+      circle.shadow = this.config.shadow
+        ? { color: '#000', blur: 10 + energy * 5, x: 0, y: 2 }
+        : undefined
     }
   }
 

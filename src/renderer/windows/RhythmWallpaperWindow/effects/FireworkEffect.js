@@ -21,9 +21,11 @@ export class FireworkEffect extends BaseEffect {
     // 计算音律能量
     const mappedValues = this.getMappedValues(dataArray)
     const energy = mappedValues.reduce((a, b) => a + b, 0) / mappedValues.length
-    // 持续生成新烟花
+    // 发射频率随能量变化
     if (energy) {
-      while (this.fireworks.length < this.fireworkCount) {
+      // 能量大时发射更多烟花
+      const targetCount = Math.floor(this.fireworkCount * (0.3 + energy * 0.7))
+      while (this.fireworks.length < targetCount) {
         this.launchFirework(x, y, width, height, energy)
       }
     }
@@ -42,11 +44,11 @@ export class FireworkEffect extends BaseEffect {
     const fireworkHeight = minHeight + (maxHeight - minHeight) * energy
     const endY = startY - fireworkHeight
     const color = this.getFill('random')
-    // 允许更大范围的水平和垂直速度，轨迹更丰富
+    // 发射速度随能量变化
     const minVx = -3.5,
       maxVx = 3.5
-    const minVy = 2.5,
-      maxVy = 8
+    const minVy = 2.5 + energy * 3,
+      maxVy = 8 + energy * 4 // 能量大时速度更快
     const vx = Math.random() * (maxVx - minVx) + minVx
     const vy = -(Math.random() * (maxVy - minVy) + minVy)
     // 随机决定是否全部同色
@@ -137,7 +139,10 @@ export class FireworkEffect extends BaseEffect {
   // 爆炸时粒子数量、大小、速度随能量变化
   explode(x, y, energy, mainColor, allSameColor) {
     const f = 600 // 透视焦距
-    const maxR = Math.random() * 150 + 50 // 50~200
+    // 爆炸范围随能量变化
+    const minR = 50 + energy * 50 // 50~100
+    const maxR = 150 + energy * 100 // 150~250
+    const explosionRadius = minR + Math.random() * (maxR - minR)
     // 主射线
     const mainCount = Math.round(16 + energy * 48) // 16~64
     for (let i = 0; i < mainCount; i++) {
@@ -147,7 +152,7 @@ export class FireworkEffect extends BaseEffect {
       const phi = 2 * Math.PI * Math.random()
       // 速度向量长度统一为 maxR / (粒子生命周期/2)
       const life = 1 / (0.007 + Math.random() * 0.004) / 2 // 取 fade 的倒数一半为大致生命周期
-      const speed = maxR / life
+      const speed = explosionRadius / life
       const vx = Math.sin(theta) * Math.cos(phi) * speed
       const vy = Math.sin(theta) * Math.sin(phi) * speed
       const vz = Math.cos(theta) * speed
@@ -191,7 +196,7 @@ export class FireworkEffect extends BaseEffect {
       const theta = Math.acos(1 - 2 * Math.random())
       const phi = 2 * Math.PI * Math.random()
       const life = 1 / (0.011 + Math.random() * 0.006) / 2
-      const speed = maxR / life
+      const speed = explosionRadius / life
       const vx = Math.sin(theta) * Math.cos(phi) * speed
       const vy = Math.sin(theta) * Math.sin(phi) * speed
       const vz = Math.cos(theta) * speed

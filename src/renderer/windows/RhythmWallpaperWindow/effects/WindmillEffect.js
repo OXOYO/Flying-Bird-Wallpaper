@@ -46,13 +46,21 @@ export class WindmillEffect extends BaseEffect {
 
   render(dataArray) {
     const { x, y, width, height } = this.bodySize
+    // 计算整体音乐能量，影响风车旋转速度和叶片大小
     const mappedValues = this.getMappedValues(dataArray)
-    const avgValue = mappedValues.reduce((a, b) => a + b, 0) / mappedValues.length
-    const speed = 0.008 + avgValue * 0.1
+    const energy = mappedValues.reduce((a, b) => a + b, 0) / mappedValues.length
+
+    // 检查是否有音频，没有音频时不显示
+    if (energy < 0.02) {
+      this.paths.forEach((path) => (path.opacity = 0))
+      return
+    }
+
+    const speed = 0.05 + energy * 0.4 // 能量大时旋转更快
     this.angle += speed
     const r = Math.min(width, height) * 0.5
-    const bladeLength = r * 0.95
-    const bladeWidth = r * 0.6
+    const bladeLength = r * (0.85 + energy * 0.5) // 能量大时叶片更长
+    const bladeWidth = r * (0.5 + energy * 0.5) // 能量大时叶片更宽
     for (let i = 0; i < this.bladeCount; i++) {
       const baseAngle = this.angle + (i * 2 * Math.PI) / this.bladeCount
       const x0 = x

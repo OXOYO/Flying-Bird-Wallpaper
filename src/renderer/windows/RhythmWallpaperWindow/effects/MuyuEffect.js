@@ -84,6 +84,20 @@ export class MuyuEffect extends BaseEffect {
   render(dataArray, timestamp = Date.now()) {
     const mappedValues = this.getMappedValues(dataArray)
     const avgValue = mappedValues.reduce((a, b) => a + b, 0) / mappedValues.length
+
+    // 检查是否有音频，没有音频时不显示
+    if (avgValue < 0.02) {
+      if (this.bodyPath) {
+        this.bodyPath.opacity = 0
+      }
+      return
+    }
+
+    // 有音频时恢复显示
+    if (this.bodyPath) {
+      this.bodyPath.opacity = 1
+    }
+
     this.beatInterval = 1000 - 800 * avgValue
     if (!this.lastTimestamp) this.lastTimestamp = timestamp
     const dt = timestamp - this.lastTimestamp

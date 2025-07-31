@@ -51,9 +51,19 @@ export class TaijiEffect extends BaseEffect {
   }
 
   render(dataArray) {
+    // 计算整体音乐能量
     const mappedValues = this.getMappedValues(dataArray)
-    const avgValue = mappedValues.reduce((a, b) => a + b, 0) / mappedValues.length
-    const speed = avgValue
+    const energy = mappedValues.reduce((a, b) => a + b, 0) / mappedValues.length
+
+    // 检查是否有音频，没有音频时不显示
+    if (energy < 0.02) {
+      if (this.taijiImage) {
+        this.taijiImage.opacity = 0
+      }
+      return
+    }
+
+    const speed = 0.05 + energy * 0.4 // 能量大时旋转更快
     if (this.taijiImage) {
       this.taijiImage.rotateOf('center', (speed * 180) / Math.PI)
     }

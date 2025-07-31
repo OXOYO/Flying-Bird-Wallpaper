@@ -48,7 +48,7 @@ export class SpectrumFlowerEffect extends BaseEffect {
       const path = this.petals[i]
       path.path = d
       path.fill = this.getFill('loop', i)
-      path.opacity = 0.5 + mapped * 0.5
+      path.opacity = 1 - mapped * 0.5 // 能量大时更不透明（透明度低）
     }
   }
 

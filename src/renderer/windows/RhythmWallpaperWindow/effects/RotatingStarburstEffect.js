@@ -31,20 +31,30 @@ export class RotatingStarburstEffect extends BaseEffect {
     const { x, y, width, height } = this.bodySize
     const baseRadius = Math.min(width, height) * 0.18
     const maxLength = baseRadius * 2.2
-    this.angle += 0.01
+
+    // 计算整体音乐能量，影响旋转速度和射线长度
     const mappedValues = this.getMappedValues(this.getReducedValues(dataArray, this.rayCount))
+    const energy = mappedValues.reduce((a, b) => a + b, 0) / mappedValues.length
+
+    // 检查是否有音频，没有音频时不显示
+    if (energy < 0.02) {
+      this.rays.forEach((ray) => (ray.path = ''))
+      return
+    }
+
+    this.angle += 0.005 + energy * 0.02 // 能量大时旋转更快
 
     for (let i = 0; i < this.rayCount; i++) {
       const mapped = mappedValues[i]
       const angle = this.angle + (i * (2 * Math.PI)) / this.rayCount
-      const length = baseRadius + mapped * (maxLength - baseRadius)
+      const length = baseRadius + mapped * (maxLength - baseRadius) * (1 + energy * 0.5) // 能量大时射线更长
       const x1 = x
       const y1 = y
       const x2 = x + Math.cos(angle) * length
       const y2 = y + Math.sin(angle) * length
       this.rays[i].path = `M${x1},${y1} L${x2},${y2}`
       this.rays[i].stroke = this.getFill('linear')
-      this.rays[i].opacity = 0.5 + mapped * 0.5
+      this.rays[i].opacity = 1 - mapped * 0.5 // 能量大时更不透明（透明度低）
     }
   }
 
