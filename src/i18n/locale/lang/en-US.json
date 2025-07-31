@@ -404,7 +404,8 @@
     "windmill": "windmill",
     "taiji": "taiji",
     "muyu": "muyu",
-    "firework": "firework"
+    "firework": "firework",
+    "snowflake": "snowflake"
   },
   "rhythmAnimationOptions": {
     "linear": "Linear (direct mapping)",

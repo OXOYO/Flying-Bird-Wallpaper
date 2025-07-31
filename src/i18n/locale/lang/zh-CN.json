@@ -404,7 +404,8 @@
     "windmill": "风车",
     "taiji": "太极",
     "muyu": "木鱼",
-    "firework": "烟花"
+    "firework": "烟花",
+    "snowflake": "雪花"
   },
   "rhythmAnimationOptions": {
     "linear": "线性（直接映射）",
