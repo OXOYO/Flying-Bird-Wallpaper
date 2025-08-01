@@ -30,10 +30,12 @@ const flags = reactive({
   // 长按收藏显示提示动效
   showFavoriteToast: false,
   // 是否操作弹层
-  showActionPopup: false,
-  // 是否显示图片信息弹层
-  showImageInfoPopup: false
+  showActionPopup: false
 })
+
+// 图片信息面板高度
+const imageInfoPanelAnchors = [0, Math.round(0.7 * window.innerHeight)]
+const imageInfoPanelHeight = ref(imageInfoPanelAnchors[0])
 
 const pageInfo = {
   startPage: 1,
@@ -170,7 +172,6 @@ const initFlag = () => {
   flags.isFavoriteHolding = false
   flags.showFavoriteToast = false
   flags.showActionPopup = false
-  flags.showImageInfoPopup = false
 }
 
 const initPageInfo = () => {
@@ -852,7 +853,16 @@ const showImageInfo = () => {
   const currentImage = autoSwitch.imageList[longPress.selectedIndex]
   if (!currentImage) return
   flags.showActionPopup = false
-  flags.showImageInfoPopup = true
+  // 设置面板高度显示图片信息
+  imageInfoPanelHeight.value = imageInfoPanelAnchors[1]
+}
+
+// 图片信息面板高度变化处理
+const onImageInfoHeightChange = (height) => {
+  // 当面板完全关闭时，清除选中的图片索引
+  if (height === 0) {
+    longPress.selectedIndex = null
+  }
 }
 
 // 保存图片
@@ -1239,10 +1249,10 @@ const handlePageShow = () => {}
   </van-popup>
 
   <!-- 图片信息弹层 -->
-  <van-popup
-    v-model:show="flags.showImageInfoPopup"
-    position="bottom"
-    :style="{ padding: '16px', height: '50%' }"
+  <van-floating-panel
+    v-model:height="imageInfoPanelHeight"
+    :anchors="imageInfoPanelAnchors"
+    @height-change="onImageInfoHeightChange"
   >
     <div class="image-info-content">
       <van-cell-group
@@ -1256,7 +1266,7 @@ const handlePageShow = () => {}
         />
       </van-cell-group>
     </div>
-  </van-popup>
+  </van-floating-panel>
 
   <!-- 收藏提示 -->
   <van-toast
@@ -1388,6 +1398,8 @@ const handlePageShow = () => {}
 /* 操作弹层样式 */
 .action-popup-content {
   display: flex;
+  justify-content: space-evenly;
+  align-items: center;
   flex-direction: row;
   gap: 16px;
 }
