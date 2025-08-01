@@ -30,6 +30,15 @@ const tabbarList = [
   { name: 'setting', title: '设置', locale: 'h5.tabbar.setting', icon: 'ri:settings-line' }
 ]
 
+// 默认tab: 首页
+const DEFAULT_TAB = 'home'
+
+// 添加loading状态
+const loadingTab = ref('')
+
+// 记录上一次的activeTabbar，用于判断是否真的切换了tab
+let prevActiveTabbar = DEFAULT_TAB
+
 let wakeLock = null
 
 const themeVars = computed(() => {
@@ -39,12 +48,13 @@ const themeVars = computed(() => {
 })
 
 const currentPage = computed(() => {
-  const pageName = activeTabbar.value || 'home'
+  const pageName = activeTabbar.value || DEFAULT_TAB
   return pages[pageName]
 })
 
 // 添加一个函数来设置页面标题
 const setPageTitle = (pageName) => {
+  if (!pageName) return
   const titleKey = tabbarList.find((item) => item.name === pageName)?.locale
   document.title = t('appInfo.name') + '-' + t(titleKey)
 }
@@ -53,7 +63,7 @@ const setPageTitle = (pageName) => {
 watch(
   () => activeTabbar.value,
   (newTabName) => {
-    const pageName = newTabName || 'home'
+    const pageName = newTabName
     setPageTitle(pageName)
   },
   { immediate: true }
@@ -69,7 +79,7 @@ watch(
       Locale.use('en-US', enUS)
     }
     // 语言变化时也需要更新页面标题
-    setPageTitle(activeTabbar.value || 'home')
+    setPageTitle(activeTabbar.value)
   },
   {
     deep: true,
@@ -94,9 +104,25 @@ const onTabbarChange = (name) => {
 }
 const onTabbarTrigger = (name) => {
   nextTick(() => {
-    if (name === activeTabbar.value && name === 'home' && pageRef.value.init) {
-      pageRef.value.init()
+    // 只有当点击的tab与之前的activeTabbar相同，且与当前activeTabbar也相同时，才触发刷新
+    // 这表示用户点击了当前已经激活的tab
+    if (name === prevActiveTabbar && name === activeTabbar.value && pageRef.value.refresh) {
+      // 设置loading状态
+      loadingTab.value = name
+      // 调用刷新方法
+      const refreshPromise = pageRef.value.refresh()
+      if (refreshPromise && typeof refreshPromise.finally === 'function') {
+        refreshPromise.finally(() => {
+          // 刷新完成后清除loading状态
+          loadingTab.value = ''
+        })
+      } else {
+        // 如果不是Promise，直接清除loading状态
+        loadingTab.value = ''
+      }
     }
+    // 更新previousActiveTabbar
+    prevActiveTabbar = activeTabbar.value
   })
 }
 
@@ -138,6 +164,8 @@ onBeforeMount(async () => {
   if (pageRef.value.init) {
     pageRef.value.init()
   }
+  // 初始化previousActiveTabbar
+  prevActiveTabbar = activeTabbar.value
 })
 
 onMounted(() => {
@@ -160,7 +188,9 @@ onUnmounted(() => {
     theme-vars-scope="global"
   >
     <div id="app">
-      <component :is="currentPage || pageEmpty" ref="pageRef"></component>
+      <keep-alive>
+        <component :is="currentPage || pageEmpty" ref="pageRef"></component>
+      </keep-alive>
       <van-tabbar
         v-if="tabbarVisible"
         v-model="activeTabbar"
@@ -175,7 +205,10 @@ onUnmounted(() => {
         >
           {{ t(item.locale) }}
           <template #icon>
-            <IconifyIcon :icon="item.icon" />
+            <IconifyIcon
+              :icon="loadingTab === item.name ? 'ri:loader-4-line' : item.icon"
+              :class="{ 'loading-spin': loadingTab === item.name }"
+            />
           </template>
         </van-tabbar-item>
       </van-tabbar>
@@ -187,5 +220,18 @@ onUnmounted(() => {
 body {
   margin: 0;
   font-family: Arial, sans-serif;
+}
+
+.loading-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>

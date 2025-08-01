@@ -997,7 +997,8 @@ const onBackTop = () => {
 }
 
 defineExpose({
-  init
+  init,
+  refresh: onRefresh
 })
 
 // 初始化加载数据
@@ -1300,7 +1301,7 @@ const handlePageShow = () => {}
   bottom: 120px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
   z-index: 100;
 }
 
