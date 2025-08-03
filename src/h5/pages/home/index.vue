@@ -6,6 +6,7 @@ import { showNotify, showConfirmDialog } from 'vant'
 import { useTranslation } from 'i18next-vue'
 import { infoKeys } from '@common/publicData.js'
 import { handleInfoVal } from '@common/utils.js'
+import VirtualList from '@h5/components/VirtualList.vue'
 
 const { t } = useTranslation()
 const commonStore = UseCommonStore()
@@ -15,6 +16,7 @@ const settingData = ref(settingStore.settingData)
 const { tabbarVisible } = storeToRefs(commonStore)
 
 const imageSliderRef = ref(null)
+const virtualListRef = ref(null)
 
 const flags = reactive({
   // 下拉刷新状态
@@ -42,12 +44,10 @@ const pageInfo = {
   pageSize: 10
 }
 
-// 滑动位置
+// 触摸位置
 const touchPosition = reactive({
   // 触摸起始位置
-  startY: 0,
-  // 滑动偏移量
-  offsetY: 0
+  startY: 0
 })
 
 // 自动切换相关状态
@@ -62,7 +62,9 @@ const autoSwitch = reactive({
   // 图片列表
   imageList: [],
   // 总数
-  total: 0
+  total: 0,
+  // 滚动更新定时器
+  scrollUpdateTimer: null
 })
 
 // 收藏双击相关状态
@@ -102,6 +104,16 @@ const isRandom = computed(() => {
 // 是否收藏当前图片
 const isFavorite = computed(() => {
   return autoSwitch.imageList[autoSwitch.currentIndex]?.isFavorite
+})
+
+// 计算图片项高度
+const imageItemHeight = computed(() => {
+  return imageSliderRef.value?.clientHeight || window.innerHeight - 60
+})
+
+// 计算容器高度
+const containerHeight = computed(() => {
+  return imageSliderRef.value?.clientHeight || window.innerHeight - 60
 })
 
 const imageItemStyle = computed(() => {
@@ -181,7 +193,6 @@ const initPageInfo = () => {
 
 const initTouchPosition = () => {
   touchPosition.startY = 0
-  touchPosition.offsetY = 0
 }
 
 const initAutoSwitch = () => {
@@ -233,7 +244,6 @@ const onRefresh = async () => {
   autoSwitch.imageList = []
   autoSwitch.currentIndex = 0
   pageInfo.startPage = 1
-  touchPosition.offsetY = 0
   flags.finished = false
   await loadData(true)
   flags.refreshing = false
@@ -278,10 +288,32 @@ const loadData = async (isRefresh) => {
     if (res.data.list.length < pageInfo.pageSize) {
       flags.finished = true
     }
+
+    // 数据加载完成后同步虚拟列表状态
+    nextTick(() => {
+      syncVirtualListState()
+    })
   } else {
+    // 如果没有数据，清空列表并设置完成状态
+    if (isRefresh) {
+      autoSwitch.imageList = []
+      autoSwitch.total = 0
+    }
     flags.finished = true
   }
-  if (flags.finished) {
+
+  // 如果加载完成且没有数据，显示提示
+  if (flags.finished && autoSwitch.imageList.length === 0) {
+    stopAutoSwitch()
+    showNotify({
+      type: 'warning',
+      message: t('messages.noData')
+    })
+    return
+  }
+
+  // 如果加载完成但有数据，显示没有更多数据的提示
+  if (flags.finished && autoSwitch.imageList.length > 0) {
     stopAutoSwitch()
     showNotify({
       type: 'warning',
@@ -308,9 +340,23 @@ const onTouchMove = (event) => {
   if (flags.isAnimating) return
   const index = autoSwitch.currentIndex
   if (imageScales[index]?.scaling) return
-  const clientHeight = imageSliderRef.value.clientHeight
-  const deltaY = event.touches[0].clientY - touchPosition.startY
-  touchPosition.offsetY = -autoSwitch.currentIndex * clientHeight + deltaY
+  // 虚拟列表会自动处理滚动，这里不需要手动设置offsetY
+}
+
+// 虚拟列表滚动处理
+const onVirtualListScroll = (scrollData) => {
+  // 使用滚动位置直接计算当前索引，这样更准确
+  let currentIndex = Math.round(scrollData.scrollTop / imageItemHeight.value)
+  currentIndex = Math.max(0, Math.min(currentIndex, autoSwitch.imageList.length - 1))
+
+  // 只有当索引真正改变时才更新
+  if (currentIndex !== autoSwitch.currentIndex) {
+    // 添加防抖，避免频繁更新
+    clearTimeout(autoSwitch.scrollUpdateTimer)
+    autoSwitch.scrollUpdateTimer = setTimeout(() => {
+      autoSwitch.currentIndex = currentIndex
+    }, 16) // 约60fps的更新频率
+  }
 }
 
 // 触摸结束
@@ -330,9 +376,11 @@ const onTouchEnd = (event) => {
     } else if (deltaY > 0 && autoSwitch.currentIndex > 0) {
       // 向下滑动，显示上一张
       autoSwitch.currentIndex -= 1
+      virtualListRef.value?.scrollToIndex(autoSwitch.currentIndex)
     } else if (deltaY < 0 && autoSwitch.currentIndex < autoSwitch.imageList.length - 1) {
       // 向上滑动，显示下一张
       autoSwitch.currentIndex += 1
+      virtualListRef.value?.scrollToIndex(autoSwitch.currentIndex)
 
       // 如果滑动到倒数第3张，且还有更多数据，则提前加载更多
       if (
@@ -347,8 +395,6 @@ const onTouchEnd = (event) => {
 
   // 滑动到目标位置
   flags.isAnimating = true
-  const clientHeight = imageSliderRef.value.clientHeight
-  touchPosition.offsetY = -autoSwitch.currentIndex * clientHeight
   setTimeout(() => {
     flags.isAnimating = false
   }, 200)
@@ -398,10 +444,9 @@ const startAutoSwitch = () => {
   startCountdown() // 启动倒计时
 
   autoSwitch.switchTimer = setInterval(async () => {
-    const clientHeight = imageSliderRef.value.clientHeight
     if (autoSwitch.currentIndex < autoSwitch.imageList.length - 1) {
       autoSwitch.currentIndex += 1
-      touchPosition.offsetY = -autoSwitch.currentIndex * clientHeight
+      virtualListRef.value?.scrollToIndex(autoSwitch.currentIndex)
       autoSwitch.countdown = settingData.value.h5SwitchIntervalTime // 重置倒计时
       startCountdown() // 重新启动倒计时
 
@@ -421,7 +466,7 @@ const startAutoSwitch = () => {
       await onLoad()
       if (autoSwitch.currentIndex < autoSwitch.imageList.length - 1) {
         autoSwitch.currentIndex += 1
-        touchPosition.offsetY = -autoSwitch.currentIndex * clientHeight
+        virtualListRef.value?.scrollToIndex(autoSwitch.currentIndex)
         autoSwitch.countdown = settingData.value.h5SwitchIntervalTime // 重置倒计时
         startCountdown() // 重新启动倒计时
       } else {
@@ -937,15 +982,13 @@ const deleteImage = async () => {
         if (autoSwitch.currentIndex >= autoSwitch.imageList.length) {
           autoSwitch.currentIndex = Math.max(0, autoSwitch.imageList.length - 1)
         }
-        // 更新偏移量
-        const clientHeight = imageSliderRef.value.clientHeight
-        touchPosition.offsetY = -autoSwitch.currentIndex * clientHeight
+        // 更新虚拟列表位置
+        virtualListRef.value?.scrollToIndex(autoSwitch.currentIndex)
       } else if (longPress.selectedIndex < autoSwitch.currentIndex) {
         // 如果删除的是当前图片之前的图片，当前索引需要减1
         autoSwitch.currentIndex--
-        // 更新偏移量
-        const clientHeight = imageSliderRef.value.clientHeight
-        touchPosition.offsetY = -autoSwitch.currentIndex * clientHeight
+        // 更新虚拟列表位置
+        virtualListRef.value?.scrollToIndex(autoSwitch.currentIndex)
       }
 
       showNotify({
@@ -1003,13 +1046,132 @@ const handleTabbarButtonTouchEnd = (e) => {
 
 const onBackTop = () => {
   autoSwitch.currentIndex = 0
-  touchPosition.offsetY = 0
+  virtualListRef.value?.scrollToTop()
 }
 
 defineExpose({
   init,
   refresh: onRefresh
 })
+
+// 强制同步虚拟列表状态
+const syncVirtualListState = () => {
+  if (!virtualListRef.value || autoSwitch.imageList.length === 0) {
+    return
+  }
+
+  // 确保虚拟列表组件已经完全初始化
+  if (!virtualListRef.value.getScrollTop) {
+    return
+  }
+
+  // 重新计算容器高度
+  const newHeight = imageSliderRef.value?.clientHeight || window.innerHeight - 60
+  virtualListRef.value.updateContainerHeight(newHeight)
+
+  // 同步滚动位置到当前索引
+  const targetScrollTop = autoSwitch.currentIndex * imageItemHeight.value
+  const currentScrollTop = virtualListRef.value.getScrollTop() || 0
+
+  // 清除之前的滚动更新定时器
+  if (autoSwitch.scrollUpdateTimer) {
+    clearTimeout(autoSwitch.scrollUpdateTimer)
+    autoSwitch.scrollUpdateTimer = null
+  }
+
+  // 强制同步滚动位置，即使位置相同也要同步以确保渲染正确
+  virtualListRef.value.setScrollTop(targetScrollTop).then(() => {
+    // 同步完成后，确保可见项目正确渲染
+    if (virtualListRef.value) {
+      virtualListRef.value.forceRefreshVisibleItems()
+    }
+  })
+}
+
+// 使用观察器进行可靠同步
+const syncVirtualListStateWithObserver = () => {
+  if (!virtualListRef.value || autoSwitch.imageList.length === 0) {
+    return
+  }
+
+  // 确保虚拟列表组件已经完全初始化
+  if (!virtualListRef.value.getScrollTop) {
+    return
+  }
+
+  let syncCompleted = false
+  let attempts = 0
+  const maxAttempts = 10
+
+  // 创建 MutationObserver 监听 DOM 变化
+  const mutationObserver = new MutationObserver((mutations) => {
+    if (syncCompleted) return
+
+    attempts++
+
+    if (attempts >= maxAttempts) {
+      mutationObserver.disconnect()
+      resizeObserver?.disconnect()
+      syncVirtualListState()
+      syncCompleted = true
+      return
+    }
+
+    // 检查虚拟列表是否已经正确渲染
+    const virtualListElement = virtualListRef.value?.$el
+    if (virtualListElement && virtualListElement.children.length > 0) {
+      mutationObserver.disconnect()
+      resizeObserver?.disconnect()
+      syncVirtualListState()
+      syncCompleted = true
+    }
+  })
+
+  // 创建 ResizeObserver 监听尺寸变化
+  const resizeObserver = new ResizeObserver((entries) => {
+    if (syncCompleted) return
+
+    // 当容器尺寸稳定后执行同步
+    setTimeout(() => {
+      if (!syncCompleted) {
+        mutationObserver.disconnect()
+        resizeObserver.disconnect()
+        syncVirtualListState()
+        syncCompleted = true
+      }
+    }, 100)
+  })
+
+  // 开始观察
+  const virtualListElement = virtualListRef.value?.$el
+  if (virtualListElement) {
+    mutationObserver.observe(virtualListElement, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['style', 'class']
+    })
+
+    resizeObserver.observe(virtualListElement)
+  }
+
+  // 备用方案：如果观察器没有触发，使用单次延迟
+  setTimeout(() => {
+    if (!syncCompleted) {
+      mutationObserver.disconnect()
+      resizeObserver?.disconnect()
+      syncVirtualListState()
+      syncCompleted = true
+    }
+  }, 500)
+}
+
+// 监听窗口大小变化，更新容器高度
+const handleResize = () => {
+  nextTick(() => {
+    syncVirtualListState()
+  })
+}
 
 // 初始化加载数据
 onMounted(() => {
@@ -1022,6 +1184,25 @@ onMounted(() => {
   // 监听设备锁屏/解锁事件（iOS和Android）
   window.addEventListener('pagehide', handlePageHide)
   window.addEventListener('pageshow', handlePageShow)
+
+  // 监听窗口大小变化
+  window.addEventListener('resize', handleResize)
+})
+
+// 组件激活时同步状态（tab切换后）
+onActivated(() => {
+  // 使用更可靠的同步机制替代多次 setTimeout
+  nextTick(() => {
+    syncVirtualListStateWithObserver()
+  })
+})
+
+// 组件停用时保存状态
+onDeactivated(() => {
+  // 停止自动切换
+  if (settingData.value.h5AutoSwitch) {
+    stopAutoSwitch()
+  }
 })
 
 // 禁用下拉刷新功能
@@ -1052,11 +1233,16 @@ onUnmounted(() => {
     clearInterval(autoSwitch.countdownTimer)
     autoSwitch.countdownTimer = null
   }
+  if (autoSwitch.scrollUpdateTimer) {
+    clearTimeout(autoSwitch.scrollUpdateTimer)
+    autoSwitch.scrollUpdateTimer = null
+  }
 
   // 移除事件监听
   document.removeEventListener('visibilitychange', handleVisibilityChange)
   window.removeEventListener('pagehide', handlePageHide)
   window.removeEventListener('pageshow', handlePageShow)
+  window.removeEventListener('resize', handleResize)
 })
 
 // 处理页面可见性变化
@@ -1090,19 +1276,19 @@ const handlePageShow = () => {}
       @touchmove="onTouchMove"
       @touchend="onTouchEnd"
     >
-      <!-- 图片列表 -->
-      <div class="image-container" :style="{ transform: `translateY(${touchPosition.offsetY}px)` }">
-        <!-- 使用 List 组件加载更多 -->
-        <van-list
-          v-model:loading="flags.loading"
-          :finished="flags.finished"
-          :finished-text="t('messages.noMoreData')"
-          @load="onLoad"
-        >
-          <!-- 每张图片 -->
+      <!-- 虚拟列表 -->
+      <VirtualList
+        ref="virtualListRef"
+        :items="autoSwitch.imageList"
+        :item-height="imageItemHeight"
+        :container-height="containerHeight"
+        :loading="flags.loading"
+        :finished="flags.finished"
+        @scroll="onVirtualListScroll"
+        @load-more="onLoad"
+      >
+        <template #default="{ item, index }">
           <div
-            v-for="(item, index) in autoSwitch.imageList"
-            :key="item.id"
             v-lazy:background-image="item.src"
             class="image-item"
             :style="{
@@ -1116,8 +1302,8 @@ const handlePageShow = () => {}
             @touchmove="(e) => handleImageTouchMove(index, e)"
             @touchend="(e) => handleImageTouchEnd(index, e)"
           ></div>
-        </van-list>
-      </div>
+        </template>
+      </VirtualList>
     </div>
     <!-- 指示器 -->
     <div v-if="autoSwitch.total" class="number-indicator">
@@ -1287,23 +1473,17 @@ const handlePageShow = () => {}
 .image-slider {
   width: 100%;
   height: calc(100vh - var(--fbw-tabbar-height));
-  overflow: hidden;
   position: relative;
-}
-
-.image-container {
-  transition: transform 0.2s ease-in;
-  will-change: transform;
-  transform: translateZ(0);
 }
 
 .image-item {
   width: 100%;
-  height: calc(100vh - var(--fbw-tabbar-height));
+  height: 100%;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   will-change: transform;
+  position: relative;
 }
 
 .floating-buttons {

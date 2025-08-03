@@ -298,7 +298,10 @@
     "noFileSelected": "No file selected!",
     "noDynamicWallpaperSet": "No dynamic wallpaper set!",
     "multiDeviceSyncWarning": "Multi-device synchronization is disabled, modifications are only effective on the current device!",
-    "rhythmWallpaperNeedVirtualAudio": "Please install and configure virtual audio card (such as VB-Audio/BlackHole) to use rhythm wallpaper feature"
+    "rhythmWallpaperNeedVirtualAudio": "Please install and configure virtual audio card (such as VB-Audio/BlackHole) to use rhythm wallpaper feature",
+    "noData": "No data",
+    "loading": "Loading...",
+    "loadingMore": "Loading more..."
   },
   "resourceTypeList": {
     "localResource": "Local resources",
