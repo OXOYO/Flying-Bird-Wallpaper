@@ -1,43 +1,57 @@
 import { colorList } from '@common/publicData.js'
-import { Rect } from 'leafer-ui'
+import * as THREE from 'three'
 
-export class BaseEffect {
+export class ThreeBase {
   constructor(leafer, config) {
     this.leafer = leafer
     this.config = config
-    this.debugRect = null
+    this.scene = null
+    this.camera = null
+    this.renderer = null
+    this.container = null
     this.bodySize = this.getBodySize()
-    this.renderDebug()
+    this.initThree()
   }
 
-  renderDebug() {
-    if (!this.config.debug) return
-    const { x, y, width, height } = this.bodySize
-    // 绘制调试红框
-    if (!this.debugRect) {
-      this.debugRect = new Rect({
-        x: x - width / 2,
-        y: y - height / 2,
-        width,
-        height,
-        stroke: 'red',
-        strokeWidth: 2,
-        fill: null
-      })
-      this.leafer.add(this.debugRect)
-    } else {
-      this.debugRect.x = x - width / 2
-      this.debugRect.y = y - height / 2
-      this.debugRect.width = width
-      this.debugRect.height = height
-    }
+  initThree() {
+    const { width, height, x, y } = this.bodySize
+
+    // 创建容器
+    this.container = document.createElement('div')
+    this.container.style.position = 'absolute'
+    this.container.style.left = `${x - width / 2}px`
+    this.container.style.top = `${y - height / 2}px`
+    this.container.style.width = `${width}px`
+    this.container.style.height = `${height}px`
+    this.container.style.pointerEvents = 'none'
+    this.container.style.zIndex = '1000'
+
+    // 添加到leafer容器
+    this.leafer.view.parentElement.appendChild(this.container)
+
+    // 创建场景
+    this.scene = new THREE.Scene()
+
+    // 创建相机
+    this.camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000)
+    this.camera.position.z = 5
+
+    // 创建渲染器
+    this.renderer = new THREE.WebGLRenderer({
+      alpha: true,
+      antialias: true,
+      preserveDrawingBuffer: true
+    })
+    this.renderer.setSize(width, height)
+    this.renderer.setClearColor(0x000000, 0)
+    this.container.appendChild(this.renderer.domElement)
+
+    // 初始化场景
+    this.initScene()
   }
 
-  destroyDebug() {
-    if (this.debugRect) {
-      this.debugRect.remove()
-      this.debugRect = null
-    }
+  initScene() {
+    // 子类实现具体场景初始化
   }
 
   getBodySize() {
@@ -55,7 +69,6 @@ export class BaseEffect {
   }
 
   getPosition(width, height, bodyWidth, bodyHeight, margin = 0) {
-    // bodyWidth/bodyHeight为效果自身宽高
     switch (this.config.position) {
       case 'top-left':
         return { x: margin + bodyWidth / 2, y: margin + bodyHeight / 2 }
@@ -149,28 +162,9 @@ export class BaseEffect {
     }
   }
 
-  getFill(type = 'linear', index = 0) {
+  getColor(type = 'linear', index = 0) {
     const colors = this.config.colors || colorList
-    if (type === 'linear') {
-      return {
-        type: 'linear',
-        stops: colors.map((color, idx) => ({
-          color,
-          offset: idx / (colors.length - 1)
-        })),
-        from: 'top',
-        to: 'bottom'
-      }
-    } else if (type === 'radial') {
-      return {
-        type: 'radial',
-        stops: colors.map((color, idx) => ({
-          color,
-          offset: idx / (colors.length - 1)
-        })),
-        from: 'center'
-      }
-    } else if (type === 'random') {
+    if (type === 'random') {
       return colors[Math.floor(Math.random() * colors.length)]
     } else if (type === 'loop') {
       return colors[index % colors.length]
@@ -181,24 +175,34 @@ export class BaseEffect {
     }
   }
 
-  // 生成平滑曲线路径
-  catmullRom2bezier(points) {
-    let d = `M${points[0][0]},${points[0][1]}`
-    for (let i = 0; i < points.length - 1; i++) {
-      const p0 = points[i - 1] || points[0]
-      const p1 = points[i]
-      const p2 = points[i + 1]
-      const p3 = points[i + 2] || p2
-      const cp1x = p1[0] + (p2[0] - p0[0]) / 6
-      const cp1y = p1[1] + (p2[1] - p0[1]) / 6
-      const cp2x = p2[0] - (p3[0] - p1[0]) / 6
-      const cp2y = p2[1] - (p3[1] - p1[1]) / 6
-      d += ` C${cp1x},${cp1y} ${cp2x},${cp2y} ${p2[0]},${p2[1]}`
-    }
-    return d
+  hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+    return result
+      ? {
+          r: parseInt(result[1], 16) / 255,
+          g: parseInt(result[2], 16) / 255,
+          b: parseInt(result[3], 16) / 255
+        }
+      : { r: 1, g: 1, b: 1 }
+  }
+
+  render(data) {
+    // 子类实现具体渲染逻辑
+    this.renderer.render(this.scene, this.camera)
   }
 
   destroy() {
-    // 子类需实现 lights/balls/bars/waves 的 remove
+    if (this.renderer) {
+      this.renderer.dispose()
+    }
+    if (this.container && this.container.parentElement) {
+      this.container.parentElement.removeChild(this.container)
+    }
+    // 清理场景中的所有对象
+    if (this.scene) {
+      while (this.scene.children.length > 0) {
+        this.scene.remove(this.scene.children[0])
+      }
+    }
   }
 }

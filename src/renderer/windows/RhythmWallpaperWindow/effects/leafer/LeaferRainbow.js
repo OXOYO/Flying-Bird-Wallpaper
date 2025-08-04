@@ -1,8 +1,8 @@
-import { BaseEffect } from './BaseEffect'
+import { LeaferBase } from './LeaferBase'
 import { Path } from 'leafer-ui'
 import { lerpHSL } from '@renderer/utils/gen-color.js'
 
-export class RainbowEffect extends BaseEffect {
+export class LeaferRainbow extends LeaferBase {
   constructor(leafer, config) {
     super(leafer, {
       smallExtraAngle: 0.25,

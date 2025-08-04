@@ -1,7 +1,7 @@
-import { BaseEffect } from './BaseEffect'
+import { LeaferBase } from './LeaferBase'
 import { Rect, Path } from 'leafer-ui'
 
-export class Bars3DEffect extends BaseEffect {
+export class LeaferBars3D extends LeaferBase {
   constructor(leafer, config) {
     super(leafer, config)
     this.densityOptions = {

@@ -1,8 +1,8 @@
-import { BaseEffect } from './BaseEffect'
+import { LeaferBase } from './LeaferBase'
 import { Rect } from 'leafer-ui'
 import { hex2RGB, rgb2HEX, lightenColor, darkenColor } from '@renderer/utils/gen-color.js'
 
-export class DynamicGridEffect extends BaseEffect {
+export class LeaferDynamicGrid extends LeaferBase {
   constructor(leafer, config) {
     super(leafer, config)
     this.baseColor = this.config.colors[0] || '#00ffcc'

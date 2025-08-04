@@ -1,7 +1,7 @@
-import { BaseEffect } from './BaseEffect'
+import { LeaferBase } from './LeaferBase'
 import { Path } from 'leafer-ui'
 
-export class WaveEffect extends BaseEffect {
+export class LeaferWave extends LeaferBase {
   constructor(leafer, config) {
     super(leafer, {
       // 振幅

@@ -1,7 +1,7 @@
-import { BaseEffect } from './BaseEffect'
+import { LeaferBase } from './LeaferBase'
 import { Path } from 'leafer-ui'
 
-export class SpectrumRingEffect extends BaseEffect {
+export class LeaferSpectrumRing extends LeaferBase {
   constructor(leafer, config) {
     super(leafer, {
       radius: 120,

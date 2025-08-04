@@ -1,7 +1,7 @@
-import { BaseEffect } from './BaseEffect'
+import { LeaferBase } from './LeaferBase'
 import { Image, Platform } from 'leafer-ui'
 
-export class TaijiEffect extends BaseEffect {
+export class LeaferTaiji extends LeaferBase {
   constructor(leafer, config) {
     super(leafer, config)
     const { x, y, width, height } = this.bodySize

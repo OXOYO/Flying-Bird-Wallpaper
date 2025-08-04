@@ -1,7 +1,7 @@
-import { BaseEffect } from './BaseEffect'
+import { LeaferBase } from './LeaferBase'
 import { Ellipse } from 'leafer-ui'
 
-export class ParticleFountainEffect extends BaseEffect {
+export class LeaferParticleFountain extends LeaferBase {
   constructor(leafer, config) {
     super(leafer, config)
     this.densityOptions = {

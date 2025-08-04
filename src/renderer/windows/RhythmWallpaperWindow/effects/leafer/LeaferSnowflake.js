@@ -1,7 +1,7 @@
-import { BaseEffect } from './BaseEffect'
+import { LeaferBase } from './LeaferBase'
 import { Ellipse, Path } from 'leafer-ui'
 
-export class SnowflakeEffect extends BaseEffect {
+export class LeaferSnowflake extends LeaferBase {
   constructor(leafer, config) {
     super(leafer, config)
     this.densityOptions = {

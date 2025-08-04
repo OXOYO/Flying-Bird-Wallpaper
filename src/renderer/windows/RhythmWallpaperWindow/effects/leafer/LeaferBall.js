@@ -1,7 +1,7 @@
 import { Ellipse } from 'leafer-ui'
-import { BaseEffect } from './BaseEffect'
+import { LeaferBase } from './LeaferBase'
 
-export class BallEffect extends BaseEffect {
+export class LeaferBall extends LeaferBase {
   constructor(leafer, config) {
     super(leafer, config)
     this.balls = []

@@ -72,13 +72,10 @@ function runEffect() {
   if (effectInstance) {
     effectInstance.destroy()
   }
-  const effectName =
-    config.value.effect.charAt(0).toUpperCase() + config.value.effect.slice(1) + 'Effect'
-  const EffectClass = Effects[effectName]
-  if (EffectClass) {
-    // 只传递当前类型的配置
-    effectInstance = new EffectClass(leafer, toRaw(config.value))
 
+  const EffectClass = Effects[config.value.effect]
+  if (EffectClass) {
+    effectInstance = new EffectClass(leafer, toRaw(config.value))
     draw()
   }
 }

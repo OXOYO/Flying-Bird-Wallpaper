@@ -1,9 +1,9 @@
-import { BaseEffect } from './BaseEffect'
+import { LeaferBase } from './LeaferBase'
 import { Ellipse, Text } from 'leafer-ui'
 
 const NOTE_CHARS = ['♪', '♫', '♬', '♩', '♭', '♯', '★', '✦', '✧']
 
-export class MusicNoteRainEffect extends BaseEffect {
+export class LeaferMusicNoteRain extends LeaferBase {
   constructor(leafer, config) {
     super(leafer, config)
     this.densityOptions = {

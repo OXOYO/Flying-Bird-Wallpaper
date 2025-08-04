@@ -1,7 +1,7 @@
-import { BaseEffect } from './BaseEffect'
+import { LeaferBase } from './LeaferBase'
 import { Ellipse } from 'leafer-ui'
 
-export class LiquidRippleEffect extends BaseEffect {
+export class LeaferLiquidRipple extends LeaferBase {
   constructor(leafer, config) {
     super(leafer, config)
     this.densityOptions = {

@@ -1,6 +1,6 @@
-import { BaseEffect } from './BaseEffect'
+import { LeaferBase } from './LeaferBase'
 import { Path, Text } from 'leafer-ui'
-export class MuyuEffect extends BaseEffect {
+export class LeaferMuyu extends LeaferBase {
   constructor(leafer, config) {
     super(leafer, config)
     this.bodyPath = null

@@ -1,8 +1,8 @@
-import { BaseEffect } from './BaseEffect'
+import { LeaferBase } from './LeaferBase'
 import { Ellipse } from 'leafer-ui'
 import { Rect } from 'leafer-ui'
 
-export class FireworkEffect extends BaseEffect {
+export class LeaferFirework extends LeaferBase {
   constructor(leafer, config) {
     super(leafer, config)
     this.densityOptions = {

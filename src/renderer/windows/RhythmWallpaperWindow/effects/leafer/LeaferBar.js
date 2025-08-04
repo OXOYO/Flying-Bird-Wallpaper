@@ -1,7 +1,7 @@
-import { BaseEffect } from './BaseEffect'
+import { LeaferBase } from './LeaferBase'
 import { Rect } from 'leafer-ui'
 
-export class BarEffect extends BaseEffect {
+export class LeaferBar extends LeaferBase {
   constructor(leafer, config) {
     super(leafer, config)
     this.bars = []

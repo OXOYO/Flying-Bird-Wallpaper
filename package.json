@@ -88,6 +88,7 @@
     "rollup-plugin-copy": "^3.5.0",
     "sass": "^1.89.2",
     "socket.io-client": "^4.8.1",
+    "three": "^0.179.1",
     "unplugin-auto-import": "^19.3.0",
     "unplugin-icons": "^22.1.0",
     "unplugin-vue-components": "^28.8.0",

@@ -1,7 +1,7 @@
-import { BaseEffect } from './BaseEffect'
+import { LeaferBase } from './LeaferBase'
 import { Path } from 'leafer-ui'
 
-export class RotatingStarburstEffect extends BaseEffect {
+export class LeaferRotatingStarburst extends LeaferBase {
   constructor(leafer, config) {
     super(leafer, config)
     this.densityOptions = {

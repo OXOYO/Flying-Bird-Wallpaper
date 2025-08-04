@@ -1,7 +1,7 @@
-import { BaseEffect } from './BaseEffect'
+import { LeaferBase } from './LeaferBase'
 import { Path } from 'leafer-ui'
 
-export class FlowingLinesEffect extends BaseEffect {
+export class LeaferFlowingLines extends LeaferBase {
   constructor(leafer, config) {
     super(leafer, {
       lineWidth: 10,

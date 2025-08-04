@@ -1,7 +1,7 @@
-import { BaseEffect } from './BaseEffect'
+import { LeaferBase } from './LeaferBase'
 import { Path, Ellipse } from 'leafer-ui'
 
-export class WindmillEffect extends BaseEffect {
+export class LeaferWindmill extends LeaferBase {
   constructor(leafer, config) {
     super(leafer, config)
     this.densityOptions = {
