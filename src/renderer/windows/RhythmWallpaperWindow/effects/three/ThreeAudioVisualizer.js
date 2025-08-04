@@ -2,8 +2,8 @@ import { ThreeBase } from './ThreeBase.js'
 import * as THREE from 'three'
 
 export class ThreeAudioVisualizer extends ThreeBase {
-  constructor(leafer, config) {
-    super(leafer, config)
+  constructor(container, config) {
+    super(container, config)
     this.bars = []
     this.particles = []
     this.rings = []
@@ -34,7 +34,7 @@ export class ThreeAudioVisualizer extends ThreeBase {
     for (let i = 0; i < this.barCount; i++) {
       const geometry = new THREE.BoxGeometry(barWidth, 0.1, barWidth)
       const material = new THREE.MeshPhongMaterial({
-        color: this.getColor('loop', i),
+        color: this.hexToNumber(this.getColor('loop', i)),
         transparent: true,
         opacity: 0.8,
         shininess: 100
@@ -51,6 +51,11 @@ export class ThreeAudioVisualizer extends ThreeBase {
   }
 
   createParticles() {
+    // 安全检查
+    if (!this.particles) {
+      this.particles = []
+    }
+
     const geometry = new THREE.BufferGeometry()
     const positions = new Float32Array(this.particleCount * 3)
     const colors = new Float32Array(this.particleCount * 3)
@@ -97,7 +102,7 @@ export class ThreeAudioVisualizer extends ThreeBase {
     for (let i = 0; i < this.ringCount; i++) {
       const ringGeometry = new THREE.RingGeometry(2 + i * 0.5, 2.2 + i * 0.5, 64)
       const ringMaterial = new THREE.MeshBasicMaterial({
-        color: this.getColor('loop', i),
+        color: this.hexToNumber(this.getColor('loop', i)),
         transparent: true,
         opacity: 0.2,
         side: THREE.DoubleSide
@@ -135,6 +140,12 @@ export class ThreeAudioVisualizer extends ThreeBase {
   }
 
   render(data) {
+    // 安全检查
+    if (!this.bars || !this.particles || !this.rings) {
+      console.warn('ThreeAudioVisualizer: Components not initialized')
+      return
+    }
+
     const mappedData = this.getMappedValues(data)
     const reducedData = this.getReducedValues(mappedData, this.barCount, 'max')
     const averageValue = reducedData.reduce((a, b) => a + b, 0) / reducedData.length
@@ -150,7 +161,7 @@ export class ThreeAudioVisualizer extends ThreeBase {
 
       // 颜色变化
       const color = this.getColor('loop', index)
-      bar.material.color.setHex(color)
+      bar.material.color.setHex(this.hexToNumber(color))
 
       // 旋转效果
       bar.rotation.y += 0.02 + value * 0.01
@@ -159,6 +170,10 @@ export class ThreeAudioVisualizer extends ThreeBase {
 
     // 更新粒子系统
     this.particles.forEach((particleSystem, systemIndex) => {
+      if (!particleSystem || !particleSystem.geometry || !particleSystem.geometry.attributes) {
+        return
+      }
+
       const positions = particleSystem.geometry.attributes.position.array
       const sizes = particleSystem.geometry.attributes.size.array
 
@@ -197,7 +212,7 @@ export class ThreeAudioVisualizer extends ThreeBase {
 
       // 颜色和透明度
       const color = this.getColor('loop', index)
-      ring.material.color.setHex(color)
+      ring.material.color.setHex(this.hexToNumber(color))
       ring.material.opacity = 0.1 + value * 0.3
     })
 

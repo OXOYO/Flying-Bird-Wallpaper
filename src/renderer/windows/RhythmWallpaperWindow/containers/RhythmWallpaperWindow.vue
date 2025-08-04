@@ -9,7 +9,7 @@ const { t } = useTranslation()
 const settingStore = UseSettingStore()
 const { settingData } = storeToRefs(settingStore)
 
-const leaferRef = ref(null)
+const containerRef = ref(null)
 let leafer, effectInstance, analyser, dataArray, source, audioContext, animationId
 
 const config = computed(() => {
@@ -27,13 +27,37 @@ const config = computed(() => {
   }
 })
 
+// 判断是否为Three.js效果
+const isThreeEffect = computed(() => {
+  const effectName = config.value.effect
+  return effectName.startsWith('Three')
+})
+
 const init = async () => {
-  leafer = new Leafer({ view: leaferRef.value, autoRender: true })
+  // 等待容器准备好
+  await nextTick()
+
+  // 清理现有的Leafer实例
+  if (leafer) {
+    try {
+      leafer.destroy()
+    } catch (error) {
+      console.error('RhythmWallpaperWindow: Error destroying existing Leafer:', error)
+    }
+    leafer = null
+  }
+
+  console.log('RhythmWallpaperWindow: Container initialized, ready for effects')
+
   audioContext = new (window.AudioContext || window.webkitAudioContext)()
   // 获取所有音频输入设备
   const devices = await navigator.mediaDevices.enumerateDevices()
   const audioInputs = devices.filter((d) => d.kind === 'audioinput')
-  // console.log('audioInputs', audioInputs)
+  console.log(
+    'RhythmWallpaperWindow: Available audio inputs:',
+    audioInputs.map((d) => d.label)
+  )
+
   // 查找虚拟声卡设备
   const virtualDevice = audioInputs.find(
     (d) =>
@@ -42,7 +66,8 @@ const init = async () => {
       d.label.includes('立体声混音') || // 新增
       d.label.toLowerCase().includes('stereo mix') // 英文系统
   )
-  // console.log('virtualDevice', virtualDevice)
+  console.log('RhythmWallpaperWindow: Virtual device found:', virtualDevice)
+
   // 用虚拟声卡 deviceId 采集音频
   if (virtualDevice) {
     const stream = await navigator.mediaDevices.getUserMedia({
@@ -53,6 +78,7 @@ const init = async () => {
     analyser.fftSize = 1024
     dataArray = new Uint8Array(analyser.frequencyBinCount)
     source.connect(analyser)
+    console.log('RhythmWallpaperWindow: Audio context setup complete')
     runEffect()
   } else {
     // console.log('请先安装并切换系统音频输出到虚拟声卡（如 VB-Audio/BlackHole）')
@@ -65,18 +91,92 @@ const init = async () => {
   }
 }
 
-function runEffect() {
-  if (!leafer) {
-    return
+async function runEffect() {
+  // 停止当前的动画循环
+  if (animationId) {
+    cancelAnimationFrame(animationId)
+    animationId = null
   }
+
+  // 销毁当前效果实例
   if (effectInstance) {
-    effectInstance.destroy()
+    try {
+      effectInstance.destroy()
+    } catch (error) {
+      console.error('RhythmWallpaperWindow: Error destroying effect instance:', error)
+    }
+    effectInstance = null
+  }
+
+  // 清理容器中的所有子元素（仅对Three.js效果需要）
+  if (containerRef.value && isThreeEffect.value) {
+    while (containerRef.value.firstChild) {
+      containerRef.value.removeChild(containerRef.value.firstChild)
+    }
+  }
+
+  // 检查容器是否准备好
+  if (!containerRef.value) {
+    console.warn('RhythmWallpaperWindow: Container not ready, skipping effect creation')
+    return
   }
 
   const EffectClass = Effects[config.value.effect]
+
   if (EffectClass) {
-    effectInstance = new EffectClass(leafer, toRaw(config.value))
-    draw()
+    try {
+      if (isThreeEffect.value) {
+        // Three.js效果使用DOM容器
+        console.log('RhythmWallpaperWindow: Creating Three.js effect:', config.value.effect)
+
+        // 确保Leafer被清理
+        if (leafer) {
+          try {
+            leafer.destroy()
+          } catch (error) {
+            console.error('RhythmWallpaperWindow: Error destroying Leafer for Three.js:', error)
+          }
+          leafer = null
+        }
+
+        effectInstance = new EffectClass(containerRef.value, toRaw(config.value))
+      } else {
+        // Leafer效果使用Leafer
+        // 每次切换效果时都重新创建Leafer实例，确保完全清理
+        if (leafer) {
+          try {
+            leafer.destroy()
+          } catch (error) {
+            console.error('RhythmWallpaperWindow: Error destroying existing Leafer:', error)
+          }
+          leafer = null
+        }
+
+        console.log('RhythmWallpaperWindow: Creating new Leafer instance')
+        leafer = new Leafer({ view: containerRef.value, autoRender: true })
+
+        console.log('RhythmWallpaperWindow: Creating Leafer effect:', config.value.effect)
+
+        // 等待Leafer完全初始化
+        await nextTick()
+        await new Promise((resolve) => setTimeout(resolve, 50))
+        await nextTick()
+
+        // 如果Leafer尺寸仍然为0，尝试强制设置
+        if (leafer.width === 0 || leafer.height === 0) {
+          console.warn('RhythmWallpaperWindow: Leafer size is 0, forcing resize')
+          leafer.resize(containerRef.value.offsetWidth, containerRef.value.offsetHeight)
+          await nextTick()
+        }
+
+        effectInstance = new EffectClass(leafer, toRaw(config.value))
+      }
+      draw()
+    } catch (error) {
+      console.error('RhythmWallpaperWindow: Error creating effect instance:', error)
+    }
+  } else {
+    console.warn('RhythmWallpaperWindow: Effect class not found:', config.value.effect)
   }
 }
 
@@ -84,13 +184,26 @@ function draw() {
   if (!analyser || !effectInstance) {
     return
   }
-  analyser.getByteFrequencyData(dataArray)
-  // 采样范围
-  const [start, end] = config.value.sampleRange
-  const startIndex = Math.floor((start * dataArray.length) / 100)
-  const endIndex = Math.floor((end * dataArray.length) / 100)
-  effectInstance.render(dataArray.slice(startIndex, endIndex))
-  animationId = requestAnimationFrame(draw)
+
+  try {
+    analyser.getByteFrequencyData(dataArray)
+    // 采样范围
+    const [start, end] = config.value.sampleRange
+    const startIndex = Math.floor((start * dataArray.length) / 100)
+    const endIndex = Math.floor((end * dataArray.length) / 100)
+
+    // 确保数据有效
+    if (dataArray && dataArray.length > 0) {
+      const audioData = dataArray.slice(startIndex, endIndex)
+      effectInstance.render(audioData)
+    }
+
+    animationId = requestAnimationFrame(draw)
+  } catch (error) {
+    console.error('RhythmWallpaperWindow: Error in draw loop:', error)
+    // 继续动画循环，避免完全停止
+    animationId = requestAnimationFrame(draw)
+  }
 }
 
 onMounted(() => {
@@ -108,12 +221,14 @@ watch(
     settingData.value.rhythmPosition,
     settingData.value.rhythmSampleRange
   ],
-  () => {
-    runEffect()
+  async () => {
+    // 确保容器准备好后再运行效果
+    await nextTick()
+    await runEffect()
   },
   {
     deep: true,
-    immediate: true
+    immediate: false // 改为false，避免在初始化时重复调用
   }
 )
 
@@ -121,11 +236,20 @@ onBeforeUnmount(() => {
   if (animationId) cancelAnimationFrame(animationId)
   if (audioContext) audioContext.close()
   leafer?.destroy()
-  effectInstance?.destroy()
-  effectInstance?.destroyDebug()
+  if (effectInstance) {
+    try {
+      effectInstance.destroy()
+    } catch (error) {
+      console.error('RhythmWallpaperWindow: Error destroying effect instance:', error)
+    }
+  }
 })
 </script>
 
 <template>
-  <div ref="leaferRef" style="width: 100vw; height: 100vh; background: transparent"></div>
+  <!-- 统一容器 - 用于所有效果 -->
+  <div
+    ref="containerRef"
+    style="width: 100vw; height: 100vh; background: transparent; position: relative"
+  ></div>
 </template>
