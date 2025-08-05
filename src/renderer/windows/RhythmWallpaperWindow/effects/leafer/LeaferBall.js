@@ -1,9 +1,9 @@
 import { Ellipse } from 'leafer-ui'
-import { LeaferBase } from './LeaferBase'
+import LeaferBase from '../base/LeaferBase'
 
 export class LeaferBall extends LeaferBase {
-  constructor(leafer, config) {
-    super(leafer, config)
+  constructor(container, config) {
+    super(container, config)
     this.balls = []
     this.densityOptions = {
       sparse: 8,
@@ -65,5 +65,6 @@ export class LeaferBall extends LeaferBase {
   destroy() {
     this.balls.forEach((circle) => circle.remove())
     this.balls = []
+    super.destroy()
   }
 }

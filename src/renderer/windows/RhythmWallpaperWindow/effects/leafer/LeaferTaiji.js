@@ -1,9 +1,9 @@
-import { LeaferBase } from './LeaferBase'
+import LeaferBase from '../base/LeaferBase'
 import { Image, Platform } from 'leafer-ui'
 
 export class LeaferTaiji extends LeaferBase {
-  constructor(leafer, config) {
-    super(leafer, config)
+  constructor(container, config) {
+    super(container, config)
     const { x, y, width, height } = this.bodySize
     this.radius = Math.min(width, height) / 2
     this.center = { x: x - this.radius, y: y - this.radius }
@@ -74,5 +74,6 @@ export class LeaferTaiji extends LeaferBase {
       this.taijiImage.remove()
       this.taijiImage = null
     }
+    super.destroy()
   }
 }

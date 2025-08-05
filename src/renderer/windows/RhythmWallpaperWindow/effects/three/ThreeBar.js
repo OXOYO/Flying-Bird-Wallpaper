@@ -1,5 +1,6 @@
-import { ThreeBase } from './ThreeBase.js'
+import ThreeBase from '../base/ThreeBase.js'
 import * as THREE from 'three'
+import { hex2RGB } from '@renderer/utils/gen-color.js'
 
 export class ThreeBar extends ThreeBase {
   constructor(container, config) {
@@ -36,10 +37,17 @@ export class ThreeBar extends ThreeBase {
       this.pointLight.position.set(0, 5, 10)
       this.scene.add(this.pointLight)
 
-      // 创建条形 - 增加大小和间距
+      // 创建条形 - 基于相机可见宽度计算
       const barWidth = 0.4
-      const barSpacing = 0.6
-      const startX = (-(this.barCount - 1) * barSpacing) / 2
+      // 计算当前相机下的可见宽度
+      const fov = (this.camera.fov * Math.PI) / 180
+      const aspect = this.camera.aspect
+      const z = Math.abs(this.camera.position.z)
+      const visibleWidth = 2 * z * Math.tan(fov / 2) * aspect
+
+      const maxBarSpan = visibleWidth * 0.8 // 使用80%的可见宽度
+      const adjustedSpacing = maxBarSpan / (this.barCount - 1)
+      const startX = -maxBarSpan / 2
 
       for (let i = 0; i < this.barCount; i++) {
         // 创建几何体 - 增加初始高度
@@ -58,8 +66,8 @@ export class ThreeBar extends ThreeBase {
         // 创建网格
         const bar = new THREE.Mesh(geometry, material)
 
-        // 设置位置 - 垂直排列
-        bar.position.x = startX + i * barSpacing
+        // 设置位置 - 基于相机可见宽度均匀分布
+        bar.position.x = startX + i * adjustedSpacing
         bar.position.y = 0
         bar.position.z = 0
 
@@ -73,32 +81,23 @@ export class ThreeBar extends ThreeBase {
       }
 
       this.initialized = true
-
-      // 立即渲染一次
-      this.render([])
     } catch (error) {
       console.error('ThreeBar: Error initializing scene:', error)
       this.initialized = false
     }
   }
 
-  animate() {
-    // 移除自己的动画循环，让外部控制
-    // 这个方法现在只用于兼容性
-  }
-
-  render(data) {
+  render(dataArray) {
     if (!this.initialized || !this.bars || this.bars.length === 0) {
       return
     }
 
     try {
       // 处理音频数据
-      const mappedData = this.getMappedValues(data)
-      const reducedData = this.getReducedValues(mappedData, this.barCount, 'max')
+      const mappedValues = this.getMappedValues(this.getReducedValues(dataArray, this.barCount))
 
       // 计算总体音频强度
-      const totalIntensity = reducedData.reduce((sum, val) => sum + val, 0) / reducedData.length
+      const totalIntensity = mappedValues.reduce((sum, val) => sum + val, 0) / mappedValues.length
 
       // 动态相机移动
       this.camera.position.x = Math.sin(Date.now() * 0.001) * 2
@@ -118,7 +117,7 @@ export class ThreeBar extends ThreeBase {
           return
         }
 
-        const value = reducedData[index] || 0
+        const value = mappedValues[index] || 0
         const originalHeight = bar.userData.originalHeight || 0.5
 
         // 计算新高度 - 让变化更明显
@@ -136,10 +135,9 @@ export class ThreeBar extends ThreeBase {
         // 获取当前颜色和下一个颜色
         const currentColor = this.config.colors[colorIndex] || this.config.colors[0]
         const nextColor = this.config.colors[nextColorIndex] || this.config.colors[0]
-
         // 插值计算最终颜色
-        const currentRgb = this.hexToRgb(currentColor)
-        const nextRgb = this.hexToRgb(nextColor)
+        const currentRgb = hex2RGB(currentColor, true)
+        const nextRgb = hex2RGB(nextColor, true)
 
         const finalR = currentRgb.r + (nextRgb.r - currentRgb.r) * colorProgress
         const finalG = currentRgb.g + (nextRgb.g - currentRgb.g) * colorProgress
@@ -163,7 +161,7 @@ export class ThreeBar extends ThreeBase {
       })
 
       // 调用父类的render方法进行实际渲染
-      super.render(data)
+      super.render(dataArray)
     } catch (error) {
       console.error('ThreeBar: Error in render:', error)
     }

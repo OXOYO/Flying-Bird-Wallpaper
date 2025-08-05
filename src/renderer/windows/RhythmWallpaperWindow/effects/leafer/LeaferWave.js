@@ -1,9 +1,9 @@
-import { LeaferBase } from './LeaferBase'
+import LeaferBase from '../base/LeaferBase'
 import { Path } from 'leafer-ui'
 
 export class LeaferWave extends LeaferBase {
-  constructor(leafer, config) {
-    super(leafer, {
+  constructor(container, config) {
+    super(container, {
       // 振幅
       amplitude: 1,
       ...config
@@ -68,5 +68,7 @@ export class LeaferWave extends LeaferBase {
 
   destroy() {
     this.path.remove()
+    this.path = null
+    super.destroy()
   }
 }

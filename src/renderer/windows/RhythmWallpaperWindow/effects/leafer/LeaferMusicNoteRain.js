@@ -1,11 +1,11 @@
-import { LeaferBase } from './LeaferBase'
+import LeaferBase from '../base/LeaferBase'
 import { Ellipse, Text } from 'leafer-ui'
 
 const NOTE_CHARS = ['♪', '♫', '♬', '♩', '♭', '♯', '★', '✦', '✧']
 
 export class LeaferMusicNoteRain extends LeaferBase {
-  constructor(leafer, config) {
-    super(leafer, config)
+  constructor(container, config) {
+    super(container, config)
     this.densityOptions = {
       sparse: 32,
       normal: 64,
@@ -66,5 +66,6 @@ export class LeaferMusicNoteRain extends LeaferBase {
   destroy() {
     this.notes.forEach((n) => n.shape.remove())
     this.notes = []
+    super.destroy()
   }
 }

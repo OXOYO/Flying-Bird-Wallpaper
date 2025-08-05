@@ -1,9 +1,9 @@
-import { LeaferBase } from './LeaferBase'
+import LeaferBase from '../base/LeaferBase'
 import { Rect } from 'leafer-ui'
 
 export class LeaferBar extends LeaferBase {
-  constructor(leafer, config) {
-    super(leafer, config)
+  constructor(container, config) {
+    super(container, config)
     this.bars = []
     this.densityOptions = {
       sparse: 32,
@@ -15,6 +15,13 @@ export class LeaferBar extends LeaferBase {
   }
 
   init() {
+    console.log('LeaferBar: Starting init, barCount:', this.barCount)
+    console.log('LeaferBar: Leafer instance:', this.leafer)
+
+    if (!this.leafer) {
+      console.error('LeaferBar: Leafer not initialized')
+      return
+    }
     for (let i = 0; i < this.barCount; i++) {
       const rect = new Rect({
         width: 10,
@@ -27,6 +34,7 @@ export class LeaferBar extends LeaferBase {
       this.leafer.add(rect)
       this.bars.push(rect)
     }
+    console.log('bar inited')
   }
 
   render(dataArray) {
@@ -34,7 +42,6 @@ export class LeaferBar extends LeaferBase {
     const offsetX = this.bodySize.x - this.bodySize.width / 2
     const offsetY = this.bodySize.y - this.bodySize.height / 2
     const mappedValues = this.getMappedValues(this.getReducedValues(dataArray, this.barCount))
-
     for (let i = 0; i < this.barCount; i++) {
       const value = mappedValues[i]
       const rect = this.bars[i]
@@ -50,5 +57,6 @@ export class LeaferBar extends LeaferBase {
   destroy() {
     this.bars.forEach((rect) => rect.remove())
     this.bars = []
+    super.destroy()
   }
 }

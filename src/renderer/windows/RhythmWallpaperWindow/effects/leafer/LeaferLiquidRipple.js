@@ -1,9 +1,9 @@
-import { LeaferBase } from './LeaferBase'
+import LeaferBase from '../base/LeaferBase'
 import { Ellipse } from 'leafer-ui'
 
 export class LeaferLiquidRipple extends LeaferBase {
-  constructor(leafer, config) {
-    super(leafer, config)
+  constructor(container, config) {
+    super(container, config)
     this.densityOptions = {
       sparse: 3,
       normal: 6,
@@ -65,5 +65,6 @@ export class LeaferLiquidRipple extends LeaferBase {
   destroy() {
     this.ripples.forEach((r) => r.shape.remove())
     this.ripples = []
+    super.destroy()
   }
 }

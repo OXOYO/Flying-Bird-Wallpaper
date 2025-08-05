@@ -1,10 +1,10 @@
-import { LeaferBase } from './LeaferBase'
+import LeaferBase from '../base/LeaferBase'
 import { Path } from 'leafer-ui'
 import { lerpHSL } from '@renderer/utils/gen-color.js'
 
 export class LeaferRainbow extends LeaferBase {
-  constructor(leafer, config) {
-    super(leafer, {
+  constructor(container, config) {
+    super(container, {
       smallExtraAngle: 0.25,
       // 彩虹条数
       rainbowCount: 48,
@@ -154,5 +154,6 @@ export class LeaferRainbow extends LeaferBase {
   destroy() {
     this.arcs.forEach((p) => p.remove())
     this.arcs = []
+    super.destroy()
   }
 }

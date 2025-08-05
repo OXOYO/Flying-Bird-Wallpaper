@@ -1,5 +1,6 @@
-import { ThreeBase } from './ThreeBase.js'
+import ThreeBase from '../base/ThreeBase.js'
 import * as THREE from 'three'
+import { hex2RGB } from '@renderer/utils/gen-color.js'
 
 export class ThreeParticle extends ThreeBase {
   constructor(container, config) {
@@ -7,6 +8,8 @@ export class ThreeParticle extends ThreeBase {
     this.particles = []
     this.particleCount = 200
     this.particleSystem = null
+
+    this.initScene()
   }
 
   initScene() {
@@ -33,7 +36,7 @@ export class ThreeParticle extends ThreeBase {
 
         // 随机颜色
         const color = this.getColor('random')
-        const rgb = this.hexToRgb(color)
+        const rgb = hex2RGB(color, true)
         colors[i * 3] = rgb.r
         colors[i * 3 + 1] = rgb.g
         colors[i * 3 + 2] = rgb.b

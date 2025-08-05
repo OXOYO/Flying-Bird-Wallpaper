@@ -1,9 +1,9 @@
-import { LeaferBase } from './LeaferBase'
+import LeaferBase from '../base/LeaferBase'
 import { Ellipse } from 'leafer-ui'
 
 export class LeaferParticleFountain extends LeaferBase {
-  constructor(leafer, config) {
-    super(leafer, config)
+  constructor(container, config) {
+    super(container, config)
     this.densityOptions = {
       sparse: 128,
       normal: 256,
@@ -76,5 +76,6 @@ export class LeaferParticleFountain extends LeaferBase {
   destroy() {
     this.particles.forEach((p) => p.shape.remove())
     this.particles = []
+    super.destroy()
   }
 }

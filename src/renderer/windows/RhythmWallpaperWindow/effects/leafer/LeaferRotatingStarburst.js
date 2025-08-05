@@ -1,9 +1,9 @@
-import { LeaferBase } from './LeaferBase'
+import LeaferBase from '../base/LeaferBase'
 import { Path } from 'leafer-ui'
 
 export class LeaferRotatingStarburst extends LeaferBase {
-  constructor(leafer, config) {
-    super(leafer, config)
+  constructor(container, config) {
+    super(container, config)
     this.densityOptions = {
       sparse: 16,
       normal: 32,
@@ -61,5 +61,6 @@ export class LeaferRotatingStarburst extends LeaferBase {
   destroy() {
     this.rays.forEach((r) => r.remove())
     this.rays = []
+    super.destroy()
   }
 }

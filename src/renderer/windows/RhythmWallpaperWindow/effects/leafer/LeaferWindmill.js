@@ -1,9 +1,9 @@
-import { LeaferBase } from './LeaferBase'
+import LeaferBase from '../base/LeaferBase'
 import { Path, Ellipse } from 'leafer-ui'
 
 export class LeaferWindmill extends LeaferBase {
-  constructor(leafer, config) {
-    super(leafer, config)
+  constructor(container, config) {
+    super(container, config)
     this.densityOptions = {
       sparse: 4,
       normal: 6,
@@ -101,5 +101,6 @@ export class LeaferWindmill extends LeaferBase {
       this.centerCircle.remove()
       this.centerCircle = null
     }
+    super.destroy()
   }
 }

@@ -1,9 +1,9 @@
-import { LeaferBase } from './LeaferBase'
+import LeaferBase from '../base/LeaferBase'
 import { Ellipse } from 'leafer-ui'
 
 export class LeaferBreathingHalo extends LeaferBase {
-  constructor(leafer, config) {
-    super(leafer, config)
+  constructor(container, config) {
+    super(container, config)
     this.densityOptions = {
       sparse: 8,
       normal: 16,
@@ -47,5 +47,7 @@ export class LeaferBreathingHalo extends LeaferBase {
 
   destroy() {
     this.halo.remove()
+    this.halo = null
+    super.destroy()
   }
 }

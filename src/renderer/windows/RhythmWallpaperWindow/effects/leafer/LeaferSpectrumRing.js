@@ -1,9 +1,9 @@
-import { LeaferBase } from './LeaferBase'
+import LeaferBase from '../base/LeaferBase'
 import { Path } from 'leafer-ui'
 
 export class LeaferSpectrumRing extends LeaferBase {
-  constructor(leafer, config) {
-    super(leafer, {
+  constructor(container, config) {
+    super(container, {
       radius: 120,
       width: 32,
       heightRatio: 2,
@@ -64,5 +64,6 @@ export class LeaferSpectrumRing extends LeaferBase {
   destroy() {
     this.paths.forEach((p) => p.remove())
     this.paths = []
+    super.destroy()
   }
 }

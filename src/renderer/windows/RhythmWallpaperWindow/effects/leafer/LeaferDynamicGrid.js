@@ -1,10 +1,10 @@
-import { LeaferBase } from './LeaferBase'
+import LeaferBase from '../base/LeaferBase'
 import { Rect } from 'leafer-ui'
-import { hex2RGB, rgb2HEX, lightenColor, darkenColor } from '@renderer/utils/gen-color.js'
+import { hex2RGB, rgb2HEX } from '@renderer/utils/gen-color.js'
 
 export class LeaferDynamicGrid extends LeaferBase {
-  constructor(leafer, config) {
-    super(leafer, config)
+  constructor(container, config) {
+    super(container, config)
     this.baseColor = this.config.colors[0] || '#00ffcc'
     this.densityOptions = {
       sparse: 256,
@@ -98,5 +98,6 @@ export class LeaferDynamicGrid extends LeaferBase {
   destroy() {
     this.cells.forEach((cell) => cell.remove())
     this.cells = []
+    super.destroy()
   }
 }

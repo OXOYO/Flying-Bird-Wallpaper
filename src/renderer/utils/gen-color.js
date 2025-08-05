@@ -124,24 +124,43 @@ function hsl2RGB(hsl) {
 /**
  * 16进制颜色转换RGB
  * @param hex string
+ * @param flag boolean 是否转成 0~1 区间值
  * @returns { r: number, g: number, b: number }
  */
-function hex2RGB(hex) {
-  if (!hex) {
-    return { r: 255, g: 255, b: 255 }
-  }
-  hex = hex.toUpperCase()
-  const hexRegExp = /^#([0-9A-F]{6})$/
-  if (!hexRegExp.test(hex)) {
-    return { r: 255, g: 255, b: 255 }
-  }
+function hex2RGB(hex, flag = false) {
+  let ret = { r: 255, g: 255, b: 255 }
+  if (hex) {
+    hex = hex.toUpperCase()
+    const hexRegExp = /^#([0-9A-F]{6})$/
+    if (hexRegExp.test(hex)) {
+      const hexValArr = (hexRegExp.exec(hex) || ['000000'])[1].split('')
 
-  const hexValArr = (hexRegExp.exec(hex) || ['000000'])[1].split('')
+      ret = {
+        r: HEX_MAP[hexValArr[0]] * 16 + HEX_MAP[hexValArr[1]],
+        g: HEX_MAP[hexValArr[2]] * 16 + HEX_MAP[hexValArr[3]],
+        b: HEX_MAP[hexValArr[4]] * 16 + HEX_MAP[hexValArr[5]]
+      }
+    }
+  }
+  if (flag) {
+    ret.r = ret.r / 255
+    ret.g = ret.g / 255
+    ret.b = ret.b / 255
+  }
+  return ret
+}
 
-  return {
-    r: HEX_MAP[hexValArr[0]] * 16 + HEX_MAP[hexValArr[1]],
-    g: HEX_MAP[hexValArr[2]] * 16 + HEX_MAP[hexValArr[3]],
-    b: HEX_MAP[hexValArr[4]] * 16 + HEX_MAP[hexValArr[5]]
+/**
+ * 16进制颜色转16进制数值
+ * @param hex string
+ * @returns number
+ */
+function hex2Number(hex) {
+  try {
+    return parseInt(hex.replace('#', '0x'))
+  } catch (error) {
+    console.error('Error in hexToNumber:', error)
+    return 0xffffff
   }
 }
 
@@ -255,6 +274,7 @@ export {
   hsl2RGB,
   hsl2HEX,
   hex2RGB,
+  hex2Number,
   hex2HSL,
   lightenColor,
   darkenColor,

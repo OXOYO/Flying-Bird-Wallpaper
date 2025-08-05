@@ -1,9 +1,9 @@
-import { LeaferBase } from './LeaferBase'
+import LeaferBase from '../base/LeaferBase'
 import { Path } from 'leafer-ui'
 
 export class LeaferFlowingLines extends LeaferBase {
-  constructor(leafer, config) {
-    super(leafer, {
+  constructor(container, config) {
+    super(container, {
       lineWidth: 10,
       ...config
     })
@@ -63,5 +63,6 @@ export class LeaferFlowingLines extends LeaferBase {
   destroy() {
     this.paths.forEach((p) => p.remove())
     this.paths = []
+    super.destroy()
   }
 }

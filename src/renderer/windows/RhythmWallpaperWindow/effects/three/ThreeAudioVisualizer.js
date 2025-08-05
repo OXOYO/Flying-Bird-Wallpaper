@@ -1,5 +1,6 @@
-import { ThreeBase } from './ThreeBase.js'
+import ThreeBase from '../base/ThreeBase.js'
 import * as THREE from 'three'
+import { hex2RGB, hex2Number } from '@renderer/utils/gen-color.js'
 
 export class ThreeAudioVisualizer extends ThreeBase {
   constructor(container, config) {
@@ -10,6 +11,8 @@ export class ThreeAudioVisualizer extends ThreeBase {
     this.barCount = 64
     this.particleCount = 100
     this.ringCount = 5
+
+    this.initScene()
   }
 
   initScene() {
@@ -34,7 +37,7 @@ export class ThreeAudioVisualizer extends ThreeBase {
     for (let i = 0; i < this.barCount; i++) {
       const geometry = new THREE.BoxGeometry(barWidth, 0.1, barWidth)
       const material = new THREE.MeshPhongMaterial({
-        color: this.hexToNumber(this.getColor('loop', i)),
+        color: hex2Number(this.getColor('loop', i)),
         transparent: true,
         opacity: 0.8,
         shininess: 100
@@ -73,7 +76,7 @@ export class ThreeAudioVisualizer extends ThreeBase {
 
       // 随机颜色
       const color = this.getColor('random')
-      const rgb = this.hexToRgb(color)
+      const rgb = hex2RGB(color, true)
       colors[i * 3] = rgb.r
       colors[i * 3 + 1] = rgb.g
       colors[i * 3 + 2] = rgb.b
@@ -102,7 +105,7 @@ export class ThreeAudioVisualizer extends ThreeBase {
     for (let i = 0; i < this.ringCount; i++) {
       const ringGeometry = new THREE.RingGeometry(2 + i * 0.5, 2.2 + i * 0.5, 64)
       const ringMaterial = new THREE.MeshBasicMaterial({
-        color: this.hexToNumber(this.getColor('loop', i)),
+        color: hex2Number(this.getColor('loop', i)),
         transparent: true,
         opacity: 0.2,
         side: THREE.DoubleSide
@@ -161,7 +164,7 @@ export class ThreeAudioVisualizer extends ThreeBase {
 
       // 颜色变化
       const color = this.getColor('loop', index)
-      bar.material.color.setHex(this.hexToNumber(color))
+      bar.material.color.setHex(hex2Number(color))
 
       // 旋转效果
       bar.rotation.y += 0.02 + value * 0.01
@@ -212,7 +215,7 @@ export class ThreeAudioVisualizer extends ThreeBase {
 
       // 颜色和透明度
       const color = this.getColor('loop', index)
-      ring.material.color.setHex(this.hexToNumber(color))
+      ring.material.color.setHex(hex2Number(color))
       ring.material.opacity = 0.1 + value * 0.3
     })
 

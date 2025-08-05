@@ -1,10 +1,10 @@
-import { LeaferBase } from './LeaferBase'
+import LeaferBase from '../base/LeaferBase'
 import { Ellipse } from 'leafer-ui'
 import { Rect } from 'leafer-ui'
 
 export class LeaferFirework extends LeaferBase {
-  constructor(leafer, config) {
-    super(leafer, config)
+  constructor(container, config) {
+    super(container, config)
     this.densityOptions = {
       sparse: 8,
       normal: 16,
@@ -302,5 +302,6 @@ export class LeaferFirework extends LeaferBase {
     this.particles.forEach((p) => p.shape.remove())
     this.fireworks = []
     this.particles = []
+    super.destroy()
   }
 }

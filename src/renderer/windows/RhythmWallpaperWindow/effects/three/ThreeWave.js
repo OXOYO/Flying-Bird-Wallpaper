@@ -1,5 +1,6 @@
-import { ThreeBase } from './ThreeBase.js'
+import ThreeBase from '../base/ThreeBase.js'
 import * as THREE from 'three'
+import { hex2RGB, hex2Number } from '@renderer/utils/gen-color.js'
 
 export class ThreeWave extends ThreeBase {
   constructor(container, config) {
@@ -25,7 +26,7 @@ export class ThreeWave extends ThreeBase {
       // 创建波形几何体
       this.waveGeometry = new THREE.PlaneGeometry(8, 4, this.segments, 1)
       this.waveMaterial = new THREE.MeshPhongMaterial({
-        color: this.hexToNumber(this.getColor('single', 0)),
+        color: hex2Number(this.getColor('single', 0)),
         transparent: true,
         opacity: 0.8,
         side: THREE.DoubleSide,
@@ -121,8 +122,8 @@ export class ThreeWave extends ThreeBase {
       const nextColor = this.config.colors[nextColorIndex] || this.config.colors[0]
 
       // 插值计算最终颜色
-      const currentRgb = this.hexToRgb(currentColor)
-      const nextRgb = this.hexToRgb(nextColor)
+      const currentRgb = hex2RGB(currentColor, true)
+      const nextRgb = hex2RGB(nextColor, true)
 
       const finalR = currentRgb.r + (nextRgb.r - currentRgb.r) * colorProgress
       const finalG = currentRgb.g + (nextRgb.g - currentRgb.g) * colorProgress

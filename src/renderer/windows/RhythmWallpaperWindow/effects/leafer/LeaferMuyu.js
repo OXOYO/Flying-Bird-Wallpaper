@@ -1,8 +1,8 @@
-import { LeaferBase } from './LeaferBase'
+import LeaferBase from '../base/LeaferBase'
 import { Path, Text } from 'leafer-ui'
 export class LeaferMuyu extends LeaferBase {
-  constructor(leafer, config) {
-    super(leafer, config)
+  constructor(container, config) {
+    super(container, config)
     this.bodyPath = null
     this.beatTime = 0
     this.beatInterval = 800
@@ -154,5 +154,6 @@ export class LeaferMuyu extends LeaferBase {
     }
     this.floatingTexts.forEach((obj) => obj.text.remove())
     this.floatingTexts = []
+    super.destroy()
   }
 }

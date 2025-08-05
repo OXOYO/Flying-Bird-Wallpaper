@@ -1,5 +1,6 @@
-import { ThreeBase } from './ThreeBase.js'
+import ThreeBase from '../base/ThreeBase.js'
 import * as THREE from 'three'
+import { hex2RGB, hex2Number } from '@renderer/utils/gen-color.js'
 
 export class ThreeSphere extends ThreeBase {
   constructor(container, config) {
@@ -9,6 +10,8 @@ export class ThreeSphere extends ThreeBase {
     this.sphereMaterial = null
     this.rings = []
     this.ringCount = 8
+
+    this.initScene()
   }
 
   initScene() {
@@ -24,7 +27,7 @@ export class ThreeSphere extends ThreeBase {
       // 创建主球体
       this.sphereGeometry = new THREE.SphereGeometry(1, 32, 32)
       this.sphereMaterial = new THREE.MeshPhongMaterial({
-        color: this.hexToNumber(this.getColor('single', 0)),
+        color: hex2Number(this.getColor('single', 0)),
         transparent: true,
         opacity: 0.8,
         shininess: 200,
@@ -39,7 +42,7 @@ export class ThreeSphere extends ThreeBase {
       for (let i = 0; i < this.ringCount; i++) {
         const ringGeometry = new THREE.RingGeometry(1.2 + i * 0.3, 1.5 + i * 0.3, 32)
         const ringMaterial = new THREE.MeshPhongMaterial({
-          color: this.hexToNumber(this.getColor('loop', i)),
+          color: hex2Number(this.getColor('loop', i)),
           transparent: true,
           opacity: 0.3,
           side: THREE.DoubleSide,
@@ -116,8 +119,8 @@ export class ThreeSphere extends ThreeBase {
     const nextColor = this.config.colors[nextColorIndex] || this.config.colors[0]
 
     // 插值计算最终颜色
-    const currentRgb = this.hexToRgb(currentColor)
-    const nextRgb = this.hexToRgb(nextColor)
+    const currentRgb = hex2RGB(currentColor, true)
+    const nextRgb = hex2RGB(nextColor, true)
 
     const finalR = currentRgb.r + (nextRgb.r - currentRgb.r) * colorProgress
     const finalG = currentRgb.g + (nextRgb.g - currentRgb.g) * colorProgress
@@ -151,8 +154,8 @@ export class ThreeSphere extends ThreeBase {
       const ringCurrentColor = this.config.colors[ringColorIndex] || this.config.colors[0]
       const ringNextColor = this.config.colors[ringNextColorIndex] || this.config.colors[0]
 
-      const ringCurrentRgb = this.hexToRgb(ringCurrentColor)
-      const ringNextRgb = this.hexToRgb(ringNextColor)
+      const ringCurrentRgb = hex2RGB(ringCurrentColor, true)
+      const ringNextRgb = hex2RGB(ringNextColor, true)
 
       const ringFinalR = ringCurrentRgb.r + (ringNextRgb.r - ringCurrentRgb.r) * ringColorProgress
       const ringFinalG = ringCurrentRgb.g + (ringNextRgb.g - ringCurrentRgb.g) * ringColorProgress

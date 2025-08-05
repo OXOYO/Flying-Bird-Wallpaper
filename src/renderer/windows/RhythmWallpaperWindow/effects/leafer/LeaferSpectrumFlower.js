@@ -1,9 +1,9 @@
-import { LeaferBase } from './LeaferBase'
+import LeaferBase from '../base/LeaferBase'
 import { Path } from 'leafer-ui'
 
 export class LeaferSpectrumFlower extends LeaferBase {
-  constructor(leafer, config) {
-    super(leafer, config)
+  constructor(container, config) {
+    super(container, config)
     this.densityOptions = {
       sparse: 8,
       normal: 16,
@@ -55,5 +55,6 @@ export class LeaferSpectrumFlower extends LeaferBase {
   destroy() {
     this.petals.forEach((p) => p.remove())
     this.petals = []
+    super.destroy()
   }
 }

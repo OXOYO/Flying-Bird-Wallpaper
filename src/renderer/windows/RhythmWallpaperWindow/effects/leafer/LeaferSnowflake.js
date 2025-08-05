@@ -1,9 +1,9 @@
-import { LeaferBase } from './LeaferBase'
+import LeaferBase from '../base/LeaferBase'
 import { Ellipse, Path } from 'leafer-ui'
 
 export class LeaferSnowflake extends LeaferBase {
-  constructor(leafer, config) {
-    super(leafer, config)
+  constructor(container, config) {
+    super(container, config)
     this.densityOptions = {
       sparse: 80,
       normal: 150,
@@ -415,5 +415,6 @@ export class LeaferSnowflake extends LeaferBase {
   destroy() {
     this.snowflakes.forEach((s) => s.shape.remove())
     this.snowflakes = []
+    super.destroy()
   }
 }
