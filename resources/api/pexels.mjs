@@ -87,7 +87,7 @@ export default class ResourcePexels extends ApiBase {
         if (Array.isArray(resData.photos)) {
           ret.list = resData.photos.map((item) => {
             const url = new URL(item.src.original)
-            const imageUrl = url.href()
+            const imageUrl = url.href
             const fileExt = url.pathname.split('.').pop()
             const quality = calculateImageQuality(item.width, item.height)
             const isLandscape = calculateImageOrientation(item.width, item.height)
