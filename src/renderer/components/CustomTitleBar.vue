@@ -78,7 +78,7 @@ const onResizeWindow = (action) => {
   font-size: 18px;
   width: 45px;
   height: 100%;
-  color: var(--primary-color);
+  color: var(--el-color-primary);
   display: flex;
   justify-content: center;
   align-items: center;

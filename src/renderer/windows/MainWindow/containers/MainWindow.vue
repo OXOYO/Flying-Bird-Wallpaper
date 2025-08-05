@@ -73,7 +73,7 @@ onMounted(() => {
   right: -18px;
   width: 18px;
   transform: translate(0, -50%);
-  color: var(--primary-color);
+  color: var(--el-color-primary);
   backdrop-filter: blur(4px);
   background-color: rgba(255, 255, 255, 0.5);
   border-top-right-radius: 50%;
