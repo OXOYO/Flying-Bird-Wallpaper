@@ -1,53 +1,4 @@
-<template>
-  <div
-    ref="virtualListRef"
-    class="virtual-list"
-    @scroll="debouncedScroll"
-    @touchstart="onTouchStart"
-    @touchmove="onTouchMove"
-    @touchend="onTouchEnd"
-  >
-    <div class="virtual-list-container" :style="{ height: `${totalHeight}px` }">
-      <div class="virtual-list-content" :style="{ transform: `translateY(${offsetY}px)` }">
-        <div
-          v-for="(item, index) in visibleItems"
-          :key="`${startIndex + index}-${item.id || index}`"
-          class="virtual-list-item"
-          :style="{ height: `${itemHeight}px` }"
-        >
-          <slot :item="item" :index="startIndex + index" :is-visible="true" />
-        </div>
-      </div>
-    </div>
-
-    <!-- 初始加载指示器 -->
-    <div v-if="loading && items.length === 0" class="loading-indicator">
-      <van-loading size="24px" />
-      <span>{{ $t('messages.loading') }}</span>
-    </div>
-
-    <!-- 无数据指示器 -->
-    <div v-if="finished && !loading && items.length === 0" class="finished-indicator">
-      {{ $t('messages.noData') }}
-    </div>
-
-    <!-- 加载更多指示器 -->
-    <div v-if="loading && items.length > 0" class="loading-more-indicator">
-      <van-loading size="24px" />
-      <span>{{ $t('messages.loadingMore') }}</span>
-    </div>
-
-    <!-- 没有更多数据指示器 -->
-    <div v-if="finished && !loading && items.length > 0" class="finished-indicator">
-      {{ $t('messages.noMoreData') }}
-    </div>
-  </div>
-</template>
-
 <script setup>
-import { Loading as VanLoading } from 'vant'
-
-// Props
 const props = defineProps({
   items: {
     type: Array,
@@ -75,14 +26,25 @@ const props = defineProps({
   }
 })
 
-// Emits
 const emit = defineEmits(['scroll', 'load-more'])
 
-// Refs
 const virtualListRef = ref(null)
-const scrollTop = ref(0)
 const containerHeight = ref(props.containerHeight)
 const isSyncing = ref(false) // 同步标志，防止在同步时触发不必要的scroll事件
+
+// 滚动性能相关状态
+const scrollPerformance = reactive({
+  // 上次滚动时间
+  lastScrollTime: 0,
+  // 上次滚动位置
+  lastScrollTop: 0,
+  // 滚动速度 (px/ms)
+  velocity: 0,
+  // 动态防抖时间 (ms)
+  debounceTime: 8,
+  // 动态缓冲区大小
+  dynamicBufferSize: props.bufferSize
+})
 
 // 计算总高度
 const totalHeight = computed(() => {
@@ -94,10 +56,12 @@ const visibleRange = computed(() => {
   // 缓存计算结果，避免重复计算
   const itemHeight = props.itemHeight
   const itemsLength = props.items.length
-  const bufferSize = props.bufferSize
+  const bufferSize = scrollPerformance.dynamicBufferSize
 
-  const start = Math.floor(scrollTop.value / itemHeight)
-  const end = Math.ceil((scrollTop.value + containerHeight.value) / itemHeight)
+  const scrollTop = virtualListRef.value?.scrollTop || 0
+
+  const start = Math.floor(scrollTop / itemHeight)
+  const end = Math.ceil((scrollTop + containerHeight.value) / itemHeight)
 
   const bufferStart = Math.max(0, start - bufferSize)
   const bufferEnd = Math.min(itemsLength, end + bufferSize)
@@ -119,22 +83,10 @@ const visibleItems = computed(() => {
   return props.items.slice(start, end)
 })
 
-// 强制刷新可见项目（用于同步）
-const forceRefreshVisibleItems = () => {
-  // 强制触发响应式更新
-  const currentScrollTop = scrollTop.value
-  scrollTop.value = 0
-  nextTick(() => {
-    scrollTop.value = currentScrollTop
-    // 再次强制触发，确保visibleItems更新
-    nextTick(() => {
-      // 触发一个微小的滚动变化来强制更新
-      scrollTop.value = currentScrollTop + 0.1
-      nextTick(() => {
-        scrollTop.value = currentScrollTop
-      })
-    })
-  })
+// 判断项目是否在可视区域内（用于懒加载优化）
+const isItemVisible = (index) => {
+  const { visibleStart, visibleEnd } = visibleRange.value
+  return index >= visibleStart && index < visibleEnd
 }
 
 // 计算偏移量
@@ -154,17 +106,75 @@ const touchState = reactive({
   isScrolling: false
 })
 
-// 防抖滚动处理
-let scrollTimer = null
-// 动画定时器数组，用于清理
-const scrollAnimationTimers = []
-const debouncedScroll = (event) => {
-  if (scrollTimer) {
-    clearTimeout(scrollTimer)
+// 定时器管理
+const timers = reactive({
+  scroll: null,
+  animation: [],
+  resize: null
+})
+
+// 清理所有定时器
+const clearAllTimers = () => {
+  // 清理滚动定时器
+  if (timers.scroll) {
+    clearTimeout(timers.scroll)
+    timers.scroll = null
   }
-  scrollTimer = setTimeout(() => {
+
+  // 清理所有动画定时器
+  timers.animation.forEach((timer) => {
+    clearTimeout(timer)
+  })
+  timers.animation = []
+
+  // 清理调整大小定时器
+  if (timers.resize) {
+    clearTimeout(timers.resize)
+    timers.resize = null
+  }
+}
+
+// 动态计算防抖时间
+const calculateDynamicDebounceTime = (newScrollTop) => {
+  const now = Date.now()
+  const timeDiff = now - scrollPerformance.lastScrollTime
+
+  if (timeDiff > 0) {
+    // 计算滚动速度 (px/ms)
+    const distance = Math.abs(newScrollTop - scrollPerformance.lastScrollTop)
+    scrollPerformance.velocity = distance / timeDiff
+
+    // 根据滚动速度动态调整防抖时间 (4-16ms)
+    // 速度越快，防抖时间越短，响应更及时
+    scrollPerformance.debounceTime = Math.max(4, Math.min(16, 16 - scrollPerformance.velocity * 50))
+
+    // 根据滚动速度动态调整缓冲区大小 (1-3项)
+    // 速度越快，缓冲区越大，避免白屏
+    scrollPerformance.dynamicBufferSize = Math.max(
+      1,
+      Math.min(3, Math.ceil(props.bufferSize * (1 + scrollPerformance.velocity)))
+    )
+  }
+
+  // 更新上次滚动状态
+  scrollPerformance.lastScrollTime = now
+  scrollPerformance.lastScrollTop = newScrollTop
+
+  return scrollPerformance.debounceTime
+}
+
+// 防抖滚动处理
+const debouncedScroll = (event) => {
+  const newScrollTop = event.target.scrollTop
+  const debounceTime = calculateDynamicDebounceTime(newScrollTop)
+
+  if (timers.scroll) {
+    clearTimeout(timers.scroll)
+  }
+
+  timers.scroll = setTimeout(() => {
     handleScroll(event)
-  }, 8) // 约120fps，更流畅的响应
+  }, debounceTime)
 }
 
 // 滚动处理
@@ -174,11 +184,9 @@ const handleScroll = (event) => {
 
   const target = event.target
   const newScrollTop = target.scrollTop
-
-  // 只有当滚动位置真正改变时才更新
-  if (Math.abs(newScrollTop - scrollTop.value) > 1) {
-    scrollTop.value = newScrollTop
-
+  const scrollTop = virtualListRef.value.scrollTop
+  // 减少阈值，让滚动事件更敏感
+  if (Math.abs(newScrollTop - scrollTop) > 1) {
     // 检查是否需要加载更多
     const { end } = visibleRange.value
     if (end >= props.items.length - 2 && !props.loading && !props.finished) {
@@ -187,12 +195,14 @@ const handleScroll = (event) => {
 
     // 触发滚动事件，传递更精确的数据
     emit('scroll', {
-      scrollTop: scrollTop.value,
+      scrollTop: newScrollTop,
       scrollHeight: target.scrollHeight,
       clientHeight: target.clientHeight,
       // 添加当前可见的索引范围，帮助父组件更准确地计算当前索引
       visibleStart: visibleRange.value.visibleStart,
-      visibleEnd: visibleRange.value.visibleEnd
+      visibleEnd: visibleRange.value.visibleEnd,
+      // 添加滚动性能数据
+      velocity: scrollPerformance.velocity
     })
   }
 }
@@ -200,7 +210,7 @@ const handleScroll = (event) => {
 // 触摸开始
 const onTouchStart = (event) => {
   touchState.startY = event.touches[0].clientY
-  touchState.startScrollTop = scrollTop.value
+  touchState.startScrollTop = virtualListRef.value.scrollTop
   touchState.isScrolling = false
 }
 
@@ -224,96 +234,64 @@ const onTouchEnd = (event) => {
   touchState.isScrolling = false
 }
 
-// 滚动到指定索引
-const scrollToIndex = (index) => {
-  if (!virtualListRef.value) return
-
-  const targetScrollTop = index * props.itemHeight
-
-  // 如果目标位置与当前位置相同，直接返回
-  if (Math.abs(scrollTop.value - targetScrollTop) < 1) {
-    return
-  }
-
-  // 设置同步标志
-  isSyncing.value = true
-
-  // 使用 requestAnimationFrame 确保在下一帧执行，提高性能
-  requestAnimationFrame(() => {
-    // 临时设置更快的滚动动画
-    virtualListRef.value.style.scrollBehavior = 'smooth'
-    virtualListRef.value.scrollTop = targetScrollTop
-
-    // 动画完成后恢复默认设置
-    const animationTimer = setTimeout(() => {
-      if (virtualListRef.value) {
-        virtualListRef.value.style.scrollBehavior = ''
-      }
-      // 清除同步标志
-      isSyncing.value = false
-    }, 200) // 200ms 动画时间
-
-    // 保存定时器引用以便清理
-    scrollAnimationTimers.push(animationTimer)
-  })
-}
-
-// 滚动到顶部
-const scrollToTop = () => {
-  if (!virtualListRef.value) return
-  // 使用 requestAnimationFrame 确保在下一帧执行，提高性能
-  requestAnimationFrame(() => {
-    // 临时设置更快的滚动动画
-    virtualListRef.value.style.scrollBehavior = 'smooth'
-    virtualListRef.value.scrollTop = 0
-
-    // 动画完成后恢复默认设置
-    const animationTimer = setTimeout(() => {
-      if (virtualListRef.value) {
-        virtualListRef.value.style.scrollBehavior = ''
-      }
-    }, 200) // 200ms 动画时间
-
-    // 保存定时器引用以便清理
-    scrollAnimationTimers.push(animationTimer)
-  })
-}
-
-// 更新容器高度
-const updateContainerHeight = (height) => {
-  containerHeight.value = height
-}
-
-// 直接设置滚动位置（用于同步，不触发scroll事件）
-const setScrollTop = (top) => {
+// 统一的滚动方法，支持索引和位置
+const scrollTo = (options) => {
   if (!virtualListRef.value) return Promise.resolve()
 
   return new Promise((resolve) => {
+    // 设置同步标志
     isSyncing.value = true
-    scrollTop.value = top
-    virtualListRef.value.scrollTop = top
 
-    // 强制重新计算可见范围并触发重新渲染
-    nextTick(() => {
-      // 强制触发响应式更新
-      scrollTop.value = top
+    // 计算目标滚动位置
+    let targetScrollTop
+    // 当前滚动位置
+    const scrollTop = virtualListRef.value.scrollTop
 
-      // 强制触发DOM更新
-      virtualListRef.value.style.transform = 'translateZ(0)'
+    if ('index' in options) {
+      // 通过索引滚动
+      const index = Math.max(0, Math.min(options.index, props.items.length - 1))
+      targetScrollTop = index * props.itemHeight
+    } else if ('position' in options) {
+      // 直接设置位置
+      targetScrollTop = options.position
+    } else {
+      // 默认滚动到顶部
+      targetScrollTop = 0
+    }
 
-      // 强制刷新可见项目
-      forceRefreshVisibleItems()
+    // 如果目标位置与当前位置相同，直接返回
+    if (Math.abs(scrollTop - targetScrollTop) < 1) {
+      isSyncing.value = false
+      resolve()
+      return
+    }
 
-      // 使用 requestAnimationFrame 确保渲染完成后再触发事件
+    // 确定是否使用动画
+    const useAnimation = options.animated !== false
+
+    // 计算动画时间（基于滚动距离，50-300ms）
+    const distance = Math.abs(scrollTop - targetScrollTop)
+    const duration = useAnimation ? Math.min(300, Math.max(50, distance / 3)) : 0
+
+    if (useAnimation && duration > 0) {
+      // 使用 requestAnimationFrame 确保在下一帧执行，提高性能
       requestAnimationFrame(() => {
-        // 再次确保可见项目更新
-        nextTick(() => {
+        // 临时设置滚动动画
+        virtualListRef.value.style.scrollBehavior = 'smooth'
+        virtualListRef.value.scrollTop = targetScrollTop
+
+        // 动画完成后恢复默认设置
+        const animationTimer = setTimeout(() => {
+          if (virtualListRef.value) {
+            virtualListRef.value.style.scrollBehavior = ''
+          }
+          // 清除同步标志
           isSyncing.value = false
 
           // 触发滚动事件，确保父组件能收到正确的滚动数据
           if (virtualListRef.value) {
             const scrollEvent = {
-              scrollTop: scrollTop.value,
+              scrollTop: targetScrollTop,
               scrollHeight: virtualListRef.value.scrollHeight,
               clientHeight: virtualListRef.value.clientHeight,
               visibleStart: visibleRange.value.visibleStart,
@@ -321,11 +299,48 @@ const setScrollTop = (top) => {
             }
             emit('scroll', scrollEvent)
           }
+
           resolve()
-        })
+        }, duration)
+
+        // 保存定时器引用以便清理
+        timers.animation.push(animationTimer)
       })
-    })
+    } else {
+      // 不使用动画，直接设置位置
+      virtualListRef.value.style.scrollBehavior = ''
+      virtualListRef.value.scrollTop = targetScrollTop
+
+      // 使用nextTick确保DOM更新后再解除同步标志
+      nextTick(() => {
+        isSyncing.value = false
+
+        // 触发滚动事件
+        if (virtualListRef.value) {
+          const scrollEvent = {
+            scrollTop: targetScrollTop,
+            scrollHeight: virtualListRef.value.scrollHeight,
+            clientHeight: virtualListRef.value.clientHeight,
+            visibleStart: visibleRange.value.visibleStart,
+            visibleEnd: visibleRange.value.visibleEnd
+          }
+          emit('scroll', scrollEvent)
+        }
+
+        resolve()
+      })
+    }
   })
+}
+
+// 滚动到指定索引（兼容旧API）
+const scrollToIndex = (index, animated = true) => {
+  return scrollTo({ index, animated })
+}
+
+// 更新容器高度
+const updateContainerHeight = (height) => {
+  containerHeight.value = height
 }
 
 // 监听容器高度变化
@@ -335,12 +350,19 @@ onMounted(() => {
   // 创建 ResizeObserver 监听容器大小变化
   if (window.ResizeObserver) {
     resizeObserver.value = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        if (entry.target === virtualListRef.value) {
-          const height = entry.contentRect.height
-          updateContainerHeight(height)
-        }
+      // 使用防抖处理尺寸变化，避免频繁更新
+      if (timers.resize) {
+        clearTimeout(timers.resize)
       }
+
+      timers.resize = setTimeout(() => {
+        for (const entry of entries) {
+          if (entry.target === virtualListRef.value) {
+            const height = entry.contentRect.height
+            updateContainerHeight(height)
+          }
+        }
+      }, 100) // 100ms防抖
     })
 
     if (virtualListRef.value) {
@@ -350,16 +372,10 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  if (scrollTimer) {
-    clearTimeout(scrollTimer)
-  }
+  // 清理所有定时器
+  clearAllTimers()
 
-  // 清理所有动画定时器
-  scrollAnimationTimers.forEach((timer) => {
-    clearTimeout(timer)
-  })
-  scrollAnimationTimers.length = 0
-
+  // 断开ResizeObserver连接
   if (resizeObserver.value) {
     resizeObserver.value.disconnect()
   }
@@ -375,16 +391,48 @@ watch(
 
 // 暴露方法
 defineExpose({
+  scrollTo,
   scrollToIndex,
-  scrollToTop,
   updateContainerHeight,
-  setScrollTop,
-  forceRefreshVisibleItems,
-  scrollTop: readonly(scrollTop),
-  // 添加获取当前滚动位置的方法
-  getScrollTop: () => scrollTop.value
+  // 状态获取
+  getScrollTop: () => virtualListRef.value.scrollTop,
+  // 性能数据
+  getScrollVelocity: () => scrollPerformance.velocity
 })
 </script>
+
+<template>
+  <div
+    ref="virtualListRef"
+    class="virtual-list"
+    @scroll="debouncedScroll"
+    @touchstart="onTouchStart"
+    @touchmove="onTouchMove"
+    @touchend="onTouchEnd"
+  >
+    <div class="virtual-list-container" :style="{ height: `${totalHeight}px` }">
+      <div class="virtual-list-content" :style="{ transform: `translateY(${offsetY}px)` }">
+        <div
+          v-for="(item, index) in visibleItems"
+          :key="`${startIndex + index}-${item.id || index}`"
+          class="virtual-list-item"
+          :style="{ height: `${itemHeight}px` }"
+        >
+          <slot
+            :item="item"
+            :index="startIndex + index"
+            :is-visible="isItemVisible(startIndex + index)"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- 无数据指示器 -->
+    <div v-if="finished && !loading && items.length === 0" class="finished-indicator">
+      <van-empty image="default" :description="$t('messages.noData')" />
+    </div>
+  </div>
+</template>
 
 <style scoped>
 .virtual-list {
@@ -402,7 +450,11 @@ defineExpose({
   scroll-timeline: auto;
   scroll-timeline-axis: block;
   /* 使用CSS自定义属性控制动画时间 */
-  --scroll-duration: 0.2s;
+  --scroll-duration: 0.1s;
+  /* 添加硬件加速，减少闪屏 */
+  -webkit-transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  -webkit-perspective: 1000px;
 }
 
 .virtual-list-container {
@@ -419,6 +471,10 @@ defineExpose({
   transform: translateZ(0);
   /* 性能优化：减少重绘 */
   contain: layout style paint;
+  /* 添加硬件加速，减少闪屏 */
+  -webkit-transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  -webkit-perspective: 1000px;
 }
 
 .virtual-list-item {
@@ -426,11 +482,18 @@ defineExpose({
   position: relative;
   will-change: transform;
   transform: translateZ(0);
+  /* 添加硬件加速，减少闪屏 */
+  -webkit-transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  -webkit-perspective: 1000px;
 }
 
-.loading-indicator,
-.loading-more-indicator,
 .finished-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -438,18 +501,6 @@ defineExpose({
   color: #999;
   font-size: 14px;
   gap: 8px;
-}
-
-.loading-indicator {
-  color: #666;
-}
-
-.loading-more-indicator {
-  color: #666;
-  padding: 10px 20px;
-}
-
-.finished-indicator {
   color: #999;
 }
 </style>

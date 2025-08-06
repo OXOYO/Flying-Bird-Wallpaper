@@ -106,6 +106,45 @@ const isFavorite = computed(() => {
   return autoSwitch.imageList[autoSwitch.currentIndex]?.isFavorite
 })
 
+// 当前显示的索引（用于指示器显示，确保稳定性）
+const currentDisplayIndex = computed(() => {
+  return autoSwitch.currentIndex + 1
+})
+
+// 防抖的显示索引，避免指示器频繁变化
+const debouncedDisplayIndex = ref(1)
+watch(
+  () => autoSwitch.currentIndex,
+  (newIndex) => {
+    // 使用防抖更新显示索引
+    clearTimeout(autoSwitch.scrollUpdateTimer)
+    autoSwitch.scrollUpdateTimer = setTimeout(() => {
+      debouncedDisplayIndex.value = newIndex + 1
+    }, 50) // 50ms防抖，确保指示器稳定
+  },
+  { immediate: true }
+)
+
+// 保存当前索引状态，用于tab切换后恢复
+const savedCurrentIndex = ref(0)
+
+// 监听虚拟列表的挂载
+watch(
+  () => virtualListRef.value,
+  (newRef) => {
+    if (newRef) {
+      // 如果虚拟列表刚挂载且有保存的索引，立即恢复
+      if (savedCurrentIndex.value > 0 && autoSwitch.imageList.length > 0) {
+        nextTick(() => {
+          autoSwitch.currentIndex = savedCurrentIndex.value
+          virtualListRef.value.scrollToIndex(autoSwitch.currentIndex)
+        })
+      }
+    }
+  },
+  { immediate: true }
+)
+
 // 计算图片项高度
 const imageItemHeight = computed(() => {
   return imageSliderRef.value?.clientHeight || window.innerHeight - 60
@@ -243,6 +282,8 @@ const onRefresh = async () => {
   flags.refreshing = true
   autoSwitch.imageList = []
   autoSwitch.currentIndex = 0
+  savedCurrentIndex.value = 0
+  virtualListRef.value?.scrollTo({ position: 0, animated: true })
   pageInfo.startPage = 1
   flags.finished = false
   await loadData(true)
@@ -289,9 +330,11 @@ const loadData = async (isRefresh) => {
       flags.finished = true
     }
 
-    // 数据加载完成后同步虚拟列表状态
+    // 数据加载完成后延迟同步虚拟列表状态，避免闪屏
     nextTick(() => {
-      syncVirtualListState()
+      setTimeout(() => {
+        syncVirtualListState()
+      }, 50) // 延迟50ms，确保DOM完全更新后再同步
     })
   } else {
     // 如果没有数据，清空列表并设置完成状态
@@ -349,13 +392,13 @@ const onVirtualListScroll = (scrollData) => {
   let currentIndex = Math.round(scrollData.scrollTop / imageItemHeight.value)
   currentIndex = Math.max(0, Math.min(currentIndex, autoSwitch.imageList.length - 1))
 
-  // 只有当索引真正改变时才更新
-  if (currentIndex !== autoSwitch.currentIndex) {
-    // 添加防抖，避免频繁更新
-    clearTimeout(autoSwitch.scrollUpdateTimer)
-    autoSwitch.scrollUpdateTimer = setTimeout(() => {
-      autoSwitch.currentIndex = currentIndex
-    }, 16) // 约60fps的更新频率
+  // 只有当索引真正改变时才更新，并添加阈值避免抖动
+  if (
+    currentIndex !== autoSwitch.currentIndex &&
+    Math.abs(currentIndex - autoSwitch.currentIndex) >= 0.5
+  ) {
+    // 立即更新索引，避免指示器闪烁
+    autoSwitch.currentIndex = currentIndex
   }
 }
 
@@ -375,19 +418,17 @@ const onTouchEnd = (event) => {
       })
     } else if (deltaY > 0 && autoSwitch.currentIndex > 0) {
       // 向下滑动，显示上一张
-      autoSwitch.currentIndex -= 1
-      virtualListRef.value?.scrollToIndex(autoSwitch.currentIndex)
+      const targetIndex = autoSwitch.currentIndex - 1
+      virtualListRef.value?.scrollTo({ index: targetIndex, animated: true })
+      // 不直接更新 currentIndex，让滚动事件处理
     } else if (deltaY < 0 && autoSwitch.currentIndex < autoSwitch.imageList.length - 1) {
       // 向上滑动，显示下一张
-      autoSwitch.currentIndex += 1
-      virtualListRef.value?.scrollToIndex(autoSwitch.currentIndex)
+      const targetIndex = autoSwitch.currentIndex + 1
+      virtualListRef.value?.scrollTo({ index: targetIndex, animated: true })
+      // 不直接更新 currentIndex，让滚动事件处理
 
       // 如果滑动到倒数第3张，且还有更多数据，则提前加载更多
-      if (
-        autoSwitch.currentIndex >= autoSwitch.imageList.length - 3 &&
-        !flags.finished &&
-        !flags.loading
-      ) {
+      if (targetIndex >= autoSwitch.imageList.length - 3 && !flags.finished && !flags.loading) {
         onLoad()
       }
     }
@@ -446,7 +487,7 @@ const startAutoSwitch = () => {
   autoSwitch.switchTimer = setInterval(async () => {
     if (autoSwitch.currentIndex < autoSwitch.imageList.length - 1) {
       autoSwitch.currentIndex += 1
-      virtualListRef.value?.scrollToIndex(autoSwitch.currentIndex)
+      virtualListRef.value?.scrollTo({ index: autoSwitch.currentIndex, animated: true })
       autoSwitch.countdown = settingData.value.h5SwitchIntervalTime // 重置倒计时
       startCountdown() // 重新启动倒计时
 
@@ -466,7 +507,7 @@ const startAutoSwitch = () => {
       await onLoad()
       if (autoSwitch.currentIndex < autoSwitch.imageList.length - 1) {
         autoSwitch.currentIndex += 1
-        virtualListRef.value?.scrollToIndex(autoSwitch.currentIndex)
+        virtualListRef.value?.scrollTo({ index: autoSwitch.currentIndex, animated: true })
         autoSwitch.countdown = settingData.value.h5SwitchIntervalTime // 重置倒计时
         startCountdown() // 重新启动倒计时
       } else {
@@ -1046,7 +1087,7 @@ const handleTabbarButtonTouchEnd = (e) => {
 
 const onBackTop = () => {
   autoSwitch.currentIndex = 0
-  virtualListRef.value?.scrollToTop()
+  virtualListRef.value?.scrollTo({ position: 0, animated: true })
 }
 
 defineExpose({
@@ -1069,108 +1110,56 @@ const syncVirtualListState = () => {
   const newHeight = imageSliderRef.value?.clientHeight || window.innerHeight - 60
   virtualListRef.value.updateContainerHeight(newHeight)
 
-  // 同步滚动位置到当前索引
-  const targetScrollTop = autoSwitch.currentIndex * imageItemHeight.value
+  // 获取当前滚动位置
   const currentScrollTop = virtualListRef.value.getScrollTop() || 0
 
-  // 清除之前的滚动更新定时器
-  if (autoSwitch.scrollUpdateTimer) {
-    clearTimeout(autoSwitch.scrollUpdateTimer)
-    autoSwitch.scrollUpdateTimer = null
-  }
-
-  // 强制同步滚动位置，即使位置相同也要同步以确保渲染正确
-  virtualListRef.value.setScrollTop(targetScrollTop).then(() => {
-    // 同步完成后，确保可见项目正确渲染
-    if (virtualListRef.value) {
-      virtualListRef.value.forceRefreshVisibleItems()
-    }
-  })
-}
-
-// 使用观察器进行可靠同步
-const syncVirtualListStateWithObserver = () => {
-  if (!virtualListRef.value || autoSwitch.imageList.length === 0) {
-    return
-  }
-
-  // 确保虚拟列表组件已经完全初始化
-  if (!virtualListRef.value.getScrollTop) {
-    return
-  }
-
-  let syncCompleted = false
-  let attempts = 0
-  const maxAttempts = 10
-
-  // 创建 MutationObserver 监听 DOM 变化
-  const mutationObserver = new MutationObserver((mutations) => {
-    if (syncCompleted) return
-
-    attempts++
-
-    if (attempts >= maxAttempts) {
-      mutationObserver.disconnect()
-      resizeObserver?.disconnect()
-      syncVirtualListState()
-      syncCompleted = true
-      return
-    }
-
-    // 检查虚拟列表是否已经正确渲染
-    const virtualListElement = virtualListRef.value?.$el
-    if (virtualListElement && virtualListElement.children.length > 0) {
-      mutationObserver.disconnect()
-      resizeObserver?.disconnect()
-      syncVirtualListState()
-      syncCompleted = true
-    }
-  })
-
-  // 创建 ResizeObserver 监听尺寸变化
-  const resizeObserver = new ResizeObserver((entries) => {
-    if (syncCompleted) return
-
-    // 当容器尺寸稳定后执行同步
-    setTimeout(() => {
-      if (!syncCompleted) {
-        mutationObserver.disconnect()
-        resizeObserver.disconnect()
-        syncVirtualListState()
-        syncCompleted = true
-      }
-    }, 100)
-  })
-
-  // 开始观察
-  const virtualListElement = virtualListRef.value?.$el
-  if (virtualListElement) {
-    mutationObserver.observe(virtualListElement, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['style', 'class']
+  // 如果当前滚动位置为0但索引不为0，说明需要强制滚动到正确位置
+  if (currentScrollTop === 0 && autoSwitch.currentIndex > 0) {
+    // 使用新的统一API强制滚动到正确的索引位置
+    virtualListRef.value.scrollTo({
+      index: autoSwitch.currentIndex,
+      animated: false
     })
-
-    resizeObserver.observe(virtualListElement)
+    return
   }
 
-  // 备用方案：如果观察器没有触发，使用单次延迟
-  setTimeout(() => {
-    if (!syncCompleted) {
-      mutationObserver.disconnect()
-      resizeObserver?.disconnect()
-      syncVirtualListState()
-      syncCompleted = true
+  // 根据当前滚动位置计算正确的索引
+  const calculatedIndex = Math.round(currentScrollTop / imageItemHeight.value)
+  const validIndex = Math.max(0, Math.min(calculatedIndex, autoSwitch.imageList.length - 1))
+
+  // 如果计算出的索引与当前索引不同，先更新索引
+  if (validIndex !== autoSwitch.currentIndex) {
+    autoSwitch.currentIndex = validIndex
+  }
+
+  // 同步滚动位置到当前索引
+  const targetScrollTop = autoSwitch.currentIndex * imageItemHeight.value
+
+  // 只有当位置真正不同时才同步，避免不必要的操作
+  if (Math.abs(targetScrollTop - currentScrollTop) > 1) {
+    // 清除之前的滚动更新定时器
+    if (autoSwitch.scrollUpdateTimer) {
+      clearTimeout(autoSwitch.scrollUpdateTimer)
+      autoSwitch.scrollUpdateTimer = null
     }
-  }, 500)
+
+    // 使用新的统一API滚动到指定索引
+    virtualListRef.value.scrollTo({
+      index: autoSwitch.currentIndex,
+      animated: true
+    })
+  }
 }
 
 // 监听窗口大小变化，更新容器高度
 const handleResize = () => {
-  nextTick(() => {
-    syncVirtualListState()
-  })
+  // 使用防抖，避免频繁更新
+  clearTimeout(autoSwitch.scrollUpdateTimer)
+  autoSwitch.scrollUpdateTimer = setTimeout(() => {
+    nextTick(() => {
+      syncVirtualListState()
+    })
+  }, 100) // 延迟100ms，避免频繁更新
 }
 
 // 初始化加载数据
@@ -1191,14 +1180,46 @@ onMounted(() => {
 
 // 组件激活时同步状态（tab切换后）
 onActivated(() => {
-  // 使用更可靠的同步机制替代多次 setTimeout
-  nextTick(() => {
-    syncVirtualListStateWithObserver()
-  })
+  // 延迟同步，避免闪屏
+  setTimeout(() => {
+    nextTick(() => {
+      // 确保虚拟列表已经重新渲染
+      if (virtualListRef.value && autoSwitch.imageList.length > 0) {
+        // 恢复保存的索引状态
+        if (savedCurrentIndex.value >= 0 && savedCurrentIndex.value < autoSwitch.imageList.length) {
+          // 先设置当前索引
+          autoSwitch.currentIndex = savedCurrentIndex.value
+
+          // 使用新的统一API滚动到指定索引
+          virtualListRef.value
+            .scrollTo({
+              index: savedCurrentIndex.value,
+              animated: false
+            })
+            .then(() => {
+              // 滚动完成后，再次确认位置是否正确
+              setTimeout(() => {
+                const currentScrollTop = virtualListRef.value.getScrollTop() || 0
+                const targetScrollTop = savedCurrentIndex.value * imageItemHeight.value
+                // 如果位置仍然不正确，尝试再次滚动（使用更小的阈值）
+                if (Math.abs(currentScrollTop - targetScrollTop) > 2) {
+                  virtualListRef.value.scrollTo({
+                    index: savedCurrentIndex.value,
+                    animated: false
+                  })
+                }
+              }, 50) // 减少验证延迟，提高响应速度
+            })
+        }
+      }
+    })
+  }, 300) // 保持300ms延迟，确保组件完全激活
 })
 
 // 组件停用时保存状态
 onDeactivated(() => {
+  // 保存当前索引状态
+  savedCurrentIndex.value = autoSwitch.currentIndex
   // 停止自动切换
   if (settingData.value.h5AutoSwitch) {
     stopAutoSwitch()
@@ -1307,7 +1328,7 @@ const handlePageShow = () => {}
     </div>
     <!-- 指示器 -->
     <div v-if="autoSwitch.total" class="number-indicator">
-      {{ autoSwitch.currentIndex + 1 }} / {{ autoSwitch.total }}
+      {{ debouncedDisplayIndex }} / {{ autoSwitch.total }}
     </div>
   </div>
 
@@ -1474,6 +1495,11 @@ const handlePageShow = () => {}
   width: 100%;
   height: calc(100vh - var(--fbw-tabbar-height));
   position: relative;
+  /* 添加硬件加速，减少闪屏 */
+  -webkit-transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  -webkit-perspective: 1000px;
+  transform: translateZ(0);
 }
 
 .image-item {
@@ -1484,6 +1510,11 @@ const handlePageShow = () => {}
   background-repeat: no-repeat;
   will-change: transform;
   position: relative;
+  /* 添加硬件加速，减少闪屏 */
+  -webkit-transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  -webkit-perspective: 1000px;
+  transform: translateZ(0);
 }
 
 .floating-buttons {
