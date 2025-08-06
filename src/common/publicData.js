@@ -358,7 +358,11 @@ export const sortFieldOptions = [
   { label: '资源创建时间', value: 'ctimeMs', locale: 'sortFieldOptions.ctimeMs' },
   { label: '资源修改时间', value: 'mtimeMs', locale: 'sortFieldOptions.mtimeMs' },
   { label: '资源文件名', value: 'fileName', locale: 'sortFieldOptions.fileName' },
-  { label: '资源文件大小', value: 'fileSize', locale: 'sortFieldOptions.fileSize' }
+  { label: '资源文件大小', value: 'fileSize', locale: 'sortFieldOptions.fileSize' },
+  { label: '浏览量', value: 'views', locale: 'sortFieldOptions.views' },
+  { label: '下载量', value: 'downloads', locale: 'sortFieldOptions.downloads' },
+  { label: '收藏量', value: 'favorites', locale: 'sortFieldOptions.favorites' },
+  { label: '壁纸量', value: 'wallpapers', locale: 'sortFieldOptions.wallpapers' }
 ]
 
 export const sortTypeOptions = [

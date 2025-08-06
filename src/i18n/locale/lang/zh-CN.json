@@ -355,7 +355,11 @@
     "ctimeMs": "资源创建时间",
     "mtimeMs": "资源修改时间",
     "fileName": "资源文件名",
-    "fileSize": "资源文件大小"
+    "fileSize": "资源文件大小",
+    "views": "浏览量",
+    "downloads": "下载量",
+    "favorites": "收藏量",
+    "wallpapers": "壁纸量"
   },
   "sortTypeOptions": {
     "asc": "升序",

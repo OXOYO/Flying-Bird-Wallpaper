@@ -355,7 +355,11 @@
     "ctimeMs": "Resource creation time",
     "mtimeMs": "Resource modification time",
     "fileName": "Resource file name",
-    "fileSize": "Resource file size"
+    "fileSize": "Resource file size",
+    "views": "Views",
+    "downloads": "Downloads",
+    "favorites": "Favorites",
+    "wallpapers": "Wallpapers"
   },
   "sortTypeOptions": {
     "asc": "asc",

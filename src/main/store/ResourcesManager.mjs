@@ -127,10 +127,14 @@ export default class ResourcesManager {
         }
 
         if (isFavorites || isHistory || isPrivacySpace) {
-          // FIXME 按顺序查询时排序字段固定
+          // 处理排序字段，统计字段需要从stats表中获取
+          const statsFields = ['views', 'downloads', 'favorites', 'wallpapers']
+          const sortFieldForOrder = statsFields.includes(sortField)
+            ? `stats.${sortField}`
+            : `s.${sortField}`
           const order_by_str = isRandom
             ? 'ORDER BY stats.views ASC, RANDOM()'
-            : `ORDER BY s.created_at ${sortOrder}`
+            : `ORDER BY ${sortFieldForOrder} ${sortOrder}`
 
           query_sql = `
             SELECT
@@ -149,9 +153,14 @@ export default class ResourcesManager {
           `
           count_sql = `SELECT COUNT(*) AS total FROM fbw_${resourceName} s JOIN fbw_resources r ON s.resourceId = r.id ${query_where_str}`
         } else {
+          // 处理排序字段，统计字段需要从stats表中获取
+          const statsFields = ['views', 'downloads', 'favorites', 'wallpapers']
+          const sortFieldForOrder = statsFields.includes(sortField)
+            ? `stats.${sortField}`
+            : `r.${sortField}`
           const order_by_str = isRandom
             ? 'ORDER BY stats.views ASC, RANDOM()'
-            : `ORDER BY r.${sortField} ${sortOrder}`
+            : `ORDER BY ${sortFieldForOrder} ${sortOrder}`
 
           query_sql = `
             SELECT
@@ -180,7 +189,7 @@ export default class ResourcesManager {
               uniqueKey: uuidv4()
             }
           })
-          // 曝光量+1（批量）
+          // 浏览量+1（批量）
           const updateParams = ret.data.list.map((item) => {
             return {
               resourceId: item.id,
