@@ -155,12 +155,6 @@ const containerHeight = computed(() => {
   return imageSliderRef.value?.clientHeight || window.innerHeight - 60
 })
 
-const imageItemStyle = computed(() => {
-  return {
-    'background-size': settingData.value.h5ImageDisplaySize === 'cover' ? 'cover' : 'contain'
-  }
-})
-
 const floatingButtonsStyle = computed(() => {
   let ret = {}
   if (settingData.value.h5FloatingButtonPosition === 'right') {
@@ -1298,7 +1292,7 @@ const handlePageShow = () => {}
       @touchend="onTouchEnd"
     >
       <!-- 虚拟列表 -->
-      <VirtualList
+      <virtualList
         ref="virtualListRef"
         :items="autoSwitch.imageList"
         :item-height="imageItemHeight"
@@ -1310,10 +1304,10 @@ const handlePageShow = () => {}
       >
         <template #default="{ item, index }">
           <div
-            v-lazy:background-image="item.src"
             class="image-item"
             :style="{
-              ...imageItemStyle,
+              'background-image': `url(${item.src})`,
+              'background-size': settingData.h5ImageDisplaySize === 'cover' ? 'cover' : 'contain',
               transform: imageScales[index]?.count
                 ? `scale(${imageScales[index]?.pinchScale || 1 + imageScales[index].count}) translate(${imageScales[index]?.offsetX || 0}px, ${imageScales[index]?.offsetY || 0}px)`
                 : 'scale(1) translate(0,0)',
@@ -1324,7 +1318,7 @@ const handlePageShow = () => {}
             @touchend="(e) => handleImageTouchEnd(index, e)"
           ></div>
         </template>
-      </VirtualList>
+      </virtualList>
     </div>
     <!-- 指示器 -->
     <div v-if="autoSwitch.total" class="number-indicator">

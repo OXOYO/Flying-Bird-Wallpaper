@@ -32,6 +32,8 @@ const virtualListRef = ref(null)
 const containerHeight = ref(props.containerHeight)
 const isSyncing = ref(false) // 同步标志，防止在同步时触发不必要的scroll事件
 
+const virtualListScrollTop = ref(0)
+
 // 滚动性能相关状态
 const scrollPerformance = reactive({
   // 上次滚动时间
@@ -58,7 +60,7 @@ const visibleRange = computed(() => {
   const itemsLength = props.items.length
   const bufferSize = scrollPerformance.dynamicBufferSize
 
-  const scrollTop = virtualListRef.value?.scrollTop || 0
+  const scrollTop = virtualListScrollTop.value || 0
 
   const start = Math.floor(scrollTop / itemHeight)
   const end = Math.ceil((scrollTop + containerHeight.value) / itemHeight)
@@ -279,7 +281,7 @@ const scrollTo = (options) => {
         // 临时设置滚动动画
         virtualListRef.value.style.scrollBehavior = 'smooth'
         virtualListRef.value.scrollTop = targetScrollTop
-
+        virtualListScrollTop.value = targetScrollTop
         // 动画完成后恢复默认设置
         const animationTimer = setTimeout(() => {
           if (virtualListRef.value) {
@@ -310,6 +312,7 @@ const scrollTo = (options) => {
       // 不使用动画，直接设置位置
       virtualListRef.value.style.scrollBehavior = ''
       virtualListRef.value.scrollTop = targetScrollTop
+      virtualListScrollTop.value = targetScrollTop
 
       // 使用nextTick确保DOM更新后再解除同步标志
       nextTick(() => {
