@@ -165,6 +165,7 @@
           "label": "Enabled Floating Buttons",
           "placeholder": "Please select enabled floating buttons"
         },
+        "h5NumberIndicatorPosition": "Number indicator Position",
         "h5Vibration": "Vibration",
         "h5WeekScreen": "Week screen",
         "powerSaveMode": "Power save mode"
@@ -381,6 +382,10 @@
     "displaySize": "display size",
     "toggleTabbar": "toggle tabbar",
     "backtop": "backtop"
+  },
+  "h5NumberIndicatorPositionOptions": {
+    "top": "top",
+    "bottom": "bottom"
   },
   "dynamicPerformanceModeOptions": {
     "high": "high",
@@ -656,6 +661,10 @@
           "h5EnabledFloatingButtons": {
             "label": "Enabled Floating Buttons",
             "placeholder": ""
+          },
+          "h5NumberIndicatorPosition": {
+            "label": "Number Indicator Position",
+            "placeholder": "Select number indicator position"
           },
           "h5Vibration": "Vibration",
           "h5WeekScreen": "Week Screen"

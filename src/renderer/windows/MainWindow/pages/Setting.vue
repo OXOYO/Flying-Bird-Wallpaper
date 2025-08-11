@@ -14,6 +14,7 @@ import {
   imageDisplaySizeOptions,
   h5FloatingButtonPositionOptions,
   h5FloatingButtonsOptions,
+  h5NumberIndicatorPositionOptions,
   allowedFileExtList,
   colorList,
   dynamicPerformanceModeOptions,
@@ -1551,6 +1552,24 @@ onBeforeUnmount(() => {
               >
                 <el-option
                   v-for="item in h5FloatingButtonsOptions"
+                  :key="item.value"
+                  :label="t(item.locale)"
+                  :value="item.value"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item
+              :label="t('pages.Setting.settingDataForm.h5NumberIndicatorPosition')"
+              prop="h5NumberIndicatorPosition"
+            >
+              <el-select
+                v-model="settingDataForm.h5NumberIndicatorPosition"
+                clearable
+                style="width: 140px"
+                @change="onSettingDataFormChange"
+              >
+                <el-option
+                  v-for="item in h5NumberIndicatorPositionOptions"
                   :key="item.value"
                   :label="t(item.locale)"
                   :value="item.value"

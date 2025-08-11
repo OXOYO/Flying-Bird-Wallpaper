@@ -246,6 +246,7 @@ export const defaultSettingData = {
     'toggleTabbar',
     'backtop'
   ],
+  h5NumberIndicatorPosition: 'top',
   h5Vibration: true,
   h5WeekScreen: true,
   powerSaveMode: true
@@ -388,6 +389,11 @@ export const h5FloatingButtonsOptions = [
   { label: '显示尺寸', value: 'displaySize', locale: 'h5FloatingButtonsOptions.displaySize' },
   { label: '切换标签栏', value: 'toggleTabbar', locale: 'h5FloatingButtonsOptions.toggleTabbar' },
   { label: '返回顶部', value: 'backtop', locale: 'h5FloatingButtonsOptions.backtop' }
+]
+
+export const h5NumberIndicatorPositionOptions = [
+  { label: '顶部', value: 'top', locale: 'h5NumberIndicatorPositionOptions.top' },
+  { label: '底部', value: 'bottom', locale: 'h5NumberIndicatorPositionOptions.bottom' }
 ]
 
 export const allowedImageExtList = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']

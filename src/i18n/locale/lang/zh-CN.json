@@ -165,6 +165,7 @@
           "label": "启用悬浮按钮",
           "placeholder": "请选择悬浮按钮"
         },
+        "h5NumberIndicatorPosition": "指示器位置",
         "h5Vibration": "震动反馈",
         "h5WeekScreen": "屏幕常亮",
         "powerSaveMode": "省电模式"
@@ -381,6 +382,10 @@
     "displaySize": "显示尺寸",
     "toggleTabbar": "切换标签栏",
     "backtop": "返回顶部"
+  },
+  "h5NumberIndicatorPositionOptions": {
+    "top": "顶部",
+    "bottom": "底部"
   },
   "dynamicPerformanceModeOptions": {
     "high": "高",
@@ -656,6 +661,10 @@
           "h5EnabledFloatingButtons": {
             "label": "启用悬浮按钮",
             "placeholder": ""
+          },
+          "h5NumberIndicatorPosition": {
+            "label": "指示器位置",
+            "placeholder": "请选择指示器位置"
           },
           "h5Vibration": "震动反馈",
           "h5WeekScreen": "屏幕常亮"

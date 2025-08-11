@@ -8,7 +8,8 @@ import {
   sortTypeOptions,
   imageDisplaySizeOptions,
   h5FloatingButtonPositionOptions,
-  h5FloatingButtonsOptions
+  h5FloatingButtonsOptions,
+  h5NumberIndicatorPositionOptions
 } from '@common/publicData.js'
 import { localeOptions } from '@i18n/locale/index.js'
 import { appInfo } from '@common/config.js'
@@ -36,7 +37,8 @@ const showPickers = reactive({
   h5SortType: false,
   h5ImageDisplaySize: false,
   h5FloatingButtonPosition: false,
-  h5EnabledFloatingButtons: false
+  h5EnabledFloatingButtons: false,
+  h5NumberIndicatorPosition: false
 })
 
 // 选中的浮动按钮
@@ -82,7 +84,8 @@ const pickerColumns = computed(() => {
     h5SortType: optionsToColumns(sortTypeOptions),
     h5ImageDisplaySize: optionsToColumns(imageDisplaySizeOptions),
     h5FloatingButtonPosition: optionsToColumns(h5FloatingButtonPositionOptions),
-    h5EnabledFloatingButtons: optionsToColumns(h5FloatingButtonsOptions)
+    h5EnabledFloatingButtons: optionsToColumns(h5FloatingButtonsOptions),
+    h5NumberIndicatorPosition: addEmptyOption(optionsToColumns(h5NumberIndicatorPositionOptions))
   }
 })
 
@@ -96,7 +99,8 @@ const fieldsData = computed(() => {
     h5SortField: '',
     h5SortType: '',
     h5ImageDisplaySize: '',
-    h5FloatingButtonPosition: ''
+    h5FloatingButtonPosition: '',
+    h5NumberIndicatorPosition: ''
   }
   Object.keys(ret).forEach((key) => {
     const target = pickerColumns.value[key].find((item) => item.value === settingDataForm[key])
@@ -149,6 +153,7 @@ const onConfirmPicker = (field, { selectedValues }) => {
     case 'h5SortType':
     case 'h5ImageDisplaySize':
     case 'h5FloatingButtonPosition':
+    case 'h5NumberIndicatorPosition':
       settingDataForm[field] = selectedValues[0]
       break
     case 'h5EnabledFloatingButtons':
@@ -532,6 +537,28 @@ onMounted(() => {
               </van-checkbox>
             </template>
           </van-picker>
+        </van-popup>
+
+        <van-field
+          v-model="fieldsData.h5NumberIndicatorPosition"
+          is-link
+          readonly
+          name="h5NumberIndicatorPosition"
+          :label="t('h5.pages.setting.form.h5NumberIndicatorPosition.label')"
+          :placeholder="t('h5.pages.setting.form.h5NumberIndicatorPosition.placeholder')"
+          @click="onShowPicker('h5NumberIndicatorPosition')"
+        />
+        <van-popup
+          v-model:show="showPickers.h5NumberIndicatorPosition"
+          destroy-on-close
+          position="bottom"
+        >
+          <van-picker
+            :columns="pickerColumns.h5NumberIndicatorPosition"
+            :model-value="[settingDataForm.h5NumberIndicatorPosition]"
+            @confirm="(...args) => onConfirmPicker('h5NumberIndicatorPosition', ...args)"
+            @cancel="(...args) => onCancelPicker('h5NumberIndicatorPosition', ...args)"
+          />
         </van-popup>
 
         <van-cell :title="t('h5.pages.setting.form.h5Vibration')">

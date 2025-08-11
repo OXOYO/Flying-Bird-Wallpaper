@@ -111,6 +111,20 @@ const currentDisplayIndex = computed(() => {
   return autoSwitch.currentIndex + 1
 })
 
+// 指示器样式
+const numberIndicatorStyle = computed(() => {
+  const position = settingData.value.h5NumberIndicatorPosition
+  const ret = {
+    display: autoSwitch.total && position ? 'inline-block' : 'none'
+  }
+
+  if (position) {
+    ret[position] = '12px'
+  }
+
+  return ret
+})
+
 // 防抖的显示索引，避免指示器频繁变化
 const debouncedDisplayIndex = ref(1)
 watch(
@@ -1321,7 +1335,7 @@ const handlePageShow = () => {}
       </virtualList>
     </div>
     <!-- 指示器 -->
-    <div v-if="autoSwitch.total" class="number-indicator">
+    <div class="number-indicator" :style="numberIndicatorStyle">
       {{ debouncedDisplayIndex }} / {{ autoSwitch.total }}
     </div>
   </div>
@@ -1654,7 +1668,6 @@ const handlePageShow = () => {}
   display: inline-block;
   position: absolute;
   left: 50%;
-  top: 12px;
   transform: translateX(-50%);
   background: rgba(0, 0, 0, 0.5);
   color: #fff;
