@@ -187,26 +187,23 @@ const handleScroll = (event) => {
   const target = event.target
   const newScrollTop = target.scrollTop
   const scrollTop = virtualListRef.value.scrollTop
-  // 减少阈值，让滚动事件更敏感
-  if (Math.abs(newScrollTop - scrollTop) > 1) {
-    // 检查是否需要加载更多
-    const { end } = visibleRange.value
-    if (end >= props.items.length - 2 && !props.loading && !props.finished) {
-      emit('load-more')
-    }
-
-    // 触发滚动事件，传递更精确的数据
-    emit('scroll', {
-      scrollTop: newScrollTop,
-      scrollHeight: target.scrollHeight,
-      clientHeight: target.clientHeight,
-      // 添加当前可见的索引范围，帮助父组件更准确地计算当前索引
-      visibleStart: visibleRange.value.visibleStart,
-      visibleEnd: visibleRange.value.visibleEnd,
-      // 添加滚动性能数据
-      velocity: scrollPerformance.velocity
-    })
+  // 检查是否需要加载更多
+  const { end } = visibleRange.value
+  if (end >= props.items.length - 3 && !props.loading && !props.finished) {
+    emit('load-more')
   }
+
+  // 触发滚动事件，传递更精确的数据
+  emit('scroll', {
+    scrollTop: newScrollTop,
+    scrollHeight: target.scrollHeight,
+    clientHeight: target.clientHeight,
+    // 添加当前可见的索引范围，帮助父组件更准确地计算当前索引
+    visibleStart: visibleRange.value.visibleStart,
+    visibleEnd: visibleRange.value.visibleEnd,
+    // 添加滚动性能数据
+    velocity: scrollPerformance.velocity
+  })
 }
 
 // 触摸开始

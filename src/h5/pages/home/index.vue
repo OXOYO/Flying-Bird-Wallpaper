@@ -119,7 +119,7 @@ const numberIndicatorStyle = computed(() => {
   }
 
   if (position) {
-    ret[position] = '12px'
+    ret[position] = position === 'bottom' ? 'calc(var(--fbw-tabbar-height) + 12px)' : '12px'
   }
 
   return ret
@@ -285,6 +285,10 @@ const onLoad = async () => {
   flags.loading = false
 }
 
+const onLoadMore = () => {
+  onLoad()
+}
+
 // 刷新数据
 const onRefresh = async () => {
   flags.refreshing = true
@@ -428,17 +432,10 @@ const onTouchEnd = (event) => {
       // 向下滑动，显示上一张
       const targetIndex = autoSwitch.currentIndex - 1
       virtualListRef.value?.scrollTo({ index: targetIndex, animated: true })
-      // 不直接更新 currentIndex，让滚动事件处理
     } else if (deltaY < 0 && autoSwitch.currentIndex < autoSwitch.imageList.length - 1) {
       // 向上滑动，显示下一张
       const targetIndex = autoSwitch.currentIndex + 1
       virtualListRef.value?.scrollTo({ index: targetIndex, animated: true })
-      // 不直接更新 currentIndex，让滚动事件处理
-
-      // 如果滑动到倒数第3张，且还有更多数据，则提前加载更多
-      if (targetIndex >= autoSwitch.imageList.length - 3 && !flags.finished && !flags.loading) {
-        onLoad()
-      }
     }
   }
 
@@ -1314,7 +1311,7 @@ const handlePageShow = () => {}
         :loading="flags.loading"
         :finished="flags.finished"
         @scroll="onVirtualListScroll"
-        @load-more="onLoad"
+        @load-more="onLoadMore"
       >
         <template #default="{ item, index }">
           <div
@@ -1666,7 +1663,7 @@ const handlePageShow = () => {}
 
 .number-indicator {
   display: inline-block;
-  position: absolute;
+  position: fixed;
   left: 50%;
   transform: translateX(-50%);
   background: rgba(0, 0, 0, 0.5);
