@@ -10,6 +10,7 @@ export default class ThreeBase extends EffectBase {
     this.camera = null
     this.renderer = null
     this.initThree()
+    this.initScene()
   }
 
   initThree() {
@@ -50,6 +51,98 @@ export default class ThreeBase extends EffectBase {
       }
     } catch (error) {
       console.error('ThreeBase: Error during initialization:', error)
+    }
+  }
+
+  initScene() {
+    try {
+      // 清空场景
+      while (this.scene.children.length > 0) {
+        this.scene.remove(this.scene.children[0])
+      }
+
+      // 添加光照
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.4)
+      this.scene.add(ambientLight)
+
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0)
+      directionalLight.position.set(10, 10, 5)
+      this.scene.add(directionalLight)
+
+      // === 创建立方体 ===
+      // 根据 bodySize 动态创建方体大小
+      const boxWidth = this.bodySize.width
+      const boxHeight = this.bodySize.height
+      const boxDepth = Math.max(boxWidth, boxHeight)
+
+      // 创建立方体几何体
+      const boxGeometry = new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth)
+
+      // 为立方体的每个面创建不同的材质，前面保持透明
+      const boxMaterials = [
+        new THREE.MeshPhongMaterial({
+          color: 0x6895ed,
+          transparent: true,
+          opacity: 0.9,
+          side: THREE.BackSide
+        }), // 右面
+        new THREE.MeshPhongMaterial({
+          color: 0x6895ed,
+          transparent: true,
+          opacity: 0.9,
+          side: THREE.BackSide
+        }), // 左面
+        new THREE.MeshPhongMaterial({
+          color: 0x6895ed,
+          transparent: true,
+          opacity: 0.7,
+          side: THREE.BackSide
+        }), // 上面
+        new THREE.MeshPhongMaterial({
+          color: 0x6895ed,
+          transparent: true,
+          opacity: 0.7,
+          side: THREE.BackSide
+        }), // 下面
+        new THREE.MeshPhongMaterial({
+          color: 0xffffff,
+          transparent: true,
+          opacity: 0.0,
+          side: THREE.DoubleSide,
+          depthWrite: false // 禁用深度写入
+        }), // 前面 - 完全透明
+        new THREE.MeshPhongMaterial({
+          color: 0x6895ed,
+          transparent: true,
+          opacity: 0.9,
+          side: THREE.BackSide
+        }) // 后面
+      ]
+
+      // 添加实体网格
+      const boxMesh = new THREE.Mesh(boxGeometry, boxMaterials)
+      const tank = new THREE.Object3D()
+      tank.add(boxMesh)
+
+      // 创建边框线
+      const boxEdges = new THREE.EdgesGeometry(boxGeometry)
+      const boxLines = new THREE.LineSegments(
+        boxEdges,
+        new THREE.LineBasicMaterial({ color: 0x000000 })
+      )
+      tank.add(boxLines)
+      this.scene.add(tank)
+
+      // === 调整相机位置 ===
+      // 设置相机位置，使其能够完整显示立方体
+      const cameraAspect = this.camera.aspect
+      const maxDimension = Math.max(boxWidth, boxHeight, boxDepth)
+      const cameraDistance = maxDimension / (cameraAspect * 1.6) / Math.tan(Math.PI / 3)
+      this.camera.position.set(0, 0, cameraDistance)
+      this.camera.lookAt(0, 0, 0)
+      console.log('ThreeBase: scene initialized')
+    } catch (error) {
+      console.error('ThreeBase: Error initializing scene:', error)
     }
   }
 
