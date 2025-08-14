@@ -7,7 +7,7 @@ export class ThreeBar extends ThreeBase {
     super(container, config)
     this.config.colors =
       Array.isArray(this.config.colors) && this.config.colors.length > 0
-        ? this.config.colors
+        ? [...this.config.colors, ...colorList]
         : colorList
     this.bars = []
     this.densityOptions = {
@@ -124,21 +124,30 @@ export class ThreeBar extends ThreeBase {
         }
       `,
       fragmentShader: `
-        uniform vec3 colors[5];
-        uniform int colorCount;
+        uniform vec3 colors[20];  // 最多支持20种颜色
+        uniform int colorCount;   // 实际颜色数量
         varying vec3 vPosition;
 
         vec3 interpolateColors(float t) {
+          // 确保t在[0,1]范围内
+          t = clamp(t, 0.0, 1.0);
+          
+          // 处理空数组和单颜色情况
+          if (colorCount <= 0) return vec3(0.0);
+          if (colorCount == 1) return colors[0];
+          
           float scaledT = t * float(colorCount - 1);
           int index = int(floor(scaledT));
+          index = clamp(index, 0, colorCount - 1);
           int nextIndex = min(index + 1, colorCount - 1);
-          float mixValue = fract(scaledT);
+          
+          // 精确处理t=1.0的边界情况
+          float mixValue = (index == colorCount - 1) ? 1.0 : fract(scaledT);
           return mix(colors[index], colors[nextIndex], mixValue);
         }
 
         void main() {
-          // 根据Y坐标计算渐变
-          float t = (vPosition.y + 1.0) / 2.0; // 将Y坐标从[-1,1]映射到[0,1]
+          float t = (vPosition.y + 1.0) / 2.0;
           gl_FragColor = vec4(interpolateColors(t), 0.9);
         }
       `,

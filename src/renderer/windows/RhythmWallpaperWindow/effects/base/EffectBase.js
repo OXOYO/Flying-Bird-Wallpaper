@@ -45,7 +45,7 @@ export default class EffectBase {
         boundHeight,
         width: bodyWidth,
         height: bodyHeight,
-        depth: Math.max(boundWidth, boundHeight),
+        depth: Math.min(bodyWidth, bodyHeight),
         x,
         y
       }
