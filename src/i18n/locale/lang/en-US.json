@@ -84,6 +84,8 @@
           "label": "Web URL",
           "placeholder": "Please enter URL"
         },
+        "autoRefreshWebWallpaper": "Timed refresh",
+        "refreshWebWallpaperIntervalTime": "Refresh interval",
         "colorWallpaperVal": {
           "label": "Color",
           "placeholder": "Please select a color"

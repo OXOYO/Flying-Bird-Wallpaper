@@ -1060,6 +1060,44 @@ onBeforeUnmount(() => {
                 <IconifyIcon icon="streamline:screensaver-monitor-wallpaper" />
               </el-button>
             </el-form-item>
+            <el-form-item
+              :label="t('pages.Setting.settingDataForm.refreshWebWallpaperIntervalTime')"
+            >
+              <el-form-item prop="refreshWebWallpaperIntervalTime">
+                <el-input-number
+                  v-model="settingDataForm.refreshWebWallpaperIntervalTime"
+                  :min="minTimes.refreshWebWallpaperIntervalUnit"
+                  :max="999"
+                  controls-position="right"
+                  style="width: 140px"
+                  @change="onSettingDataFormChange"
+                />
+              </el-form-item>
+              <el-form-item prop="refreshWebWallpaperIntervalUnit">
+                <el-select
+                  v-model="settingDataForm.refreshWebWallpaperIntervalUnit"
+                  style="width: 140px; margin-left: 10px"
+                  @change="(val) => onTimeUnitChange('refreshWebWallpaperIntervalUnit', val)"
+                >
+                  <el-option
+                    v-for="item in intervalUnits.refreshWebWallpaperIntervalUnit"
+                    :key="item.value"
+                    :label="t(item.locale)"
+                    :value="item.value"
+                  />
+                </el-select>
+              </el-form-item>
+            </el-form-item>
+            <el-form-item
+              :label="t('pages.Setting.settingDataForm.autoRefreshWebWallpaper')"
+              prop="autoRefreshWebWallpaper"
+            >
+              <el-checkbox
+                v-model="settingDataForm.autoRefreshWebWallpaper"
+                :disabled="!settingDataForm.webWallpaperUrl"
+                @change="onSettingDataFormChange"
+              />
+            </el-form-item>
 
             <div id="divider-colorWallpaper" class="divider-sub">
               <span style="vertical-align: middle">{{

@@ -150,6 +150,9 @@ export const defaultSettingData = {
   allowedFileExt: ['.jpg', '.png', '.jpeg'],
   localResourceFolders: [],
   webWallpaperUrl: '',
+  autoRefreshWebWallpaper: false,
+  refreshWebWallpaperIntervalTime: 1,
+  refreshWebWallpaperIntervalUnit: 'h',
   colorWallpaperVal: '#999999',
   dynamicAutoPlayOnStartup: false,
   dynamicMuteAudio: true,
@@ -322,6 +325,12 @@ export const intervalUnits = {
     { label: '天', value: 'd', min: 1, locale: 'intervalUnits.d' }
   ],
   clearDownloadedExpiredUnit: [{ label: '天', value: 'd', min: 1, locale: 'intervalUnits.d' }],
+  refreshWebWallpaperIntervalUnit: [
+    { label: '秒', value: 's', min: 1, locale: 'intervalUnits.s' },
+    { label: '分', value: 'm', min: 1, locale: 'intervalUnits.m' },
+    { label: '时', value: 'h', min: 1, locale: 'intervalUnits.h' },
+    { label: '天', value: 'd', min: 1, locale: 'intervalUnits.d' }
+  ],
   viewImageIntervalUnit: [{ label: '秒', value: 's', min: 2, locale: 'intervalUnits.s' }],
   h5SwitchIntervalUnit: [{ label: '秒', value: 's', min: 2, locale: 'intervalUnits.s' }]
 }
@@ -332,6 +341,7 @@ export const unitToValField = {
   refreshDirectoryIntervalUnit: 'refreshDirectoryIntervalTime',
   downloadIntervalUnit: 'downloadIntervalTime',
   clearDownloadedExpiredUnit: 'clearDownloadedExpiredTime',
+  refreshWebWallpaperIntervalUnit: 'refreshWebWallpaperIntervalTime',
   viewImageIntervalUnit: 'viewImageIntervalTime',
   h5SwitchIntervalUnit: 'h5SwitchIntervalTime'
 }

@@ -84,6 +84,8 @@
           "label": "网页地址",
           "placeholder": "请输入网页地址"
         },
+        "autoRefreshWebWallpaper": "定时刷新",
+        "refreshWebWallpaperIntervalTime": "刷新间隔",
         "colorWallpaperVal": {
           "label": "颜色",
           "placeholder": "请选择颜色"
