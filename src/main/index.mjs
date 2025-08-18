@@ -564,10 +564,10 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
 
       ipcMain.handle('main:clearCache', () => {
         cache.clear()
-        global.FBW.sendMsg(global.FBW.mainWindow.win, {
-          type: 'success',
+        return {
+          success: true,
           message: t('messages.clearCacheSuccess')
-        })
+        }
       })
 
       ipcMain.handle('main:selectVideoFile', async () => {

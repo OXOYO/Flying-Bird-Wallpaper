@@ -227,7 +227,7 @@ const api = {
     ipcRenderer.invoke('main:setDynamicWallpaperContrast', value),
 
   // 数据库操作
-  doClearDB: (...args) => ipcRenderer.invoke('main:doClearDB', ...args),
+  clearDB: (...args) => ipcRenderer.invoke('main:clearDB', ...args),
   clearCache: (...args) => ipcRenderer.invoke('main:clearCache', ...args),
   clearDownloadedAll: (...args) => ipcRenderer.invoke('main:clearDownloadedAll', ...args),
   clearDownloadedExpired: (...args) => ipcRenderer.invoke('main:clearDownloadedExpired', ...args),

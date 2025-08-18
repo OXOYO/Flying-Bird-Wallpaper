@@ -2,7 +2,7 @@ import path from 'node:path'
 import { screen, app, BrowserWindow, ipcMain } from 'electron'
 import { getWindowURL, preventContextMenu, isDev, isMac, isWin } from '../utils/utils.mjs'
 import { setWindowsDynamicWallpaper } from '../utils/dynamicWallpaper.mjs'
-
+import { t } from '../../i18n/server'
 export default class RhythmWallpaperWindow {
   // 单例实例
   static _instance = null
@@ -42,12 +42,12 @@ export default class RhythmWallpaperWindow {
       }
     }
 
-    ipcMain.handle('main:openRhythmWallpaperWindow', (event) => {
-      this.create()
+    ipcMain.handle('main:openRhythmWallpaperWindow', async (event) => {
+      return await this.openRhythmWallpaperWindow()
     })
 
     ipcMain.handle('main:closeRhythmWallpaperWindow', (event) => {
-      this.close()
+      return this.closeRhythmWallpaperWindow()
     })
 
     // 保存实例
@@ -128,5 +128,23 @@ export default class RhythmWallpaperWindow {
 
   destroy() {
     this.win?.destroy()
+  }
+
+  async openRhythmWallpaperWindow() {
+    try {
+      await this.create()
+      return { success: true, message: t('messages.operationSuccess') }
+    } catch (err) {
+      global.logger.error(`打开律动壁纸窗口失败: ${err}`)
+      return { success: false, message: t('messages.operationFail') }
+    }
+  }
+
+  closeRhythmWallpaperWindow() {
+    this.close()
+    return {
+      success: true,
+      message: t('messages.operationSuccess')
+    }
   }
 }

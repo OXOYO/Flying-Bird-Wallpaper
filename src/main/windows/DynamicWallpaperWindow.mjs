@@ -47,7 +47,7 @@ export default class DynamicWallpaperWindow {
     }
 
     ipcMain.handle('main:setDynamicWallpaper', async (event, videoPath) => {
-      return this.setDynamicWallpaper(videoPath)
+      return await this.setDynamicWallpaper(videoPath)
     })
 
     ipcMain.handle('main:setDynamicWallpaperMute', (event, mute) => {
@@ -133,9 +133,10 @@ export default class DynamicWallpaperWindow {
           // 设置为桌面级别
           if (isWin()) {
             // 同时设置纯色背景壁纸图片，提高视角体验
-            // const dynamicBackgroundColor =
-            //   global.FBW.store?.settingData?.dynamicBackgroundColor || '#FFFFFF'
-            // await global.FBW.store?.wallpaperManager.setColorWallpaper(dynamicBackgroundColor)
+            const dynamicBackgroundColor = global.FBW.store?.settingData?.dynamicBackgroundColor
+            if (dynamicBackgroundColor) {
+              await global.FBW.store?.wallpaperManager.setColorWallpaper(dynamicBackgroundColor)
+            }
             setWindowsDynamicWallpaper(this.win.getNativeWindowHandle().readInt32LE(0))
           }
           this.win.show()

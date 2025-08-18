@@ -88,6 +88,10 @@
           "label": "颜色",
           "placeholder": "请选择颜色"
         },
+        "dynamicLastVideoPath": {
+          "label": "动态壁纸文件",
+          "placeholder": "请选择动态壁纸文件"
+        },
         "dynamicAutoPlayOnStartup": "启动时自动播放",
         "dynamicMuteAudio": "静音播放",
         "dynamicBackgroundColor": "背景色",
@@ -185,6 +189,9 @@
       }
     },
     "Utils": {
+      "dataUtils": "数据工具",
+      "wallpaperUtils": "壁纸工具",
+      "fileUtils": "文件工具",
       "refreshDirectory": "刷新本地资源目录数据",
       "clearCurrentResourceDB": "清空当前资源数据",
       "clearWordsDB": "清空词库数据",
@@ -199,6 +206,7 @@
       "execute": "执行",
       "openDatabaseDir": "打开操作数据库目录",
       "openLogsDir": "打开操作日志目录",
+      "openDownloadDir": "打开下载目录",
       "openPluginsDir": "打开自定义插件目录",
       "startH5Server": "启动H5服务",
       "stopH5Server": "停止H5服务",

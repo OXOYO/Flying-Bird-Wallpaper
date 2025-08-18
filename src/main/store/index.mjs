@@ -637,24 +637,13 @@ export default class Store {
     })
 
     // 清空当前资源DB
-    ipcMain.handle('main:doClearDB', async (event, tableName, resourceName) => {
-      const res = await this.dbManager.clearDB(tableName, resourceName)
-      global.FBW.sendMsg(global.FBW.mainWindow.win, {
-        type: res.success ? 'success' : 'error',
-        message: res.message
-      })
-      return res
+    ipcMain.handle('main:clearDB', async (event, tableName, resourceName) => {
+      return await this.dbManager.clearDB(tableName, resourceName)
     })
 
     // 刷新当前资源目录
     ipcMain.handle('main:refreshDirectory', async () => {
-      const res = this.fileManager.refreshDirectory(this.locks, true)
-      if (res && !res.success) {
-        global.FBW.sendMsg(global.FBW.mainWindow.win, {
-          type: 'error',
-          message: res.message
-        })
-      }
+      return this.fileManager.refreshDirectory(this.locks, true)
     })
 
     // 查找词库
@@ -672,23 +661,11 @@ export default class Store {
     })
 
     ipcMain.handle('main:clearDownloadedAll', async () => {
-      const res = await this.wallpaperManager.clearDownloadedAll()
-      if (res) {
-        global.FBW.sendMsg(global.FBW.mainWindow.win, {
-          type: res.success ? 'success' : 'error',
-          message: res.message
-        })
-      }
+      return await this.wallpaperManager.clearDownloadedAll()
     })
 
     ipcMain.handle('main:clearDownloadedExpired', async () => {
-      const res = await this.wallpaperManager.clearDownloadedExpired()
-      if (res) {
-        global.FBW.sendMsg(global.FBW.mainWindow.win, {
-          type: res.success ? 'success' : 'error',
-          message: res.message
-        })
-      }
+      return await this.wallpaperManager.clearDownloadedExpired()
     })
   }
 

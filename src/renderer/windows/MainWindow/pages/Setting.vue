@@ -71,7 +71,9 @@ const flags = reactive({
   saving: false,
   selectFolder: false,
   settingWebWallpaper: false,
-  settingColorWallpaper: false
+  settingColorWallpaper: false,
+  settingDynamicWallpaper: false,
+  settingRhythmWallpaper: false
 })
 
 // 可以启用/停用的菜单列表
@@ -258,6 +260,25 @@ const onSetColorWallpaper = async () => {
   })
 }
 
+const onSelectDynamicVideo = async () => {
+  const selectFileRes = await window.FBW.selectFile('video')
+  const videoPath = selectFileRes && !selectFileRes.canceled ? selectFileRes.filePaths[0] : null
+  if (videoPath) {
+    settingDataForm.dynamicLastVideoPath = videoPath
+    onSettingDataFormChange()
+  }
+}
+
+const onSetDynamicWallpaper = async () => {
+  flags.settingDynamicWallpaper = true
+  const res = await window.FBW.setDynamicWallpaper(settingData.value.dynamicLastVideoPath)
+  flags.settingDynamicWallpaper = false
+  ElMessage({
+    type: res.success ? 'success' : 'error',
+    message: res.message
+  })
+}
+
 const onDynamicSettingChange = (field, value) => {
   onSettingDataFormChange()
 
@@ -281,6 +302,16 @@ const onDynamicSettingChange = (field, value) => {
       window.FBW.setDynamicWallpaperScaleMode(value)
       break
   }
+}
+
+const onSetRhythmWallpaper = async () => {
+  flags.settingRhythmWallpaper = true
+  const res = await window.FBW.openRhythmWallpaperWindow()
+  flags.settingRhythmWallpaper = false
+  ElMessage({
+    type: res.success ? 'success' : 'error',
+    message: res.message
+  })
 }
 
 const onRhythmColorsChange = (index, val) => {
@@ -1019,17 +1050,15 @@ onBeforeUnmount(() => {
                 :placeholder="t('pages.Setting.settingDataForm.webWallpaperUrl.placeholder')"
                 style="max-width: 450px"
                 @change="onSettingDataFormChange"
+              />
+              <el-button
+                :disabled="!settingDataForm.webWallpaperUrl"
+                :loading="flags.settingWebWallpaper"
+                @click="onSetWebWallpaper"
+                style="margin-left: 10px"
               >
-                <template #append>
-                  <el-button
-                    :disabled="!settingDataForm.webWallpaperUrl"
-                    :loading="flags.settingWebWallpaper"
-                    @click="onSetWebWallpaper"
-                  >
-                    <IconifyIcon icon="ep:check" />
-                  </el-button>
-                </template>
-              </el-input>
+                <IconifyIcon icon="streamline:screensaver-monitor-wallpaper" />
+              </el-button>
             </el-form-item>
 
             <div id="divider-colorWallpaper" class="divider-sub">
@@ -1057,7 +1086,7 @@ onBeforeUnmount(() => {
                 @click="onSetColorWallpaper"
                 style="margin-left: 10px"
               >
-                <IconifyIcon icon="ep:check" />
+                <IconifyIcon icon="streamline:screensaver-monitor-wallpaper" />
               </el-button>
             </el-form-item>
 
@@ -1070,6 +1099,27 @@ onBeforeUnmount(() => {
                 style="vertical-align: middle"
               />
             </div>
+            <el-form-item
+              :label="t('pages.Setting.settingDataForm.dynamicLastVideoPath.label')"
+              prop="dynamicLastVideoPath"
+            >
+              <el-input
+                v-model="settingDataForm.dynamicLastVideoPath"
+                clearable
+                :placeholder="t('pages.Setting.settingDataForm.dynamicLastVideoPath.placeholder')"
+                style="max-width: 450px"
+                @click="onSelectDynamicVideo"
+                @change="onSettingDataFormChange"
+              />
+              <el-button
+                :disabled="!settingDataForm.dynamicLastVideoPath"
+                :loading="flags.settingDynamicWallpaper"
+                @click="onSetDynamicWallpaper"
+                style="margin-left: 10px"
+              >
+                <IconifyIcon icon="streamline:screensaver-monitor-wallpaper" />
+              </el-button>
+            </el-form-item>
             <el-form-item
               :label="t('pages.Setting.settingDataForm.dynamicAutoPlayOnStartup')"
               prop="dynamicAutoPlayOnStartup"
@@ -1206,6 +1256,13 @@ onBeforeUnmount(() => {
                   :value="item.value"
                 />
               </el-select>
+              <el-button
+                :loading="flags.settingRhythmWallpaper"
+                @click="onSetRhythmWallpaper"
+                style="margin-left: 10px"
+              >
+                <IconifyIcon icon="streamline:screensaver-monitor-wallpaper" />
+              </el-button>
             </el-form-item>
             <el-form-item
               :label="t('pages.Setting.settingDataForm.rhythmWidthRatio')"

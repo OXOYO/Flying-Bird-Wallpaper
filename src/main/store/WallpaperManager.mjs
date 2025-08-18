@@ -596,10 +596,6 @@ export default class WallpaperManager {
   closeDynamicWallpaper() {
     try {
       global.FBW.dynamicWallpaperWindow?.closeDynamicWallpaper()
-      // 清理“最后视频地址”
-      global.FBW.store?.updateSettingData({
-        dynamicLastVideoPath: ''
-      })
       return {
         success: true,
         message: t('messages.operationSuccess')
