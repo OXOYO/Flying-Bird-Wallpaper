@@ -232,7 +232,7 @@ const onExec = (name) => {
       })
       .catch(() => {
         ElMessage({
-          type: 'info',
+          type: 'error',
           message: t('messages.operationFail')
         })
       })

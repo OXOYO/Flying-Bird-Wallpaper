@@ -102,6 +102,8 @@ export default class SuspensionBall {
 
     this.win.once('ready-to-show', () => {
       this.win.show()
+      // 发送公共信息
+      global.FBW.sendCommonData(this.win)
     })
 
     preventContextMenu(this.win)

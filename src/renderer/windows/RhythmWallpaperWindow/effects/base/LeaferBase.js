@@ -22,13 +22,11 @@ export default class LeaferBase extends EffectBase {
         console.error('LeaferBase: Leafer already initialized')
         return
       }
-      console.log('LeaferBase: this.bodySize', this.bodySize)
       this.leafer = new Leafer({
         view: this.container,
         width: this.bodySize.boundWidth,
         height: this.bodySize.boundHeight
       })
-      console.log('LeaferBase: Leafer initialized successfully:', this.leafer)
     } catch (error) {
       console.error('LeaferBase: Error initializing leafer:', error)
     }

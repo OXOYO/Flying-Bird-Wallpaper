@@ -601,7 +601,7 @@ export default class WallpaperManager {
         dynamicLastVideoPath: ''
       })
       return {
-        success: false,
+        success: true,
         message: t('messages.operationSuccess')
       }
     } catch (err) {

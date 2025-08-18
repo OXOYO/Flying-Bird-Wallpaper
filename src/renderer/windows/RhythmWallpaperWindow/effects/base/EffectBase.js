@@ -26,7 +26,6 @@ export default class EffectBase {
       }
 
       const rect = this.container.getBoundingClientRect()
-      console.log('EffectBase: Container rect:', rect)
       const boundWidth = rect.width || 0
       const boundHeight = rect.height || 0
 
@@ -50,7 +49,6 @@ export default class EffectBase {
         y
       }
 
-      console.log('EffectBase: Body size calculated:', ret)
       return ret
     } catch (error) {
       console.error('EffectBase: Error getting body size:', error)
@@ -106,7 +104,6 @@ export default class EffectBase {
   getReducedValues(list, count = 8, type = 'max') {
     try {
       if (!list || list.length === 0) {
-        console.log('getReducedValues fill 0')
         return new Array(count).fill(0)
       }
 

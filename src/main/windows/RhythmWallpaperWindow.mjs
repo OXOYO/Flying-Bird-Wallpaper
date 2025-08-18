@@ -56,6 +56,8 @@ export default class RhythmWallpaperWindow {
 
   async create() {
     return await new Promise((resolve) => {
+      // 关闭动态壁纸
+      global.FBW.dynamicWallpaperWindow.close()
       if (this.win) {
         this.win.show()
         resolve()
@@ -94,13 +96,11 @@ export default class RhythmWallpaperWindow {
         this.win.once('ready-to-show', async () => {
           // 设置为桌面级别
           if (isWin()) {
-            // 同时设置纯色背景壁纸图片，提高视角体验
-            const dynamicBackgroundColor =
-              global.FBW.store?.settingData?.dynamicBackgroundColor || '#FFFFFF'
-            await global.FBW.store?.wallpaperManager.setColorWallpaper(dynamicBackgroundColor)
             setWindowsDynamicWallpaper(this.win.getNativeWindowHandle().readInt32LE(0))
           }
           this.win.show()
+          // 发送公共信息
+          global.FBW.sendCommonData(this.win)
           resolve()
         })
 

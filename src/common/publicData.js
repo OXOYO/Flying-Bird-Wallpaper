@@ -496,17 +496,17 @@ export const rhythmEffectOptions = [
   { label: '太极', locale: 'rhythmEffectOptions.LeaferTaiji', value: 'LeaferTaiji' },
   { label: '木鱼', locale: 'rhythmEffectOptions.LeaferMuyu', value: 'LeaferMuyu' },
   { label: '烟花', locale: 'rhythmEffectOptions.LeaferFirework', value: 'LeaferFirework' },
-  { label: '雪花', locale: 'rhythmEffectOptions.LeaferSnowflake', value: 'LeaferSnowflake' },
+  { label: '雪花', locale: 'rhythmEffectOptions.LeaferSnowflake', value: 'LeaferSnowflake' }
   // Three.js 效果
-  { label: '3D柱状', locale: 'rhythmEffectOptions.ThreeBar', value: 'ThreeBar' },
-  { label: '3D波形', locale: 'rhythmEffectOptions.ThreeWave', value: 'ThreeWave' },
-  { label: '3D粒子', locale: 'rhythmEffectOptions.ThreeParticle', value: 'ThreeParticle' },
-  { label: '3D球体', locale: 'rhythmEffectOptions.ThreeSphere', value: 'ThreeSphere' },
-  {
-    label: '3D音频可视化',
-    locale: 'rhythmEffectOptions.ThreeAudioVisualizer',
-    value: 'ThreeAudioVisualizer'
-  }
+  // { label: '3D柱状', locale: 'rhythmEffectOptions.ThreeBar', value: 'ThreeBar' },
+  // { label: '3D波形', locale: 'rhythmEffectOptions.ThreeWave', value: 'ThreeWave' },
+  // { label: '3D粒子', locale: 'rhythmEffectOptions.ThreeParticle', value: 'ThreeParticle' },
+  // { label: '3D球体', locale: 'rhythmEffectOptions.ThreeSphere', value: 'ThreeSphere' },
+  // {
+  //   label: '3D音频可视化',
+  //   locale: 'rhythmEffectOptions.ThreeAudioVisualizer',
+  //   value: 'ThreeAudioVisualizer'
+  // }
 ]
 
 // 律动动效

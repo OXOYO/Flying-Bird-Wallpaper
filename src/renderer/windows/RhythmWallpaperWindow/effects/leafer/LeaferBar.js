@@ -15,9 +15,6 @@ export class LeaferBar extends LeaferBase {
   }
 
   init() {
-    console.log('LeaferBar: Starting init, barCount:', this.barCount)
-    console.log('LeaferBar: Leafer instance:', this.leafer)
-
     if (!this.leafer) {
       console.error('LeaferBar: Leafer not initialized')
       return
@@ -34,7 +31,6 @@ export class LeaferBar extends LeaferBase {
       this.leafer.add(rect)
       this.bars.push(rect)
     }
-    console.log('bar inited')
   }
 
   render(dataArray) {

@@ -347,7 +347,7 @@ const onPrivacyPasswordFormConfirm = (formEl) => {
         formEl.resetFields()
       } else {
         options.type = 'error'
-        options.message = res.message || t('messages.operationSuccess')
+        options.message = res.message || t('messages.operationFail')
       }
       ElMessage(options)
     } else {

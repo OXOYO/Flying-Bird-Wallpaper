@@ -92,6 +92,8 @@ export default class DynamicWallpaperWindow {
 
   async create() {
     return await new Promise((resolve) => {
+      // 关闭律动壁纸
+      global.FBW.rhythmWallpaperWindow.close()
       if (this.win) {
         this.win.show()
         resolve()
@@ -131,12 +133,14 @@ export default class DynamicWallpaperWindow {
           // 设置为桌面级别
           if (isWin()) {
             // 同时设置纯色背景壁纸图片，提高视角体验
-            const dynamicBackgroundColor =
-              global.FBW.store?.settingData?.dynamicBackgroundColor || '#FFFFFF'
-            await global.FBW.store?.wallpaperManager.setColorWallpaper(dynamicBackgroundColor)
+            // const dynamicBackgroundColor =
+            //   global.FBW.store?.settingData?.dynamicBackgroundColor || '#FFFFFF'
+            // await global.FBW.store?.wallpaperManager.setColorWallpaper(dynamicBackgroundColor)
             setWindowsDynamicWallpaper(this.win.getNativeWindowHandle().readInt32LE(0))
           }
           this.win.show()
+          // 发送公共信息
+          global.FBW.sendCommonData(this.win)
           resolve()
         })
 
@@ -261,7 +265,7 @@ export default class DynamicWallpaperWindow {
       return { success: true, message: t('messages.operationSuccess') }
     } catch (err) {
       global.logger.error(`设置动态壁纸缩放模式失败: ${err}`)
-      return { success: false, message: t('messages.operationSuccess') }
+      return { success: false, message: t('messages.operationFail') }
     }
   }
 

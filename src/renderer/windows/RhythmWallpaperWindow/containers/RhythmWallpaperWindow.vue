@@ -1,9 +1,13 @@
 <script setup>
 import * as Effects from '../effects'
+import UseCommonStore from '@renderer/stores/commonStore'
 import UseSettingStore from '@renderer/stores/settingStore'
 import { useTranslation } from 'i18next-vue'
 
 const { t } = useTranslation()
+
+const commonStore = UseCommonStore()
+const { commonData } = storeToRefs(commonStore)
 
 const settingStore = UseSettingStore()
 const { settingData } = storeToRefs(settingStore)
@@ -22,7 +26,7 @@ const config = computed(() => {
     position: settingData.value.rhythmPosition,
     sampleRange: settingData.value.rhythmSampleRange,
     shadow: true,
-    debug: true
+    debug: !!commonData.value?.isDev
   }
 })
 
@@ -49,8 +53,6 @@ const init = async () => {
       d.label.includes('立体声混音') || // 新增
       d.label.toLowerCase().includes('stereo mix') // 英文系统
   )
-  console.log('RhythmWallpaperWindow: Virtual device found:', virtualDevice)
-
   // 用虚拟声卡 deviceId 采集音频
   if (virtualDevice) {
     const stream = await navigator.mediaDevices.getUserMedia({
@@ -79,9 +81,6 @@ const destroyEffect = () => {
     if (effectInstance) {
       effectInstance.destroy()
       effectInstance = null
-      console.log('RhythmWallpaperWindow destroyEffect successfully')
-    } else {
-      console.log('RhythmWallpaperWindow destroyEffect not need')
     }
   } catch (error) {
     console.error('RhythmWallpaperWindow: Error destroying effect instance:', error)

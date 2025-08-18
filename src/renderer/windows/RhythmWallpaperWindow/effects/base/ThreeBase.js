@@ -132,7 +132,6 @@ export default class ThreeBase extends EffectBase {
         if (this.stats) {
           this.container.appendChild(this.stats.dom)
         }
-        console.log('ThreeBase: Canvas added to container')
       }
     } catch (error) {
       console.error('ThreeBase: Error during initialization:', error)
