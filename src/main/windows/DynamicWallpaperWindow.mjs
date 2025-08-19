@@ -187,6 +187,8 @@ export default class DynamicWallpaperWindow {
 
       // 停止自动切换壁纸
       await global.FBW.store?.toggleAutoSwitchWallpaper(false)
+      // 关闭定时刷新网页壁纸任务
+      await global.FBW.store?.toggleRefreshWebWallpaperTask(false)
       // 更新设置数据中“最后视频地址”
       await global.FBW.store?.updateSettingData({
         dynamicLastVideoPath: videoPath

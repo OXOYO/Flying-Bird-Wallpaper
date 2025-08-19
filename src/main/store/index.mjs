@@ -30,6 +30,7 @@ export default class Store {
     this.powerState = {
       isSystemIdle: false,
       wasAutoSwitchEnabled: false,
+      wasAutoRefreshWebEnabled: false,
       isOnBattery: false,
       wasPausedByBattery: false
     }
@@ -163,6 +164,7 @@ export default class Store {
     this.initHandleQualityTask()
     this.initHandleWordsTask()
     this.initSwitchWallpaperTask()
+    this.initRefreshWebWallpaperTask()
     this.initDownloadTask()
     this.initClearDownloadedTask()
   }
@@ -287,10 +289,15 @@ export default class Store {
       // 系统进入空闲状态，记录当前自动切换状态并暂停
       this.powerState.isSystemIdle = true
       this.powerState.wasAutoSwitchEnabled = this.settingData.autoSwitchWallpaper
+      this.settingData.wasAutoRefreshWebEnabled = this.settingData.autoRefreshWebWallpaper
 
       if (this.powerState.wasAutoSwitchEnabled) {
         // 暂停自动切换壁纸，但不更新设置
         this.stopSwitchWallpaperTask()
+      }
+      if (this.powerState.wasAutoRefreshWebEnabled) {
+        // 暂停自动刷新壁纸，但不更新设置
+        this.stopRefreshWebWallpaperTask()
       }
     } else if (!isIdle && this.powerState.isSystemIdle) {
       // 系统恢复活跃状态，恢复之前的自动切换状态
@@ -306,6 +313,11 @@ export default class Store {
         // 恢复自动切换壁纸，先停止当前任务，然后重新启动
         this.stopSwitchWallpaperTask()
         this.startSwitchWallpaperTask()
+      }
+      if (this.powerState.wasAutoRefreshWebEnabled) {
+        // 恢复自动刷新壁纸，先停止当前任务，然后重新启动
+        this.stopRefreshWebWallpaperTask()
+        this.startRefreshWebWallpaperTask()
       }
     }
   }
@@ -626,6 +638,11 @@ export default class Store {
       return this.setWebWallpaper(url)
     })
 
+    // 启停定时刷新网页壁纸任务
+    ipcMain.handle('main:toggleRefreshWebWallpaperTask', async () => {
+      return this.toggleRefreshWebWallpaperTask()
+    })
+
     // 设置颜色壁纸
     ipcMain.handle('main:setColorWallpaper', (event, color) => {
       return this.setColorWallpaper(color)
@@ -688,6 +705,7 @@ export default class Store {
       this.restartRefreshDirectoryTask(oldData, newData)
       this.restartHandleWordsTask(oldData, newData)
       this.restartSwitchWallpaperTask(oldData, newData)
+      this.restartRefreshWebWallpaperTask(oldData, newData)
       this.restartDownloadTask(oldData, newData)
       this.restartClearDownloadedTask(oldData, newData)
       // 处理应用打包后开机自启
@@ -700,6 +718,7 @@ export default class Store {
   async doManualSwitchWallpaper(direction) {
     // 先关闭自动切换
     await this.toggleAutoSwitchWallpaper(false)
+    await this.toggleRefreshWebWallpaperTask(false)
     let ret = {
       success: false,
       message: t('messages.operationFail')
@@ -765,20 +784,29 @@ export default class Store {
         }
       })
 
+      // 创建一个Promise来等待页面加载完成
+      const loadPromise = new Promise((resolve) => {
+        tempWindow.webContents.once('did-finish-load', () => {
+          // 可以添加一个小延迟确保所有资源加载完成
+          setTimeout(resolve, 500)
+        })
+      })
+
       // 加载URL
       await tempWindow.loadURL(url)
 
       // 等待页面完全加载
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      await loadPromise
 
       // 捕获页面截图
       const image = await tempWindow.webContents.capturePage()
       const pngData = image.toPNG()
 
-      // 保存截图到下载文件
-      const downloadFilePath = path.join(process.env.FBW_DOWNLOAD_PATH, 'wallpaper.png')
-      // global.logger.info(`downloadFilePath: ${downloadFilePath}`)
-      fs.writeFileSync(downloadFilePath, pngData)
+      // 保存截图到文件
+      const downloadFilePath = path.join(process.env.FBW_TEMP_PATH, 'fbw-web-wallpaper.png')
+      const tempFilePath = path.join(process.env.FBW_TEMP_PATH, 'fbw-web-wallpaper_temp.png')
+      fs.writeFileSync(tempFilePath, pngData)
+      fs.renameSync(tempFilePath, downloadFilePath)
 
       return downloadFilePath
     } catch (err) {
@@ -798,6 +826,8 @@ export default class Store {
     try {
       // 先关闭自动切换
       await this.toggleAutoSwitchWallpaper(false)
+      // 关闭视频壁纸
+      this.wallpaperManager.closeDynamicWallpaper()
       url = url || this.settingData.webWallpaperUrl
       if (!url) {
         return {
@@ -821,8 +851,6 @@ export default class Store {
       }
       const imgPath = await this.getWebImage(url)
       if (imgPath) {
-        // 关闭视频壁纸
-        this.wallpaperManager.closeDynamicWallpaper()
         return await this.wallpaperManager.setImageWallpaper(imgPath)
       } else {
         return {
@@ -842,6 +870,7 @@ export default class Store {
   // 设置颜色壁纸
   async setColorWallpaper(color) {
     await this.toggleAutoSwitchWallpaper(false)
+    await this.toggleRefreshWebWallpaperTask(false)
     // 关闭视频壁纸
     this.wallpaperManager.closeDynamicWallpaper()
     return await this.wallpaperManager.setColorWallpaper(
@@ -855,6 +884,9 @@ export default class Store {
     await this.updateSettingData({
       autoSwitchWallpaper: newValue
     })
+    if (newValue) {
+      await this.toggleRefreshWebWallpaperTask(false)
+    }
     // 更新当前电源状态记录
     if (!this.powerState.isSystemIdle) {
       this.powerState.wasAutoSwitchEnabled = newValue
@@ -899,6 +931,56 @@ export default class Store {
       if (newData.autoRefreshDirectory) {
         this.startRefreshDirectoryTask()
       }
+    }
+  }
+
+  // 定时刷新网页壁纸任务
+  initRefreshWebWallpaperTask() {
+    this.stopRefreshWebWallpaperTask()
+    if (this.settingData.autoRefreshWebWallpaper) {
+      this.startRefreshWebWallpaperTask()
+    }
+  }
+
+  startRefreshWebWallpaperTask() {
+    const key = 'autoRefreshWebWallpaper'
+    // 如果开启了自动刷新网页壁纸
+    if (this.settingData[key]) {
+      // 设置定时刷新网页壁纸
+      this.taskScheduler.scheduleTask(key, this.handleInterval(key), async () => {
+        await this.setWebWallpaper()
+      })
+    }
+  }
+
+  stopRefreshWebWallpaperTask() {
+    this.taskScheduler.clearTask('autoRefreshWebWallpaper')
+  }
+
+  restartRefreshWebWallpaperTask(oldData, newData) {
+    if (
+      oldData.autoRefreshWebWallpaper !== newData.autoRefreshWebWallpaper ||
+      oldData.refreshWebWallpaperIntervalUnit !== newData.refreshWebWallpaperIntervalUnit ||
+      oldData.refreshWebWallpaperIntervalTime !== newData.refreshWebWallpaperIntervalTime
+    ) {
+      this.stopRefreshWebWallpaperTask()
+      if (newData.autoRefreshWebWallpaper) {
+        this.startRefreshWebWallpaperTask()
+      }
+    }
+  }
+
+  async toggleRefreshWebWallpaperTask(val) {
+    const newValue = val === undefined ? !this.settingData.autoRefreshWebWallpaper : val
+    await this.updateSettingData({
+      autoRefreshWebWallpaper: newValue
+    })
+    if (newValue) {
+      await this.toggleAutoSwitchWallpaper(false)
+    }
+    // 更新当前电源状态记录
+    if (!this.powerState.isSystemIdle) {
+      this.powerState.wasAutoRefreshWebEnabled = newValue
     }
   }
 
@@ -975,6 +1057,8 @@ export default class Store {
       switchIntervalTime,
       refreshDirectoryIntervalUnit,
       refreshDirectoryIntervalTime,
+      refreshWebWallpaperIntervalTime,
+      refreshWebWallpaperIntervalUnit,
       downloadIntervalUnit,
       downloadIntervalTime,
       clearDownloadedExpiredTime,
@@ -989,6 +1073,10 @@ export default class Store {
       autoRefreshDirectory: {
         unit: refreshDirectoryIntervalUnit,
         intervalTime: refreshDirectoryIntervalTime
+      },
+      autoRefreshWebWallpaper: {
+        unit: refreshWebWallpaperIntervalUnit,
+        intervalTime: refreshWebWallpaperIntervalTime
       },
       autoDownload: {
         unit: downloadIntervalUnit,

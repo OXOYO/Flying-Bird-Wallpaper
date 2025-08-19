@@ -127,7 +127,13 @@ const onTimeUnitChange = (unitField, unitValue) => {
   onSettingDataFormChange()
 }
 
-const onSettingDataFormChange = () => {
+const onSettingDataFormChange = (field) => {
+  // 处理互斥字段
+  if (field === 'autoSwitchWallpaper') {
+    settingDataForm.autoRefreshWebWallpaper = false
+  } else if (field === 'autoRefreshWebWallpaper') {
+    settingDataForm.autoSwitchWallpaper = false
+  }
   onSettingDataFormConfirm()
 }
 
@@ -431,19 +437,6 @@ onBeforeUnmount(() => {
             />
             <el-anchor-link
               class="anchor-sub-link"
-              href="#divider-wallpaperResource"
-              :title="t('pages.Setting.divider.wallpaperResource')"
-            />
-          </template>
-        </el-anchor-link>
-        <el-anchor-link
-          class="anchor-link"
-          href="#divider-resourceSettings"
-          :title="t('pages.Setting.divider.resourceSettings')"
-        >
-          <template #sub-link>
-            <el-anchor-link
-              class="anchor-sub-link"
               href="#divider-localResource"
               :title="t('pages.Setting.divider.localResource')"
             />
@@ -633,7 +626,7 @@ onBeforeUnmount(() => {
             >
               <el-checkbox
                 v-model="settingDataForm.autoSwitchWallpaper"
-                @change="onSettingDataFormChange"
+                @change="onSettingDataFormChange('autoSwitchWallpaper')"
               />
             </el-form-item>
             <el-form-item :label="t('pages.Setting.settingDataForm.switchType')" prop="switchType">
@@ -695,9 +688,6 @@ onBeforeUnmount(() => {
               </el-select>
             </el-form-item>
 
-            <div id="divider-wallpaperResource" class="divider-sub">
-              {{ t('pages.Setting.divider.wallpaperResource') }}
-            </div>
             <el-form-item
               :label="t('pages.Setting.settingDataForm.wallpaperResource')"
               prop="wallpaperResource"
@@ -758,12 +748,7 @@ onBeforeUnmount(() => {
                 @change="onSettingDataFormChange"
               />
             </el-form-item>
-          </div>
 
-          <div class="form-card">
-            <div id="divider-resourceSettings" class="divider">
-              {{ t('pages.Setting.divider.resourceSettings') }}
-            </div>
             <div id="divider-localResource" class="divider-sub">
               {{ t('pages.Setting.divider.localResource') }}
             </div>
@@ -1095,7 +1080,7 @@ onBeforeUnmount(() => {
               <el-checkbox
                 v-model="settingDataForm.autoRefreshWebWallpaper"
                 :disabled="!settingDataForm.webWallpaperUrl"
-                @change="onSettingDataFormChange"
+                @change="onSettingDataFormChange('autoRefreshWebWallpaper')"
               />
             </el-form-item>
 
