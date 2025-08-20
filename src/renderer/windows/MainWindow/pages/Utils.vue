@@ -27,6 +27,49 @@ const onSetDynamicWallpaper = async () => {
 
 const utilGroups = ref([
   {
+    name: 'wallpaperUtils',
+    text: '壁纸工具',
+    locale: 'pages.Utils.wallpaperUtils',
+    children: [
+      {
+        name: 'setWebWallpaper',
+        text: '设置网页壁纸',
+        locale: 'pages.Utils.setWebWallpaper',
+        confirm: true
+      },
+      {
+        name: 'setColorWallpaper',
+        text: '设置颜色壁纸',
+        locale: 'pages.Utils.setColorWallpaper',
+        confirm: true
+      },
+      {
+        name: 'setDynamicWallpaper',
+        text: '设置动态壁纸',
+        locale: 'pages.Utils.setDynamicWallpaper',
+        handle: onSetDynamicWallpaper
+      },
+      {
+        name: 'closeDynamicWallpaper',
+        text: '关闭动态壁纸',
+        locale: 'pages.Utils.closeDynamicWallpaper',
+        confirm: true
+      },
+      {
+        name: 'openRhythmWallpaperWindow',
+        text: '打开律动壁纸',
+        locale: 'pages.Utils.openRhythmWallpaperWindow',
+        confirm: true
+      },
+      {
+        name: 'closeRhythmWallpaperWindow',
+        text: '关闭律动壁纸',
+        locale: 'pages.Utils.closeRhythmWallpaperWindow',
+        confirm: true
+      }
+    ]
+  },
+  {
     name: 'dataUtils',
     text: '数据工具',
     locale: 'pages.Utils.dataUtils',
@@ -81,49 +124,6 @@ const utilGroups = ref([
         name: 'clearDownloadedExpired',
         text: '清空过期下载数据',
         locale: 'pages.Utils.clearDownloadedExpired',
-        confirm: true
-      }
-    ]
-  },
-  {
-    name: 'wallpaperUtils',
-    text: '壁纸工具',
-    locale: 'pages.Utils.wallpaperUtils',
-    children: [
-      {
-        name: 'setWebWallpaper',
-        text: '设置网页壁纸',
-        locale: 'pages.Utils.setWebWallpaper',
-        confirm: true
-      },
-      {
-        name: 'setColorWallpaper',
-        text: '设置颜色壁纸',
-        locale: 'pages.Utils.setColorWallpaper',
-        confirm: true
-      },
-      {
-        name: 'setDynamicWallpaper',
-        text: '设置动态壁纸',
-        locale: 'pages.Utils.setDynamicWallpaper',
-        handle: onSetDynamicWallpaper
-      },
-      {
-        name: 'closeDynamicWallpaper',
-        text: '关闭动态壁纸',
-        locale: 'pages.Utils.closeDynamicWallpaper',
-        confirm: true
-      },
-      {
-        name: 'openRhythmWallpaperWindow',
-        text: '打开律动壁纸',
-        locale: 'pages.Utils.openRhythmWallpaperWindow',
-        confirm: true
-      },
-      {
-        name: 'closeRhythmWallpaperWindow',
-        text: '关闭律动壁纸',
-        locale: 'pages.Utils.closeRhythmWallpaperWindow',
         confirm: true
       }
     ]
