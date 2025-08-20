@@ -787,8 +787,13 @@ export default class Store {
       // 创建一个Promise来等待页面加载完成
       const loadPromise = new Promise((resolve) => {
         tempWindow.webContents.once('did-finish-load', () => {
+          // console.log('Successfully loaded page:', url)
           // 可以添加一个小延迟确保所有资源加载完成
           setTimeout(resolve, 500)
+        })
+        tempWindow.webContents.once('did-fail-load', () => {
+          // console.error('Failed to load URL:', url)
+          resolve()
         })
       })
 

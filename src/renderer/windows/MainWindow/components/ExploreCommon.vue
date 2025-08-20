@@ -412,7 +412,7 @@ const cardItemBtns = computed(() => {
     {
       title: t('exploreCommon.setAsWallpaperWithDownload'),
       action: 'setAsWallpaperWithDownload',
-      icon: 'ep:check'
+      icon: 'streamline:screensaver-monitor-wallpaper'
     },
     {
       title: t('exploreCommon.doViewImage'),
