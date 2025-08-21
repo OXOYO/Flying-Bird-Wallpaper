@@ -869,8 +869,10 @@ const debouncedGetNextList = debounce(() => {
   getNextList()
 }, 300)
 
-const onScroll = (event) => {
-  const { scrollTop, scrollHeight, clientHeight } = event.target
+const onScroll = (scrollInfo) => {
+  // 直接从参数中获取滚动信息
+  const { scrollTop, scrollHeight, clientHeight } = scrollInfo
+
   // 检测是否接近底部（可以调整 buffer 区域）
   const isCloseBottom = scrollHeight - scrollTop - clientHeight < cardForm.buffer
   if (!isCloseBottom || flags.loading || !flags.hasMore) {
@@ -1374,7 +1376,6 @@ onMounted(() => {
 onBeforeUnmount(() => {
   // 取消主进程事件监听
   window.FBW.offTriggerAction()
-
   // 清理ResizeObserver
   const entry = cardBlockRef.value
   if (entry) {
@@ -1544,7 +1545,7 @@ onBeforeUnmount(() => {
           :right="40"
           :bottom="backtopBtnBottom"
           :visibility-height="200"
-          target=".vue-recycle-scroller"
+          target=".virtual-list-scrollbar .el-scrollbar__wrap"
         />
         <div v-for="item in fixedBtns" :key="item.action" class="fixed-btn" :style="item.style">
           <div v-if="item.children && item.children.length" class="fixed-btn-children">
@@ -1571,13 +1572,15 @@ onBeforeUnmount(() => {
             <span v-else class="fixed-btn-text">{{ item.title }}</span>
           </el-button>
         </div>
-        <RecycleScroller
+
+        <VirtualList
           v-show="cardList.length"
           ref="scrollRef"
           :items="cardList"
-          :item-size="cardForm.cardHeight"
-          :item-secondary-size="cardForm.cardWidth"
+          :item-height="cardForm.cardHeight"
+          :item-width="cardForm.cardWidth"
           :grid-items="cardForm.gridItems"
+          :grid-gap="cardForm.gridGap"
           :buffer="cardForm.buffer"
           key-field="uniqueKey"
           style="height: 100%"
@@ -1655,9 +1658,6 @@ onBeforeUnmount(() => {
                   fit="cover"
                   @dblclick="doViewImage(item, index, true)"
                 >
-                  <!-- <template #placeholder>
-                    <div class="image-loading-inner">Loading...</div>
-                  </template> -->
                   <template #error>
                     <div class="image-error-inner">
                       <IconifyIcon icon="material-symbols:broken-image-sharp" />
@@ -1705,7 +1705,8 @@ onBeforeUnmount(() => {
               </div>
             </div>
           </template>
-        </RecycleScroller>
+        </VirtualList>
+
         <EmptyHelp v-if="flags.empty" />
       </div>
     </div>
