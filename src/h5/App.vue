@@ -103,6 +103,7 @@ const onTabbarChange = (name) => {
   commonStore.setActiveTabbar(name)
 }
 const onTabbarTrigger = (name) => {
+  settingStore.vibrate()
   nextTick(() => {
     // 只有当点击的tab与之前的activeTabbar相同，且与当前activeTabbar也相同时，才触发刷新
     // 这表示用户点击了当前已经激活的tab

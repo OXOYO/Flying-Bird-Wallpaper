@@ -36,7 +36,7 @@ const flags = reactive({
 })
 
 // 图片信息面板高度
-const imageInfoPanelAnchors = [0, Math.round(0.7 * window.innerHeight)]
+const imageInfoPanelAnchors = [0, Math.round(0.5 * window.innerHeight)]
 const imageInfoPanelHeight = ref(imageInfoPanelAnchors[0])
 
 const pageInfo = {
@@ -102,13 +102,8 @@ const isRandom = computed(() => {
 })
 
 // 是否收藏当前图片
-const isFavorite = computed(() => {
+const isCurrentFavorite = computed(() => {
   return autoSwitch.imageList[autoSwitch.currentIndex]?.isFavorite
-})
-
-// 当前显示的索引（用于指示器显示，确保稳定性）
-const currentDisplayIndex = computed(() => {
-  return autoSwitch.currentIndex + 1
 })
 
 // 指示器样式
@@ -462,6 +457,7 @@ const onTouchEnd = (event) => {
 
 // 启停自动翻页
 const toggleAutoSwitch = async () => {
+  settingStore.vibrate()
   // 确保在设置状态后再启动自动翻页
   if (settingData.value.h5AutoSwitch) {
     stopAutoSwitch()
@@ -563,6 +559,8 @@ const stopCountdown = () => {
 
 // 切换翻页等待时长
 const changeSwitchIntervalTime = async () => {
+  settingStore.vibrate()
+
   // 固定的间隔时间数组
   const fixedIntervals = [3, 6, 9, 12]
 
@@ -625,7 +623,7 @@ const handleFavoriteTouchStart = (event) => {
       if (favoriteHold.count < 100) {
         favoriteHold.count++
         flags.showFavoriteToast = true
-        settingStore.vibrate(Math.min(Math.max(10, favoriteHold.count), 100))
+        settingStore.vibrate(Math.min(Math.max(10, favoriteHold.count), 50))
       } else {
         // 达到最大值时停止计数并提示用户
         clearInterval(favoriteHold.interval)
@@ -677,21 +675,25 @@ const handleFavoriteTouchEnd = async () => {
     favoriteHold.timer = null
   }
 
+  // 清除长按计数间隔
+  if (favoriteHold.interval) {
+    clearInterval(favoriteHold.interval)
+    favoriteHold.interval = null
+  }
+
   // 如果是长按状态且计数大于0，则更新收藏数据
   if (flags.isFavoriteHolding && favoriteHold.count > 0) {
     const currentImage = autoSwitch.imageList[autoSwitch.currentIndex]
     if (!currentImage) return
+    // 如果没有收藏过，先添加收藏
+    if (!currentImage.isFavorite) {
+      await api.addToFavorites(currentImage.id)
+    }
     const res = await api.updateFavoriteCount(currentImage.id, favoriteHold.count)
     if (res.success) {
       // 更新本地数据
       currentImage.favoriteCount = (currentImage.favoriteCount || 0) + favoriteHold.count
       currentImage.isFavorite = true
-    }
-
-    // 清除长按计数间隔
-    if (favoriteHold.interval) {
-      clearInterval(favoriteHold.interval)
-      favoriteHold.interval = null
     }
 
     // 重置状态
@@ -753,18 +755,19 @@ const onRemoveFavorites = async () => {
   const res = await api.removeFavorites(currentImage.id)
   if (res.success) {
     currentImage.isFavorite = false
-    settingStore.vibrate()
+    settingStore.vibrate(20)
   }
 }
 
 // 切换图片大小
-const toggleImageDisplaySize = () => {
+const toggleImageDisplaySize = async () => {
+  settingStore.vibrate()
+  // 切换图片大小时关闭自动翻页
   stopAutoSwitch()
-
+  // 切换图片大小
   settingData.value.h5ImageDisplaySize =
     settingData.value.h5ImageDisplaySize === 'cover' ? 'contain' : 'cover'
-
-  onSettingDataChange({
+  await onSettingDataChange({
     h5ImageDisplaySize: settingData.value.h5ImageDisplaySize,
     h5AutoSwitch: settingData.value.h5AutoSwitch
   })
@@ -772,6 +775,7 @@ const toggleImageDisplaySize = () => {
 
 // 切换随机模式
 const toggleRandom = async () => {
+  settingStore.vibrate()
   // 切换随机模式时关闭自动翻页
   stopAutoSwitch()
   // 切换随机模式
@@ -824,9 +828,9 @@ const handleImageTouchStart = (index, event) => {
     imageTouch.startX = event.touches[0].clientX
     imageTouch.startY = event.touches[0].clientY
     longPress.timer = setTimeout(() => {
+      settingStore.vibrate()
       longPress.selectedIndex = index
       flags.showActionPopup = true
-      settingStore.vibrate()
     }, 500)
   }
 }
@@ -943,6 +947,7 @@ const showImageInfo = () => {
   if (longPress.selectedIndex === null) return
   const currentImage = autoSwitch.imageList[longPress.selectedIndex]
   if (!currentImage) return
+  settingStore.vibrate()
   flags.showActionPopup = false
   // 设置面板高度显示图片信息
   imageInfoPanelHeight.value = imageInfoPanelAnchors[1]
@@ -962,6 +967,10 @@ const saveImage = async () => {
 
   try {
     const currentImage = autoSwitch.imageList[longPress.selectedIndex]
+    if (!currentImage) return
+    settingStore.vibrate()
+    flags.showActionPopup = false
+
     // 创建一个隐藏的a标签
     const link = document.createElement('a')
 
@@ -994,7 +1003,7 @@ const saveImage = async () => {
       message: t('messages.saveFail')
     })
   } finally {
-    flags.showActionPopup = false
+    longPress.selectedIndex = null
   }
 }
 
@@ -1002,11 +1011,13 @@ const saveImage = async () => {
 const deleteImage = async () => {
   if (longPress.selectedIndex === null) return
 
-  // 关闭操作弹层
-  flags.showActionPopup = false
-
   // 显示确认对话框
   try {
+    const currentImage = autoSwitch.imageList[longPress.selectedIndex]
+    if (!currentImage) return
+    settingStore.vibrate()
+    flags.showActionPopup = false
+
     await showConfirmDialog({
       title: t('h5.pages.home.actions.confirmDelete'),
       message: t('h5.pages.home.actions.confirmDeleteMessage'),
@@ -1017,7 +1028,6 @@ const deleteImage = async () => {
     })
 
     // 用户点击确认后执行删除操作
-    const currentImage = autoSwitch.imageList[longPress.selectedIndex]
     const res = await api.deleteImage(toRaw(currentImage))
     if (res.success) {
       // 从列表中移除该图片
@@ -1076,6 +1086,7 @@ const handleTabbarButtonTouchEnd = (e) => {
     tabbarBtnTouch.timer = null
   }
   if (timeDiff < 300) {
+    settingStore.vibrate()
     // 双击
     tabbarBtnTouch.lastTapTime = 0
     onRefresh()
@@ -1083,6 +1094,7 @@ const handleTabbarButtonTouchEnd = (e) => {
     // 单击，等待是否有第二次点击
     tabbarBtnTouch.lastTapTime = now
     tabbarBtnTouch.timer = setTimeout(() => {
+      settingStore.vibrate()
       commonStore.toggleTabbarVisible()
       tabbarBtnTouch.timer = null
       tabbarBtnTouch.lastTapTime = 0
@@ -1091,6 +1103,7 @@ const handleTabbarButtonTouchEnd = (e) => {
 }
 
 const onBackTop = () => {
+  settingStore.vibrate()
   autoSwitch.currentIndex = 0
   virtualListRef.value?.scrollTo({ position: 0, animated: true })
 }
@@ -1385,12 +1398,9 @@ const handlePageShow = () => {}
     >
       <IconifyIcon
         class="floating-button-icon"
-        :icon="isFavorite ? 'ri:star-fill' : 'ri:star-line'"
-        :style="{ color: isFavorite ? 'gold' : '' }"
+        :icon="isCurrentFavorite ? 'ri:star-fill' : 'ri:star-line'"
+        :style="{ color: isCurrentFavorite ? 'gold' : '' }"
       />
-      <span v-if="flags.isFavoriteHolding && favoriteHold.count > 0" class="favorite-count"
-        >+{{ favoriteHold.count }}</span
-      >
     </div>
 
     <!-- 切换背景大小 -->
@@ -1472,6 +1482,7 @@ const handlePageShow = () => {}
       >
         <van-cell
           v-for="key in infoKeys"
+          value-class="image-info-value"
           :key="key"
           :title="t(`h5.pages.home.imageInfo.${key}`)"
           :value="handleInfoVal(autoSwitch.imageList[longPress.selectedIndex], key)"
@@ -1487,7 +1498,10 @@ const handlePageShow = () => {}
     style="background-color: transparent"
   >
     <template #message>
-      <img src="@h5/assets/images/star.gif" style="width: 50vw; max-width: 200px; padding: 0" />
+      <img class="favorite-toast-icon" src="@h5/assets/images/star.gif" />
+      <div v-if="flags.isFavoriteHolding && favoriteHold.count" class="favorite-toast-count">
+        +{{ favoriteHold.count }}
+      </div>
     </template>
   </van-toast>
 </template>
@@ -1548,12 +1562,8 @@ const handlePageShow = () => {}
   transition: all 0.2s ease;
 
   &:active {
-    transform: scale(0.95);
+    transform: scale(0.6);
     background-color: rgba(0, 0, 0, 0.7);
-
-    .floating-button-icon {
-      transform: scale(1.2);
-    }
   }
 }
 
@@ -1595,20 +1605,16 @@ const handlePageShow = () => {}
   }
 }
 
-.favorite-count {
-  position: absolute;
-  top: -10px;
-  right: -10px;
-  background-color: #ff4d4f;
-  color: white;
-  border-radius: 50%;
-  min-width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
+.favorite-toast-icon {
+  width: 50vw;
+  max-width: 200px;
   padding: 0;
+}
+
+.favorite-toast-count {
+  text-align: center;
+  font-size: 16px;
+  color: #fff;
 }
 
 /* 操作弹层样式 */
@@ -1628,8 +1634,8 @@ const handlePageShow = () => {}
   font-size: 16px;
 
   &:active {
-    .action-icon-inner {
-      transform: scale(1.2);
+    .action-icon-wrapper {
+      transform: scale(0.8);
     }
   }
 }
@@ -1676,10 +1682,19 @@ const handlePageShow = () => {}
   pointer-events: none;
 }
 
+.image-info-content {
+}
+
 /* 深色模式 */
 .van-theme-dark {
   .action-icon-wrapper {
     background-color: black;
   }
+}
+</style>
+
+<style lang="scss">
+.image-info-value > * {
+  // user-select: text;
 }
 </style>
