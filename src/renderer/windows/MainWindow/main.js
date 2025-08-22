@@ -1,7 +1,5 @@
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
-import VueVirtualScroller from 'vue-virtual-scroller'
-import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 import 'viewerjs/dist/viewer.css'
 import '@renderer/assets/main.scss'
 
@@ -14,7 +12,6 @@ const pinia = createPinia()
 
 app.use(pinia)
 app.use(ElementPlus)
-app.use(VueVirtualScroller)
 
 useIconifyIcon(app)
 
