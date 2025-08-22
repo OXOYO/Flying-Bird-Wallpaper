@@ -1,3 +1,19 @@
+# [1.2.0](https://github.com/OXOYO/Flying-Bird-Wallpaper/compare/v1.1.1...v1.2.0) (2025-08-22)
+
+
+### Bug Fixes
+
+* 修复滚动加载卡顿 ([ec82a9d](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/ec82a9df40d91fc8994fe3de0b24953c6e0efdd0))
+* 修复pexels url计算错误 ([72380b6](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/72380b64b2c6367260e8c70bf53b6c3568383024))
+
+
+### Features
+
+* 支持按统计字段排序 ([45c89c4](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/45c89c486eefd042c114f478401f4af770e6826d))
+* 支持设置H5图片指示器位置 ([9e1f3b4](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/9e1f3b4e351efcbd660c7417085bbea938f598e7))
+
+
+
 ## [1.1.1](https://github.com/OXOYO/Flying-Bird-Wallpaper/compare/v1.1.0...v1.1.1) (2025-08-03)
 
 
