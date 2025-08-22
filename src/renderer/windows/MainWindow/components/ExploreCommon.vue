@@ -215,9 +215,9 @@ const gridForm = reactive({
 
 const cardForm = reactive({
   cardWidth: 225,
-  cardGap: 4,
   cardHeight: Math.floor(225 * 0.618),
   gridItems: gridForm.gridSize === 'auto' ? 4 : gridForm.gridSize,
+  gridGap: 10,
   buffer: 100
 })
 
@@ -767,9 +767,9 @@ const calculateOptimalBuffer = (blockHeight, cardHeight) => {
 const doCompleteList = async () => {
   if (cardList.value.length && searchForm.pageSize > cardList.value.length) {
     await getNextList()
-    // 在获取新数据后强制更新视图
+    // 在获取新数据后强制更新视图，但不重置滚动位置
     nextTick(() => {
-      scrollRef.value?.updateVisibleItems(true)
+      scrollRef.value?.updateVisibleItems(false)
     })
   }
 }
@@ -839,7 +839,7 @@ const onRefresh = async (flag = true) => {
 
   // 使用nextTick替代setTimeout
   await nextTick()
-  // 强制更新可视区域的项目
+  // 强制更新可视区域的项目，并重置滚动位置
   scrollRef.value?.updateVisibleItems(true)
   // 执行查询
   await getNextList()
@@ -860,9 +860,13 @@ const onLoadMore = async () => {
   // 在数据加载完成后，滚动到新加载内容的开始位置
   if (lastIndex >= 0) {
     setTimeout(() => {
-      scrollRef.value?.scrollToItem(lastIndex)
+      scrollRef.value?.scrollToIndex(lastIndex)
     })
   }
+  // 更新可视区域的项目，但不重置滚动位置
+  nextTick(() => {
+    scrollRef.value?.updateVisibleItems(false)
+  })
 }
 // 防抖
 const debouncedGetNextList = debounce(() => {
@@ -1003,9 +1007,9 @@ const getNextList = async () => {
     flags.loadMoreClicked = false
     flags.empty = !cardList.value.length
 
-    // 强制更新可视区域的项目
+    // 强制更新可视区域的项目，但不重置滚动位置
     nextTick(() => {
-      scrollRef.value?.updateVisibleItems(true)
+      scrollRef.value?.updateVisibleItems(false)
     })
   }
 }
@@ -1241,7 +1245,7 @@ const onDeleteFile = (item, index) => {
         await doCompleteList()
         // 强制更新
         nextTick(() => {
-          scrollRef.value?.updateVisibleItems(true)
+          scrollRef.value?.updateVisibleItems(false)
         })
       }
     }
@@ -1583,7 +1587,7 @@ onBeforeUnmount(() => {
           :grid-gap="cardForm.gridGap"
           :buffer="cardForm.buffer"
           key-field="uniqueKey"
-          style="height: 100%"
+          style="height: 100%; margin: 0 10px"
           @scroll="onScroll"
         >
           <template #default="{ item, index }">
@@ -1595,9 +1599,6 @@ onBeforeUnmount(() => {
                   : ''
               ]"
               :style="{
-                '--card-width': `${cardForm.cardWidth - cardForm.cardGap * 2}px`,
-                '--card-height': `${cardForm.cardHeight - cardForm.cardGap * 2}px`,
-                '--card-gap': `${cardForm.cardGap}px`,
                 '--dominant-color': item.dominantColor || 'transparent',
                 '--dominant-color-rgba': item.dominantColorRgb
                   ? `rgba(${item.dominantColorRgb.r}, ${item.dominantColorRgb.g}, ${item.dominantColorRgb.b}, .5)`
@@ -1919,9 +1920,10 @@ onBeforeUnmount(() => {
 
 .card-item {
   contain: content;
-  width: var(--card-width);
-  height: var(--card-height);
-  margin: var(--card-gap);
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
   background-color: rgba(0, 0, 0, 0.2);
   position: relative;
   cursor: pointer;

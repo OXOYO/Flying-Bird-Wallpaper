@@ -50,7 +50,7 @@ const visibleRange = computed(() => {
   // 计算起始索引
   const startRowIndex = Math.floor(currentScrollTop / props.itemHeight)
   const startBufferedRowIndex = Math.max(0, startRowIndex - bufferRows)
-  const start = startBufferedRowIndex * props.gridItems
+  const start = Math.max(0, startBufferedRowIndex * props.gridItems)
 
   // 计算可见行数
   const visibleRowCount = Math.ceil(currentWrapperHeight / props.itemHeight)
@@ -59,7 +59,11 @@ const visibleRange = computed(() => {
   // 计算结束索引
   const endRowIndex = startRowIndex + visibleRowCount
   const endBufferedRowIndex = endRowIndex + bufferRows
-  const end = Math.min(props.items.length - 1, endBufferedRowIndex * props.gridItems - 1)
+  // 确保 end 不会是负数
+  const end = Math.max(
+    0,
+    Math.min(props.items.length - 1, endBufferedRowIndex * props.gridItems - 1)
+  )
 
   return { start, end }
 })
@@ -67,7 +71,6 @@ const visibleRange = computed(() => {
 // 计算可见的项目
 const visibleItems = computed(() => {
   const { start, end } = visibleRange.value
-  console.log('visibleItems', start, end)
   const items = []
 
   // 确保 start 和 end 是有效索引
@@ -97,22 +100,21 @@ const getItemStyle = (item) => {
   const row = Math.floor(item.index / props.gridItems)
   const col = item.index % props.gridItems
 
-  const gap = props.gridGap
+  const gridGap = props.gridGap
 
   // 计算每项的宽度百分比，考虑间距
-  const itemWidthPercent = 100 / props.gridItems
+  const totalGapWidth = (props.gridItems - 1) * gridGap
+  const itemWidthPercent = (100 - totalGapWidth) / props.gridItems
 
   return {
     position: 'absolute',
-    top: props.itemWidth
-      ? `${row * props.itemHeight + gap}px`
-      : `calc(${row * props.itemHeight}px + ${gap}px)`,
+    top: `${row * (props.itemHeight + gridGap)}px`,
     left: props.itemWidth
-      ? `${col * props.itemWidth + gap}px`
-      : `calc(${col * itemWidthPercent}% + ${(col * 8) / props.gridItems}px + ${gap}px)`,
+      ? `${col * (props.itemWidth + gridGap)}px`
+      : `calc(${col * (100 / props.gridItems)}% + ${col * gridGap}px)`,
     width: props.itemWidth
       ? `${props.itemWidth}px`
-      : `calc(${itemWidthPercent}% - ${props.gridItems > 1 ? 8 / props.gridItems : 0}px)`,
+      : `calc(${100 / props.gridItems}% - ${props.gridItems > 1 ? totalGapWidth / props.gridItems : 0}px)`,
     height: `${props.itemHeight}px`
   }
 }
@@ -133,10 +135,15 @@ const handleScroll = (event) => {
 }
 
 // 更新可见项目
-const updateVisibleItems = () => {
+const updateVisibleItems = (resetScrollTop = false) => {
   nextTick(() => {
     const scrollElement = scrollbarRef.value?.wrapRef
     if (scrollElement) {
+      if (resetScrollTop) {
+        scrollTop.value = 0
+      } else {
+        scrollTop.value = scrollElement.scrollTop
+      }
       wrapperHeight.value = scrollElement.clientHeight
     }
   })
@@ -165,14 +172,30 @@ onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
 })
 
+// 滚动到指定位置
+const scrollToTop = (top) => {
+  const scrollElement = scrollbarRef.value?.wrapRef
+  if (scrollElement) {
+    scrollElement.scrollTop = top
+  }
+}
+
+// 滚动到指定索引
+const scrollToIndex = (index) => {
+  // 确保索引有效
+  const validIndex = Math.max(0, Math.min(index, props.items.length - 1))
+  // 计算行号
+  const row = Math.floor(validIndex / props.gridItems)
+  // 计算滚动位置
+  const top = row * props.itemHeight
+  // 调用 scrollToTop 方法
+  scrollToTop(top)
+}
+
 defineExpose({
   updateVisibleItems,
-  scrollTo: (top) => {
-    const scrollElement = scrollbarRef.value?.wrapRef
-    if (scrollElement) {
-      scrollElement.scrollTop = top
-    }
-  }
+  scrollToTop,
+  scrollToIndex
 })
 </script>
 
