@@ -1,8 +1,8 @@
 <script setup>
-import UseSettingStore from '@renderer/stores/settingStore.js'
-import UseMenuStore from '@renderer/stores/menuStore.js'
-import UseWordsStore from '@renderer/stores/wordsStore.js'
 import UseCommonStore from '@renderer/stores/commonStore.js'
+import UseMenuStore from '@renderer/stores/menuStore.js'
+import UseSettingStore from '@renderer/stores/settingStore.js'
+import UseWordsStore from '@renderer/stores/wordsStore.js'
 import iconLogo from '@resources/icons/icon_64x64.png'
 import QRCode from 'qrcode'
 

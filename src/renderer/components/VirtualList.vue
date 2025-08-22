@@ -16,7 +16,7 @@ const props = defineProps({
     type: Number,
     default: 0
   },
-  gridItems: {
+  gridSize: {
     type: Number,
     default: 1
   },
@@ -50,7 +50,7 @@ const visibleRange = computed(() => {
   // 计算起始索引
   const startRowIndex = Math.floor(currentScrollTop / props.itemHeight)
   const startBufferedRowIndex = Math.max(0, startRowIndex - bufferRows)
-  const start = Math.max(0, startBufferedRowIndex * props.gridItems)
+  const start = Math.max(0, startBufferedRowIndex * props.gridSize)
 
   // 计算可见行数
   const visibleRowCount = Math.ceil(currentWrapperHeight / props.itemHeight)
@@ -62,7 +62,7 @@ const visibleRange = computed(() => {
   // 确保 end 不会是负数
   const end = Math.max(
     0,
-    Math.min(props.items.length - 1, endBufferedRowIndex * props.gridItems - 1)
+    Math.min(props.items.length - 1, endBufferedRowIndex * props.gridSize - 1)
   )
 
   return { start, end }
@@ -90,31 +90,34 @@ const visibleItems = computed(() => {
 // 包装器样式
 const wrapperStyle = computed(() => {
   return {
-    height: `${Math.ceil(props.items.length / props.gridItems) * props.itemHeight}px`,
-    position: 'relative'
+    height: `${Math.ceil(props.items.length / props.gridSize) * props.itemHeight}px`
   }
 })
 
 // 获取项目样式
 const getItemStyle = (item) => {
-  const row = Math.floor(item.index / props.gridItems)
-  const col = item.index % props.gridItems
+  const row = Math.floor(item.index / props.gridSize)
+  const col = item.index % props.gridSize
 
   const gridGap = props.gridGap
 
-  // 计算每项的宽度百分比，考虑间距
-  const totalGapWidth = (props.gridItems - 1) * gridGap
-  const itemWidthPercent = (100 - totalGapWidth) / props.gridItems
+  // 计算总可用宽度和单个项目宽度百分比
+  const totalGap = (props.gridSize - 1) * gridGap
+  const itemWidthPercent = 100 / props.gridSize
+
+  // 计算左侧偏移和宽度，使用更精确的计算方式
+  const left = props.itemWidth
+    ? `${col * (props.itemWidth + gridGap)}px`
+    : `calc(${itemWidthPercent * col}% + ${col * gridGap}px)`
+
+  const width = props.itemWidth
+    ? `${props.itemWidth}px`
+    : `calc(${itemWidthPercent}% - ${(totalGap / props.gridSize).toFixed(4)}px)` // 使用toFixed提高精度
 
   return {
-    position: 'absolute',
     top: `${row * (props.itemHeight + gridGap)}px`,
-    left: props.itemWidth
-      ? `${col * (props.itemWidth + gridGap)}px`
-      : `calc(${col * (100 / props.gridItems)}% + ${col * gridGap}px)`,
-    width: props.itemWidth
-      ? `${props.itemWidth}px`
-      : `calc(${100 / props.gridItems}% - ${props.gridItems > 1 ? totalGapWidth / props.gridItems : 0}px)`,
+    left,
+    width,
     height: `${props.itemHeight}px`
   }
 }
@@ -185,9 +188,9 @@ const scrollToIndex = (index) => {
   // 确保索引有效
   const validIndex = Math.max(0, Math.min(index, props.items.length - 1))
   // 计算行号
-  const row = Math.floor(validIndex / props.gridItems)
+  const row = Math.floor(validIndex / props.gridSize)
   // 计算滚动位置
-  const top = row * props.itemHeight
+  const top = row * (props.itemHeight + props.gridGap)
   // 调用 scrollToTop 方法
   scrollToTop(top)
 }
@@ -220,14 +223,20 @@ defineExpose({
 
   :deep(.el-scrollbar__wrap) {
     overflow-x: hidden;
+    scroll-behavior: smooth;
   }
 }
 
 .virtual-list-wrapper {
+  position: relative;
+  box-sizing: border-box;
   width: 100%;
 }
 
 .virtual-list-item {
+  position: absolute;
   box-sizing: border-box;
+  transform: translateZ(0);
+  will-change: transform;
 }
 </style>

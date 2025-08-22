@@ -2,6 +2,7 @@
 import { h } from 'vue'
 import clipboard from 'clipboardy'
 import UseCommonStore from '@renderer/stores/commonStore.js'
+import UseMenuStore from '@renderer/stores/menuStore.js'
 import UseSettingStore from '@renderer/stores/settingStore.js'
 import UseWordsStore from '@renderer/stores/wordsStore.js'
 import { useTranslation } from 'i18next-vue'
@@ -18,9 +19,11 @@ import { debounce } from '@renderer/utils/index.js'
 
 const { t } = useTranslation()
 const commonStore = UseCommonStore()
+const menuStore = UseMenuStore()
 const settingStore = UseSettingStore()
 const wordsStore = UseWordsStore()
 const { settingData } = storeToRefs(settingStore)
+const { selectedMenu, menuList } = storeToRefs(menuStore)
 const { wordTypeList, wordDrawerVisible } = storeToRefs(wordsStore)
 
 const cardBlockRef = ref(null)
@@ -47,6 +50,31 @@ const cardItemStatus = reactive({
 const props = defineProps({
   menu: String,
   menuParams: Object
+})
+
+// 启用的菜单列表
+const enabledMenus = computed(() => {
+  const list = menuList.value.filter((item) => item.placement.includes('sideMenu'))
+  if (
+    !settingData.value ||
+    !Array.isArray(settingData.value?.enabledMenus) ||
+    !settingData.value?.enabledMenus?.length
+  ) {
+    return list
+  }
+  return list.filter((item) => {
+    if (item.canBeEnabled) {
+      return settingData.value.enabledMenus.includes(item.name)
+    }
+    return true
+  })
+})
+
+// 是否启用WordDraw
+const enabledWordDraw = computed(() => {
+  // 词云菜单
+  const WordsMenu = enabledMenus.value.find((item) => item.name === 'Words')
+  return WordsMenu && selectedMenu.value && selectedMenu.value.name === 'Search'
 })
 
 const isExploreMenu = computed(() => {
@@ -216,8 +244,8 @@ const gridForm = reactive({
 const cardForm = reactive({
   cardWidth: 225,
   cardHeight: Math.floor(225 * 0.618),
-  gridItems: gridForm.gridSize === 'auto' ? 4 : gridForm.gridSize,
-  gridGap: 10,
+  gridSize: gridForm.gridSize === 'auto' ? 4 : gridForm.gridSize,
+  gridGap: 4,
   buffer: 100
 })
 
@@ -490,7 +518,7 @@ const onTabChange = () => {
   wordFilter.value = ''
 }
 const getWords = () => {
-  if (isSearchMenu.value) {
+  if (enabledWordDraw.value) {
     window.FBW.getWords({
       types: [1, 2],
       size: 1000
@@ -708,6 +736,10 @@ const onSwitchGridSize = async (childVal) => {
 const handleGridSize = (blockWidth = 900, blockHeight = 600) => {
   if (!blockWidth || !blockHeight) return
   const { gridSize, gridHWRatio } = gridForm
+
+  // 减去VirtualList组件的左右margin (10px * 2)
+  const availableWidth = blockWidth - 20
+
   // 批量计算所有需要更新的值
   const updates = {}
   if (gridSize === 'auto') {
@@ -715,17 +747,23 @@ const handleGridSize = (blockWidth = 900, blockHeight = 600) => {
       const size = gridSizeRange.size * Math.pow(1.5, i)
       const minWidth = gridSizeRange.wrapperWidth * Math.pow(1.5, i)
       const maxWidth = gridSizeRange.wrapperWidth * Math.pow(1.5, i + 1)
-      if (blockWidth >= minWidth && blockWidth < maxWidth) {
-        updates.gridItems = size
-        updates.cardWidth = Math.floor(blockWidth / updates.gridItems)
-        updates.cardHeight = Math.floor(updates.cardWidth * gridHWRatio)
+      if (availableWidth >= minWidth && availableWidth < maxWidth) {
+        updates.gridSize = size
+        // 计算总间距并从总宽度中减去
+        const totalGap = (updates.gridSize - 1) * cardForm.gridGap
+        // 使用更精确的计算方法，保留一位小数
+        updates.cardWidth = Math.round(((availableWidth - totalGap) / updates.gridSize) * 10) / 10
+        updates.cardHeight = Math.round(updates.cardWidth * gridHWRatio * 10) / 10
         break
       }
     }
   } else {
-    updates.gridItems = gridSize
-    updates.cardWidth = Math.floor(blockWidth / updates.gridItems)
-    updates.cardHeight = Math.floor(updates.cardWidth * gridHWRatio)
+    updates.gridSize = gridSize
+    // 计算总间距并从总宽度中减去
+    const totalGap = (updates.gridSize - 1) * cardForm.gridGap
+    // 使用更精确的计算方法，保留一位小数
+    updates.cardWidth = Math.round(((availableWidth - totalGap) / updates.gridSize) * 10) / 10
+    updates.cardHeight = Math.round(updates.cardWidth * gridHWRatio * 10) / 10
   }
   // 计算最优缓冲区大小
   updates.buffer = calculateOptimalBuffer(blockHeight, updates.cardHeight)
@@ -735,9 +773,9 @@ const handleGridSize = (blockWidth = 900, blockHeight = 600) => {
     (blockWidth * blockHeight) / (updates.cardWidth * updates.cardHeight)
   )
   // 计算当前卡片大小下，block容器可以包含行
-  const rows = Math.floor(allCardSize / updates.gridItems)
+  const rows = Math.floor(allCardSize / updates.gridSize)
   // 在当前block容器可以包含的行数基础上再加1行，乘以每行grid数量得出新的分页量
-  updates.pageSize = Math.floor((rows + 2) * updates.gridItems)
+  updates.pageSize = Math.floor((rows + 2) * updates.gridSize)
 
   // 一次性应用所有更新，减少重排次数
   Object.assign(cardForm, updates)
@@ -1044,7 +1082,8 @@ const onSyncToWallpaperSetting = async () => {
 
 // 设置为壁纸
 const setAsWallpaperWithDownload = async (item, index) => {
-  const res = await window.FBW.setAsWallpaperWithDownload(toRaw(item))
+  const res = await window.FBW.setAsWallpaperWithDownload(JSON.parse(JSON.stringify(item)))
+
   let options = {}
   if (res && res.success) {
     options.type = 'success'
@@ -1237,7 +1276,7 @@ const onCopyFilePath = (filePath) => {
 
 const onDeleteFile = (item, index) => {
   const onConfirmDeleteFile = async () => {
-    const res = await window.FBW.deleteFile(toRaw(item))
+    const res = await window.FBW.deleteFile(JSON.parse(JSON.stringify(item)))
     let callback
     if (res.success) {
       callback = async () => {
@@ -1503,7 +1542,7 @@ onBeforeUnmount(() => {
     </div>
     <div class="body-block">
       <div
-        v-if="isSearchMenu"
+        v-if="enabledWordDraw"
         :class="{ 'word-drawer': true, 'word-drawer-visible': wordDrawerVisible }"
       >
         <el-tabs v-model="activeWordTab" class="words-tabs" @tab-change="onTabChange">
@@ -1583,7 +1622,7 @@ onBeforeUnmount(() => {
           :items="cardList"
           :item-height="cardForm.cardHeight"
           :item-width="cardForm.cardWidth"
-          :grid-items="cardForm.gridItems"
+          :grid-size="cardForm.gridSize"
           :grid-gap="cardForm.gridGap"
           :buffer="cardForm.buffer"
           key-field="uniqueKey"
@@ -1853,6 +1892,8 @@ onBeforeUnmount(() => {
   justify-content: center;
   align-items: center;
   overflow: hidden;
+  transform: translateZ(0);
+  will-change: transform, opacity;
 
   &:hover {
     background-color: rgba(50, 57, 65, 0.9);
@@ -2091,6 +2132,10 @@ onBeforeUnmount(() => {
     margin: 0;
     + .card-item-btn {
       margin: 0;
+    }
+
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.3);
     }
   }
 }
