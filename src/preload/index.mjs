@@ -159,6 +159,7 @@ const api = {
   selectFile: (...args) => ipcRenderer.invoke('main:selectFile', ...args),
   showItemInFolder: (...args) => ipcRenderer.invoke('main:showItemInFolder', ...args),
   deleteFile: (...args) => ipcRenderer.invoke('main:deleteFile', ...args),
+  downloadFile: (...args) => ipcRenderer.invoke('main:downloadFile', ...args),
   openDir: (...args) => ipcRenderer.invoke('main:openDir', ...args),
   openUrl: (...args) => ipcRenderer.invoke('main:openUrl', ...args),
   refreshDirectory: (...args) => ipcRenderer.invoke('main:refreshDirectory', ...args),

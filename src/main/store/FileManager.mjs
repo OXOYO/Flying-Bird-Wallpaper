@@ -1,4 +1,6 @@
 import fs from 'node:fs'
+import path from 'node:path'
+import axios from 'axios'
 import cache from '../cache.mjs'
 import { t } from '../../i18n/server.js'
 import { transFilePath } from '../utils/file.mjs'
@@ -416,5 +418,129 @@ export default class FileManager {
       }
     }
     return ret
+  }
+
+  // 下载文件
+  async downloadFile(item) {
+    if (!item) {
+      return {
+        success: false,
+        message: t('messages.paramsError')
+      }
+    }
+    if (item.srcType === 'url' && (item.imageUrl || item.videoUrl)) {
+      // 下载壁纸或视频
+      const { downloadFolder } = this.settingData
+      if (!downloadFolder || !fs.existsSync(downloadFolder)) {
+        return {
+          success: false,
+          message: t('messages.downloadFolderNotExistOrNotSet')
+        }
+      }
+
+      // 判断是图片还是视频
+      const isVideo = item.fileType === 'video'
+      const downloadUrl = isVideo ? item.videoUrl : item.imageUrl
+      const posterUrl = item.imageUrl // 视频的封面图片
+
+      // 生成文件名
+      const fileName = `${item.fileName}.${item.fileExt}`
+      const filePath = path.join(downloadFolder, fileName)
+
+      if (fs.existsSync(filePath)) {
+        // 文件已存在，取消写入
+        this.logger.warn(`文件 ${filePath} 已存在，跳过写入`)
+      } else {
+        // 下载文件
+        const response = await axios({
+          method: 'GET',
+          url: downloadUrl,
+          responseType: 'stream'
+        })
+
+        const writer = fs.createWriteStream(filePath)
+        response.data.pipe(writer)
+
+        await new Promise((resolve, reject) => {
+          writer.on('finish', resolve)
+          writer.on('error', reject)
+        })
+      }
+
+      // 获取文件信息
+      const stats = fs.statSync(filePath)
+
+      // 插入到数据库
+      try {
+        const insert_stmt = this.db.prepare(
+          `INSERT INTO fbw_resources
+                (resourceName, fileName, filePath, fileExt, fileType, fileSize, imageUrl, videoUrl, author, link, title, desc, quality, width, height, isLandscape, atimeMs, mtimeMs, ctimeMs) VALUES
+                (@resourceName, @fileName, @filePath, @fileExt, @fileType, @fileSize, @imageUrl, @videoUrl, @author, @link, @title, @desc, @quality, @width, @height, @isLandscape, @atimeMs, @mtimeMs, @ctimeMs)`
+        )
+        const insert_result = insert_stmt.run({
+          resourceName: item.resourceName,
+          fileName: item.fileName,
+          filePath: filePath,
+          fileExt: item.fileExt,
+          fileType: item.fileType || 'image',
+          fileSize: stats.size,
+          imageUrl: posterUrl || '',
+          videoUrl: isVideo ? downloadUrl : '',
+          author: item.author || '',
+          link: item.link || '',
+          title: item.title || '',
+          desc: item.desc || '',
+          quality: item.quality || '',
+          width: item.width || 0,
+          height: item.height || 0,
+          isLandscape: item.isLandscape,
+          atimeMs: stats.atimeMs,
+          mtimeMs: stats.mtimeMs,
+          ctimeMs: stats.ctimeMs
+        })
+
+        if (insert_result.changes > 0) {
+          // 查询插入的记录
+          const query_stmt = this.db.prepare(`SELECT * FROM fbw_resources WHERE id = ?`)
+          const query_result = query_stmt.get(insert_result.lastInsertRowid)
+
+          if (query_result) {
+            return {
+              success: true,
+              message: t('messages.downloadFileSuccess'),
+              data: query_result
+            }
+          }
+        }
+      } catch (err) {
+        // 处理唯一键冲突
+        if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+          this.logger.info(`文件路径已存在，尝试查询现有记录: ${filePath}`)
+          // 查询已存在的记录
+          const query_stmt = this.db.prepare(`SELECT * FROM fbw_resources WHERE filePath = ?`)
+          const query_result = query_stmt.get(filePath)
+
+          if (query_result) {
+            return {
+              success: true,
+              message: t('messages.downloadFileExist'),
+              data: query_result
+            }
+          }
+        } else {
+          // 非唯一键约束的错误
+          this.logger.error(`下载文件失败: error => ${err}`)
+          return {
+            success: false,
+            message: t('messages.downloadFileFail')
+          }
+        }
+      }
+    }
+
+    return {
+      success: false,
+      message: t('messages.downloadFileFail')
+    }
   }
 }

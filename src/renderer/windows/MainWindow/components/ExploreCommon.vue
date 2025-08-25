@@ -440,7 +440,7 @@ const cardItemBtns = computed(() => {
     {
       title: t('exploreCommon.setAsWallpaperWithDownload'),
       action: 'setAsWallpaperWithDownload',
-      icon: 'streamline:screensaver-monitor-wallpaper'
+      icon: 'lucide:wallpaper'
     },
     {
       title: t('exploreCommon.doViewImage'),
@@ -485,7 +485,7 @@ const cardItemBtns = computed(() => {
     ret.push({
       title: t('exploreCommon.onDeleteFile'),
       action: 'onDeleteFile',
-      icon: 'ep:close'
+      icon: 'ri:delete-bin-line'
     })
     ret.push({
       title: t('exploreCommon.showItemInFolder'),
@@ -498,6 +498,14 @@ const cardItemBtns = computed(() => {
       title: t('exploreCommon.openLink'),
       action: 'openLink',
       icon: 'ep:link'
+    })
+  }
+
+  if (item.srcType === 'url') {
+    ret.push({
+      title: t('exploreCommon.onDownloadFile'),
+      action: 'onDownloadFile',
+      icon: 'ri:download-line'
     })
   }
 
@@ -595,6 +603,9 @@ const onCardItemBtnClick = (action, item, index) => {
       break
     case 'onDeleteFile':
       onDeleteFile(item, index)
+      break
+    case 'onDownloadFile':
+      onDownloadFile(item, index)
       break
     case 'showItemInFolder':
       showItemInFolder(item.filePath)
@@ -1326,6 +1337,22 @@ const showItemInFolder = (filePath) => {
 
 const openLink = (url) => {
   window.open(url, '_blank')
+}
+
+const onDownloadFile = async (item, index) => {
+  const res = await window.FBW.downloadFile(JSON.parse(JSON.stringify(item)))
+
+  let options = {}
+  if (res && res.success) {
+    options.type = 'success'
+    options.message = res.message
+    setCardItemStatus(index, 'success')
+  } else {
+    options.type = 'error'
+    options.message = res.message
+    setCardItemStatus(index, 'error')
+  }
+  ElMessage(options)
 }
 
 const onViewInfo = (item) => {

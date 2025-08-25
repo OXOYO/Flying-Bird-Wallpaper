@@ -613,6 +613,11 @@ export default class Store {
       return await this.fileManager.deleteFile(item)
     })
 
+    // 下载文件
+    ipcMain.handle('main:downloadFile', async (event, item) => {
+      return await this.fileManager.downloadFile(item)
+    })
+
     // 搜索资源数据
     ipcMain.handle('main:search', async (event, params) => {
       return await this.resourcesManager.search(params)

@@ -1042,7 +1042,7 @@ onBeforeUnmount(() => {
                 @click="onSetWebWallpaper"
                 style="margin-left: 10px"
               >
-                <IconifyIcon icon="streamline:screensaver-monitor-wallpaper" />
+                <IconifyIcon icon="lucide:wallpaper" />
               </el-button>
             </el-form-item>
             <el-form-item
@@ -1109,7 +1109,7 @@ onBeforeUnmount(() => {
                 @click="onSetColorWallpaper"
                 style="margin-left: 10px"
               >
-                <IconifyIcon icon="streamline:screensaver-monitor-wallpaper" />
+                <IconifyIcon icon="lucide:wallpaper" />
               </el-button>
             </el-form-item>
 
@@ -1140,7 +1140,7 @@ onBeforeUnmount(() => {
                 @click="onSetDynamicWallpaper"
                 style="margin-left: 10px"
               >
-                <IconifyIcon icon="streamline:screensaver-monitor-wallpaper" />
+                <IconifyIcon icon="lucide:wallpaper" />
               </el-button>
             </el-form-item>
             <el-form-item
@@ -1284,7 +1284,7 @@ onBeforeUnmount(() => {
                 @click="onSetRhythmWallpaper"
                 style="margin-left: 10px"
               >
-                <IconifyIcon icon="streamline:screensaver-monitor-wallpaper" />
+                <IconifyIcon icon="lucide:wallpaper" />
               </el-button>
             </el-form-item>
             <el-form-item
