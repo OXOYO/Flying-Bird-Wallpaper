@@ -461,6 +461,23 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
         })
         notice.show()
       })
+
+      // 添加更新下载完成的事件监听器
+      updater.on('update-downloaded', (info) => {
+        global.logger.info('更新下载完成', info)
+        // 显示系统通知提示用户安装更新
+        const notice = new Notification({
+          title: t('actions.checkUpdate'),
+          body: t('messages.updateDownloaded', {
+            version: `v${info.version}`
+          })
+        })
+        notice.on('click', () => {
+          // 退出并安装更新
+          autoUpdater.quitAndInstall()
+        })
+        notice.show()
+      })
       updater.on('update-not-available', (info) => {
         global.logger.info('无需更新', info)
         // 显示系统通知
