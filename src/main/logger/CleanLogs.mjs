@@ -67,7 +67,7 @@ export default class CleanLogs {
         if (stats.mtimeMs < threshold) {
           await fs.promises.unlink(filePath)
           global.logger.info(
-            `Deleted old log file: ${file} (last modified: ${new Date(stats.mtimeMs).toISOString().slice(0, 19).replace('T', ' ')})`
+            `Deleted old log file: ${file} (last modified: ${new Date(stats.mtimeMs)})`
           )
         }
       } catch (err) {

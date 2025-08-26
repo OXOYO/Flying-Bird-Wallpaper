@@ -324,7 +324,10 @@ export const intervalUnits = {
     { label: '时', value: 'h', min: 1, locale: 'intervalUnits.h' },
     { label: '天', value: 'd', min: 1, locale: 'intervalUnits.d' }
   ],
-  clearDownloadedExpiredUnit: [{ label: '天', value: 'd', min: 1, locale: 'intervalUnits.d' }],
+  clearDownloadedExpiredUnit: [
+    { label: '时', value: 'h', min: 1, locale: 'intervalUnits.h' },
+    { label: '天', value: 'd', min: 1, locale: 'intervalUnits.d' }
+  ],
   refreshWebWallpaperIntervalUnit: [
     { label: '秒', value: 's', min: 1, locale: 'intervalUnits.s' },
     { label: '分', value: 'm', min: 1, locale: 'intervalUnits.m' },

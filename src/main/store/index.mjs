@@ -224,25 +224,25 @@ export default class Store {
   setupPowerMonitor() {
     // 监听系统挂起事件
     powerMonitor.on('suspend', () => {
-      global.logger.info('系统挂起，暂停自动切换壁纸')
+      global.logger.info('系统挂起')
       this.handleSystemIdle(true)
     })
 
     // 监听系统恢复事件
     powerMonitor.on('resume', () => {
-      global.logger.info('系统恢复，恢复自动切换壁纸状态')
+      global.logger.info('系统恢复')
       this.handleSystemIdle(false)
     })
 
     // 监听锁屏事件
     powerMonitor.on('lock-screen', () => {
-      global.logger.info('系统锁屏，暂停自动切换壁纸')
+      global.logger.info('系统锁屏')
       this.handleSystemIdle(true)
     })
 
     // 监听解锁事件
     powerMonitor.on('unlock-screen', () => {
-      global.logger.info('系统解锁，恢复自动切换壁纸状态')
+      global.logger.info('系统解锁')
       this.handleSystemIdle(false)
     })
 
@@ -253,10 +253,10 @@ export default class Store {
         // 系统空闲阈值，单位为秒，默认5分钟
         const idleState = powerMonitor.getSystemIdleState(300)
         if (idleState === 'idle' && !this.powerState.isSystemIdle) {
-          global.logger.info('系统空闲，暂停自动切换壁纸')
+          global.logger.info('系统空闲')
           this.handleSystemIdle(true)
         } else if (idleState === 'active' && this.powerState.isSystemIdle) {
-          global.logger.info('系统活跃，恢复自动切换壁纸状态')
+          global.logger.info('系统活跃')
           this.handleSystemIdle(false)
         }
       }, 60000)
@@ -299,6 +299,7 @@ export default class Store {
         // 暂停自动刷新壁纸，但不更新设置
         this.stopRefreshWebWallpaperTask()
       }
+      global.logger.info('系统空闲，暂停壁纸更新任务')
     } else if (!isIdle && this.powerState.isSystemIdle) {
       // 系统恢复活跃状态，恢复之前的自动切换状态
       this.powerState.isSystemIdle = false
@@ -319,6 +320,7 @@ export default class Store {
         this.stopRefreshWebWallpaperTask()
         this.startRefreshWebWallpaperTask()
       }
+      global.logger.info('系统恢复活跃，恢复壁纸更新任务')
     }
   }
 

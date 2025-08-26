@@ -930,18 +930,12 @@ export default class WallpaperManager {
       const { clearDownloadedExpiredTime, clearDownloadedExpiredUnit } = this.settingData
       const expiredTimeMs = handleTimeByUnit(clearDownloadedExpiredTime, clearDownloadedExpiredUnit)
       const expiredTimestamp = Date.now() - expiredTimeMs
-      // 将时间戳转换为 SQLite 日期时间格式
-      const expiredDate = new Date(expiredTimestamp).toISOString()
 
-      // 直接从数据库中查询过期的非local资源
+      // 直接从数据库中查询过期的非local资源，使用unixepoch修饰符将时间戳转换为SQLite日期时间格式
       const query_stmt = this.db.prepare(
-        `SELECT * FROM fbw_resources WHERE resourceName != 'local' AND created_at < ?`
+        `SELECT * FROM fbw_resources WHERE resourceName != 'local' AND created_at < datetime(?, 'unixepoch', 'localtime')`
       )
-      console.log(
-        'expiredDate',
-        `SELECT * FROM fbw_resources WHERE resourceName != 'local' AND created_at < ${expiredDate}`
-      )
-      const query_result = query_stmt.all(expiredDate)
+      const query_result = query_stmt.all(expiredTimestamp / 1000)
 
       let allCount = 0
       let successCount = 0
