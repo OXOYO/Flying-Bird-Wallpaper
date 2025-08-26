@@ -1,8 +1,7 @@
 import fs from 'node:fs'
 import { join } from 'node:path'
-import schedule from 'node-schedule'
 
-export default class CleanOldLogs {
+export default class CleanLogs {
   #job
 
   constructor() {
@@ -11,9 +10,10 @@ export default class CleanOldLogs {
 
   /**
    * 启动清理任务
-   * @param {string} rule - 定时任务规则，默认为每小时的第 0 分钟执行
+   * @param {number} interval - 清理间隔（毫秒），默认为 1 小时
    */
-  start(rule = '0 * * * *') {
+  start(interval = 60 * 60 * 1000) {
+    // 默认 1 小时
     this.stop()
 
     // 检查日志目录是否存在
@@ -23,33 +23,36 @@ export default class CleanOldLogs {
       return
     }
 
-    // 每小时执行一次清理任务
-    this.#job = schedule.scheduleJob(rule, async () => {
+    // 每隔指定时间执行一次清理任务
+    this.#job = setInterval(async () => {
       try {
-        await this.cleanOldLogs(logDir)
+        await this.clean(logDir)
       } catch (err) {
         global.logger.error(`Failed to clean old logs: ${err.message}`)
       }
-    })
+    }, interval)
 
-    global.logger.info('CleanOldLogs task started.')
+    global.logger.info('CleanLogs task started.')
   }
 
   /**
    * 停止清理任务
    */
   stop() {
-    this.#job?.cancel()
-    global.logger.info('CleanOldLogs task stopped.')
+    if (this.#job) {
+      clearInterval(this.#job)
+      this.#job = null
+    }
+    global.logger.info('CleanLogs task stopped.')
   }
 
   /**
    * 清理旧日志文件
    * @param {string} logDir - 日志目录路径
    */
-  async cleanOldLogs(logDir) {
+  async clean(logDir) {
     const now = Date.now()
-    const twoHoursAgo = now - 2 * 60 * 60 * 1000 // 2 小时前的时间戳
+    const threshold = now - 24 * 60 * 60 * 1000 // 清理阈值时间戳
 
     // 读取日志目录
     const files = await fs.promises.readdir(logDir)
@@ -60,11 +63,11 @@ export default class CleanOldLogs {
       try {
         const stats = await fs.promises.stat(filePath)
 
-        // 如果文件最后修改时间超过 2 小时，则删除
-        if (stats.mtimeMs < twoHoursAgo) {
+        // 如果文件最后修改时间超过清理阈值，则删除
+        if (stats.mtimeMs < threshold) {
           await fs.promises.unlink(filePath)
           global.logger.info(
-            `Deleted old log file: ${file} (last modified: ${new Date(stats.mtimeMs).toISOString()})`
+            `Deleted old log file: ${file} (last modified: ${new Date(stats.mtimeMs).toISOString().slice(0, 19).replace('T', ' ')})`
           )
         }
       } catch (err) {

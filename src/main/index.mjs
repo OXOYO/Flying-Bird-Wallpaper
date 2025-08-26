@@ -16,7 +16,7 @@ import {
 import { electronApp, optimizer } from '@electron-toolkit/utils'
 import installExtension, { VUEJS_DEVTOOLS_BETA } from 'electron-devtools-installer'
 import localShortcut from 'electron-localshortcut'
-import logger from './logger.mjs'
+import logger from './logger/logger.mjs'
 import Store from './store/index.mjs'
 import {
   osType,

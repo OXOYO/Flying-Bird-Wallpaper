@@ -1,6 +1,7 @@
 import { join } from 'node:path'
 import pino from 'pino'
-import { isDev } from './utils/utils.mjs'
+import { isDev } from '../utils/utils.mjs'
+import CleanLogs from './CleanLogs.mjs'
 
 export default (logDir, fileName = 'app.log') => {
   // 获取用户数据目录
@@ -34,4 +35,8 @@ export default (logDir, fileName = 'app.log') => {
 
   // 初始化日志 挂载全局变量
   global.logger = logger
+
+  // 初始化日志清理任务
+  const cleanLogs = new CleanLogs()
+  cleanLogs.start()
 }
