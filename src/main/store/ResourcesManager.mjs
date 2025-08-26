@@ -133,7 +133,7 @@ export default class ResourcesManager {
             ? `stats.${sortField}`
             : `s.${sortField}`
           const order_by_str = isRandom
-            ? `ORDER BY ${sortFieldForOrder} ${sortOrder}, RANDOM()`
+            ? `ORDER BY RANDOM(), ${sortFieldForOrder} ${sortOrder}`
             : `ORDER BY ${sortFieldForOrder} ${sortOrder}`
 
           query_sql = `
@@ -159,7 +159,7 @@ export default class ResourcesManager {
             ? `stats.${sortField}`
             : `r.${sortField}`
           const order_by_str = isRandom
-            ? `ORDER BY ${sortFieldForOrder} ${sortOrder}, RANDOM()`
+            ? `ORDER BY RANDOM(), ${sortFieldForOrder} ${sortOrder}`
             : `ORDER BY ${sortFieldForOrder} ${sortOrder}`
 
           query_sql = `
