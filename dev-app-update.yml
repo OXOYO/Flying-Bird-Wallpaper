@@ -1,4 +1,10 @@
-provider: github
-owner: OXOYO
-repo: Flying-Bird-Wallpaper
+# 测试本地更新
+provider: generic
+url: http://localhost:8080
+
+# 测试 GitHub 更新
+# provider: github
+# owner: OXOYO
+# repo: Flying-Bird-Wallpaper
+
 updaterCacheDirName: Flying Bird Wallpaper-updater
