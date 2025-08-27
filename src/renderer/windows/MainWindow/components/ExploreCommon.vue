@@ -1066,7 +1066,6 @@ const getNextList = async () => {
         })
       }
     } else {
-      searchForm.total = 0
       ElMessage({
         type: 'error',
         message: res?.message || t('messages.getDataFail')
@@ -1319,6 +1318,7 @@ const onDeleteFile = (item, index) => {
     if (res.success) {
       callback = async () => {
         cardList.value.splice(index, 1)
+        searchForm.total = Math.max(0, searchForm.total - 1)
         await doCompleteList()
         // 强制更新
         nextTick(() => {
