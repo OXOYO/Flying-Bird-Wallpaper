@@ -19,7 +19,7 @@ export default class Updater {
       autoUpdater.allowDowngrade = true
     }
     // 配置自动更新
-    autoUpdater.autoDownload = true // 自动下载
+    autoUpdater.autoDownload = false // 自动下载
     autoUpdater.autoInstallOnAppQuit = true // 应用退出后自动安装
 
     // 监听渲染进程的检查更新事件，触发检查更新
