@@ -473,6 +473,7 @@
     "jumpText": "检查设置"
   },
   "exploreCommon": {
+    "toggleFixedBtns": "切换按钮",
     "onLoadMore": "加载更多",
     "onRefresh": "刷新",
     "isRandom": {

@@ -473,6 +473,7 @@
     "jumpText": "Check settings"
   },
   "exploreCommon": {
+    "toggleFixedBtns": "Toggle Buttons",
     "onLoadMore": "Load more",
     "onRefresh": "Refresh",
     "isRandom": {

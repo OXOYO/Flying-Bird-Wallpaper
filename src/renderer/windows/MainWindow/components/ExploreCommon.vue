@@ -187,7 +187,8 @@ const flags = reactive({
   inPrivacySpace: false,
   loadMoreClicked: false,
   syncToSetting: false,
-  scrollDebounce: false // 添加滚动防抖标志
+  scrollDebounce: false, // 添加滚动防抖标志
+  showFixedBtns: true // 固定按钮是否显示
 })
 
 const autoRefreshForm = reactive({
@@ -293,33 +294,51 @@ const resizeObserver = new ResizeObserver((entries) => {
 })
 
 const fixedBtns = computed(() => {
-  const ret = [
-    {
-      action: 'onLoadMore',
-      actionParams: [],
-      title: t('exploreCommon.onLoadMore'),
-      icon: 'ep:d-arrow-right',
-      iconStyle: {
-        transform: 'rotate(90deg)'
-      },
-      style: {
-        bottom: '40px'
-      }
-    },
-    {
-      action: 'onRefresh',
-      actionParams: [false],
-      title: t('exploreCommon.onRefresh'),
-      icon: 'ep:refresh-right',
-      iconStyle: {},
-      style: {
-        bottom: '100px'
-      }
-    }
-  ]
   const getBottom = () => {
     return (ret.length - 1) * 60 + 100 + 'px'
   }
+  const ret = []
+  ret.push({
+    action: 'toggleFixedBtns',
+    actionParams: [],
+    title: t('exploreCommon.toggleFixedBtns'),
+    icon: flags.showFixedBtns
+      ? 'material-symbols:collapse-all-rounded'
+      : 'material-symbols:expand-all-rounded',
+    iconStyle: {},
+    style: {
+      bottom: getBottom()
+    }
+  })
+
+  if (!flags.showFixedBtns) {
+    return ret
+  }
+
+  ret.push({
+    action: 'onLoadMore',
+    actionParams: [],
+    title: t('exploreCommon.onLoadMore'),
+    icon: 'ep:d-arrow-right',
+    iconStyle: {
+      transform: 'rotate(90deg)'
+    },
+    style: {
+      bottom: getBottom()
+    }
+  })
+
+  ret.push({
+    action: 'onRefresh',
+    actionParams: [false],
+    title: t('exploreCommon.onRefresh'),
+    icon: 'ep:refresh-right',
+    iconStyle: {},
+    style: {
+      bottom: getBottom()
+    }
+  })
+
   // FIXME 注意顺序
   if (!isSearchMenu.value || (isSearchMenu.value && isLocalResource.value)) {
     ret.push({
@@ -545,6 +564,9 @@ const onWordClick = (item) => {
 
 const onFixedBtnClick = (action, actionParams, childVal) => {
   switch (action) {
+    case 'toggleFixedBtns':
+      toggleFixedBtns()
+      break
     case 'onLoadMore':
       onLoadMore()
       break
@@ -617,6 +639,11 @@ const onCardItemBtnClick = (action, item, index) => {
       onViewInfo(item)
       break
   }
+}
+
+// 切换固定按钮显示隐藏
+const toggleFixedBtns = () => {
+  flags.showFixedBtns = !flags.showFixedBtns
 }
 
 // 切换资源
@@ -1611,6 +1638,7 @@ onBeforeUnmount(() => {
       </div>
       <div ref="cardBlockRef" class="card-block" :style="cardBlockStyle">
         <el-backtop
+          v-if="flags.showFixedBtns"
           class="fixed-btn"
           :right="40"
           :bottom="backtopBtnBottom"
@@ -2020,7 +2048,7 @@ onBeforeUnmount(() => {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(149, 212, 117, 0.5);
+    background-color: rgba(149, 212, 117, 0.8);
     z-index: 11;
     animation: fadeOut 0.3s forwards;
   }
@@ -2036,7 +2064,7 @@ onBeforeUnmount(() => {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(248, 152, 152, 0.5);
+    background-color: rgba(248, 152, 152, 0.8);
     z-index: 11;
     animation: fadeOut 0.3s forwards;
   }
