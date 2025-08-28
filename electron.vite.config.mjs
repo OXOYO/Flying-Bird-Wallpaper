@@ -1,8 +1,10 @@
-import { resolve, join, dirname, sep } from 'node:path'
+import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import fg from 'fast-glob'
 import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
 import vue from '@vitejs/plugin-vue'
+import viteCompression from 'vite-plugin-compression2'
+// import { analyzer } from 'vite-bundle-analyzer'
 // ELEMENT-PLUS 按需加载
 import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
@@ -85,7 +87,12 @@ export default defineConfig({
       // 图标按需加载
       Icons({
         compiler: 'vue3'
+      }),
+      // 代码压缩
+      viteCompression({
+        deleteOriginalAssets: true
       })
+      // analyzer()
     ],
     css: {
       preprocessorOptions: {

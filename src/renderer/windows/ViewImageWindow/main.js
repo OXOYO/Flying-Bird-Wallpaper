@@ -1,5 +1,3 @@
-import ElementPlus from 'element-plus'
-import 'element-plus/dist/index.css'
 import 'viewerjs/dist/viewer.css'
 import '@renderer/assets/main.scss'
 
@@ -11,7 +9,6 @@ const app = createApp(App)
 const pinia = createPinia()
 
 app.use(pinia)
-app.use(ElementPlus)
 
 useIconifyIcon(app)
 
