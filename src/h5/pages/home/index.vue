@@ -2,7 +2,6 @@
 import UseCommonStore from '@h5/stores/commonStore.js'
 import UseSettingStore from '@h5/stores/settingStore.js'
 import * as api from '@h5/api/index.js'
-import { showNotify, showConfirmDialog } from 'vant'
 import { useTranslation } from 'i18next-vue'
 import { infoKeys } from '@common/publicData.js'
 import { handleInfoVal } from '@common/utils.js'

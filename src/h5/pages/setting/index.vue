@@ -15,7 +15,6 @@ import { localeOptions } from '@i18n/locale/index.js'
 import { appInfo } from '@common/config.js'
 import UseCommonStore from '@h5/stores/commonStore.js'
 import UseSettingStore from '@h5/stores/settingStore.js'
-import { showNotify, showToast } from 'vant'
 import { useTranslation } from 'i18next-vue'
 
 const { t } = useTranslation()

@@ -3,6 +3,9 @@ import vue from '@vitejs/plugin-vue'
 import AutoImport from 'unplugin-auto-import/vite'
 import liveReload from 'vite-plugin-live-reload'
 import viteCompression from 'vite-plugin-compression2'
+import Components from 'unplugin-vue-components/vite'
+import { VantResolver } from '@vant/auto-import-resolver'
+// import { analyzer } from 'vite-bundle-analyzer'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 // 图标按需加载
@@ -27,6 +30,8 @@ export default defineConfig({
     AutoImport({
       // 自动导入 Vue 相关函数，如：ref, reactive, toRef 等
       imports: ['vue', 'pinia'],
+      // 按需导入 Vant 组件
+      resolvers: [VantResolver()],
       // 生成 TypeScript 声明文件
       dts: './auto-imports.d.ts',
       // 生成 ESLint 配置文件
@@ -36,11 +41,15 @@ export default defineConfig({
         globalsPropValue: true
       }
     }),
+    Components({
+      resolvers: [VantResolver()]
+    }),
     liveReload(['src/h5/**/*']), // 监听 src 目录下的文件变化
     Icons({
       compiler: 'vue3'
     }),
     viteCompression()
+    // analyzer()
   ],
   build: {
     emptyOutDir: true, // 清空 outDir
