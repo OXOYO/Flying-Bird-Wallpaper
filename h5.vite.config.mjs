@@ -48,9 +48,7 @@ export default defineConfig({
     Icons({
       compiler: 'vue3'
     }),
-    viteCompression({
-      deleteOriginalAssets: true
-    })
+    viteCompression()
     // analyzer()
   ],
   build: {

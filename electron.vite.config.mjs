@@ -89,9 +89,7 @@ export default defineConfig({
         compiler: 'vue3'
       }),
       // 代码压缩
-      viteCompression({
-        deleteOriginalAssets: true
-      })
+      viteCompression()
       // analyzer()
     ],
     css: {
