@@ -8,12 +8,16 @@ forceCodeSigning: false
 buildDependenciesFromSource: true
 compression: maximum
 
+# 打包后hooks
+afterPack: ./scripts/after-pack-hook.mjs
+
 directories:
   buildResources: build
   output: dist
 files:
-  - 'out/**/*'
-  - '!out/h5/**'
+  - 'out/main/**/*'
+  - 'out/preload/**/*'
+  - 'out/renderer/**/*'
   - '!**/.vscode/*'
   - '!src/*'
   - '!electron.vite.config.{js,ts,mjs,cjs}'
@@ -27,10 +31,7 @@ extraResources:
   - from: resources
     to: resources
 asarUnpack:
-  - resources/**
-  - h5/**
-  - '**/*.{node,dll,exe}'
-  - '**/node_modules/@iconify-json/**'
+
 win:
   executableName: Flying Bird Wallpaper
   target:
@@ -46,6 +47,10 @@ nsis:
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
+  # 允许用户更改安装目录
+  allowToChangeInstallationDirectory: true
+  # 安装完成后打开应用程序
+  runAfterFinish: true
   differentialPackage: false
 
 mac:
