@@ -41,6 +41,9 @@
 飞鸟壁纸是一款功能丰富的桌面壁纸软件，支持图片、视频、律动、纯色等多种壁纸类型，让您的桌面焕发独特魅力。
 
 ## [预览效果](./docs/preview.md)
+
+<img src="./docs/fbw_search.png" width="100%">
+
 ## [文档](https://github.com/OXOYO/Flying-Bird-Wallpaper/blob/dev/README.md)
 
 ## 核心功能
