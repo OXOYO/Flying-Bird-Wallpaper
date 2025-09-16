@@ -329,6 +329,12 @@ export default class Store {
     try {
       // 启动子进程
       this.fileServer?.start({
+        options: {
+          env: {
+            ...process.env, // 传递主进程的环境变量给子进程
+            NODE_ENV: process.env.NODE_ENV
+          }
+        },
         onMessage: ({ data }) => {
           switch (data.event) {
             case 'REFRESH_DIRECTORY::SUCCESS':
@@ -428,7 +434,10 @@ export default class Store {
       try {
         this.h5Server?.start({
           options: {
-            env: process.env
+            env: {
+              ...process.env, // 传递主进程的环境变量给子进程
+              NODE_ENV: process.env.NODE_ENV
+            }
           },
           onMessage: async ({ data }) => {
             switch (data.event) {

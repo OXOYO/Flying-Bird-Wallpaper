@@ -9,7 +9,9 @@ import crypto from 'node:crypto'
 import sharp from 'sharp'
 import forge from 'node-forge'
 import fg from 'fast-glob'
+
 import { allowedImageExtList, allowedVideoExtList } from '../../common/publicData.js'
+import ImageScorer from './ImageScorer.mjs'
 
 const OS_TYPES = {
   Linux: 'linux',
@@ -187,7 +189,7 @@ export const readDirRecursive = async (
           ctimeMs: file.stats.ctimeMs
         }
       } catch (err) {
-        global.logger.error(`处理文件元数据失败: ${file.filePath} error => ${err}`)
+        // global.logger.error(`处理文件元数据失败: ${file.filePath} error => ${err}`)
         return null
       }
     })
@@ -227,10 +229,10 @@ export const calculateImageQuality = (width = 0, height = 0) => {
 
 // 计算图片是否横屏 横屏: 1 竖屏: 0
 export const calculateImageOrientation = (width = 0, height = 0) => {
-  return width > height ? 1 : 0
+  return width >= height ? 1 : 0
 }
 
-export const extractDominantColor = async (filePath) => {
+export const calculateDominantColor = async (filePath) => {
   try {
     // 将图片缩小到 1x1 像素以获取平均颜色
     const { data } = await sharp(filePath)
@@ -246,10 +248,19 @@ export const extractDominantColor = async (filePath) => {
     // 返回十六进制颜色值
     return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
   } catch (err) {
-    global.logger.error(`提取图片主色调失败: ${filePath} error => ${err}`)
+    // global.logger.error(`提取图片主色调失败: ${filePath} error => ${err}`)
     // 默认透明色
     return '#00000000'
   }
+}
+
+// 计算图片美学评分
+export const calculateImageScore = async (filePath) => {
+  // 使用静态导入的ImageScorer
+  const scorer = ImageScorer.getInstance()
+
+  const score = await scorer.predict(filePath)
+  return score
 }
 
 export const calculateImageByPath = async (filePath) => {
@@ -258,6 +269,7 @@ export const calculateImageByPath = async (filePath) => {
     isLandscape: -1,
     width: 0,
     height: 0,
+    score: 0,
     dominantColor: '#00000000'
   }
   try {
@@ -266,8 +278,10 @@ export const calculateImageByPath = async (filePath) => {
     ret.height = height
     ret.quality = calculateImageQuality(width, height)
     ret.isLandscape = calculateImageOrientation(width, height)
+    // 计算图片美学评分
+    ret.score = await calculateImageScore(filePath)
     // 提取主色调
-    ret.dominantColor = await extractDominantColor(filePath)
+    ret.dominantColor = await calculateDominantColor(filePath)
     return ret
   } catch (err) {
     return ret

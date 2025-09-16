@@ -315,7 +315,7 @@ export const intervalUnits = {
     { label: '天', value: 'd', min: 1, locale: 'intervalUnits.d' }
   ],
   refreshDirectoryIntervalUnit: [
-    { label: '分', value: 'm', min: 5, locale: 'intervalUnits.m' },
+    { label: '分', value: 'm', min: 1, locale: 'intervalUnits.m' },
     { label: '时', value: 'h', min: 1, locale: 'intervalUnits.h' },
     { label: '天', value: 'd', min: 1, locale: 'intervalUnits.d' }
   ],

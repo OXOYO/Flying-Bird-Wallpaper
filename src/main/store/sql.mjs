@@ -64,6 +64,7 @@ export const createTables = [
     width INTEGER NOT NULL DEFAULT 0, -- 图片宽度
     height INTEGER NOT NULL DEFAULT 0, -- 图片高度
     isLandscape INTEGER NOT NULL DEFAULT -1, -- 是否为横屏
+    score INTEGER NOT NULL DEFAULT 0, -- 图片美学评分
     dominantColor TEXT NOT NULL DEFAULT '', -- 主色调
     atimeMs INTEGER NOT NULL DEFAULT 0, -- 本地文件最后访问时间
     mtimeMs INTEGER NOT NULL DEFAULT 0, -- 本地文件最后修改时间
