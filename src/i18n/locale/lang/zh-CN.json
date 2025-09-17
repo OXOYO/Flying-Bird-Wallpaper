@@ -523,6 +523,7 @@
       "placeholder": "请输入关键词"
     },
     "tagItem": {
+      "score": "评分",
       "favorited": "已收藏"
     },
     "totalText": "共 {current} / {total} 条"
@@ -560,6 +561,7 @@
       "fileExt": "扩展名",
       "fileSize": "文件大小",
       "quality": "质量",
+      "score": "评分",
       "dimensions": "尺寸",
       "views": "浏览量",
       "downloads": "下载量",
@@ -600,6 +602,7 @@
           "fileExt": "扩展名",
           "fileSize": "文件大小",
           "quality": "质量",
+          "score": "评分",
           "dimensions": "尺寸",
           "views": "浏览量",
           "downloads": "下载量",

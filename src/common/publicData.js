@@ -566,6 +566,7 @@ export const infoKeys = [
   'fileExt',
   'fileSize',
   'quality',
+  'score',
   'dimensions',
   'views',
   'downloads',

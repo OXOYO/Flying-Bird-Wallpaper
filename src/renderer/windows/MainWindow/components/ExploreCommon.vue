@@ -287,10 +287,8 @@ const supportSearchTypes = computed(() => {
   return Array.isArray(types) && types.length ? types : ['images']
 })
 
-const resizeObserver = new ResizeObserver((entries) => {
-  for (let entry of entries) {
-    handleGridSize(entry.contentRect.width, entry.contentRect.height)
-  }
+const isShowTag = computed(() => {
+  return settingData.value.showImageTag && cardForm.cardHeight > 100 && cardForm.cardWidth > 100
 })
 
 const fixedBtns = computed(() => {
@@ -770,6 +768,12 @@ const onSwitchGridSize = async (childVal) => {
     settingStore.updateSettingData(res.data)
   }
 }
+
+const resizeObserver = new ResizeObserver((entries) => {
+  for (let entry of entries) {
+    handleGridSize(entry.contentRect.width, entry.contentRect.height)
+  }
+})
 
 const handleGridSize = (blockWidth = 900, blockHeight = 600) => {
   if (!blockWidth || !blockHeight) return
@@ -1426,18 +1430,6 @@ const toggleVideo = (item, index) => {
   }
 }
 
-const isShowTag = (item) => {
-  return (
-    settingData.value.showImageTag &&
-    (item.resourceName ||
-      (item.quality && item.quality !== 'unset') ||
-      item.isLandscape === 1 ||
-      item.isLandscape === 0) &&
-    cardForm.cardHeight > 100 &&
-    cardForm.cardWidth > 100
-  )
-}
-
 const onTriggerActionCallback = (event, action, params) => {
   if (
     action === 'setWallpaper' &&
@@ -1700,7 +1692,7 @@ onBeforeUnmount(() => {
               }"
               @mouseenter="onOverCard(index)"
             >
-              <div v-if="isShowTag(item)" class="card-item-tags">
+              <div v-if="isShowTag" class="card-item-tags">
                 <div
                   v-if="item.resourceName"
                   class="tag-item"
@@ -1716,6 +1708,14 @@ onBeforeUnmount(() => {
                   @click.stop="onTagClick('quality', item.quality)"
                 >
                   {{ item.quality }}
+                </div>
+                <div
+                  v-if="item.score"
+                  class="tag-item"
+                  :title="t('exploreCommon.tagItem.score')"
+                  style="cursor: not-allowed"
+                >
+                  {{ item.score }}
                 </div>
                 <div
                   v-if="item.isLandscape === 1"
@@ -2164,8 +2164,9 @@ onBeforeUnmount(() => {
 }
 .card-item-btns {
   position: absolute;
-  left: 0;
+  right: 0;
   bottom: 0;
+  left: 0;
   transform: translate(0, 100%);
   z-index: 10;
   width: 100%;
@@ -2180,7 +2181,7 @@ onBeforeUnmount(() => {
   align-items: center;
   /* 网格间距 */
   gap: 4px;
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(10px);
   background-color: var(--dominant-color-rgba);
 
   .card-item-btn {
@@ -2196,7 +2197,7 @@ onBeforeUnmount(() => {
 }
 
 .card-item-btn-icon {
-  font-size: 20px;
+  font-size: 22px;
 }
 
 .card-item-tags {
@@ -2207,6 +2208,7 @@ onBeforeUnmount(() => {
   font-size: 12px;
   color: #ffffff;
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
   justify-content: center;
   align-items: center;
@@ -2216,6 +2218,7 @@ onBeforeUnmount(() => {
   background-color: rgba(0, 0, 0, 0.6);
   padding: 2px 4px;
   border-radius: 4px;
+  cursor: pointer;
 }
 
 .total-text {

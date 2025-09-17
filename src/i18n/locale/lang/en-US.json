@@ -523,6 +523,7 @@
       "placeholder": "Filter keywords"
     },
     "tagItem": {
+      "score": "Score",
       "favorited": "Favorited"
     },
     "totalText": "Total {current} / {total} items"
@@ -560,6 +561,7 @@
       "fileExt": "File Extension",
       "fileSize": "File Size",
       "quality": "Quality",
+      "score": "Score",
       "dimensions": "Dimensions",
       "views": "Views",
       "downloads": "Downloads",
@@ -600,6 +602,7 @@
           "fileExt": "File Extension",
           "fileSize": "File Size",
           "quality": "Quality",
+          "score": "Score",
           "dimensions": "Dimensions",
           "views": "Views",
           "downloads": "Downloads",
