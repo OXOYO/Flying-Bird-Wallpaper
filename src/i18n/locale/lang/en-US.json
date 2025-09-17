@@ -314,7 +314,9 @@
     "rhythmWallpaperNeedVirtualAudio": "Please install and configure virtual audio card (such as VB-Audio/BlackHole) to use rhythm wallpaper feature",
     "noData": "No data",
     "loading": "Loading...",
-    "loadingMore": "Loading more..."
+    "loadingMore": "Loading more...",
+    "invalidIndex": "Please enter a valid index",
+    "indexOutOfRange": "Index out of range"
   },
   "resourceTypeList": {
     "localResource": "Local resources",
@@ -589,7 +591,9 @@
           "confirmDelete": "Confirm Delete",
           "confirmDeleteMessage": "Are you sure you want to delete this image?",
           "confirmDeleteBtn": "Confirm",
-          "cancelDeleteBtn": "Cancel"
+          "cancelDeleteBtn": "Cancel",
+          "jumpToIndex": "Jump to Index",
+          "enterIndex": "Please enter index"
         },
         "imageInfo": {
           "title": "Title",

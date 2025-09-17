@@ -31,7 +31,9 @@ const flags = reactive({
   // 长按收藏显示提示动效
   showFavoriteToast: false,
   // 是否操作弹层
-  showActionPopup: false
+  showActionPopup: false,
+  // 是否显示跳转弹窗
+  showJumpPopup: false
 })
 
 // 图片信息面板高度
@@ -1302,6 +1304,65 @@ const handlePageHide = () => {
 
 // 处理页面显示事件（可能是解锁或切回应用）
 const handlePageShow = () => {}
+
+// 新增跳转索引
+const jumpIndex = ref('')
+
+// 添加跳转到指定索引的方法
+const jumpToIndex = async () => {
+  const index = parseInt(jumpIndex.value) - 1
+  if (isNaN(index) || index < 0) {
+    jumpIndex.value = ''
+    showNotify({
+      type: 'warning',
+      message: t('messages.invalidIndex')
+    })
+    return
+  }
+
+  // 如果索引超出当前图片列表范围，需要加载更多数据
+  if (index >= autoSwitch.imageList.length) {
+    // 计算需要加载的页数
+    const neededPage = Math.ceil((index + 1) / pageInfo.pageSize)
+    const currentPage = pageInfo.startPage
+
+    // 如果需要加载更多数据
+    if (neededPage > currentPage) {
+      flags.loading = true
+      const pagesToLoad = neededPage - currentPage
+
+      for (let i = 0; i < pagesToLoad; i++) {
+        if (!flags.finished) {
+          pageInfo.startPage += 1
+          await loadData()
+        } else {
+          break
+        }
+      }
+
+      flags.loading = false
+    }
+  }
+
+  // 再次检查索引是否有效
+  if (index >= autoSwitch.imageList.length) {
+    jumpIndex.value = ''
+    showNotify({
+      type: 'warning',
+      message: t('messages.indexOutOfRange')
+    })
+    return
+  }
+
+  // 跳转到指定索引
+  autoSwitch.currentIndex = index
+  // 使用nextTick确保在DOM更新后执行滚动
+  nextTick(() => {
+    virtualListRef.value?.scrollToIndex(autoSwitch.currentIndex)
+  })
+  flags.showJumpPopup = false
+  jumpIndex.value = ''
+}
 </script>
 
 <template>
@@ -1344,7 +1405,7 @@ const handlePageShow = () => {}
       </virtualList>
     </div>
     <!-- 指示器 -->
-    <div class="number-indicator" :style="numberIndicatorStyle">
+    <div class="number-indicator" :style="numberIndicatorStyle" @click="flags.showJumpPopup = true">
       {{ debouncedDisplayIndex }} / {{ autoSwitch.total }}
     </div>
   </div>
@@ -1503,6 +1564,22 @@ const handlePageShow = () => {}
       </div>
     </template>
   </van-toast>
+
+  <!-- 跳转弹窗 -->
+  <van-dialog
+    v-model:show="flags.showJumpPopup"
+    :title="t('h5.pages.home.actions.jumpToIndex')"
+    show-cancel-button
+    @confirm="jumpToIndex"
+    @cancel="jumpIndex = ''"
+  >
+    <van-field
+      v-model="jumpIndex"
+      :placeholder="t('h5.pages.home.actions.enterIndex')"
+      type="digit"
+      :maxlength="String(autoSwitch.total).length"
+    />
+  </van-dialog>
 </template>
 
 <style scoped lang="scss">
@@ -1677,8 +1754,8 @@ const handlePageShow = () => {}
   border-radius: 16px;
   font-size: 14px;
   letter-spacing: 1px;
-  z-index: 20;
-  pointer-events: none;
+  z-index: 100;
+  pointer-events: auto; /* 修改为auto以允许点击事件 */
 }
 
 .image-info-content {

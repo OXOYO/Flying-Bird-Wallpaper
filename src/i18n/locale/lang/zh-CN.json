@@ -314,7 +314,9 @@
     "rhythmWallpaperNeedVirtualAudio": "请先安装并配置虚拟声卡（如 VB-Audio/BlackHole）才能使用律动壁纸功能",
     "noData": "暂无数据",
     "loading": "加载中...",
-    "loadingMore": "加载更多..."
+    "loadingMore": "加载更多...",
+    "invalidIndex": "请输入有效的序号",
+    "indexOutOfRange": "序号超出范围"
   },
   "resourceTypeList": {
     "localResource": "本地资源",
@@ -589,7 +591,9 @@
           "confirmDelete": "确认删除",
           "confirmDeleteMessage": "确认要删除图片吗？",
           "confirmDeleteBtn": "确认",
-          "cancelDeleteBtn": "取消"
+          "cancelDeleteBtn": "取消",
+          "jumpToIndex": "跳转到指定位置",
+          "enterIndex": "请输入序号"
         },
         "imageInfo": {
           "title": "标题",
