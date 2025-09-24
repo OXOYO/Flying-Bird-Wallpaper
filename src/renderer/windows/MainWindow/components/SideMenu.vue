@@ -90,19 +90,6 @@ const onToolClick = async (funcName) => {
     await window.FBW[funcName]()
   }
 }
-
-const onJumpToPageCallback = (event, key) => {
-  onSelect(key)
-}
-onBeforeMount(() => {
-  // 监听主进程的页面跳转事件
-  window.FBW.onJumpToPage(onJumpToPageCallback)
-})
-
-onBeforeUnmount(() => {
-  // 取消监听主进程的页面跳转事件
-  window.FBW.offJumpToPage(onJumpToPageCallback)
-})
 </script>
 
 <template>

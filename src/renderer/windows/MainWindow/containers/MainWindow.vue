@@ -19,9 +19,23 @@ const toggleExpandSideMenu = async () => {
   }
 }
 
+const onJumpToPageCallback = (event, key) => {
+  menuStore.setSelected(key)
+}
+
+onBeforeMount(() => {
+  // 监听主进程的页面跳转事件
+  window.FBW.onJumpToPage(onJumpToPageCallback)
+})
+
 onMounted(() => {
   // 设置菜单默认选中
   menuStore.setSelected('Search')
+})
+
+onBeforeUnmount(() => {
+  // 取消监听主进程的页面跳转事件
+  window.FBW.offJumpToPage(onJumpToPageCallback)
 })
 </script>
 
