@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="./docs/fbw_social_preview.png" width="100%">
-</p>
-
 <div align="center">
 
 # 飞鸟壁纸 (Flying Bird Wallpaper)
@@ -22,29 +18,23 @@
   <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/releases">
     <img src="https://img.shields.io/github/actions/workflow/status/OXOYO/Flying-Bird-Wallpaper/release.yml" alt="release status">
   </a>
-  <!-- Commitizen friendly -->
-  <a href="http://commitizen.github.io/cz-cli/">
-    <img src="https://img.shields.io/badge/commitizen-friendly-brightgreen.svg" alt="Commitizen friendly">
-  </a>
-  <!-- DeepWiki -->
-  <a href="https://deepwiki.com/OXOYO/Flying-Bird-Wallpaper">
-    <img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki">
-  </a>
 
-
-  <h3>简体中文 | <a href="README-en.md">English</a></h3>
-  
 </div>
 
 ## 项目简介
 
-飞鸟壁纸是一款功能丰富的桌面壁纸软件，支持图片、视频、律动、纯色等多种壁纸类型，让您的桌面焕发独特魅力。
+飞鸟壁纸是一款跨平台桌面壁纸应用，让您轻松浏览、收藏美图，一键设置桌面壁纸。
 
-## [预览效果](./docs/preview.md)
+## [Github](https://github.com/OXOYO/Flying-Bird-Wallpaper)
 
-<img src="./docs/fbw_search.png" width="100%">
 
-## [文档](https://github.com/OXOYO/Flying-Bird-Wallpaper/blob/dev/README.md)
+## [预览效果](https://github.com/OXOYO/Flying-Bird-Wallpaper/blob/main/docs/preview.md)
+
+<img width="1020" alt="Image" src="https://raw.githubusercontent.com/OXOYO/Flying-Bird-Wallpaper/main/docs/fbw_search.png" />
+
+<img width="1020" alt="Image" src="https://raw.githubusercontent.com/OXOYO/Flying-Bird-Wallpaper/main/docs/fbw_settings.png" />
+
+## [开发文档](https://github.com/OXOYO/Flying-Bird-Wallpaper/blob/dev/README.md)
 
 ## 核心功能
 
@@ -55,6 +45,7 @@
 3. **一键管理** - 一键设置壁纸、收藏图片、本地保存，操作简便高效。
 
 4. **桌面悬浮球** - 快速切换壁纸功能，无需打开主界面。
+
 5. **H5端** - 支持手机端访问，随时随地浏览壁纸。
 
 6. **多语言支持** - 内置多语言界面，满足国际化需求。
