@@ -316,7 +316,8 @@
     "loading": "加载中...",
     "loadingMore": "加载更多...",
     "invalidIndex": "请输入有效的序号",
-    "indexOutOfRange": "序号超出范围"
+    "indexOutOfRange": "序号超出范围",
+    "indexTooLarge": "索引过大"
   },
   "resourceTypeList": {
     "localResource": "本地资源",

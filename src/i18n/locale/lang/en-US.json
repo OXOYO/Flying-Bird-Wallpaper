@@ -316,7 +316,8 @@
     "loading": "Loading...",
     "loadingMore": "Loading more...",
     "invalidIndex": "Please enter a valid index",
-    "indexOutOfRange": "Index out of range"
+    "indexOutOfRange": "Index out of range",
+    "indexTooLarge": "Index too large"
   },
   "resourceTypeList": {
     "localResource": "Local resources",

@@ -1323,13 +1323,24 @@ const jumpToIndex = async () => {
   // 如果索引超出当前图片列表范围，需要加载更多数据
   if (index >= autoSwitch.imageList.length) {
     // 计算需要加载的页数
-    const neededPage = Math.ceil((index + 1) / pageInfo.pageSize)
+    let neededPage = Math.ceil((index + 1) / pageInfo.pageSize)
     const currentPage = pageInfo.startPage
 
     // 如果需要加载更多数据
     if (neededPage > currentPage) {
       flags.loading = true
       const pagesToLoad = neededPage - currentPage
+
+      // 限制最多加载10页数据
+      if (pagesToLoad > 10) {
+        flags.loading = false
+        showNotify({
+          type: 'warning',
+          message: t('messages.indexTooLarge')
+        })
+        jumpIndex.value = ''
+        return
+      }
 
       for (let i = 0; i < pagesToLoad; i++) {
         if (!flags.finished) {
