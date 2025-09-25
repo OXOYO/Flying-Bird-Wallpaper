@@ -338,6 +338,11 @@ const scrollToIndex = (index, animated = true) => {
   return scrollTo({ index, animated })
 }
 
+// 滚动到指定位置（兼容旧API）
+const scrollToPosition = (position, animated = true) => {
+  return scrollTo({ position, animated })
+}
+
 // 更新容器高度
 const updateContainerHeight = (height) => {
   containerHeight.value = height
@@ -391,8 +396,8 @@ watch(
 
 // 暴露方法
 defineExpose({
-  scrollTo,
   scrollToIndex,
+  scrollToPosition,
   updateContainerHeight,
   // 状态获取
   getScrollTop: () => virtualListRef.value.scrollTop,

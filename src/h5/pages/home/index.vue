@@ -291,7 +291,7 @@ const onRefresh = async () => {
   autoSwitch.imageList = []
   autoSwitch.currentIndex = 0
   savedCurrentIndex.value = 0
-  virtualListRef.value?.scrollTo({ position: 0, animated: true })
+  virtualListRef.value?.scrollToPosition(0)
   pageInfo.startPage = 1
   flags.finished = false
   await loadData(true)
@@ -426,12 +426,10 @@ const onTouchEnd = (event) => {
       })
     } else if (deltaY > 0 && autoSwitch.currentIndex > 0) {
       // 向下滑动，显示上一张
-      const targetIndex = autoSwitch.currentIndex - 1
-      virtualListRef.value?.scrollTo({ index: targetIndex, animated: true })
+      virtualListRef.value?.scrollToIndex(autoSwitch.currentIndex - 1)
     } else if (deltaY < 0 && autoSwitch.currentIndex < autoSwitch.imageList.length - 1) {
       // 向上滑动，显示下一张
-      const targetIndex = autoSwitch.currentIndex + 1
-      virtualListRef.value?.scrollTo({ index: targetIndex, animated: true })
+      virtualListRef.value?.scrollToIndex(autoSwitch.currentIndex + 1)
     }
   }
 
@@ -489,7 +487,7 @@ const startAutoSwitch = () => {
   autoSwitch.switchTimer = setInterval(async () => {
     if (autoSwitch.currentIndex < autoSwitch.imageList.length - 1) {
       autoSwitch.currentIndex += 1
-      virtualListRef.value?.scrollTo({ index: autoSwitch.currentIndex, animated: true })
+      virtualListRef.value?.scrollToIndex(autoSwitch.currentIndex)
       autoSwitch.countdown = settingData.value.h5SwitchIntervalTime // 重置倒计时
       startCountdown() // 重新启动倒计时
 
@@ -509,7 +507,7 @@ const startAutoSwitch = () => {
       await onLoad()
       if (autoSwitch.currentIndex < autoSwitch.imageList.length - 1) {
         autoSwitch.currentIndex += 1
-        virtualListRef.value?.scrollTo({ index: autoSwitch.currentIndex, animated: true })
+        virtualListRef.value?.scrollToIndex(autoSwitch.currentIndex)
         autoSwitch.countdown = settingData.value.h5SwitchIntervalTime // 重置倒计时
         startCountdown() // 重新启动倒计时
       } else {
@@ -1106,7 +1104,7 @@ const handleTabbarButtonTouchEnd = (e) => {
 const onBackTop = () => {
   settingStore.vibrate()
   autoSwitch.currentIndex = 0
-  virtualListRef.value?.scrollTo({ position: 0, animated: true })
+  virtualListRef.value?.scrollToPosition(0)
 }
 
 defineExpose({
@@ -1135,10 +1133,7 @@ const syncVirtualListState = () => {
   // 如果当前滚动位置为0但索引不为0，说明需要强制滚动到正确位置
   if (currentScrollTop === 0 && autoSwitch.currentIndex > 0) {
     // 使用新的统一API强制滚动到正确的索引位置
-    virtualListRef.value.scrollTo({
-      index: autoSwitch.currentIndex,
-      animated: false
-    })
+    virtualListRef.value.scrollToIndex(autoSwitch.currentIndex, false)
     return
   }
 
@@ -1163,10 +1158,7 @@ const syncVirtualListState = () => {
     }
 
     // 使用新的统一API滚动到指定索引
-    virtualListRef.value.scrollTo({
-      index: autoSwitch.currentIndex,
-      animated: true
-    })
+    virtualListRef.value.scrollToIndex(autoSwitch.currentIndex)
   }
 }
 
@@ -1210,25 +1202,17 @@ onActivated(() => {
           autoSwitch.currentIndex = savedCurrentIndex.value
 
           // 使用新的统一API滚动到指定索引
-          virtualListRef.value
-            .scrollTo({
-              index: savedCurrentIndex.value,
-              animated: false
-            })
-            .then(() => {
-              // 滚动完成后，再次确认位置是否正确
-              setTimeout(() => {
-                const currentScrollTop = virtualListRef.value.getScrollTop() || 0
-                const targetScrollTop = savedCurrentIndex.value * imageItemHeight.value
-                // 如果位置仍然不正确，尝试再次滚动（使用更小的阈值）
-                if (Math.abs(currentScrollTop - targetScrollTop) > 2) {
-                  virtualListRef.value.scrollTo({
-                    index: savedCurrentIndex.value,
-                    animated: false
-                  })
-                }
-              }, 50) // 减少验证延迟，提高响应速度
-            })
+          virtualListRef.value.scrollToIndex(savedCurrentIndex.value, false).then(() => {
+            // 滚动完成后，再次确认位置是否正确
+            setTimeout(() => {
+              const currentScrollTop = virtualListRef.value.getScrollTop() || 0
+              const targetScrollTop = savedCurrentIndex.value * imageItemHeight.value
+              // 如果位置仍然不正确，尝试再次滚动（使用更小的阈值）
+              if (Math.abs(currentScrollTop - targetScrollTop) > 2) {
+                virtualListRef.value.scrollToIndex(savedCurrentIndex.value, false)
+              }
+            }, 50) // 减少验证延迟，提高响应速度
+          })
         }
       }
     })
@@ -1367,9 +1351,9 @@ const jumpToIndex = async () => {
 
   // 跳转到指定索引
   autoSwitch.currentIndex = index
-  // 使用nextTick确保在DOM更新后执行滚动
+  // 确保在DOM更新后执行滚动，并使用nextTick和setTimeout确保虚拟列表完全更新
   nextTick(() => {
-    virtualListRef.value?.scrollToIndex(autoSwitch.currentIndex)
+    virtualListRef.value?.scrollToIndex(index, false)
   })
   flags.showJumpPopup = false
   jumpIndex.value = ''
