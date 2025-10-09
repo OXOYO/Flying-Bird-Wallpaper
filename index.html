@@ -12,214 +12,873 @@
         }
 
         body {
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #fff;
-            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background: #f0f8ff;
+            color: #333;
             overflow-x: hidden;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            min-height: 100vh;
+        /* 导航栏样式 */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 80px;
+            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.7);
             display: flex;
-            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 50px;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            -webkit-backdrop-filter: blur(20px);
         }
 
-        header {
-            text-align: center;
-            padding: 40px 0;
+        .logo-container {
+            display: flex;
+            align-items: center;
+            height: 100%;
         }
 
         .logo {
-            width: 120px;
-            height: 120px;
-            margin: 0 auto 20px;
-            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+            width: 60px;
+            height: 60px;
+            transition: transform 0.3s ease;
         }
 
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        .logo:hover {
+            transform: scale(1.05);
         }
 
-        .subtitle {
-            font-size: 1.2rem;
-            opacity: 0.9;
-            max-width: 600px;
-            margin: 0 auto;
-            line-height: 1.6;
-        }
-
-        .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        .nav-links {
+            display: flex;
             gap: 30px;
-            margin: 50px 0;
+        }
+
+        .nav-links a {
+            color: #4a6fa5;
+            text-decoration: none;
+            font-size: 1.1rem;
+            padding: 8px 16px;
+            border-radius: 30px;
+            transition: all 0.3s ease;
+            /* background: rgba(74, 111, 165, 0.1); */
+        }
+
+        .nav-links a:hover {
+            background: rgba(74, 111, 165, 0.2);
+            color: #2c3e50;
+        }
+
+        /* 屏幕样式 */
+        section {
+            min-height: 100vh;
+            width: 100%;
+            padding: 80px 20px 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* 首屏样式 */
+        .hero {
+            background: #f0f8ff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 10% 20%, rgba(224, 247, 250, 0.7) 0%, transparent 20%),
+                        radial-gradient(circle at 90% 80%, rgba(187, 222, 251, 0.7) 0%, transparent 20%);
+        }
+
+        .hero-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 50px;
+            padding: 0 50px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-text {
             flex: 1;
+            padding: 30px 0;
         }
 
-        .feature-card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 30px;
-            text-align: center;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 30px rgba(0, 0, 0, 0.2);
-            background: rgba(255, 255, 255, 0.15);
-        }
-
-        .feature-icon {
-            font-size: 2.5rem;
+        .hero-text h1 {
+            font-size: 4rem;
             margin-bottom: 20px;
+            background: linear-gradient(90deg, #4a6fa5, #2c3e50);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
         }
 
-        .feature-title {
-            font-size: 1.3rem;
-            margin-bottom: 15px;
+        .tagline {
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            color: #2c3e50;
+            font-weight: 300;
         }
 
-        .feature-desc {
-            font-size: 1rem;
-            opacity: 0.8;
-            line-height: 1.6;
+        .description {
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+            color: #4a4a6a;
+            line-height: 1.7;
+            max-width: 600px;
         }
 
-        .download-section {
-            text-align: center;
-            padding: 50px 0;
+        .cta-group {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
         }
 
         .download-btn {
-            display: inline-block;
-            background: #fff;
-            color: #667eea;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(90deg, #4a6fa5, #2c3e50);
+            color: #fff;
+            font-size: 1.2rem;
+            font-weight: bold;
             padding: 15px 40px;
             border-radius: 50px;
             text-decoration: none;
-            font-weight: bold;
-            font-size: 1.1rem;
+            box-shadow: 0 10px 30px rgba(74, 111, 165, 0.3);
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
             border: none;
             cursor: pointer;
         }
 
         .download-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-            background: #f8f9fa;
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(74, 111, 165, 0.5);
         }
 
-        footer {
+        .github-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #2c3e50;
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 15px 30px;
+            border-radius: 50px;
+            text-decoration: none;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .github-btn:hover {
+            background: #fff;
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+
+        .github-stats {
+            display: flex;
+            gap: 10px;
+        }
+
+        .github-stats img {
+            height: 20px;
+        }
+
+        /* 轮播图样式 */
+        .carousel {
+            flex: 1.5;
+            min-width: 300px;
+            max-width: 750px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 25px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.1);
+        }
+
+        .carousel-inner {
+            display: flex;
+            transition: transform 0.5s ease;
+            height: 450px;
+        }
+
+        .carousel-item {
+            min-width: 100%;
+            height: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .carousel-image {
+            flex: 1;
+            width: 100%;
+            object-fit: contain;
+            background: #fff;
+        }
+
+        .carousel-caption {
+            position: relative;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 20px;
             text-align: center;
-            padding: 30px 0;
-            opacity: 0.7;
-            font-size: 0.9rem;
+            width: 100%;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .carousel-caption h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #4a6fa5;
+        }
+
+        .carousel-caption p {
+            font-size: 1.1rem;
+            color: #4a4a6a;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .carousel-control {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: #4a6fa5;
+            border: none;
+            font-size: 1.5rem;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 10;
+            opacity: 0;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .carousel:hover .carousel-control {
+            opacity: 1;
+        }
+
+        .carousel-control:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: translateY(-50%) scale(1.1);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .carousel-control.prev {
+            left: 20px;
+        }
+
+        .carousel-control.next {
+            right: 20px;
+        }
+
+        .carousel-indicators {
+            display: none;
+        }
+
+        /* 向下滚动箭头 */
+        .scroll-down {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .scroll-down span {
+            display: block;
+            width: 10px;
+            height: 10px;
+            border-right: 2px solid #4a6fa5;
+            border-bottom: 2px solid #4a6fa5;
+            transform: rotate(45deg);
+            animation: scrollDown 1.5s infinite;
+        }
+
+        .scroll-down span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .scroll-down span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes scrollDown {
+            0% {
+                opacity: 0;
+                transform: rotate(45deg) translate(-10px, -10px);
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+                transform: rotate(45deg) translate(10px, 10px);
+            }
+        }
+
+        /* 功能特性样式 */
+        .features {
+            background: linear-gradient(135deg, #bbdefb, #e0f7fa);
+            padding: 100px 20px 100px;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.8rem;
+            margin-bottom: 70px;
+            background: linear-gradient(90deg, #2c3e50, #4a6fa5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: relative;
+        }
+
+        .section-title::after {
+            content: '';
+            display: block;
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(90deg, #2c3e50, #4a6fa5);
+            margin: 15px auto 0;
+            border-radius: 2px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 40px;
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 25px;
+            padding: 40px 30px;
+            text-align: center;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            transition: all 0.4s ease;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-15px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.9);
+            border-color: rgba(74, 111, 165, 0.3);
+        }
+
+        .feature-icon {
+            font-size: 3.5rem;
+            margin-bottom: 25px;
+            background: linear-gradient(135deg, #4a6fa5, #2c3e50);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .feature-card h3 {
+            font-size: 1.7rem;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .feature-card p {
+            font-size: 1.1rem;
+            color: #4a4a6a;
+            line-height: 1.7;
+        }
+
+        /* 技术架构样式 */
+        .tech {
+            background: linear-gradient(135deg, #e0f7fa, #f0f8ff);
+            padding: 100px 20px 100px;
+        }
+
+        .tech-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 40px;
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        .tech-item {
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 25px;
+            padding: 40px 30px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            transition: all 0.4s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        }
+
+        .tech-item:hover {
+            transform: translateY(-10px);
+            background: rgba(255, 255, 255, 0.9);
+            border-color: rgba(74, 111, 165, 0.3);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        }
+
+        .tech-item h3 {
+            font-size: 1.7rem;
+            margin-bottom: 20px;
+            color: #4a6fa5;
+        }
+
+        .tech-item p {
+            font-size: 1.1rem;
+            color: #4a4a6a;
+            line-height: 1.7;
+        }
+
+        /* 页脚样式 */
+        footer {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 60px 20px 40px;
+            text-align: center;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: #4a6fa5;
+            text-decoration: none;
+            transition: color 0.3s;
+            font-size: 1.1rem;
+            padding: 8px 16px;
+            border-radius: 30px;
+            /* background: rgba(74, 111, 165, 0.1); */
+        }
+
+        .footer-links a:hover {
+            color: #2c3e50;
+            background: rgba(74, 111, 165, 0.2);
+        }
+
+        .copyright {
+            color: #707090;
+            font-size: 1rem;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1024px) {
+            .hero-content {
+                flex-direction: column;
+                text-align: center;
+                gap: 40px;
+                padding: 0 30px;
+            }
+            
+            .hero-text {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .description {
+                margin-left: auto;
+                margin-right: auto;
+            }
+            
+            .hero-text h1 {
+                font-size: 3.5rem;
+            }
+            
+            .tagline {
+                font-size: 1.6rem;
+            }
+            
+            .carousel {
+                max-width: 100%;
+            }
         }
 
         @media (max-width: 768px) {
-            .container {
-                padding: 15px;
+            nav {
+                padding: 0 20px;
+                height: 70px;
             }
-
-            h1 {
-                font-size: 2rem;
+            
+            .nav-links {
+                gap: 15px;
             }
+            
+            .nav-links a {
+                font-size: 1rem;
+                padding: 6px 12px;
+            }
+            
+            section {
+                padding: 70px 15px 80px;
+            }
+            
+            .hero-text h1 {
+                font-size: 2.8rem;
+            }
+            
+            .tagline {
+                font-size: 1.4rem;
+            }
+            
+            .description {
+                font-size: 1.1rem;
+            }
+            
+            .cta-group {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .download-btn,
+            .github-btn {
+                font-size: 1.1rem;
+                padding: 12px 30px;
+                width: 100%;
+                max-width: 250px;
+            }
+            
+            .github-stats {
+                justify-content: center;
+                width: 100%;
+            }
+            
+            .carousel-inner {
+                height: 350px;
+            }
+            
+            .carousel-control {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
+                opacity: 1;
+            }
+            
+            .carousel-control.prev {
+                left: 15px;
+            }
+            
+            .carousel-control.next {
+                right: 15px;
+            }
+            
+            .section-title {
+                font-size: 2.3rem;
+                margin-bottom: 50px;
+            }
+            
+            .feature-grid,
+            .tech-content {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+            
+            .feature-card,
+            .tech-item {
+                padding: 30px 20px;
+            }
+            
+            .feature-icon {
+                font-size: 3rem;
+            }
+            
+            .feature-card h3,
+            .tech-item h3 {
+                font-size: 1.5rem;
+            }
+            
+            .footer-links {
+                gap: 20px;
+            }
+            
+            footer {
+                padding: 40px 15px 30px;
+            }
+        }
 
-            .subtitle {
+        @media (max-width: 480px) {
+            .hero-text h1 {
+                font-size: 2.3rem;
+            }
+            
+            .tagline {
+                font-size: 1.2rem;
+            }
+            
+            .description {
                 font-size: 1rem;
             }
-
-            .features {
-                grid-template-columns: 1fr;
-                gap: 20px;
-                margin: 30px 0;
+            
+            .download-btn,
+            .github-btn {
+                font-size: 1rem;
+                padding: 10px 25px;
             }
-
-            .feature-card {
-                padding: 20px;
+            
+            .section-title {
+                font-size: 2rem;
             }
-
-            header {
-                padding: 30px 0;
+            
+            .feature-card,
+            .tech-item {
+                padding: 25px 15px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <svg class="logo" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#667eea" />
-                        <stop offset="100%" stop-color="#764ba2" />
-                    </linearGradient>
-                    <linearGradient id="birdGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#FF9A9E" />
-                        <stop offset="100%" stop-color="#FAD0C4" />
-                    </linearGradient>
-                </defs>
-                <rect width="256" height="256" fill="url(#bgGradient)" rx="50"/>
-                <path d="M85 120 Q100 80 130 80 Q160 80 175 120 Q190 160 160 180 Q130 200 100 180 Q70 160 85 120 Z" fill="url(#birdGradient)"/>
-                <circle cx="140" cy="110" r="8" fill="#333"/>
-                <path d="M120 130 Q135 140 150 130" stroke="#333" stroke-width="3" fill="none"/>
-            </svg>
-            <h1>Flying Bird Wallpaper</h1>
-            <p class="subtitle">飞鸟壁纸是一款功能丰富的桌面壁纸软件，支持图片、视频、律动、纯色等多种壁纸类型，让您的桌面焕发独特魅力。</p>
-        </header>
+    <!-- 导航栏 -->
+    <nav>
+        <img class="logo" src="https://raw.githubusercontent.com/OXOYO/Flying-Bird-Wallpaper/refs/heads/dev/resources/icons/icon.svg">
+        <div class="nav-links">
+            <a href="#home">首页</a>
+            <a href="#features">功能</a>
+            <a href="#technology">技术</a>
+        </div>
+    </nav>
 
-        <div class="features">
-            <div class="feature-card">
-                <div class="feature-icon">🖼️</div>
-                <h3 class="feature-title">图片壁纸</h3>
-                <p class="feature-desc">支持本地和网络图片作为壁纸，支持多种图片格式，让您的桌面更加个性化。</p>
+    <!-- 第一屏：首页 -->
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1>飞鸟壁纸</h1>
+                <p class="tagline">让您的桌面焕发独特魅力</p>
+                <p class="description">集壁纸浏览、收藏、管理于一体，支持图片、视频、律动、纯色等多种壁纸类型，提供NASA、Unsplash、Pixabay等多个优质壁纸源。</p>
+                <div class="cta-group">
+                    <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/releases" class="download-btn" target="_blank">
+                        立即下载
+                    </a>
+                    <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper" class="github-btn" target="_blank">
+                        <svg height="20" viewBox="0 0 16 16" width="20" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" fill="currentColor"></path>
+                        </svg>
+                        GitHub
+                    </a>
+                    <!-- <div class="github-stats">
+                        <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/stargazers" target="_blank">
+                            <img src="https://img.shields.io/github/stars/OXOYO/Flying-Bird-Wallpaper?style=social" alt="GitHub stars">
+                        </a>
+                        <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/releases" target="_blank">
+                            <img src="https://img.shields.io/github/downloads/OXOYO/Flying-Bird-Wallpaper/total?style=social" alt="GitHub downloads">
+                        </a>
+                    </div> -->
+                </div>
             </div>
-
-            <div class="feature-card">
-                <div class="feature-icon">🎬</div>
-                <h3 class="feature-title">视频壁纸</h3>
-                <p class="feature-desc">将MP4等格式的视频设置为动态桌面背景，让您的桌面充满活力。</p>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon">🎵</div>
-                <h3 class="feature-title">律动壁纸</h3>
-                <p class="feature-desc">结合音频节奏生成可视化动态效果，让壁纸随音乐节拍跳动。</p>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon">🌈</div>
-                <h3 class="feature-title">纯色壁纸</h3>
-                <p class="feature-desc">快速设置单色或渐变色背景，简洁而优雅，适合专注工作。</p>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon">🌐</div>
-                <h3 class="feature-title">H5壁纸</h3>
-                <p class="feature-desc">支持嵌入H5页面作为动态内容源，实现更加丰富的交互效果。</p>
+            <!-- 轮播图 -->
+            <div class="carousel">
+                <div class="carousel-inner">
+                    <div class="carousel-item">
+                        <img src="https://raw.githubusercontent.com/OXOYO/Flying-Bird-Wallpaper/main/docs/fbw_search.png" alt="搜索界面" class="carousel-image">
+                        <div class="carousel-caption">
+                            <h3>多源壁纸搜索</h3>
+                            <p>集成多个优质壁纸源，轻松找到心仪壁纸</p>
+                        </div>
+                    </div>
+                    <div class="carousel-item">
+                        <img src="https://raw.githubusercontent.com/OXOYO/Flying-Bird-Wallpaper/main/docs/fbw_viewer_window.png" alt="壁纸查看器" class="carousel-image">
+                        <div class="carousel-caption">
+                            <h3>精美壁纸预览</h3>
+                            <p>全屏体验壁纸效果，支持多种操作</p>
+                        </div>
+                    </div>
+                    <div class="carousel-item">
+                        <img src="https://raw.githubusercontent.com/OXOYO/Flying-Bird-Wallpaper/main/docs/fbw_settings.png" alt="设置界面" class="carousel-image">
+                        <div class="carousel-caption">
+                            <h3>个性化设置</h3>
+                            <p>丰富选项满足您的个性化需求</p>
+                        </div>
+                    </div>
+                </div>
+                <button class="carousel-control prev">&#10094;</button>
+                <button class="carousel-control next">&#10095;</button>
+                <div class="carousel-indicators">
+                    <div class="indicator active" data-index="0"></div>
+                    <div class="indicator" data-index="1"></div>
+                    <div class="indicator" data-index="2"></div>
+                </div>
             </div>
         </div>
-
-        <div class="download-section">
-            <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/releases" class="download-btn" target="_blank">
-                下载最新版本
-            </a>
+        <div class="scroll-down">
+            <span></span>
+            <span></span>
+            <span></span>
         </div>
+    </section>
 
-        <footer>
-            <p>© 2025 OXOYO. Flying Bird Wallpaper. MIT License</p>
-        </footer>
-    </div>
+    <!-- 第二屏：功能介绍 -->
+    <section id="features" class="section section-2">
+        <div class="container">
+            <h2 class="section-title">核心功能</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <h3>多源壁纸</h3>
+                    <p>集成NASA、Unsplash、Pixabay等多个优质壁纸源，支持自定义壁纸源插件，同时支持本地目录图片。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>智能搜索</h3>
+                    <p>支持关键词搜索与智能分类，快速定位心仪壁纸。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🪄</div>
+                    <h3>多种壁纸类型</h3>
+                    <p>支持图片、视频、律动、纯色等多种壁纸类型，满足个性化需求。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <h3>H5移动端</h3>
+                    <p>支持手机端访问，随时随地浏览和设置壁纸。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚙️</div>
+                    <h3>个性化设置</h3>
+                    <p>丰富的设置选项，包括定时任务、自动更新、多语言支持等。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔮</div>
+                    <h3>智能管理</h3>
+                    <p>支持壁纸收藏、历史记录、词库功能和隐私空间，方便管理个人壁纸库。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 第三屏：技术架构 -->
+    <section id="technology" class="section section-3">
+        <div class="container">
+            <h2 class="section-title">技术架构</h2>
+            <div class="tech-content">
+                <div class="tech-item">
+                    <h3>Electron跨平台框架</h3>
+                    <p>基于Electron开发，完美支持Windows和macOS系统，确保跨平台兼容性。</p>
+                </div>
+                <div class="tech-item">
+                    <h3>Vue 3前端技术</h3>
+                    <p>采用Vue 3构建现代化用户界面，提供流畅的用户体验。</p>
+                </div>
+                <div class="tech-item">
+                    <h3>多进程架构</h3>
+                    <p>采用主进程、子进程、渲染进程分离的架构设计，提高应用稳定性和性能。</p>
+                </div>
+                <div class="tech-item">
+                    <h3>SQLite数据库</h3>
+                    <p>本地存储用户数据，包括设置、缓存、历史记录等，确保数据安全。</p>
+                </div>
+                <div class="tech-item">
+                    <h3>WebSocket通信</h3>
+                    <p>实现前后端实时交互，支持H5端与桌面端的数据同步。</p>
+                </div>
+                <div class="tech-item">
+                    <h3>插件化系统</h3>
+                    <p>支持扩展新壁纸源，便于功能扩展和定制化开发。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="#home">首页</a>
+                <a href="#features">功能特性</a>
+                <a href="#tech">技术架构</a>
+                <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper" target="_blank">GitHub</a>
+                <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/releases" target="_blank">下载</a>
+            </div>
+            <p class="copyright">© 2025 OXOYO. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // 轮播图功能
+        let currentIndex = 0;
+        const slides = document.querySelectorAll('.carousel-item');
+        const totalSlides = slides.length;
+        const carouselInner = document.querySelector('.carousel-inner');
+        
+        // 更新轮播图位置
+        function updateCarousel() {
+            carouselInner.style.transform = `translateX(-${currentIndex * 100}%)`;
+        }
+        
+        // 下一张
+        function nextSlide() {
+            currentIndex = (currentIndex + 1) % totalSlides;
+            updateCarousel();
+        }
+        
+        // 上一张
+        function prevSlide() {
+            currentIndex = (currentIndex - 1 + totalSlides) % totalSlides;
+            updateCarousel();
+        }
+        
+        // 自动播放
+        setInterval(nextSlide, 5000);
+        
+        // 绑定按钮事件
+        document.querySelector('.carousel-control.next').addEventListener('click', nextSlide);
+        document.querySelector('.carousel-control.prev').addEventListener('click', prevSlide);
+        
+        // 平滑滚动
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
 </body>
 </html>
