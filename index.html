@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flying Bird Wallpaper - 飞鸟壁纸</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            text-align: center;
+            padding: 40px 0;
+        }
+
+        .logo {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 20px;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin: 50px 0;
+            flex: 1;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 30px rgba(0, 0, 0, 0.2);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+
+        .feature-title {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+        }
+
+        .feature-desc {
+            font-size: 1rem;
+            opacity: 0.8;
+            line-height: 1.6;
+        }
+
+        .download-section {
+            text-align: center;
+            padding: 50px 0;
+        }
+
+        .download-btn {
+            display: inline-block;
+            background: #fff;
+            color: #667eea;
+            padding: 15px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            border: none;
+            cursor: pointer;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            background: #f8f9fa;
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px 0;
+            opacity: 0.7;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .subtitle {
+                font-size: 1rem;
+            }
+
+            .features {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                margin: 30px 0;
+            }
+
+            .feature-card {
+                padding: 20px;
+            }
+
+            header {
+                padding: 30px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <svg class="logo" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#667eea" />
+                        <stop offset="100%" stop-color="#764ba2" />
+                    </linearGradient>
+                    <linearGradient id="birdGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#FF9A9E" />
+                        <stop offset="100%" stop-color="#FAD0C4" />
+                    </linearGradient>
+                </defs>
+                <rect width="256" height="256" fill="url(#bgGradient)" rx="50"/>
+                <path d="M85 120 Q100 80 130 80 Q160 80 175 120 Q190 160 160 180 Q130 200 100 180 Q70 160 85 120 Z" fill="url(#birdGradient)"/>
+                <circle cx="140" cy="110" r="8" fill="#333"/>
+                <path d="M120 130 Q135 140 150 130" stroke="#333" stroke-width="3" fill="none"/>
+            </svg>
+            <h1>Flying Bird Wallpaper</h1>
+            <p class="subtitle">飞鸟壁纸是一款功能丰富的桌面壁纸软件，支持图片、视频、律动、纯色等多种壁纸类型，让您的桌面焕发独特魅力。</p>
+        </header>
+
+        <div class="features">
+            <div class="feature-card">
+                <div class="feature-icon">🖼️</div>
+                <h3 class="feature-title">图片壁纸</h3>
+                <p class="feature-desc">支持本地和网络图片作为壁纸，支持多种图片格式，让您的桌面更加个性化。</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🎬</div>
+                <h3 class="feature-title">视频壁纸</h3>
+                <p class="feature-desc">将MP4等格式的视频设置为动态桌面背景，让您的桌面充满活力。</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🎵</div>
+                <h3 class="feature-title">律动壁纸</h3>
+                <p class="feature-desc">结合音频节奏生成可视化动态效果，让壁纸随音乐节拍跳动。</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🌈</div>
+                <h3 class="feature-title">纯色壁纸</h3>
+                <p class="feature-desc">快速设置单色或渐变色背景，简洁而优雅，适合专注工作。</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🌐</div>
+                <h3 class="feature-title">H5壁纸</h3>
+                <p class="feature-desc">支持嵌入H5页面作为动态内容源，实现更加丰富的交互效果。</p>
+            </div>
+        </div>
+
+        <div class="download-section">
+            <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/releases" class="download-btn" target="_blank">
+                下载最新版本
+            </a>
+        </div>
+
+        <footer>
+            <p>© 2025 OXOYO. Flying Bird Wallpaper. MIT License</p>
+        </footer>
+    </div>
+</body>
+</html>
