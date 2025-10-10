@@ -2,6 +2,10 @@
 
 # 飞鸟壁纸 (Flying Bird Wallpaper)
 
+  <!-- Github star -->
+  <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/stargazers">
+    <img src="https://img.shields.io/github/stars/OXOYO/Flying-Bird-Wallpaper.svg" alt="Github star">
+  </a>
   <!-- License -->
   <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/blob/master/LICENSE">
     <img src="https://img.shields.io/github/license/OXOYO/Flying-Bird-Wallpaper.svg" alt="LICENSE">
@@ -18,7 +22,16 @@
   <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/releases">
     <img src="https://img.shields.io/github/actions/workflow/status/OXOYO/Flying-Bird-Wallpaper/release.yml" alt="release status">
   </a>
+  <!-- Commitizen friendly -->
+  <a href="http://commitizen.github.io/cz-cli/">
+    <img src="https://img.shields.io/badge/commitizen-friendly-brightgreen.svg" alt="Commitizen friendly">
+  </a>
+  <!-- DeepWiki -->
+  <a href="https://deepwiki.com/OXOYO/Flying-Bird-Wallpaper">
+    <img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki">
+  </a>
 
+  <h3>简体中文 | <a href="README-en.md">English</a></h3>
 </div>
 
 ## 项目简介
