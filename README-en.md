@@ -31,7 +31,7 @@
     <img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki">
   </a>
 
-  <h3>English | <a href="README.md">简体中文</a></h3>
+  <h3>English | <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/blob/main/README.md">简体中文</a></h3>
   
 </div>
 
