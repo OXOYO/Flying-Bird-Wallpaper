@@ -31,14 +31,12 @@
     <img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki">
   </a>
 
-  <h3>简体中文 | <a href="README-en.md">English</a></h3>
+  <h3>简体中文 | <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/blob/main/README-en.md">English</a></h3>
 </div>
 
 ## 项目简介
 
-飞鸟壁纸是一款跨平台桌面壁纸应用，让您轻松浏览、收藏美图，一键设置桌面壁纸。
-
-## [Github](https://github.com/OXOYO/Flying-Bird-Wallpaper)
+飞鸟壁纸是一款功能丰富的桌面壁纸软件，支持图片、视频、律动、纯色等多种壁纸类型，让您的桌面焕发独特魅力。
 
 
 ## [预览效果](https://github.com/OXOYO/Flying-Bird-Wallpaper/blob/main/docs/preview.md)
