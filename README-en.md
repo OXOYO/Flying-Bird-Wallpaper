@@ -42,7 +42,7 @@ Flying Bird Wallpaper is a feature-rich desktop wallpaper application that suppo
 
 ## [Preview](https://github.com/OXOYO/Flying-Bird-Wallpaper/blob/main/docs/preview.md)
 
-<img width="1020" alt="Image" src="https://raw.githubusercontent.com/OXOYO/Flying-Bird-Wallpaper/main/docs/fbw_search.png" />
+<img width="1020" alt="Image" src="https://raw.githubusercontent.com/OXOYO/Flying-Bird-Wallpaper/main/docs/fbw_search_en.png" />
 
 <img width="1020" alt="Image" src="https://raw.githubusercontent.com/OXOYO/Flying-Bird-Wallpaper/main/docs/fbw_settings.png" />
 
