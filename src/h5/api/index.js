@@ -1,7 +1,14 @@
 import { io } from 'socket.io-client'
 
 // 创建 Socket.IO 客户端实例
-const socket = io(window.location.origin)
+const socket = io(window.location.origin, {
+  transports: ['websocket', 'polling'],
+  upgrade: true,
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000,
+  timeout: 20000
+})
 
 // 包装 Socket.IO 事件为 Promise
 const emitAsync = (event, data) => {

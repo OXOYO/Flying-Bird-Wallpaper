@@ -450,7 +450,6 @@ export default class Store {
 
                 if (ip === '0.0.0.0' || ip === '127.0.0.1') {
                   global.logger.warn(`H5服务器IP无效: ${ip}，尝试重启服务`)
-
                   // 停止当前服务
                   this.h5Server?.stop(() => {
                     if (retryCount < maxRetries) {
@@ -479,7 +478,7 @@ export default class Store {
                 break
               }
               case 'SERVER_START::FAIL': {
-                global.logger.error(`H5服务器启动失败: ${data}`)
+                global.logger.error(`H5服务器启动失败: ${data.message || data}`)
                 break
               }
               case 'SERVER_LOG': {
@@ -503,7 +502,6 @@ export default class Store {
         })
       } catch (err) {
         global.logger.error(`启动H5服务器失败: ${err}`)
-
         if (retryCount < maxRetries) {
           retryCount++
           global.logger.info(`重试启动H5服务 (${retryCount}/${maxRetries})...`)

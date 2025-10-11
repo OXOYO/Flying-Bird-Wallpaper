@@ -3,13 +3,12 @@ import KoaRouter from '@koa/router'
 import staticServe from 'koa-static'
 import compress from 'koa-compress'
 import { Server } from 'socket.io'
-import http from 'node:http'
 import http2 from 'node:http2'
-import fs from 'node:fs' // 添加fs模块用于读取证书文件
+import fs from 'node:fs'
 import path from 'node:path'
 import zlib from 'node:zlib'
 import { fileURLToPath } from 'node:url'
-import { getLocalIP, findAvailablePort, generateSelfSignedCert, isDev } from '../../utils/utils.mjs' // 添加证书生成函数
+import { getLocalIP, findAvailablePort, generateSelfSignedCert, isDev } from '../../utils/utils.mjs'
 import useApi from './api/index.mjs'
 import { t } from '../../../i18n/server.js'
 import setupSocketIO from './socket/index.mjs'
@@ -18,7 +17,7 @@ import setupSocketIO from './socket/index.mjs'
 export default async ({
   port = 8888,
   host = '0.0.0.0',
-  useHttps = true, // 添加HTTPS选项
+  useHttps = true,
   dbManager,
   settingManager,
   resourcesManager,
@@ -35,14 +34,13 @@ export default async ({
     port = await findAvailablePort(port)
     host = getLocalIP()
 
-    // 创建 Koa 服务器
+    // 创建 Koa 应用
     const app = new Koa()
 
-    // 创建服务器 (HTTP 或 HTTPS)
+    let sslOptions
     if (useHttps) {
       // 证书路径
       const certPath = process.env.FBW_CERTS_PATH
-      let sslOptions
 
       // 检查证书文件是否存在
       try {
@@ -68,16 +66,21 @@ export default async ({
 
         sslOptions = { key, cert }
       }
-
-      // 创建HTTPS服务器
-      httpServer = http2.createSecureServer(sslOptions, app.callback())
-      logger.info('[H5Server] INFO => 已创建HTTPS服务器')
-    } else {
-      // 创建HTTP服务器
-      httpServer = http.createServer(app.callback())
     }
 
-    // 创建 Socket.IO 服务器
+    // 创建支持HTTP/1.1和HTTP/2的服务器
+    // 使用allowHTTP1选项允许HTTP/1.1连接（用于WebSocket）
+    if (useHttps && sslOptions) {
+      httpServer = http2.createSecureServer({
+        ...sslOptions,
+        allowHTTP1: true // 允许HTTP/1.1连接，支持WebSocket
+      })
+      logger.info('[H5Server] INFO => 已创建支持HTTP/1.1和HTTP/2的HTTPS服务器')
+    } else {
+      httpServer = http2.createServer({ allowHTTP1: true })
+    }
+
+    // 创建 Socket.IO 实例
     ioServer = new Server(httpServer, {
       cors: {
         origin: '*',
@@ -101,7 +104,7 @@ export default async ({
       }
     }
 
-    // 使用中间件方式挂载方法
+    // 使用中间件方式挂载方法到 Koa 应用
     app.use(async (ctx, next) => {
       // 绑定方法到 ctx 对象
       ctx.t = t
@@ -111,6 +114,7 @@ export default async ({
 
       await next()
     })
+
     app.use(
       compress({
         filter(content_type) {
@@ -128,11 +132,13 @@ export default async ({
         }
       })
     )
+
     // 处理H5静态资源地址
     const staticPath = isDev()
       ? path.resolve(__dirname, '../h5')
       : path.resolve(process.env.FBW_RESOURCES_PATH, './h5')
     logger.info(`[H5Server] INFO => H5静态资源路径: ${staticPath}`)
+
     // 提供静态资源服务
     app.use(
       staticServe(staticPath, {
@@ -155,6 +161,10 @@ export default async ({
 
     // 注册路由中间件
     app.use(router.routes()).use(router.allowedMethods())
+
+    // 将 Koa 应用挂载到 HTTP/2 服务器
+    httpServer.on('request', app.callback())
+
     try {
       // 设置 Socket.IO - 等待初始化完成
       await setupSocketIO(ioServer, {
