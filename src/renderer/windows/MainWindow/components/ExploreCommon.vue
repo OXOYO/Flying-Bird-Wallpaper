@@ -2079,11 +2079,18 @@ onBeforeUnmount(() => {
   }
 }
 
+.card-item:hover .card-item-image-wrapper {
+  transform: scale(1.05);
+}
+
 .card-item-image-wrapper {
   width: 100%;
   height: 100%;
   position: relative;
   overflow: hidden;
+  transition: all 0.3s ease-in-out;
+  will-change: transform;
+  transform: translateZ(0);
 
   .card-item-image-inner {
     width: 100%;
