@@ -117,6 +117,14 @@ Copyright (c) 2025-present OXOYO
     <div>加我进群，备注【项目名称】</div>
 </div>
 
+## Buy Me a Coffee
+
+<p style="display: flex; flex-wrap: wrap; justify-content: center; gap: 5px;">
+    <a target="_blank" href="https://github.com/hantangtouzi">
+        <img width="40" title="hantangtouzi" src="https://avatars.githubusercontent.com/u/17481448?v=4" loading="lazy" />
+    </a>
+</p>
+
 ---
 
 飞鸟壁纸，让您的桌面焕然一新！
