@@ -12,6 +12,7 @@
 - [颜色壁纸](./docs/color_wallpaper.md)
 - [动态壁纸](./docs/dynamic_wallpaper.md)
 - [律动壁纸](./docs/rhythm_wallpaper.md)
+- [图像美学评分](./docs/image_aesthetic_rating.md)
 - [H5](./docs/h5.md)
 - [常见问题与支持](./docs/faq.md)
 
