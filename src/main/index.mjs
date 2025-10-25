@@ -235,7 +235,7 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
 
     tray = new Tray(trayIcon)
 
-    tray.setToolTip(t('appInfo.name'))
+    tray.setToolTip(t('appInfo.appName'))
 
     // 监听托盘图标点击事件
     tray.on('click', () => {
@@ -521,7 +521,7 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
 
       ipcMain.handle('main:sendNotification', async (event, options) => {
         const notice = new Notification({
-          title: options.title || t('appInfo.name'),
+          title: options.title || t('appInfo.appName'),
           body: options.body || '',
           icon: global.FBW.iconLogo,
           silent: options.silent || false

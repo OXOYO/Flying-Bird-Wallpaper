@@ -98,7 +98,7 @@ export const menuList = [
     name: 'History',
     title: '回忆',
     locale: 'menuList.History',
-    icon: 'ep:toilet-paper',
+    icon: 'ep:clock',
     canBeEnabled: true,
     placement: ['trayMenuChildren', 'sideMenu']
   },

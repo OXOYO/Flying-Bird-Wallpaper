@@ -371,8 +371,10 @@ export const appInfo = {
   appName: 'Flying Bird Wallpaper',
   version,
   author: 'OXOYO',
-  homepage: 'https://github.com/OXOYO/Flying-Bird-Wallpaper',
+  authorLink: 'https://github.com/OXOYO',
+  homepage: 'http://oxoyo.co/Flying-Bird-Wallpaper',
   github: 'https://github.com/OXOYO/Flying-Bird-Wallpaper',
+  repository: 'OXOYO/Flying-Bird-Wallpaper',
   email: 'zmn2007.hi@163.com'
 }
 ```
@@ -977,7 +979,7 @@ const createTray = () => {
   trayIcon.setTemplateImage(true)
 
   tray = new Tray(trayIcon)
-  tray.setToolTip(t('appInfo.name'))
+  tray.setToolTip(t('appInfo.appName'))
 
   // 托盘点击事件
   tray.on('click', () => {

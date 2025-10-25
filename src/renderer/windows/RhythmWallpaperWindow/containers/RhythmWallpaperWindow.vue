@@ -69,7 +69,7 @@ const init = async () => {
     // console.log('请先安装并切换系统音频输出到虚拟声卡（如 VB-Audio/BlackHole）')
     // 发送系统通知
     window.FBW.sendNotification({
-      title: t('appInfo.name'),
+      title: t('appInfo.appName'),
       body: t('messages.rhythmWallpaperNeedVirtualAudio'),
       silent: false
     })

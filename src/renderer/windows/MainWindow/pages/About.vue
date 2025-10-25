@@ -11,18 +11,6 @@ const openUrl = (url) => {
     <el-form label-width="auto" label-suffix=":">
       <div class="form-card">
         <el-form-item :label="$t('pages.About.name')">
-          <span>{{ $t('appInfo.name') }}</span>
-        </el-form-item>
-        <el-form-item :label="$t('pages.About.description')">
-          <span>{{ $t('appInfo.description') }}</span>
-        </el-form-item>
-        <el-form-item :label="$t('pages.About.author')">
-          <span>{{ appInfo.author }}</span>
-        </el-form-item>
-        <el-form-item :label="$t('pages.About.version')">
-          <span>{{ appInfo.version }}</span>
-        </el-form-item>
-        <el-form-item :label="$t('pages.About.github')">
           <el-link
             type="primary"
             :herf="appInfo.homepage"
@@ -30,6 +18,32 @@ const openUrl = (url) => {
             @click="openUrl(appInfo.homepage)"
           >
             {{ appInfo.appName }}
+          </el-link>
+        </el-form-item>
+        <el-form-item :label="$t('pages.About.description')">
+          <span>{{ $t('appInfo.description') }}</span>
+        </el-form-item>
+        <el-form-item :label="$t('pages.About.author')">
+          <el-link
+            type="primary"
+            :herf="appInfo.authorLink"
+            target="_blank"
+            @click="openUrl(appInfo.authorLink)"
+          >
+            {{ appInfo.author }}
+          </el-link>
+        </el-form-item>
+        <el-form-item :label="$t('pages.About.version')">
+          <span>{{ appInfo.version }}</span>
+        </el-form-item>
+        <el-form-item :label="$t('pages.About.github')">
+          <el-link
+            type="primary"
+            :herf="appInfo.github"
+            target="_blank"
+            @click="openUrl(appInfo.github)"
+          >
+            {{ appInfo.repository }}
           </el-link>
         </el-form-item>
         <el-form-item :label="$t('pages.About.email')">
