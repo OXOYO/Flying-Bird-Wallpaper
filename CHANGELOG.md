@@ -1,3 +1,12 @@
+## [1.3.1](https://github.com/OXOYO/Flying-Bird-Wallpaper/compare/v1.3.0...v1.3.1) (2025-10-25)
+
+
+### Bug Fixes
+
+* 修复打包配置错误 ([5016ef0](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/5016ef036ee85639a6f8a35e7ffb38b635e17814))
+
+
+
 # [1.3.0](https://github.com/OXOYO/Flying-Bird-Wallpaper/compare/v1.2.1...v1.3.0) (2025-10-25)
 
 
