@@ -33,6 +33,9 @@
       },
       "divider": {
         "base": "基础设置",
+        "application": "应用设置",
+        "explore": "浏览设置",
+        "function": "功能设置",
         "wallpaper": "壁纸设置",
         "switch": "切换设置",
         "localResource": "本地资源",
@@ -41,13 +44,11 @@
         "dynamicWallpaper": "动态壁纸",
         "rhythmWallpaper": "律动壁纸",
         "remoteResource": "远程资源",
-        "other": "其他设置",
         "privacyPassword": "隐私密码",
         "h5Settings": "H5设置",
-        "h5SwitchSettings": "H5切换设置",
-        "h5ResourcesSettings": "H5资源设置",
-        "h5DisplaySettings": "H5显示设置",
-        "h5ActionSettings": "H5操作设置"
+        "h5ExploreSettings": "浏览设置",
+        "h5ResourcesSettings": "资源设置",
+        "h5FunctionSettings": "功能设置"
       },
       "settingDataForm": {
         "locale": "语言",
@@ -62,8 +63,8 @@
         "allScreen": "应用到所有屏幕",
         "scaleType": "填充方式",
         "wallpaperResource": "壁纸资源",
-        "orientation": "壁纸方向",
-        "quality": "壁纸质量",
+        "orientation": "过滤方向",
+        "quality": "过滤质量",
         "filterKeywords": {
           "label": "过滤关键词",
           "placeholder": "请输入关键词"
@@ -150,15 +151,15 @@
         "enableExpandSideMenu": "启用展开侧边栏",
         "showSideMenuLabel": "显示侧边栏文本",
         "viewImageIntervalTime": "预览播放间隔",
-        "showImageTag": "显示图片标签",
-        "confirmOnDeleteFile": "删除文件前确认",
+        "showTag": "显示标签",
+        "confirmOnDeleteFile": "删除前确认",
         "enableSegmentationTask": "启用分词任务",
         "h5AutoSwitch": "自动切换",
         "h5SwitchType": "切换方式",
         "h5SwitchIntervalTime": "切换间隔",
         "h5Resource": "图片资源",
-        "h5Orientation": "图片方向",
-        "h5Quality": "图片质量",
+        "h5Orientation": "过滤方向",
+        "h5Quality": "过滤质量",
         "h5SortField": "排序字段",
         "h5SortType": "排序方式",
         "h5ImageDisplaySize": "显示尺寸",
@@ -625,7 +626,7 @@
       "setting": {
         "title": "设置",
         "form": {
-          "appSettings": "应用设置",
+          "h5ApplicationSettings": "应用设置",
           "locale": {
             "label": "语言",
             "placeholder": "请选择语言"
@@ -640,25 +641,25 @@
               "placeholder": "请选择主题色"
             }
           },
-          "switchSettings": "切换设置",
+          "h5ExploreSettings": "浏览设置",
           "h5AutoSwitch": "自动切换",
           "h5SwitchType": {
             "label": "切换方式",
             "placeholder": "请选择切换方式"
           },
           "h5SwitchIntervalTime": "切换间隔",
-          "resourcesSettings": "资源设置",
+          "h5ResourcesSettings": "资源设置",
           "h5Resource": {
             "label": "图片资源",
             "placeholder": "请选择资源"
           },
           "h5Orientation": {
-            "label": "图片方向",
-            "placeholder": "请选择图片方向"
+            "label": "过滤方向",
+            "placeholder": "请选择过滤方向"
           },
           "h5Quality": {
-            "label": "图片质量",
-            "placeholder": "请选择图片质量"
+            "label": "过滤质量",
+            "placeholder": "请选择过滤质量"
           },
           "h5SortField": {
             "label": "排序字段",
@@ -668,14 +669,13 @@
             "label": "排序方式",
             "placeholder": "请选择排序方式"
           },
-          "displaySettings": "显示设置",
           "h5ImageDisplaySize": {
             "label": "显示尺寸",
             "placeholder": "请选择显示尺寸"
           },
           "h5ImageCompress": "图片压缩",
           "h5ImageCompressStartSize": "压缩起始大小",
-          "actionSettings": "操作设置",
+          "h5FunctionSettings": "功能设置",
           "h5FloatingButtonPosition": {
             "label": "悬浮按钮位置",
             "placeholder": "请选择悬浮按钮位置"

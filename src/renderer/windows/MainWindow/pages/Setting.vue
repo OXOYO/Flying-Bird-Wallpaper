@@ -338,7 +338,8 @@ const onAddRhythmColors = (index) => {
   onSettingDataFormChange()
 }
 
-const onThemeColorChange = () => {
+const onThemeColorChange = (val) => {
+  console.log('onThemeColorChange', val)
   onSettingDataFormChange()
 }
 
@@ -423,7 +424,25 @@ onBeforeUnmount(() => {
           class="anchor-link"
           href="#divider-base"
           :title="t('pages.Setting.divider.base')"
-        />
+        >
+          <template #sub-link>
+            <el-anchor-link
+              class="anchor-sub-link"
+              href="#divider-app"
+              :title="t('pages.Setting.divider.application')"
+            />
+            <el-anchor-link
+              class="anchor-sub-link"
+              href="#divider-function"
+              :title="t('pages.Setting.divider.function')"
+            />
+            <el-anchor-link
+              class="anchor-sub-link"
+              href="#divider-explore"
+              :title="t('pages.Setting.divider.explore')"
+            />
+          </template>
+        </el-anchor-link>
         <el-anchor-link
           class="anchor-link"
           href="#divider-wallpaper"
@@ -491,37 +510,30 @@ onBeforeUnmount(() => {
           <template #sub-link>
             <el-anchor-link
               class="anchor-sub-link"
-              href="#divider-h5SwitchSettings"
-              :title="t('pages.Setting.divider.h5SwitchSettings')"
-            />
-            <el-anchor-link
-              class="anchor-sub-link"
               href="#divider-h5ResourcesSettings"
               :title="t('pages.Setting.divider.h5ResourcesSettings')"
             />
             <el-anchor-link
               class="anchor-sub-link"
-              href="#divider-h5DisplaySettings"
-              :title="t('pages.Setting.divider.h5DisplaySettings')"
+              href="#divider-h5ExploreSettings"
+              :title="t('pages.Setting.divider.h5ExploreSettings')"
             />
             <el-anchor-link
               class="anchor-sub-link"
-              href="#divider-h5ActionSettings"
-              :title="t('pages.Setting.divider.h5ActionSettings')"
+              href="#divider-h5FunctionSettings"
+              :title="t('pages.Setting.divider.h5FunctionSettings')"
             />
           </template>
         </el-anchor-link>
-        <el-anchor-link
-          class="anchor-link"
-          href="#divider-other"
-          :title="t('pages.Setting.divider.other')"
-        />
       </el-anchor>
       <el-scrollbar ref="baseSettingsScrollbarRef" style="height: 100%; flex: 1">
         <!-- 基础设置 -->
         <el-form ref="settingDataFormRef" :model="settingDataForm" label-width="auto">
           <div class="form-card">
             <div id="divider-base" class="divider">{{ t('pages.Setting.divider.base') }}</div>
+            <div id="divider-app" class="divider-sub">
+              {{ t('pages.Setting.divider.application') }}
+            </div>
             <el-form-item :label="t('pages.Setting.settingDataForm.locale')" prop="locale">
               <el-select
                 v-model="settingDataForm.locale"
@@ -536,6 +548,65 @@ onBeforeUnmount(() => {
                 />
               </el-select>
             </el-form-item>
+            <el-form-item :label="t('pages.Setting.settingDataForm.themeColor')">
+              <el-color-picker
+                v-model="settingDataForm.themes.primary"
+                :predefine="colorList"
+                :value-on-clear="colorList[0]"
+                @change="onThemeColorChange"
+              />
+            </el-form-item>
+            <el-form-item
+              :label="t('pages.Setting.settingDataForm.enabledMenus')"
+              prop="enabledMenus"
+            >
+              <el-checkbox-group
+                v-model="settingDataForm.enabledMenus"
+                style="max-width: 450px"
+                @change="onSettingDataFormChange"
+              >
+                <el-checkbox
+                  v-for="item in canBeEnabledMenus"
+                  :key="item.name"
+                  :label="t(item.locale)"
+                  :value="item.name"
+                  style="width: 100px"
+                >
+                  <span class="checkbox-label">{{ t(item.locale) }}</span>
+                </el-checkbox>
+              </el-checkbox-group>
+            </el-form-item>
+            <el-form-item
+              :label="t('pages.Setting.settingDataForm.enableExpandSideMenu')"
+              prop="enableExpandSideMenu"
+            >
+              <el-checkbox
+                v-model="settingDataForm.enableExpandSideMenu"
+                @change="onEnableExpandSideMenuChange"
+              />
+            </el-form-item>
+            <el-form-item
+              :label="t('pages.Setting.settingDataForm.showSideMenuLabel')"
+              prop="showSideMenuLabel"
+            >
+              <el-checkbox
+                v-model="settingDataForm.showSideMenuLabel"
+                @change="onSettingDataFormChange"
+              />
+            </el-form-item>
+            <el-form-item
+              :label="t('pages.Setting.settingDataForm.suspensionBallVisible')"
+              prop="suspensionBallVisible"
+            >
+              <el-checkbox
+                v-model="settingDataForm.suspensionBallVisible"
+                @change="onSuspensionBallVisibleChange"
+              />
+            </el-form-item>
+
+            <div id="divider-function" class="divider-sub">
+              {{ t('pages.Setting.divider.function') }}
+            </div>
             <el-form-item :label="t('pages.Setting.settingDataForm.startup')" prop="startup">
               <el-checkbox v-model="settingDataForm.startup" @change="onSettingDataFormChange" />
             </el-form-item>
@@ -558,47 +629,11 @@ onBeforeUnmount(() => {
               />
             </el-form-item>
             <el-form-item
-              :label="t('pages.Setting.settingDataForm.suspensionBallVisible')"
-              prop="suspensionBallVisible"
+              :label="t('pages.Setting.settingDataForm.enableSegmentationTask')"
+              prop="enableSegmentationTask"
             >
               <el-checkbox
-                v-model="settingDataForm.suspensionBallVisible"
-                @change="onSuspensionBallVisibleChange"
-              />
-            </el-form-item>
-            <el-form-item
-              :label="t('pages.Setting.settingDataForm.enabledMenus')"
-              prop="enabledMenus"
-            >
-              <el-checkbox-group
-                v-model="settingDataForm.enabledMenus"
-                style="max-width: 450px"
-                @change="onSettingDataFormChange"
-              >
-                <el-checkbox
-                  v-for="item in canBeEnabledMenus"
-                  :key="item.name"
-                  :label="t(item.locale)"
-                  :value="item.name"
-                  style="width: 100px"
-                />
-              </el-checkbox-group>
-            </el-form-item>
-            <el-form-item
-              :label="t('pages.Setting.settingDataForm.enableExpandSideMenu')"
-              prop="enableExpandSideMenu"
-            >
-              <el-checkbox
-                v-model="settingDataForm.enableExpandSideMenu"
-                @change="onEnableExpandSideMenuChange"
-              />
-            </el-form-item>
-            <el-form-item
-              :label="t('pages.Setting.settingDataForm.showSideMenuLabel')"
-              prop="showSideMenuLabel"
-            >
-              <el-checkbox
-                v-model="settingDataForm.showSideMenuLabel"
+                v-model="settingDataForm.enableSegmentationTask"
                 @change="onSettingDataFormChange"
               />
             </el-form-item>
@@ -610,6 +645,76 @@ onBeforeUnmount(() => {
                 v-model="settingDataForm.powerSaveMode"
                 @change="onSettingDataFormChange"
               />
+            </el-form-item>
+
+            <div id="divider-explore" class="divider-sub">
+              {{ t('pages.Setting.divider.explore') }}
+            </div>
+            <el-form-item :label="t('pages.Setting.settingDataForm.sortField')" prop="sortField">
+              <el-select
+                v-model="settingDataForm.sortField"
+                style="width: 290px"
+                @change="onSettingDataFormChange"
+              >
+                <el-option
+                  v-for="item in sortFieldOptions"
+                  :key="item.value"
+                  :label="t(item.locale)"
+                  :value="item.value"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item :label="t('pages.Setting.settingDataForm.sortType')" prop="sortType">
+              <el-select
+                v-model="settingDataForm.sortType"
+                style="width: 140px"
+                @change="onSettingDataFormChange"
+              >
+                <el-option
+                  v-for="item in sortTypeOptions"
+                  :key="item.value"
+                  :label="t(item.locale)"
+                  :value="item.value"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item :label="t('pages.Setting.settingDataForm.showTag')" prop="showTag">
+              <el-checkbox v-model="settingDataForm.showTag" @change="onSettingDataFormChange" />
+            </el-form-item>
+            <el-form-item
+              :label="t('pages.Setting.settingDataForm.confirmOnDeleteFile')"
+              prop="confirmOnDeleteFile"
+            >
+              <el-checkbox
+                v-model="settingDataForm.confirmOnDeleteFile"
+                @change="onSettingDataFormChange"
+              />
+            </el-form-item>
+            <el-form-item :label="t('pages.Setting.settingDataForm.viewImageIntervalTime')">
+              <el-form-item prop="viewImageIntervalTime">
+                <el-input-number
+                  v-model="settingDataForm.viewImageIntervalTime"
+                  :min="minTimes.viewImageIntervalUnit"
+                  :max="999"
+                  controls-position="right"
+                  style="width: 140px"
+                  @change="onSettingDataFormChange"
+                />
+              </el-form-item>
+              <el-form-item prop="viewImageIntervalUnit">
+                <el-select
+                  v-model="settingDataForm.viewImageIntervalUnit"
+                  style="width: 140px; margin-left: 10px"
+                  @change="(val) => onTimeUnitChange('viewImageIntervalUnit', val)"
+                >
+                  <el-option
+                    v-for="item in intervalUnits.viewImageIntervalUnit"
+                    :key="item.value"
+                    :label="t(item.locale)"
+                    :value="item.value"
+                  />
+                </el-select>
+              </el-form-item>
             </el-form-item>
           </div>
 
@@ -640,7 +745,7 @@ onBeforeUnmount(() => {
                   :value="item.value"
                   style="width: 100px"
                 >
-                  {{ t(item.locale) }}
+                  <span class="radio-label">{{ t(item.locale) }}</span>
                 </el-radio>
               </el-radio-group>
             </el-form-item>
@@ -719,7 +824,9 @@ onBeforeUnmount(() => {
                   :label="t(item.locale)"
                   :value="item.value"
                   style="width: 100px"
-                />
+                >
+                  <span class="checkbox-label">{{ t(item.locale) }}</span>
+                </el-checkbox>
               </el-checkbox-group>
             </el-form-item>
             <el-form-item :label="t('pages.Setting.settingDataForm.quality')" prop="quality">
@@ -733,7 +840,9 @@ onBeforeUnmount(() => {
                   :label="text"
                   :value="text"
                   style="width: 100px"
-                />
+                >
+                  <span class="checkbox-label">{{ text }}</span>
+                </el-checkbox>
               </el-checkbox-group>
             </el-form-item>
             <el-form-item
@@ -891,6 +1000,8 @@ onBeforeUnmount(() => {
             >
               <el-checkbox-group
                 v-model="settingDataForm.downloadOrientation"
+                :disabled="!settingDataForm.downloadSources.length"
+                style="max-width: 450px"
                 @change="onSettingDataFormChange"
               >
                 <el-checkbox
@@ -899,7 +1010,9 @@ onBeforeUnmount(() => {
                   :label="t(item.locale)"
                   :value="item.value"
                   style="width: 100px"
-                />
+                >
+                  <span class="checkbox-label">{{ t(item.locale) }}</span>
+                </el-checkbox>
               </el-checkbox-group>
             </el-form-item>
             <el-form-item
@@ -908,8 +1021,9 @@ onBeforeUnmount(() => {
             >
               <el-input
                 v-model="settingDataForm.downloadKeywords"
-                :placeholder="t('pages.Setting.settingDataForm.downloadKeywords.placeholder')"
+                :disabled="!settingDataForm.downloadSources.length"
                 clearable
+                :placeholder="t('pages.Setting.settingDataForm.downloadKeywords.placeholder')"
                 style="max-width: 450px"
                 @change="onSettingDataFormChange"
               />
@@ -920,6 +1034,7 @@ onBeforeUnmount(() => {
             >
               <el-input
                 v-model="settingDataForm.downloadFolder"
+                :disabled="!settingDataForm.downloadSources.length"
                 readonly
                 :placeholder="t('pages.Setting.settingDataForm.downloadFolder.placeholder')"
                 style="max-width: 450px"
@@ -946,6 +1061,7 @@ onBeforeUnmount(() => {
               <el-form-item prop="downloadIntervalTime">
                 <el-input-number
                   v-model="settingDataForm.downloadIntervalTime"
+                  :disabled="!settingDataForm.downloadSources.length"
                   :min="minTimes.downloadIntervalUnit"
                   :max="999"
                   controls-position="right"
@@ -956,6 +1072,7 @@ onBeforeUnmount(() => {
               <el-form-item prop="switchIntervalUnit">
                 <el-select
                   v-model="settingDataForm.downloadIntervalUnit"
+                  :disabled="!settingDataForm.downloadSources.length"
                   style="width: 140px; margin-left: 10px"
                   @change="(val) => onTimeUnitChange('downloadIntervalUnit', val)"
                 >
@@ -974,7 +1091,9 @@ onBeforeUnmount(() => {
             >
               <el-checkbox
                 v-model="settingDataForm.autoDownload"
-                :disabled="!settingDataForm.downloadFolder"
+                :disabled="
+                  !settingDataForm.downloadSources.length || !settingDataForm.downloadFolder
+                "
                 @change="onSettingDataFormChange"
               />
             </el-form-item>
@@ -1413,62 +1532,6 @@ onBeforeUnmount(() => {
             <div id="divider-h5Settings" class="divider">
               {{ t('pages.Setting.divider.h5Settings') }}
             </div>
-            <div id="divider-h5SwitchSettings" class="divider-sub">
-              {{ t('pages.Setting.divider.h5SwitchSettings') }}
-            </div>
-            <el-form-item
-              :label="t('pages.Setting.settingDataForm.h5AutoSwitch')"
-              prop="h5AutoSwitch"
-            >
-              <el-checkbox
-                v-model="settingDataForm.h5AutoSwitch"
-                @change="onSettingDataFormChange"
-              />
-            </el-form-item>
-            <el-form-item
-              :label="t('pages.Setting.settingDataForm.h5SwitchType')"
-              prop="h5SwitchType"
-            >
-              <el-radio-group
-                v-model="settingDataForm.h5SwitchType"
-                @change="onSettingDataFormChange"
-              >
-                <el-radio
-                  v-for="item in switchTypeOptions"
-                  :key="item.value"
-                  :value="item.value"
-                  style="width: 100px"
-                >
-                  {{ t(item.locale) }}
-                </el-radio>
-              </el-radio-group>
-            </el-form-item>
-            <el-form-item :label="t('pages.Setting.settingDataForm.h5SwitchIntervalTime')">
-              <el-form-item prop="h5SwitchIntervalTime">
-                <el-input-number
-                  v-model="settingDataForm.h5SwitchIntervalTime"
-                  :min="minTimes.h5SwitchIntervalUnit"
-                  :max="60"
-                  controls-position="right"
-                  style="width: 140px"
-                  @change="onSettingDataFormChange"
-                />
-              </el-form-item>
-              <el-form-item prop="h5SwitchIntervalUnit">
-                <el-select
-                  v-model="settingDataForm.h5SwitchIntervalUnit"
-                  style="width: 140px; margin-left: 10px"
-                  @change="(val) => onTimeUnitChange('h5SwitchIntervalUnit', val)"
-                >
-                  <el-option
-                    v-for="item in intervalUnits.h5SwitchIntervalUnit"
-                    :key="item.value"
-                    :label="t(item.locale)"
-                    :value="item.value"
-                  />
-                </el-select>
-              </el-form-item>
-            </el-form-item>
 
             <div id="divider-h5ResourcesSettings" class="divider-sub">
               {{ t('pages.Setting.divider.h5ResourcesSettings') }}
@@ -1547,9 +1610,62 @@ onBeforeUnmount(() => {
               </el-select>
             </el-form-item>
 
-            <div id="divider-h5DisplaySettings" class="divider-sub">
-              {{ t('pages.Setting.divider.h5DisplaySettings') }}
+            <div id="divider-h5ExploreSettings" class="divider-sub">
+              {{ t('pages.Setting.divider.h5ExploreSettings') }}
             </div>
+            <el-form-item
+              :label="t('pages.Setting.settingDataForm.h5AutoSwitch')"
+              prop="h5AutoSwitch"
+            >
+              <el-checkbox
+                v-model="settingDataForm.h5AutoSwitch"
+                @change="onSettingDataFormChange"
+              />
+            </el-form-item>
+            <el-form-item
+              :label="t('pages.Setting.settingDataForm.h5SwitchType')"
+              prop="h5SwitchType"
+            >
+              <el-radio-group
+                v-model="settingDataForm.h5SwitchType"
+                @change="onSettingDataFormChange"
+              >
+                <el-radio
+                  v-for="item in switchTypeOptions"
+                  :key="item.value"
+                  :value="item.value"
+                  style="width: 100px"
+                >
+                  <span class="radio-label">{{ t(item.locale) }}</span>
+                </el-radio>
+              </el-radio-group>
+            </el-form-item>
+            <el-form-item :label="t('pages.Setting.settingDataForm.h5SwitchIntervalTime')">
+              <el-form-item prop="h5SwitchIntervalTime">
+                <el-input-number
+                  v-model="settingDataForm.h5SwitchIntervalTime"
+                  :min="minTimes.h5SwitchIntervalUnit"
+                  :max="60"
+                  controls-position="right"
+                  style="width: 140px"
+                  @change="onSettingDataFormChange"
+                />
+              </el-form-item>
+              <el-form-item prop="h5SwitchIntervalUnit">
+                <el-select
+                  v-model="settingDataForm.h5SwitchIntervalUnit"
+                  style="width: 140px; margin-left: 10px"
+                  @change="(val) => onTimeUnitChange('h5SwitchIntervalUnit', val)"
+                >
+                  <el-option
+                    v-for="item in intervalUnits.h5SwitchIntervalUnit"
+                    :key="item.value"
+                    :label="t(item.locale)"
+                    :value="item.value"
+                  />
+                </el-select>
+              </el-form-item>
+            </el-form-item>
             <el-form-item
               :label="t('pages.Setting.settingDataForm.h5ImageDisplaySize')"
               prop="h5ImageDisplaySize"
@@ -1595,8 +1711,8 @@ onBeforeUnmount(() => {
               </el-input-number>
             </el-form-item>
 
-            <div id="divider-h5ActionSettings" class="divider-sub">
-              {{ t('pages.Setting.divider.h5ActionSettings') }}
+            <div id="divider-h5FunctionSettings" class="divider-sub">
+              {{ t('pages.Setting.divider.h5FunctionSettings') }}
             </div>
             <el-form-item
               :label="t('pages.Setting.settingDataForm.h5FloatingButtonPosition')"
@@ -1612,7 +1728,7 @@ onBeforeUnmount(() => {
                   :value="item.value"
                   style="width: 100px"
                 >
-                  {{ t(item.locale) }}
+                  <span class="radio-label">{{ t(item.locale) }}</span>
                 </el-radio>
               </el-radio-group>
             </el-form-item>
@@ -1671,98 +1787,6 @@ onBeforeUnmount(() => {
             >
               <el-checkbox
                 v-model="settingDataForm.h5WeekScreen"
-                @change="onSettingDataFormChange"
-              />
-            </el-form-item>
-          </div>
-
-          <div class="form-card">
-            <div id="divider-other" class="divider">{{ t('pages.Setting.divider.other') }}</div>
-            <el-form-item :label="t('pages.Setting.settingDataForm.sortField')" prop="sortField">
-              <el-select
-                v-model="settingDataForm.sortField"
-                style="width: 290px"
-                @change="onSettingDataFormChange"
-              >
-                <el-option
-                  v-for="item in sortFieldOptions"
-                  :key="item.value"
-                  :label="t(item.locale)"
-                  :value="item.value"
-                />
-              </el-select>
-            </el-form-item>
-            <el-form-item :label="t('pages.Setting.settingDataForm.sortType')" prop="sortType">
-              <el-select
-                v-model="settingDataForm.sortType"
-                style="width: 140px"
-                @change="onSettingDataFormChange"
-              >
-                <el-option
-                  v-for="item in sortTypeOptions"
-                  :key="item.value"
-                  :label="t(item.locale)"
-                  :value="item.value"
-                />
-              </el-select>
-            </el-form-item>
-            <el-form-item
-              :label="t('pages.Setting.settingDataForm.showImageTag')"
-              prop="showImageTag"
-            >
-              <el-checkbox
-                v-model="settingDataForm.showImageTag"
-                @change="onSettingDataFormChange"
-              />
-            </el-form-item>
-            <el-form-item
-              :label="t('pages.Setting.settingDataForm.confirmOnDeleteFile')"
-              prop="confirmOnDeleteFile"
-            >
-              <el-checkbox
-                v-model="settingDataForm.confirmOnDeleteFile"
-                @change="onSettingDataFormChange"
-              />
-            </el-form-item>
-            <el-form-item :label="t('pages.Setting.settingDataForm.viewImageIntervalTime')">
-              <el-form-item prop="viewImageIntervalTime">
-                <el-input-number
-                  v-model="settingDataForm.viewImageIntervalTime"
-                  :min="minTimes.viewImageIntervalUnit"
-                  :max="999"
-                  controls-position="right"
-                  style="width: 140px"
-                  @change="onSettingDataFormChange"
-                />
-              </el-form-item>
-              <el-form-item prop="viewImageIntervalUnit">
-                <el-select
-                  v-model="settingDataForm.viewImageIntervalUnit"
-                  style="width: 140px; margin-left: 10px"
-                  @change="(val) => onTimeUnitChange('viewImageIntervalUnit', val)"
-                >
-                  <el-option
-                    v-for="item in intervalUnits.viewImageIntervalUnit"
-                    :key="item.value"
-                    :label="t(item.locale)"
-                    :value="item.value"
-                  />
-                </el-select>
-              </el-form-item>
-            </el-form-item>
-            <el-form-item :label="t('pages.Setting.settingDataForm.themeColor')">
-              <el-color-picker
-                v-model="settingDataForm.themes.primary"
-                :predefine="colorList"
-                @change="onThemeColorChange"
-              />
-            </el-form-item>
-            <el-form-item
-              :label="t('pages.Setting.settingDataForm.enableSegmentationTask')"
-              prop="enableSegmentationTask"
-            >
-              <el-checkbox
-                v-model="settingDataForm.enableSegmentationTask"
                 @change="onSettingDataFormChange"
               />
             </el-form-item>
@@ -1899,5 +1923,12 @@ onBeforeUnmount(() => {
       font-weight: normal !important;
     }
   }
+}
+
+.radio-label {
+  color: var(--el-text-color-regular);
+}
+.checkbox-label {
+  color: var(--el-text-color-regular);
 }
 </style>

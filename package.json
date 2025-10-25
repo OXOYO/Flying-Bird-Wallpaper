@@ -71,7 +71,7 @@
     "electron-builder": "^26.0.12",
     "electron-devtools-installer": "^4.0.0",
     "electron-vite": "^4.0.0",
-    "element-plus": "^2.10.7",
+    "element-plus": "^2.11.5",
     "eslint": "^9.33.0",
     "eslint-plugin-vue": "^10.4.0",
     "fast-glob": "^3.3.3",

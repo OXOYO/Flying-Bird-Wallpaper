@@ -1,4 +1,4 @@
-import '@renderer/assets/main.scss'
+import '@renderer/assets/styles/main.scss'
 
 import App from './App.vue'
 import useIconifyIcon from '@renderer/utils/icons.js'

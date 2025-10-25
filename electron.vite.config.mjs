@@ -95,7 +95,7 @@ export default defineConfig({
     css: {
       preprocessorOptions: {
         scss: {
-          additionalData: '@use "@renderer/assets/custom.scss" as *;',
+          additionalData: '@use "@renderer/assets/styles/custom.scss" as *;',
           silenceDeprecations: ['legacy-js-api']
         }
       }

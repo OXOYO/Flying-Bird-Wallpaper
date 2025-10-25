@@ -33,6 +33,9 @@
       },
       "divider": {
         "base": "Basic settings",
+        "application": "Application settings",
+        "explore": "Explore settings",
+        "function": "Function settings",
         "wallpaper": "Wallpaper settings",
         "switch": "Switch settings",
         "localResource": "Local resources",
@@ -41,13 +44,11 @@
         "dynamicWallpaper": "Dynamic wallpaper",
         "rhythmWallpaper": "Rhythm wallpaper",
         "remoteResource": "Remote resources",
-        "other": "Other settings",
         "privacyPassword": "Privacy password",
         "h5Settings": "H5 settings",
-        "h5SwitchSettings": "H5 switch settings",
-        "h5ResourcesSettings": "H5 resources settings",
-        "h5DisplaySettings": "H5 display settings",
-        "h5ActionSettings": "H5 action settings"
+        "h5ExploreSettings": "Explore settings",
+        "h5ResourcesSettings": "Resources settings",
+        "h5FunctionSettings": "Function settings"
       },
       "settingDataForm": {
         "locale": "Language",
@@ -62,8 +63,8 @@
         "allScreen": "Apply to all screens",
         "scaleType": "Filling mode",
         "wallpaperResource": "Wallpaper resource",
-        "orientation": "Wallpaper orientation",
-        "quality": "Wallpaper quality",
+        "orientation": "Filter direction",
+        "quality": "Filter quality",
         "filterKeywords": {
           "label": "Filter keywords",
           "placeholder": "Please enter keywords"
@@ -150,7 +151,7 @@
         "enableExpandSideMenu": "Enable expand side menu",
         "showSideMenuLabel": "Show side menu label",
         "viewImageIntervalTime": "View image interval",
-        "showImageTag": "Show image tag",
+        "showTag": "Show tag",
         "confirmOnDeleteFile": "Confirm on delete",
         "enableSegmentationTask": "Enable segmentation task",
         "h5AutoSwitch": "Automatic switching",
@@ -625,7 +626,7 @@
       "setting": {
         "title": "Settings",
         "form": {
-          "appSettings": "App Settings",
+          "h5ApplicationSettings": "Application Settings",
           "locale": {
             "label": "Language",
             "placeholder": "Select language"
@@ -640,14 +641,14 @@
               "placeholder": "Select theme color"
             }
           },
-          "switchSettings": "Switch Settings",
+          "h5ExploreSettings": "Explore Settings",
           "h5AutoSwitch": "Auto Switch",
           "h5SwitchType": {
             "label": "Switch Mode",
             "placeholder": "Select switch mode"
           },
           "h5SwitchIntervalTime": "Switch Interval",
-          "resourcesSettings": "Resources Settings",
+          "h5ResourcesSettings": "Resources Settings",
           "h5Resource": {
             "label": "Resource",
             "placeholder": "Select resource"
@@ -668,14 +669,13 @@
             "label": "Sort Order",
             "placeholder": "Select sort order"
           },
-          "displaySettings": "Display Settings",
           "h5ImageDisplaySize": {
             "label": "Display Size",
             "placeholder": "Select display size"
           },
           "h5ImageCompress": "Image Compress",
           "h5ImageCompressStartSize": "Start compress size",
-          "actionSettings": "Action Settings",
+          "h5FunctionSettings": "Function Settings",
           "h5FloatingButtonPosition": {
             "label": "Floating Button Position",
             "placeholder": "Select floating button position"

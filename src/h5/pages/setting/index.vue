@@ -236,7 +236,7 @@ onMounted(() => {
     <van-nav-bar :title="t('h5.pages.setting.title')" fixed safe-area-inset-top />
 
     <div class="page-setting-inner">
-      <van-cell-group inset :title="t('h5.pages.setting.form.appSettings')">
+      <van-cell-group inset :title="t('h5.pages.setting.form.h5ApplicationSettings')">
         <van-field
           v-model="fieldsData.locale"
           is-link
@@ -285,65 +285,7 @@ onMounted(() => {
         </van-cell>
       </van-cell-group>
 
-      <van-cell-group inset :title="t('h5.pages.setting.form.switchSettings')">
-        <van-cell :title="t('h5.pages.setting.form.h5AutoSwitch')">
-          <template #right-icon>
-            <van-switch
-              v-model="settingDataForm.h5AutoSwitch"
-              size="20px"
-              @change="onSettingDataChange('h5AutoSwitch')"
-            />
-          </template>
-        </van-cell>
-
-        <van-field
-          v-model="fieldsData.h5SwitchType"
-          is-link
-          readonly
-          name="h5SwitchType"
-          :label="t('h5.pages.setting.form.h5SwitchType.label')"
-          :placeholder="t('h5.pages.setting.form.h5SwitchType.placeholder')"
-          @click="onShowPicker('h5SwitchType')"
-        />
-        <van-popup v-model:show="showPickers.h5SwitchType" destroy-on-close position="bottom">
-          <van-picker
-            :columns="pickerColumns.h5SwitchType"
-            :model-value="[settingDataForm.h5SwitchType]"
-            @confirm="(...args) => onConfirmPicker('h5SwitchType', ...args)"
-            @cancel="(...args) => onCancelPicker('h5SwitchType', ...args)"
-          />
-        </van-popup>
-
-        <van-field
-          name="h5SwitchIntervalTime"
-          :label="t('h5.pages.setting.form.h5SwitchIntervalTime')"
-        >
-          <template #input>
-            <div class="interval-setting">
-              <van-slider
-                v-model="settingDataForm.h5SwitchIntervalTime"
-                min="2"
-                max="60"
-                @update:model-value="onH5SwitchIntervalTimeUpdate"
-                @change="onSettingDataChange('h5SwitchIntervalTime')"
-              >
-                <template #button>
-                  <div class="slider-button">{{ settingDataForm.h5SwitchIntervalTime }}</div>
-                </template>
-              </van-slider>
-              <van-dropdown-menu style="width: 100px">
-                <van-dropdown-item
-                  v-model="settingDataForm.h5SwitchIntervalUnit"
-                  :options="pickerColumns.h5SwitchIntervalUnit"
-                  @change="onSettingDataChange('h5SwitchIntervalUnit')"
-                />
-              </van-dropdown-menu>
-            </div>
-          </template>
-        </van-field>
-      </van-cell-group>
-
-      <van-cell-group inset :title="t('h5.pages.setting.form.resourcesSettings')">
+      <van-cell-group inset :title="t('h5.pages.setting.form.h5ResourcesSettings')">
         <van-field
           v-model="fieldsData.h5Resource"
           is-link
@@ -435,7 +377,62 @@ onMounted(() => {
         </van-popup>
       </van-cell-group>
 
-      <van-cell-group inset :title="t('h5.pages.setting.form.displaySettings')">
+      <van-cell-group inset :title="t('h5.pages.setting.form.h5ExploreSettings')">
+        <van-cell :title="t('h5.pages.setting.form.h5AutoSwitch')">
+          <template #right-icon>
+            <van-switch
+              v-model="settingDataForm.h5AutoSwitch"
+              size="20px"
+              @change="onSettingDataChange('h5AutoSwitch')"
+            />
+          </template>
+        </van-cell>
+
+        <van-field
+          v-model="fieldsData.h5SwitchType"
+          is-link
+          readonly
+          name="h5SwitchType"
+          :label="t('h5.pages.setting.form.h5SwitchType.label')"
+          :placeholder="t('h5.pages.setting.form.h5SwitchType.placeholder')"
+          @click="onShowPicker('h5SwitchType')"
+        />
+        <van-popup v-model:show="showPickers.h5SwitchType" destroy-on-close position="bottom">
+          <van-picker
+            :columns="pickerColumns.h5SwitchType"
+            :model-value="[settingDataForm.h5SwitchType]"
+            @confirm="(...args) => onConfirmPicker('h5SwitchType', ...args)"
+            @cancel="(...args) => onCancelPicker('h5SwitchType', ...args)"
+          />
+        </van-popup>
+
+        <van-field
+          name="h5SwitchIntervalTime"
+          :label="t('h5.pages.setting.form.h5SwitchIntervalTime')"
+        >
+          <template #input>
+            <div class="interval-setting">
+              <van-slider
+                v-model="settingDataForm.h5SwitchIntervalTime"
+                min="2"
+                max="60"
+                @update:model-value="onH5SwitchIntervalTimeUpdate"
+                @change="onSettingDataChange('h5SwitchIntervalTime')"
+              >
+                <template #button>
+                  <div class="slider-button">{{ settingDataForm.h5SwitchIntervalTime }}</div>
+                </template>
+              </van-slider>
+              <van-dropdown-menu style="width: 100px">
+                <van-dropdown-item
+                  v-model="settingDataForm.h5SwitchIntervalUnit"
+                  :options="pickerColumns.h5SwitchIntervalUnit"
+                  @change="onSettingDataChange('h5SwitchIntervalUnit')"
+                />
+              </van-dropdown-menu>
+            </div>
+          </template>
+        </van-field>
         <van-field
           v-model="fieldsData.h5ImageDisplaySize"
           is-link
@@ -485,7 +482,7 @@ onMounted(() => {
         </van-field>
       </van-cell-group>
 
-      <van-cell-group inset :title="t('h5.pages.setting.form.actionSettings')">
+      <van-cell-group inset :title="t('h5.pages.setting.form.h5FunctionSettings')">
         <van-field
           v-model="fieldsData.h5FloatingButtonPosition"
           is-link

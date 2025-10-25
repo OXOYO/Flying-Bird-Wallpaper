@@ -288,7 +288,7 @@ const supportSearchTypes = computed(() => {
 })
 
 const isShowTag = computed(() => {
-  return settingData.value.showImageTag && cardForm.cardHeight > 100 && cardForm.cardWidth > 100
+  return settingData.value.showTag && cardForm.cardHeight > 100 && cardForm.cardWidth > 100
 })
 
 const fixedBtns = computed(() => {

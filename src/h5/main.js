@@ -1,4 +1,4 @@
-import './assets/main.css'
+import './assets/styles/main.css'
 import App from './App.vue'
 import useIconifyIcon from './utils/icons.js'
 import useI18n from '@i18n/web.js'

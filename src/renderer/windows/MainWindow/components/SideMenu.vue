@@ -116,8 +116,12 @@ const onToolClick = async (funcName) => {
         @mouseleave="onOutMenu()"
       >
         <div class="side-menu-btn__inner">
-          <IconifyIcon class="side-menu-btn-icon" :icon="item.icon" />
-          <div class="side-menu-btn-text" :class="{ 'show-text': settingData.showSideMenuLabel }">
+          <IconifyIcon
+            class="side-menu-btn-icon"
+            :class="{ 'side-menu-btn-icon_large': !settingData.showSideMenuLabel }"
+            :icon="item.icon"
+          />
+          <div v-if="settingData.showSideMenuLabel" class="side-menu-btn-text">
             {{ $t(item.locale) }}
           </div>
         </div>
@@ -283,19 +287,21 @@ const onToolClick = async (funcName) => {
 .side-menu-btn__inner {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
+  min-height: 46px;
 }
 .side-menu-btn-icon {
   font-size: 20px;
+  transition: all 0.3s ease-in-out;
+  will-change: transform;
+
+  &_large {
+    font-size: 24px;
+  }
 }
 .side-menu-btn-text {
   margin: 6px 0;
-  visibility: hidden;
-}
-
-.show-text {
-  visibility: visible;
 }
 
 .side-footer {

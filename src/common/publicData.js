@@ -221,7 +221,7 @@ export const defaultSettingData = {
   viewImageIntervalTime: 5,
   viewImageIntervalUnit: 's',
   // 显示图片标签
-  showImageTag: true,
+  showTag: true,
   // 删除文件时是否需要确认
   confirmOnDeleteFile: true,
   // 启用分词计算任务

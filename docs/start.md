@@ -17,7 +17,7 @@ Flying-Bird-Wallpaper/
 ├── resources/                  # 资源文件
 │   ├── api/                    # 各类壁纸API集成模块
 │   ├── icons/                  # 应用图标资源
-│   ├── lib/                    # 原生库文件
+│   ├── models/                 # 大模型文件
 │   ├── loading.html            # 加载页
 │   ├── migrations/             # 数据迁移脚本
 │   └── plugin-templates/       # 插件模板
