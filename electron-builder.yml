@@ -47,8 +47,9 @@ nsis:
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
-  # 允许用户更改安装目录
+  # 允许用户更改安装目录 (需要设置 oneClick 为 false)
   allowToChangeInstallationDirectory: true
+  oneClick: false
   # 安装完成后打开应用程序
   runAfterFinish: true
   differentialPackage: false
@@ -99,13 +100,3 @@ publish:
   repo: Flying-Bird-Wallpaper
   private: false
   releaseType: release
-  publishAutoUpdate: true
-  # 添加更新通道配置
-  channel: latest
-  # 确保发布正确的文件
-  publisherName: ['*.exe', '*.dmg', 'latest*.yml', '!*.blockmap']
-  # 本地发布测试
-  # provider: generic
-  # url: http://localhost:8080
-electronDownload:
-  mirror: https://npmmirror.com/mirrors/electron/
