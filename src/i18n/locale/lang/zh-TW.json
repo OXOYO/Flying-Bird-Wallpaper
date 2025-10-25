@@ -1,0 +1,702 @@
+{
+  "appInfo": {
+    "appName": "飛鳥桌布",
+    "description": "飛鳥桌布是一款功能豐富的桌面桌布軟體，支援圖片、影片、律動、純色等多種桌布類型，讓您的桌面煥發獨特魅力。"
+  },
+  "actions": {
+    "autoSwitchWallpaper": {
+      "start": "啟動自動切換",
+      "stop": "停止自動切換"
+    },
+    "nextWallpaper": "下一個桌布",
+    "prevWallpaper": "上一個桌布",
+    "closeSuspensionBall": "關閉懸浮球",
+    "openSuspensionBall": "顯示懸浮球",
+    "quit": "退出",
+    "checkUpdate": "檢查更新",
+    "menu": "選單",
+    "wordDrawer": "詞庫",
+    "qrCode": "QR碼"
+  },
+  "qrCode": {
+    "notice": "掃描QR碼訪問行動版",
+    "imgPlaceholder": "請先啟動H5服務",
+    "imgError": "載入QR碼失敗",
+    "startH5Server": "啟動H5服務",
+    "stopH5Server": "停止H5服務"
+  },
+  "pages": {
+    "Setting": {
+      "tabs": {
+        "baseSetting": "基礎設定",
+        "privacySpace": "隱私空間"
+      },
+      "divider": {
+        "base": "基礎設定",
+        "application": "應用設定",
+        "explore": "瀏覽設定",
+        "function": "功能設定",
+        "wallpaper": "桌布設定",
+        "switch": "切換設定",
+        "localResource": "本地資源",
+        "webWallpaper": "網頁桌布",
+        "colorWallpaper": "顏色桌布",
+        "dynamicWallpaper": "動態桌布",
+        "rhythmWallpaper": "律動桌布",
+        "remoteResource": "遠程資源",
+        "privacyPassword": "隱私密碼",
+        "h5Settings": "H5設定",
+        "h5ExploreSettings": "瀏覽設定",
+        "h5ResourcesSettings": "資源設定",
+        "h5FunctionSettings": "功能設定"
+      },
+      "settingDataForm": {
+        "locale": "語言",
+        "startup": "開機啟動",
+        "openMainWindowOnStartup": "啟動時打開主視窗",
+        "startH5ServerOnStartup": "啟動時啟動H5服務",
+        "suspensionBallVisible": "顯示懸浮球",
+        "enabledMenus": "啟用選單",
+        "autoSwitchWallpaper": "自動切換桌布",
+        "switchType": "切換方式",
+        "switchIntervalTime": "切換間隔",
+        "allScreen": "應用到所有螢幕",
+        "scaleType": "填充方式",
+        "wallpaperResource": "桌布資源",
+        "orientation": "過濾方向",
+        "quality": "過濾品質",
+        "filterKeywords": {
+          "label": "過濾關鍵詞",
+          "placeholder": "請輸入關鍵詞"
+        },
+        "localResourceFolders": {
+          "label": "資源目錄",
+          "placeholder": "請選擇目錄"
+        },
+        "allowedFileExt": {
+          "label": "允許檔案類型",
+          "placeholder": "請選擇檔案類型"
+        },
+        "autoRefreshDirectory": "定時刷新",
+        "refreshDirectoryIntervalTime": "刷新間隔",
+        "webWallpaperUrl": {
+          "label": "網頁地址",
+          "placeholder": "請輸入網頁地址"
+        },
+        "autoRefreshWebWallpaper": "定時刷新",
+        "refreshWebWallpaperIntervalTime": "刷新間隔",
+        "colorWallpaperVal": {
+          "label": "顏色",
+          "placeholder": "請選擇顏色"
+        },
+        "dynamicLastVideoPath": {
+          "label": "動態桌布檔案",
+          "placeholder": "請選擇動態桌布檔案"
+        },
+        "dynamicAutoPlayOnStartup": "啟動時自動播放",
+        "dynamicMuteAudio": "靜音播放",
+        "dynamicBackgroundColor": "背景色",
+        "dynamicOpacity": "透明度",
+        "dynamicBrightness": "亮度",
+        "dynamicContrast": "對比度",
+        "dynamicPerformanceMode": {
+          "label": "效能模式",
+          "placeholder": "請選擇效能模式"
+        },
+        "dynamicScaleMode": {
+          "label": "縮放模式",
+          "placeholder": "請選擇縮放模式"
+        },
+        "rhythmEffect": {
+          "label": "律動效果",
+          "placeholder": "請選擇律動效果"
+        },
+        "rhythmWidthRatio": "寬度占比",
+        "rhythmHeightRatio": "高度占比",
+        "rhythmColors": "律動顏色",
+        "rhythmAnimation": {
+          "label": "動效",
+          "placeholder": "請選擇動效"
+        },
+        "rhythmDensity": {
+          "label": "密集程度",
+          "placeholder": "請選擇密集程度"
+        },
+        "rhythmPosition": {
+          "label": "顯示位置",
+          "placeholder": "請選擇顯示位置"
+        },
+        "rhythmSampleRange": "取樣範圍",
+        "remoteResourceSecretKeys": {
+          "label": "資源金鑰",
+          "placeholder": "請輸入金鑰"
+        },
+        "downloadSources": "下載源",
+        "downloadOrientation": "圖片方向",
+        "downloadKeywords": {
+          "label": "下載關鍵詞",
+          "placeholder": "請輸入關鍵詞"
+        },
+        "autoDownload": "自動下載",
+        "downloadIntervalTime": "下載間隔",
+        "downloadFolder": {
+          "label": "下載目錄",
+          "placeholder": "請選擇目錄"
+        },
+        "autoClearDownloaded": "自動清理",
+        "clearDownloadedExpiredTime": "過期時間",
+        "sortField": "排序欄位",
+        "sortType": "排序方式",
+        "themeColor": "主題色",
+        "enableExpandSideMenu": "啟用展開側邊欄",
+        "showSideMenuLabel": "顯示側邊欄文字",
+        "viewImageIntervalTime": "預覽播放間隔",
+        "showTag": "顯示標籤",
+        "confirmOnDeleteFile": "刪除前確認",
+        "enableSegmentationTask": "啟用分詞任務",
+        "h5AutoSwitch": "自動切換",
+        "h5SwitchType": "切換方式",
+        "h5SwitchIntervalTime": "切換間隔",
+        "h5Resource": "圖片資源",
+        "h5Orientation": "過濾方向",
+        "h5Quality": "過濾品質",
+        "h5SortField": "排序欄位",
+        "h5SortType": "排序方式",
+        "h5ImageDisplaySize": "顯示尺寸",
+        "h5ImageCompress": "圖片壓縮",
+        "h5ImageCompressStartSize": "壓縮起始大小",
+        "h5FloatingButtonPosition": "懸浮按鈕位置",
+        "h5EnabledFloatingButtons": {
+          "label": "啟用懸浮按鈕",
+          "placeholder": "請選擇懸浮按鈕"
+        },
+        "h5NumberIndicatorPosition": "指示器位置",
+        "h5Vibration": "震動回饋",
+        "h5WeekScreen": "螢幕常亮",
+        "powerSaveMode": "省電模式"
+      },
+      "privacyPasswordForm": {
+        "old": {
+          "label": "舊密碼",
+          "placeholder": "請輸入舊密碼",
+          "tooltip": "密碼由數字組成，最少3位，最多6位數字，預設密碼為空"
+        },
+        "new": {
+          "label": "新密碼",
+          "placeholder": "請輸入新密碼",
+          "tooltip": "密碼由數字組成，最少3位，最多6位數字"
+        },
+        "confirm": "更新密碼"
+      }
+    },
+    "Utils": {
+      "dataUtils": "資料工具",
+      "wallpaperUtils": "桌布工具",
+      "fileUtils": "檔案工具",
+      "refreshDirectory": "刷新本地資源目錄資料",
+      "clearCurrentResourceDB": "清空目前資源資料",
+      "clearWordsDB": "清空詞庫資料",
+      "clearFavoritesDB": "清空收藏資料",
+      "clearHistoryDB": "清空回憶資料",
+      "clearStatisticsDB": "清空統計資料",
+      "clearCache": "清空快取資料",
+      "clearDownloadedAll": "清空所有下載",
+      "clearDownloadedExpired": "清理過期下載",
+      "nextWallpaper": "下一個桌布",
+      "prevWallpaper": "上一個桌布",
+      "execute": "執行",
+      "openDatabaseDir": "打開操作資料庫目錄",
+      "openLogsDir": "打開操作日誌目錄",
+      "openDownloadDir": "打開下載目錄",
+      "openPluginsDir": "打開自訂插件目錄",
+      "startH5Server": "啟動H5服務",
+      "stopH5Server": "停止H5服務",
+      "setWebWallpaper": "設定網頁桌布",
+      "setColorWallpaper": "設定顏色桌布",
+      "setDynamicWallpaper": "設定動態桌布",
+      "closeDynamicWallpaper": "關閉動態桌布",
+      "openRhythmWallpaperWindow": "打開律動桌布",
+      "closeRhythmWallpaperWindow": "關閉律動桌布"
+    },
+    "About": {
+      "name": "名稱",
+      "description": "描述",
+      "author": "作者",
+      "version": "版本",
+      "github": "GitHub",
+      "email": "Email"
+    }
+  },
+  "messages": {
+    "operationSuccess": "操作成功！",
+    "operationFail": "操作失敗！",
+    "operationIllegal": "非法操作！",
+    "operationInProgress": "操作執行中！",
+    "folderAlreadyExist": "資源目錄重複！",
+    "confirmMessageTemplate": "確認要<span style=\"color: red; font-weight: bolder; margin: 0 5px\">{text}</span>嗎？",
+    "confirmMessageDanger": "危險操作，此操作不可逆，確認執行嗎？",
+    "inputPrivacySpacePassword": "請輸入隱私空間密碼！",
+    "inputPrivacySpacePasswordErrorMessage": "最少3位，最多6位數字！",
+    "enterPrivacySpaceSuccess": "已進入隱私空間！",
+    "exitedPrivacySpaceSuccess": "已退出隱私空間！",
+    "noMoreData": "沒有更多資料了！",
+    "getDataFail": "獲取資料失敗！",
+    "copySuccess": "已複製！",
+    "copyFail": "複製失敗！",
+    "confirmDelete": "刪除後無法恢復，確認刪除嗎？",
+    "refreshDirectorySuccess": "刷新資源目錄成功，成功插入 {insertedCount} 條，資料總數 {total} 條！",
+    "refreshDirectoryFail": "刷新資源失敗！",
+    "refreshDirectoryFailSettingError": "刷新資源失敗，配置錯誤！",
+    "refreshDirectoryFailNotSettingFolder": "刷新資源失敗，未設定資源目錄！",
+    "refreshDirectoryFailNotSettingFileExt": "刷新資源失敗，未設定允許的檔案類型！",
+    "clearTableSuccess": "清空資料成功！",
+    "clearTableFail": "清空資料失敗！",
+    "clearCacheSuccess": "清除快取成功！",
+    "clearCacheFail": "清除快取失敗！",
+    "clearTableAutoincrementFail": "清除表成功，清除表自增序列失敗！",
+    "operationSuccessWithInsertFail": "操作成功，插入資料庫失敗！",
+    "oldPasswordError": "舊密碼錯誤！",
+    "newPasswordNotEmpty": "新密碼不能為空！",
+    "passwordError": "密碼錯誤！",
+    "alreadyInPrivacySpace": "已在隱私空間！",
+    "alreadyInFavorites": "已在收藏！",
+    "operationTooFrequent": "操作太頻繁，請稍後再試！",
+    "privacyPasswordNotSet": "隱私密碼未設定，請先設定隱私密碼！",
+    "verifyPrivacyPasswordSuccess": "驗證通過！",
+    "verifyPrivacyPasswordFail": "驗證失敗！",
+    "operationFailWithDataDuplication": "操作失敗，資料重複！",
+    "querySuccess": "查詢成功！",
+    "queryFail": "查詢失敗！",
+    "queryEmpty": "查詢結果為空！",
+    "paramsError": "參數錯誤！",
+    "setWallpaperSuccess": "設定桌布成功！",
+    "setWallpaperFail": "設定桌布失敗！",
+    "setDynamicWallpaperSuccess": "設定動態桌布成功！",
+    "setDynamicWallpaperFail": "設定動態桌布失敗！",
+    "closeDynamicWallpaperSuccess": "關閉動態桌布成功！",
+    "closeDynamicWallpaperFail": "關閉動態桌布失敗！",
+    "fileTypeNotSupported": "不支援的檔案類型！",
+    "enterKeywords": "請輸入關鍵詞！",
+    "pleaseSetDownloadFolder": "請先設定下載目錄！",
+    "downloadFolderNotExistOrNotSet": "下載目錄不存在或未設定！",
+    "downloadFileSuccess": "下載檔案成功！",
+    "downloadFileFail": "下載檔案失敗！",
+    "downloadFileExist": "下載檔案已存在！",
+    "resourceNotFound": "資源不存在！",
+    "resourceSecretKeyUnset": "請先設定遠程資源金鑰！",
+    "h5ServerStartSuccess": "H5服務啟動成功！",
+    "h5ServerStartFail": "H5服務啟動失敗！",
+    "h5ServerStopSuccess": "H5服務停止成功！",
+    "h5ServerStopFail": "H5服務停止失敗！",
+    "dbConnectFail": "資料庫連結失敗！",
+    "fileNotExist": "檔案不存在！",
+    "resourceNotExist": "資源不存在！",
+    "downloadFail": "下載失敗！",
+    "alreadyExists": "已存在！",
+    "notExists": "不存在！",
+    "urlEmpty": "URL不能為空！",
+    "invalidUrl": "無效的URL！",
+    "fileServerNotInitialized": "檔案伺服器未初始化！",
+    "useDefaultSettings": "使用預設設定！",
+    "clearDownloadedDone": "清理完成，共 {allCount}，成功 {successCount}，失敗 {failCount}！",
+    "updateAvailable": "發現新版本 {version}，點擊跳轉下載！",
+    "checkUpdateFail": "檢查更新失敗！",
+    "checkUpdateSuccess": "檢查更新成功！",
+    "updateNotAvailable": "目前已是最新版本！",
+    "updateDownloaded": "已下載完成，點擊安裝！",
+    "saveSuccess": "儲存成功！",
+    "saveFail": "儲存失敗！",
+    "deleteSuccess": "刪除成功！",
+    "deleteFail": "刪除失敗！",
+    "maxFavoriteCountReached": "收藏數量已達上限！",
+    "noFileSelected": "未選擇檔案！",
+    "noDynamicWallpaperSet": "未設定動態桌布！",
+    "multiDeviceSyncWarning": "多裝置同步功能已關閉，修改僅在目前裝置生效！",
+    "rhythmWallpaperNeedVirtualAudio": "請先安裝並配置虛擬聲卡（如 VB-Audio/BlackHole）才能使用律動桌布功能",
+    "noData": "暫無資料",
+    "loading": "載入中...",
+    "loadingMore": "載入更多...",
+    "invalidIndex": "請輸入有效的序號",
+    "indexOutOfRange": "序號超出範圍",
+    "indexTooLarge": "序號過大"
+  },
+  "resourceTypeList": {
+    "localResource": "本地資源",
+    "remoteResource": "遠程資源"
+  },
+  "resourceList": {
+    "resources": "資源庫",
+    "local": "本地資源",
+    "favorites": "收藏"
+  },
+  "menuList": {
+    "Explore": "圖庫",
+    "Search": "搜尋",
+    "Words": "詞庫",
+    "Favorites": "收藏",
+    "History": "回憶",
+    "Setting": "設定",
+    "Utils": "工具",
+    "About": "關於"
+  },
+  "scaleTypes": {
+    "auto": "自動",
+    "span": "自動",
+    "fill": "填充",
+    "fit": "適應",
+    "stretch": "拉伸",
+    "center": "居中",
+    "tile": "平鋪"
+  },
+  "intervalUnits": {
+    "s": "秒",
+    "m": "分鐘",
+    "h": "小時",
+    "d": "天"
+  },
+  "filterTypeOptions": {
+    "images": "圖片",
+    "videos": "影片"
+  },
+  "orientationOptions": {
+    "landscape": "橫向",
+    "portrait": "縱向"
+  },
+  "switchTypeOptions": {
+    "random": "隨機",
+    "order": "順序"
+  },
+  "sortFieldOptions": {
+    "created_at": "記錄建立時間",
+    "updated_at": "記錄修改時間",
+    "ctimeMs": "資源建立時間",
+    "mtimeMs": "資源修改時間",
+    "fileName": "資源檔名",
+    "fileSize": "資源檔案大小",
+    "views": "瀏覽量",
+    "downloads": "下載量",
+    "favorites": "收藏量",
+    "wallpapers": "桌布量"
+  },
+  "sortTypeOptions": {
+    "asc": "升序",
+    "desc": "降序"
+  },
+  "imageDisplaySizeOptions": {
+    "contain": "適應",
+    "cover": "填充"
+  },
+  "h5FloatingButtonPositionOptions": {
+    "left": "左側",
+    "right": "右側"
+  },
+  "h5FloatingButtonsOptions": {
+    "autoSwitch": "自動切換",
+    "intervalTime": "切換間隔",
+    "switchType": "切換方式",
+    "favorites": "收藏",
+    "displaySize": "顯示尺寸",
+    "toggleTabbar": "切換標籤欄",
+    "backtop": "返回頂部"
+  },
+  "h5NumberIndicatorPositionOptions": {
+    "top": "頂部",
+    "bottom": "底部"
+  },
+  "dynamicPerformanceModeOptions": {
+    "high": "高",
+    "balanced": "均衡",
+    "powersave": "省電"
+  },
+  "dynamicScaleModeOptions": {
+    "cover": "填充",
+    "contain": "適應",
+    "stretch": "拉伸"
+  },
+  "rhythmEffectOptions": {
+    "LeaferBar": "柱狀",
+    "LeaferWave": "波形",
+    "LeaferBall": "小球",
+    "LeaferDisco": "迪士可",
+    "LeaferSpectrumRing": "頻譜環",
+    "LeaferParticleFountain": "粒子噴泉",
+    "LeaferBreathingHalo": "呼吸光圈",
+    "LeaferDynamicGrid": "動態網格",
+    "LeaferFlowingLines": "流動線條",
+    "LeaferMusicNoteRain": "音符雨",
+    "LeaferRotatingStarburst": "旋轉星芒",
+    "LeaferBars3D": "3D柱狀",
+    "LeaferLiquidRipple": "液體波紋",
+    "LeaferSpectrumFlower": "頻譜花朵",
+    "LeaferRainbow": "彩虹",
+    "LeaferWindmill": "風車",
+    "LeaferTaiji": "太極",
+    "LeaferMuyu": "木魚",
+    "LeaferFirework": "煙花",
+    "LeaferSnowflake": "雪花",
+    "ThreeBar": "3D柱狀",
+    "ThreeWave": "3D波形",
+    "ThreeParticle": "3D粒子",
+    "ThreeSphere": "3D球體",
+    "ThreeAudioVisualizer": "3D音訊視覺化"
+  },
+  "rhythmAnimationOptions": {
+    "linear": "線性（直接對映）",
+    "log": "對數（低能量更敏感）",
+    "parabola": "拋物線（柔和中帶爆發）",
+    "sqrt": "平方根（更柔和）",
+    "exp": "指數（爆發感）",
+    "sin": "正弦（彈性週期）",
+    "bounce": "彈跳回彈",
+    "step": "階梯/像素跳躍",
+    "max": "最大值",
+    "avg": "平均值"
+  },
+  "rhythmDensityOptions": {
+    "sparse": "稀疏",
+    "normal": "正常",
+    "dense": "密集"
+  },
+  "positionOptions": {
+    "topLeft": "左上",
+    "top": "上",
+    "topRight": "右上",
+    "right": "右",
+    "bottomRight": "右下",
+    "bottom": "下",
+    "bottomLeft": "左下",
+    "left": "左",
+    "center": "居中"
+  },
+  "wordTypeList": {
+    "chinese": "中文",
+    "english": "English"
+  },
+  "emptyHelp": {
+    "text": "暫無資料，請檢查設定",
+    "jumpText": "檢查設定"
+  },
+  "exploreCommon": {
+    "toggleFixedBtns": "切換按鈕",
+    "onLoadMore": "載入更多",
+    "onRefresh": "刷新",
+    "isRandom": {
+      "on": "隨機",
+      "off": "順序"
+    },
+    "onTogglePrivacySpace": {
+      "quit": "退出隱私空間",
+      "enter": "進入隱私空間"
+    },
+    "onSwitchResource": "切換資源",
+    "onRefreshDirectory": "刷新資源目錄",
+    "setAsWallpaperWithDownload": "設為桌布",
+    "doViewImage": "預覽圖片",
+    "addToFavorites": "加入收藏",
+    "removeFavorites": "取消收藏",
+    "addToPrivacySpace": "加入隱私空間",
+    "removePrivacySpace": "移出隱私空間",
+    "onCopyFilePath": "複製檔案路徑",
+    "onDeleteFile": "刪除檔案",
+    "onDownloadFile": "下載檔案",
+    "showItemInFolder": "在資料夾中打開",
+    "openLink": "打開連結",
+    "viewInfo": "查看資訊",
+    "searchForm": {
+      "filterKeywords": {
+        "placeholder": "請輸入關鍵詞，按Enter查詢"
+      },
+      "resourceType": {
+        "placeholder": "資源類型"
+      },
+      "resourceName": {
+        "placeholder": "資源名稱"
+      },
+      "filterType": {
+        "placeholder": "類型"
+      },
+      "orientation": {
+        "placeholder": "方向"
+      },
+      "quality": {
+        "placeholder": "圖片品質"
+      }
+    },
+    "onSyncToWallpaperSetting": "同步到桌布設定",
+    "wordFilter": {
+      "placeholder": "請輸入關鍵詞"
+    },
+    "tagItem": {
+      "score": "評分",
+      "favorited": "已收藏"
+    },
+    "totalText": "共 {current} / {total} 條"
+  },
+  "autoRefreshList": {
+    "off": "關閉自動刷新",
+    "on": "開啟自動刷新"
+  },
+  "gridSizeList": {
+    "label": {
+      "auto": "自動",
+      "size": "{size}"
+    },
+    "alt": {
+      "auto": "格子：自動",
+      "size": "格子：{size}"
+    }
+  },
+  "gridRatioList": {
+    "square": "正方形",
+    "rectangle": "長方形",
+    "verticalRectangle": "豎長方形"
+  },
+  "comingSoon": "敬請期待",
+  "viewInfo": {
+    "title": "查看資訊",
+    "row": {
+      "title": "標題",
+      "desc": "描述",
+      "author": "作者",
+      "link": "連結",
+      "resourceName": "資源名稱",
+      "fileName": "檔名",
+      "filePath": "檔案路徑",
+      "fileExt": "副檔名",
+      "fileSize": "檔案大小",
+      "quality": "品質",
+      "score": "評分",
+      "dimensions": "尺寸",
+      "views": "瀏覽量",
+      "downloads": "下載量",
+      "favorites": "收藏量",
+      "wallpapers": "桌布量",
+      "created_at": "記錄建立時間",
+      "updated_at": "記錄更新時間",
+      "ctimeMs": "資源建立時間",
+      "mtimeMs": "資源更新時間"
+    }
+  },
+  "h5": {
+    "tabbar": {
+      "home": "首頁",
+      "search": "搜尋",
+      "setting": "設定"
+    },
+    "pages": {
+      "home": {
+        "title": "首頁",
+        "actions": {
+          "imageInfo": "圖片資訊",
+          "saveImage": "儲存圖片",
+          "deleteImage": "刪除圖片",
+          "confirmDelete": "確認刪除",
+          "confirmDeleteMessage": "確認要刪除圖片嗎？",
+          "confirmDeleteBtn": "確認",
+          "cancelDeleteBtn": "取消",
+          "jumpToIndex": "跳轉到指定位置",
+          "enterIndex": "請輸入序號"
+        },
+        "imageInfo": {
+          "title": "標題",
+          "desc": "描述",
+          "author": "作者",
+          "link": "連結",
+          "resourceName": "資源名稱",
+          "fileName": "檔名",
+          "filePath": "檔案路徑",
+          "fileExt": "副檔名",
+          "fileSize": "檔案大小",
+          "quality": "品質",
+          "score": "評分",
+          "dimensions": "尺寸",
+          "views": "瀏覽量",
+          "downloads": "下載量",
+          "favorites": "收藏量",
+          "wallpapers": "桌布量",
+          "created_at": "記錄建立時間",
+          "updated_at": "記錄更新時間",
+          "ctimeMs": "資源建立時間",
+          "mtimeMs": "資源更新時間"
+        }
+      },
+      "search": {
+        "title": "搜尋"
+      },
+      "setting": {
+        "title": "設定",
+        "form": {
+          "h5ApplicationSettings": "應用設定",
+          "locale": {
+            "label": "語言",
+            "placeholder": "請選擇語言"
+          },
+          "themes": {
+            "dark": {
+              "label": "深色模式",
+              "placeholder": "是否開啟深色模式"
+            },
+            "primary": {
+              "label": "主題色",
+              "placeholder": "請選擇主題色"
+            }
+          },
+          "h5ExploreSettings": "瀏覽設定",
+          "h5AutoSwitch": "自動切換",
+          "h5SwitchType": {
+            "label": "切換方式",
+            "placeholder": "請選擇切換方式"
+          },
+          "h5SwitchIntervalTime": "切換間隔",
+          "h5ResourcesSettings": "資源設定",
+          "h5Resource": {
+            "label": "圖片資源",
+            "placeholder": "請選擇資源"
+          },
+          "h5Orientation": {
+            "label": "過濾方向",
+            "placeholder": "請選擇過濾方向"
+          },
+          "h5Quality": {
+            "label": "過濾品質",
+            "placeholder": "請選擇過濾品質"
+          },
+          "h5SortField": {
+            "label": "排序欄位",
+            "placeholder": "請選擇排序欄位"
+          },
+          "h5SortType": {
+            "label": "排序方式",
+            "placeholder": "請選擇排序方式"
+          },
+          "h5ImageDisplaySize": {
+            "label": "顯示尺寸",
+            "placeholder": "請選擇顯示尺寸"
+          },
+          "h5ImageCompress": "圖片壓縮",
+          "h5ImageCompressStartSize": "壓縮起始大小",
+          "h5FunctionSettings": "功能設定",
+          "h5FloatingButtonPosition": {
+            "label": "懸浮按鈕位置",
+            "placeholder": "請選擇懸浮按鈕位置"
+          },
+          "h5EnabledFloatingButtons": {
+            "label": "啟用懸浮按鈕",
+            "placeholder": ""
+          },
+          "h5NumberIndicatorPosition": {
+            "label": "指示器位置",
+            "placeholder": "請選擇指示器位置"
+          },
+          "h5Vibration": "震動回饋",
+          "h5WeekScreen": "螢幕常亮"
+        },
+        "about": "關於",
+        "version": "版本",
+        "localSetting": {
+          "multiDeviceSync": "多裝置同步"
+        }
+      }
+    }
+  }
+}

@@ -1,20 +1,45 @@
 <script setup>
 import UseCommonStore from '@renderer/stores/commonStore.js'
 import UseSettingStore from '@renderer/stores/settingStore.js'
-import { useTranslation } from 'i18next-vue'
-import zhCN from 'element-plus/es/locale/lang/zh-cn'
-import enUS from 'element-plus/es/locale/lang/en'
 import { updateThemeColorVar } from '@renderer/utils/index.js'
+import { useTranslation } from 'i18next-vue'
+// 导入所有支持的语言包
+import zhCn from 'element-plus/es/locale/lang/zh-cn'
+import zhTw from 'element-plus/es/locale/lang/zh-tw'
+import en from 'element-plus/es/locale/lang/en'
+import ru from 'element-plus/es/locale/lang/ru'
+import de from 'element-plus/es/locale/lang/de'
+import fr from 'element-plus/es/locale/lang/fr'
+import ja from 'element-plus/es/locale/lang/ja'
+import ko from 'element-plus/es/locale/lang/ko'
+import es from 'element-plus/es/locale/lang/es'
+import ptBr from 'element-plus/es/locale/lang/pt-br'
+import it from 'element-plus/es/locale/lang/it'
+import ar from 'element-plus/es/locale/lang/ar'
 
 const { i18next } = useTranslation()
-const lang = { zhCN, enUS }
+// 定义语言映射关系
+const lang = {
+  zhCN: zhCn,
+  zhTW: zhTw,
+  enUS: en,
+  ruRU: ru,
+  deDE: de,
+  frFR: fr,
+  jaJP: ja,
+  koKR: ko,
+  esES: es,
+  ptBR: ptBr,
+  itIT: it,
+  arSA: ar
+}
 
 const commonStore = UseCommonStore()
 const settingStore = UseSettingStore()
 
 // Element Plus 全局配置
 const elGlobalConfig = reactive({
-  locale: zhCN,
+  locale: zhCn,
   message: {
     grouping: true
   }
@@ -42,7 +67,8 @@ const init = async () => {
 const updateElLocale = (locale) => {
   // 更新 Element Plus 语言
   i18next.changeLanguage(locale)
-  elGlobalConfig.locale = lang[locale] || zhCN
+  // 使用对应的语言包
+  elGlobalConfig.locale = lang[locale] || zhCn
 }
 
 const onSettingDataUpdateCallback = (event, data) => {

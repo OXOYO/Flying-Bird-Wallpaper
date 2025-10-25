@@ -1,0 +1,702 @@
+{
+  "appInfo": {
+    "appName": "Flying Bird Wallpaper",
+    "description": "تطبيق خلفيات سطح المكتب Flying Bird Wallpaper غني بالميزات يدعم أنواع متعددة من الخلفيات بما في ذلك الصور ومقاطع الفيديو والخلفيات الإيقاعية والألوان الصلبة، مما يجعل سطح مكتبك فريدًا ومليئًا بالحيوية."
+  },
+  "actions": {
+    "autoSwitchWallpaper": {
+      "start": "بدء التبديل التلقائي",
+      "stop": "إيقاف التبديل التلقائي"
+    },
+    "nextWallpaper": "الخلفية التالية",
+    "prevWallpaper": "الخلفية السابقة",
+    "closeSuspensionBall": "إغلاق الكرة المعلقة",
+    "openSuspensionBall": "عرض الكرة المعلقة",
+    "quit": "خروج",
+    "checkUpdate": "التحقق من التحديث",
+    "menu": "القائمة",
+    "wordDrawer": "الكلمات",
+    "qrCode": "رمز الاستجابة السريعة"
+  },
+  "qrCode": {
+    "notice": "امسح رمز الاستجابة السريعة للوصول إلى الإصدار المحمول",
+    "imgPlaceholder": "يرجى تشغيل خادم H5 أولاً",
+    "imgError": "فشل تحميل رمز الاستجابة السريعة",
+    "startH5Server": "تشغيل خادم H5",
+    "stopH5Server": "إيقاف خادم H5"
+  },
+  "pages": {
+    "Setting": {
+      "tabs": {
+        "baseSetting": "الإعدادات الأساسية",
+        "privacySpace": "المساحة الخاصة"
+      },
+      "divider": {
+        "base": "الإعدادات الأساسية",
+        "application": "إعدادات التطبيق",
+        "explore": "إعدادات الاستكشاف",
+        "function": "إعدادات الوظائف",
+        "wallpaper": "إعدادات الخلفيات",
+        "switch": "إعدادات التبديل",
+        "localResource": "الموارد المحلية",
+        "webWallpaper": "خلفية الويب",
+        "colorWallpaper": "خلفية ملونة",
+        "dynamicWallpaper": "خلفية ديناميكية",
+        "rhythmWallpaper": "خلفية إيقاعية",
+        "remoteResource": "الموارد عن بُعد",
+        "privacyPassword": "كلمة مرور الخصوصية",
+        "h5Settings": "إعدادات H5",
+        "h5ExploreSettings": "إعدادات الاستكشاف",
+        "h5ResourcesSettings": "إعدادات الموارد",
+        "h5FunctionSettings": "إعدادات الوظائف"
+      },
+      "settingDataForm": {
+        "locale": "اللغة",
+        "startup": "التشغيل التلقائي",
+        "openMainWindowOnStartup": "فتح النافذة الرئيسية عند بدء التشغيل",
+        "startH5ServerOnStartup": "تشغيل خادم H5 عند بدء التشغيل",
+        "suspensionBallVisible": "عرض الكرة المعلقة",
+        "enabledMenus": "تمكين القائمة",
+        "autoSwitchWallpaper": "تبديل تلقائي",
+        "switchType": "وضع التبديل",
+        "switchIntervalTime": "فترة التبديل",
+        "allScreen": "تطبيق على جميع الشاشات",
+        "scaleType": "وضع التعبئة",
+        "wallpaperResource": "موارد الخلفيات",
+        "orientation": "تصفية الاتجاه",
+        "quality": "تصفية الجودة",
+        "filterKeywords": {
+          "label": "كلمات مفتاحية التصفية",
+          "placeholder": "يرجى إدخال الكلمات المفتاحية"
+        },
+        "localResourceFolders": {
+          "label": "دليل الموارد",
+          "placeholder": "يرجى تحديد دليل"
+        },
+        "allowedFileExt": {
+          "label": "امتدادات الملفات المسموحة",
+          "placeholder": "يرجى تحديد امتدادات الملفات المسموحة"
+        },
+        "autoRefreshDirectory": "تحديث مجدول",
+        "refreshDirectoryIntervalTime": "فترة التحديث",
+        "webWallpaperUrl": {
+          "label": "عنوان الويب",
+          "placeholder": "يرجى إدخال العنوان"
+        },
+        "autoRefreshWebWallpaper": "تحديث مجدول",
+        "refreshWebWallpaperIntervalTime": "فترة التحديث",
+        "colorWallpaperVal": {
+          "label": "اللون",
+          "placeholder": "يرجى تحديد لون"
+        },
+        "dynamicLastVideoPath": {
+          "label": "ملف الخلفية الديناميكية",
+          "placeholder": "يرجى تحديد ملف الخلفية الديناميكية"
+        },
+        "dynamicAutoPlayOnStartup": "تشغيل تلقائي عند بدء التشغيل",
+        "dynamicMuteAudio": "تشغيل صامت",
+        "dynamicBackgroundColor": "لون الخلفية",
+        "dynamicOpacity": "الشفافية",
+        "dynamicBrightness": "السطوع",
+        "dynamicContrast": "التباين",
+        "dynamicPerformanceMode": {
+          "label": "وضع الأداء",
+          "placeholder": "يرجى تحديد وضع الأداء"
+        },
+        "dynamicScaleMode": {
+          "label": "وضع التحجيم",
+          "placeholder": "يرجى تحديد وضع التحجيم"
+        },
+        "rhythmEffect": {
+          "label": "التأثير الإيقاعي",
+          "placeholder": "يرجى تحديد التأثير الإيقاعي"
+        },
+        "rhythmWidthRatio": "نسبة العرض",
+        "rhythmHeightRatio": "نسبة الارتفاع",
+        "rhythmColors": "ألوان الإيقاع",
+        "rhythmAnimation": {
+          "label": "الرسوم المتحركة",
+          "placeholder": "يرجى تحديد الرسوم المتحركة"
+        },
+        "rhythmDensity": {
+          "label": "الكثافة",
+          "placeholder": "يرجى تحديد الكثافة"
+        },
+        "rhythmPosition": {
+          "label": "موضع العرض",
+          "placeholder": "يرجى تحديد موضع العرض"
+        },
+        "rhythmSampleRange": "نطاق العينة",
+        "remoteResourceSecretKeys": {
+          "label": "مفتاح الموارد",
+          "placeholder": "يرجى إدخال مفتاح"
+        },
+        "downloadSources": "مصادر التنزيل",
+        "downloadOrientation": "اتجاه الصورة",
+        "downloadKeywords": {
+          "label": "كلمات مفتاحية التنزيل",
+          "placeholder": "يرجى إدخال الكلمات المفتاحية"
+        },
+        "autoDownload": "تنزيل تلقائي",
+        "downloadIntervalTime": "فترة التنزيل",
+        "downloadFolder": {
+          "label": "دليل التنزيل",
+          "placeholder": "يرجى تحديد دليل"
+        },
+        "autoClearDownloaded": "تنظيف تلقائي",
+        "clearDownloadedExpiredTime": "وقت انتهاء الصلاحية",
+        "sortField": "حقل الفرز",
+        "sortType": "طريقة الفرز",
+        "themeColor": "لون السمة",
+        "enableExpandSideMenu": "تمكين القائمة الجانبية القابلة للتوسيع",
+        "showSideMenuLabel": "عرض تسمية القائمة الجانبية",
+        "viewImageIntervalTime": "فترة تشغيل المعاينة",
+        "showTag": "عرض العلامات",
+        "confirmOnDeleteFile": "تأكيد قبل الحذف",
+        "enableSegmentationTask": "تمكين مهمة التجزئة",
+        "h5AutoSwitch": "تبديل تلقائي",
+        "h5SwitchType": "وضع التبديل",
+        "h5SwitchIntervalTime": "فترة التبديل",
+        "h5Resource": "موارد الصور",
+        "h5Orientation": "تصفية الاتجاه",
+        "h5Quality": "تصفية الجودة",
+        "h5SortField": "حقل الفرز",
+        "h5SortType": "طريقة الفرز",
+        "h5ImageDisplaySize": "حجم العرض",
+        "h5ImageCompress": "ضغط الصورة",
+        "h5ImageCompressStartSize": "حجم بدء الضغط",
+        "h5FloatingButtonPosition": "موضع الزر العائم",
+        "h5EnabledFloatingButtons": {
+          "label": "الأزرار العائمة الممكّنة",
+          "placeholder": "يرجى تحديد الأزرار العائمة"
+        },
+        "h5NumberIndicatorPosition": "موضع المؤشر الرقمي",
+        "h5Vibration": "ردود الفعل الاهتزازية",
+        "h5WeekScreen": "شاشة مفعلة دائماً",
+        "powerSaveMode": "وضع توفير الطاقة"
+      },
+      "privacyPasswordForm": {
+        "old": {
+          "label": "كلمة المرور القديمة",
+          "placeholder": "يرجى إدخال كلمة المرور القديمة",
+          "tooltip": "تتكون كلمة المرور من أرقام، بحد أدنى 3 أرقام وحد أقصى 6 أرقام. كلمة المرور الافتراضية فارغة"
+        },
+        "new": {
+          "label": "كلمة المرور الجديدة",
+          "placeholder": "يرجى إدخال كلمة المرور الجديدة",
+          "tooltip": "تتكون كلمة المرور من أرقام، بحد أدنى 3 أرقام وحد أقصى 6 أرقام"
+        },
+        "confirm": "تحديث كلمة المرور"
+      }
+    },
+    "Utils": {
+      "dataUtils": "أدوات البيانات",
+      "wallpaperUtils": "أدوات الخلفيات",
+      "fileUtils": "أدوات الملفات",
+      "refreshDirectory": "تحديث بيانات دليل الموارد المحلية",
+      "clearCurrentResourceDB": "مسح بيانات الموارد الحالية",
+      "clearWordsDB": "مسح بيانات الكلمات",
+      "clearFavoritesDB": "مسح بيانات المفضلة",
+      "clearHistoryDB": "مسح بيانات السجل",
+      "clearStatisticsDB": "مسح البيانات الإحصائية",
+      "clearCache": "مسح بيانات الذاكرة المؤقتة",
+      "clearDownloadedAll": "مسح جميع التنزيلات",
+      "clearDownloadedExpired": "مسح التنزيلات منتهية الصلاحية",
+      "nextWallpaper": "الخلفية التالية",
+      "prevWallpaper": "الخلفية السابقة",
+      "execute": "تنفيذ",
+      "openDatabaseDir": "فتح دليل قاعدة البيانات",
+      "openLogsDir": "فتح دليل السجلات",
+      "openDownloadDir": "فتح دليل التنزيلات",
+      "openPluginsDir": "فتح دليل الإضافات المخصصة",
+      "startH5Server": "تشغيل خادم H5",
+      "stopH5Server": "إيقاف خادم H5",
+      "setWebWallpaper": "تعيين خلفية الويب",
+      "setColorWallpaper": "تعيين خلفية ملونة",
+      "setDynamicWallpaper": "تعيين خلفية ديناميكية",
+      "closeDynamicWallpaper": "إغلاق الخلفية الديناميكية",
+      "openRhythmWallpaperWindow": "فتح خلفية إيقاعية",
+      "closeRhythmWallpaperWindow": "إغلاق خلفية إيقاعية"
+    },
+    "About": {
+      "name": "الاسم",
+      "description": "الوصف",
+      "author": "المؤلف",
+      "version": "الإصدار",
+      "github": "GitHub",
+      "email": "البريد الإلكتروني"
+    }
+  },
+  "messages": {
+    "operationSuccess": "نجحت العملية!",
+    "operationFail": "فشلت العملية!",
+    "operationIllegal": "عملية غير قانونية!",
+    "operationInProgress": "العملية قيد التنفيذ!",
+    "folderAlreadyExist": "دليل الموارد مكرر!",
+    "confirmMessageTemplate": "هل تؤكد أنك تريد <span style=\"color: red; font-weight: bolder; margin: 0 5px\">{text}</span>؟",
+    "confirmMessageDanger": "عملية خطيرة، هذه العملية لا رجعة فيها، هل تؤكد التنفيذ؟",
+    "inputPrivacySpacePassword": "يرجى إدخال كلمة مرور المساحة الخاصة!",
+    "inputPrivacySpacePasswordErrorMessage": "بحد أدنى 3 أرقام، وبحد أقصى 6 أرقام!",
+    "enterPrivacySpaceSuccess": "تم الدخول إلى المساحة الخاصة!",
+    "exitedPrivacySpaceSuccess": "تم الخروج من المساحة الخاصة!",
+    "noMoreData": "لا توجد بيانات إضافية!",
+    "getDataFail": "فشل الحصول على البيانات!",
+    "copySuccess": "تم النسخ!",
+    "copyFail": "فشل النسخ!",
+    "confirmDelete": "بعد الحذف، لا يمكن الاستعادة. هل تؤكد الحذف؟",
+    "refreshDirectorySuccess": "تم تحديث دليل الموارد بنجاح، تم إدراج {insertedCount} عناصر بنجاح، العدد الإجمالي للبيانات {total} عناصر!",
+    "refreshDirectoryFail": "فشل تحديث الموارد!",
+    "refreshDirectoryFailSettingError": "فشل تحديث الموارد، خطأ في الإعدادات!",
+    "refreshDirectoryFailNotSettingFolder": "فشل تحديث الموارد، دليل الموارد غير محدد!",
+    "refreshDirectoryFailNotSettingFileExt": "فشل تحديث الموارد، أنواع الملفات المسموحة غير محددة!",
+    "clearTableSuccess": "تم مسح البيانات بنجاح!",
+    "clearTableFail": "فشل مسح البيانات!",
+    "clearCacheSuccess": "تم مسح الذاكرة المؤقتة بنجاح!",
+    "clearCacheFail": "فشل مسح الذاكرة المؤقتة!",
+    "clearTableAutoincrementFail": "تم مسح الجدول بنجاح، فشل مسح تسلسل الزيادة التلقائية!",
+    "operationSuccessWithInsertFail": "نجحت العملية، فشل الإدراج في قاعدة البيانات!",
+    "oldPasswordError": "كلمة المرور القديمة غير صحيحة!",
+    "newPasswordNotEmpty": "لا يمكن أن تكون كلمة المرور الجديدة فارغة!",
+    "passwordError": "كلمة المرور غير صحيحة!",
+    "alreadyInPrivacySpace": "أنت بالفعل في المساحة الخاصة!",
+    "alreadyInFavorites": "موجود بالفعل في المفضلة!",
+    "operationTooFrequent": "العملية متكررة جداً، يرجى المحاولة لاحقاً!",
+    "privacyPasswordNotSet": "كلمة مرور الخصوصية غير محددة، يرجى تحديد كلمة مرور الخصوصية أولاً!",
+    "verifyPrivacyPasswordSuccess": "نجحت المصادقة!",
+    "verifyPrivacyPasswordFail": "فشلت المصادقة!",
+    "operationFailWithDataDuplication": "فشلت العملية، بيانات مكررة!",
+    "querySuccess": "نجحت الاستعلام!",
+    "queryFail": "فشل الاستعلام!",
+    "queryEmpty": "نتيجة الاستعلام فارغة!",
+    "paramsError": "خطأ في المعلمات!",
+    "setWallpaperSuccess": "تم تعيين الخلفية بنجاح!",
+    "setWallpaperFail": "فشل تعيين الخلفية!",
+    "setDynamicWallpaperSuccess": "تم تعيين الخلفية الديناميكية بنجاح!",
+    "setDynamicWallpaperFail": "فشل تعيين الخلفية الديناميكية!",
+    "closeDynamicWallpaperSuccess": "تم إغلاق الخلفية الديناميكية بنجاح!",
+    "closeDynamicWallpaperFail": "فشل إغلاق الخلفية الديناميكية!",
+    "fileTypeNotSupported": "نوع الملف غير مدعوم!",
+    "enterKeywords": "يرجى إدخال الكلمات المفتاحية!",
+    "pleaseSetDownloadFolder": "يرجى تحديد دليل التنزيل أولاً!",
+    "downloadFolderNotExistOrNotSet": "دليل التنزيل غير موجود أو غير محدد!",
+    "downloadFileSuccess": "تم تنزيل الملف بنجاح!",
+    "downloadFileFail": "فشل تنزيل الملف!",
+    "downloadFileExist": "الملف موجود بالفعل!",
+    "resourceNotFound": "لم يتم العثور على المورد!",
+    "resourceSecretKeyUnset": "يرجى تحديد مفتاح المورد السري أولاً!",
+    "h5ServerStartSuccess": "تم تشغيل خادم H5 بنجاح!",
+    "h5ServerStartFail": "فشل تشغيل خادم H5!",
+    "h5ServerStopSuccess": "تم إيقاف خادم H5 بنجاح!",
+    "h5ServerStopFail": "فشل إيقاف خادم H5!",
+    "dbConnectFail": "فشل الاتصال بقاعدة البيانات!",
+    "fileNotExist": "الملف غير موجود!",
+    "resourceNotExist": "المورد غير موجود!",
+    "downloadFail": "فشل التنزيل!",
+    "alreadyExists": "موجود بالفعل!",
+    "notExists": "غير موجود!",
+    "urlEmpty": "لا يمكن أن يكون العنوان فارغاً!",
+    "invalidUrl": "عنوان غير صالح!",
+    "fileServerNotInitialized": "خادم الملفات غير مهيأ!",
+    "useDefaultSettings": "استخدام الإعدادات الافتراضية!",
+    "clearDownloadedDone": "اكتملت عملية التنظيف، المجموع {allCount}، نجاح {successCount}، فشل {failCount}!",
+    "updateAvailable": "تم العثور على إصدار جديد {version}، انقر للتنزيل!",
+    "checkUpdateFail": "فشل التحقق من التحديث!",
+    "checkUpdateSuccess": "نجحت عملية التحقق من التحديث!",
+    "updateNotAvailable": "الإصدار الأحدث متاح بالفعل!",
+    "updateDownloaded": "اكتمل التنزيل، انقر للتثبيت!",
+    "saveSuccess": "تم الحفظ بنجاح!",
+    "saveFail": "فشل الحفظ!",
+    "deleteSuccess": "تم الحذف بنجاح!",
+    "deleteFail": "فشل الحذف!",
+    "maxFavoriteCountReached": "تم الوصول إلى الحد الأقصى للمفضلة!",
+    "noFileSelected": "لم يتم تحديد أي ملف!",
+    "noDynamicWallpaperSet": "لم يتم تعيين خلفية ديناميكية!",
+    "multiDeviceSyncWarning": "وظيفة المزامنة متعددة الأجهزة معطلة، التغييرات سارية فقط على الجهاز الحالي!",
+    "rhythmWallpaperNeedVirtualAudio": "يرجى تثبيت وتكوين بطاقة صوت افتراضية (مثل VB-Audio/BlackHole) لاستخدام وظيفة الخلفية الإيقاعية",
+    "noData": "لا توجد بيانات",
+    "loading": "جارٍ التحميل...",
+    "loadingMore": "تحميل المزيد...",
+    "invalidIndex": "يرجى إدخال فهرس صالح",
+    "indexOutOfRange": "الفهرس خارج النطاق",
+    "indexTooLarge": "الفهرس كبير جداً"
+  },
+  "resourceTypeList": {
+    "localResource": "الموارد المحلية",
+    "remoteResource": "الموارد عن بُعد"
+  },
+  "resourceList": {
+    "resources": "مكتبة الموارد",
+    "local": "الموارد المحلية",
+    "favorites": "المفضلة"
+  },
+  "menuList": {
+    "Explore": "المعرض",
+    "Search": "بحث",
+    "Words": "الكلمات",
+    "Favorites": "المفضلة",
+    "History": "السجل",
+    "Setting": "الإعدادات",
+    "Utils": "الأدوات",
+    "About": "حول"
+  },
+  "scaleTypes": {
+    "auto": "تلقائي",
+    "span": "تلقائي",
+    "fill": "ملء",
+    "fit": "ملاءمة",
+    "stretch": "تمديد",
+    "center": "توسيط",
+    "tile": "تبليط"
+  },
+  "intervalUnits": {
+    "s": "ثانية",
+    "m": "دقيقة",
+    "h": "ساعة",
+    "d": "يوم"
+  },
+  "filterTypeOptions": {
+    "images": "الصور",
+    "videos": "مقاطع الفيديو"
+  },
+  "orientationOptions": {
+    "landscape": "أفقي",
+    "portrait": "رأسي"
+  },
+  "switchTypeOptions": {
+    "random": "عشوائي",
+    "order": "مرتب"
+  },
+  "sortFieldOptions": {
+    "created_at": "وقت إنشاء السجل",
+    "updated_at": "وقت تعديل السجل",
+    "ctimeMs": "وقت إنشاء المورد",
+    "mtimeMs": "وقت تعديل المورد",
+    "fileName": "اسم ملف المورد",
+    "fileSize": "حجم ملف المورد",
+    "views": "المشاهدات",
+    "downloads": "التنزيلات",
+    "favorites": "المفضلة",
+    "wallpapers": "الخلفيات"
+  },
+  "sortTypeOptions": {
+    "asc": "تصاعدي",
+    "desc": "تنازلي"
+  },
+  "imageDisplaySizeOptions": {
+    "contain": "احتواء",
+    "cover": "تغطية"
+  },
+  "h5FloatingButtonPositionOptions": {
+    "left": "يسار",
+    "right": "يمين"
+  },
+  "h5FloatingButtonsOptions": {
+    "autoSwitch": "تبديل تلقائي",
+    "intervalTime": "فترة زمنية",
+    "switchType": "وضع التبديل",
+    "favorites": "المفضلة",
+    "displaySize": "حجم العرض",
+    "toggleTabbar": "تبديل شريط التبويب",
+    "backtop": "العودة إلى الأعلى"
+  },
+  "h5NumberIndicatorPositionOptions": {
+    "top": "أعلى",
+    "bottom": "أسفل"
+  },
+  "dynamicPerformanceModeOptions": {
+    "high": "عالي",
+    "balanced": "متوازن",
+    "powersave": "توفير الطاقة"
+  },
+  "dynamicScaleModeOptions": {
+    "cover": "تغطية",
+    "contain": "احتواء",
+    "stretch": "تمديد"
+  },
+  "rhythmEffectOptions": {
+    "LeaferBar": "أعمدة",
+    "LeaferWave": "موجات",
+    "LeaferBall": "كرات",
+    "LeaferDisco": "ديسكو",
+    "LeaferSpectrumRing": "حلقة الطيف",
+    "LeaferParticleFountain": "نافورة الجسيمات",
+    "LeaferBreathingHalo": "هالة التنفس",
+    "LeaferDynamicGrid": "شبكة ديناميكية",
+    "LeaferFlowingLines": "خطوط متدفقة",
+    "LeaferMusicNoteRain": "مطر نغمات الموسيقى",
+    "LeaferRotatingStarburst": "انفجار نجمي دوار",
+    "LeaferBars3D": "أعمدة ثلاثية الأبعاد",
+    "LeaferLiquidRipple": "تموجات سائلة",
+    "LeaferSpectrumFlower": "زهرة الطيف",
+    "LeaferRainbow": "قوس قزح",
+    "LeaferWindmill": "طاحونة هوائية",
+    "LeaferTaiji": "تاي جي",
+    "LeaferMuyu": "ميو يو",
+    "LeaferFirework": "ألعاب نارية",
+    "LeaferSnowflake": "ندفة ثلج",
+    "ThreeBar": "أعمدة ثلاثية الأبعاد",
+    "ThreeWave": "موجات ثلاثية الأبعاد",
+    "ThreeParticle": "جسيمات ثلاثية الأبعاد",
+    "ThreeSphere": "كرة ثلاثية الأبعاد",
+    "ThreeAudioVisualizer": "مُصور صوتي ثلاثي الأبعاد"
+  },
+  "rhythmAnimationOptions": {
+    "linear": "خطي (تعيين مباشر)",
+    "log": "لوغاريتمي (حساس للطاقة المنخفضة)",
+    "parabola": "قطع مكافئ (ناعم مع انفجار)",
+    "sqrt": "جذر تربيعي (أنعم)",
+    "exp": "أسي (انفجاري)",
+    "sin": "جيب (دوري مرن)",
+    "bounce": "ارتداد (مع ارتداد عكسي)",
+    "step": "خطوة/قفزة بكسل",
+    "max": "القيمة القصوى",
+    "avg": "القيمة المتوسطة"
+  },
+  "rhythmDensityOptions": {
+    "sparse": "متناثر",
+    "normal": "عادي",
+    "dense": "كثيف"
+  },
+  "positionOptions": {
+    "topLeft": "أعلى اليسار",
+    "top": "أعلى",
+    "topRight": "أعلى اليمين",
+    "right": "يمين",
+    "bottomRight": "أسفل اليمين",
+    "bottom": "أسفل",
+    "bottomLeft": "أسفل اليسار",
+    "left": "يسار",
+    "center": "مركز"
+  },
+  "wordTypeList": {
+    "chinese": "中文",
+    "english": "English"
+  },
+  "emptyHelp": {
+    "text": "لا توجد بيانات حتى الآن، يرجى التحقق من الإعدادات",
+    "jumpText": "التحقق من الإعدادات"
+  },
+  "exploreCommon": {
+    "toggleFixedBtns": "تبديل الأزرار",
+    "onLoadMore": "تحميل المزيد",
+    "onRefresh": "تحديث",
+    "isRandom": {
+      "on": "عشوائي",
+      "off": "مرتب"
+    },
+    "onTogglePrivacySpace": {
+      "quit": "الخروج من المساحة الخاصة",
+      "enter": "الدخول إلى المساحة الخاصة"
+    },
+    "onSwitchResource": "تبديل الموارد",
+    "onRefreshDirectory": "تحديث دليل الموارد",
+    "setAsWallpaperWithDownload": "تعيين كخلفية",
+    "doViewImage": "معاينة الصورة",
+    "addToFavorites": "إضافة إلى المفضلة",
+    "removeFavorites": "إزالة من المفضلة",
+    "addToPrivacySpace": "إضافة إلى المساحة الخاصة",
+    "removePrivacySpace": "إزالة من المساحة الخاصة",
+    "onCopyFilePath": "نسخ مسار الملف",
+    "onDeleteFile": "حذف الملف",
+    "onDownloadFile": "تنزيل الملف",
+    "showItemInFolder": "فتح في المجلد",
+    "openLink": "فتح الرابط",
+    "viewInfo": "عرض المعلومات",
+    "searchForm": {
+      "filterKeywords": {
+        "placeholder": "يرجى إدخال الكلمات المفتاحية والضغط على Enter للبحث"
+      },
+      "resourceType": {
+        "placeholder": "نوع المورد"
+      },
+      "resourceName": {
+        "placeholder": "اسم المورد"
+      },
+      "filterType": {
+        "placeholder": "النوع"
+      },
+      "orientation": {
+        "placeholder": "الاتجاه"
+      },
+      "quality": {
+        "placeholder": "جودة الصورة"
+      }
+    },
+    "onSyncToWallpaperSetting": "مزامنة مع إعدادات الخلفية",
+    "wordFilter": {
+      "placeholder": "يرجى إدخال الكلمات المفتاحية"
+    },
+    "tagItem": {
+      "score": "النتيجة",
+      "favorited": "مفضل"
+    },
+    "totalText": "الإجمالي {current} / {total} عناصر"
+  },
+  "autoRefreshList": {
+    "off": "تعطيل التحديث التلقائي",
+    "on": "تمكين التحديث التلقائي"
+  },
+  "gridSizeList": {
+    "label": {
+      "auto": "تلقائي",
+      "size": "{size}"
+    },
+    "alt": {
+      "auto": "الشبكة: تلقائية",
+      "size": "الشبكة: {size}"
+    }
+  },
+  "gridRatioList": {
+    "square": "مربع",
+    "rectangle": "مستطيل",
+    "verticalRectangle": "مستطيل عمودي"
+  },
+  "comingSoon": "قريباً",
+  "viewInfo": {
+    "title": "عرض المعلومات",
+    "row": {
+      "title": "العنوان",
+      "desc": "الوصف",
+      "author": "المؤلف",
+      "link": "الرابط",
+      "resourceName": "اسم المورد",
+      "fileName": "اسم الملف",
+      "filePath": "مسار الملف",
+      "fileExt": "الامتداد",
+      "fileSize": "حجم الملف",
+      "quality": "الجودة",
+      "score": "النتيجة",
+      "dimensions": "الأبعاد",
+      "views": "المشاهدات",
+      "downloads": "التنزيلات",
+      "favorites": "المفضلة",
+      "wallpapers": "الخلفيات",
+      "created_at": "وقت إنشاء السجل",
+      "updated_at": "وقت تحديث السجل",
+      "ctimeMs": "وقت إنشاء المورد",
+      "mtimeMs": "وقت تحديث المورد"
+    }
+  },
+  "h5": {
+    "tabbar": {
+      "home": "الرئيسية",
+      "search": "بحث",
+      "setting": "الإعدادات"
+    },
+    "pages": {
+      "home": {
+        "title": "الرئيسية",
+        "actions": {
+          "imageInfo": "معلومات الصورة",
+          "saveImage": "حفظ الصورة",
+          "deleteImage": "حذف الصورة",
+          "confirmDelete": "تأكيد الحذف",
+          "confirmDeleteMessage": "هل تؤكد حذف هذه الصورة؟",
+          "confirmDeleteBtn": "تأكيد",
+          "cancelDeleteBtn": "إلغاء",
+          "jumpToIndex": "الانتقال إلى الفهرس",
+          "enterIndex": "يرجى إدخال الفهرس"
+        },
+        "imageInfo": {
+          "title": "العنوان",
+          "desc": "الوصف",
+          "author": "المؤلف",
+          "link": "الرابط",
+          "resourceName": "اسم المورد",
+          "fileName": "اسم الملف",
+          "filePath": "مسار الملف",
+          "fileExt": "الامتداد",
+          "fileSize": "حجم الملف",
+          "quality": "الجودة",
+          "score": "النتيجة",
+          "dimensions": "الأبعاد",
+          "views": "المشاهدات",
+          "downloads": "التنزيلات",
+          "favorites": "المفضلة",
+          "wallpapers": "الخلفيات",
+          "created_at": "وقت إنشاء السجل",
+          "updated_at": "وقت تحديث السجل",
+          "ctimeMs": "وقت إنشاء المورد",
+          "mtimeMs": "وقت تحديث المورد"
+        }
+      },
+      "search": {
+        "title": "بحث"
+      },
+      "setting": {
+        "title": "الإعدادات",
+        "form": {
+          "h5ApplicationSettings": "إعدادات التطبيق",
+          "locale": {
+            "label": "اللغة",
+            "placeholder": "حدد اللغة"
+          },
+          "themes": {
+            "dark": {
+              "label": "الوضع الداكن",
+              "placeholder": "تمكين الوضع الداكن؟"
+            },
+            "primary": {
+              "label": "لون السمة",
+              "placeholder": "حدد لون السمة"
+            }
+          },
+          "h5ExploreSettings": "إعدادات الاستكشاف",
+          "h5AutoSwitch": "تبديل تلقائي",
+          "h5SwitchType": {
+            "label": "وضع التبديل",
+            "placeholder": "حدد وضع التبديل"
+          },
+          "h5SwitchIntervalTime": "فترة التبديل",
+          "h5ResourcesSettings": "إعدادات الموارد",
+          "h5Resource": {
+            "label": "موارد الصور",
+            "placeholder": "حدد المورد"
+          },
+          "h5Orientation": {
+            "label": "تصفية الاتجاه",
+            "placeholder": "حدد الاتجاه"
+          },
+          "h5Quality": {
+            "label": "تصفية الجودة",
+            "placeholder": "حدد الجودة"
+          },
+          "h5SortField": {
+            "label": "حقل الفرز",
+            "placeholder": "حدد حقل الفرز"
+          },
+          "h5SortType": {
+            "label": "طريقة الفرز",
+            "placeholder": "حدد طريقة الفرز"
+          },
+          "h5ImageDisplaySize": {
+            "label": "حجم العرض",
+            "placeholder": "حدد حجم العرض"
+          },
+          "h5ImageCompress": "ضغط الصورة",
+          "h5ImageCompressStartSize": "حجم بدء الضغط",
+          "h5FunctionSettings": "إعدادات الوظائف",
+          "h5FloatingButtonPosition": {
+            "label": "موضع الزر العائم",
+            "placeholder": "حدد موضع الزر العائم"
+          },
+          "h5EnabledFloatingButtons": {
+            "label": "الأزرار العائمة الممكّنة",
+            "placeholder": ""
+          },
+          "h5NumberIndicatorPosition": {
+            "label": "موضع المؤشر الرقمي",
+            "placeholder": "حدد موضع المؤشر الرقمي"
+          },
+          "h5Vibration": "ردود الفعل الاهتزازية",
+          "h5WeekScreen": "شاشة مفعلة دائماً"
+        },
+        "about": "حول",
+        "version": "الإصدار",
+        "localSetting": {
+          "multiDeviceSync": "مزامنة متعددة الأجهزة"
+        }
+      }
+    }
+  }
+}

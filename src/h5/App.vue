@@ -6,8 +6,19 @@ import setting from './pages/setting/index.vue'
 import pageEmpty from './components/pageEmpty.vue'
 import { useTranslation } from 'i18next-vue'
 import { Locale } from 'vant'
+// 导入所有支持的语言包
 import zhCN from 'vant/es/locale/lang/zh-CN'
+import zhTW from 'vant/es/locale/lang/zh-TW'
 import enUS from 'vant/es/locale/lang/en-US'
+import ruRU from 'vant/es/locale/lang/ru-RU'
+import deDE from 'vant/es/locale/lang/de-DE'
+import frFR from 'vant/es/locale/lang/fr-FR'
+import jaJP from 'vant/es/locale/lang/ja-JP'
+import koKR from 'vant/es/locale/lang/ko-KR'
+import esES from 'vant/es/locale/lang/es-ES'
+import ptBR from 'vant/es/locale/lang/pt-BR'
+import itIT from 'vant/es/locale/lang/it-IT'
+import arSA from 'vant/es/locale/lang/ar-SA'
 
 const { t, i18next } = useTranslation()
 
@@ -56,7 +67,7 @@ const currentPage = computed(() => {
 const setPageTitle = (pageName) => {
   if (!pageName) return
   const titleKey = tabbarList.find((item) => item.name === pageName)?.locale
-  document.title = t('appInfo.name') + '-' + t(titleKey)
+  document.title = t('appInfo.appName') + '-' + t(titleKey)
 }
 
 // 监听 activeTabbar 变化来更新页面标题
@@ -69,13 +80,32 @@ watch(
   { immediate: true }
 )
 
+// 定义语言映射关系
+const vantLocales = {
+  zhCN: ['zh-CN', zhCN],
+  zhTW: ['zh-TW', zhTW],
+  enUS: ['en-US', enUS],
+  ruRU: ['ru-RU', ruRU],
+  deDE: ['de-DE', deDE],
+  frFR: ['fr-FR', frFR],
+  jaJP: ['ja-JP', jaJP],
+  koKR: ['ko-KR', koKR],
+  esES: ['es-ES', esES],
+  ptBR: ['pt-BR', ptBR],
+  itIT: ['it-IT', itIT],
+  arSA: ['ar-SA', arSA]
+}
+
 watch(
   () => settingData.value,
   (val) => {
     i18next.changeLanguage(val.locale)
-    if (val.locale === 'zhCN') {
-      Locale.use('zh-CN', zhCN)
+    // 使用对应的语言包
+    const localeInfo = vantLocales[val.locale]
+    if (localeInfo) {
+      Locale.use(localeInfo[0], localeInfo[1])
     } else {
+      // 默认使用英语
       Locale.use('en-US', enUS)
     }
     // 语言变化时也需要更新页面标题

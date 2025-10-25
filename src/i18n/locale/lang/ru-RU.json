@@ -1,0 +1,702 @@
+{
+  "appInfo": {
+    "appName": "Flying Bird Wallpaper",
+    "description": "Flying Bird Wallpaper - это многофункциональное приложение для обоев на рабочем столе, которое поддерживает несколько типов обоев, включая изображения, видео, ритмические обои и сплошные цвета, делая ваш рабочий стол уникальным и ярким."
+  },
+  "actions": {
+    "autoSwitchWallpaper": {
+      "start": "Начать автоматическое переключение",
+      "stop": "Остановить автоматическое переключение"
+    },
+    "nextWallpaper": "Следующие обои",
+    "prevWallpaper": "Предыдущие обои",
+    "closeSuspensionBall": "Закрыть плавающий шар",
+    "openSuspensionBall": "Показать плавающий шар",
+    "quit": "Выход",
+    "checkUpdate": "Проверить обновление",
+    "menu": "Меню",
+    "wordDrawer": "Слова",
+    "qrCode": "QR-код"
+  },
+  "qrCode": {
+    "notice": "Отсканируйте QR-код для доступа к мобильной версии",
+    "imgPlaceholder": "Сначала запустите H5-сервер",
+    "imgError": "Не удалось загрузить QR-код",
+    "startH5Server": "Запустить H5-сервер",
+    "stopH5Server": "Остановить H5-сервер"
+  },
+  "pages": {
+    "Setting": {
+      "tabs": {
+        "baseSetting": "Базовые настройки",
+        "privacySpace": "Приватное пространство"
+      },
+      "divider": {
+        "base": "Базовые настройки",
+        "application": "Настройки приложения",
+        "explore": "Настройки обзора",
+        "function": "Функциональные настройки",
+        "wallpaper": "Настройки обоев",
+        "switch": "Настройки переключения",
+        "localResource": "Локальные ресурсы",
+        "webWallpaper": "Веб-обои",
+        "colorWallpaper": "Цветные обои",
+        "dynamicWallpaper": "Динамические обои",
+        "rhythmWallpaper": "Ритмические обои",
+        "remoteResource": "Удаленные ресурсы",
+        "privacyPassword": "Пароль конфиденциальности",
+        "h5Settings": "Настройки H5",
+        "h5ExploreSettings": "Настройки обзора",
+        "h5ResourcesSettings": "Настройки ресурсов",
+        "h5FunctionSettings": "Функциональные настройки"
+      },
+      "settingDataForm": {
+        "locale": "Язык",
+        "startup": "Автозагрузка",
+        "openMainWindowOnStartup": "Открывать главное окно при запуске",
+        "startH5ServerOnStartup": "Запускать H5-сервер при запуске",
+        "suspensionBallVisible": "Показывать плавающий шар",
+        "enabledMenus": "Включить меню",
+        "autoSwitchWallpaper": "Автоматически переключать обои",
+        "switchType": "Режим переключения",
+        "switchIntervalTime": "Интервал переключения",
+        "allScreen": "Применить ко всем экранам",
+        "scaleType": "Режим заполнения",
+        "wallpaperResource": "Ресурсы обоев",
+        "orientation": "Фильтр направления",
+        "quality": "Фильтр качества",
+        "filterKeywords": {
+          "label": "Ключевые слова фильтра",
+          "placeholder": "Введите ключевые слова"
+        },
+        "localResourceFolders": {
+          "label": "Каталог ресурсов",
+          "placeholder": "Выберите каталог"
+        },
+        "allowedFileExt": {
+          "label": "Разрешенные расширения файлов",
+          "placeholder": "Выберите разрешенные расширения файлов"
+        },
+        "autoRefreshDirectory": "Периодическое обновление",
+        "refreshDirectoryIntervalTime": "Интервал обновления",
+        "webWallpaperUrl": {
+          "label": "Веб-адрес",
+          "placeholder": "Введите URL"
+        },
+        "autoRefreshWebWallpaper": "Периодическое обновление",
+        "refreshWebWallpaperIntervalTime": "Интервал обновления",
+        "colorWallpaperVal": {
+          "label": "Цвет",
+          "placeholder": "Выберите цвет"
+        },
+        "dynamicLastVideoPath": {
+          "label": "Файл динамических обоев",
+          "placeholder": "Выберите файл динамических обоев"
+        },
+        "dynamicAutoPlayOnStartup": "Автовоспроизведение при запуске",
+        "dynamicMuteAudio": "Воспроизведение без звука",
+        "dynamicBackgroundColor": "Фоновый цвет",
+        "dynamicOpacity": "Прозрачность",
+        "dynamicBrightness": "Яркость",
+        "dynamicContrast": "Контрастность",
+        "dynamicPerformanceMode": {
+          "label": "Режим производительности",
+          "placeholder": "Выберите режим производительности"
+        },
+        "dynamicScaleMode": {
+          "label": "Режим масштабирования",
+          "placeholder": "Выберите режим масштабирования"
+        },
+        "rhythmEffect": {
+          "label": "Ритмический эффект",
+          "placeholder": "Выберите ритмический эффект"
+        },
+        "rhythmWidthRatio": "Соотношение ширины",
+        "rhythmHeightRatio": "Соотношение высоты",
+        "rhythmColors": "Цвета ритма",
+        "rhythmAnimation": {
+          "label": "Анимация",
+          "placeholder": "Выберите анимацию"
+        },
+        "rhythmDensity": {
+          "label": "Плотность",
+          "placeholder": "Выберите плотность"
+        },
+        "rhythmPosition": {
+          "label": "Позиция отображения",
+          "placeholder": "Выберите позицию отображения"
+        },
+        "rhythmSampleRange": "Диапазон выборки",
+        "remoteResourceSecretKeys": {
+          "label": "Ключ ресурса",
+          "placeholder": "Введите ключ"
+        },
+        "downloadSources": "Источники загрузки",
+        "downloadOrientation": "Ориентация изображения",
+        "downloadKeywords": {
+          "label": "Ключевые слова для загрузки",
+          "placeholder": "Введите ключевые слова"
+        },
+        "autoDownload": "Автозагрузка",
+        "downloadIntervalTime": "Интервал загрузки",
+        "downloadFolder": {
+          "label": "Каталог загрузки",
+          "placeholder": "Выберите каталог"
+        },
+        "autoClearDownloaded": "Автоматическая очистка",
+        "clearDownloadedExpiredTime": "Время истечения срока",
+        "sortField": "Поле сортировки",
+        "sortType": "Метод сортировки",
+        "themeColor": "Цвет темы",
+        "enableExpandSideMenu": "Включить расширяемое боковое меню",
+        "showSideMenuLabel": "Показать текст бокового меню",
+        "viewImageIntervalTime": "Интервал предварительного просмотра",
+        "showTag": "Показать теги",
+        "confirmOnDeleteFile": "Подтверждение перед удалением",
+        "enableSegmentationTask": "Включить задачу сегментации",
+        "h5AutoSwitch": "Автоматическое переключение",
+        "h5SwitchType": "Режим переключения",
+        "h5SwitchIntervalTime": "Интервал переключения",
+        "h5Resource": "Ресурсы изображений",
+        "h5Orientation": "Фильтр направления",
+        "h5Quality": "Фильтр качества",
+        "h5SortField": "Поле сортировки",
+        "h5SortType": "Метод сортировки",
+        "h5ImageDisplaySize": "Размер отображения",
+        "h5ImageCompress": "Сжатие изображений",
+        "h5ImageCompressStartSize": "Начальный размер сжатия",
+        "h5FloatingButtonPosition": "Позиция плавающей кнопки",
+        "h5EnabledFloatingButtons": {
+          "label": "Включенные плавающие кнопки",
+          "placeholder": "Выберите плавающие кнопки"
+        },
+        "h5NumberIndicatorPosition": "Позиция индикатора",
+        "h5Vibration": "Виброотклик",
+        "h5WeekScreen": "Постоянный экран",
+        "powerSaveMode": "Режим энергосбережения"
+      },
+      "privacyPasswordForm": {
+        "old": {
+          "label": "Старый пароль",
+          "placeholder": "Введите старый пароль",
+          "tooltip": "Пароль состоит из цифр, минимум 3 цифры, максимум 6 цифр, пароль по умолчанию пуст"
+        },
+        "new": {
+          "label": "Новый пароль",
+          "placeholder": "Введите новый пароль",
+          "tooltip": "Пароль состоит из цифр, минимум 3 цифры, максимум 6 цифр"
+        },
+        "confirm": "Обновить пароль"
+      }
+    },
+    "Utils": {
+      "dataUtils": "Инструменты данных",
+      "wallpaperUtils": "Инструменты обоев",
+      "fileUtils": "Инструменты файлов",
+      "refreshDirectory": "Обновить данные каталога локальных ресурсов",
+      "clearCurrentResourceDB": "Очистить текущие данные ресурсов",
+      "clearWordsDB": "Очистить данные слов",
+      "clearFavoritesDB": "Очистить данные избранного",
+      "clearHistoryDB": "Очистить данные истории",
+      "clearStatisticsDB": "Очистить статистические данные",
+      "clearCache": "Очистить данные кэша",
+      "clearDownloadedAll": "Очистить все загрузки",
+      "clearDownloadedExpired": "Очистить просроченные загрузки",
+      "nextWallpaper": "Следующие обои",
+      "prevWallpaper": "Предыдущие обои",
+      "execute": "Выполнить",
+      "openDatabaseDir": "Открыть каталог базы данных",
+      "openLogsDir": "Открыть каталог журналов",
+      "openDownloadDir": "Открыть каталог загрузок",
+      "openPluginsDir": "Открыть каталог пользовательских плагинов",
+      "startH5Server": "Запустить H5-сервер",
+      "stopH5Server": "Остановить H5-сервер",
+      "setWebWallpaper": "Установить веб-обои",
+      "setColorWallpaper": "Установить цветные обои",
+      "setDynamicWallpaper": "Установить динамические обои",
+      "closeDynamicWallpaper": "Закрыть динамические обои",
+      "openRhythmWallpaperWindow": "Открыть ритмические обои",
+      "closeRhythmWallpaperWindow": "Закрыть ритмические обои"
+    },
+    "About": {
+      "name": "Название",
+      "description": "Описание",
+      "author": "Автор",
+      "version": "Версия",
+      "github": "GitHub",
+      "email": "Email"
+    }
+  },
+  "messages": {
+    "operationSuccess": "Операция выполнена успешно!",
+    "operationFail": "Операция не удалась!",
+    "operationIllegal": "Незаконная операция!",
+    "operationInProgress": "Операция выполняется!",
+    "folderAlreadyExist": "Каталог ресурсов дублируется!",
+    "confirmMessageTemplate": "Подтвердите, что хотите <span style=\"color: red; font-weight: bolder; margin: 0 5px\">{text}</span>?",
+    "confirmMessageDanger": "Опасная операция, эта операция необратима, подтвердите выполнение?",
+    "inputPrivacySpacePassword": "Введите пароль приватного пространства!",
+    "inputPrivacySpacePasswordErrorMessage": "Минимум 3 цифры, максимум 6 цифр!",
+    "enterPrivacySpaceSuccess": "Вошли в приватное пространство!",
+    "exitedPrivacySpaceSuccess": "Вышли из приватного пространства!",
+    "noMoreData": "Больше нет данных!",
+    "getDataFail": "Не удалось получить данные!",
+    "copySuccess": "Скопировано!",
+    "copyFail": "Ошибка копирования!",
+    "confirmDelete": "После удаления восстановление невозможно, подтвердите удаление?",
+    "refreshDirectorySuccess": "Каталог ресурсов успешно обновлен, успешно вставлено {insertedCount} элементов, общее количество данных {total} элементов!",
+    "refreshDirectoryFail": "Не удалось обновить ресурсы!",
+    "refreshDirectoryFailSettingError": "Не удалось обновить ресурсы, ошибка конфигурации!",
+    "refreshDirectoryFailNotSettingFolder": "Не удалось обновить ресурсы, каталог ресурсов не установлен!",
+    "refreshDirectoryFailNotSettingFileExt": "Не удалось обновить ресурсы, не установлены разрешенные типы файлов!",
+    "clearTableSuccess": "Данные успешно очищены!",
+    "clearTableFail": "Не удалось очистить данные!",
+    "clearCacheSuccess": "Кэш успешно очищен!",
+    "clearCacheFail": "Не удалось очистить кэш!",
+    "clearTableAutoincrementFail": "Таблица успешно очищена, но не удалось очистить последовательность автоинкремента!",
+    "operationSuccessWithInsertFail": "Операция выполнена успешно, но не удалось вставить в базу данных!",
+    "oldPasswordError": "Неверный старый пароль!",
+    "newPasswordNotEmpty": "Новый пароль не может быть пустым!",
+    "passwordError": "Неверный пароль!",
+    "alreadyInPrivacySpace": "Уже в приватном пространстве!",
+    "alreadyInFavorites": "Уже в избранном!",
+    "operationTooFrequent": "Слишком частые операции, попробуйте позже!",
+    "privacyPasswordNotSet": "Пароль конфиденциальности не установлен, сначала установите пароль конфиденциальности!",
+    "verifyPrivacyPasswordSuccess": "Проверка пройдена!",
+    "verifyPrivacyPasswordFail": "Проверка не удалась!",
+    "operationFailWithDataDuplication": "Операция не удалась, данные дублируются!",
+    "querySuccess": "Запрос выполнен успешно!",
+    "queryFail": "Запрос не удался!",
+    "queryEmpty": "Результаты запроса пусты!",
+    "paramsError": "Ошибка параметров!",
+    "setWallpaperSuccess": "Обои успешно установлены!",
+    "setWallpaperFail": "Не удалось установить обои!",
+    "setDynamicWallpaperSuccess": "Динамические обои успешно установлены!",
+    "setDynamicWallpaperFail": "Не удалось установить динамические обои!",
+    "closeDynamicWallpaperSuccess": "Динамические обои успешно закрыты!",
+    "closeDynamicWallpaperFail": "Не удалось закрыть динамические обои!",
+    "fileTypeNotSupported": "Неподдерживаемый тип файла!",
+    "enterKeywords": "Введите ключевые слова!",
+    "pleaseSetDownloadFolder": "Сначала установите каталог загрузки!",
+    "downloadFolderNotExistOrNotSet": "Каталог загрузки не существует или не установлен!",
+    "downloadFileSuccess": "Файл успешно загружен!",
+    "downloadFileFail": "Не удалось загрузить файл!",
+    "downloadFileExist": "Файл уже существует!",
+    "resourceNotFound": "Ресурс не найден!",
+    "resourceSecretKeyUnset": "Сначала установите секретный ключ удаленного ресурса!",
+    "h5ServerStartSuccess": "H5-сервер успешно запущен!",
+    "h5ServerStartFail": "Не удалось запустить H5-сервер!",
+    "h5ServerStopSuccess": "H5-сервер успешно остановлен!",
+    "h5ServerStopFail": "Не удалось остановить H5-сервер!",
+    "dbConnectFail": "Не удалось подключиться к базе данных!",
+    "fileNotExist": "Файл не существует!",
+    "resourceNotExist": "Ресурс не существует!",
+    "downloadFail": "Загрузка не удалась!",
+    "alreadyExists": "уже существует!",
+    "notExists": "не существует!",
+    "urlEmpty": "URL не может быть пустым!",
+    "invalidUrl": "Недействительный URL!",
+    "fileServerNotInitialized": "Файловый сервер не инициализирован!",
+    "useDefaultSettings": "Использовать настройки по умолчанию!",
+    "clearDownloadedDone": "Очистка завершена, всего {allCount}, успешно {successCount}, неудачно {failCount}!",
+    "updateAvailable": "Найдена новая версия {version}, нажмите для загрузки!",
+    "checkUpdateFail": "Не удалось проверить обновление!",
+    "checkUpdateSuccess": "Проверка обновления выполнена успешно!",
+    "updateNotAvailable": "Это последняя версия!",
+    "updateDownloaded": "Загрузка завершена, нажмите для установки!",
+    "saveSuccess": "Сохранено успешно!",
+    "saveFail": "Ошибка сохранения!",
+    "deleteSuccess": "Удалено успешно!",
+    "deleteFail": "Ошибка удаления!",
+    "maxFavoriteCountReached": "Достигнуто максимальное количество избранных!",
+    "noFileSelected": "Файл не выбран!",
+    "noDynamicWallpaperSet": "Динамические обои не установлены!",
+    "multiDeviceSyncWarning": "Функция синхронизации между устройствами отключена, изменения действуют только на текущем устройстве!",
+    "rhythmWallpaperNeedVirtualAudio": "Установите и настройте виртуальную звуковую карту (например, VB-Audio/BlackHole), чтобы использовать функцию ритмических обоев",
+    "noData": "Нет данных",
+    "loading": "Загрузка...",
+    "loadingMore": "Загрузить больше...",
+    "invalidIndex": "Введите действительный индекс",
+    "indexOutOfRange": "Индекс вне диапазона",
+    "indexTooLarge": "Индекс слишком большой"
+  },
+  "resourceTypeList": {
+    "localResource": "Локальные ресурсы",
+    "remoteResource": "Удаленные ресурсы"
+  },
+  "resourceList": {
+    "resources": "Библиотека ресурсов",
+    "local": "Локальные ресурсы",
+    "favorites": "Избранное"
+  },
+  "menuList": {
+    "Explore": "Галерея",
+    "Search": "Поиск",
+    "Words": "Слова",
+    "Favorites": "Избранное",
+    "History": "История",
+    "Setting": "Настройки",
+    "Utils": "Инструменты",
+    "About": "О программе"
+  },
+  "scaleTypes": {
+    "auto": "авто",
+    "span": "авто",
+    "fill": "заполнить",
+    "fit": "подогнать",
+    "stretch": "растянуть",
+    "center": "по центру",
+    "tile": "плитка"
+  },
+  "intervalUnits": {
+    "s": "секунда",
+    "m": "минута",
+    "h": "час",
+    "d": "день"
+  },
+  "filterTypeOptions": {
+    "images": "изображения",
+    "videos": "видео"
+  },
+  "orientationOptions": {
+    "landscape": "горизонтальная",
+    "portrait": "вертикальная"
+  },
+  "switchTypeOptions": {
+    "random": "случайно",
+    "order": "по порядку"
+  },
+  "sortFieldOptions": {
+    "created_at": "время создания записи",
+    "updated_at": "время изменения записи",
+    "ctimeMs": "время создания ресурса",
+    "mtimeMs": "время изменения ресурса",
+    "fileName": "имя файла ресурса",
+    "fileSize": "размер файла ресурса",
+    "views": "просмотры",
+    "downloads": "загрузки",
+    "favorites": "избранное",
+    "wallpapers": "обои"
+  },
+  "sortTypeOptions": {
+    "asc": "по возрастанию",
+    "desc": "по убыванию"
+  },
+  "imageDisplaySizeOptions": {
+    "contain": "подогнать",
+    "cover": "заполнить"
+  },
+  "h5FloatingButtonPositionOptions": {
+    "left": "слева",
+    "right": "справа"
+  },
+  "h5FloatingButtonsOptions": {
+    "autoSwitch": "автопереключение",
+    "intervalTime": "интервал времени",
+    "switchType": "режим переключения",
+    "favorites": "избранное",
+    "displaySize": "размер отображения",
+    "toggleTabbar": "переключить панель вкладок",
+    "backtop": "наверх"
+  },
+  "h5NumberIndicatorPositionOptions": {
+    "top": "сверху",
+    "bottom": "снизу"
+  },
+  "dynamicPerformanceModeOptions": {
+    "high": "высокий",
+    "balanced": "сбалансированный",
+    "powersave": "энергосбережение"
+  },
+  "dynamicScaleModeOptions": {
+    "cover": "заполнить",
+    "contain": "подогнать",
+    "stretch": "растянуть"
+  },
+  "rhythmEffectOptions": {
+    "LeaferBar": "столбцы",
+    "LeaferWave": "волны",
+    "LeaferBall": "шары",
+    "LeaferDisco": "диско",
+    "LeaferSpectrumRing": "спектральное кольцо",
+    "LeaferParticleFountain": "фонтан частиц",
+    "LeaferBreathingHalo": "дышащий ореол",
+    "LeaferDynamicGrid": "динамическая сетка",
+    "LeaferFlowingLines": "текущие линии",
+    "LeaferMusicNoteRain": "дождь нот",
+    "LeaferRotatingStarburst": "вращающийся звездный луч",
+    "LeaferBars3D": "3D столбцы",
+    "LeaferLiquidRipple": "жидкие рябь",
+    "LeaferSpectrumFlower": "спектральный цветок",
+    "LeaferRainbow": "радуга",
+    "LeaferWindmill": "ветряная мельница",
+    "LeaferTaiji": "тайцзи",
+    "LeaferMuyu": "муюй",
+    "LeaferFirework": "фейерверк",
+    "LeaferSnowflake": "снежинка",
+    "ThreeBar": "3D столбцы",
+    "ThreeWave": "3D волны",
+    "ThreeParticle": "3D частицы",
+    "ThreeSphere": "3D сфера",
+    "ThreeAudioVisualizer": "3D аудиовизуализатор"
+  },
+  "rhythmAnimationOptions": {
+    "linear": "Линейный (прямое сопоставление)",
+    "log": "Логарифмический (чувствителен к низкой энергии)",
+    "parabola": "Парабола (мягкий с всплеском)",
+    "sqrt": "Квадратный корень (более мягкий)",
+    "exp": "Экспоненциальный (взрывной)",
+    "sin": "Синусоидальный (упругий периодический)",
+    "bounce": "Отскок с отдачей",
+    "step": "Ступенчатый/пиксельный скачок",
+    "max": "Максимальное значение",
+    "avg": "Среднее значение"
+  },
+  "rhythmDensityOptions": {
+    "sparse": "Разреженный",
+    "normal": "Нормальный",
+    "dense": "Плотный"
+  },
+  "positionOptions": {
+    "topLeft": "Слева сверху",
+    "top": "Сверху",
+    "topRight": "Справа сверху",
+    "right": "Справа",
+    "bottomRight": "Справа снизу",
+    "bottom": "Снизу",
+    "bottomLeft": "Слева снизу",
+    "left": "Слева",
+    "center": "По центру"
+  },
+  "wordTypeList": {
+    "chinese": "中文",
+    "english": "English"
+  },
+  "emptyHelp": {
+    "text": "Нет данных, проверьте настройки",
+    "jumpText": "Проверить настройки"
+  },
+  "exploreCommon": {
+    "toggleFixedBtns": "Переключить кнопки",
+    "onLoadMore": "Загрузить больше",
+    "onRefresh": "Обновить",
+    "isRandom": {
+      "on": "Случайно",
+      "off": "По порядку"
+    },
+    "onTogglePrivacySpace": {
+      "quit": "Выйти из приватного пространства",
+      "enter": "Войти в приватное пространство"
+    },
+    "onSwitchResource": "Переключить ресурсы",
+    "onRefreshDirectory": "Обновить каталог ресурсов",
+    "setAsWallpaperWithDownload": "Установить как обои",
+    "doViewImage": "Предварительный просмотр изображения",
+    "addToFavorites": "Добавить в избранное",
+    "removeFavorites": "Удалить из избранного",
+    "addToPrivacySpace": "Добавить в приватное пространство",
+    "removePrivacySpace": "Удалить из приватного пространства",
+    "onCopyFilePath": "Копировать путь к файлу",
+    "onDeleteFile": "Удалить файл",
+    "onDownloadFile": "Загрузить файл",
+    "showItemInFolder": "Открыть в папке",
+    "openLink": "Открыть ссылку",
+    "viewInfo": "Просмотр информации",
+    "searchForm": {
+      "filterKeywords": {
+        "placeholder": "Введите ключевые слова и нажмите Enter для поиска"
+      },
+      "resourceType": {
+        "placeholder": "Тип ресурса"
+      },
+      "resourceName": {
+        "placeholder": "Название ресурса"
+      },
+      "filterType": {
+        "placeholder": "Тип"
+      },
+      "orientation": {
+        "placeholder": "Ориентация"
+      },
+      "quality": {
+        "placeholder": "Качество изображения"
+      }
+    },
+    "onSyncToWallpaperSetting": "Синхронизировать с настройками обоев",
+    "wordFilter": {
+      "placeholder": "Введите ключевые слова"
+    },
+    "tagItem": {
+      "score": "Оценка",
+      "favorited": "В избранном"
+    },
+    "totalText": "Всего {current} / {total} элементов"
+  },
+  "autoRefreshList": {
+    "off": "Отключить автоматическое обновление",
+    "on": "Включить автоматическое обновление"
+  },
+  "gridSizeList": {
+    "label": {
+      "auto": "Авто",
+      "size": "{size}"
+    },
+    "alt": {
+      "auto": "Сетка: Авто",
+      "size": "Сетка: {size}"
+    }
+  },
+  "gridRatioList": {
+    "square": "Квадрат",
+    "rectangle": "Прямоугольник",
+    "verticalRectangle": "Вертикальный прямоугольник"
+  },
+  "comingSoon": "Скоро будет",
+  "viewInfo": {
+    "title": "Просмотр информации",
+    "row": {
+      "title": "Заголовок",
+      "desc": "Описание",
+      "author": "Автор",
+      "link": "Ссылка",
+      "resourceName": "Название ресурса",
+      "fileName": "Имя файла",
+      "filePath": "Путь к файлу",
+      "fileExt": "Расширение",
+      "fileSize": "Размер файла",
+      "quality": "Качество",
+      "score": "Оценка",
+      "dimensions": "Размеры",
+      "views": "Просмотры",
+      "downloads": "Загрузки",
+      "favorites": "Избранное",
+      "wallpapers": "Обои",
+      "created_at": "Время создания записи",
+      "updated_at": "Время обновления записи",
+      "ctimeMs": "Время создания ресурса",
+      "mtimeMs": "Время обновления ресурса"
+    }
+  },
+  "h5": {
+    "tabbar": {
+      "home": "Главная",
+      "search": "Поиск",
+      "setting": "Настройки"
+    },
+    "pages": {
+      "home": {
+        "title": "Главная",
+        "actions": {
+          "imageInfo": "Информация об изображении",
+          "saveImage": "Сохранить изображение",
+          "deleteImage": "Удалить изображение",
+          "confirmDelete": "Подтвердить удаление",
+          "confirmDeleteMessage": "Вы уверены, что хотите удалить изображение?",
+          "confirmDeleteBtn": "Подтвердить",
+          "cancelDeleteBtn": "Отмена",
+          "jumpToIndex": "Перейти к указанной позиции",
+          "enterIndex": "Введите индекс"
+        },
+        "imageInfo": {
+          "title": "Заголовок",
+          "desc": "Описание",
+          "author": "Автор",
+          "link": "Ссылка",
+          "resourceName": "Название ресурса",
+          "fileName": "Имя файла",
+          "filePath": "Путь к файлу",
+          "fileExt": "Расширение",
+          "fileSize": "Размер файла",
+          "quality": "Качество",
+          "score": "Оценка",
+          "dimensions": "Размеры",
+          "views": "Просмотры",
+          "downloads": "Загрузки",
+          "favorites": "Избранное",
+          "wallpapers": "Обои",
+          "created_at": "Время создания записи",
+          "updated_at": "Время обновления записи",
+          "ctimeMs": "Время создания ресурса",
+          "mtimeMs": "Время обновления ресурса"
+        }
+      },
+      "search": {
+        "title": "Поиск"
+      },
+      "setting": {
+        "title": "Настройки",
+        "form": {
+          "h5ApplicationSettings": "Настройки приложения",
+          "locale": {
+            "label": "Язык",
+            "placeholder": "Выберите язык"
+          },
+          "themes": {
+            "dark": {
+              "label": "Темный режим",
+              "placeholder": "Включить темный режим"
+            },
+            "primary": {
+              "label": "Цвет темы",
+              "placeholder": "Выберите цвет темы"
+            }
+          },
+          "h5ExploreSettings": "Настройки обзора",
+          "h5AutoSwitch": "Автоматическое переключение",
+          "h5SwitchType": {
+            "label": "Режим переключения",
+            "placeholder": "Выберите режим переключения"
+          },
+          "h5SwitchIntervalTime": "Интервал переключения",
+          "h5ResourcesSettings": "Настройки ресурсов",
+          "h5Resource": {
+            "label": "Ресурсы изображений",
+            "placeholder": "Выберите ресурсы"
+          },
+          "h5Orientation": {
+            "label": "Фильтр направления",
+            "placeholder": "Выберите фильтр направления"
+          },
+          "h5Quality": {
+            "label": "Фильтр качества",
+            "placeholder": "Выберите фильтр качества"
+          },
+          "h5SortField": {
+            "label": "Поле сортировки",
+            "placeholder": "Выберите поле сортировки"
+          },
+          "h5SortType": {
+            "label": "Метод сортировки",
+            "placeholder": "Выберите метод сортировки"
+          },
+          "h5ImageDisplaySize": {
+            "label": "Размер отображения",
+            "placeholder": "Выберите размер отображения"
+          },
+          "h5ImageCompress": "Сжатие изображений",
+          "h5ImageCompressStartSize": "Начальный размер сжатия",
+          "h5FunctionSettings": "Функциональные настройки",
+          "h5FloatingButtonPosition": {
+            "label": "Позиция плавающей кнопки",
+            "placeholder": "Выберите позицию плавающей кнопки"
+          },
+          "h5EnabledFloatingButtons": {
+            "label": "Включенные плавающие кнопки",
+            "placeholder": ""
+          },
+          "h5NumberIndicatorPosition": {
+            "label": "Позиция индикатора",
+            "placeholder": "Выберите позицию индикатора"
+          },
+          "h5Vibration": "Виброотклик",
+          "h5WeekScreen": "Постоянный экран"
+        },
+        "about": "О программе",
+        "version": "Версия",
+        "localSetting": {
+          "multiDeviceSync": "Синхронизация между устройствами"
+        }
+      }
+    }
+  }
+}

@@ -33,6 +33,8 @@ const UseSettingStore = defineStore('setting', {
     async h5UpdateSettingData(data) {
       if (!this.localSetting.multiDeviceSync) {
         this.settingData = Object.assign({}, this.settingData, data)
+        // 更新语言
+        i18next.changeLanguage(this.settingData.locale)
         return {
           success: false,
           message: i18next.t('messages.multiDeviceSyncWarning')

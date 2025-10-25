@@ -1,0 +1,702 @@
+{
+  "appInfo": {
+    "appName": "Flying Bird Wallpaper",
+    "description": "Flying Bird Wallpaperは、画像、動画、リズム、単色など複数の壁紙タイプをサポートする機能豊富なデスクトップ壁紙アプリケーションで、あなたのデスクトップを独特で活気に満ちたものにします。"
+  },
+  "actions": {
+    "autoSwitchWallpaper": {
+      "start": "自動切り替えを開始",
+      "stop": "自動切り替えを停止"
+    },
+    "nextWallpaper": "次の壁紙",
+    "prevWallpaper": "前の壁紙",
+    "closeSuspensionBall": "サスペンションボールを閉じる",
+    "openSuspensionBall": "サスペンションボールを表示",
+    "quit": "終了",
+    "checkUpdate": "更新を確認",
+    "menu": "メニュー",
+    "wordDrawer": "単語",
+    "qrCode": "QRコード"
+  },
+  "qrCode": {
+    "notice": "QRコードをスキャンしてモバイル版にアクセス",
+    "imgPlaceholder": "まずH5サーバーを起動してください",
+    "imgError": "QRコードの読み込みに失敗しました",
+    "startH5Server": "H5サーバーを起動",
+    "stopH5Server": "H5サーバーを停止"
+  },
+  "pages": {
+    "Setting": {
+      "tabs": {
+        "baseSetting": "基本設定",
+        "privacySpace": "プライバシー空間"
+      },
+      "divider": {
+        "base": "基本設定",
+        "application": "アプリケーション設定",
+        "explore": "探索設定",
+        "function": "機能設定",
+        "wallpaper": "壁紙設定",
+        "switch": "切り替え設定",
+        "localResource": "ローカルリソース",
+        "webWallpaper": "ウェブ壁紙",
+        "colorWallpaper": "カラーバリ紙",
+        "dynamicWallpaper": "動的壁紙",
+        "rhythmWallpaper": "リズム壁紙",
+        "remoteResource": "リモートリソース",
+        "privacyPassword": "プライバシーパスワード",
+        "h5Settings": "H5設定",
+        "h5ExploreSettings": "探索設定",
+        "h5ResourcesSettings": "リソース設定",
+        "h5FunctionSettings": "機能設定"
+      },
+      "settingDataForm": {
+        "locale": "言語",
+        "startup": "起動時自動実行",
+        "openMainWindowOnStartup": "起動時にメインウィンドウを開く",
+        "startH5ServerOnStartup": "起動時にH5サーバーを起動",
+        "suspensionBallVisible": "サスペンションボールを表示",
+        "enabledMenus": "メニューを有効化",
+        "autoSwitchWallpaper": "自動切り替え",
+        "switchType": "切り替えモード",
+        "switchIntervalTime": "切り替え間隔",
+        "allScreen": "すべての画面に適用",
+        "scaleType": "塗りつぶしモード",
+        "wallpaperResource": "壁紙リソース",
+        "orientation": "方向フィルター",
+        "quality": "品質フィルター",
+        "filterKeywords": {
+          "label": "キーワードフィルター",
+          "placeholder": "キーワードを入力してください"
+        },
+        "localResourceFolders": {
+          "label": "リソースディレクトリ",
+          "placeholder": "ディレクトリを選択してください"
+        },
+        "allowedFileExt": {
+          "label": "許可されるファイル拡張子",
+          "placeholder": "許可されるファイル拡張子を選択してください"
+        },
+        "autoRefreshDirectory": "定期更新",
+        "refreshDirectoryIntervalTime": "更新間隔",
+        "webWallpaperUrl": {
+          "label": "ウェブURL",
+          "placeholder": "URLを入力してください"
+        },
+        "autoRefreshWebWallpaper": "定期更新",
+        "refreshWebWallpaperIntervalTime": "更新間隔",
+        "colorWallpaperVal": {
+          "label": "色",
+          "placeholder": "色を選択してください"
+        },
+        "dynamicLastVideoPath": {
+          "label": "動的壁紙ファイル",
+          "placeholder": "動的壁紙ファイルを選択してください"
+        },
+        "dynamicAutoPlayOnStartup": "起動時に自動再生",
+        "dynamicMuteAudio": "音声をミュート",
+        "dynamicBackgroundColor": "背景色",
+        "dynamicOpacity": "不透明度",
+        "dynamicBrightness": "明るさ",
+        "dynamicContrast": "コントラスト",
+        "dynamicPerformanceMode": {
+          "label": "パフォーマンスモード",
+          "placeholder": "パフォーマンスモードを選択してください"
+        },
+        "dynamicScaleMode": {
+          "label": "スケールモード",
+          "placeholder": "スケールモードを選択してください"
+        },
+        "rhythmEffect": {
+          "label": "リズム効果",
+          "placeholder": "リズム効果を選択してください"
+        },
+        "rhythmWidthRatio": "幅比率",
+        "rhythmHeightRatio": "高さ比率",
+        "rhythmColors": "リズムカラー",
+        "rhythmAnimation": {
+          "label": "アニメーション",
+          "placeholder": "アニメーションを選択してください"
+        },
+        "rhythmDensity": {
+          "label": "密度",
+          "placeholder": "密度を選択してください"
+        },
+        "rhythmPosition": {
+          "label": "表示位置",
+          "placeholder": "表示位置を選択してください"
+        },
+        "rhythmSampleRange": "サンプル範囲",
+        "remoteResourceSecretKeys": {
+          "label": "リソースキー",
+          "placeholder": "キーを入力してください"
+        },
+        "downloadSources": "ダウンロードソース",
+        "downloadOrientation": "画像方向",
+        "downloadKeywords": {
+          "label": "ダウンロードキーワード",
+          "placeholder": "キーワードを入力してください"
+        },
+        "autoDownload": "自動ダウンロード",
+        "downloadIntervalTime": "ダウンロード間隔",
+        "downloadFolder": {
+          "label": "ダウンロードディレクトリ",
+          "placeholder": "ディレクトリを選択してください"
+        },
+        "autoClearDownloaded": "自動クリーンアップ",
+        "clearDownloadedExpiredTime": "有効期限",
+        "sortField": "ソートフィールド",
+        "sortType": "ソート方法",
+        "themeColor": "テーマカラー",
+        "enableExpandSideMenu": "展開サイドメニューを有効化",
+        "showSideMenuLabel": "サイドメニューラベルを表示",
+        "viewImageIntervalTime": "プレビュー再生間隔",
+        "showTag": "タグを表示",
+        "confirmOnDeleteFile": "削除前に確認",
+        "enableSegmentationTask": "セグメンテーションタスクを有効化",
+        "h5AutoSwitch": "自動切り替え",
+        "h5SwitchType": "切り替え方式",
+        "h5SwitchIntervalTime": "切り替え間隔",
+        "h5Resource": "画像リソース",
+        "h5Orientation": "方向フィルター",
+        "h5Quality": "品質フィルター",
+        "h5SortField": "ソートフィールド",
+        "h5SortType": "ソート方法",
+        "h5ImageDisplaySize": "表示サイズ",
+        "h5ImageCompress": "画像圧縮",
+        "h5ImageCompressStartSize": "圧縮開始サイズ",
+        "h5FloatingButtonPosition": "フローティングボタンの位置",
+        "h5EnabledFloatingButtons": {
+          "label": "有効なフローティングボタン",
+          "placeholder": "フローティングボタンを選択してください"
+        },
+        "h5NumberIndicatorPosition": "数値インジケーターの位置",
+        "h5Vibration": "振動フィードバック",
+        "h5WeekScreen": "画面常時点灯",
+        "powerSaveMode": "省電力モード"
+      },
+      "privacyPasswordForm": {
+        "old": {
+          "label": "古いパスワード",
+          "placeholder": "古いパスワードを入力してください",
+          "tooltip": "パスワードは数字で構成され、最低3桁、最大6桁です。デフォルトパスワードは空です"
+        },
+        "new": {
+          "label": "新しいパスワード",
+          "placeholder": "新しいパスワードを入力してください",
+          "tooltip": "パスワードは数字で構成され、最低3桁、最大6桁です"
+        },
+        "confirm": "パスワードを更新"
+      }
+    },
+    "Utils": {
+      "dataUtils": "データツール",
+      "wallpaperUtils": "壁紙ツール",
+      "fileUtils": "ファイルツール",
+      "refreshDirectory": "ローカルリソースディレクトリデータを更新",
+      "clearCurrentResourceDB": "現在のリソースデータをクリア",
+      "clearWordsDB": "単語データをクリア",
+      "clearFavoritesDB": "お気に入りデータをクリア",
+      "clearHistoryDB": "履歴データをクリア",
+      "clearStatisticsDB": "統計データをクリア",
+      "clearCache": "キャッシュデータをクリア",
+      "clearDownloadedAll": "すべてのダウンロードをクリア",
+      "clearDownloadedExpired": "期限切れのダウンロードをクリーンアップ",
+      "nextWallpaper": "次の壁紙",
+      "prevWallpaper": "前の壁紙",
+      "execute": "実行",
+      "openDatabaseDir": "データベースディレクトリを開く",
+      "openLogsDir": "ログディレクトリを開く",
+      "openDownloadDir": "ダウンロードディレクトリを開く",
+      "openPluginsDir": "カスタムプラグインディレクトリを開く",
+      "startH5Server": "H5サーバーを起動",
+      "stopH5Server": "H5サーバーを停止",
+      "setWebWallpaper": "ウェブ壁紙を設定",
+      "setColorWallpaper": "カラーバリ紙を設定",
+      "setDynamicWallpaper": "動的壁紙を設定",
+      "closeDynamicWallpaper": "動的壁紙を閉じる",
+      "openRhythmWallpaperWindow": "リズム壁紙を開く",
+      "closeRhythmWallpaperWindow": "リズム壁紙を閉じる"
+    },
+    "About": {
+      "name": "名前",
+      "description": "説明",
+      "author": "著者",
+      "version": "バージョン",
+      "github": "GitHub",
+      "email": "メール"
+    }
+  },
+  "messages": {
+    "operationSuccess": "操作成功！",
+    "operationFail": "操作失敗！",
+    "operationIllegal": "不正な操作！",
+    "operationInProgress": "操作実行中！",
+    "folderAlreadyExist": "リソースディレクトリが重複しています！",
+    "confirmMessageTemplate": "<span style=\"color: red; font-weight: bolder; margin: 0 5px\">{text}</span>を実行してもよろしいですか？",
+    "confirmMessageDanger": "危険な操作です。この操作は元に戻せません。実行しますか？",
+    "inputPrivacySpacePassword": "プライバシー空間のパスワードを入力してください！",
+    "inputPrivacySpacePasswordErrorMessage": "最低3桁、最大6桁の数字を入力してください！",
+    "enterPrivacySpaceSuccess": "プライバシー空間に入りました！",
+    "exitedPrivacySpaceSuccess": "プライバシー空間から出ました！",
+    "noMoreData": "データがありません！",
+    "getDataFail": "データの取得に失敗しました！",
+    "copySuccess": "コピーしました！",
+    "copyFail": "コピーに失敗しました！",
+    "confirmDelete": "削除後は復元できません。削除してもよろしいですか？",
+    "refreshDirectorySuccess": "リソースディレクトリの更新に成功しました。{insertedCount}項目が正常に挿入され、データ総数は{total}項目です！",
+    "refreshDirectoryFail": "リソースの更新に失敗しました！",
+    "refreshDirectoryFailSettingError": "リソースの更新に失敗しました。設定エラーです！",
+    "refreshDirectoryFailNotSettingFolder": "リソースの更新に失敗しました。リソースディレクトリが設定されていません！",
+    "refreshDirectoryFailNotSettingFileExt": "リソースの更新に失敗しました。許可されるファイルタイプが設定されていません！",
+    "clearTableSuccess": "データのクリアに成功しました！",
+    "clearTableFail": "データのクリアに失敗しました！",
+    "clearCacheSuccess": "キャッシュのクリアに成功しました！",
+    "clearCacheFail": "キャッシュのクリアに失敗しました！",
+    "clearTableAutoincrementFail": "テーブルのクリアに成功しましたが、テーブルの自動増分シーケンスのクリアに失敗しました！",
+    "operationSuccessWithInsertFail": "操作成功、データベースへの挿入に失敗しました！",
+    "oldPasswordError": "古いパスワードが間違っています！",
+    "newPasswordNotEmpty": "新しいパスワードは空にできません！",
+    "passwordError": "パスワードが間違っています！",
+    "alreadyInPrivacySpace": "すでにプライバシー空間にいます！",
+    "alreadyInFavorites": "すでにお気に入りに登録されています！",
+    "operationTooFrequent": "操作が頻繁すぎます。後でもう一度お試しください！",
+    "privacyPasswordNotSet": "プライバシーパスワードが設定されていません。まずプライバシーパスワードを設定してください！",
+    "verifyPrivacyPasswordSuccess": "認証に成功しました！",
+    "verifyPrivacyPasswordFail": "認証に失敗しました！",
+    "operationFailWithDataDuplication": "操作に失敗しました。データが重複しています！",
+    "querySuccess": "クエリに成功しました！",
+    "queryFail": "クエリに失敗しました！",
+    "queryEmpty": "クエリ結果が空です！",
+    "paramsError": "パラメータエラー！",
+    "setWallpaperSuccess": "壁紙の設定に成功しました！",
+    "setWallpaperFail": "壁紙の設定に失敗しました！",
+    "setDynamicWallpaperSuccess": "動的壁紙の設定に成功しました！",
+    "setDynamicWallpaperFail": "動的壁紙の設定に失敗しました！",
+    "closeDynamicWallpaperSuccess": "動的壁紙のクローズに成功しました！",
+    "closeDynamicWallpaperFail": "動的壁紙のクローズに失敗しました！",
+    "fileTypeNotSupported": "サポートされていないファイルタイプです！",
+    "enterKeywords": "キーワードを入力してください！",
+    "pleaseSetDownloadFolder": "まずダウンロードディレクトリを設定してください！",
+    "downloadFolderNotExistOrNotSet": "ダウンロードディレクトリが存在しないか、設定されていません！",
+    "downloadFileSuccess": "ファイルのダウンロードに成功しました！",
+    "downloadFileFail": "ファイルのダウンロードに失敗しました！",
+    "downloadFileExist": "ファイルはすでに存在します！",
+    "resourceNotFound": "リソースが見つかりません！",
+    "resourceSecretKeyUnset": "まずリモートリソースのシークレットキーを設定してください！",
+    "h5ServerStartSuccess": "H5サーバーの起動に成功しました！",
+    "h5ServerStartFail": "H5サーバーの起動に失敗しました！",
+    "h5ServerStopSuccess": "H5サーバーの停止に成功しました！",
+    "h5ServerStopFail": "H5サーバーの停止に失敗しました！",
+    "dbConnectFail": "データベース接続に失敗しました！",
+    "fileNotExist": "ファイルが存在しません！",
+    "resourceNotExist": "リソースが存在しません！",
+    "downloadFail": "ダウンロードに失敗しました！",
+    "alreadyExists": "すでに存在します！",
+    "notExists": "存在しません！",
+    "urlEmpty": "URLは空にできません！",
+    "invalidUrl": "無効なURLです！",
+    "fileServerNotInitialized": "ファイルサーバーが初期化されていません！",
+    "useDefaultSettings": "デフォルト設定を使用！",
+    "clearDownloadedDone": "クリーンアップ完了、合計{allCount}、成功{successCount}、失敗{failCount}！",
+    "updateAvailable": "新しいバージョン{version}が見つかりました。クリックしてダウンロード！",
+    "checkUpdateFail": "更新の確認に失敗しました！",
+    "checkUpdateSuccess": "更新の確認に成功しました！",
+    "updateNotAvailable": "最新バージョンです！",
+    "updateDownloaded": "ダウンロード完了、クリックしてインストール！",
+    "saveSuccess": "保存成功！",
+    "saveFail": "保存失敗！",
+    "deleteSuccess": "削除成功！",
+    "deleteFail": "削除失敗！",
+    "maxFavoriteCountReached": "お気に入り数が上限に達しました！",
+    "noFileSelected": "ファイルが選択されていません！",
+    "noDynamicWallpaperSet": "動的壁紙が設定されていません！",
+    "multiDeviceSyncWarning": "マルチデバイス同期機能が無効になっています。変更は現在のデバイスでのみ有効です！",
+    "rhythmWallpaperNeedVirtualAudio": "リズム壁紙機能を使用するには、仮想サウンドカード（VB-Audio/BlackHoleなど）をインストールして設定してください",
+    "noData": "データなし",
+    "loading": "読み込み中...",
+    "loadingMore": "さらに読み込む...",
+    "invalidIndex": "有効なインデックスを入力してください",
+    "indexOutOfRange": "インデックスが範囲外です",
+    "indexTooLarge": "インデックスが大きすぎます"
+  },
+  "resourceTypeList": {
+    "localResource": "ローカルリソース",
+    "remoteResource": "リモートリソース"
+  },
+  "resourceList": {
+    "resources": "リソースライブラリ",
+    "local": "ローカルリソース",
+    "favorites": "お気に入り"
+  },
+  "menuList": {
+    "Explore": "ギャラリー",
+    "Search": "検索",
+    "Words": "単語",
+    "Favorites": "お気に入り",
+    "History": "履歴",
+    "Setting": "設定",
+    "Utils": "ツール",
+    "About": "アプリについて"
+  },
+  "scaleTypes": {
+    "auto": "自動",
+    "span": "自動",
+    "fill": "塗りつぶし",
+    "fit": "適合",
+    "stretch": "引き伸ばし",
+    "center": "中央",
+    "tile": "タイル"
+  },
+  "intervalUnits": {
+    "s": "秒",
+    "m": "分",
+    "h": "時間",
+    "d": "日"
+  },
+  "filterTypeOptions": {
+    "images": "画像",
+    "videos": "動画"
+  },
+  "orientationOptions": {
+    "landscape": "横長",
+    "portrait": "縦長"
+  },
+  "switchTypeOptions": {
+    "random": "ランダム",
+    "order": "順序"
+  },
+  "sortFieldOptions": {
+    "created_at": "レコード作成時間",
+    "updated_at": "レコード変更時間",
+    "ctimeMs": "リソース作成時間",
+    "mtimeMs": "リソース変更時間",
+    "fileName": "リソースファイル名",
+    "fileSize": "リソースファイルサイズ",
+    "views": "閲覧数",
+    "downloads": "ダウンロード数",
+    "favorites": "お気に入り数",
+    "wallpapers": "壁紙数"
+  },
+  "sortTypeOptions": {
+    "asc": "昇順",
+    "desc": "降順"
+  },
+  "imageDisplaySizeOptions": {
+    "contain": "適合",
+    "cover": "塗りつぶし"
+  },
+  "h5FloatingButtonPositionOptions": {
+    "left": "左",
+    "right": "右"
+  },
+  "h5FloatingButtonsOptions": {
+    "autoSwitch": "自動切り替え",
+    "intervalTime": "切り替え間隔",
+    "switchType": "切り替え方式",
+    "favorites": "お気に入り",
+    "displaySize": "表示サイズ",
+    "toggleTabbar": "タブバー切り替え",
+    "backtop": "トップに戻る"
+  },
+  "h5NumberIndicatorPositionOptions": {
+    "top": "上",
+    "bottom": "下"
+  },
+  "dynamicPerformanceModeOptions": {
+    "high": "高",
+    "balanced": "バランス",
+    "powersave": "省電力"
+  },
+  "dynamicScaleModeOptions": {
+    "cover": "塗りつぶし",
+    "contain": "適合",
+    "stretch": "引き伸ばし"
+  },
+  "rhythmEffectOptions": {
+    "LeaferBar": "バー",
+    "LeaferWave": "波形",
+    "LeaferBall": "ボール",
+    "LeaferDisco": "ディスコ",
+    "LeaferSpectrumRing": "スペクトルリング",
+    "LeaferParticleFountain": "パーティクル噴水",
+    "LeaferBreathingHalo": "呼吸ハロ",
+    "LeaferDynamicGrid": "ダイナミックグリッド",
+    "LeaferFlowingLines": "流れる線",
+    "LeaferMusicNoteRain": "音符の雨",
+    "LeaferRotatingStarburst": "回転スターバースト",
+    "LeaferBars3D": "3Dバー",
+    "LeaferLiquidRipple": "液体波紋",
+    "LeaferSpectrumFlower": "スペクトルフラワー",
+    "LeaferRainbow": "虹",
+    "LeaferWindmill": "風車",
+    "LeaferTaiji": "太極",
+    "LeaferMuyu": "木魚",
+    "LeaferFirework": "花火",
+    "LeaferSnowflake": "雪片",
+    "ThreeBar": "3Dバー",
+    "ThreeWave": "3D波形",
+    "ThreeParticle": "3Dパーティクル",
+    "ThreeSphere": "3D球体",
+    "ThreeAudioVisualizer": "3Dオーディオビジュアライザー"
+  },
+  "rhythmAnimationOptions": {
+    "linear": "線形（直接マッピング）",
+    "log": "対数（低エネルギーに敏感）",
+    "parabola": "放物線（柔らかで爆発的）",
+    "sqrt": "平方根（より柔らかい）",
+    "exp": "指数（爆発的）",
+    "sin": "正弦（弾性周期）",
+    "bounce": "バウンス（反発）",
+    "step": "ステップ/ピクセルジャンプ",
+    "max": "最大値",
+    "avg": "平均値"
+  },
+  "rhythmDensityOptions": {
+    "sparse": "希薄",
+    "normal": "普通",
+    "dense": "密集"
+  },
+  "positionOptions": {
+    "topLeft": "左上",
+    "top": "上",
+    "topRight": "右上",
+    "right": "右",
+    "bottomRight": "右下",
+    "bottom": "下",
+    "bottomLeft": "左下",
+    "left": "左",
+    "center": "中央"
+  },
+  "wordTypeList": {
+    "chinese": "中文",
+    "english": "English"
+  },
+  "emptyHelp": {
+    "text": "データがありません。設定を確認してください",
+    "jumpText": "設定を確認"
+  },
+  "exploreCommon": {
+    "toggleFixedBtns": "ボタン切り替え",
+    "onLoadMore": "さらに読み込む",
+    "onRefresh": "更新",
+    "isRandom": {
+      "on": "ランダム",
+      "off": "順序"
+    },
+    "onTogglePrivacySpace": {
+      "quit": "プライバシー空間を終了",
+      "enter": "プライバシー空間に入る"
+    },
+    "onSwitchResource": "リソース切り替え",
+    "onRefreshDirectory": "リソースディレクトリを更新",
+    "setAsWallpaperWithDownload": "壁紙に設定",
+    "doViewImage": "画像プレビュー",
+    "addToFavorites": "お気に入りに追加",
+    "removeFavorites": "お気に入りから削除",
+    "addToPrivacySpace": "プライバシー空間に追加",
+    "removePrivacySpace": "プライバシー空間から削除",
+    "onCopyFilePath": "ファイルパスをコピー",
+    "onDeleteFile": "ファイルを削除",
+    "onDownloadFile": "ファイルをダウンロード",
+    "showItemInFolder": "フォルダで開く",
+    "openLink": "リンクを開く",
+    "viewInfo": "情報を表示",
+    "searchForm": {
+      "filterKeywords": {
+        "placeholder": "キーワードを入力し、Enterキーで検索"
+      },
+      "resourceType": {
+        "placeholder": "リソースタイプ"
+      },
+      "resourceName": {
+        "placeholder": "リソース名"
+      },
+      "filterType": {
+        "placeholder": "タイプ"
+      },
+      "orientation": {
+        "placeholder": "方向"
+      },
+      "quality": {
+        "placeholder": "画像品質"
+      }
+    },
+    "onSyncToWallpaperSetting": "壁紙設定に同期",
+    "wordFilter": {
+      "placeholder": "キーワードを入力してください"
+    },
+    "tagItem": {
+      "score": "スコア",
+      "favorited": "お気に入り済み"
+    },
+    "totalText": "合計 {current} / {total} 項目"
+  },
+  "autoRefreshList": {
+    "off": "自動更新をオフ",
+    "on": "自動更新をオン"
+  },
+  "gridSizeList": {
+    "label": {
+      "auto": "自動",
+      "size": "{size}"
+    },
+    "alt": {
+      "auto": "グリッド：自動",
+      "size": "グリッド：{size}"
+    }
+  },
+  "gridRatioList": {
+    "square": "正方形",
+    "rectangle": "長方形",
+    "verticalRectangle": "縦長長方形"
+  },
+  "comingSoon": "近日公開",
+  "viewInfo": {
+    "title": "情報を表示",
+    "row": {
+      "title": "タイトル",
+      "desc": "説明",
+      "author": "著者",
+      "link": "リンク",
+      "resourceName": "リソース名",
+      "fileName": "ファイル名",
+      "filePath": "ファイルパス",
+      "fileExt": "拡張子",
+      "fileSize": "ファイルサイズ",
+      "quality": "品質",
+      "score": "スコア",
+      "dimensions": "寸法",
+      "views": "閲覧数",
+      "downloads": "ダウンロード数",
+      "favorites": "お気に入り数",
+      "wallpapers": "壁紙数",
+      "created_at": "レコード作成時間",
+      "updated_at": "レコード更新時間",
+      "ctimeMs": "リソース作成時間",
+      "mtimeMs": "リソース更新時間"
+    }
+  },
+  "h5": {
+    "tabbar": {
+      "home": "ホーム",
+      "search": "検索",
+      "setting": "設定"
+    },
+    "pages": {
+      "home": {
+        "title": "ホーム",
+        "actions": {
+          "imageInfo": "画像情報",
+          "saveImage": "画像を保存",
+          "deleteImage": "画像を削除",
+          "confirmDelete": "削除を確認",
+          "confirmDeleteMessage": "画像を削除してもよろしいですか？",
+          "confirmDeleteBtn": "確認",
+          "cancelDeleteBtn": "キャンセル",
+          "jumpToIndex": "指定位置にジャンプ",
+          "enterIndex": "インデックスを入力してください"
+        },
+        "imageInfo": {
+          "title": "タイトル",
+          "desc": "説明",
+          "author": "著者",
+          "link": "リンク",
+          "resourceName": "リソース名",
+          "fileName": "ファイル名",
+          "filePath": "ファイルパス",
+          "fileExt": "拡張子",
+          "fileSize": "ファイルサイズ",
+          "quality": "品質",
+          "score": "スコア",
+          "dimensions": "寸法",
+          "views": "閲覧数",
+          "downloads": "ダウンロード数",
+          "favorites": "お気に入り数",
+          "wallpapers": "壁紙数",
+          "created_at": "レコード作成時間",
+          "updated_at": "レコード更新時間",
+          "ctimeMs": "リソース作成時間",
+          "mtimeMs": "リソース更新時間"
+        }
+      },
+      "search": {
+        "title": "検索"
+      },
+      "setting": {
+        "title": "設定",
+        "form": {
+          "h5ApplicationSettings": "アプリケーション設定",
+          "locale": {
+            "label": "言語",
+            "placeholder": "言語を選択してください"
+          },
+          "themes": {
+            "dark": {
+              "label": "ダークモード",
+              "placeholder": "ダークモードを有効にする"
+            },
+            "primary": {
+              "label": "テーマカラー",
+              "placeholder": "テーマカラーを選択してください"
+            }
+          },
+          "h5ExploreSettings": "探索設定",
+          "h5AutoSwitch": "自動切り替え",
+          "h5SwitchType": {
+            "label": "切り替え方式",
+            "placeholder": "切り替え方式を選択してください"
+          },
+          "h5SwitchIntervalTime": "切り替え間隔",
+          "h5ResourcesSettings": "リソース設定",
+          "h5Resource": {
+            "label": "画像リソース",
+            "placeholder": "リソースを選択してください"
+          },
+          "h5Orientation": {
+            "label": "方向フィルター",
+            "placeholder": "方向フィルターを選択してください"
+          },
+          "h5Quality": {
+            "label": "品質フィルター",
+            "placeholder": "品質フィルターを選択してください"
+          },
+          "h5SortField": {
+            "label": "ソートフィールド",
+            "placeholder": "ソートフィールドを選択してください"
+          },
+          "h5SortType": {
+            "label": "ソート方法",
+            "placeholder": "ソート方法を選択してください"
+          },
+          "h5ImageDisplaySize": {
+            "label": "表示サイズ",
+            "placeholder": "表示サイズを選択してください"
+          },
+          "h5ImageCompress": "画像圧縮",
+          "h5ImageCompressStartSize": "圧縮開始サイズ",
+          "h5FunctionSettings": "機能設定",
+          "h5FloatingButtonPosition": {
+            "label": "フローティングボタンの位置",
+            "placeholder": "フローティングボタンの位置を選択してください"
+          },
+          "h5EnabledFloatingButtons": {
+            "label": "有効なフローティングボタン",
+            "placeholder": ""
+          },
+          "h5NumberIndicatorPosition": {
+            "label": "数値インジケーターの位置",
+            "placeholder": "数値インジケーターの位置を選択してください"
+          },
+          "h5Vibration": "振動フィードバック",
+          "h5WeekScreen": "画面常時点灯"
+        },
+        "about": "アプリについて",
+        "version": "バージョン",
+        "localSetting": {
+          "multiDeviceSync": "マルチデバイス同期"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,702 @@
+{
+  "appInfo": {
+    "appName": "Flying Bird Wallpaper",
+    "description": "Flying Bird Wallpaper는 이미지, 비디오, 리듬, 솔리드 컬러 등 다양한 배경화면 유형을 지원하는 기능이 풍부한 데스크톱 배경화면 애플리케이션으로, 당신의 데스크톱을 독특하고 활기차게 만들어 줍니다."
+  },
+  "actions": {
+    "autoSwitchWallpaper": {
+      "start": "자동 전환 시작",
+      "stop": "자동 전환 중지"
+    },
+    "nextWallpaper": "다음 배경화면",
+    "prevWallpaper": "이전 배경화면",
+    "closeSuspensionBall": "서스펜션 볼 닫기",
+    "openSuspensionBall": "서스펜션 볼 표시",
+    "quit": "종료",
+    "checkUpdate": "업데이트 확인",
+    "menu": "메뉴",
+    "wordDrawer": "단어",
+    "qrCode": "QR 코드"
+  },
+  "qrCode": {
+    "notice": "QR 코드를 스캔하여 모바일 버전 접속",
+    "imgPlaceholder": "먼저 H5 서버를 시작해 주세요",
+    "imgError": "QR 코드 로드 실패",
+    "startH5Server": "H5 서버 시작",
+    "stopH5Server": "H5 서버 중지"
+  },
+  "pages": {
+    "Setting": {
+      "tabs": {
+        "baseSetting": "기본 설정",
+        "privacySpace": "프라이버시 공간"
+      },
+      "divider": {
+        "base": "기본 설정",
+        "application": "애플리케이션 설정",
+        "explore": "탐색 설정",
+        "function": "기능 설정",
+        "wallpaper": "배경화면 설정",
+        "switch": "전환 설정",
+        "localResource": "로컬 리소스",
+        "webWallpaper": "웹 배경화면",
+        "colorWallpaper": "색상 배경화면",
+        "dynamicWallpaper": "동적 배경화면",
+        "rhythmWallpaper": "리듬 배경화면",
+        "remoteResource": "원격 리소스",
+        "privacyPassword": "프라이버시 비밀번호",
+        "h5Settings": "H5 설정",
+        "h5ExploreSettings": "탐색 설정",
+        "h5ResourcesSettings": "리소스 설정",
+        "h5FunctionSettings": "기능 설정"
+      },
+      "settingDataForm": {
+        "locale": "언어",
+        "startup": "시작 시 자동 실행",
+        "openMainWindowOnStartup": "시작 시 메인 창 열기",
+        "startH5ServerOnStartup": "시작 시 H5 서버 시작",
+        "suspensionBallVisible": "서스펜션 볼 표시",
+        "enabledMenus": "메뉴 활성화",
+        "autoSwitchWallpaper": "자동 전환",
+        "switchType": "전환 모드",
+        "switchIntervalTime": "전환 간격",
+        "allScreen": "모든 화면에 적용",
+        "scaleType": "채우기 모드",
+        "wallpaperResource": "배경화면 리소스",
+        "orientation": "방향 필터",
+        "quality": "품질 필터",
+        "filterKeywords": {
+          "label": "필터 키워드",
+          "placeholder": "키워드를 입력해 주세요"
+        },
+        "localResourceFolders": {
+          "label": "리소스 디렉토리",
+          "placeholder": "디렉토리를 선택해 주세요"
+        },
+        "allowedFileExt": {
+          "label": "허용된 파일 확장자",
+          "placeholder": "허용된 파일 확장자를 선택해 주세요"
+        },
+        "autoRefreshDirectory": "정기 새로고침",
+        "refreshDirectoryIntervalTime": "새로고침 간격",
+        "webWallpaperUrl": {
+          "label": "웹 URL",
+          "placeholder": "URL을 입력해 주세요"
+        },
+        "autoRefreshWebWallpaper": "정기 새로고침",
+        "refreshWebWallpaperIntervalTime": "새로고침 간격",
+        "colorWallpaperVal": {
+          "label": "색상",
+          "placeholder": "색상을 선택해 주세요"
+        },
+        "dynamicLastVideoPath": {
+          "label": "동적 배경화면 파일",
+          "placeholder": "동적 배경화면 파일을 선택해 주세요"
+        },
+        "dynamicAutoPlayOnStartup": "시작 시 자동 재생",
+        "dynamicMuteAudio": "음소거 재생",
+        "dynamicBackgroundColor": "배경색",
+        "dynamicOpacity": "불투명도",
+        "dynamicBrightness": "밝기",
+        "dynamicContrast": "대비",
+        "dynamicPerformanceMode": {
+          "label": "성능 모드",
+          "placeholder": "성능 모드를 선택해 주세요"
+        },
+        "dynamicScaleMode": {
+          "label": "스케일 모드",
+          "placeholder": "스케일 모드를 선택해 주세요"
+        },
+        "rhythmEffect": {
+          "label": "리듬 효과",
+          "placeholder": "리듬 효과를 선택해 주세요"
+        },
+        "rhythmWidthRatio": "너비 비율",
+        "rhythmHeightRatio": "높이 비율",
+        "rhythmColors": "리듬 색상",
+        "rhythmAnimation": {
+          "label": "애니메이션",
+          "placeholder": "애니메이션을 선택해 주세요"
+        },
+        "rhythmDensity": {
+          "label": "밀도",
+          "placeholder": "밀도를 선택해 주세요"
+        },
+        "rhythmPosition": {
+          "label": "표시 위치",
+          "placeholder": "표시 위치를 선택해 주세요"
+        },
+        "rhythmSampleRange": "샘플 범위",
+        "remoteResourceSecretKeys": {
+          "label": "리소스 키",
+          "placeholder": "키를 입력해 주세요"
+        },
+        "downloadSources": "다운로드 소스",
+        "downloadOrientation": "이미지 방향",
+        "downloadKeywords": {
+          "label": "다운로드 키워드",
+          "placeholder": "키워드를 입력해 주세요"
+        },
+        "autoDownload": "자동 다운로드",
+        "downloadIntervalTime": "다운로드 간격",
+        "downloadFolder": {
+          "label": "다운로드 디렉토리",
+          "placeholder": "디렉토리를 선택해 주세요"
+        },
+        "autoClearDownloaded": "자동 정리",
+        "clearDownloadedExpiredTime": "만료 시간",
+        "sortField": "정렬 필드",
+        "sortType": "정렬 방식",
+        "themeColor": "테마 색상",
+        "enableExpandSideMenu": "확장 사이드 메뉴 활성화",
+        "showSideMenuLabel": "사이드 메뉴 레이블 표시",
+        "viewImageIntervalTime": "미리보기 재생 간격",
+        "showTag": "태그 표시",
+        "confirmOnDeleteFile": "삭제 전 확인",
+        "enableSegmentationTask": "분할 작업 활성화",
+        "h5AutoSwitch": "자동 전환",
+        "h5SwitchType": "전환 방식",
+        "h5SwitchIntervalTime": "전환 간격",
+        "h5Resource": "이미지 리소스",
+        "h5Orientation": "방향 필터",
+        "h5Quality": "품질 필터",
+        "h5SortField": "정렬 필드",
+        "h5SortType": "정렬 방식",
+        "h5ImageDisplaySize": "표시 크기",
+        "h5ImageCompress": "이미지 압축",
+        "h5ImageCompressStartSize": "압축 시작 크기",
+        "h5FloatingButtonPosition": "플로팅 버튼 위치",
+        "h5EnabledFloatingButtons": {
+          "label": "활성화된 플로팅 버튼",
+          "placeholder": "플로팅 버튼을 선택해 주세요"
+        },
+        "h5NumberIndicatorPosition": "숫자 표시기 위치",
+        "h5Vibration": "진동 피드백",
+        "h5WeekScreen": "화면 항상 켜짐",
+        "powerSaveMode": "절전 모드"
+      },
+      "privacyPasswordForm": {
+        "old": {
+          "label": "이전 비밀번호",
+          "placeholder": "이전 비밀번호를 입력해 주세요",
+          "tooltip": "비밀번호는 숫자로 구성되며, 최소 3자리에서 최대 6자리입니다. 기본 비밀번호는 비어 있습니다"
+        },
+        "new": {
+          "label": "새 비밀번호",
+          "placeholder": "새 비밀번호를 입력해 주세요",
+          "tooltip": "비밀번호는 숫자로 구성되며, 최소 3자리에서 최대 6자리입니다"
+        },
+        "confirm": "비밀번호 업데이트"
+      }
+    },
+    "Utils": {
+      "dataUtils": "데이터 도구",
+      "wallpaperUtils": "배경화면 도구",
+      "fileUtils": "파일 도구",
+      "refreshDirectory": "로컬 리소스 디렉토리 데이터 새로고침",
+      "clearCurrentResourceDB": "현재 리소스 데이터 지우기",
+      "clearWordsDB": "단어 데이터 지우기",
+      "clearFavoritesDB": "즐겨찾기 데이터 지우기",
+      "clearHistoryDB": "기록 데이터 지우기",
+      "clearStatisticsDB": "통계 데이터 지우기",
+      "clearCache": "캐시 데이터 지우기",
+      "clearDownloadedAll": "모든 다운로드 지우기",
+      "clearDownloadedExpired": "만료된 다운로드 정리",
+      "nextWallpaper": "다음 배경화면",
+      "prevWallpaper": "이전 배경화면",
+      "execute": "실행",
+      "openDatabaseDir": "데이터베이스 디렉토리 열기",
+      "openLogsDir": "로그 디렉토리 열기",
+      "openDownloadDir": "다운로드 디렉토리 열기",
+      "openPluginsDir": "사용자 정의 플러그인 디렉토리 열기",
+      "startH5Server": "H5 서버 시작",
+      "stopH5Server": "H5 서버 중지",
+      "setWebWallpaper": "웹 배경화면 설정",
+      "setColorWallpaper": "색상 배경화면 설정",
+      "setDynamicWallpaper": "동적 배경화면 설정",
+      "closeDynamicWallpaper": "동적 배경화면 닫기",
+      "openRhythmWallpaperWindow": "리듬 배경화면 열기",
+      "closeRhythmWallpaperWindow": "리듬 배경화면 닫기"
+    },
+    "About": {
+      "name": "이름",
+      "description": "설명",
+      "author": "저자",
+      "version": "버전",
+      "github": "GitHub",
+      "email": "이메일"
+    }
+  },
+  "messages": {
+    "operationSuccess": "작업 성공!",
+    "operationFail": "작업 실패!",
+    "operationIllegal": "잘못된 작업!",
+    "operationInProgress": "작업 실행 중!",
+    "folderAlreadyExist": "리소스 디렉토리가 중복되었습니다!",
+    "confirmMessageTemplate": "<span style=\"color: red; font-weight: bolder; margin: 0 5px\">{text}</span>하시겠습니까?",
+    "confirmMessageDanger": "위험 작업입니다. 이 작업은 되돌릴 수 없습니다. 실행하시겠습니까?",
+    "inputPrivacySpacePassword": "프라이버시 공간 비밀번호를 입력해 주세요!",
+    "inputPrivacySpacePasswordErrorMessage": "최소 3자리, 최대 6자리 숫자를 입력해 주세요!",
+    "enterPrivacySpaceSuccess": "프라이버시 공간에 입장했습니다!",
+    "exitedPrivacySpaceSuccess": "프라이버시 공간에서 나갔습니다!",
+    "noMoreData": "데이터가 더 이상 없습니다!",
+    "getDataFail": "데이터를 가져오지 못했습니다!",
+    "copySuccess": "복사되었습니다!",
+    "copyFail": "복사에 실패했습니다!",
+    "confirmDelete": "삭제 후 복구할 수 없습니다. 삭제하시겠습니까?",
+    "refreshDirectorySuccess": "리소스 디렉토리 새로고침 성공, {insertedCount}개 항목이 성공적으로 삽입되었고, 데이터 총 개수는 {total}개입니다!",
+    "refreshDirectoryFail": "리소스 새로고침 실패!",
+    "refreshDirectoryFailSettingError": "리소스 새로고침 실패, 설정 오류입니다!",
+    "refreshDirectoryFailNotSettingFolder": "리소스 새로고침 실패, 리소스 디렉토리가 설정되지 않았습니다!",
+    "refreshDirectoryFailNotSettingFileExt": "리소스 새로고침 실패, 허용된 파일 유형이 설정되지 않았습니다!",
+    "clearTableSuccess": "데이터 지우기 성공!",
+    "clearTableFail": "데이터 지우기 실패!",
+    "clearCacheSuccess": "캐시 지우기 성공!",
+    "clearCacheFail": "캐시 지우기 실패!",
+    "clearTableAutoincrementFail": "테이블 지우기 성공, 테이블 자동 증분 시퀀스 지우기 실패!",
+    "operationSuccessWithInsertFail": "작업 성공, 데이터베이스 삽입 실패!",
+    "oldPasswordError": "이전 비밀번호가 잘못되었습니다!",
+    "newPasswordNotEmpty": "새 비밀번호는 비워둘 수 없습니다!",
+    "passwordError": "비밀번호가 잘못되었습니다!",
+    "alreadyInPrivacySpace": "이미 프라이버시 공간에 있습니다!",
+    "alreadyInFavorites": "이미 즐겨찾기에 등록되어 있습니다!",
+    "operationTooFrequent": "작업이 너무 빈번합니다. 잠시 후 다시 시도해 주세요!",
+    "privacyPasswordNotSet": "프라이버시 비밀번호가 설정되지 않았습니다. 먼저 프라이버시 비밀번호를 설정해 주세요!",
+    "verifyPrivacyPasswordSuccess": "인증 성공!",
+    "verifyPrivacyPasswordFail": "인증 실패!",
+    "operationFailWithDataDuplication": "작업 실패, 데이터가 중복되었습니다!",
+    "querySuccess": "쿼리 성공!",
+    "queryFail": "쿼리 실패!",
+    "queryEmpty": "쿼리 결과가 비어 있습니다!",
+    "paramsError": "파라미터 오류!",
+    "setWallpaperSuccess": "배경화면 설정 성공!",
+    "setWallpaperFail": "배경화면 설정 실패!",
+    "setDynamicWallpaperSuccess": "동적 배경화면 설정 성공!",
+    "setDynamicWallpaperFail": "동적 배경화면 설정 실패!",
+    "closeDynamicWallpaperSuccess": "동적 배경화면 닫기 성공!",
+    "closeDynamicWallpaperFail": "동적 배경화면 닫기 실패!",
+    "fileTypeNotSupported": "지원되지 않는 파일 유형입니다!",
+    "enterKeywords": "키워드를 입력해 주세요!",
+    "pleaseSetDownloadFolder": "먼저 다운로드 디렉토리를 설정해 주세요!",
+    "downloadFolderNotExistOrNotSet": "다운로드 디렉토리가 존재하지 않거나 설정되지 않았습니다!",
+    "downloadFileSuccess": "파일 다운로드 성공!",
+    "downloadFileFail": "파일 다운로드 실패!",
+    "downloadFileExist": "파일이 이미 존재합니다!",
+    "resourceNotFound": "리소스를 찾을 수 없습니다!",
+    "resourceSecretKeyUnset": "먼저 원격 리소스 비밀 키를 설정해 주세요!",
+    "h5ServerStartSuccess": "H5 서버 시작 성공!",
+    "h5ServerStartFail": "H5 서버 시작 실패!",
+    "h5ServerStopSuccess": "H5 서버 중지 성공!",
+    "h5ServerStopFail": "H5 서버 중지 실패!",
+    "dbConnectFail": "데이터베이스 연결 실패!",
+    "fileNotExist": "파일이 존재하지 않습니다!",
+    "resourceNotExist": "리소스가 존재하지 않습니다!",
+    "downloadFail": "다운로드 실패!",
+    "alreadyExists": "이미 존재합니다!",
+    "notExists": "존재하지 않습니다!",
+    "urlEmpty": "URL은 비워둘 수 없습니다!",
+    "invalidUrl": "유효하지 않은 URL입니다!",
+    "fileServerNotInitialized": "파일 서버가 초기화되지 않았습니다!",
+    "useDefaultSettings": "기본 설정 사용!",
+    "clearDownloadedDone": "정리 완료, 총 {allCount}, 성공 {successCount}, 실패 {failCount}!",
+    "updateAvailable": "새 버전 {version}을 찾았습니다. 클릭하여 다운로드!",
+    "checkUpdateFail": "업데이트 확인 실패!",
+    "checkUpdateSuccess": "업데이트 확인 성공!",
+    "updateNotAvailable": "최신 버전입니다!",
+    "updateDownloaded": "다운로드 완료, 클릭하여 설치!",
+    "saveSuccess": "저장 성공!",
+    "saveFail": "저장 실패!",
+    "deleteSuccess": "삭제 성공!",
+    "deleteFail": "삭제 실패!",
+    "maxFavoriteCountReached": "즐겨찾기 수가 한도에 도달했습니다!",
+    "noFileSelected": "파일이 선택되지 않았습니다!",
+    "noDynamicWallpaperSet": "동적 배경화면이 설정되지 않았습니다!",
+    "multiDeviceSyncWarning": "다중 장치 동기화 기능이 비활성화되었습니다. 변경 사항은 현재 장치에서만 유효합니다!",
+    "rhythmWallpaperNeedVirtualAudio": "리듬 배경화면 기능을 사용하려면 가상 사운드 카드(VB-Audio/BlackHole 등)를 설치하고 설정해 주세요",
+    "noData": "데이터 없음",
+    "loading": "로딩 중...",
+    "loadingMore": "더 불러오기...",
+    "invalidIndex": "유효한 인덱스를 입력해 주세요",
+    "indexOutOfRange": "인덱스가 범위를 벗어났습니다",
+    "indexTooLarge": "인덱스가 너무 큽니다"
+  },
+  "resourceTypeList": {
+    "localResource": "로컬 리소스",
+    "remoteResource": "원격 리소스"
+  },
+  "resourceList": {
+    "resources": "리소스 라이브러리",
+    "local": "로컬 리소스",
+    "favorites": "즐겨찾기"
+  },
+  "menuList": {
+    "Explore": "갤러리",
+    "Search": "검색",
+    "Words": "단어",
+    "Favorites": "즐겨찾기",
+    "History": "기록",
+    "Setting": "설정",
+    "Utils": "도구",
+    "About": "정보"
+  },
+  "scaleTypes": {
+    "auto": "자동",
+    "span": "자동",
+    "fill": "채우기",
+    "fit": "맞춤",
+    "stretch": "늘리기",
+    "center": "중앙",
+    "tile": "타일"
+  },
+  "intervalUnits": {
+    "s": "초",
+    "m": "분",
+    "h": "시간",
+    "d": "일"
+  },
+  "filterTypeOptions": {
+    "images": "이미지",
+    "videos": "비디오"
+  },
+  "orientationOptions": {
+    "landscape": "가로",
+    "portrait": "세로"
+  },
+  "switchTypeOptions": {
+    "random": "랜덤",
+    "order": "순서"
+  },
+  "sortFieldOptions": {
+    "created_at": "레코드 생성 시간",
+    "updated_at": "레코드 수정 시간",
+    "ctimeMs": "리소스 생성 시간",
+    "mtimeMs": "리소스 수정 시간",
+    "fileName": "리소스 파일명",
+    "fileSize": "리소스 파일 크기",
+    "views": "조회수",
+    "downloads": "다운로드수",
+    "favorites": "즐겨찾기수",
+    "wallpapers": "배경화면수"
+  },
+  "sortTypeOptions": {
+    "asc": "오름차순",
+    "desc": "내림차순"
+  },
+  "imageDisplaySizeOptions": {
+    "contain": "맞춤",
+    "cover": "채우기"
+  },
+  "h5FloatingButtonPositionOptions": {
+    "left": "왼쪽",
+    "right": "오른쪽"
+  },
+  "h5FloatingButtonsOptions": {
+    "autoSwitch": "자동 전환",
+    "intervalTime": "전환 간격",
+    "switchType": "전환 방식",
+    "favorites": "즐겨찾기",
+    "displaySize": "표시 크기",
+    "toggleTabbar": "탭바 전환",
+    "backtop": "맨 위로"
+  },
+  "h5NumberIndicatorPositionOptions": {
+    "top": "상단",
+    "bottom": "하단"
+  },
+  "dynamicPerformanceModeOptions": {
+    "high": "고성능",
+    "balanced": "균형",
+    "powersave": "절전"
+  },
+  "dynamicScaleModeOptions": {
+    "cover": "채우기",
+    "contain": "맞춤",
+    "stretch": "늘리기"
+  },
+  "rhythmEffectOptions": {
+    "LeaferBar": "바",
+    "LeaferWave": "파형",
+    "LeaferBall": "볼",
+    "LeaferDisco": "디스코",
+    "LeaferSpectrumRing": "스펙트럼 링",
+    "LeaferParticleFountain": "파티클 분수",
+    "LeaferBreathingHalo": "호흡형 후광",
+    "LeaferDynamicGrid": "동적 그리드",
+    "LeaferFlowingLines": "흐르는 선",
+    "LeaferMusicNoteRain": "음표 비",
+    "LeaferRotatingStarburst": "회전 스타버스트",
+    "LeaferBars3D": "3D 바",
+    "LeaferLiquidRipple": "액체 물결",
+    "LeaferSpectrumFlower": "스펙트럼 꽃",
+    "LeaferRainbow": "무지개",
+    "LeaferWindmill": "풍차",
+    "LeaferTaiji": "태극",
+    "LeaferMuyu": "목어",
+    "LeaferFirework": "불꽃놀이",
+    "LeaferSnowflake": "눈송이",
+    "ThreeBar": "3D 바",
+    "ThreeWave": "3D 파형",
+    "ThreeParticle": "3D 파티클",
+    "ThreeSphere": "3D 구체",
+    "ThreeAudioVisualizer": "3D 오디오 비주얼라이저"
+  },
+  "rhythmAnimationOptions": {
+    "linear": "선형 (직접 매핑)",
+    "log": "로그 (저에너지에 민감)",
+    "parabola": "포물선 (부드럽고 폭발적)",
+    "sqrt": "제곱근 (더 부드럽게)",
+    "exp": "지수 (폭발적)",
+    "sin": "사인 (탄성 주기)",
+    "bounce": "바운스 (튕김 반동)",
+    "step": "스텝/픽셀 점프",
+    "max": "최대값",
+    "avg": "평균값"
+  },
+  "rhythmDensityOptions": {
+    "sparse": "희박",
+    "normal": "보통",
+    "dense": "밀집"
+  },
+  "positionOptions": {
+    "topLeft": "좌상단",
+    "top": "상단",
+    "topRight": "우상단",
+    "right": "우측",
+    "bottomRight": "우하단",
+    "bottom": "하단",
+    "bottomLeft": "좌하단",
+    "left": "좌측",
+    "center": "중앙"
+  },
+  "wordTypeList": {
+    "chinese": "中文",
+    "english": "English"
+  },
+  "emptyHelp": {
+    "text": "데이터가 없습니다. 설정을 확인해 주세요",
+    "jumpText": "설정 확인"
+  },
+  "exploreCommon": {
+    "toggleFixedBtns": "버튼 전환",
+    "onLoadMore": "더 불러오기",
+    "onRefresh": "새로고침",
+    "isRandom": {
+      "on": "랜덤",
+      "off": "순서"
+    },
+    "onTogglePrivacySpace": {
+      "quit": "프라이버시 공간 나가기",
+      "enter": "프라이버시 공간 입장"
+    },
+    "onSwitchResource": "리소스 전환",
+    "onRefreshDirectory": "리소스 디렉토리 새로고침",
+    "setAsWallpaperWithDownload": "배경화면으로 설정",
+    "doViewImage": "이미지 미리보기",
+    "addToFavorites": "즐겨찾기에 추가",
+    "removeFavorites": "즐겨찾기에서 제거",
+    "addToPrivacySpace": "프라이버시 공간에 추가",
+    "removePrivacySpace": "프라이버시 공간에서 제거",
+    "onCopyFilePath": "파일 경로 복사",
+    "onDeleteFile": "파일 삭제",
+    "onDownloadFile": "파일 다운로드",
+    "showItemInFolder": "폴더에서 열기",
+    "openLink": "링크 열기",
+    "viewInfo": "정보 보기",
+    "searchForm": {
+      "filterKeywords": {
+        "placeholder": "키워드를 입력하고 Enter 키를 눌러 검색"
+      },
+      "resourceType": {
+        "placeholder": "리소스 유형"
+      },
+      "resourceName": {
+        "placeholder": "리소스 이름"
+      },
+      "filterType": {
+        "placeholder": "유형"
+      },
+      "orientation": {
+        "placeholder": "방향"
+      },
+      "quality": {
+        "placeholder": "이미지 품질"
+      }
+    },
+    "onSyncToWallpaperSetting": "배경화면 설정에 동기화",
+    "wordFilter": {
+      "placeholder": "키워드를 입력해 주세요"
+    },
+    "tagItem": {
+      "score": "점수",
+      "favorited": "즐겨찾기됨"
+    },
+    "totalText": "총 {current} / {total} 항목"
+  },
+  "autoRefreshList": {
+    "off": "자동 새로고침 끄기",
+    "on": "자동 새로고침 켜기"
+  },
+  "gridSizeList": {
+    "label": {
+      "auto": "자동",
+      "size": "{size}"
+    },
+    "alt": {
+      "auto": "그리드: 자동",
+      "size": "그리드: {size}"
+    }
+  },
+  "gridRatioList": {
+    "square": "정사각형",
+    "rectangle": "직사각형",
+    "verticalRectangle": "세로 직사각형"
+  },
+  "comingSoon": "곧 출시",
+  "viewInfo": {
+    "title": "정보 보기",
+    "row": {
+      "title": "제목",
+      "desc": "설명",
+      "author": "저자",
+      "link": "링크",
+      "resourceName": "리소스 이름",
+      "fileName": "파일명",
+      "filePath": "파일 경로",
+      "fileExt": "확장자",
+      "fileSize": "파일 크기",
+      "quality": "품질",
+      "score": "점수",
+      "dimensions": "크기",
+      "views": "조회수",
+      "downloads": "다운로드수",
+      "favorites": "즐겨찾기수",
+      "wallpapers": "배경화면수",
+      "created_at": "레코드 생성 시간",
+      "updated_at": "레코드 수정 시간",
+      "ctimeMs": "리소스 생성 시간",
+      "mtimeMs": "리소스 수정 시간"
+    }
+  },
+  "h5": {
+    "tabbar": {
+      "home": "홈",
+      "search": "검색",
+      "setting": "설정"
+    },
+    "pages": {
+      "home": {
+        "title": "홈",
+        "actions": {
+          "imageInfo": "이미지 정보",
+          "saveImage": "이미지 저장",
+          "deleteImage": "이미지 삭제",
+          "confirmDelete": "삭제 확인",
+          "confirmDeleteMessage": "이미지를 삭제하시겠습니까?",
+          "confirmDeleteBtn": "확인",
+          "cancelDeleteBtn": "취소",
+          "jumpToIndex": "지정 위치로 이동",
+          "enterIndex": "인덱스를 입력해 주세요"
+        },
+        "imageInfo": {
+          "title": "제목",
+          "desc": "설명",
+          "author": "저자",
+          "link": "링크",
+          "resourceName": "리소스 이름",
+          "fileName": "파일명",
+          "filePath": "파일 경로",
+          "fileExt": "확장자",
+          "fileSize": "파일 크기",
+          "quality": "품질",
+          "score": "점수",
+          "dimensions": "크기",
+          "views": "조회수",
+          "downloads": "다운로드수",
+          "favorites": "즐겨찾기수",
+          "wallpapers": "배경화면수",
+          "created_at": "레코드 생성 시간",
+          "updated_at": "레코드 수정 시간",
+          "ctimeMs": "리소스 생성 시간",
+          "mtimeMs": "리소스 수정 시간"
+        }
+      },
+      "search": {
+        "title": "검색"
+      },
+      "setting": {
+        "title": "설정",
+        "form": {
+          "h5ApplicationSettings": "애플리케이션 설정",
+          "locale": {
+            "label": "언어",
+            "placeholder": "언어를 선택해 주세요"
+          },
+          "themes": {
+            "dark": {
+              "label": "다크 모드",
+              "placeholder": "다크 모드를 활성화할지 여부"
+            },
+            "primary": {
+              "label": "테마 색상",
+              "placeholder": "테마 색상을 선택해 주세요"
+            }
+          },
+          "h5ExploreSettings": "탐색 설정",
+          "h5AutoSwitch": "자동 전환",
+          "h5SwitchType": {
+            "label": "전환 방식",
+            "placeholder": "전환 방식을 선택해 주세요"
+          },
+          "h5SwitchIntervalTime": "전환 간격",
+          "h5ResourcesSettings": "리소스 설정",
+          "h5Resource": {
+            "label": "이미지 리소스",
+            "placeholder": "리소스를 선택해 주세요"
+          },
+          "h5Orientation": {
+            "label": "방향 필터",
+            "placeholder": "방향 필터를 선택해 주세요"
+          },
+          "h5Quality": {
+            "label": "품질 필터",
+            "placeholder": "품질 필터를 선택해 주세요"
+          },
+          "h5SortField": {
+            "label": "정렬 필드",
+            "placeholder": "정렬 필드를 선택해 주세요"
+          },
+          "h5SortType": {
+            "label": "정렬 방식",
+            "placeholder": "정렬 방식을 선택해 주세요"
+          },
+          "h5ImageDisplaySize": {
+            "label": "표시 크기",
+            "placeholder": "표시 크기를 선택해 주세요"
+          },
+          "h5ImageCompress": "이미지 압축",
+          "h5ImageCompressStartSize": "압축 시작 크기",
+          "h5FunctionSettings": "기능 설정",
+          "h5FloatingButtonPosition": {
+            "label": "플로팅 버튼 위치",
+            "placeholder": "플로팅 버튼 위치를 선택해 주세요"
+          },
+          "h5EnabledFloatingButtons": {
+            "label": "활성화된 플로팅 버튼",
+            "placeholder": ""
+          },
+          "h5NumberIndicatorPosition": {
+            "label": "숫자 표시기 위치",
+            "placeholder": "숫자 표시기 위치를 선택해 주세요"
+          },
+          "h5Vibration": "진동 피드백",
+          "h5WeekScreen": "화면 항상 켜짐"
+        },
+        "about": "정보",
+        "version": "버전",
+        "localSetting": {
+          "multiDeviceSync": "다중 장치 동기화"
+        }
+      }
+    }
+  }
+}

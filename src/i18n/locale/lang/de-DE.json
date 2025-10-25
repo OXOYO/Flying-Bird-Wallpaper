@@ -1,0 +1,702 @@
+{
+  "appInfo": {
+    "appName": "Flying Bird Wallpaper",
+    "description": "Flying Bird Wallpaper ist eine funktionsreiche Desktop-Hintergrundanwendung, die mehrere Hintergrundtypen unterstützt, darunter Bilder, Videos, Rhythmus-Hintergründe und Volltonfarben, die Ihren Desktop einzigartig und lebendig machen."
+  },
+  "actions": {
+    "autoSwitchWallpaper": {
+      "start": "Automatisches Wechseln starten",
+      "stop": "Automatisches Wechseln stoppen"
+    },
+    "nextWallpaper": "Nächstes Hintergrundbild",
+    "prevWallpaper": "Vorheriges Hintergrundbild",
+    "closeSuspensionBall": "Schwebekugel schließen",
+    "openSuspensionBall": "Schwebekugel anzeigen",
+    "quit": "Beenden",
+    "checkUpdate": "Auf Updates prüfen",
+    "menu": "Menü",
+    "wordDrawer": "Wörter",
+    "qrCode": "QR-Code"
+  },
+  "qrCode": {
+    "notice": "Scannen Sie den QR-Code, um auf die mobile Version zuzugreifen",
+    "imgPlaceholder": "Bitte starten Sie zuerst den H5-Server",
+    "imgError": "QR-Code konnte nicht geladen werden",
+    "startH5Server": "H5-Server starten",
+    "stopH5Server": "H5-Server stoppen"
+  },
+  "pages": {
+    "Setting": {
+      "tabs": {
+        "baseSetting": "Grundeinstellungen",
+        "privacySpace": "Privatbereich"
+      },
+      "divider": {
+        "base": "Grundeinstellungen",
+        "application": "Anwendungseinstellungen",
+        "explore": "Erkundungseinstellungen",
+        "function": "Funktionseinstellungen",
+        "wallpaper": "Hintergrund-Einstellungen",
+        "switch": "Wechseleinstellungen",
+        "localResource": "Lokale Ressourcen",
+        "webWallpaper": "Web-Hintergrund",
+        "colorWallpaper": "Farb-Hintergrund",
+        "dynamicWallpaper": "Dynamische Hintergründe",
+        "rhythmWallpaper": "Rhythmus-Hintergründe",
+        "remoteResource": "Remote-Ressourcen",
+        "privacyPassword": "Datenschutz-Passwort",
+        "h5Settings": "H5-Einstellungen",
+        "h5ExploreSettings": "Erkundungseinstellungen",
+        "h5ResourcesSettings": "Ressourceneinstellungen",
+        "h5FunctionSettings": "Funktionseinstellungen"
+      },
+      "settingDataForm": {
+        "locale": "Sprache",
+        "startup": "Autostart",
+        "openMainWindowOnStartup": "Hauptfenster beim Start öffnen",
+        "startH5ServerOnStartup": "H5-Server beim Start starten",
+        "suspensionBallVisible": "Schwebekugel anzeigen",
+        "enabledMenus": "Menü aktivieren",
+        "autoSwitchWallpaper": "Automatisch wechseln",
+        "switchType": "Wechselmodus",
+        "switchIntervalTime": "Wechselintervall",
+        "allScreen": "Auf alle Bildschirme anwenden",
+        "scaleType": "Füllmodus",
+        "wallpaperResource": "Hintergrundressourcen",
+        "orientation": "Richtungsfilter",
+        "quality": "Qualitätsfilter",
+        "filterKeywords": {
+          "label": "Schlüsselwörter filtern",
+          "placeholder": "Bitte Schlüsselwörter eingeben"
+        },
+        "localResourceFolders": {
+          "label": "Ressourcenverzeichnis",
+          "placeholder": "Bitte Verzeichnis auswählen"
+        },
+        "allowedFileExt": {
+          "label": "Erlaubte Dateierweiterungen",
+          "placeholder": "Bitte erlaubte Dateierweiterungen auswählen"
+        },
+        "autoRefreshDirectory": "Zeitgesteuertes Aktualisieren",
+        "refreshDirectoryIntervalTime": "Aktualisierungsintervall",
+        "webWallpaperUrl": {
+          "label": "Web-URL",
+          "placeholder": "Bitte URL eingeben"
+        },
+        "autoRefreshWebWallpaper": "Zeitgesteuertes Aktualisieren",
+        "refreshWebWallpaperIntervalTime": "Aktualisierungsintervall",
+        "colorWallpaperVal": {
+          "label": "Farbe",
+          "placeholder": "Bitte Farbe auswählen"
+        },
+        "dynamicLastVideoPath": {
+          "label": "Dynamische Hintergrunddatei",
+          "placeholder": "Bitte dynamische Hintergrunddatei auswählen"
+        },
+        "dynamicAutoPlayOnStartup": "Automatische Wiedergabe beim Start",
+        "dynamicMuteAudio": "Stummschalten",
+        "dynamicBackgroundColor": "Hintergrundfarbe",
+        "dynamicOpacity": "Deckkraft",
+        "dynamicBrightness": "Helligkeit",
+        "dynamicContrast": "Kontrast",
+        "dynamicPerformanceMode": {
+          "label": "Leistungsmodus",
+          "placeholder": "Bitte Leistungsmodus auswählen"
+        },
+        "dynamicScaleMode": {
+          "label": "Skalierungsmodus",
+          "placeholder": "Bitte Skalierungsmodus auswählen"
+        },
+        "rhythmEffect": {
+          "label": "Rhythmus-Effekt",
+          "placeholder": "Bitte Rhythmus-Effekt auswählen"
+        },
+        "rhythmWidthRatio": "Breitenverhältnis",
+        "rhythmHeightRatio": "Höhenverhältnis",
+        "rhythmColors": "Rhythmus-Farben",
+        "rhythmAnimation": {
+          "label": "Animation",
+          "placeholder": "Bitte Animation auswählen"
+        },
+        "rhythmDensity": {
+          "label": "Dichte",
+          "placeholder": "Bitte Dichte auswählen"
+        },
+        "rhythmPosition": {
+          "label": "Anzeigeposition",
+          "placeholder": "Bitte Anzeigeposition auswählen"
+        },
+        "rhythmSampleRange": "Abtastbereich",
+        "remoteResourceSecretKeys": {
+          "label": "Ressourcenschlüssel",
+          "placeholder": "Bitte Schlüssel eingeben"
+        },
+        "downloadSources": "Download-Quellen",
+        "downloadOrientation": "Bildausrichtung",
+        "downloadKeywords": {
+          "label": "Download-Schlüsselwörter",
+          "placeholder": "Bitte Schlüsselwörter eingeben"
+        },
+        "autoDownload": "Automatisch herunterladen",
+        "downloadIntervalTime": "Download-Intervall",
+        "downloadFolder": {
+          "label": "Download-Verzeichnis",
+          "placeholder": "Bitte Verzeichnis auswählen"
+        },
+        "autoClearDownloaded": "Automatische Bereinigung",
+        "clearDownloadedExpiredTime": "Ablaufzeit",
+        "sortField": "Sortierfeld",
+        "sortType": "Sortiermethode",
+        "themeColor": "Themenfarbe",
+        "enableExpandSideMenu": "Erweitertes Seitenmenü aktivieren",
+        "showSideMenuLabel": "Seitenmenü-Text anzeigen",
+        "viewImageIntervalTime": "Vorschau-Wiedergabeintervall",
+        "showTag": "Tags anzeigen",
+        "confirmOnDeleteFile": "Bestätigung vor Löschen",
+        "enableSegmentationTask": "Segmentierungsaufgabe aktivieren",
+        "h5AutoSwitch": "Automatischer Wechsel",
+        "h5SwitchType": "Wechselmodus",
+        "h5SwitchIntervalTime": "Wechselintervall",
+        "h5Resource": "Bildressourcen",
+        "h5Orientation": "Richtungsfilter",
+        "h5Quality": "Qualitätsfilter",
+        "h5SortField": "Sortierfeld",
+        "h5SortType": "Sortiermethode",
+        "h5ImageDisplaySize": "Anzeigegröße",
+        "h5ImageCompress": "Bildkomprimierung",
+        "h5ImageCompressStartSize": "Komprimierungsstartgröße",
+        "h5FloatingButtonPosition": "Position der Schwebeschaltfläche",
+        "h5EnabledFloatingButtons": {
+          "label": "Aktivierte Schwebeschaltflächen",
+          "placeholder": "Bitte aktivierte Schwebeschaltflächen auswählen"
+        },
+        "h5NumberIndicatorPosition": "Position des Zahlenindikators",
+        "h5Vibration": "Vibrationsrückmeldung",
+        "h5WeekScreen": "Bildschirm immer an",
+        "powerSaveMode": "Energiesparmodus"
+      },
+      "privacyPasswordForm": {
+        "old": {
+          "label": "Altes Passwort",
+          "placeholder": "Bitte altes Passwort eingeben",
+          "tooltip": "Das Passwort besteht aus Zahlen, mindestens 3 Ziffern und maximal 6 Ziffern. Das Standardpasswort ist leer"
+        },
+        "new": {
+          "label": "Neues Passwort",
+          "placeholder": "Bitte neues Passwort eingeben",
+          "tooltip": "Das Passwort besteht aus Zahlen, mindestens 3 Ziffern und maximal 6 Ziffern"
+        },
+        "confirm": "Passwort aktualisieren"
+      }
+    },
+    "Utils": {
+      "dataUtils": "Datenwerkzeuge",
+      "wallpaperUtils": "Hintergrundwerkzeuge",
+      "fileUtils": "Dateiwerkzeuge",
+      "refreshDirectory": "Lokales Ressourcenverzeichnis aktualisieren",
+      "clearCurrentResourceDB": "Aktuelle Ressourcendaten leeren",
+      "clearWordsDB": "Wortdaten leeren",
+      "clearFavoritesDB": "Favoritendaten leeren",
+      "clearHistoryDB": "Verlaufsdaten leeren",
+      "clearStatisticsDB": "Statistikdaten leeren",
+      "clearCache": "Cachedaten leeren",
+      "clearDownloadedAll": "Alle Downloads leeren",
+      "clearDownloadedExpired": "Abgelaufene Downloads bereinigen",
+      "nextWallpaper": "Nächstes Hintergrundbild",
+      "prevWallpaper": "Vorheriges Hintergrundbild",
+      "execute": "Ausführen",
+      "openDatabaseDir": "Datenbankverzeichnis öffnen",
+      "openLogsDir": "Logverzeichnis öffnen",
+      "openDownloadDir": "Downloadverzeichnis öffnen",
+      "openPluginsDir": "Benutzerdefiniertes Plugin-Verzeichnis öffnen",
+      "startH5Server": "H5-Server starten",
+      "stopH5Server": "H5-Server stoppen",
+      "setWebWallpaper": "Web-Hintergrund festlegen",
+      "setColorWallpaper": "Farb-Hintergrund festlegen",
+      "setDynamicWallpaper": "Dynamischen Hintergrund festlegen",
+      "closeDynamicWallpaper": "Dynamischen Hintergrund schließen",
+      "openRhythmWallpaperWindow": "Rhythmus-Hintergrund öffnen",
+      "closeRhythmWallpaperWindow": "Rhythmus-Hintergrund schließen"
+    },
+    "About": {
+      "name": "Name",
+      "description": "Beschreibung",
+      "author": "Autor",
+      "version": "Version",
+      "github": "GitHub",
+      "email": "E-Mail"
+    }
+  },
+  "messages": {
+    "operationSuccess": "Vorgang erfolgreich!",
+    "operationFail": "Vorgang fehlgeschlagen!",
+    "operationIllegal": "Ungültiger Vorgang!",
+    "operationInProgress": "Vorgang wird ausgeführt!",
+    "folderAlreadyExist": "Ressourcenverzeichnis ist doppelt vorhanden!",
+    "confirmMessageTemplate": "Möchten Sie wirklich <span style=\"color: red; font-weight: bolder; margin: 0 5px\">{text}</span>?",
+    "confirmMessageDanger": "Gefährlicher Vorgang, dieser Vorgang ist nicht umkehrbar, Bestätigung zur Ausführung?",
+    "inputPrivacySpacePassword": "Bitte geben Sie das Passwort für den Privatbereich ein!",
+    "inputPrivacySpacePasswordErrorMessage": "Mindestens 3 Ziffern, maximal 6 Ziffern!",
+    "enterPrivacySpaceSuccess": "In den Privatbereich eingetreten!",
+    "exitedPrivacySpaceSuccess": "Privatbereich verlassen!",
+    "noMoreData": "Keine weiteren Daten!",
+    "getDataFail": "Daten konnten nicht abgerufen werden!",
+    "copySuccess": "Kopiert!",
+    "copyFail": "Kopieren fehlgeschlagen!",
+    "confirmDelete": "Nach dem Löschen kann nicht wiederhergestellt werden, Löschen bestätigen?",
+    "refreshDirectorySuccess": "Ressourcenverzeichnis erfolgreich aktualisiert, {insertedCount} Elemente erfolgreich eingefügt, Gesamtanzahl der Daten {total} Elemente!",
+    "refreshDirectoryFail": "Ressourcenaktualisierung fehlgeschlagen!",
+    "refreshDirectoryFailSettingError": "Ressourcenaktualisierung fehlgeschlagen, Konfigurationsfehler!",
+    "refreshDirectoryFailNotSettingFolder": "Ressourcenaktualisierung fehlgeschlagen, Ressourcenverzeichnis nicht festgelegt!",
+    "refreshDirectoryFailNotSettingFileExt": "Ressourcenaktualisierung fehlgeschlagen, erlaubte Dateitypen nicht festgelegt!",
+    "clearTableSuccess": "Daten erfolgreich geleert!",
+    "clearTableFail": "Daten konnten nicht geleert werden!",
+    "clearCacheSuccess": "Cache erfolgreich geleert!",
+    "clearCacheFail": "Cache konnte nicht geleert werden!",
+    "clearTableAutoincrementFail": "Tabelle erfolgreich geleert, Tabellen-Autoinkrementfolge konnte nicht geleert werden!",
+    "operationSuccessWithInsertFail": "Vorgang erfolgreich, Einfügen in die Datenbank fehlgeschlagen!",
+    "oldPasswordError": "Altes Passwort falsch!",
+    "newPasswordNotEmpty": "Neues Passwort darf nicht leer sein!",
+    "passwordError": "Passwort falsch!",
+    "alreadyInPrivacySpace": "Bereits im Privatbereich!",
+    "alreadyInFavorites": "Bereits in den Favoriten!",
+    "operationTooFrequent": "Vorgang zu häufig, bitte später erneut versuchen!",
+    "privacyPasswordNotSet": "Datenschutz-Passwort nicht festgelegt, bitte zuerst Datenschutz-Passwort festlegen!",
+    "verifyPrivacyPasswordSuccess": "Überprüfung erfolgreich!",
+    "verifyPrivacyPasswordFail": "Überprüfung fehlgeschlagen!",
+    "operationFailWithDataDuplication": "Vorgang fehlgeschlagen, Daten sind doppelt vorhanden!",
+    "querySuccess": "Abfrage erfolgreich!",
+    "queryFail": "Abfrage fehlgeschlagen!",
+    "queryEmpty": "Abfrageergebnis ist leer!",
+    "paramsError": "Parameterfehler!",
+    "setWallpaperSuccess": "Hintergrund erfolgreich festgelegt!",
+    "setWallpaperFail": "Hintergrund konnte nicht festgelegt werden!",
+    "setDynamicWallpaperSuccess": "Dynamischer Hintergrund erfolgreich festgelegt!",
+    "setDynamicWallpaperFail": "Dynamischer Hintergrund konnte nicht festgelegt werden!",
+    "closeDynamicWallpaperSuccess": "Dynamischer Hintergrund erfolgreich geschlossen!",
+    "closeDynamicWallpaperFail": "Dynamischer Hintergrund konnte nicht geschlossen werden!",
+    "fileTypeNotSupported": "Nicht unterstützter Dateityp!",
+    "enterKeywords": "Bitte Schlüsselwörter eingeben!",
+    "pleaseSetDownloadFolder": "Bitte zuerst Download-Verzeichnis festlegen!",
+    "downloadFolderNotExistOrNotSet": "Download-Verzeichnis existiert nicht oder ist nicht festgelegt!",
+    "downloadFileSuccess": "Datei erfolgreich heruntergeladen!",
+    "downloadFileFail": "Datei konnte nicht heruntergeladen werden!",
+    "downloadFileExist": "Datei ist bereits vorhanden!",
+    "resourceNotFound": "Ressource nicht gefunden!",
+    "resourceSecretKeyUnset": "Bitte zuerst den geheimen Schlüssel für Remote-Ressourcen festlegen!",
+    "h5ServerStartSuccess": "H5-Server erfolgreich gestartet!",
+    "h5ServerStartFail": "H5-Server konnte nicht gestartet werden!",
+    "h5ServerStopSuccess": "H5-Server erfolgreich gestoppt!",
+    "h5ServerStopFail": "H5-Server konnte nicht gestoppt werden!",
+    "dbConnectFail": "Datenbankverbindung fehlgeschlagen!",
+    "fileNotExist": "Datei existiert nicht!",
+    "resourceNotExist": "Ressource existiert nicht!",
+    "downloadFail": "Download fehlgeschlagen!",
+    "alreadyExists": "existiert bereits!",
+    "notExists": "existiert nicht!",
+    "urlEmpty": "URL darf nicht leer sein!",
+    "invalidUrl": "Ungültige URL!",
+    "fileServerNotInitialized": "Dateiserver nicht initialisiert!",
+    "useDefaultSettings": "Standardeinstellungen verwenden!",
+    "clearDownloadedDone": "Bereinigung abgeschlossen, insgesamt {allCount}, erfolgreich {successCount}, fehlgeschlagen {failCount}!",
+    "updateAvailable": "Neue Version {version} gefunden, klicken Sie zum Herunterladen!",
+    "checkUpdateFail": "Update-Prüfung fehlgeschlagen!",
+    "checkUpdateSuccess": "Update-Prüfung erfolgreich!",
+    "updateNotAvailable": "Die neueste Version ist bereits vorhanden!",
+    "updateDownloaded": "Download abgeschlossen, klicken Sie zur Installation!",
+    "saveSuccess": "Erfolgreich gespeichert!",
+    "saveFail": "Speichern fehlgeschlagen!",
+    "deleteSuccess": "Erfolgreich gelöscht!",
+    "deleteFail": "Löschen fehlgeschlagen!",
+    "maxFavoriteCountReached": "Maximale Anzahl an Favoriten erreicht!",
+    "noFileSelected": "Keine Datei ausgewählt!",
+    "noDynamicWallpaperSet": "Kein dynamischer Hintergrund festgelegt!",
+    "multiDeviceSyncWarning": "Die Multi-Geräte-Synchronisierungsfunktion ist deaktiviert, Änderungen gelten nur für das aktuelle Gerät!",
+    "rhythmWallpaperNeedVirtualAudio": "Bitte installieren und konfigurieren Sie eine virtuelle Soundkarte (z. B. VB-Audio/BlackHole), um die Rhythmus-Hintergrund-Funktion zu verwenden",
+    "noData": "Keine Daten",
+    "loading": "Wird geladen...",
+    "loadingMore": "Mehr laden...",
+    "invalidIndex": "Bitte geben Sie einen gültigen Index ein",
+    "indexOutOfRange": "Index außerhalb des gültigen Bereichs",
+    "indexTooLarge": "Index zu groß"
+  },
+  "resourceTypeList": {
+    "localResource": "Lokale Ressourcen",
+    "remoteResource": "Remote-Ressourcen"
+  },
+  "resourceList": {
+    "resources": "Ressourcenbibliothek",
+    "local": "Lokale Ressourcen",
+    "favorites": "Favoriten"
+  },
+  "menuList": {
+    "Explore": "Galerie",
+    "Search": "Suche",
+    "Words": "Wörter",
+    "Favorites": "Favoriten",
+    "History": "Verlauf",
+    "Setting": "Einstellungen",
+    "Utils": "Werkzeuge",
+    "About": "Über"
+  },
+  "scaleTypes": {
+    "auto": "automatisch",
+    "span": "automatisch",
+    "fill": "füllen",
+    "fit": "anpassen",
+    "stretch": "strecken",
+    "center": "zentrieren",
+    "tile": "kacheln"
+  },
+  "intervalUnits": {
+    "s": "Sekunde",
+    "m": "Minute",
+    "h": "Stunde",
+    "d": "Tag"
+  },
+  "filterTypeOptions": {
+    "images": "Bilder",
+    "videos": "Videos"
+  },
+  "orientationOptions": {
+    "landscape": "Querformat",
+    "portrait": "Hochformat"
+  },
+  "switchTypeOptions": {
+    "random": "zufällig",
+    "order": "nacheinander"
+  },
+  "sortFieldOptions": {
+    "created_at": "Erstellungszeit des Datensatzes",
+    "updated_at": "Änderungszeit des Datensatzes",
+    "ctimeMs": "Erstellungszeit der Ressource",
+    "mtimeMs": "Änderungszeit der Ressource",
+    "fileName": "Ressourcendateiname",
+    "fileSize": "Ressourcendateigröße",
+    "views": "Aufrufe",
+    "downloads": "Downloads",
+    "favorites": "Favoriten",
+    "wallpapers": "Hintergründe"
+  },
+  "sortTypeOptions": {
+    "asc": "aufsteigend",
+    "desc": "absteigend"
+  },
+  "imageDisplaySizeOptions": {
+    "contain": "anpassen",
+    "cover": "füllen"
+  },
+  "h5FloatingButtonPositionOptions": {
+    "left": "links",
+    "right": "rechts"
+  },
+  "h5FloatingButtonsOptions": {
+    "autoSwitch": "automatisch wechseln",
+    "intervalTime": "Intervallzeit",
+    "switchType": "Wechselmodus",
+    "favorites": "Favoriten",
+    "displaySize": "Anzeigegröße",
+    "toggleTabbar": "Tab-Leiste umschalten",
+    "backtop": "nach oben"
+  },
+  "h5NumberIndicatorPositionOptions": {
+    "top": "oben",
+    "bottom": "unten"
+  },
+  "dynamicPerformanceModeOptions": {
+    "high": "hoch",
+    "balanced": "ausgeglichen",
+    "powersave": "energiesparend"
+  },
+  "dynamicScaleModeOptions": {
+    "cover": "füllen",
+    "contain": "anpassen",
+    "stretch": "strecken"
+  },
+  "rhythmEffectOptions": {
+    "LeaferBar": "Balken",
+    "LeaferWave": "Welle",
+    "LeaferBall": "Kugel",
+    "LeaferDisco": "Disco",
+    "LeaferSpectrumRing": "Spektrum-Ring",
+    "LeaferParticleFountain": "Partikel-Brunnen",
+    "LeaferBreathingHalo": "Atmender Halo",
+    "LeaferDynamicGrid": "Dynamisches Gitter",
+    "LeaferFlowingLines": "Fließende Linien",
+    "LeaferMusicNoteRain": "Musiknoten-Regen",
+    "LeaferRotatingStarburst": "Rotierender Sternenstrahl",
+    "LeaferBars3D": "3D-Balken",
+    "LeaferLiquidRipple": "Flüssigkeitswelle",
+    "LeaferSpectrumFlower": "Spektrum-Blume",
+    "LeaferRainbow": "Regenbogen",
+    "LeaferWindmill": "Windmühle",
+    "LeaferTaiji": "Taiji",
+    "LeaferMuyu": "Muyu",
+    "LeaferFirework": "Feuerwerk",
+    "LeaferSnowflake": "Schneeflocke",
+    "ThreeBar": "3D-Balken",
+    "ThreeWave": "3D-Welle",
+    "ThreeParticle": "3D-Partikel",
+    "ThreeSphere": "3D-Kugel",
+    "ThreeAudioVisualizer": "3D-Audio-Visualisierer"
+  },
+  "rhythmAnimationOptions": {
+    "linear": "Linear (direkte Abbildung)",
+    "log": "Logarithmisch (empfindlich für niedrige Energie)",
+    "parabola": "Parabel (sanft mit Ausbruch)",
+    "sqrt": "Quadratwurzel (sanfter)",
+    "exp": "Exponentiell (explosiv)",
+    "sin": "Sinus (elastisch periodisch)",
+    "bounce": "Sprung mit Rückstoß",
+    "step": "Stufen-/Pixel-Sprung",
+    "max": "Maximalwert",
+    "avg": "Durchschnittswert"
+  },
+  "rhythmDensityOptions": {
+    "sparse": "Spärlich",
+    "normal": "Normal",
+    "dense": "Dicht"
+  },
+  "positionOptions": {
+    "topLeft": "Oben links",
+    "top": "Oben",
+    "topRight": "Oben rechts",
+    "right": "Rechts",
+    "bottomRight": "Unten rechts",
+    "bottom": "Unten",
+    "bottomLeft": "Unten links",
+    "left": "Links",
+    "center": "Zentriert"
+  },
+  "wordTypeList": {
+    "chinese": "中文",
+    "english": "English"
+  },
+  "emptyHelp": {
+    "text": "Keine Daten, bitte Einstellungen prüfen",
+    "jumpText": "Einstellungen prüfen"
+  },
+  "exploreCommon": {
+    "toggleFixedBtns": "Schaltflächen umschalten",
+    "onLoadMore": "Mehr laden",
+    "onRefresh": "Aktualisieren",
+    "isRandom": {
+      "on": "Zufällig",
+      "off": "Nacheinander"
+    },
+    "onTogglePrivacySpace": {
+      "quit": "Privatbereich verlassen",
+      "enter": "Privatbereich betreten"
+    },
+    "onSwitchResource": "Ressourcen wechseln",
+    "onRefreshDirectory": "Ressourcenverzeichnis aktualisieren",
+    "setAsWallpaperWithDownload": "Als Hintergrund festlegen",
+    "doViewImage": "Bildvorschau",
+    "addToFavorites": "Zu Favoriten hinzufügen",
+    "removeFavorites": "Aus Favoriten entfernen",
+    "addToPrivacySpace": "Zum Privatbereich hinzufügen",
+    "removePrivacySpace": "Aus Privatbereich entfernen",
+    "onCopyFilePath": "Dateipfad kopieren",
+    "onDeleteFile": "Datei löschen",
+    "onDownloadFile": "Datei herunterladen",
+    "showItemInFolder": "Im Ordner öffnen",
+    "openLink": "Link öffnen",
+    "viewInfo": "Informationen anzeigen",
+    "searchForm": {
+      "filterKeywords": {
+        "placeholder": "Bitte Schlüsselwörter eingeben und Enter drücken, um zu suchen"
+      },
+      "resourceType": {
+        "placeholder": "Ressourcentyp"
+      },
+      "resourceName": {
+        "placeholder": "Ressourcenname"
+      },
+      "filterType": {
+        "placeholder": "Typ"
+      },
+      "orientation": {
+        "placeholder": "Ausrichtung"
+      },
+      "quality": {
+        "placeholder": "Bildqualität"
+      }
+    },
+    "onSyncToWallpaperSetting": "Mit Hintergrund-Einstellungen synchronisieren",
+    "wordFilter": {
+      "placeholder": "Bitte Schlüsselwörter eingeben"
+    },
+    "tagItem": {
+      "score": "Bewertung",
+      "favorited": "Favorisiert"
+    },
+    "totalText": "Insgesamt {current} / {total} Elemente"
+  },
+  "autoRefreshList": {
+    "off": "Automatische Aktualisierung deaktivieren",
+    "on": "Automatische Aktualisierung aktivieren"
+  },
+  "gridSizeList": {
+    "label": {
+      "auto": "Automatisch",
+      "size": "{size}"
+    },
+    "alt": {
+      "auto": "Raster: Automatisch",
+      "size": "Raster: {size}"
+    }
+  },
+  "gridRatioList": {
+    "square": "Quadrat",
+    "rectangle": "Rechteck",
+    "verticalRectangle": "Vertikales Rechteck"
+  },
+  "comingSoon": "Demnächst verfügbar",
+  "viewInfo": {
+    "title": "Informationen anzeigen",
+    "row": {
+      "title": "Titel",
+      "desc": "Beschreibung",
+      "author": "Autor",
+      "link": "Link",
+      "resourceName": "Ressourcenname",
+      "fileName": "Dateiname",
+      "filePath": "Dateipfad",
+      "fileExt": "Erweiterung",
+      "fileSize": "Dateigröße",
+      "quality": "Qualität",
+      "score": "Bewertung",
+      "dimensions": "Abmessungen",
+      "views": "Aufrufe",
+      "downloads": "Downloads",
+      "favorites": "Favoriten",
+      "wallpapers": "Hintergründe",
+      "created_at": "Erstellungszeit des Datensatzes",
+      "updated_at": "Änderungszeit des Datensatzes",
+      "ctimeMs": "Erstellungszeit der Ressource",
+      "mtimeMs": "Änderungszeit der Ressource"
+    }
+  },
+  "h5": {
+    "tabbar": {
+      "home": "Startseite",
+      "search": "Suche",
+      "setting": "Einstellungen"
+    },
+    "pages": {
+      "home": {
+        "title": "Startseite",
+        "actions": {
+          "imageInfo": "Bildinformationen",
+          "saveImage": "Bild speichern",
+          "deleteImage": "Bild löschen",
+          "confirmDelete": "Löschen bestätigen",
+          "confirmDeleteMessage": "Möchten Sie das Bild wirklich löschen?",
+          "confirmDeleteBtn": "Bestätigen",
+          "cancelDeleteBtn": "Abbrechen",
+          "jumpToIndex": "Zu bestimmter Position springen",
+          "enterIndex": "Bitte Index eingeben"
+        },
+        "imageInfo": {
+          "title": "Titel",
+          "desc": "Beschreibung",
+          "author": "Autor",
+          "link": "Link",
+          "resourceName": "Ressourcenname",
+          "fileName": "Dateiname",
+          "filePath": "Dateipfad",
+          "fileExt": "Erweiterung",
+          "fileSize": "Dateigröße",
+          "quality": "Qualität",
+          "score": "Bewertung",
+          "dimensions": "Abmessungen",
+          "views": "Aufrufe",
+          "downloads": "Downloads",
+          "favorites": "Favoriten",
+          "wallpapers": "Hintergründe",
+          "created_at": "Erstellungszeit des Datensatzes",
+          "updated_at": "Änderungszeit des Datensatzes",
+          "ctimeMs": "Erstellungszeit der Ressource",
+          "mtimeMs": "Änderungszeit der Ressource"
+        }
+      },
+      "search": {
+        "title": "Suche"
+      },
+      "setting": {
+        "title": "Einstellungen",
+        "form": {
+          "h5ApplicationSettings": "Anwendungseinstellungen",
+          "locale": {
+            "label": "Sprache",
+            "placeholder": "Bitte Sprache auswählen"
+          },
+          "themes": {
+            "dark": {
+              "label": "Dunkelmodus",
+              "placeholder": "Dunkelmodus aktivieren"
+            },
+            "primary": {
+              "label": "Themenfarbe",
+              "placeholder": "Bitte Themenfarbe auswählen"
+            }
+          },
+          "h5ExploreSettings": "Erkundungseinstellungen",
+          "h5AutoSwitch": "Automatischer Wechsel",
+          "h5SwitchType": {
+            "label": "Wechselmodus",
+            "placeholder": "Bitte Wechselmodus auswählen"
+          },
+          "h5SwitchIntervalTime": "Wechselintervall",
+          "h5ResourcesSettings": "Ressourceneinstellungen",
+          "h5Resource": {
+            "label": "Bildressourcen",
+            "placeholder": "Bitte Ressourcen auswählen"
+          },
+          "h5Orientation": {
+            "label": "Richtungsfilter",
+            "placeholder": "Bitte Richtungsfilter auswählen"
+          },
+          "h5Quality": {
+            "label": "Qualitätsfilter",
+            "placeholder": "Bitte Qualitätsfilter auswählen"
+          },
+          "h5SortField": {
+            "label": "Sortierfeld",
+            "placeholder": "Bitte Sortierfeld auswählen"
+          },
+          "h5SortType": {
+            "label": "Sortiermethode",
+            "placeholder": "Bitte Sortiermethode auswählen"
+          },
+          "h5ImageDisplaySize": {
+            "label": "Anzeigegröße",
+            "placeholder": "Bitte Anzeigegröße auswählen"
+          },
+          "h5ImageCompress": "Bildkomprimierung",
+          "h5ImageCompressStartSize": "Komprimierungsstartgröße",
+          "h5FunctionSettings": "Funktionseinstellungen",
+          "h5FloatingButtonPosition": {
+            "label": "Position der Schwebeschaltfläche",
+            "placeholder": "Bitte Position der Schwebeschaltfläche auswählen"
+          },
+          "h5EnabledFloatingButtons": {
+            "label": "Aktivierte Schwebeschaltflächen",
+            "placeholder": ""
+          },
+          "h5NumberIndicatorPosition": {
+            "label": "Position des Zahlenindikators",
+            "placeholder": "Bitte Position des Zahlenindikators auswählen"
+          },
+          "h5Vibration": "Vibrationsrückmeldung",
+          "h5WeekScreen": "Bildschirm immer an"
+        },
+        "about": "Über",
+        "version": "Version",
+        "localSetting": {
+          "multiDeviceSync": "Multi-Geräte-Synchronisierung"
+        }
+      }
+    }
+  }
+}
