@@ -1,6 +1,5 @@
-# 通用 npm 配置文件
-# 使用国内镜像加速 Electron 及相关依赖安装
-# 适用于大多数开发环境和 CI/CD 构建
+# GitHub Actions 构建专用配置文件
+# 适用于 GitHub Actions CI/CD 环境构建
 
 # Electron 镜像源 - 加速 Electron 主程序下载
 electron_mirror=https://npmmirror.com/mirrors/electron/

@@ -33,7 +33,9 @@
     "build:mac": "npm run build && electron-builder --mac",
     "build:linux": "npm run build && electron-builder --linux",
     "changelog": "npx conventional-changelog -p angular -i CHANGELOG.md -s",
-    "changelog:first": "npx conventional-changelog -p angular -i CHANGELOG.md -s -r 0"
+    "changelog:first": "npx conventional-changelog -p angular -i CHANGELOG.md -s -r 0",
+    "local:build:win": "npm run build:win --userconfig=.npmrc.local.win",
+    "local:build:mac": "npm run build:mac --userconfig=.npmrc.local.mac"
   },
   "dependencies": {
     "@electron-toolkit/utils": "^4.0.0",

@@ -1,0 +1,21 @@
+# Windows 本地构建专用配置文件
+# 仅适用于 Windows 环境下的本地构建
+# 注意：确保已安装 Visual Studio Community 2022 和 C++ 构建工具
+
+# Electron 镜像源 - 加速 Electron 主程序下载
+electron_mirror=https://npmmirror.com/mirrors/electron/
+
+# Electron Builder 二进制文件镜像源 - 加速构建工具下载
+electron_builder_binaries_mirror=https://npmmirror.com/mirrors/electron-builder-binaries/
+
+# better-sqlite3 二进制文件镜像源 - 加速数据库模块安装
+better_sqlite3_binary_host=https://npmmirror.com/mirrors/better-sqlite3/
+
+# Visual Studio 版本配置 - 指定使用 VS 2022 构建工具
+msvs_version=2022
+
+# MSBuild 路径配置 - 指定 MSBuild 可执行文件位置
+msbuild_path=C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe
+
+# 构建架构配置 - 指定构建 64 位应用程序
+arch=x64

@@ -82,6 +82,8 @@ Flying-Bird-Wallpaper/
 | npm run build:win       | 构建 Windows 安装包                                      |
 | npm run build:mac       | 构建 macOS 安装包                                        |
 | npm run build:linux     | 构建 Linux 安装包                                        |
+| npm run local:build:win | Windows 本地打包（使用特定环境配置）                     |
+| npm run local:build:mac | macOS 本地打包（使用特定环境配置）                       |
 | npm run changelog       | 生成/更新 CHANGELOG.md（基于 conventional-changelog）    |
 | npm run changelog:first | 生成完整的 CHANGELOG.md（首次/全量）                     |
 
@@ -111,11 +113,15 @@ Flying-Bird-Wallpaper/
 ## 本地打包
 
 - **H5 端打包**
+
   ```bash
   npm run build:h5
   # 生成的静态文件在 out/h5 目录，后续应用打包时会 copy 进 resources 目录
   ```
+
 - **Electron 桌面端打包**
+
+  标准构建命令：
   - Windows:
     ```bash
     npm run build:win
@@ -129,6 +135,18 @@ Flying-Bird-Wallpaper/
     npm run build:linux
     ```
   - 打包产物在 `dist/` 目录，包含安装包和可执行文件。
+
+  本地专用构建命令（使用特定环境配置）：
+  - Windows:
+    ```bash
+    npm run local:build:win
+    ```
+  - macOS:
+    ```bash
+    npm run local:build:mac
+    ```
+    本地构建命令会使用平台特定的配置文件（.npmrc.local.win 或 .npmrc.local.mac），
+    以确保在不同环境下正确编译原生模块。
 
 ---
 
