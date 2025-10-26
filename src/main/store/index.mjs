@@ -327,13 +327,17 @@ export default class Store {
   // 处理文件服务子进程启动
   handleFileServerStart() {
     try {
+      // 准备环境变量，确保所有值都是字符串
+      const env = {}
+      for (const key in process.env) {
+        // 确保所有环境变量值都是字符串
+        env[key] = String(process.env[key])
+      }
+
       // 启动子进程
       this.fileServer?.start({
         options: {
-          env: {
-            ...process.env, // 传递主进程的环境变量给子进程
-            NODE_ENV: process.env.NODE_ENV
-          }
+          env
         },
         onMessage: ({ data }) => {
           switch (data.event) {
@@ -366,7 +370,7 @@ export default class Store {
         }
       })
     } catch (err) {
-      global.logger.error(err)
+      global.logger.error(`启动文件服务器失败: ${err}`)
     }
   }
 
@@ -432,12 +436,16 @@ export default class Store {
 
     const attemptStart = () => {
       try {
+        // 准备环境变量，确保所有值都是字符串
+        const env = {}
+        for (const key in process.env) {
+          // 确保所有环境变量值都是字符串
+          env[key] = String(process.env[key])
+        }
+
         this.h5Server?.start({
           options: {
-            env: {
-              ...process.env, // 传递主进程的环境变量给子进程
-              NODE_ENV: process.env.NODE_ENV
-            }
+            env
           },
           onMessage: async ({ data }) => {
             switch (data.event) {
