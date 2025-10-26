@@ -1,3 +1,12 @@
+## [1.3.2](https://github.com/OXOYO/Flying-Bird-Wallpaper/compare/v1.3.1...v1.3.2) (2025-10-26)
+
+
+### Features
+
+* 支持多环境打包命令，优化命令脚本和配置 ([d54b124](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/d54b124e295e450c37bc79155a727be772ff5c1f))
+
+
+
 ## [1.3.1](https://github.com/OXOYO/Flying-Bird-Wallpaper/compare/v1.3.0...v1.3.1) (2025-10-25)
 
 
