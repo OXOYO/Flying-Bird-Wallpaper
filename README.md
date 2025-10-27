@@ -41,9 +41,13 @@
 
 ## [预览效果](https://github.com/OXOYO/Flying-Bird-Wallpaper/blob/main/docs/preview.md)
 
-<img width="1020" alt="Image" src="https://raw.githubusercontent.com/OXOYO/Flying-Bird-Wallpaper/main/docs/fbw_search.png" />
+<img width="1020" alt="搜索" src="https://raw.githubusercontent.com/OXOYO/Flying-Bird-Wallpaper/main/docs/fbw_search.png" />
 
-<img width="1020" alt="Image" src="https://raw.githubusercontent.com/OXOYO/Flying-Bird-Wallpaper/main/docs/fbw_settings.png" />
+<img width="1020" alt="设置" src="https://raw.githubusercontent.com/OXOYO/Flying-Bird-Wallpaper/main/docs/fbw_settings.png" />
+
+<img width="390" alt="H5 首页" src="https://raw.githubusercontent.com/OXOYO/Flying-Bird-Wallpaper/main/docs/fbw_h5_home.png" />
+
+<img width="390" alt="H5 设置" src="https://raw.githubusercontent.com/OXOYO/Flying-Bird-Wallpaper/main/docs/fbw_h5_settings.png" />
 
 ## [开发文档](https://github.com/OXOYO/Flying-Bird-Wallpaper/blob/dev/README.md)
 

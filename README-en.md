@@ -40,11 +40,15 @@
 Flying Bird Wallpaper is a feature-rich desktop wallpaper application that supports multiple wallpaper types including images, videos, rhythm wallpapers, and solid colors, making your desktop unique and vibrant.
 
 
-## [Preview](https://github.com/OXOYO/Flying-Bird-Wallpaper/blob/main/docs/preview.md)
+## [Preview](https://github.com/OXOYO/Flying-Bird-Wallpaper/blob/main/docs/preview.en.md)
 
-<img width="1020" alt="Image" src="https://raw.githubusercontent.com/OXOYO/Flying-Bird-Wallpaper/main/docs/fbw_search_en.png" />
+<img width="1020" alt="Search" src="https://raw.githubusercontent.com/OXOYO/Flying-Bird-Wallpaper/main/docs/fbw_search_en.png" />
 
-<img width="1020" alt="Image" src="https://raw.githubusercontent.com/OXOYO/Flying-Bird-Wallpaper/main/docs/fbw_settings.png" />
+<img width="1020" alt="Settings" src="https://raw.githubusercontent.com/OXOYO/Flying-Bird-Wallpaper/main/docs/fbw_settings_en.png" />
+
+<img width="390" alt="H5 Home" src="https://raw.githubusercontent.com/OXOYO/Flying-Bird-Wallpaper/main/docs/fbw_h5_home_en.png" />
+
+<img width="390" alt="H5 Settings" src="https://raw.githubusercontent.com/OXOYO/Flying-Bird-Wallpaper/main/docs/fbw_h5_settings_en.png" />
 
 ## [Docs](https://github.com/OXOYO/Flying-Bird-Wallpaper/blob/dev/README.md)
 
