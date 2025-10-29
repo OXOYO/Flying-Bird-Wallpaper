@@ -40,7 +40,7 @@
   "dependencies": {
     "@electron-toolkit/utils": "^4.0.0",
     "@node-rs/jieba": "^2.0.1",
-    "better-sqlite3": "^12.2.0",
+    "better-sqlite3": "^12.4.1",
     "electron-localshortcut": "^3.2.1",
     "electron-updater": "^6.6.2",
     "koffi": "^2.14.0",
@@ -69,7 +69,7 @@
     "conventional-changelog-angular": "^8.0.0",
     "conventional-changelog-cli": "^5.0.0",
     "cz-conventional-changelog": "^3.3.0",
-    "electron": "^35.7.5",
+    "electron": "^38.4.0",
     "electron-builder": "^26.0.12",
     "electron-devtools-installer": "^4.0.0",
     "electron-vite": "^4.0.0",
