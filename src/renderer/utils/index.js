@@ -7,6 +7,7 @@ export const setStyleProperty = (prop, color) => {
 
 // 更新品牌色变量
 export const updateBrandExtendColorsVar = (color, name = 'primary') => {
+  if (!color || !name) return
   const { DEFAULT, dark, light } = genMixColor(color)
   // 每种主题色由浅到深分为五个阶梯以供开发者使用。
   setStyleProperty(`--${name}-lighter-color`, light[5])

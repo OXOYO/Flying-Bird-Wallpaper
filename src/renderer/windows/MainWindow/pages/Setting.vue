@@ -339,7 +339,9 @@ const onAddRhythmColors = (index) => {
 }
 
 const onThemeColorChange = (val) => {
-  console.log('onThemeColorChange', val)
+  if (!val) {
+    settingDataForm.themes.primary = colorList[0]
+  }
   onSettingDataFormChange()
 }
 
@@ -552,7 +554,6 @@ onBeforeUnmount(() => {
               <el-color-picker
                 v-model="settingDataForm.themes.primary"
                 :predefine="colorList"
-                :value-on-clear="colorList[0]"
                 @change="onThemeColorChange"
               />
             </el-form-item>

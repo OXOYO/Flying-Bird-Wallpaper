@@ -193,7 +193,7 @@ function hex2HSL(hex) {
 }
 
 // 生成混合色（混黑 + 混白）
-function genMixColor(base) {
+function genMixColor(base = '#ffffff') {
   // 基准色统一转换为RGB
   if (typeof base === 'string') {
     base = hex2RGB(base)
