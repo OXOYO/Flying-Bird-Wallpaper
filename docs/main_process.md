@@ -372,7 +372,7 @@ export const appInfo = {
   version,
   author: 'OXOYO',
   authorLink: 'https://github.com/OXOYO',
-  homepage: 'http://oxoyo.co/Flying-Bird-Wallpaper',
+  homepage: 'http://fbw.oxoyo.co',
   github: 'https://github.com/OXOYO/Flying-Bird-Wallpaper',
   repository: 'OXOYO/Flying-Bird-Wallpaper',
   email: 'zmn2007.hi@163.com'
