@@ -68,7 +68,6 @@ export const resourceTypeList = [
 
 // 菜单列表
 export const menuList = [
-  // { name: 'Explore', title: '图库', locale: 'menuList.Explore', icon: 'ep:files', canBeEnabled: true },
   {
     name: 'Search',
     title: '搜索',
@@ -356,9 +355,24 @@ export const filterTypeOptions = [
   { label: '视频', value: 'videos', locale: 'filterTypeOptions.videos' }
 ]
 
+export const orientationIcons = {
+  0: 'material-symbols:crop-portrait-outline',
+  1: 'material-symbols:crop-landscape-outline'
+}
+
 export const orientationOptions = [
-  { label: '纵向', value: 0, locale: 'orientationOptions.portrait' },
-  { label: '横向', value: 1, locale: 'orientationOptions.landscape' }
+  {
+    label: '纵向',
+    value: 0,
+    locale: 'orientationOptions.portrait',
+    icon: orientationIcons[0]
+  },
+  {
+    label: '横向',
+    value: 1,
+    locale: 'orientationOptions.landscape',
+    icon: orientationIcons[1]
+  }
 ]
 
 export const switchTypeOptions = [

@@ -1,6 +1,5 @@
 <script setup>
 import UseMenuStore from '@renderer/stores/menuStore.js'
-import Explore from '../pages/Explore.vue'
 import Search from '../pages/Search.vue'
 import Favorites from '../pages/Favorites.vue'
 import History from '../pages/History.vue'
@@ -13,7 +12,6 @@ const menuStore = UseMenuStore()
 const { selectedMenu } = storeToRefs(menuStore)
 
 const componentDict = {
-  Explore,
   Search,
   Favorites,
   History,

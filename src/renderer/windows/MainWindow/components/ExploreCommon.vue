@@ -77,9 +77,6 @@ const enabledWordDraw = computed(() => {
   return WordsMenu && selectedMenu.value && selectedMenu.value.name === 'Search'
 })
 
-const isExploreMenu = computed(() => {
-  return props.menu === 'Explore'
-})
 const isSearchMenu = computed(() => {
   return props.menu === 'Search'
 })
@@ -105,11 +102,10 @@ const resourceMap = computed(() => {
 
 // 资源分组列表
 const resourceGroupList = computed(() => {
-  const { resourceListByResourceType } = resourceMap.value
   return resourceTypeList.map((group) => {
     const resourceType = group.value
     const sourceList = JSON.parse(
-      JSON.stringify(toRaw(resourceListByResourceType[resourceType]) || [])
+      JSON.stringify(toRaw(resourceMap.value.resourceListByResourceType[resourceType]) || [])
     )
     group.children = sourceList.map((item) => {
       const resourceName = item.value
@@ -122,22 +118,6 @@ const resourceGroupList = computed(() => {
     })
     return group
   })
-})
-
-const currentSourceList = computed(() => {
-  return resourceMap.value.resourceListByResourceType[searchForm.resourceType] || []
-})
-
-const enableSwitchSource = computed(() => {
-  return isExploreMenu.value && currentSourceList.value.length > 1
-})
-
-const cardBlockStyle = computed(() => {
-  return isSearchMenu.value
-    ? { height: 'calc(100vh - 130px)' }
-    : {
-        height: 'calc(100vh - 60px)'
-      }
 })
 
 const imgSize = computed(() => {
@@ -277,13 +257,18 @@ const selectedResource = computed(() => {
 
 const currentResource = computed(() => {
   const { resourceType, resourceName } = searchForm
-  const list = resourceMap.value.resourceListByResourceType[resourceType] || []
+  const list = resourceMap.value.resourceListByResourceType[resourceType]
   const item = list.find((item) => item.value === resourceName)
   return item
 })
 
 const supportSearchTypes = computed(() => {
-  const types = currentResource.value?.supportSearchTypes
+  let types = ['images']
+  if (isSearchMenu.value) {
+    types = currentResource.value?.supportSearchTypes
+  } else if (isFavoritesMenu.value || isHistoryMenu.value) {
+    types = ['images', 'videos']
+  }
   return Array.isArray(types) && types.length ? types : ['images']
 })
 
@@ -374,18 +359,6 @@ const fixedBtns = computed(() => {
       style: {
         bottom: getBottom(),
         backgroundColor: flags.inPrivacySpace ? '#FF0000' : 'rgba(50, 57, 65, 0.6)'
-      }
-    })
-  }
-  if (enableSwitchSource.value) {
-    ret.push({
-      action: 'onSwitchResource',
-      actionParams: [],
-      title: t('exploreCommon.onSwitchResource'),
-      icon: 'ep:switch',
-      iconStyle: {},
-      style: {
-        bottom: getBottom()
       }
     })
   }
@@ -577,9 +550,6 @@ const onFixedBtnClick = (action, actionParams, childVal) => {
     case 'isRandom':
       isRandom()
       break
-    case 'onSwitchResource':
-      onSwitchResource()
-      break
     case 'onTogglePrivacySpace':
       onTogglePrivacySpace()
       break
@@ -642,15 +612,6 @@ const onCardItemBtnClick = (action, item, index) => {
 // 切换固定按钮显示隐藏
 const toggleFixedBtns = () => {
   flags.showFixedBtns = !flags.showFixedBtns
-}
-
-// 切换资源
-const onSwitchResource = async () => {
-  const prevIndex = searchForm.resourceNameIndex
-  const nextIndex = prevIndex + 1 >= currentSourceList.value.length ? 0 : prevIndex + 1
-  searchForm.resourceNameIndex = nextIndex
-  searchForm.resourceName = currentSourceList.value[nextIndex].value
-  await onRefresh(false)
 }
 
 // 进入、退出隐私空间
@@ -895,11 +856,12 @@ const onRefresh = async (flag = true) => {
   searchForm.startPage = 1
   searchForm.total = 0
   if (flag) {
-    if (isExploreMenu.value || isSearchMenu.value) {
+    if (isSearchMenu.value) {
+      searchForm.resourceType = 'localResource'
       searchForm.resourceNameIndex = 0
-      searchForm.resourceName = currentSourceList.value.length
-        ? currentSourceList.value[0].value
-        : 'resources'
+      const currentSourceList =
+        resourceMap.value.resourceListByResourceType[searchForm.resourceType]
+      searchForm.resourceName = currentSourceList.length ? currentSourceList[0].value : 'resources'
     } else if (isFavoritesMenu.value) {
       searchForm.resourceType = 'localResource'
       searchForm.resourceNameIndex = -1
@@ -1140,15 +1102,13 @@ const setAsWallpaperWithDownload = async (item, index) => {
 
 // 添加事件处理函数
 const onTagClick = (field, value) => {
-  // 如果不是搜索菜单，则不处理
-  if (!isSearchMenu.value) {
-    return
-  }
-
   // 设置查询条件
   switch (field) {
     case 'resourceName':
-      searchForm.resourceName = value
+      // 只在搜索菜单下生效，注意只改变资源名称不改变资源类型
+      if (isSearchMenu.value) {
+        searchForm.resourceName = value
+      }
       break
     case 'quality':
       // 判断数组是否包含该值
@@ -1484,7 +1444,7 @@ onBeforeUnmount(() => {
     :class="{ 'privacy-space': flags.inPrivacySpace }"
     element-loading-background="rgba(0, 0, 0, 0.2)"
   >
-    <div v-if="isSearchMenu" class="header-block">
+    <div class="header-block">
       <el-input
         v-model="searchForm.filterKeywords"
         class="header-search-input"
@@ -1496,7 +1456,8 @@ onBeforeUnmount(() => {
       >
         <template #prepend>
           <el-select
-            v-model="selectedResource"
+            v-if="isSearchMenu"
+            :model-value="selectedResource"
             value-key="key"
             :disabled="flags.loading"
             :placeholder="t('exploreCommon.searchForm.resourceName.placeholder')"
@@ -1563,7 +1524,10 @@ onBeforeUnmount(() => {
               :key="item.value"
               :label="t(item.locale)"
               :value="item.value"
-            />
+            >
+              <IconifyIcon :icon="item.icon" style="vertical-align: middle; margin-right: 10px" />
+              <span>{{ t(item.locale) }}</span>
+            </el-option>
           </el-select>
           <el-select
             v-if="isLocalResource"
@@ -1579,11 +1543,11 @@ onBeforeUnmount(() => {
             <el-option v-for="text in qualityList" :key="text" :label="text" :value="text" />
           </el-select>
         </template>
-        <template v-if="isSearchMenu && isLocalResource" #append>
+        <!-- <template v-if="isSearchMenu && isLocalResource" #append>
           <el-button type="primary" size="large" @click="onSyncToWallpaperSetting">{{
             t('exploreCommon.onSyncToWallpaperSetting')
           }}</el-button>
-        </template>
+        </template> -->
       </el-input>
     </div>
     <div class="body-block">
@@ -1628,7 +1592,7 @@ onBeforeUnmount(() => {
           <EmptyHelp v-else />
         </el-scrollbar>
       </div>
-      <div ref="cardBlockRef" class="card-block" :style="cardBlockStyle">
+      <div ref="cardBlockRef" class="card-block">
         <el-backtop
           v-if="flags.showFixedBtns"
           class="fixed-btn"
@@ -1692,10 +1656,12 @@ onBeforeUnmount(() => {
               }"
               @mouseenter="onOverCard(index)"
             >
+              <div class="card-item-btns__trigger"></div>
               <div v-if="isShowTag" class="card-item-tags">
                 <div
                   v-if="item.resourceName"
                   class="tag-item"
+                  :class="{ 'tag-item__disabled': !isSearchMenu }"
                   :title="item.resourceName"
                   @click.stop="onTagClick('resourceName', item.resourceName)"
                 >
@@ -1711,9 +1677,8 @@ onBeforeUnmount(() => {
                 </div>
                 <div
                   v-if="item.score"
-                  class="tag-item"
+                  class="tag-item tag-item__disabled"
                   :title="t('exploreCommon.tagItem.score')"
-                  style="cursor: not-allowed"
                 >
                   {{ item.score }}
                 </div>
@@ -1736,9 +1701,8 @@ onBeforeUnmount(() => {
                 <!-- 收藏 -->
                 <div
                   v-if="item.isFavorite"
-                  class="tag-item"
+                  class="tag-item tag-item__disabled"
                   :title="t('exploreCommon.tagItem.favorited')"
-                  style="cursor: not-allowed"
                 >
                   <IconifyIcon icon="ep:star-filled" />
                 </div>
@@ -1928,7 +1892,7 @@ onBeforeUnmount(() => {
 
 .card-block {
   flex: 1;
-  height: calc(100vh - 60px);
+  height: calc(100vh - 130px);
   position: relative;
 }
 .fixed-btn {
@@ -2166,9 +2130,22 @@ onBeforeUnmount(() => {
   }
 }
 
-.card-item:hover .card-item-btns {
+/* 下半部分触发区域 */
+.card-item-btns__trigger {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 50%;
+  z-index: 9;
+}
+
+/* 当鼠标悬停在卡片下半部分时显示按钮 */
+.card-item-btns__trigger:hover ~ .card-item-btns,
+.card-item-btns:hover {
   transform: translate(0, 0);
 }
+
 .card-item-btns {
   position: absolute;
   right: 0;
@@ -2226,6 +2203,16 @@ onBeforeUnmount(() => {
   padding: 2px 4px;
   border-radius: 4px;
   cursor: pointer;
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.8);
+  }
+}
+
+.tag-item__disabled {
+  cursor: not-allowed;
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.6);
+  }
 }
 
 .total-text {
