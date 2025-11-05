@@ -37,7 +37,7 @@
         "explore": "Explore settings",
         "function": "Function settings",
         "wallpaper": "Wallpaper settings",
-        "switch": "Switch settings",
+        "switch": "Wallpaper switching",
         "localResource": "Local resources",
         "webWallpaper": "Web wallpaper",
         "colorWallpaper": "Color wallpaper",
@@ -104,8 +104,8 @@
           "placeholder": "Please select performance mode"
         },
         "dynamicScaleMode": {
-          "label": "Filling mode",
-          "placeholder": "Please select filling mode"
+          "label": "Scale mode",
+          "placeholder": "Please select scale mode"
         },
         "rhythmEffect": {
           "label": "Rhythm effect",
@@ -150,16 +150,16 @@
         "themeColor": "Theme color",
         "enableExpandSideMenu": "Enable expand side menu",
         "showSideMenuLabel": "Show side menu label",
-        "viewImageIntervalTime": "View image interval",
+        "viewImageIntervalTime": "Preview playback interval",
         "showTag": "Show tag",
         "confirmOnDeleteFile": "Confirm on delete",
         "enableSegmentationTask": "Enable segmentation task",
         "h5AutoSwitch": "Automatic switching",
-        "h5SwitchType": "Switching mode",
-        "h5Resource": "H5 resource",
+        "h5SwitchType": "Switch mode",
+        "h5Resource": "Image resource",
         "h5SwitchIntervalTime": "Switching interval",
-        "h5Orientation": "Image orientation",
-        "h5Quality": "Image quality",
+        "h5Orientation": "Filter direction",
+        "h5Quality": "Filter quality",
         "h5SortField": "Sort field",
         "h5SortType": "Sort mode",
         "h5ImageDisplaySize": "Display size",
@@ -171,8 +171,8 @@
           "placeholder": "Please select enabled floating buttons"
         },
         "h5NumberIndicatorPosition": "Number indicator Position",
-        "h5Vibration": "Vibration",
-        "h5WeekScreen": "Week screen",
+        "h5Vibration": "Vibration feedback",
+        "h5WeekScreen": "Screen always on",
         "powerSaveMode": "Power save mode"
       },
       "privacyPasswordForm": {
@@ -330,7 +330,6 @@
     "favorites": "favorites"
   },
   "menuList": {
-    "Explore": "Gallery",
     "Search": "Search",
     "Words": "Words",
     "Favorites": "Favorites",
@@ -465,7 +464,7 @@
     "bottomRight": "Bottom right",
     "bottom": "Bottom",
     "bottomLeft": "Bottom left",
-    "left": "left",
+    "left": "Left",
     "center": "Center"
   },
   "wordTypeList": {
@@ -488,7 +487,6 @@
       "quit": "Exit privacy space",
       "enter": "Enter privacy space"
     },
-    "onSwitchResource": "Switch resources",
     "onRefreshDirectory": "Refresh resource directory",
     "setAsWallpaperWithDownload": "Set as wallpaper",
     "doViewImage": "Preview image",
@@ -650,16 +648,16 @@
           "h5SwitchIntervalTime": "Switch Interval",
           "h5ResourcesSettings": "Resources Settings",
           "h5Resource": {
-            "label": "Resource",
+            "label": "Image Resource",
             "placeholder": "Select resource"
           },
           "h5Orientation": {
-            "label": "Image Orientation",
-            "placeholder": "Select image orientation"
+            "label": "Filter Direction",
+            "placeholder": "Select filter direction"
           },
           "h5Quality": {
-            "label": "Image Quality",
-            "placeholder": "Select image quality"
+            "label": "Filter Quality",
+            "placeholder": "Select filter quality"
           },
           "h5SortField": {
             "label": "Sort Field",
@@ -688,8 +686,8 @@
             "label": "Number Indicator Position",
             "placeholder": "Select number indicator position"
           },
-          "h5Vibration": "Vibration",
-          "h5WeekScreen": "Week Screen"
+          "h5Vibration": "Vibration feedback",
+          "h5WeekScreen": "Screen always on"
         },
         "about": "About",
         "version": "Version",

@@ -37,7 +37,7 @@
         "explore": "Configuración de exploración",
         "function": "Configuración de funciones",
         "wallpaper": "Configuración de fondos de pantalla",
-        "switch": "Configuración de cambio",
+        "switch": "Cambio de fondo de pantalla",
         "localResource": "Recursos locales",
         "webWallpaper": "Fondo web",
         "colorWallpaper": "Fondo de color",
@@ -151,8 +151,8 @@
         "enableExpandSideMenu": "Habilitar menú lateral expandible",
         "showSideMenuLabel": "Mostrar etiqueta del menú lateral",
         "viewImageIntervalTime": "Intervalo de reproducción de vista previa",
-        "showTag": "Mostrar etiquetas",
-        "confirmOnDeleteFile": "Confirmar antes de eliminar",
+        "showTag": "Mostrar etiqueta",
+        "confirmOnDeleteFile": "Confirmación antes de eliminar",
         "enableSegmentationTask": "Habilitar tarea de segmentación",
         "h5AutoSwitch": "Cambio automático",
         "h5SwitchType": "Modo de cambio",
@@ -178,13 +178,13 @@
       "privacyPasswordForm": {
         "old": {
           "label": "Contraseña antigua",
-          "placeholder": "Por favor, introduzca la contraseña antigua",
-          "tooltip": "La contraseña consiste en números, mínimo 3 dígitos y máximo 6 dígitos. La contraseña predeterminada está vacía"
+          "placeholder": "Por favor, introduzca su contraseña antigua",
+          "tooltip": "La contraseña se compone de números, mínimo 3 dígitos y máximo 6 dígitos. La contraseña predeterminada está vacía"
         },
         "new": {
-          "label": "Nueva contraseña",
-          "placeholder": "Por favor, introduzca la nueva contraseña",
-          "tooltip": "La contraseña consiste en números, mínimo 3 dígitos y máximo 6 dígitos"
+          "label": "Contraseña nueva",
+          "placeholder": "Por favor, introduzca su contraseña nueva",
+          "tooltip": "La contraseña se compone de números, mínimo 3 dígitos y máximo 6 dígitos"
         },
         "confirm": "Actualizar contraseña"
       }
@@ -243,7 +243,7 @@
     "getDataFail": "¡Error al obtener datos!",
     "copySuccess": "¡Copiado!",
     "copyFail": "¡Error al copiar!",
-    "confirmDelete": "Después de eliminar, no se puede restaurar. ¿Confirma que desea eliminar?",
+    "confirmDelete": "Los datos eliminados no se pueden restaurar. ¿Confirmar eliminación?",
     "refreshDirectorySuccess": "Directorio de recursos actualizado correctamente, se insertaron {insertedCount} elementos correctamente, número total de datos {total} elementos!",
     "refreshDirectoryFail": "¡Error al actualizar recursos!",
     "refreshDirectoryFailSettingError": "¡Error al actualizar recursos, error de configuración!",
@@ -253,7 +253,7 @@
     "clearTableFail": "¡Error al limpiar datos!",
     "clearCacheSuccess": "¡Caché limpiada correctamente!",
     "clearCacheFail": "¡Error al limpiar caché!",
-    "clearTableAutoincrementFail": "¡Tabla limpiada correctamente, error al limpiar la secuencia de autoincremento!",
+    "clearTableAutoincrementFail": "Tabla limpiada con éxito, ¡error al limpiar la secuencia de autoincremento de la tabla!",
     "operationSuccessWithInsertFail": "¡Operación exitosa, error al insertar en la base de datos!",
     "oldPasswordError": "¡Contraseña antigua incorrecta!",
     "newPasswordNotEmpty": "¡La nueva contraseña no puede estar vacía!",
@@ -281,7 +281,7 @@
     "downloadFolderNotExistOrNotSet": "¡El directorio de descarga no existe o no está configurado!",
     "downloadFileSuccess": "¡Archivo descargado correctamente!",
     "downloadFileFail": "¡Error al descargar archivo!",
-    "downloadFileExist": "¡El archivo ya existe!",
+    "downloadFileExist": "¡El archivo de descarga ya existe!",
     "resourceNotFound": "¡Recurso no encontrado!",
     "resourceSecretKeyUnset": "¡Por favor, configure primero la clave secreta del recurso remoto!",
     "h5ServerStartSuccess": "¡Servidor H5 iniciado correctamente!",
@@ -311,7 +311,7 @@
     "maxFavoriteCountReached": "¡Número máximo de favoritos alcanzado!",
     "noFileSelected": "¡Ningún archivo seleccionado!",
     "noDynamicWallpaperSet": "¡Ningún fondo dinámico establecido!",
-    "multiDeviceSyncWarning": "¡La función de sincronización multidispositivo está deshabilitada, las modificaciones solo son efectivas en el dispositivo actual!",
+    "multiDeviceSyncWarning": "¡La sincronización entre dispositivos está deshabilitada, las modificaciones solo son efectivas en el dispositivo actual!",
     "rhythmWallpaperNeedVirtualAudio": "Por favor, instale y configure una tarjeta de sonido virtual (como VB-Audio/BlackHole) para usar la función de fondo rítmico",
     "noData": "Sin datos",
     "loading": "Cargando...",
@@ -330,7 +330,6 @@
     "favorites": "Favoritos"
   },
   "menuList": {
-    "Explore": "Galería",
     "Search": "Buscar",
     "Words": "Palabras",
     "Favorites": "Favoritos",
@@ -367,12 +366,12 @@
     "order": "ordenado"
   },
   "sortFieldOptions": {
-    "created_at": "tiempo de creación del registro",
-    "updated_at": "tiempo de modificación del registro",
-    "ctimeMs": "tiempo de creación del recurso",
-    "mtimeMs": "tiempo de modificación del recurso",
-    "fileName": "nombre del archivo del recurso",
-    "fileSize": "tamaño del archivo del recurso",
+    "created_at": "Hora de creación del registro",
+    "updated_at": "Hora de modificación del registro",
+    "ctimeMs": "Hora de creación del recurso",
+    "mtimeMs": "Hora de modificación del recurso",
+    "fileName": "Nombre del archivo de recurso",
+    "fileSize": "Tamaño del archivo de recurso",
     "views": "vistas",
     "downloads": "descargas",
     "favorites": "favoritos",
@@ -383,8 +382,8 @@
     "desc": "descendente"
   },
   "imageDisplaySizeOptions": {
-    "contain": "ajustar",
-    "cover": "rellenar"
+    "contain": "contener",
+    "cover": "cubrir"
   },
   "h5FloatingButtonPositionOptions": {
     "left": "izquierda",
@@ -414,9 +413,9 @@
     "stretch": "estirar"
   },
   "rhythmEffectOptions": {
-    "LeaferBar": "barras",
-    "LeaferWave": "ondas",
-    "LeaferBall": "bolas",
+    "LeaferBar": "barra",
+    "LeaferWave": "onda",
+    "LeaferBall": "bola",
     "LeaferDisco": "disco",
     "LeaferSpectrumRing": "anillo de espectro",
     "LeaferParticleFountain": "fuente de partículas",
@@ -426,19 +425,19 @@
     "LeaferMusicNoteRain": "lluvia de notas musicales",
     "LeaferRotatingStarburst": "ráfaga de estrellas giratoria",
     "LeaferBars3D": "barras 3D",
-    "LeaferLiquidRipple": "ondulaciones líquidas",
+    "LeaferLiquidRipple": "onda líquida",
     "LeaferSpectrumFlower": "flor de espectro",
     "LeaferRainbow": "arcoíris",
     "LeaferWindmill": "molino de viento",
     "LeaferTaiji": "taiji",
     "LeaferMuyu": "muyu",
-    "LeaferFirework": "fuegos artificiales",
+    "LeaferFirework": "fuego artificial",
     "LeaferSnowflake": "copo de nieve",
-    "ThreeBar": "barras 3D",
-    "ThreeWave": "ondas 3D",
-    "ThreeParticle": "partículas 3D",
-    "ThreeSphere": "esfera 3D",
-    "ThreeAudioVisualizer": "visualizador de audio 3D"
+    "ThreeBar": "Barra 3D",
+    "ThreeWave": "Onda 3D",
+    "ThreeParticle": "Partícula 3D",
+    "ThreeSphere": "Esfera 3D",
+    "ThreeAudioVisualizer": "Visualizador de audio 3D"
   },
   "rhythmAnimationOptions": {
     "linear": "Lineal (mapeo directo)",
@@ -453,7 +452,7 @@
     "avg": "Valor promedio"
   },
   "rhythmDensityOptions": {
-    "sparse": "Escaso",
+    "sparse": "Disperso",
     "normal": "Normal",
     "dense": "Denso"
   },
@@ -473,7 +472,7 @@
     "english": "English"
   },
   "emptyHelp": {
-    "text": "Aún no hay datos, por favor revise la configuración",
+    "text": "Sin datos, por favor revise la configuración",
     "jumpText": "Revisar configuración"
   },
   "exploreCommon": {
@@ -488,7 +487,6 @@
       "quit": "Salir del espacio privado",
       "enter": "Entrar en el espacio privado"
     },
-    "onSwitchResource": "Cambiar recursos",
     "onRefreshDirectory": "Actualizar directorio de recursos",
     "setAsWallpaperWithDownload": "Establecer como fondo de pantalla",
     "doViewImage": "Vista previa de imagen",
@@ -524,7 +522,7 @@
     },
     "onSyncToWallpaperSetting": "Sincronizar con configuración de fondos de pantalla",
     "wordFilter": {
-      "placeholder": "Filtrar palabras clave"
+      "placeholder": "Por favor, introduzca palabras clave"
     },
     "tagItem": {
       "score": "Puntuación",
@@ -562,7 +560,7 @@
       "resourceName": "Nombre del recurso",
       "fileName": "Nombre del archivo",
       "filePath": "Ruta del archivo",
-      "fileExt": "Extensión",
+      "fileExt": "Extensión del archivo",
       "fileSize": "Tamaño del archivo",
       "quality": "Calidad",
       "score": "Puntuación",
@@ -571,10 +569,10 @@
       "downloads": "Descargas",
       "favorites": "Favoritos",
       "wallpapers": "Fondos de pantalla",
-      "created_at": "Tiempo de creación del registro",
-      "updated_at": "Tiempo de actualización del registro",
-      "ctimeMs": "Tiempo de creación del recurso",
-      "mtimeMs": "Tiempo de actualización del recurso"
+      "created_at": "Registro creado en",
+      "updated_at": "Registro actualizado en",
+      "ctimeMs": "Recurso creado en",
+      "mtimeMs": "Recurso actualizado en"
     }
   },
   "h5": {

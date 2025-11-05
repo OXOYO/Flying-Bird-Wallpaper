@@ -37,7 +37,7 @@
         "explore": "Configurações de exploração",
         "function": "Configurações de função",
         "wallpaper": "Configurações de papel de parede",
-        "switch": "Configurações de troca",
+        "switch": "Troca de papel de parede",
         "localResource": "Recursos locais",
         "webWallpaper": "Papel de parede web",
         "colorWallpaper": "Papel de parede colorido",
@@ -150,8 +150,8 @@
         "themeColor": "Cor do tema",
         "enableExpandSideMenu": "Habilitar menu lateral expansível",
         "showSideMenuLabel": "Mostrar rótulo do menu lateral",
-        "viewImageIntervalTime": "Intervalo de reprodução de visualização",
-        "showTag": "Mostrar tags",
+        "viewImageIntervalTime": "Intervalo de reprodução da visualização",
+        "showTag": "Mostrar etiqueta",
         "confirmOnDeleteFile": "Confirmar antes de excluir",
         "enableSegmentationTask": "Habilitar tarefa de segmentação",
         "h5AutoSwitch": "Troca automática",
@@ -179,10 +179,10 @@
         "old": {
           "label": "Senha antiga",
           "placeholder": "Por favor, insira a senha antiga",
-          "tooltip": "A senha consiste em números, mínimo de 3 dígitos e máximo de 6 dígitos. A senha padrão está vazia"
+          "tooltip": "A senha é composta por números, mínimo de 3 dígitos e máximo de 6 dígitos. A senha padrão está vazia"
         },
         "new": {
-          "label": "Nova senha",
+          "label": "Senha nova",
           "placeholder": "Por favor, insira a nova senha",
           "tooltip": "A senha consiste em números, mínimo de 3 dígitos e máximo de 6 dígitos"
         },
@@ -192,7 +192,7 @@
     "Utils": {
       "dataUtils": "Ferramentas de dados",
       "wallpaperUtils": "Ferramentas de papel de parede",
-      "fileUtils": "Ferramentas de arquivo",
+      "fileUtils": "Ferramentas de arquivos",
       "refreshDirectory": "Atualizar dados do diretório de recursos locais",
       "clearCurrentResourceDB": "Limpar dados de recursos atuais",
       "clearWordsDB": "Limpar dados de palavras",
@@ -330,7 +330,6 @@
     "favorites": "Favoritos"
   },
   "menuList": {
-    "Explore": "Galeria",
     "Search": "Pesquisar",
     "Words": "Palavras",
     "Favorites": "Favoritos",
@@ -346,7 +345,7 @@
     "fit": "ajustar",
     "stretch": "esticar",
     "center": "centralizar",
-    "tile": "ladrilho"
+    "tile": "ladrilhar"
   },
   "intervalUnits": {
     "s": "segundo",
@@ -359,12 +358,12 @@
     "videos": "vídeos"
   },
   "orientationOptions": {
-    "landscape": "paisagem",
-    "portrait": "retrato"
+    "landscape": "horizontal",
+    "portrait": "vertical"
   },
   "switchTypeOptions": {
     "random": "aleatório",
-    "order": "ordenado"
+    "order": "ordem"
   },
   "sortFieldOptions": {
     "created_at": "tempo de criação do registro",
@@ -473,7 +472,7 @@
     "english": "English"
   },
   "emptyHelp": {
-    "text": "Ainda não há dados, por favor verifique as configurações",
+    "text": "Sem dados, por favor verifique as configurações",
     "jumpText": "Verificar configurações"
   },
   "exploreCommon": {
@@ -488,7 +487,6 @@
       "quit": "Sair do espaço privado",
       "enter": "Entrar no espaço privado"
     },
-    "onSwitchResource": "Alternar recursos",
     "onRefreshDirectory": "Atualizar diretório de recursos",
     "setAsWallpaperWithDownload": "Definir como papel de parede",
     "doViewImage": "Visualizar imagem",
@@ -513,10 +511,10 @@
         "placeholder": "Nome do recurso"
       },
       "filterType": {
-        "placeholder": "Tipo"
+        "placeholder": "tipo"
       },
       "orientation": {
-        "placeholder": "Orientação"
+        "placeholder": "orientação"
       },
       "quality": {
         "placeholder": "Qualidade da imagem"

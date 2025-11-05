@@ -1,7 +1,7 @@
 {
   "appInfo": {
-    "appName": "Flying Bird Wallpaper",
-    "description": "Flying Bird Wallpaper는 이미지, 비디오, 리듬, 솔리드 컬러 등 다양한 배경화면 유형을 지원하는 기능이 풍부한 데스크톱 배경화면 애플리케이션으로, 당신의 데스크톱을 독특하고 활기차게 만들어 줍니다."
+    "appName": "플라잉 버드 배경화면",
+    "description": "플라잉 버드 배경화면은 이미지, 비디오, 리듬, 솔리드 컬러 등 다양한 배경화면 유형을 지원하는 기능이 풍부한 데스크톱 배경화면 소프트웨어로, 당신의 데스크톱을 독특한 매력으로 빛나게 만들어 줍니다."
   },
   "actions": {
     "autoSwitchWallpaper": {
@@ -37,7 +37,7 @@
         "explore": "탐색 설정",
         "function": "기능 설정",
         "wallpaper": "배경화면 설정",
-        "switch": "전환 설정",
+        "switch": "배경화면 전환",
         "localResource": "로컬 리소스",
         "webWallpaper": "웹 배경화면",
         "colorWallpaper": "색상 배경화면",
@@ -330,7 +330,6 @@
     "favorites": "즐겨찾기"
   },
   "menuList": {
-    "Explore": "갤러리",
     "Search": "검색",
     "Words": "단어",
     "Favorites": "즐겨찾기",
@@ -485,17 +484,16 @@
       "off": "순서"
     },
     "onTogglePrivacySpace": {
-      "quit": "프라이버시 공간 나가기",
-      "enter": "프라이버시 공간 입장"
+      "quit": "비밀 공간 나가기",
+      "enter": "비밀 공간 들어가기"
     },
-    "onSwitchResource": "리소스 전환",
     "onRefreshDirectory": "리소스 디렉토리 새로고침",
     "setAsWallpaperWithDownload": "배경화면으로 설정",
     "doViewImage": "이미지 미리보기",
     "addToFavorites": "즐겨찾기에 추가",
     "removeFavorites": "즐겨찾기에서 제거",
-    "addToPrivacySpace": "프라이버시 공간에 추가",
-    "removePrivacySpace": "프라이버시 공간에서 제거",
+    "addToPrivacySpace": "비밀 공간에 추가",
+    "removePrivacySpace": "비밀 공간에서 제거",
     "onCopyFilePath": "파일 경로 복사",
     "onDeleteFile": "파일 삭제",
     "onDownloadFile": "파일 다운로드",
@@ -504,7 +502,7 @@
     "viewInfo": "정보 보기",
     "searchForm": {
       "filterKeywords": {
-        "placeholder": "키워드를 입력하고 Enter 키를 눌러 검색"
+        "placeholder": "키워드를 입력하고 Enter를 눌러 검색하세요"
       },
       "resourceType": {
         "placeholder": "리소스 유형"
@@ -522,9 +520,9 @@
         "placeholder": "이미지 품질"
       }
     },
-    "onSyncToWallpaperSetting": "배경화면 설정에 동기화",
+    "onSyncToWallpaperSetting": "배경화면 설정과 동기화",
     "wordFilter": {
-      "placeholder": "키워드를 입력해 주세요"
+      "placeholder": "키워드를 입력하세요"
     },
     "tagItem": {
       "score": "점수",

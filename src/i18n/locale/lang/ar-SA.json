@@ -37,7 +37,7 @@
         "explore": "إعدادات الاستكشاف",
         "function": "إعدادات الوظائف",
         "wallpaper": "إعدادات الخلفيات",
-        "switch": "إعدادات التبديل",
+        "switch": "تبديل الخلفيات",
         "localResource": "الموارد المحلية",
         "webWallpaper": "خلفية الويب",
         "colorWallpaper": "خلفية ملونة",
@@ -113,7 +113,7 @@
         },
         "rhythmWidthRatio": "نسبة العرض",
         "rhythmHeightRatio": "نسبة الارتفاع",
-        "rhythmColors": "ألوان الإيقاع",
+        "rhythmColors": "ألوان إيقاعية",
         "rhythmAnimation": {
           "label": "الرسوم المتحركة",
           "placeholder": "يرجى تحديد الرسوم المتحركة"
@@ -149,7 +149,7 @@
         "sortType": "طريقة الفرز",
         "themeColor": "لون السمة",
         "enableExpandSideMenu": "تمكين القائمة الجانبية القابلة للتوسيع",
-        "showSideMenuLabel": "عرض تسمية القائمة الجانبية",
+        "showSideMenuLabel": "عرض نص القائمة الجانبية",
         "viewImageIntervalTime": "فترة تشغيل المعاينة",
         "showTag": "عرض العلامات",
         "confirmOnDeleteFile": "تأكيد قبل الحذف",
@@ -179,7 +179,7 @@
         "old": {
           "label": "كلمة المرور القديمة",
           "placeholder": "يرجى إدخال كلمة المرور القديمة",
-          "tooltip": "تتكون كلمة المرور من أرقام، بحد أدنى 3 أرقام وحد أقصى 6 أرقام. كلمة المرور الافتراضية فارغة"
+          "tooltip": "تتكون كلمة المرور من أرقام، و3 أرقام كحد أدنى و6 أرقام كحد أقصى. كلمة المرور الافتراضية فارغة"
         },
         "new": {
           "label": "كلمة المرور الجديدة",
@@ -233,37 +233,37 @@
     "operationIllegal": "عملية غير قانونية!",
     "operationInProgress": "العملية قيد التنفيذ!",
     "folderAlreadyExist": "دليل الموارد مكرر!",
-    "confirmMessageTemplate": "هل تؤكد أنك تريد <span style=\"color: red; font-weight: bolder; margin: 0 5px\">{text}</span>؟",
+    "confirmMessageTemplate": "هل أنت متأكد أنك تريد <span style=\"color: red; font-weight: bolder; margin: 0 5px\">{text}</span>؟",
     "confirmMessageDanger": "عملية خطيرة، هذه العملية لا رجعة فيها، هل تؤكد التنفيذ؟",
     "inputPrivacySpacePassword": "يرجى إدخال كلمة مرور المساحة الخاصة!",
-    "inputPrivacySpacePasswordErrorMessage": "بحد أدنى 3 أرقام، وبحد أقصى 6 أرقام!",
+    "inputPrivacySpacePasswordErrorMessage": "3 أرقام كحد أدنى، 6 أرقام كحد أقصى!",
     "enterPrivacySpaceSuccess": "تم الدخول إلى المساحة الخاصة!",
     "exitedPrivacySpaceSuccess": "تم الخروج من المساحة الخاصة!",
     "noMoreData": "لا توجد بيانات إضافية!",
     "getDataFail": "فشل الحصول على البيانات!",
     "copySuccess": "تم النسخ!",
     "copyFail": "فشل النسخ!",
-    "confirmDelete": "بعد الحذف، لا يمكن الاستعادة. هل تؤكد الحذف؟",
+    "confirmDelete": "لا يمكن استعادة البيانات المحذوفة. تأكيد الحذف؟",
     "refreshDirectorySuccess": "تم تحديث دليل الموارد بنجاح، تم إدراج {insertedCount} عناصر بنجاح، العدد الإجمالي للبيانات {total} عناصر!",
     "refreshDirectoryFail": "فشل تحديث الموارد!",
-    "refreshDirectoryFailSettingError": "فشل تحديث الموارد، خطأ في الإعدادات!",
+    "refreshDirectoryFailSettingError": "فشل تحديث الموارد، خطأ في التكوين!",
     "refreshDirectoryFailNotSettingFolder": "فشل تحديث الموارد، دليل الموارد غير محدد!",
     "refreshDirectoryFailNotSettingFileExt": "فشل تحديث الموارد، أنواع الملفات المسموحة غير محددة!",
     "clearTableSuccess": "تم مسح البيانات بنجاح!",
     "clearTableFail": "فشل مسح البيانات!",
     "clearCacheSuccess": "تم مسح الذاكرة المؤقتة بنجاح!",
     "clearCacheFail": "فشل مسح الذاكرة المؤقتة!",
-    "clearTableAutoincrementFail": "تم مسح الجدول بنجاح، فشل مسح تسلسل الزيادة التلقائية!",
+    "clearTableAutoincrementFail": "تم مسح الجدول بنجاح، فشل مسح تسلسل الزيادة التلقائية للجدول!",
     "operationSuccessWithInsertFail": "نجحت العملية، فشل الإدراج في قاعدة البيانات!",
-    "oldPasswordError": "كلمة المرور القديمة غير صحيحة!",
+    "oldPasswordError": "كلمة المرور القديمة خاطئة!",
     "newPasswordNotEmpty": "لا يمكن أن تكون كلمة المرور الجديدة فارغة!",
-    "passwordError": "كلمة المرور غير صحيحة!",
+    "passwordError": "خطأ في كلمة المرور!",
     "alreadyInPrivacySpace": "أنت بالفعل في المساحة الخاصة!",
-    "alreadyInFavorites": "موجود بالفعل في المفضلة!",
-    "operationTooFrequent": "العملية متكررة جداً، يرجى المحاولة لاحقاً!",
+    "alreadyInFavorites": "أنت بالفعل في المفضلة!",
+    "operationTooFrequent": "العملية متكررة جدًا، يرجى المحاولة لاحقًا!",
     "privacyPasswordNotSet": "كلمة مرور الخصوصية غير محددة، يرجى تحديد كلمة مرور الخصوصية أولاً!",
     "verifyPrivacyPasswordSuccess": "نجحت المصادقة!",
-    "verifyPrivacyPasswordFail": "فشلت المصادقة!",
+    "verifyPrivacyPasswordFail": "فشل التحقق!",
     "operationFailWithDataDuplication": "فشلت العملية، بيانات مكررة!",
     "querySuccess": "نجحت الاستعلام!",
     "queryFail": "فشل الاستعلام!",
@@ -277,13 +277,13 @@
     "closeDynamicWallpaperFail": "فشل إغلاق الخلفية الديناميكية!",
     "fileTypeNotSupported": "نوع الملف غير مدعوم!",
     "enterKeywords": "يرجى إدخال الكلمات المفتاحية!",
-    "pleaseSetDownloadFolder": "يرجى تحديد دليل التنزيل أولاً!",
+    "pleaseSetDownloadFolder": "يرجى تعيين دليل التنزيل أولاً!",
     "downloadFolderNotExistOrNotSet": "دليل التنزيل غير موجود أو غير محدد!",
     "downloadFileSuccess": "تم تنزيل الملف بنجاح!",
     "downloadFileFail": "فشل تنزيل الملف!",
-    "downloadFileExist": "الملف موجود بالفعل!",
-    "resourceNotFound": "لم يتم العثور على المورد!",
-    "resourceSecretKeyUnset": "يرجى تحديد مفتاح المورد السري أولاً!",
+    "downloadFileExist": "ملف التنزيل موجود بالفعل!",
+    "resourceNotFound": "الموارد غير موجودة!",
+    "resourceSecretKeyUnset": "يرجى تعيين المفتاح السري للموارد عن بُعد أولاً!",
     "h5ServerStartSuccess": "تم تشغيل خادم H5 بنجاح!",
     "h5ServerStartFail": "فشل تشغيل خادم H5!",
     "h5ServerStopSuccess": "تم إيقاف خادم H5 بنجاح!",
@@ -302,7 +302,7 @@
     "updateAvailable": "تم العثور على إصدار جديد {version}، انقر للتنزيل!",
     "checkUpdateFail": "فشل التحقق من التحديث!",
     "checkUpdateSuccess": "نجحت عملية التحقق من التحديث!",
-    "updateNotAvailable": "الإصدار الأحدث متاح بالفعل!",
+    "updateNotAvailable": "الإصدار الأحدث متوفر الآن!",
     "updateDownloaded": "اكتمل التنزيل، انقر للتثبيت!",
     "saveSuccess": "تم الحفظ بنجاح!",
     "saveFail": "فشل الحفظ!",
@@ -311,7 +311,7 @@
     "maxFavoriteCountReached": "تم الوصول إلى الحد الأقصى للمفضلة!",
     "noFileSelected": "لم يتم تحديد أي ملف!",
     "noDynamicWallpaperSet": "لم يتم تعيين خلفية ديناميكية!",
-    "multiDeviceSyncWarning": "وظيفة المزامنة متعددة الأجهزة معطلة، التغييرات سارية فقط على الجهاز الحالي!",
+    "multiDeviceSyncWarning": "تم تعطيل المزامنة بين الأجهزة، التعديلات سارية فقط على الجهاز الحالي!",
     "rhythmWallpaperNeedVirtualAudio": "يرجى تثبيت وتكوين بطاقة صوت افتراضية (مثل VB-Audio/BlackHole) لاستخدام وظيفة الخلفية الإيقاعية",
     "noData": "لا توجد بيانات",
     "loading": "جارٍ التحميل...",
@@ -330,7 +330,6 @@
     "favorites": "المفضلة"
   },
   "menuList": {
-    "Explore": "المعرض",
     "Search": "بحث",
     "Words": "الكلمات",
     "Favorites": "المفضلة",
@@ -473,7 +472,7 @@
     "english": "English"
   },
   "emptyHelp": {
-    "text": "لا توجد بيانات حتى الآن، يرجى التحقق من الإعدادات",
+    "text": "لا توجد بيانات، يرجى التحقق من الإعدادات",
     "jumpText": "التحقق من الإعدادات"
   },
   "exploreCommon": {
@@ -482,13 +481,12 @@
     "onRefresh": "تحديث",
     "isRandom": {
       "on": "عشوائي",
-      "off": "مرتب"
+      "off": "ترتيب"
     },
     "onTogglePrivacySpace": {
       "quit": "الخروج من المساحة الخاصة",
       "enter": "الدخول إلى المساحة الخاصة"
     },
-    "onSwitchResource": "تبديل الموارد",
     "onRefreshDirectory": "تحديث دليل الموارد",
     "setAsWallpaperWithDownload": "تعيين كخلفية",
     "doViewImage": "معاينة الصورة",
@@ -522,12 +520,12 @@
         "placeholder": "جودة الصورة"
       }
     },
-    "onSyncToWallpaperSetting": "مزامنة مع إعدادات الخلفية",
+    "onSyncToWallpaperSetting": "مزامنة مع إعدادات الخلفيات",
     "wordFilter": {
       "placeholder": "يرجى إدخال الكلمات المفتاحية"
     },
     "tagItem": {
-      "score": "النتيجة",
+      "score": "التقييم",
       "favorited": "مفضل"
     },
     "totalText": "الإجمالي {current} / {total} عناصر"
@@ -666,8 +664,8 @@
             "placeholder": "حدد حقل الفرز"
           },
           "h5SortType": {
-            "label": "طريقة الفرز",
-            "placeholder": "حدد طريقة الفرز"
+            "label": "ترتيب الفرز",
+            "placeholder": "تحديد ترتيب الفرز"
           },
           "h5ImageDisplaySize": {
             "label": "حجم العرض",

@@ -37,7 +37,7 @@
         "explore": "浏览设置",
         "function": "功能设置",
         "wallpaper": "壁纸设置",
-        "switch": "切换设置",
+        "switch": "壁纸切换",
         "localResource": "本地资源",
         "webWallpaper": "网页壁纸",
         "colorWallpaper": "颜色壁纸",
@@ -57,16 +57,16 @@
         "startH5ServerOnStartup": "启动时启动H5服务",
         "suspensionBallVisible": "显示悬浮球",
         "enabledMenus": "启用菜单",
-        "autoSwitchWallpaper": "自动切换壁纸",
+        "autoSwitchWallpaper": "自动切换",
         "switchType": "切换方式",
         "switchIntervalTime": "切换间隔",
         "allScreen": "应用到所有屏幕",
         "scaleType": "填充方式",
         "wallpaperResource": "壁纸资源",
-        "orientation": "过滤方向",
-        "quality": "过滤质量",
+        "orientation": "筛选方向",
+        "quality": "筛选质量",
         "filterKeywords": {
-          "label": "过滤关键词",
+          "label": "筛选关键词",
           "placeholder": "请输入关键词"
         },
         "localResourceFolders": {
@@ -158,8 +158,8 @@
         "h5SwitchType": "切换方式",
         "h5SwitchIntervalTime": "切换间隔",
         "h5Resource": "图片资源",
-        "h5Orientation": "过滤方向",
-        "h5Quality": "过滤质量",
+        "h5Orientation": "筛选方向",
+        "h5Quality": "筛选质量",
         "h5SortField": "排序字段",
         "h5SortType": "排序方式",
         "h5ImageDisplaySize": "显示尺寸",
@@ -330,7 +330,6 @@
     "favorites": "收藏"
   },
   "menuList": {
-    "Explore": "图库",
     "Search": "搜索",
     "Words": "词库",
     "Favorites": "收藏",
@@ -488,7 +487,6 @@
       "quit": "退出隐私空间",
       "enter": "进入隐私空间"
     },
-    "onSwitchResource": "切换资源",
     "onRefreshDirectory": "刷新资源目录",
     "setAsWallpaperWithDownload": "设为壁纸",
     "doViewImage": "预览图片",
@@ -654,12 +652,12 @@
             "placeholder": "请选择资源"
           },
           "h5Orientation": {
-            "label": "过滤方向",
-            "placeholder": "请选择过滤方向"
+            "label": "筛选方向",
+            "placeholder": "请选择筛选方向"
           },
           "h5Quality": {
-            "label": "过滤质量",
-            "placeholder": "请选择过滤质量"
+            "label": "筛选质量",
+            "placeholder": "请选择筛选质量"
           },
           "h5SortField": {
             "label": "排序字段",

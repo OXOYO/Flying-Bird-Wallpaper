@@ -37,7 +37,7 @@
         "explore": "Impostazioni di esplorazione",
         "function": "Impostazioni funzionali",
         "wallpaper": "Impostazioni degli sfondi",
-        "switch": "Impostazioni di cambio",
+        "switch": "Modifica sfondo",
         "localResource": "Risorse locali",
         "webWallpaper": "Sfondo web",
         "colorWallpaper": "Sfondo colorato",
@@ -140,7 +140,7 @@
         "autoDownload": "Download automatico",
         "downloadIntervalTime": "Intervallo di download",
         "downloadFolder": {
-          "label": "Directory download",
+          "label": "Directory di download",
           "placeholder": "Per favore, seleziona una directory"
         },
         "autoClearDownloaded": "Pulizia automatica",
@@ -157,7 +157,7 @@
         "h5AutoSwitch": "Cambio automatico",
         "h5SwitchType": "Modalità di cambio",
         "h5SwitchIntervalTime": "Intervallo di cambio",
-        "h5Resource": "Risorse immagine",
+        "h5Resource": "Risorse immagini",
         "h5Orientation": "Filtra direzione",
         "h5Quality": "Filtra qualità",
         "h5SortField": "Campo di ordinamento",
@@ -171,8 +171,8 @@
           "placeholder": "Per favore, seleziona pulsanti fluttuanti"
         },
         "h5NumberIndicatorPosition": "Posizione indicatore numerico",
-        "h5Vibration": "Feedback vibrazione",
-        "h5WeekScreen": "Schermo sempre attivo",
+        "h5Vibration": "Feedback aptico",
+        "h5WeekScreen": "Schermo sempre acceso",
         "powerSaveMode": "Modalità risparmio energetico"
       },
       "privacyPasswordForm": {
@@ -330,7 +330,6 @@
     "favorites": "Preferiti"
   },
   "menuList": {
-    "Explore": "Galleria",
     "Search": "Cerca",
     "Words": "Parole",
     "Favorites": "Preferiti",
@@ -364,7 +363,7 @@
   },
   "switchTypeOptions": {
     "random": "casuale",
-    "order": "ordinato"
+    "order": "ordine"
   },
   "sortFieldOptions": {
     "created_at": "tempo creazione record",
@@ -414,9 +413,9 @@
     "stretch": "allungare"
   },
   "rhythmEffectOptions": {
-    "LeaferBar": "barre",
-    "LeaferWave": "onde",
-    "LeaferBall": "palle",
+    "LeaferBar": "barra",
+    "LeaferWave": "onda",
+    "LeaferBall": "palla",
     "LeaferDisco": "discoteca",
     "LeaferSpectrumRing": "anello spettro",
     "LeaferParticleFountain": "fontana particelle",
@@ -434,20 +433,20 @@
     "LeaferMuyu": "muyu",
     "LeaferFirework": "fuochi d'artificio",
     "LeaferSnowflake": "fiocco di neve",
-    "ThreeBar": "barre 3D",
-    "ThreeWave": "onde 3D",
-    "ThreeParticle": "particelle 3D",
+    "ThreeBar": "Barra 3D",
+    "ThreeWave": "Onda 3D",
+    "ThreeParticle": "Particella 3D",
     "ThreeSphere": "sfera 3D",
     "ThreeAudioVisualizer": "visualizzatore audio 3D"
   },
   "rhythmAnimationOptions": {
     "linear": "Lineare (mappatura diretta)",
-    "log": "Logaritmico (sensibile a bassa energia)",
+    "log": "Logaritmico (sensibile all'energia bassa)",
     "parabola": "Parabolico (dolce con esplosione)",
     "sqrt": "Radice quadrata (più dolce)",
     "exp": "Esponenziale (esplosivo)",
     "sin": "Seno (periodico elastico)",
-    "bounce": "Rimbalzo (con contraccolpo)",
+    "bounce": "Rimbalzo (rimbalzo elastico)",
     "step": "Gradino/salto pixel",
     "max": "Valore massimo",
     "avg": "Valore medio"
@@ -488,7 +487,6 @@
       "quit": "Esci dallo spazio privato",
       "enter": "Entra nello spazio privato"
     },
-    "onSwitchResource": "Cambia risorse",
     "onRefreshDirectory": "Aggiorna directory risorse",
     "setAsWallpaperWithDownload": "Imposta come sfondo",
     "doViewImage": "Anteprima immagine",
@@ -513,10 +511,10 @@
         "placeholder": "Nome risorsa"
       },
       "filterType": {
-        "placeholder": "Tipo"
+        "placeholder": "tipo"
       },
       "orientation": {
-        "placeholder": "Orientamento"
+        "placeholder": "orientamento"
       },
       "quality": {
         "placeholder": "Qualità immagine"
@@ -655,11 +653,11 @@
           },
           "h5Orientation": {
             "label": "Filtra direzione",
-            "placeholder": "Seleziona direzione"
+            "placeholder": "Seleziona filtro direzione"
           },
           "h5Quality": {
             "label": "Filtra qualità",
-            "placeholder": "Seleziona qualità"
+            "placeholder": "Seleziona filtro qualità"
           },
           "h5SortField": {
             "label": "Campo ordinamento",

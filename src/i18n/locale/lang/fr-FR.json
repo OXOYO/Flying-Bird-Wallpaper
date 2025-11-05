@@ -37,7 +37,7 @@
         "explore": "Paramètres d'exploration",
         "function": "Paramètres de fonction",
         "wallpaper": "Paramètres du fond d'écran",
-        "switch": "Paramètres de changement",
+        "switch": "Changement de fond d'écran",
         "localResource": "Ressources locales",
         "webWallpaper": "Fond d'écran Web",
         "colorWallpaper": "Fond d'écran de couleur",
@@ -148,10 +148,10 @@
         "sortField": "Champ de tri",
         "sortType": "Méthode de tri",
         "themeColor": "Couleur du thème",
-        "enableExpandSideMenu": "Activer le menu latéral extensible",
+        "enableExpandSideMenu": "Activer le menu latéral étendu",
         "showSideMenuLabel": "Afficher le texte du menu latéral",
         "viewImageIntervalTime": "Intervalle de lecture de l'aperçu",
-        "showTag": "Afficher les étiquettes",
+        "showTag": "Afficher le tag",
         "confirmOnDeleteFile": "Confirmation avant suppression",
         "enableSegmentationTask": "Activer la tâche de segmentation",
         "h5AutoSwitch": "Changement automatique",
@@ -233,7 +233,7 @@
     "operationIllegal": "Opération illégale !",
     "operationInProgress": "Opération en cours !",
     "folderAlreadyExist": "Le répertoire de ressources est dupliqué !",
-    "confirmMessageTemplate": "Confirmez-vous vouloir <span style=\"color: red; font-weight: bolder; margin: 0 5px\">{text}</span> ?",
+    "confirmMessageTemplate": "Êtes-vous sûr de vouloir <span style=\"color: red; font-weight: bolder; margin: 0 5px\">{text}</span> ?",
     "confirmMessageDanger": "Opération dangereuse, cette opération est irréversible, confirmez-vous l'exécution ?",
     "inputPrivacySpacePassword": "Veuillez saisir le mot de passe de l'espace privé !",
     "inputPrivacySpacePasswordErrorMessage": "Au minimum 3 chiffres, au maximum 6 chiffres !",
@@ -243,7 +243,7 @@
     "getDataFail": "Échec de la récupération des données !",
     "copySuccess": "Copié !",
     "copyFail": "Échec de la copie !",
-    "confirmDelete": "Après suppression, impossible de restaurer, confirmez-vous la suppression ?",
+    "confirmDelete": "Les données supprimées ne peuvent pas être restaurées. Confirmer la suppression ?",
     "refreshDirectorySuccess": "Répertoire de ressources actualisé avec succès, {insertedCount} éléments insérés avec succès, nombre total de données {total} éléments !",
     "refreshDirectoryFail": "Échec de l'actualisation des ressources !",
     "refreshDirectoryFailSettingError": "Échec de l'actualisation des ressources, erreur de configuration !",
@@ -330,7 +330,6 @@
     "favorites": "Favoris"
   },
   "menuList": {
-    "Explore": "Galerie",
     "Search": "Recherche",
     "Words": "Mots",
     "Favorites": "Favoris",
@@ -367,10 +366,10 @@
     "order": "ordonné"
   },
   "sortFieldOptions": {
-    "created_at": "date de création de l'enregistrement",
-    "updated_at": "date de modification de l'enregistrement",
-    "ctimeMs": "date de création de la ressource",
-    "mtimeMs": "date de modification de la ressource",
+    "created_at": "Heure de création de l'enregistrement",
+    "updated_at": "Heure de modification de l'enregistrement",
+    "ctimeMs": "Heure de création de la ressource",
+    "mtimeMs": "Heure de modification de la ressource",
     "fileName": "nom du fichier de ressource",
     "fileSize": "taille du fichier de ressource",
     "views": "vues",
@@ -482,13 +481,12 @@
     "onRefresh": "Actualiser",
     "isRandom": {
       "on": "Aléatoire",
-      "off": "Ordonné"
+      "off": "Ordre"
     },
     "onTogglePrivacySpace": {
       "quit": "Quitter l'espace privé",
       "enter": "Entrer dans l'espace privé"
     },
-    "onSwitchResource": "Changer de ressources",
     "onRefreshDirectory": "Actualiser le répertoire de ressources",
     "setAsWallpaperWithDownload": "Définir comme fond d'écran",
     "doViewImage": "Aperçu de l'image",

@@ -1,7 +1,7 @@
 {
   "appInfo": {
-    "appName": "Flying Bird Wallpaper",
-    "description": "Flying Bird Wallpaperは、画像、動画、リズム、単色など複数の壁紙タイプをサポートする機能豊富なデスクトップ壁紙アプリケーションで、あなたのデスクトップを独特で活気に満ちたものにします。"
+    "appName": "飛鳥壁紙",
+    "description": "飛鳥壁紙は、画像、動画、リズム、単色など複数の壁紙タイプをサポートする機能豊富なデスクトップ壁紙ソフトウェアで、あなたのデスクトップを独特な魅力に満ちたものにします。"
   },
   "actions": {
     "autoSwitchWallpaper": {
@@ -37,7 +37,7 @@
         "explore": "探索設定",
         "function": "機能設定",
         "wallpaper": "壁紙設定",
-        "switch": "切り替え設定",
+        "switch": "壁紙切り替え",
         "localResource": "ローカルリソース",
         "webWallpaper": "ウェブ壁紙",
         "colorWallpaper": "カラーバリ紙",
@@ -330,7 +330,6 @@
     "favorites": "お気に入り"
   },
   "menuList": {
-    "Explore": "ギャラリー",
     "Search": "検索",
     "Words": "単語",
     "Favorites": "お気に入り",
@@ -477,34 +476,33 @@
     "jumpText": "設定を確認"
   },
   "exploreCommon": {
-    "toggleFixedBtns": "ボタン切り替え",
+    "toggleFixedBtns": "ボタンの切り替え",
     "onLoadMore": "さらに読み込む",
     "onRefresh": "更新",
     "isRandom": {
       "on": "ランダム",
-      "off": "順序"
+      "off": "順番"
     },
     "onTogglePrivacySpace": {
-      "quit": "プライバシー空間を終了",
-      "enter": "プライバシー空間に入る"
+      "quit": "プライバシースペースを終了",
+      "enter": "プライバシースペースに入る"
     },
-    "onSwitchResource": "リソース切り替え",
     "onRefreshDirectory": "リソースディレクトリを更新",
     "setAsWallpaperWithDownload": "壁紙に設定",
     "doViewImage": "画像プレビュー",
     "addToFavorites": "お気に入りに追加",
     "removeFavorites": "お気に入りから削除",
-    "addToPrivacySpace": "プライバシー空間に追加",
-    "removePrivacySpace": "プライバシー空間から削除",
+    "addToPrivacySpace": "プライバシースペースに追加",
+    "removePrivacySpace": "プライバシースペースから削除",
     "onCopyFilePath": "ファイルパスをコピー",
     "onDeleteFile": "ファイルを削除",
     "onDownloadFile": "ファイルをダウンロード",
     "showItemInFolder": "フォルダで開く",
     "openLink": "リンクを開く",
-    "viewInfo": "情報を表示",
+    "viewInfo": "情報を見る",
     "searchForm": {
       "filterKeywords": {
-        "placeholder": "キーワードを入力し、Enterキーで検索"
+        "placeholder": "キーワードを入力してください。Enterキーで検索"
       },
       "resourceType": {
         "placeholder": "リソースタイプ"
@@ -519,18 +517,18 @@
         "placeholder": "方向"
       },
       "quality": {
-        "placeholder": "画像品質"
+        "placeholder": "画質"
       }
     },
-    "onSyncToWallpaperSetting": "壁紙設定に同期",
+    "onSyncToWallpaperSetting": "壁紙設定と同期",
     "wordFilter": {
       "placeholder": "キーワードを入力してください"
     },
     "tagItem": {
       "score": "スコア",
-      "favorited": "お気に入り済み"
+      "favorited": "お気に入り"
     },
-    "totalText": "合計 {current} / {total} 項目"
+    "totalText": "合計 {current} / {total} 件"
   },
   "autoRefreshList": {
     "off": "自動更新をオフ",

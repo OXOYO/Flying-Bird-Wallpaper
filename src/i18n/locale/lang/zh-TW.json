@@ -37,7 +37,7 @@
         "explore": "瀏覽設定",
         "function": "功能設定",
         "wallpaper": "桌布設定",
-        "switch": "切換設定",
+        "switch": "桌布切換",
         "localResource": "本地資源",
         "webWallpaper": "網頁桌布",
         "colorWallpaper": "顏色桌布",
@@ -63,10 +63,10 @@
         "allScreen": "應用到所有螢幕",
         "scaleType": "填充方式",
         "wallpaperResource": "桌布資源",
-        "orientation": "過濾方向",
-        "quality": "過濾品質",
+        "orientation": "篩選方向",
+        "quality": "篩選品質",
         "filterKeywords": {
-          "label": "過濾關鍵詞",
+          "label": "篩選關鍵詞",
           "placeholder": "請輸入關鍵詞"
         },
         "localResourceFolders": {
@@ -158,8 +158,8 @@
         "h5SwitchType": "切換方式",
         "h5SwitchIntervalTime": "切換間隔",
         "h5Resource": "圖片資源",
-        "h5Orientation": "過濾方向",
-        "h5Quality": "過濾品質",
+        "h5Orientation": "篩選方向",
+        "h5Quality": "篩選品質",
         "h5SortField": "排序欄位",
         "h5SortType": "排序方式",
         "h5ImageDisplaySize": "顯示尺寸",
@@ -330,7 +330,6 @@
     "favorites": "收藏"
   },
   "menuList": {
-    "Explore": "圖庫",
     "Search": "搜尋",
     "Words": "詞庫",
     "Favorites": "收藏",
@@ -479,7 +478,7 @@
   "exploreCommon": {
     "toggleFixedBtns": "切換按鈕",
     "onLoadMore": "載入更多",
-    "onRefresh": "刷新",
+    "onRefresh": "重新整理",
     "isRandom": {
       "on": "隨機",
       "off": "順序"
@@ -488,8 +487,7 @@
       "quit": "退出隱私空間",
       "enter": "進入隱私空間"
     },
-    "onSwitchResource": "切換資源",
-    "onRefreshDirectory": "刷新資源目錄",
+    "onRefreshDirectory": "重新整理資源目錄",
     "setAsWallpaperWithDownload": "設為桌布",
     "doViewImage": "預覽圖片",
     "addToFavorites": "加入收藏",
@@ -499,12 +497,12 @@
     "onCopyFilePath": "複製檔案路徑",
     "onDeleteFile": "刪除檔案",
     "onDownloadFile": "下載檔案",
-    "showItemInFolder": "在資料夾中打開",
-    "openLink": "打開連結",
-    "viewInfo": "查看資訊",
+    "showItemInFolder": "在資料夾中開啟",
+    "openLink": "開啟連結",
+    "viewInfo": "檢視資訊",
     "searchForm": {
       "filterKeywords": {
-        "placeholder": "請輸入關鍵詞，按Enter查詢"
+        "placeholder": "請輸入關鍵字，按 Enter 查詢"
       },
       "resourceType": {
         "placeholder": "資源類型"
@@ -524,7 +522,7 @@
     },
     "onSyncToWallpaperSetting": "同步到桌布設定",
     "wordFilter": {
-      "placeholder": "請輸入關鍵詞"
+      "placeholder": "請輸入關鍵字"
     },
     "tagItem": {
       "score": "評分",

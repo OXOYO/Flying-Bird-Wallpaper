@@ -37,7 +37,7 @@
         "explore": "Erkundungseinstellungen",
         "function": "Funktionseinstellungen",
         "wallpaper": "Hintergrund-Einstellungen",
-        "switch": "Wechseleinstellungen",
+        "switch": "Hintergrund wechseln",
         "localResource": "Lokale Ressourcen",
         "webWallpaper": "Web-Hintergrund",
         "colorWallpaper": "Farb-Hintergrund",
@@ -151,7 +151,7 @@
         "enableExpandSideMenu": "Erweitertes Seitenmenü aktivieren",
         "showSideMenuLabel": "Seitenmenü-Text anzeigen",
         "viewImageIntervalTime": "Vorschau-Wiedergabeintervall",
-        "showTag": "Tags anzeigen",
+        "showTag": "Tag anzeigen",
         "confirmOnDeleteFile": "Bestätigung vor Löschen",
         "enableSegmentationTask": "Segmentierungsaufgabe aktivieren",
         "h5AutoSwitch": "Automatischer Wechsel",
@@ -168,7 +168,7 @@
         "h5FloatingButtonPosition": "Position der Schwebeschaltfläche",
         "h5EnabledFloatingButtons": {
           "label": "Aktivierte Schwebeschaltflächen",
-          "placeholder": "Bitte aktivierte Schwebeschaltflächen auswählen"
+          "placeholder": ""
         },
         "h5NumberIndicatorPosition": "Position des Zahlenindikators",
         "h5Vibration": "Vibrationsrückmeldung",
@@ -228,36 +228,36 @@
     }
   },
   "messages": {
-    "operationSuccess": "Vorgang erfolgreich!",
-    "operationFail": "Vorgang fehlgeschlagen!",
-    "operationIllegal": "Ungültiger Vorgang!",
-    "operationInProgress": "Vorgang wird ausgeführt!",
+    "operationSuccess": "Operation erfolgreich!",
+    "operationFail": "Operation fehlgeschlagen!",
+    "operationIllegal": "Ungültige Operation!",
+    "operationInProgress": "Operation wird ausgeführt!",
     "folderAlreadyExist": "Ressourcenverzeichnis ist doppelt vorhanden!",
-    "confirmMessageTemplate": "Möchten Sie wirklich <span style=\"color: red; font-weight: bolder; margin: 0 5px\">{text}</span>?",
-    "confirmMessageDanger": "Gefährlicher Vorgang, dieser Vorgang ist nicht umkehrbar, Bestätigung zur Ausführung?",
+    "confirmMessageTemplate": "Sind Sie sicher, dass Sie <span style=\"color: red; font-weight: bolder; margin: 0 5px\">{text}</span> möchten?",
+    "confirmMessageDanger": "Gefährliche Operation, diese Operation ist nicht rückgängig zu machen, möchten Sie fortfahren?",
     "inputPrivacySpacePassword": "Bitte geben Sie das Passwort für den Privatbereich ein!",
-    "inputPrivacySpacePasswordErrorMessage": "Mindestens 3 Ziffern, maximal 6 Ziffern!",
+    "inputPrivacySpacePasswordErrorMessage": "Mindestens 3, maximal 6 Ziffern!",
     "enterPrivacySpaceSuccess": "In den Privatbereich eingetreten!",
-    "exitedPrivacySpaceSuccess": "Privatbereich verlassen!",
+    "exitedPrivacySpaceSuccess": "Den Privatbereich verlassen!",
     "noMoreData": "Keine weiteren Daten!",
     "getDataFail": "Daten konnten nicht abgerufen werden!",
     "copySuccess": "Kopiert!",
     "copyFail": "Kopieren fehlgeschlagen!",
     "confirmDelete": "Nach dem Löschen kann nicht wiederhergestellt werden, Löschen bestätigen?",
-    "refreshDirectorySuccess": "Ressourcenverzeichnis erfolgreich aktualisiert, {insertedCount} Elemente erfolgreich eingefügt, Gesamtanzahl der Daten {total} Elemente!",
+    "refreshDirectorySuccess": "Ressourcenverzeichnis erfolgreich aktualisiert, erfolgreich {insertedCount} Elemente eingefügt, Gesamtzahl der Daten {total} Elemente!",
     "refreshDirectoryFail": "Ressourcenaktualisierung fehlgeschlagen!",
     "refreshDirectoryFailSettingError": "Ressourcenaktualisierung fehlgeschlagen, Konfigurationsfehler!",
     "refreshDirectoryFailNotSettingFolder": "Ressourcenaktualisierung fehlgeschlagen, Ressourcenverzeichnis nicht festgelegt!",
     "refreshDirectoryFailNotSettingFileExt": "Ressourcenaktualisierung fehlgeschlagen, erlaubte Dateitypen nicht festgelegt!",
     "clearTableSuccess": "Daten erfolgreich geleert!",
-    "clearTableFail": "Daten konnten nicht geleert werden!",
-    "clearCacheSuccess": "Cache erfolgreich geleert!",
-    "clearCacheFail": "Cache konnte nicht geleert werden!",
+    "clearTableFail": "Daten löschen fehlgeschlagen!",
+    "clearCacheSuccess": "Cache erfolgreich gelöscht!",
+    "clearCacheFail": "Cache löschen fehlgeschlagen!",
     "clearTableAutoincrementFail": "Tabelle erfolgreich geleert, Tabellen-Autoinkrementfolge konnte nicht geleert werden!",
     "operationSuccessWithInsertFail": "Vorgang erfolgreich, Einfügen in die Datenbank fehlgeschlagen!",
-    "oldPasswordError": "Altes Passwort falsch!",
+    "oldPasswordError": "Altes Passwort ist falsch!",
     "newPasswordNotEmpty": "Neues Passwort darf nicht leer sein!",
-    "passwordError": "Passwort falsch!",
+    "passwordError": "Passwortfehler!",
     "alreadyInPrivacySpace": "Bereits im Privatbereich!",
     "alreadyInFavorites": "Bereits in den Favoriten!",
     "operationTooFrequent": "Vorgang zu häufig, bitte später erneut versuchen!",
@@ -302,7 +302,7 @@
     "updateAvailable": "Neue Version {version} gefunden, klicken Sie zum Herunterladen!",
     "checkUpdateFail": "Update-Prüfung fehlgeschlagen!",
     "checkUpdateSuccess": "Update-Prüfung erfolgreich!",
-    "updateNotAvailable": "Die neueste Version ist bereits vorhanden!",
+    "updateNotAvailable": "Die neueste Version ist bereits installiert!",
     "updateDownloaded": "Download abgeschlossen, klicken Sie zur Installation!",
     "saveSuccess": "Erfolgreich gespeichert!",
     "saveFail": "Speichern fehlgeschlagen!",
@@ -330,7 +330,6 @@
     "favorites": "Favoriten"
   },
   "menuList": {
-    "Explore": "Galerie",
     "Search": "Suche",
     "Words": "Wörter",
     "Favorites": "Favoriten",
@@ -340,13 +339,13 @@
     "About": "Über"
   },
   "scaleTypes": {
-    "auto": "automatisch",
-    "span": "automatisch",
-    "fill": "füllen",
-    "fit": "anpassen",
-    "stretch": "strecken",
-    "center": "zentrieren",
-    "tile": "kacheln"
+    "auto": "Automatisch",
+    "span": "Automatisch",
+    "fill": "Füllen",
+    "fit": "Anpassen",
+    "stretch": "Strecken",
+    "center": "Zentrieren",
+    "tile": "Kacheln"
   },
   "intervalUnits": {
     "s": "Sekunde",
@@ -363,8 +362,8 @@
     "portrait": "Hochformat"
   },
   "switchTypeOptions": {
-    "random": "zufällig",
-    "order": "nacheinander"
+    "random": "Zufällig",
+    "order": "Reihenfolge"
   },
   "sortFieldOptions": {
     "created_at": "Erstellungszeit des Datensatzes",
@@ -379,16 +378,16 @@
     "wallpapers": "Hintergründe"
   },
   "sortTypeOptions": {
-    "asc": "aufsteigend",
-    "desc": "absteigend"
+    "asc": "Aufsteigend",
+    "desc": "Absteigend"
   },
   "imageDisplaySizeOptions": {
-    "contain": "anpassen",
-    "cover": "füllen"
+    "contain": "Anpassen",
+    "cover": "Füllen"
   },
   "h5FloatingButtonPositionOptions": {
-    "left": "links",
-    "right": "rechts"
+    "left": "Links",
+    "right": "Rechts"
   },
   "h5FloatingButtonsOptions": {
     "autoSwitch": "automatisch wechseln",
@@ -404,9 +403,9 @@
     "bottom": "unten"
   },
   "dynamicPerformanceModeOptions": {
-    "high": "hoch",
-    "balanced": "ausgeglichen",
-    "powersave": "energiesparend"
+    "high": "Hoch",
+    "balanced": "Ausgeglichen",
+    "powersave": "Energiesparen"
   },
   "dynamicScaleModeOptions": {
     "cover": "füllen",
@@ -442,13 +441,13 @@
   },
   "rhythmAnimationOptions": {
     "linear": "Linear (direkte Abbildung)",
-    "log": "Logarithmisch (empfindlich für niedrige Energie)",
+    "log": "Logarithmisch (empfindlich für geringe Energie)",
     "parabola": "Parabel (sanft mit Ausbruch)",
     "sqrt": "Quadratwurzel (sanfter)",
     "exp": "Exponentiell (explosiv)",
     "sin": "Sinus (elastisch periodisch)",
-    "bounce": "Sprung mit Rückstoß",
-    "step": "Stufen-/Pixel-Sprung",
+    "bounce": "Sprung (abprallen)",
+    "step": "Stufe/Pixel-Sprung",
     "max": "Maximalwert",
     "avg": "Durchschnittswert"
   },
@@ -473,8 +472,8 @@
     "english": "English"
   },
   "emptyHelp": {
-    "text": "Keine Daten, bitte Einstellungen prüfen",
-    "jumpText": "Einstellungen prüfen"
+    "text": "Keine Daten, bitte Einstellungen überprüfen",
+    "jumpText": "Einstellungen überprüfen"
   },
   "exploreCommon": {
     "toggleFixedBtns": "Schaltflächen umschalten",
@@ -488,7 +487,6 @@
       "quit": "Privatbereich verlassen",
       "enter": "Privatbereich betreten"
     },
-    "onSwitchResource": "Ressourcen wechseln",
     "onRefreshDirectory": "Ressourcenverzeichnis aktualisieren",
     "setAsWallpaperWithDownload": "Als Hintergrund festlegen",
     "doViewImage": "Bildvorschau",
@@ -533,8 +531,8 @@
     "totalText": "Insgesamt {current} / {total} Elemente"
   },
   "autoRefreshList": {
-    "off": "Automatische Aktualisierung deaktivieren",
-    "on": "Automatische Aktualisierung aktivieren"
+    "off": "Automatische Aktualisierung ausschalten",
+    "on": "Automatische Aktualisierung einschalten"
   },
   "gridSizeList": {
     "label": {
