@@ -348,7 +348,7 @@ export const unitToValField = {
   h5SwitchIntervalUnit: 'h5SwitchIntervalTime'
 }
 
-export const qualityList = ['2K', '4K', '5k', '8K']
+export const qualityList = ['2K', '4K', '5K', '8K']
 
 export const filterTypeOptions = [
   { label: '图片', value: 'images', locale: 'filterTypeOptions.images' },
