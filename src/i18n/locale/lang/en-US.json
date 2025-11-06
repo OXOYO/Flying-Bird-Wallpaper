@@ -318,7 +318,9 @@
     "loadingMore": "Loading more...",
     "invalidIndex": "Please enter a valid index",
     "indexOutOfRange": "Index out of range",
-    "indexTooLarge": "Index too large"
+    "indexTooLarge": "Index too large",
+    "downloadTask": "Download task",
+    "downloadTaskDone": "Download task completed!"
   },
   "resourceTypeList": {
     "localResource": "Local resources",

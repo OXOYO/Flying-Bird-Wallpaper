@@ -318,7 +318,9 @@
     "loadingMore": "تحميل المزيد...",
     "invalidIndex": "يرجى إدخال فهرس صالح",
     "indexOutOfRange": "الفهرس خارج النطاق",
-    "indexTooLarge": "الفهرس كبير جداً"
+    "indexTooLarge": "الفهرس كبير جداً",
+    "downloadTask": "مهمة التحميل",
+    "downloadTaskDone": "اكتملت مهمة التحميل!"
   },
   "resourceTypeList": {
     "localResource": "الموارد المحلية",

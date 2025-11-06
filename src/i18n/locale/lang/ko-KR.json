@@ -318,7 +318,9 @@
     "loadingMore": "더 불러오기...",
     "invalidIndex": "유효한 인덱스를 입력해 주세요",
     "indexOutOfRange": "인덱스가 범위를 벗어났습니다",
-    "indexTooLarge": "인덱스가 너무 큽니다"
+    "indexTooLarge": "인덱스가 너무 큽니다",
+    "downloadTask": "다운로드 작업",
+    "downloadTaskDone": "다운로드 작업 완료!"
   },
   "resourceTypeList": {
     "localResource": "로컬 리소스",

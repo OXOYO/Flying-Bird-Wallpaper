@@ -3,6 +3,7 @@ import path from 'node:path'
 import { setWallpaper } from 'wallpaper'
 import axios from 'axios'
 import { t } from '../../i18n/server.js'
+import { Notification } from 'electron'
 import { isMac, handleTimeByUnit, createSolidColorBMP } from '../utils/utils.mjs'
 
 export default class WallpaperManager {
@@ -58,15 +59,17 @@ export default class WallpaperManager {
 
   async resetDownloadParams() {
     const settingData = this.settingData
+    // 修改downloadKeywords为数组支持
+    const downloadKeywords = Array.isArray(settingData.downloadKeywords)
+      ? settingData.downloadKeywords
+      : settingData.downloadKeywords
+        ? [settingData.downloadKeywords]
+        : []
+
     const downloadParams = {
       downloadSources: settingData.downloadSources,
-      downloadKeywords: settingData.downloadKeywords,
+      downloadKeywords,
       downloadOrientation: settingData.downloadOrientation,
-      // 记录下载的页数，用于顺序下载时查找索引
-      startPage: 1,
-      pageSize: 10,
-      // 添加当前下载源索引
-      currentSourceIndex: 0,
       // 任务是否已完成
       isTaskCompleted: false
     }
@@ -76,12 +79,9 @@ export default class WallpaperManager {
       if (
         storeData &&
         storeData.downloadSources.toString() === settingData.downloadSources.toString() &&
-        storeData.downloadKeywords === settingData.downloadKeywords &&
+        storeData.downloadKeywords.toString() === downloadKeywords.toString() &&
         storeData.downloadOrientation.toString() === settingData.downloadOrientation.toString()
       ) {
-        downloadParams.startPage = storeData.startPage
-        downloadParams.pageSize = storeData.pageSize
-        downloadParams.currentSourceIndex = storeData.currentSourceIndex
         downloadParams.isTaskCompleted = storeData.isTaskCompleted
       }
     } catch (err) {
@@ -114,6 +114,19 @@ export default class WallpaperManager {
     } catch (err) {
       this.logger.error(`保存下载参数失败: ${err}`)
       return false
+    }
+  }
+
+  // 重置下载任务完成状态
+  async resetDownloadTaskCompletedStatus() {
+    try {
+      if (this.downloadParams) {
+        this.downloadParams.isTaskCompleted = false
+        await this.saveDownloadParams()
+        this.logger.info('下载任务完成状态已重置')
+      }
+    } catch (err) {
+      this.logger.error(`重置下载任务完成状态失败: ${err}`)
     }
   }
 
@@ -661,7 +674,8 @@ export default class WallpaperManager {
 
     let ret = {
       success: false,
-      message: t('messages.operationFail')
+      message: t('messages.operationFail'),
+      list: []
     }
 
     if (!downloadFolder || !fs.existsSync(downloadFolder)) {
@@ -702,6 +716,7 @@ export default class WallpaperManager {
           : ''
       })
       if (res) {
+        ret.list = res.list || []
         if (res.list.length) {
           const docs = []
           const inserted_ids = []
@@ -718,16 +733,16 @@ export default class WallpaperManager {
                 // 方式一：同步写入
                 const fileRes = await axios.get(item.imageUrl, { responseType: 'arraybuffer' })
                 fs.writeFileSync(filePath, fileRes.data)
+                const stats = fs.statSync(filePath)
+                docs.push({
+                  ...item,
+                  filePath,
+                  fileSize: stats.size,
+                  atimeMs: stats.atimeMs,
+                  mtimeMs: stats.mtimeMs,
+                  ctimeMs: stats.ctimeMs
+                })
               }
-              const stats = fs.statSync(filePath)
-              docs.push({
-                ...item,
-                filePath,
-                fileSize: stats.size,
-                atimeMs: stats.atimeMs,
-                mtimeMs: stats.mtimeMs,
-                ctimeMs: stats.ctimeMs
-              })
             } catch (err) {
               this.logger.error(`searchWallpaperWithDownload writeFileSync ERROR:: ${err}`)
             }
@@ -789,46 +804,53 @@ export default class WallpaperManager {
       return ret
     } catch (err) {
       this.logger.error(`搜索并下载壁纸失败: error => ${err}`)
+      ret.message = err.message || t('messages.operationFail')
       return ret
     }
   }
 
   // 下载壁纸
   async downloadWallpaper(stopDownloadTask) {
-    // 每次下载前重置参数
-    await this.resetDownloadParams()
-    const { downloadFolder, autoDownload } = this.settingData
+    // 每次下载前同步最新的设置参数
+    const settingData = this.settingData
+    const downloadKeywords = Array.isArray(settingData.downloadKeywords)
+      ? settingData.downloadKeywords
+      : settingData.downloadKeywords
+        ? [settingData.downloadKeywords]
+        : []
+
+    // 更新downloadParams中的设置相关字段
+    this.downloadParams.downloadSources = settingData.downloadSources
+    this.downloadParams.downloadKeywords = downloadKeywords
+    this.downloadParams.downloadOrientation = settingData.downloadOrientation
+
+    const { downloadFolder, autoDownload } = settingData
     const {
       downloadSources,
-      downloadKeywords,
+      downloadKeywords: currentKeywords,
       downloadOrientation,
-      startPage,
-      pageSize,
-      currentSourceIndex,
       isTaskCompleted
     } = this.downloadParams
 
-    const isOutSource = currentSourceIndex > downloadSources.length - 1
-
+    // 检查基本条件
     if (
       !autoDownload ||
       !downloadSources ||
       !downloadSources.length ||
-      !downloadKeywords ||
-      !downloadFolder ||
-      isTaskCompleted ||
-      isOutSource
+      !currentKeywords ||
+      !currentKeywords.length ||
+      !downloadFolder
     ) {
-      if (isOutSource) {
-        this.logger.info('下载任务已完成')
-        this.downloadParams.isTaskCompleted = true
-        await this.saveDownloadParams()
-      }
       // 条件不满足，停止下载任务
       if (typeof stopDownloadTask === 'function') {
         stopDownloadTask()
       }
-      return false
+      return
+    }
+
+    // 如果任务已完成，记录日志但不立即停止，因为可能有新的内容
+    if (isTaskCompleted) {
+      this.logger.info('下载任务已完成，等待新的内容或设置变更')
     }
 
     try {
@@ -837,35 +859,229 @@ export default class WallpaperManager {
         fs.mkdirSync(downloadFolder, { recursive: true })
       }
 
-      // 获取当前要使用的下载源
-      // 如果是数组，则按顺序轮流使用每个下载源
-      const sourceIndex = (currentSourceIndex || 0) % downloadSources.length
-      const currentSource = downloadSources[sourceIndex]
-
-      const res = await this.searchWallpaperWithDownload({
-        resourceName: currentSource,
-        keywords: downloadKeywords,
-        orientation: downloadOrientation,
-        startPage,
-        pageSize
-      })
-
-      // 查询有结果时向下翻页，否则切换到下一个下载源
-      if (res.success) {
-        this.downloadParams.startPage = startPage + 1
-        // 保存参数
-        await this.saveDownloadParams()
-        return true
-      } else {
-        // 切换到下一个下载源，并重置页码
-        this.downloadParams.currentSourceIndex = (currentSourceIndex + 1) % downloadSources.length
-        this.downloadParams.startPage = 1
-        // 保存参数
-        await this.saveDownloadParams()
-        return false
+      // 为每个资源-关键词组合创建独立的下载任务
+      const downloadTasks = []
+      for (let i = 0; i < downloadSources.length; i++) {
+        const source = downloadSources[i]
+        for (let j = 0; j < currentKeywords.length; j++) {
+          const keyword = currentKeywords[j]
+          // 为每个组合创建独立的任务
+          downloadTasks.push({
+            source,
+            keyword,
+            // 获取该组合的独立参数
+            params: await this.getResourceKeywordParams(source, keyword)
+          })
+        }
       }
+
+      // 过滤掉已完成的任务
+      const pendingTasks = downloadTasks.filter((task) => !task.params.isCompleted)
+
+      // 如果所有任务都已完成，记录日志并返回
+      if (pendingTasks.length === 0) {
+        this.logger.info('所有下载任务已完成，等待新的内容或设置变更')
+        // 标记整个任务为完成
+        if (!this.downloadParams.isTaskCompleted) {
+          this.downloadParams.isTaskCompleted = true
+          await this.saveDownloadParams()
+
+          // 发送系统通知
+          const notification = new Notification({
+            title: t('messages.downloadTask'),
+            body: t('messages.downloadTaskDone')
+          })
+          notification.show()
+        }
+        return
+      }
+
+      // 控制并发数量，避免触发API限制
+      const CONCURRENT_LIMIT = 3 // 最大并发数
+      const results = []
+
+      // 分批执行任务
+      for (let i = 0; i < pendingTasks.length; i += CONCURRENT_LIMIT) {
+        const batch = pendingTasks.slice(i, i + CONCURRENT_LIMIT)
+        const batchPromises = batch.map((task) =>
+          this.downloadResourceKeywordBatch(
+            task.source,
+            task.keyword,
+            task.params,
+            downloadOrientation
+          )
+        )
+
+        // 等待这一批任务完成
+        const batchResults = await Promise.allSettled(batchPromises)
+        results.push(...batchResults)
+
+        // 添加延迟避免请求过于频繁
+        if (i + CONCURRENT_LIMIT < pendingTasks.length) {
+          await new Promise((resolve) => setTimeout(resolve, 1000))
+        }
+      }
+
+      // 检查是否有任何下载成功
+      const successfulTasks = results
+        .map((result, index) => ({ result, index }))
+        .filter(({ result }) => result.status === 'fulfilled' && result.value)
+
+      let hasUpdates = false
+
+      // 更新成功任务的参数
+      for (const { index } of successfulTasks) {
+        const task = pendingTasks[index]
+        task.params.startPage += 1
+        await this.saveResourceKeywordParams(task.source, task.keyword, task.params)
+        hasUpdates = true
+      }
+
+      // 对于失败的任务，检查是否是因为空结果导致的失败，如果是，则标记为完成
+      const failedTasks = results
+        .map((result, index) => ({ result, index }))
+        .filter(({ result }) => result.status === 'rejected' || !result.value)
+
+      // 检查失败的任务是否是因为没有更多内容导致的
+      for (const { index } of failedTasks) {
+        const task = pendingTasks[index]
+        // 尝试获取下一页来确认是否真的没有更多内容
+        try {
+          const testRes = await this.searchWallpaperWithDownload({
+            resourceName: task.source,
+            keywords: task.keyword,
+            orientation: downloadOrientation,
+            startPage: task.params.startPage,
+            pageSize: task.params.pageSize
+          })
+
+          if (testRes && testRes.success && testRes.list?.length > 0) {
+            // 仍有内容可以下载
+            hasUpdates = true
+          } else {
+            // 标记该任务已完成
+            task.params.isCompleted = true
+            await this.saveResourceKeywordParams(task.source, task.keyword, task.params)
+            this.logger.info(`任务 ${task.source}-${task.keyword} 已完成`)
+          }
+        } catch (err) {
+          this.logger.warn(`检查任务 ${task.source}-${task.keyword} 是否完成时出错: ${err.message}`)
+          // 即使检查失败，也认为可能有更新
+          hasUpdates = true
+        }
+      }
+
+      // 如果有更新，重置任务完成状态
+      if (hasUpdates && this.downloadParams.isTaskCompleted) {
+        this.downloadParams.isTaskCompleted = false
+        await this.saveDownloadParams()
+      }
+
+      // 如果有成功的下载任务，发送系统通知
+      if (successfulTasks.length > 0) {
+        // 发送系统通知
+        const notification = new Notification({
+          title: t('messages.downloadTask'),
+          body: t('messages.downloadTaskDone')
+        })
+        notification.show()
+      }
+
+      // 清理不再使用的资源-关键词组合参数
+      await this.cleanupUnusedResourceKeywordParams(downloadSources, currentKeywords)
     } catch (err) {
       this.logger.error(`下载壁纸失败: error => ${err}`)
+    }
+  }
+
+  // 获取特定资源-关键词组合的参数
+  async getResourceKeywordParams(source, keyword) {
+    try {
+      const key = `download_params_${source}_${keyword}`
+      const res = await this.dbManager.getSysRecord(key)
+      if (res.success && res.data?.storeData) {
+        return res.data.storeData
+      }
+    } catch (err) {
+      this.logger.error(`加载资源${source}关键词${keyword}参数失败: ${err}`)
+    }
+
+    // 默认参数
+    return {
+      startPage: 1,
+      pageSize: 10,
+      isCompleted: false
+    }
+  }
+
+  // 保存特定资源-关键词组合的参数
+  async saveResourceKeywordParams(source, keyword, params) {
+    try {
+      const key = `download_params_${source}_${keyword}`
+      await this.dbManager.setSysRecord(key, params, 'object')
+      this.logger.info(`保存资源${source}关键词${keyword}参数成功:`, params)
+      return true
+    } catch (err) {
+      this.logger.error(`保存资源${source}关键词${keyword}参数失败: ${err}`)
+      return false
+    }
+  }
+
+  // 清理不再使用的资源-关键词组合参数
+  async cleanupUnusedResourceKeywordParams(currentSources, currentKeywords) {
+    try {
+      // 获取所有存储的资源-关键词参数键
+      const allKeysRes = await this.dbManager.getAllKeys()
+      if (!allKeysRes.success) {
+        throw new Error('获取所有键失败')
+      }
+
+      const resourceKeywordParamKeys = allKeysRes.data.filter((key) =>
+        key.startsWith('download_params_')
+      )
+
+      // 删除不再使用的参数
+      for (const key of resourceKeywordParamKeys) {
+        const parts = key.split('_')
+        if (parts.length >= 4) {
+          const source = parts[2]
+          const keyword = parts.slice(3).join('_') // 关键词可能包含下划线
+
+          // 检查这个组合是否还在当前设置中
+          const isSourceInUse = currentSources.includes(source)
+          const isKeywordInUse = currentKeywords.includes(keyword)
+
+          // 如果资源或关键词已不在使用中，则删除相关参数
+          if (!isSourceInUse || !isKeywordInUse) {
+            await this.dbManager.removeSysRecord(`download_params_${source}_${keyword}`)
+            this.logger.info(`清理无用的资源${source}关键词${keyword}参数`)
+          }
+        }
+      }
+    } catch (err) {
+      this.logger.error(`清理无用的资源-关键词参数失败: ${err}`)
+    }
+  }
+
+  // 下载特定资源-关键词组合的批次
+  async downloadResourceKeywordBatch(source, keyword, params, orientation) {
+    try {
+      const res = await this.searchWallpaperWithDownload({
+        resourceName: source,
+        keywords: keyword,
+        orientation: orientation,
+        startPage: params.startPage,
+        pageSize: params.pageSize
+      })
+
+      return res && res.success
+    } catch (err) {
+      this.logger.error(`下载资源${source}关键词${keyword}失败: ${err}`)
+      // 检查是否是网络错误，决定是否重试
+      if (err.code === 'ENOTFOUND' || err.code === 'ECONNREFUSED' || err.code === 'ECONNRESET') {
+        // 网络错误，可以考虑重试
+        this.logger.info(`网络错误，可考虑重试资源${source}关键词${keyword}`)
+      }
       return false
     }
   }

@@ -1035,12 +1035,31 @@ export default class Store {
   }
 
   restartDownloadTask(oldData, newData) {
-    if (
+    // 检查是否需要重启下载任务
+    const shouldRestart =
       oldData.autoDownload !== newData.autoDownload ||
       oldData.downloadIntervalUnit !== newData.downloadIntervalUnit ||
-      oldData.downloadIntervalTime !== newData.downloadIntervalTime
-    ) {
+      oldData.downloadIntervalTime !== newData.downloadIntervalTime ||
+      // 当下载源或关键词发生变化时，重置任务完成状态
+      JSON.stringify(oldData.downloadSources || []) !==
+        JSON.stringify(newData.downloadSources || []) ||
+      JSON.stringify(oldData.downloadKeywords || []) !==
+        JSON.stringify(newData.downloadKeywords || [])
+
+    if (shouldRestart) {
       this.stopDownloadTask()
+      // 如果下载源或关键词发生变化，通知WallpaperManager重置任务状态
+      if (
+        JSON.stringify(oldData.downloadSources || []) !==
+          JSON.stringify(newData.downloadSources || []) ||
+        JSON.stringify(oldData.downloadKeywords || []) !==
+          JSON.stringify(newData.downloadKeywords || [])
+      ) {
+        // 通知WallpaperManager重置下载参数
+        if (this.wallpaperManager) {
+          this.wallpaperManager.resetDownloadTaskCompletedStatus()
+        }
+      }
       if (newData.autoDownload) {
         this.startDownloadTask()
       }

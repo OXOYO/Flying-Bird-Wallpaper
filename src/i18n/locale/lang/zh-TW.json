@@ -318,7 +318,9 @@
     "loadingMore": "載入更多...",
     "invalidIndex": "請輸入有效的序號",
     "indexOutOfRange": "序號超出範圍",
-    "indexTooLarge": "序號過大"
+    "indexTooLarge": "序號過大",
+    "downloadTask": "下載任務",
+    "downloadTaskDone": "下載任務完成！"
   },
   "resourceTypeList": {
     "localResource": "本地資源",

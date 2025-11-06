@@ -187,7 +187,7 @@ export const defaultSettingData = {
   autoDownload: false,
   downloadSources: [],
   downloadOrientation: [],
-  downloadKeywords: '',
+  downloadKeywords: [],
   downloadIntervalTime: 15,
   downloadIntervalUnit: 'm',
   downloadFolder: '',

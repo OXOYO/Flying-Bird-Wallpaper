@@ -318,7 +318,9 @@
     "loadingMore": "Загрузить еще...",
     "invalidIndex": "Введите допустимый индекс",
     "indexOutOfRange": "Индекс вне диапазона",
-    "indexTooLarge": "Индекс слишком большой"
+    "indexTooLarge": "Индекс слишком большой",
+    "downloadTask": "Задача загрузки",
+    "downloadTaskDone": "Задача загрузки завершена!"
   },
   "resourceTypeList": {
     "localResource": "Локальные ресурсы",

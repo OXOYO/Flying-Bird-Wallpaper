@@ -437,4 +437,58 @@ export default class DatabaseManager {
 
     return ret
   }
+
+  // 获取所有sys表的键
+  async getAllKeys() {
+    let ret = {
+      success: false,
+      message: t('messages.operationFail'),
+      data: []
+    }
+
+    try {
+      const query_stmt = this.db.prepare(`SELECT storeKey FROM fbw_sys`)
+      const query_res = query_stmt.all()
+
+      if (query_res) {
+        ret.success = true
+        ret.message = t('messages.operationSuccess')
+        ret.data = query_res.map((row) => row.storeKey)
+      }
+    } catch (err) {
+      this.logger.error(`获取所有键失败: ${err.message}`)
+    }
+
+    return ret
+  }
+
+  // 删除sys表数据
+  async removeSysRecord(storeKey) {
+    let ret = {
+      success: false,
+      message: t('messages.operationFail')
+    }
+
+    if (!storeKey) {
+      return ret
+    }
+
+    try {
+      const delete_stmt = this.db.prepare(`DELETE FROM fbw_sys WHERE storeKey = ?`)
+      const delete_result = delete_stmt.run(storeKey)
+
+      if (delete_result.changes > 0) {
+        ret = {
+          success: true,
+          message: t('messages.operationSuccess')
+        }
+      } else {
+        this.logger.error(`删除失败: tableName => fbw_sys, storeKey => ${storeKey}`)
+      }
+    } catch (err) {
+      this.logger.error(`删除数据失败: ${err.message}`)
+    }
+
+    return ret
+  }
 }

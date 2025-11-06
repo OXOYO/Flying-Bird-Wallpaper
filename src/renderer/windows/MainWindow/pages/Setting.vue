@@ -39,7 +39,9 @@ const activeTab = ref('baseSetting')
 const baseSettingsScrollbarRef = ref(null)
 const settingDataFormRef = ref(null)
 const privacyPasswordFormRef = ref(null)
-const settingDataForm = reactive(toRaw(settingData.value))
+const settingDataForm = reactive({
+  ...toRaw(settingStore.settingData)
+})
 const privacyPasswordForm = reactive({
   old: '',
   new: ''
@@ -358,6 +360,25 @@ const handlePasswordInput = (field, val) => {
 const togglePasswordView = (field) => {
   privacyPasswordView[field] = !privacyPasswordView[field]
 }
+
+// 处理下载关键词变化
+const onDownloadKeywordsChange = (val) => {
+  if (Array.isArray(val)) {
+    // 去左右空格并去重
+    const processed = val
+      .map((item) => (typeof item === 'string' ? item.trim() : String(item)))
+      .filter((item) => item.length > 0)
+      .filter((item, index, self) => self.indexOf(item) === index)
+
+    // 限制最多5个关键词
+    const limited = processed.slice(0, 5)
+
+    // 更新数据
+    settingDataForm.downloadKeywords = limited
+  }
+  onSettingDataFormChange()
+}
+
 const onTabChange = (tab) => {
   let formEl
   switch (tab.paneName) {
@@ -1020,13 +1041,14 @@ onBeforeUnmount(() => {
               :label="t('pages.Setting.settingDataForm.downloadKeywords.label')"
               prop="downloadKeywords"
             >
-              <el-input
+              <el-input-tag
                 v-model="settingDataForm.downloadKeywords"
                 :disabled="!settingDataForm.downloadSources.length"
                 clearable
                 :placeholder="t('pages.Setting.settingDataForm.downloadKeywords.placeholder')"
                 style="max-width: 450px"
-                @change="onSettingDataFormChange"
+                :max="5"
+                @change="onDownloadKeywordsChange"
               />
             </el-form-item>
             <el-form-item
