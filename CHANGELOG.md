@@ -1,3 +1,14 @@
+## [1.3.4](https://github.com/OXOYO/Flying-Bird-Wallpaper/compare/v1.3.3...v1.3.4) (2025-12-22)
+
+
+### Features
+
+* 支持复制H5 URL ([baf348d](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/baf348d4e0bba7e9c6b83df0f1d9cf56a28f89d8))
+* 收藏夹、回忆菜单支持搜索 ([23ea659](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/23ea659671678833e1ae82bc6108e1d517bd6bc6))
+* 远程资源下载支持多关键词 ([e8e39dc](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/e8e39dc8769c0e88526788d05f1ca5898c0ea498))
+
+
+
 ## [1.3.3](https://github.com/OXOYO/Flying-Bird-Wallpaper/compare/v1.3.2...v1.3.3) (2025-10-29)
 
 
