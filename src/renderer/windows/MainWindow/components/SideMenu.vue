@@ -5,6 +5,8 @@ import UseSettingStore from '@renderer/stores/settingStore.js'
 import UseWordsStore from '@renderer/stores/wordsStore.js'
 import iconLogo from '@resources/icons/icon_64x64.png'
 import QRCode from 'qrcode'
+import clipboard from 'clipboardy'
+import { useTranslation } from 'i18next-vue'
 
 const menuStore = UseMenuStore()
 const settingStore = UseSettingStore()
@@ -15,6 +17,8 @@ const { settingData } = storeToRefs(settingStore)
 const { wordDrawerVisible } = storeToRefs(wordsStore)
 const { toggleWordDrawerVisible } = wordsStore
 const { commonData } = storeToRefs(commonStore)
+
+const { t } = useTranslation()
 
 const hoverMenu = ref(null)
 
@@ -88,6 +92,26 @@ const onOutMenu = () => {
 const onToolClick = async (funcName) => {
   if (typeof window.FBW[funcName] === 'function') {
     await window.FBW[funcName]()
+  }
+}
+
+const onCopyH5ServerUrl = () => {
+  const { h5ServerUrl } = commonData.value
+  if (h5ServerUrl) {
+    clipboard
+      .write(h5ServerUrl)
+      .then(() => {
+        ElMessage({
+          type: 'success',
+          message: t('messages.copySuccess')
+        })
+      })
+      .catch(() => {
+        ElMessage({
+          type: 'error',
+          message: t('messages.copyFail')
+        })
+      })
   }
 }
 </script>
@@ -164,9 +188,17 @@ const onToolClick = async (funcName) => {
                 </div>
               </template>
             </el-image>
-            <el-link :href="commonData.h5ServerUrl" target="_blank" style="height: 20px">
-              {{ commonData.h5ServerUrl }}
-            </el-link>
+            <div class="qr-code-link">
+              <el-link :href="commonData.h5ServerUrl" target="_blank" style="height: 20px">
+                {{ commonData.h5ServerUrl }}
+              </el-link>
+              <IconifyIcon
+                v-if="commonData.h5ServerUrl"
+                class="qr-code-copy"
+                icon="ep:document-copy"
+                @click="onCopyH5ServerUrl"
+              />
+            </div>
             <div class="qr-code-title">{{ $t('qrCode.notice') }}</div>
             <el-button
               v-if="commonData.h5ServerUrl"
@@ -363,6 +395,28 @@ const onToolClick = async (funcName) => {
   }
   .qr-code-error {
     color: #f56c6c;
+  }
+
+  .qr-code-link {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+  }
+
+  .qr-code-copy {
+    margin-left: 5px;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--el-color-primary);
+    }
+    &:active {
+      opacity: 0.6;
+    }
   }
 
   .qr-code-title {
