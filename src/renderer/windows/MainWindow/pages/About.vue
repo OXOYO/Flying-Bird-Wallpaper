@@ -34,7 +34,14 @@ const openUrl = (url) => {
           </el-link>
         </el-form-item>
         <el-form-item :label="$t('pages.About.version')">
-          <span>{{ appInfo.version }}</span>
+          <el-link
+            type="primary"
+            :herf="appInfo.releases"
+            target="_blank"
+            @click="openUrl(appInfo.releases)"
+          >
+            {{ appInfo.version }}
+          </el-link>
         </el-form-item>
         <el-form-item :label="$t('pages.About.github')">
           <el-link
