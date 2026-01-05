@@ -112,8 +112,8 @@ const createGallery = () => {
       const imageWidth = image.naturalWidth
       const imageHeight = image.naturalHeight
 
-      // 计算适合的缩放比例，使图片完全填充容器（可能裁剪部分内容）
-      const scale = Math.max(containerWidth / imageWidth, containerHeight / imageHeight)
+      // 计算适合的缩放比例，使图片完全显示
+      const scale = Math.min(containerWidth / imageWidth, containerHeight / imageHeight)
 
       // 应用缩放
       gallery.zoomTo(scale)

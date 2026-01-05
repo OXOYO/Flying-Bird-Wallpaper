@@ -2013,7 +2013,7 @@ onBeforeUnmount(() => {
     width: 100%;
     height: 100%;
     background-color: rgba(149, 212, 117, 0.8);
-    z-index: 11;
+    z-index: 1;
     animation: fadeOut 0.3s forwards;
   }
 }
@@ -2029,7 +2029,7 @@ onBeforeUnmount(() => {
     width: 100%;
     height: 100%;
     background-color: rgba(248, 152, 152, 0.8);
-    z-index: 11;
+    z-index: 1;
     animation: fadeOut 0.3s forwards;
   }
 }
