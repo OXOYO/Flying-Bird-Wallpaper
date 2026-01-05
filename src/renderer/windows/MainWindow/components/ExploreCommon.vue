@@ -431,13 +431,15 @@ const cardItemBtns = computed(() => {
       title: t('exploreCommon.setAsWallpaperWithDownload'),
       action: 'setAsWallpaperWithDownload',
       icon: 'lucide:wallpaper'
-    },
-    {
+    }
+  ]
+  if (item.fileType === 'image') {
+    ret.push({
       title: t('exploreCommon.doViewImage'),
       action: 'doViewImage',
       icon: 'material-symbols:preview'
-    }
-  ]
+    })
+  }
   if (item.isFavorite) {
     ret.push({
       title: t('exploreCommon.removeFavorites'),
@@ -993,7 +995,10 @@ const getNextList = async () => {
             }
             // 处理视频URL
             if (isVideo) {
-              item.isPlaying = false
+              // 初始化播放状态
+              if (typeof item.isPlaying === 'undefined') {
+                item.isPlaying = false
+              }
               if (item.srcType === 'file') {
                 item.videoSrc = `fbwtp://fbw/api/videos/get?filePath=${item.filePath}`
               } else {
@@ -1376,18 +1381,82 @@ const onOutBtn = () => {
 const toggleVideo = (item, index) => {
   const video = videoRefs.value[index]
   window.videoSrc = video?.src
+  console.log(
+    'toggleVideo',
+    video,
+    video?.paused,
+    video?.currentTime,
+    video?.duration,
+    item.videoSrc,
+    videoSrc
+  )
   if (!video) return
   try {
     if (video.paused) {
-      item.isPlaying = true
-      video.play()
+      // 设置播放状态
+      cardList.value[index].isPlaying = true
+      const playPromise = video.play()
+      // 如果 play() 返回 Promise，则处理可能的错误
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          console.error('Video play error:', err)
+          cardList.value[index].isPlaying = false
+        })
+      }
     } else {
-      item.isPlaying = false
+      // 暂停视频并更新状态
+      cardList.value[index].isPlaying = false
       video.pause()
     }
   } catch (err) {
-    console.error(err)
+    console.error('Video toggle error:', err)
+    cardList.value[index].isPlaying = false
   }
+}
+
+const onVideoEnded = (item, index) => {
+  const video = videoRefs.value[index]
+  console.log(
+    'onVideoEnded',
+    video,
+    video?.paused,
+    video?.currentTime,
+    video?.duration,
+    item.videoSrc,
+    videoSrc
+  )
+  if (!video) return
+  video.currentTime = 0
+  if (cardList.value[index].isPlaying) {
+    cardList.value[index].isPlaying = false
+  }
+}
+
+const onVideoError = (item, index) => {
+  const video = videoRefs.value[index]
+  if (video) {
+    console.error('Video Error Details:', {
+      errorCode: video.error?.code,
+      errorMessage: getVideoErrorMessage(video.error?.code),
+      videoSrc: video.src,
+      videoElement: video,
+      item: item,
+      index: index
+    })
+  } else {
+    console.error('Video Error - Cannot access video element', { item, index })
+  }
+}
+
+// 获取视频错误信息的辅助函数
+const getVideoErrorMessage = (errorCode) => {
+  const errorMessages = {
+    1: 'MEDIA_ERR_ABORTED: 取消加载',
+    2: 'MEDIA_ERR_NETWORK: 网络错误',
+    3: 'MEDIA_ERR_DECODE: 解码错误',
+    4: 'MEDIA_ERR_SRC_NOT_SUPPORTED: 不支持的媒体格式'
+  }
+  return errorMessages[errorCode] || `未知错误 (${errorCode})`
 }
 
 const onTriggerActionCallback = (event, action, params) => {
@@ -1706,6 +1775,7 @@ onBeforeUnmount(() => {
                 >
                   <IconifyIcon icon="ep:star-filled" />
                 </div>
+                <div class="tag-item">{{ item.fileType }}</div>
               </div>
               <div v-if="item.fileType === 'image'" class="card-item-image-wrapper">
                 <!-- 高清图 -->
@@ -1727,14 +1797,26 @@ onBeforeUnmount(() => {
               <!-- 视频 -->
               <div v-else-if="item.fileType === 'video'" class="card-item-video-wrapper">
                 <video
-                  :ref="(el) => (videoRefs[index] = el)"
+                  :ref="
+                    (el) => {
+                      if (el) {
+                        videoRefs[index] = el
+                      } else {
+                        // 当元素被销毁时清理引用
+                        if (videoRefs[index]) {
+                          delete videoRefs[index]
+                        }
+                      }
+                    }
+                  "
                   class="card-item-video-player"
                   :src="item.videoSrc"
                   :poster="item.imageSrc"
                   preload="metadata"
                   muted
                   loop
-                  @dblclick="doViewImage(item, index, true)"
+                  @ended="onVideoEnded(item, index)"
+                  @error="onVideoError(item, index)"
                 ></video>
                 <IconifyIcon
                   class="card-item-video-btn"

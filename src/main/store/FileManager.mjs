@@ -43,8 +43,8 @@ export default class FileManager {
       this.preparedStatements = {
         insertResource: this.db.prepare(
           `INSERT OR IGNORE INTO fbw_resources
-            (resourceName, fileName, filePath, fileExt, fileSize, atimeMs, mtimeMs, ctimeMs) VALUES
-            (@resourceName, @fileName, @filePath, @fileExt, @fileSize, @atimeMs, @mtimeMs, @ctimeMs)`
+            (resourceName, fileName, filePath, fileExt, fileType, fileSize, atimeMs, mtimeMs, ctimeMs) VALUES
+            (@resourceName, @fileName, @filePath, @fileExt, @fileType, @fileSize, @atimeMs, @mtimeMs, @ctimeMs)`
         )
       }
     }
@@ -164,8 +164,8 @@ export default class FileManager {
           this.preparedStatements?.insertResource ||
           this.db.prepare(
             `INSERT OR IGNORE INTO fbw_resources
-              (resourceName, fileName, filePath, fileExt, fileSize, atimeMs, mtimeMs, ctimeMs) VALUES
-              (@resourceName, @fileName, @filePath, @fileExt, @fileSize, @atimeMs, @mtimeMs, @ctimeMs)`
+              (resourceName, fileName, filePath, fileExt, fileType, fileSize, atimeMs, mtimeMs, ctimeMs) VALUES
+              (@resourceName, @fileName, @filePath, @fileExt, @fileType, @fileSize, @atimeMs, @mtimeMs, @ctimeMs)`
           )
 
         // 记录插入成功的数量
@@ -183,16 +183,19 @@ export default class FileManager {
 
         // 尝试执行事务，批量插入资源
         transaction(
-          list.map((item) => ({
-            resourceName: item.resourceName,
-            fileName: item.fileName,
-            filePath: item.filePath,
-            fileExt: item.fileExt,
-            fileSize: item.fileSize,
-            atimeMs: item.atimeMs,
-            mtimeMs: item.mtimeMs,
-            ctimeMs: item.ctimeMs
-          }))
+          list.map((item) => {
+            return {
+              resourceName: item.resourceName,
+              fileName: item.fileName,
+              filePath: item.filePath,
+              fileExt: item.fileExt,
+              fileType: item.fileType || 'image',
+              fileSize: item.fileSize,
+              atimeMs: item.atimeMs,
+              mtimeMs: item.mtimeMs,
+              ctimeMs: item.ctimeMs
+            }
+          })
         )
         this.logger.info(
           `读取目录文件，批量插入资源事务执行成功: tableName => fbw_resources, list.length => ${list.length}`

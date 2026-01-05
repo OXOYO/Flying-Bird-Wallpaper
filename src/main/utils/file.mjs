@@ -4,7 +4,42 @@ import sharp from 'sharp'
 import cache from '../cache.mjs'
 import { mimeTypes } from '../../common/publicData.js'
 
-export const handleFileResponse = async (query) => {
+// 处理视频响应的函数
+export const handleVideoResponse = async ({ filePath }) => {
+  const ret = {
+    status: 404,
+    headers: {},
+    data: null
+  }
+  try {
+    // 获取文件信息
+    const stats = await fs.promises.stat(filePath)
+    const extension = path.extname(filePath).toLowerCase()
+    const mimeType = mimeTypes[extension] || 'video/mp4'
+
+    // 创建文件流
+    const streamData = fs.createReadStream(filePath)
+
+    // 设置响应头
+    const headers = {
+      'Content-Type': mimeType,
+      'Content-Length': stats.size,
+      'Cache-Control': 'max-age=3600',
+      'Last-Modified': stats.mtime.toUTCString(),
+      ETag: `"${stats.mtimeMs}-${stats.size}"`
+    }
+
+    ret.status = 200
+    ret.headers = headers
+    ret.data = streamData
+    return ret
+  } catch (err) {
+    console.error('Video file error:', err)
+    return ret
+  }
+}
+
+export const handleImageResponse = async (query) => {
   const ret = {
     status: 404,
     headers: {},

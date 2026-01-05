@@ -31,7 +31,7 @@ import {
   calculateImageQuality,
   getIconPath
 } from './utils/utils.mjs'
-import { handleFileResponse } from './utils/file.mjs'
+import { handleImageResponse, handleVideoResponse } from './utils/file.mjs'
 import ApiBase from './ApiBase.js'
 // import setMacDynamicWallpaper from './utils/setMacDynamicWallpaper.mjs'
 import { t } from '../i18n/server.js'
@@ -367,14 +367,14 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
           const w = urlObj.searchParams.get('w')
           const h = urlObj.searchParams.get('h')
 
-          const res = await handleFileResponse({ filePath, w, h })
+          const res = await handleImageResponse({ filePath, w, h })
           return new Response(res.data, {
             status: res.status,
             headers: res.headers
           })
         }
         case '/api/videos/get': {
-          const res = await handleFileResponse({ filePath })
+          const res = await handleVideoResponse({ filePath })
           console.log('api/videos/get', filePath, res.status)
           return new Response(res.data, {
             status: res.status,
