@@ -1,5 +1,4 @@
 /* eslint-env node */
-import { readFileSync } from 'fs'
 import js from '@eslint/js'
 import vue from 'eslint-plugin-vue'
 import electronToolkit from '@electron-toolkit/eslint-config'
