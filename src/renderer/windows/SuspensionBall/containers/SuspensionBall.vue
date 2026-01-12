@@ -105,8 +105,8 @@ onBeforeUnmount(() => {
             ]"
             :icon="
               settingData.autoSwitchWallpaper
-                ? 'material-symbols:pause-circle-outline-rounded'
-                : 'material-symbols:play-circle-outline-rounded'
+                ? 'custom:pause-circle-outline-rounded'
+                : 'custom:play-circle-outline-rounded'
             "
           />
         </el-button>
@@ -116,7 +116,7 @@ onBeforeUnmount(() => {
           link
           @click="onToolClick('nextWallpaper')"
         >
-          <IconifyIcon class="tool-btn-icon" icon="material-symbols:skip-next-outline-rounded" />
+          <IconifyIcon class="tool-btn-icon" icon="custom:skip-next-outline-rounded" />
         </el-button>
         <el-button
           class="tool-btn"
@@ -124,10 +124,7 @@ onBeforeUnmount(() => {
           link
           @click="onToolClick('prevWallpaper')"
         >
-          <IconifyIcon
-            class="tool-btn-icon"
-            icon="material-symbols:skip-previous-outline-rounded"
-          />
+          <IconifyIcon class="tool-btn-icon" icon="custom:skip-previous-outline-rounded" />
         </el-button>
         <el-button
           class="tool-btn tool-btn-close"
@@ -135,7 +132,7 @@ onBeforeUnmount(() => {
           link
           @click="onToolClick('closeSuspensionBall')"
         >
-          <IconifyIcon class="tool-btn-icon" icon="ep:circle-close" />
+          <IconifyIcon class="tool-btn-icon" icon="custom:circle-close" />
         </el-button>
       </div>
     </div>

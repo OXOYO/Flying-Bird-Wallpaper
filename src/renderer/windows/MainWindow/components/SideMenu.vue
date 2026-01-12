@@ -163,7 +163,7 @@ const onCopyH5ServerUrl = () => {
         <IconifyIcon
           class="footer-btn-icon"
           :class="{ active: wordDrawerVisible }"
-          icon="ep:mostly-cloudy"
+          icon="custom:cloud"
         />
       </el-button>
       <el-tooltip effect="light" placement="right" :offset="20" trigger="click">
@@ -171,7 +171,7 @@ const onCopyH5ServerUrl = () => {
           <IconifyIcon
             class="footer-btn-icon"
             :class="{ active: commonData?.h5ServerUrl }"
-            icon="mdi:qrcode"
+            icon="custom:qrcode"
           />
         </el-button>
         <template #content>
@@ -195,7 +195,7 @@ const onCopyH5ServerUrl = () => {
               <IconifyIcon
                 v-if="commonData.h5ServerUrl"
                 class="qr-code-copy"
-                icon="ep:document-copy"
+                icon="custom:copy"
                 @click="onCopyH5ServerUrl"
               />
             </div>
@@ -240,8 +240,8 @@ const onCopyH5ServerUrl = () => {
           :class="{ active: settingData.autoSwitchWallpaper }"
           :icon="
             settingData.autoSwitchWallpaper
-              ? 'material-symbols:pause-circle-outline-rounded'
-              : 'material-symbols:play-circle-outline-rounded'
+              ? 'custom:pause-circle-outline-rounded'
+              : 'custom:play-circle-outline-rounded'
           "
         />
       </el-button>
@@ -251,7 +251,7 @@ const onCopyH5ServerUrl = () => {
         link
         @click="onToolClick('nextWallpaper')"
       >
-        <IconifyIcon class="footer-btn-icon" icon="material-symbols:skip-next-outline-rounded" />
+        <IconifyIcon class="footer-btn-icon" icon="custom:skip-next-outline-rounded" />
       </el-button>
       <el-button
         class="side-footer-btn"
@@ -259,10 +259,7 @@ const onCopyH5ServerUrl = () => {
         link
         @click="onToolClick('prevWallpaper')"
       >
-        <IconifyIcon
-          class="footer-btn-icon"
-          icon="material-symbols:skip-previous-outline-rounded"
-        />
+        <IconifyIcon class="footer-btn-icon" icon="custom:skip-previous-outline-rounded" />
       </el-button>
     </div>
   </div>

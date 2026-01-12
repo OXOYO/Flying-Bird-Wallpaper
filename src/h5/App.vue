@@ -36,9 +36,9 @@ const pages = {
 const pageRef = ref(null)
 
 const tabbarList = [
-  { name: 'home', title: '首页', locale: 'h5.tabbar.home', icon: 'ri:home-3-line' },
-  { name: 'search', title: '搜索', locale: 'h5.tabbar.search', icon: 'ri:search-line' },
-  { name: 'setting', title: '设置', locale: 'h5.tabbar.setting', icon: 'ri:settings-line' }
+  { name: 'home', title: '首页', locale: 'h5.tabbar.home', icon: 'custom:home-3-line' },
+  { name: 'search', title: '搜索', locale: 'h5.tabbar.search', icon: 'custom:search' },
+  { name: 'setting', title: '设置', locale: 'h5.tabbar.setting', icon: 'custom:settings' }
 ]
 
 // 默认tab: 首页
@@ -237,7 +237,7 @@ onUnmounted(() => {
           {{ t(item.locale) }}
           <template #icon>
             <IconifyIcon
-              :icon="loadingTab === item.name ? 'ri:loader-4-line' : item.icon"
+              :icon="loadingTab === item.name ? 'custom:loading' : item.icon"
               :class="{ 'loading-spin': loadingTab === item.name }"
             />
           </template>

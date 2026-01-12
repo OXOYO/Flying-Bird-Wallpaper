@@ -46,7 +46,12 @@ export default defineConfig({
     }),
     liveReload(['src/h5/**/*']), // 监听 src 目录下的文件变化
     Icons({
-      compiler: 'vue3'
+      compiler: 'vue3',
+      autoInstall: true,
+      // 使用本地图标数据，避免网络请求
+      customCollections: {
+        'custom': './src/assets/icons/custom/icons.json'
+      }
     }),
     viteCompression()
     // analyzer()

@@ -86,7 +86,12 @@ export default defineConfig({
       }),
       // 图标按需加载
       Icons({
-        compiler: 'vue3'
+        compiler: 'vue3',
+        autoInstall: true,
+        // 使用本地图标数据，避免网络请求
+        customCollections: {
+          'custom': './src/assets/icons/custom/icons.json'
+        }
       }),
       // 代码压缩
       viteCompression()

@@ -50,7 +50,7 @@ onBeforeUnmount(() => {
       >
         <IconifyIcon
           class="expand-btn-icon"
-          :icon="settingData.expandSideMenu ? 'ep:caret-left' : 'ep:caret-right'"
+          :icon="settingData.expandSideMenu ? 'custom:caret-left' : 'custom:caret-right'"
         />
       </div>
     </el-aside>

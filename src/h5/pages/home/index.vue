@@ -1417,7 +1417,7 @@ const jumpToIndex = async () => {
     >
       <IconifyIcon
         class="floating-button-icon"
-        :icon="settingData.h5AutoSwitch ? 'ri:pause-large-fill' : 'ri:play-large-fill'"
+        :icon="settingData.h5AutoSwitch ? 'custom:pause-fill' : 'custom:play-fill'"
       />
     </div>
 
@@ -1438,7 +1438,7 @@ const jumpToIndex = async () => {
     >
       <IconifyIcon
         class="floating-button-icon"
-        :icon="isRandom ? 'ri:shuffle-line' : 'ri:repeat-line'"
+        :icon="isRandom ? 'custom:shuffle-line' : 'custom:repeat-line'"
         style="transform: scale(0.9)"
       />
     </div>
@@ -1453,7 +1453,7 @@ const jumpToIndex = async () => {
     >
       <IconifyIcon
         class="floating-button-icon"
-        :icon="isCurrentFavorite ? 'ri:star-fill' : 'ri:star-line'"
+        :icon="isCurrentFavorite ? 'custom:star-fill' : 'custom:star'"
         :style="{ color: isCurrentFavorite ? 'gold' : '' }"
       />
     </div>
@@ -1468,8 +1468,8 @@ const jumpToIndex = async () => {
         class="floating-button-icon"
         :icon="
           settingData.h5ImageDisplaySize === 'cover'
-            ? 'ri:collapse-diagonal-line'
-            : 'ri:expand-diagonal-line'
+            ? 'custom:collapse-diagonal-line'
+            : 'custom:expand-diagonal-line'
         "
       />
     </div>
@@ -1482,7 +1482,7 @@ const jumpToIndex = async () => {
     >
       <IconifyIcon
         class="floating-button-icon"
-        :icon="tabbarVisible ? 'ri:home-3-line' : 'ri:home-2-line'"
+        :icon="tabbarVisible ? 'custom:home-3-line' : 'custom:home-2-line'"
       />
     </div>
 
@@ -1492,7 +1492,7 @@ const jumpToIndex = async () => {
       class="floating-button"
       @click="onBackTop"
     >
-      <IconifyIcon class="floating-button-icon" icon="tdesign:backtop" />
+      <IconifyIcon class="floating-button-icon" icon="custom:backtop" />
     </div>
   </div>
 
@@ -1506,19 +1506,19 @@ const jumpToIndex = async () => {
     <div class="action-popup-content">
       <div class="action-item" @click="showImageInfo">
         <div class="action-icon-wrapper">
-          <IconifyIcon class="action-icon-inner" icon="ri:information-line" />
+          <IconifyIcon class="action-icon-inner" icon="custom:info-line" />
         </div>
         <span class="action-label">{{ t('h5.pages.home.actions.imageInfo') }}</span>
       </div>
       <div class="action-item" @click="saveImage">
         <div class="action-icon-wrapper">
-          <IconifyIcon class="action-icon-inner" icon="ri:download-line" />
+          <IconifyIcon class="action-icon-inner" icon="custom:download-line" />
         </div>
         <span class="action-label">{{ t('h5.pages.home.actions.saveImage') }}</span>
       </div>
       <div class="action-item delete-action" @click="deleteImage">
         <div class="action-icon-wrapper">
-          <IconifyIcon class="action-icon-inner" icon="ri:delete-bin-line" />
+          <IconifyIcon class="action-icon-inner" icon="custom:delete-line" />
         </div>
         <span class="action-label">{{ t('h5.pages.home.actions.deleteImage') }}</span>
       </div>

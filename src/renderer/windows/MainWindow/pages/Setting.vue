@@ -491,37 +491,25 @@ onBeforeUnmount(() => {
               <span style="vertical-align: middle">{{
                 t('pages.Setting.divider.webWallpaper')
               }}</span>
-              <IconifyIcon
-                icon="material-symbols:experiment-outline-sharp"
-                style="vertical-align: middle"
-              />
+              <IconifyIcon icon="custom:experiment-outline-sharp" style="vertical-align: middle" />
             </el-anchor-link>
             <el-anchor-link class="anchor-sub-link" href="#divider-colorWallpaper">
               <span style="vertical-align: middle">{{
                 t('pages.Setting.divider.colorWallpaper')
               }}</span>
-              <IconifyIcon
-                icon="material-symbols:experiment-outline-sharp"
-                style="vertical-align: middle"
-              />
+              <IconifyIcon icon="custom:experiment-outline-sharp" style="vertical-align: middle" />
             </el-anchor-link>
             <el-anchor-link class="anchor-sub-link" href="#divider-dynamicWallpaper">
               <span style="vertical-align: middle">{{
                 t('pages.Setting.divider.dynamicWallpaper')
               }}</span>
-              <IconifyIcon
-                icon="material-symbols:experiment-outline-sharp"
-                style="vertical-align: middle"
-              />
+              <IconifyIcon icon="custom:experiment-outline-sharp" style="vertical-align: middle" />
             </el-anchor-link>
             <el-anchor-link class="anchor-sub-link" href="#divider-rhythmWallpaper">
               <span style="vertical-align: middle">{{
                 t('pages.Setting.divider.rhythmWallpaper')
               }}</span>
-              <IconifyIcon
-                icon="material-symbols:experiment-outline-sharp"
-                style="vertical-align: middle"
-              />
+              <IconifyIcon icon="custom:experiment-outline-sharp" style="vertical-align: middle" />
             </el-anchor-link>
           </template>
         </el-anchor-link>
@@ -896,10 +884,10 @@ onBeforeUnmount(() => {
                 >
                   <template #append>
                     <el-button @click="onRemoveFolder('localResourceFolders', index)">
-                      <IconifyIcon icon="ep:minus" />
+                      <IconifyIcon icon="custom:minus" />
                     </el-button>
                     <el-button style="margin-left: 20px" @click="onOpenFolder(folderPath)">
-                      <IconifyIcon icon="ep:folder-opened" />
+                      <IconifyIcon icon="custom:folder-opened" />
                     </el-button>
                   </template>
                 </el-input>
@@ -909,7 +897,7 @@ onBeforeUnmount(() => {
                 style="width: 100%"
               >
                 <el-button @click="onAddFolder('localResourceFolders')">
-                  <IconifyIcon icon="ep:plus" />
+                  <IconifyIcon icon="custom:plus" />
                 </el-button>
               </div>
             </el-form-item>
@@ -992,7 +980,7 @@ onBeforeUnmount(() => {
                 </template>
                 <template #append>
                   <el-link :href="resourceMap.remoteResourceMap[resourceName].site" target="_blank">
-                    <IconifyIcon icon="ep:link" />
+                    <IconifyIcon icon="custom:link" />
                   </el-link>
                 </template>
               </el-input>
@@ -1068,14 +1056,14 @@ onBeforeUnmount(() => {
                     :disabled="!settingDataForm.downloadFolder"
                     @click="onRemoveFolder('downloadFolder')"
                   >
-                    <IconifyIcon icon="ep:close" />
+                    <IconifyIcon icon="custom:close" />
                   </el-button>
                   <el-button
                     :disabled="!settingDataForm.downloadFolder"
                     style="margin-left: 20px"
                     @click="onOpenFolder(settingDataForm.downloadFolder)"
                   >
-                    <IconifyIcon icon="ep:folder-opened" />
+                    <IconifyIcon icon="custom:folder-opened" />
                   </el-button>
                 </template>
               </el-input>
@@ -1161,10 +1149,7 @@ onBeforeUnmount(() => {
               <span style="vertical-align: middle">{{
                 t('pages.Setting.divider.webWallpaper')
               }}</span>
-              <IconifyIcon
-                icon="material-symbols:experiment-outline-sharp"
-                style="vertical-align: middle"
-              />
+              <IconifyIcon icon="custom:experiment-outline-sharp" style="vertical-align: middle" />
             </div>
             <el-form-item
               :label="t('pages.Setting.settingDataForm.webWallpaperUrl.label')"
@@ -1184,7 +1169,7 @@ onBeforeUnmount(() => {
                 @click="onSetWebWallpaper"
                 style="margin-left: 10px"
               >
-                <IconifyIcon icon="lucide:wallpaper" />
+                <IconifyIcon icon="custom:wallpaper" />
               </el-button>
             </el-form-item>
             <el-form-item
@@ -1230,10 +1215,7 @@ onBeforeUnmount(() => {
               <span style="vertical-align: middle">{{
                 t('pages.Setting.divider.colorWallpaper')
               }}</span>
-              <IconifyIcon
-                icon="material-symbols:experiment-outline-sharp"
-                style="vertical-align: middle"
-              />
+              <IconifyIcon icon="custom:experiment-outline-sharp" style="vertical-align: middle" />
             </div>
             <el-form-item
               :label="t('pages.Setting.settingDataForm.colorWallpaperVal.label')"
@@ -1251,7 +1233,7 @@ onBeforeUnmount(() => {
                 @click="onSetColorWallpaper"
                 style="margin-left: 10px"
               >
-                <IconifyIcon icon="lucide:wallpaper" />
+                <IconifyIcon icon="custom:wallpaper" />
               </el-button>
             </el-form-item>
 
@@ -1259,10 +1241,7 @@ onBeforeUnmount(() => {
               <span style="vertical-align: middle">{{
                 t('pages.Setting.divider.dynamicWallpaper')
               }}</span>
-              <IconifyIcon
-                icon="material-symbols:experiment-outline-sharp"
-                style="vertical-align: middle"
-              />
+              <IconifyIcon icon="custom:experiment-outline-sharp" style="vertical-align: middle" />
             </div>
             <el-form-item
               :label="t('pages.Setting.settingDataForm.dynamicLastVideoPath.label')"
@@ -1282,7 +1261,7 @@ onBeforeUnmount(() => {
                 @click="onSetDynamicWallpaper"
                 style="margin-left: 10px"
               >
-                <IconifyIcon icon="lucide:wallpaper" />
+                <IconifyIcon icon="custom:wallpaper" />
               </el-button>
             </el-form-item>
             <el-form-item
@@ -1399,10 +1378,7 @@ onBeforeUnmount(() => {
               <span style="vertical-align: middle">{{
                 t('pages.Setting.divider.rhythmWallpaper')
               }}</span>
-              <IconifyIcon
-                icon="material-symbols:experiment-outline-sharp"
-                style="vertical-align: middle"
-              />
+              <IconifyIcon icon="custom:experiment-outline-sharp" style="vertical-align: middle" />
             </div>
             <el-form-item
               :label="t('pages.Setting.settingDataForm.rhythmEffect.label')"
@@ -1426,7 +1402,7 @@ onBeforeUnmount(() => {
                 @click="onSetRhythmWallpaper"
                 style="margin-left: 10px"
               >
-                <IconifyIcon icon="lucide:wallpaper" />
+                <IconifyIcon icon="custom:wallpaper" />
               </el-button>
             </el-form-item>
             <el-form-item
@@ -1477,7 +1453,7 @@ onBeforeUnmount(() => {
                   class="color-picker-btn"
                   @click="onAddRhythmColors"
                 >
-                  <IconifyIcon icon="ep:plus" />
+                  <IconifyIcon icon="custom:plus" />
                 </el-button>
               </div>
             </el-form-item>
@@ -1835,7 +1811,7 @@ onBeforeUnmount(() => {
             >
               <template #suffix>
                 <IconifyIcon
-                  :icon="privacyPasswordView.old ? 'ep:view' : 'ep:hide'"
+                  :icon="privacyPasswordView.old ? 'custom:view' : 'custom:hide'"
                   style="cursor: pointer"
                   @mousedown="togglePasswordView('old')"
                   @mouseup="togglePasswordView('old')"
@@ -1849,7 +1825,7 @@ onBeforeUnmount(() => {
                 </div>
               </template>
               <IconifyIcon
-                icon="ep:warning-filled"
+                icon="custom:info-filled"
                 style="color: var(--el-text-color-regular); margin-left: 10px"
               />
             </el-tooltip>
@@ -1867,7 +1843,7 @@ onBeforeUnmount(() => {
             >
               <template #suffix>
                 <IconifyIcon
-                  :icon="privacyPasswordView.new ? 'ep:view' : 'ep:hide'"
+                  :icon="privacyPasswordView.new ? 'custom:view' : 'custom:hide'"
                   style="cursor: pointer"
                   @mousedown="togglePasswordView('new')"
                   @mouseup="togglePasswordView('new')"
@@ -1881,7 +1857,7 @@ onBeforeUnmount(() => {
                 </div>
               </template>
               <IconifyIcon
-                icon="ep:warning-filled"
+                icon="custom:info-filled"
                 style="color: var(--el-text-color-regular); margin-left: 10px"
               />
             </el-tooltip>

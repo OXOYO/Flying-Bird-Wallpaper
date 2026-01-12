@@ -33,7 +33,7 @@ defineExpose({
   <div v-if="flags.visible" class="view-info-wrapper">
     <div class="view-info-backdrop" @click.self="handleClose"></div>
     <div class="view-info-close" @click="handleClose">
-      <IconifyIcon class="close-icon" icon="material-symbols:close-rounded" />
+      <IconifyIcon class="close-icon" icon="custom:close-rounded" />
     </div>
     <div class="view-info-container" @click="onContainerClick">
       <div class="image-block">

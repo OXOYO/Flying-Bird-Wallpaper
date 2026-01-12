@@ -262,7 +262,7 @@ const onExec = (name) => {
           @click="onExec(item.name)"
         >
           <div class="utils-item-text">{{ $t(item.locale) }}</div>
-          <IconifyIcon class="utils-item-icon" icon="material-symbols:arrow-forward-ios-rounded" />
+          <IconifyIcon class="utils-item-icon" icon="custom:arrow-forward-ios-rounded" />
         </div>
       </div>
     </el-scrollbar>

@@ -211,9 +211,17 @@ const gridSizeList = [
   }
 ]
 const gridRatioList = [
-  { label: t('gridRatioList.square'), value: 1, icon: 'material-symbols-light:square' },
-  { label: t('gridRatioList.rectangle'), value: 0.618, icon: 'material-symbols-light:rectangle' },
-  { label: t('gridRatioList.verticalRectangle'), value: 1.618, icon: 'icon-park-solid:rectangle' }
+  { label: t('gridRatioList.square'), value: 1, icon: 'custom:square' },
+  {
+    label: t('gridRatioList.rectangle'),
+    value: 0.618,
+    icon: 'custom:rectangle-one'
+  },
+  {
+    label: t('gridRatioList.verticalRectangle'),
+    value: 1.618,
+    icon: 'custom:rectangle'
+  }
 ]
 const gridForm = reactive({
   // 格子大小
@@ -285,9 +293,7 @@ const fixedBtns = computed(() => {
     action: 'toggleFixedBtns',
     actionParams: [],
     title: t('exploreCommon.toggleFixedBtns'),
-    icon: flags.showFixedBtns
-      ? 'material-symbols:collapse-all-rounded'
-      : 'material-symbols:expand-all-rounded',
+    icon: flags.showFixedBtns ? 'custom:collapse-all-rounded' : 'custom:expand-all-rounded',
     iconStyle: {},
     style: {
       bottom: getBottom()
@@ -302,7 +308,7 @@ const fixedBtns = computed(() => {
     action: 'onLoadMore',
     actionParams: [],
     title: t('exploreCommon.onLoadMore'),
-    icon: 'ep:d-arrow-right',
+    icon: 'custom:next',
     iconStyle: {
       transform: 'rotate(90deg)'
     },
@@ -315,7 +321,7 @@ const fixedBtns = computed(() => {
     action: 'onRefresh',
     actionParams: [false],
     title: t('exploreCommon.onRefresh'),
-    icon: 'ep:refresh-right',
+    icon: 'custom:refresh_right',
     iconStyle: {},
     style: {
       bottom: getBottom()
@@ -328,7 +334,7 @@ const fixedBtns = computed(() => {
       action: 'onSwitchSortType',
       actionParams: [],
       title: searchForm.sortType > 0 ? t('sortType.asc') : t('sortType.desc'),
-      icon: searchForm.sortType > 0 ? 'lucide:sort-asc' : 'lucide:sort-desc',
+      icon: searchForm.sortType > 0 ? 'custom:sort-asc' : 'custom:sort-desc',
       iconStyle: {},
       style: {
         bottom: getBottom()
@@ -338,7 +344,7 @@ const fixedBtns = computed(() => {
       action: 'isRandom',
       actionParams: [],
       title: searchForm.isRandom ? t('exploreCommon.isRandom.on') : t('exploreCommon.isRandom.off'),
-      icon: searchForm.isRandom ? 'ri:shuffle-line' : 'ri:repeat-line',
+      icon: searchForm.isRandom ? 'custom:shuffle-line' : 'custom:repeat-line',
       iconStyle: {},
       style: {
         bottom: getBottom()
@@ -352,9 +358,7 @@ const fixedBtns = computed(() => {
       title: flags.inPrivacySpace
         ? t('exploreCommon.onTogglePrivacySpace.quit')
         : t('exploreCommon.onTogglePrivacySpace.enter'),
-      icon: flags.inPrivacySpace
-        ? 'material-symbols:door-open-outline'
-        : 'material-symbols:door-front-outline',
+      icon: flags.inPrivacySpace ? 'custom:door-open-outline' : 'custom:door-front-outline',
       iconStyle: {},
       style: {
         bottom: getBottom(),
@@ -409,7 +413,7 @@ const fixedBtns = computed(() => {
       action: 'onRefreshDirectory',
       actionParams: [],
       title: t('exploreCommon.onRefreshDirectory'),
-      icon: 'stash:folder-refresh',
+      icon: 'custom:stash_folder-refresh',
       iconStyle: {},
       style: {
         bottom: getBottom()
@@ -430,41 +434,41 @@ const cardItemBtns = computed(() => {
     {
       title: t('exploreCommon.setAsWallpaperWithDownload'),
       action: 'setAsWallpaperWithDownload',
-      icon: 'lucide:wallpaper'
+      icon: 'custom:wallpaper'
     }
   ]
   if (item.fileType === 'image') {
     ret.push({
       title: t('exploreCommon.doViewImage'),
       action: 'doViewImage',
-      icon: 'material-symbols:preview'
+      icon: 'custom:preview'
     })
   }
   if (item.isFavorite) {
     ret.push({
       title: t('exploreCommon.removeFavorites'),
       action: 'removeFavorites',
-      icon: 'ep:star-filled'
+      icon: 'custom:star-fill'
     })
   } else {
     ret.push({
       title: t('exploreCommon.addToFavorites'),
       action: 'addToFavorites',
-      icon: 'ep:star'
+      icon: 'custom:star'
     })
   }
   if (!flags.inPrivacySpace) {
     ret.push({
       title: t('exploreCommon.addToPrivacySpace'),
       action: 'addToPrivacySpace',
-      icon: 'material-symbols:privacy-tip-outline'
+      icon: 'custom:privacy-tip-outline'
     })
   }
   if (isFavoritesMenu.value && flags.inPrivacySpace) {
     ret.push({
       title: t('exploreCommon.removePrivacySpace'),
       action: 'removePrivacySpace',
-      icon: 'material-symbols:privacy-tip'
+      icon: 'custom:privacy-tip'
     })
   }
 
@@ -472,24 +476,24 @@ const cardItemBtns = computed(() => {
     ret.push({
       title: t('exploreCommon.onCopyFilePath'),
       action: 'onCopyFilePath',
-      icon: 'ep:document-copy'
+      icon: 'custom:copy'
     })
     ret.push({
       title: t('exploreCommon.onDeleteFile'),
       action: 'onDeleteFile',
-      icon: 'ri:delete-bin-line'
+      icon: 'custom:delete-line'
     })
     ret.push({
       title: t('exploreCommon.showItemInFolder'),
       action: 'showItemInFolder',
-      icon: 'ep:folder-opened'
+      icon: 'custom:folder-opened'
     })
   }
   if (item.link) {
     ret.push({
       title: t('exploreCommon.openLink'),
       action: 'openLink',
-      icon: 'ep:link'
+      icon: 'custom:link'
     })
   }
 
@@ -497,14 +501,14 @@ const cardItemBtns = computed(() => {
     ret.push({
       title: t('exploreCommon.onDownloadFile'),
       action: 'onDownloadFile',
-      icon: 'ri:download-line'
+      icon: 'custom:download-line'
     })
   }
 
   ret.push({
     title: t('exploreCommon.viewInfo'),
     action: 'onViewInfo',
-    icon: 'material-symbols:info-outline-rounded'
+    icon: 'custom:info-outline-rounded'
   })
 
   return ret
@@ -1757,7 +1761,7 @@ onBeforeUnmount(() => {
                   :title="t('orientationOptions.landscape')"
                   @click.stop="onTagClick('orientation', 1)"
                 >
-                  <IconifyIcon icon="material-symbols:crop-landscape-outline" />
+                  <IconifyIcon icon="custom:crop-landscape-outline" />
                 </div>
                 <div
                   v-else-if="item.isLandscape === 0"
@@ -1765,7 +1769,7 @@ onBeforeUnmount(() => {
                   :title="t('orientationOptions.portrait')"
                   @click.stop="onTagClick('orientation', 0)"
                 >
-                  <IconifyIcon icon="material-symbols:crop-portrait-outline" />
+                  <IconifyIcon icon="custom:crop-portrait-outline" />
                 </div>
                 <!-- 收藏 -->
                 <div
@@ -1773,7 +1777,7 @@ onBeforeUnmount(() => {
                   class="tag-item tag-item__disabled"
                   :title="t('exploreCommon.tagItem.favorited')"
                 >
-                  <IconifyIcon icon="ep:star-filled" />
+                  <IconifyIcon icon="custom:star-fill" />
                 </div>
                 <div class="tag-item">{{ item.fileType }}</div>
               </div>
@@ -1789,7 +1793,7 @@ onBeforeUnmount(() => {
                 >
                   <template #error>
                     <div class="image-error-inner">
-                      <IconifyIcon icon="material-symbols:broken-image-sharp" />
+                      <IconifyIcon icon="custom:broken-image-sharp" />
                     </div>
                   </template>
                 </el-image>
@@ -1820,11 +1824,7 @@ onBeforeUnmount(() => {
                 ></video>
                 <IconifyIcon
                   class="card-item-video-btn"
-                  :icon="
-                    item.isPlaying
-                      ? 'material-symbols:pause-circle'
-                      : 'material-symbols:play-circle'
-                  "
+                  :icon="item.isPlaying ? 'custom:pause-circle' : 'custom:play-circle'"
                   @click="toggleVideo(item, index)"
                 />
               </div>

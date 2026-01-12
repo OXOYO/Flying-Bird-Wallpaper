@@ -46,8 +46,8 @@ export const defaultResourceMap = {
 }
 
 export const resourceTypeIcons = {
-  localResource: 'material-symbols:desktop-windows-outline',
-  remoteResource: 'material-symbols:desktop-cloud-outline'
+  localResource: 'custom:desktop-windows-outline',
+  remoteResource: 'custom:desktop-cloud-outline'
 }
 
 // 资源类型分类
@@ -72,7 +72,7 @@ export const menuList = [
     name: 'Search',
     title: '搜索',
     locale: 'menuList.Search',
-    icon: 'ep:search',
+    icon: 'custom:search',
     canBeEnabled: false,
     // 放置位置
     placement: ['trayMenuChildren', 'sideMenu']
@@ -81,7 +81,7 @@ export const menuList = [
     name: 'Words',
     title: '词库',
     locale: 'menuList.Words',
-    icon: 'ep:mostly-cloudy',
+    icon: 'custom:cloud',
     canBeEnabled: true,
     placement: ['trayMenuChildren', 'sideMenu']
   },
@@ -89,7 +89,7 @@ export const menuList = [
     name: 'Favorites',
     title: '收藏',
     locale: 'menuList.Favorites',
-    icon: 'ep:star',
+    icon: 'custom:star',
     canBeEnabled: true,
     placement: ['trayMenuChildren', 'sideMenu']
   },
@@ -97,7 +97,7 @@ export const menuList = [
     name: 'History',
     title: '回忆',
     locale: 'menuList.History',
-    icon: 'ep:clock',
+    icon: 'custom:clock',
     canBeEnabled: true,
     placement: ['trayMenuChildren', 'sideMenu']
   },
@@ -105,7 +105,7 @@ export const menuList = [
     name: 'Setting',
     title: '设置',
     locale: 'menuList.Setting',
-    icon: 'ep:setting',
+    icon: 'custom:settings',
     canBeEnabled: true,
     placement: ['trayFuncMenu', 'sideMenu']
   },
@@ -113,7 +113,7 @@ export const menuList = [
     name: 'Utils',
     title: '工具',
     locale: 'menuList.Utils',
-    icon: 'ep:key',
+    icon: 'custom:tools',
     canBeEnabled: true,
     placement: ['trayFuncMenu', 'sideMenu']
   },
@@ -121,7 +121,7 @@ export const menuList = [
     name: 'About',
     title: '关于',
     locale: 'menuList.About',
-    icon: 'ep:lollipop',
+    icon: 'custom:about',
     canBeEnabled: false,
     placement: ['trayFuncMenu']
   }
@@ -356,8 +356,8 @@ export const filterTypeOptions = [
 ]
 
 export const orientationIcons = {
-  0: 'material-symbols:crop-portrait-outline',
-  1: 'material-symbols:crop-landscape-outline'
+  0: 'custom:crop-portrait-outline',
+  1: 'custom:crop-landscape-outline'
 }
 
 export const orientationOptions = [
@@ -443,12 +443,17 @@ export const dynamicScaleModeOptions = [
 
 // 自动刷新
 export const autoRefreshListOptions = [
-  { label: '开启自动刷新', locale: 'autoRefreshList.on', value: true, icon: 'lucide:refresh-cw' },
+  {
+    label: '开启自动刷新',
+    locale: 'autoRefreshList.on',
+    value: true,
+    icon: 'custom:refresh-on'
+  },
   {
     label: '关闭自动刷新',
     locale: 'autoRefreshList.off',
     value: false,
-    icon: 'lucide:refresh-cw-off'
+    icon: 'custom:refresh-off'
   }
 ]
 

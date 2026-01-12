@@ -56,7 +56,6 @@
     "@babel/eslint-parser": "^7.28.0",
     "@babel/preset-env": "^7.28.3",
     "@electron-toolkit/eslint-config": "^2.1.0",
-    "@iconify/json": "^2.2.376",
     "@iconify/vue": "^5.0.0",
     "@koa/router": "^14.0.0",
     "@rushstack/eslint-patch": "^1.12.0",
