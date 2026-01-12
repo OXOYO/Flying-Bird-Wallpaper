@@ -5,31 +5,71 @@ import cache from '../cache.mjs'
 import { mimeTypes } from '../../common/publicData.js'
 
 // 处理视频响应的函数
-export const handleVideoResponse = async ({ filePath }) => {
+export const handleVideoResponse = async ({ filePath, request }) => {
   const ret = {
     status: 404,
     headers: {},
     data: null
   }
   try {
+    // 转换文件路径（包含URL解码）
+    filePath = transFilePath(filePath)
     // 获取文件信息
     const stats = await fs.promises.stat(filePath)
     const extension = path.extname(filePath).toLowerCase()
     const mimeType = mimeTypes[extension] || 'video/mp4'
+    const fileSize = stats.size
 
-    // 创建文件流
-    const streamData = fs.createReadStream(filePath)
+    // 处理范围请求
+    let start = 0
+    let end = fileSize - 1
+    let statusCode = 200
+    let contentRange = `bytes ${start}-${end}/${fileSize}`
+    let contentLength = fileSize
+
+    // 检查是否是范围请求
+    if (request && request.headers && request.headers.get('range')) {
+      const range = request.headers.get('range')
+      const parts = range.replace(/bytes=/, '').split('-')
+      const partialStart = parts[0]
+      const partialEnd = parts[1]
+
+      start = parseInt(partialStart, 10)
+      end = partialEnd ? parseInt(partialEnd, 10) : fileSize - 1
+
+      if (start >= fileSize) {
+        // 范围无效，返回416状态码
+        ret.status = 416
+        ret.headers = {
+          'Content-Range': contentRange
+        }
+        return ret
+      }
+
+      if (end >= fileSize) {
+        end = fileSize - 1
+      }
+
+      contentLength = end - start + 1
+      contentRange = `bytes ${start}-${end}/${fileSize}`
+      statusCode = 206 // 部分内容
+    }
+
+    // 创建文件流，支持范围请求
+    const streamData = fs.createReadStream(filePath, { start, end })
 
     // 设置响应头
     const headers = {
       'Content-Type': mimeType,
-      'Content-Length': stats.size,
+      'Content-Length': contentLength,
+      'Accept-Ranges': 'bytes',
+      'Content-Range': contentRange,
       'Cache-Control': 'max-age=3600',
       'Last-Modified': stats.mtime.toUTCString(),
       ETag: `"${stats.mtimeMs}-${stats.size}"`
     }
 
-    ret.status = 200
+    ret.status = statusCode
     ret.headers = headers
     ret.data = streamData
     return ret
@@ -181,6 +221,7 @@ export const transFilePath = (filePath) => {
       filePath = '/' + filePath
     }
   }
-  filePath = decodeURIComponent(filePath)
+  // 注意：这里不再需要 decodeURIComponent，因为 URL.searchParams.get() 已经自动解码了
+  // filePath = decodeURIComponent(filePath)
   return filePath
 }

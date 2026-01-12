@@ -47,6 +47,28 @@ const cardItemStatus = reactive({
   status: null
 })
 
+// 视频播放状态管理
+const videoPlayState = reactive({
+  // 是否存在手动播放的视频
+  hasManualPlay: false,
+  // 记录每个视频的播放来源：'auto' 或 'manual'
+  playSources: new Map()
+})
+
+// 检查是否存在手动播放的视频
+const checkManualPlayStatus = () => {
+  // 遍历所有视频，检查是否有手动播放且正在播放的视频
+  for (let i = 0; i < cardList.value.length; i++) {
+    const item = cardList.value[i]
+    if (videoPlayState.playSources.get(item.uniqueKey) === 'manual' && item.isPlaying) {
+      videoPlayState.hasManualPlay = true
+      return
+    }
+  }
+  // 如果没有手动播放的视频，重置状态
+  videoPlayState.hasManualPlay = false
+}
+
 const props = defineProps({
   menu: String,
   menuParams: Object
@@ -215,12 +237,12 @@ const gridRatioList = [
   {
     label: t('gridRatioList.rectangle'),
     value: 0.618,
-    icon: 'custom:rectangle-one'
+    icon: 'custom:rectangle'
   },
   {
     label: t('gridRatioList.verticalRectangle'),
     value: 1.618,
-    icon: 'custom:rectangle'
+    icon: 'custom:rectangle-one'
   }
 ]
 const gridForm = reactive({
@@ -983,7 +1005,7 @@ const getNextList = async () => {
                 rawImageUrl = item.rawImageUrl = item.imageUrl
               } else {
                 rawImageUrl =
-                  item.rawImageUrl = `fbwtp://fbw/api/images/get?filePath=${item.filePath}`
+                  item.rawImageUrl = `fbwtp://fbw/api/images/get?filePath=${encodeURIComponent(item.filePath)}`
               }
             } else if (item.srcType === 'url') {
               rawImageUrl = item.rawImageUrl = item.imageUrl
@@ -1004,7 +1026,8 @@ const getNextList = async () => {
                 item.isPlaying = false
               }
               if (item.srcType === 'file') {
-                item.videoSrc = `fbwtp://fbw/api/videos/get?filePath=${item.filePath}`
+                // 确保文件路径被正确编码，避免URL格式问题
+                item.videoSrc = `fbwtp://fbw/api/videos/get?filePath=${encodeURIComponent(item.filePath)}`
               } else {
                 item.videoSrc = item.videoUrl
               }
@@ -1382,6 +1405,88 @@ const onOutBtn = () => {
   hoverBtnName.value = null
 }
 
+// 鼠标移入视频区域
+const onVideoMouseEnter = (item, index) => {
+  // 检查是否存在手动播放的视频
+  if (videoPlayState.hasManualPlay) {
+    return
+  }
+
+  const video = videoRefs.value[index]
+  if (!video || !video.paused) {
+    return
+  }
+
+  console.log(
+    'onVideoMouseEnter',
+    item.uniqueKey,
+    'playSource:',
+    videoPlayState.playSources.get(item.uniqueKey),
+    'hasManualPlay:',
+    videoPlayState.hasManualPlay
+  )
+
+  try {
+    // 设置播放状态
+    cardList.value[index].isPlaying = true
+    // 记录播放来源为自动播放
+    videoPlayState.playSources.set(item.uniqueKey, 'auto')
+
+    const playPromise = video.play()
+    // 如果 play() 返回 Promise，则处理可能的错误
+    if (playPromise !== undefined) {
+      playPromise.catch((err) => {
+        // 忽略 AbortError，这是用户主动暂停视频的正常行为
+        if (err.name !== 'AbortError') {
+          console.error('Video auto play error:', err)
+          cardList.value[index].isPlaying = false
+          videoPlayState.playSources.delete(item.uniqueKey)
+        }
+      })
+    }
+  } catch (err) {
+    console.error('Video auto play error:', err)
+    cardList.value[index].isPlaying = false
+    videoPlayState.playSources.delete(item.uniqueKey)
+  }
+}
+
+// 鼠标移出视频区域
+const onVideoMouseLeave = (item, index) => {
+  // 检查是否存在手动播放的视频
+  if (videoPlayState.hasManualPlay) {
+    return
+  }
+
+  const video = videoRefs.value[index]
+  if (!video || video.paused) {
+    return
+  }
+
+  // 检查播放来源是否为自动播放
+  const playSource = videoPlayState.playSources.get(item.uniqueKey)
+  console.log(
+    'onVideoMouseLeave',
+    item.uniqueKey,
+    'playSource:',
+    playSource,
+    'hasManualPlay:',
+    videoPlayState.hasManualPlay
+  )
+
+  if (playSource === 'auto') {
+    try {
+      // 暂停视频并更新状态
+      cardList.value[index].isPlaying = false
+      video.pause()
+      // 移除自动播放来源记录
+      videoPlayState.playSources.delete(item.uniqueKey)
+    } catch (err) {
+      console.error('Video auto pause error:', err)
+    }
+  }
+}
+
 const toggleVideo = (item, index) => {
   const video = videoRefs.value[index]
   window.videoSrc = video?.src
@@ -1392,29 +1497,77 @@ const toggleVideo = (item, index) => {
     video?.currentTime,
     video?.duration,
     item.videoSrc,
-    videoSrc
+    videoSrc,
+    'playSource:',
+    videoPlayState.playSources.get(item.uniqueKey),
+    'hasManualPlay:',
+    videoPlayState.hasManualPlay
   )
   if (!video) return
   try {
+    // 手动点击时，无论当前播放来源是什么，都先将其转换为手动播放状态
+    const currentPlaySource = videoPlayState.playSources.get(item.uniqueKey)
+
+    // 如果当前是自动播放，点击按钮时先转换为手动播放，再处理暂停逻辑
+    if (currentPlaySource === 'auto') {
+      // 记录播放来源为手动播放
+      videoPlayState.playSources.set(item.uniqueKey, 'manual')
+      // 设置存在手动播放的视频
+      videoPlayState.hasManualPlay = true
+    }
+
     if (video.paused) {
+      // 先暂停所有其他正在播放的视频
+      for (let i = 0; i < videoRefs.value.length; i++) {
+        const otherVideo = videoRefs.value[i]
+        if (otherVideo && otherVideo !== video && !otherVideo.paused) {
+          otherVideo.pause()
+          if (cardList.value[i]) {
+            cardList.value[i].isPlaying = false
+            // 移除其他视频的播放来源记录
+            videoPlayState.playSources.delete(cardList.value[i].uniqueKey)
+          }
+        }
+      }
+
       // 设置播放状态
       cardList.value[index].isPlaying = true
+      // 记录播放来源为手动播放
+      videoPlayState.playSources.set(item.uniqueKey, 'manual')
+      // 设置存在手动播放的视频
+      videoPlayState.hasManualPlay = true
+
       const playPromise = video.play()
       // 如果 play() 返回 Promise，则处理可能的错误
       if (playPromise !== undefined) {
         playPromise.catch((err) => {
-          console.error('Video play error:', err)
-          cardList.value[index].isPlaying = false
+          // 忽略 AbortError，这是用户主动暂停视频的正常行为
+          if (err.name !== 'AbortError') {
+            console.error('Video play error:', err)
+            cardList.value[index].isPlaying = false
+            // 移除播放来源记录
+            videoPlayState.playSources.delete(item.uniqueKey)
+            // 检查是否还有手动播放的视频
+            checkManualPlayStatus()
+          }
         })
       }
     } else {
       // 暂停视频并更新状态
       cardList.value[index].isPlaying = false
       video.pause()
+      // 移除播放来源记录
+      videoPlayState.playSources.delete(item.uniqueKey)
+      // 检查是否还有手动播放的视频
+      checkManualPlayStatus()
     }
   } catch (err) {
     console.error('Video toggle error:', err)
     cardList.value[index].isPlaying = false
+    // 移除播放来源记录
+    videoPlayState.playSources.delete(item.uniqueKey)
+    // 检查是否还有手动播放的视频
+    checkManualPlayStatus()
   }
 }
 
@@ -1430,23 +1583,63 @@ const onVideoEnded = (item, index) => {
     videoSrc
   )
   if (!video) return
+
+  // 重置视频时间
   video.currentTime = 0
+
+  // 更新播放状态
   if (cardList.value[index].isPlaying) {
     cardList.value[index].isPlaying = false
+  }
+
+  // 移除播放来源记录
+  const playSource = videoPlayState.playSources.get(item.uniqueKey)
+  if (playSource) {
+    videoPlayState.playSources.delete(item.uniqueKey)
+
+    // 如果是手动播放的视频结束，检查是否还有其他手动播放的视频
+    if (playSource === 'manual') {
+      checkManualPlayStatus()
+    }
   }
 }
 
 const onVideoError = (item, index) => {
   const video = videoRefs.value[index]
   if (video) {
+    const errorCode = video.error?.code
+    const errorMessage = getVideoErrorMessage(errorCode)
     console.error('Video Error Details:', {
-      errorCode: video.error?.code,
-      errorMessage: getVideoErrorMessage(video.error?.code),
+      errorCode,
+      errorMessage,
       videoSrc: video.src,
       videoElement: video,
       item: item,
       index: index
     })
+    ElMessage({
+      type: 'error',
+      message: errorMessage
+    })
+
+    // 重置视频状态
+    video.currentTime = 0
+
+    // 检查播放状态并更新
+    if (cardList.value[index].isPlaying) {
+      cardList.value[index].isPlaying = false
+    }
+
+    // 移除播放来源记录
+    const playSource = videoPlayState.playSources.get(item.uniqueKey)
+    if (playSource) {
+      videoPlayState.playSources.delete(item.uniqueKey)
+
+      // 如果是手动播放的视频出错，检查是否还有其他手动播放的视频
+      if (playSource === 'manual') {
+        checkManualPlayStatus()
+      }
+    }
   } else {
     console.error('Video Error - Cannot access video element', { item, index })
   }
@@ -1799,7 +1992,12 @@ onBeforeUnmount(() => {
                 </el-image>
               </div>
               <!-- 视频 -->
-              <div v-else-if="item.fileType === 'video'" class="card-item-video-wrapper">
+              <div
+                v-else-if="item.fileType === 'video'"
+                class="card-item-video-wrapper"
+                @mouseenter="onVideoMouseEnter(item, index)"
+                @mouseleave="onVideoMouseLeave(item, index)"
+              >
                 <video
                   :ref="
                     (el) => {
@@ -2182,12 +2380,6 @@ onBeforeUnmount(() => {
   position: relative;
   overflow: hidden;
 
-  &:hover {
-    .card-item-video-btn {
-      display: inline-block;
-    }
-  }
-
   .card-item-video-player {
     width: 100%;
     height: 100%;
@@ -2199,16 +2391,37 @@ onBeforeUnmount(() => {
     will-change: transform;
     transform: translateZ(0);
     backface-visibility: hidden;
+    z-index: 5;
+    cursor: pointer;
   }
+
+  /* 视频播放按钮样式 */
   .card-item-video-btn {
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 10;
-    display: none;
-    transition: all 0.3s ease-in-out;
+    transform: translate(-50%, -50%) scale(0.8);
+    z-index: 20;
+    display: inline-block;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.2s ease-in-out;
     font-size: 50px;
+    cursor: pointer;
+    color: white;
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  }
+
+  /* 鼠标悬停时显示按钮 */
+  &:hover .card-item-video-btn {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  /* 播放状态下的按钮样式 */
+  &:hover .card-item-video-btn:hover {
+    transform: translate(-50%, -50%) scale(1.1);
   }
 }
 

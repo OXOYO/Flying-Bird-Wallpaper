@@ -374,7 +374,7 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
           })
         }
         case '/api/videos/get': {
-          const res = await handleVideoResponse({ filePath })
+          const res = await handleVideoResponse({ filePath, request })
           console.log('api/videos/get', filePath, res.status)
           return new Response(res.data, {
             status: res.status,
