@@ -15,15 +15,15 @@ const props = defineProps({
 const btns = computed(() => {
   return [
     {
-      icon: 'mdi:minus-thick',
+      icon: 'custom:minus-thick',
       action: 'minimize'
     },
     {
-      icon: 'mdi:maximize',
+      icon: 'custom:maximize',
       action: 'maximize'
     },
     {
-      icon: 'mdi:close',
+      icon: 'custom:close',
       action: 'close'
     }
   ]

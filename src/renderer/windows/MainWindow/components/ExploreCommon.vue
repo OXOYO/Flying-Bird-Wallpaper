@@ -308,7 +308,7 @@ const fixedBtns = computed(() => {
     action: 'onLoadMore',
     actionParams: [],
     title: t('exploreCommon.onLoadMore'),
-    icon: 'custom:next',
+    icon: 'custom:load-more',
     iconStyle: {
       transform: 'rotate(90deg)'
     },
@@ -413,7 +413,7 @@ const fixedBtns = computed(() => {
       action: 'onRefreshDirectory',
       actionParams: [],
       title: t('exploreCommon.onRefreshDirectory'),
-      icon: 'custom:stash_folder-refresh',
+      icon: 'custom:folder-refresh',
       iconStyle: {},
       style: {
         bottom: getBottom()
