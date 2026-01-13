@@ -49,25 +49,9 @@ const cardItemStatus = reactive({
 
 // 视频播放状态管理
 const videoPlayState = reactive({
-  // 是否存在手动播放的视频
-  hasManualPlay: false,
   // 记录每个视频的播放来源：'auto' 或 'manual'
   playSources: new Map()
 })
-
-// 检查是否存在手动播放的视频
-const checkManualPlayStatus = () => {
-  // 遍历所有视频，检查是否有手动播放且正在播放的视频
-  for (let i = 0; i < cardList.value.length; i++) {
-    const item = cardList.value[i]
-    if (videoPlayState.playSources.get(item.uniqueKey) === 'manual' && item.isPlaying) {
-      videoPlayState.hasManualPlay = true
-      return
-    }
-  }
-  // 如果没有手动播放的视频，重置状态
-  videoPlayState.hasManualPlay = false
-}
 
 const props = defineProps({
   menu: String,
@@ -1394,8 +1378,17 @@ const setCardItemStatus = (index, status, callback) => {
   }, 300)
 }
 
-const onOverCard = (index) => {
+const onOverCard = (item, index) => {
   hoverCardIndex.value = index
+  if (item.fileType === 'video') {
+    onVideoMouseEnter(item, index)
+  }
+}
+const onLeaveCard = (item, index) => {
+  hoverCardIndex.value = -1
+  if (item.fileType === 'video') {
+    onVideoMouseLeave(item, index)
+  }
 }
 
 const onOverBtn = (key) => {
@@ -1407,24 +1400,17 @@ const onOutBtn = () => {
 
 // 鼠标移入视频区域
 const onVideoMouseEnter = (item, index) => {
-  // 检查是否存在手动播放的视频
-  if (videoPlayState.hasManualPlay) {
-    return
-  }
-
   const video = videoRefs.value[index]
   if (!video || !video.paused) {
     return
   }
 
-  console.log(
-    'onVideoMouseEnter',
-    item.uniqueKey,
-    'playSource:',
-    videoPlayState.playSources.get(item.uniqueKey),
-    'hasManualPlay:',
-    videoPlayState.hasManualPlay
-  )
+  const playSource = videoPlayState.playSources.get(item.uniqueKey)
+
+  // 如果是手动播放，则不执行自动播放
+  if (playSource === 'manual') {
+    return
+  }
 
   try {
     // 设置播放状态
@@ -1453,28 +1439,26 @@ const onVideoMouseEnter = (item, index) => {
 
 // 鼠标移出视频区域
 const onVideoMouseLeave = (item, index) => {
-  // 检查是否存在手动播放的视频
-  if (videoPlayState.hasManualPlay) {
-    return
-  }
-
   const video = videoRefs.value[index]
-  if (!video || video.paused) {
+  if (!video) {
     return
   }
 
-  // 检查播放来源是否为自动播放
+  // 检查当前视频的播放来源
   const playSource = videoPlayState.playSources.get(item.uniqueKey)
-  console.log(
-    'onVideoMouseLeave',
-    item.uniqueKey,
-    'playSource:',
-    playSource,
-    'hasManualPlay:',
-    videoPlayState.hasManualPlay
-  )
 
-  if (playSource === 'auto') {
+  // 如果是手动播放且视频已暂停，移除播放来源记录，允许自动播放重新触发
+  if (playSource === 'manual' && video.paused) {
+    videoPlayState.playSources.delete(item.uniqueKey)
+    return
+  }
+
+  // 如果是手动播放，则不执行自动暂停
+  if (playSource === 'manual') {
+    return
+  }
+
+  if (playSource === 'auto' && !video.paused) {
     try {
       // 暂停视频并更新状态
       cardList.value[index].isPlaying = false
@@ -1489,33 +1473,8 @@ const onVideoMouseLeave = (item, index) => {
 
 const toggleVideo = (item, index) => {
   const video = videoRefs.value[index]
-  window.videoSrc = video?.src
-  console.log(
-    'toggleVideo',
-    video,
-    video?.paused,
-    video?.currentTime,
-    video?.duration,
-    item.videoSrc,
-    videoSrc,
-    'playSource:',
-    videoPlayState.playSources.get(item.uniqueKey),
-    'hasManualPlay:',
-    videoPlayState.hasManualPlay
-  )
   if (!video) return
   try {
-    // 手动点击时，无论当前播放来源是什么，都先将其转换为手动播放状态
-    const currentPlaySource = videoPlayState.playSources.get(item.uniqueKey)
-
-    // 如果当前是自动播放，点击按钮时先转换为手动播放，再处理暂停逻辑
-    if (currentPlaySource === 'auto') {
-      // 记录播放来源为手动播放
-      videoPlayState.playSources.set(item.uniqueKey, 'manual')
-      // 设置存在手动播放的视频
-      videoPlayState.hasManualPlay = true
-    }
-
     if (video.paused) {
       // 先暂停所有其他正在播放的视频
       for (let i = 0; i < videoRefs.value.length; i++) {
@@ -1534,8 +1493,6 @@ const toggleVideo = (item, index) => {
       cardList.value[index].isPlaying = true
       // 记录播放来源为手动播放
       videoPlayState.playSources.set(item.uniqueKey, 'manual')
-      // 设置存在手动播放的视频
-      videoPlayState.hasManualPlay = true
 
       const playPromise = video.play()
       // 如果 play() 返回 Promise，则处理可能的错误
@@ -1547,8 +1504,6 @@ const toggleVideo = (item, index) => {
             cardList.value[index].isPlaying = false
             // 移除播放来源记录
             videoPlayState.playSources.delete(item.uniqueKey)
-            // 检查是否还有手动播放的视频
-            checkManualPlayStatus()
           }
         })
       }
@@ -1556,32 +1511,19 @@ const toggleVideo = (item, index) => {
       // 暂停视频并更新状态
       cardList.value[index].isPlaying = false
       video.pause()
-      // 移除播放来源记录
-      videoPlayState.playSources.delete(item.uniqueKey)
-      // 检查是否还有手动播放的视频
-      checkManualPlayStatus()
+      // 保持播放来源为手动播放，防止自动播放重新触发
+      videoPlayState.playSources.set(item.uniqueKey, 'manual')
     }
   } catch (err) {
     console.error('Video toggle error:', err)
     cardList.value[index].isPlaying = false
     // 移除播放来源记录
     videoPlayState.playSources.delete(item.uniqueKey)
-    // 检查是否还有手动播放的视频
-    checkManualPlayStatus()
   }
 }
 
 const onVideoEnded = (item, index) => {
   const video = videoRefs.value[index]
-  console.log(
-    'onVideoEnded',
-    video,
-    video?.paused,
-    video?.currentTime,
-    video?.duration,
-    item.videoSrc,
-    videoSrc
-  )
   if (!video) return
 
   // 重置视频时间
@@ -1596,11 +1538,6 @@ const onVideoEnded = (item, index) => {
   const playSource = videoPlayState.playSources.get(item.uniqueKey)
   if (playSource) {
     videoPlayState.playSources.delete(item.uniqueKey)
-
-    // 如果是手动播放的视频结束，检查是否还有其他手动播放的视频
-    if (playSource === 'manual') {
-      checkManualPlayStatus()
-    }
   }
 }
 
@@ -1634,11 +1571,6 @@ const onVideoError = (item, index) => {
     const playSource = videoPlayState.playSources.get(item.uniqueKey)
     if (playSource) {
       videoPlayState.playSources.delete(item.uniqueKey)
-
-      // 如果是手动播放的视频出错，检查是否还有其他手动播放的视频
-      if (playSource === 'manual') {
-        checkManualPlayStatus()
-      }
     }
   } else {
     console.error('Video Error - Cannot access video element', { item, index })
@@ -1920,7 +1852,8 @@ onBeforeUnmount(() => {
                   ? `rgba(${item.dominantColorRgb.r}, ${item.dominantColorRgb.g}, ${item.dominantColorRgb.b}, .5)`
                   : 'rgba(255, 255, 255, 0.5)'
               }"
-              @mouseenter="onOverCard(index)"
+              @mouseenter="onOverCard(item, index)"
+              @mouseleave="onLeaveCard(item, index)"
             >
               <div class="card-item-btns__trigger"></div>
               <div v-if="isShowTag" class="card-item-tags">
@@ -1992,12 +1925,7 @@ onBeforeUnmount(() => {
                 </el-image>
               </div>
               <!-- 视频 -->
-              <div
-                v-else-if="item.fileType === 'video'"
-                class="card-item-video-wrapper"
-                @mouseenter="onVideoMouseEnter(item, index)"
-                @mouseleave="onVideoMouseLeave(item, index)"
-              >
+              <div v-else-if="item.fileType === 'video'" class="card-item-video-wrapper">
                 <video
                   :ref="
                     (el) => {
@@ -2404,7 +2332,6 @@ onBeforeUnmount(() => {
     z-index: 20;
     display: inline-block;
     opacity: 0;
-    pointer-events: none;
     transition: all 0.2s ease-in-out;
     font-size: 50px;
     cursor: pointer;
@@ -2415,7 +2342,6 @@ onBeforeUnmount(() => {
   /* 鼠标悬停时显示按钮 */
   &:hover .card-item-video-btn {
     opacity: 1;
-    pointer-events: auto;
     transform: translate(-50%, -50%) scale(1);
   }
 

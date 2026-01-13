@@ -50,7 +50,16 @@ const controlFrameRate = (timestamp) => {
     if (timestamp - lastFrameTime >= frameInterval) {
       // 如果视频暂停，则播放
       if (video.paused) {
-        video.play()
+        const playPromise = video.play()
+        // 处理 play() 返回的 Promise，忽略 AbortError
+        if (playPromise !== undefined) {
+          playPromise.catch((err) => {
+            // 忽略 AbortError，这是正常的帧率控制行为
+            if (err.name !== 'AbortError') {
+              console.error('Video play error:', err)
+            }
+          })
+        }
       }
 
       lastFrameTime = timestamp

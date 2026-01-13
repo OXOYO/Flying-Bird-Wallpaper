@@ -176,25 +176,24 @@ export default class DynamicWallpaperWindow {
       // 创建动态壁纸窗口
       await this.create()
 
-      // 等待窗口准备好
-      if (this.win.isVisible()) {
-        this.win.webContents.send('main:setVideoSource', videoPath)
-      } else {
-        this.win.once('ready-to-show', () => {
+      // 等待窗口准备好，确保窗口内容完全加载完成，Vue 组件挂载完成后再发送事件
+      return new Promise((resolve, reject) => {
+        // 延迟发送事件，确保 Vue 组件已经挂载
+        setTimeout(() => {
           this.win.webContents.send('main:setVideoSource', videoPath)
-        })
-      }
 
-      // 停止自动切换壁纸
-      await global.FBW.store?.toggleAutoSwitchWallpaper(false)
-      // 关闭定时刷新网页壁纸任务
-      await global.FBW.store?.toggleRefreshWebWallpaperTask(false)
-      // 更新设置数据中“最后视频地址”
-      await global.FBW.store?.updateSettingData({
-        dynamicLastVideoPath: videoPath
+          // 停止自动切换壁纸
+          global.FBW.store?.toggleAutoSwitchWallpaper(false)
+          // 关闭定时刷新网页壁纸任务
+          global.FBW.store?.toggleRefreshWebWallpaperTask(false)
+          // 更新设置数据中“最后视频地址”
+          global.FBW.store?.updateSettingData({
+            dynamicLastVideoPath: videoPath
+          })
+
+          resolve({ success: true, message: t('messages.operationSuccess') })
+        }, 100)
       })
-
-      return { success: true, message: t('messages.operationSuccess') }
     } catch (err) {
       global.logger.error(`设置动态壁纸失败: ${err}`)
       return { success: false, message: t('messages.operationFail') }
