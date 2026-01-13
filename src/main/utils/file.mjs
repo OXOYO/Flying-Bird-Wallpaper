@@ -7,7 +7,7 @@ import { mimeTypes } from '../../common/publicData.js'
 // 处理视频响应的函数
 export const handleVideoResponse = async ({ filePath, request }) => {
   const ret = {
-    status: 404,
+    status: 500,
     headers: {},
     data: null
   }
@@ -75,13 +75,18 @@ export const handleVideoResponse = async ({ filePath, request }) => {
     return ret
   } catch (err) {
     console.error('Video file error:', err)
+    // 根据错误类型设置适当的状态码
+    if (err.code === 'ENOENT') {
+      // 文件不存在，设置为404
+      ret.status = 404
+    }
     return ret
   }
 }
 
 export const handleImageResponse = async (query) => {
   const ret = {
-    status: 404,
+    status: 500,
     headers: {},
     data: null
   }
@@ -91,6 +96,8 @@ export const handleImageResponse = async (query) => {
     // 获取图片 URL 和尺寸
     let { filePath, w, compressStartSize } = query
     if (!filePath) {
+      // 缺少文件路径参数，返回400错误
+      ret.status = 400
       return ret
     }
     // 转换文件路径
@@ -205,6 +212,12 @@ export const handleImageResponse = async (query) => {
       return ret
     }
   } catch (err) {
+    console.error('Image file error:', err)
+    // 根据错误类型设置适当的状态码
+    if (err.code === 'ENOENT') {
+      // 文件不存在，设置为404
+      ret.status = 404
+    }
     return ret
   }
 }
