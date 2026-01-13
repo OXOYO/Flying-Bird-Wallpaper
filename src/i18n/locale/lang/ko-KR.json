@@ -221,10 +221,11 @@
     "About": {
       "name": "이름",
       "description": "설명",
-      "author": "저자",
+      "author": "작가",
       "version": "버전",
       "github": "GitHub",
-      "email": "이메일"
+      "email": "이메일",
+      "sponsor": "후원"
     }
   },
   "messages": {
@@ -694,8 +695,9 @@
         "about": "정보",
         "version": "버전",
         "localSetting": {
-          "multiDeviceSync": "다중 장치 동기화"
-        }
+          "multiDeviceSync": "멀티 디바이스 동기화"
+        },
+        "sponsor": "후원"
       }
     }
   }

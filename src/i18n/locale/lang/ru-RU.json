@@ -219,12 +219,13 @@
       "closeRhythmWallpaperWindow": "Закрыть ритмические обои"
     },
     "About": {
-      "name": "Имя",
+      "name": "Название",
       "description": "Описание",
       "author": "Автор",
       "version": "Версия",
       "github": "GitHub",
-      "email": "Email"
+      "email": "Эл. почта",
+      "sponsor": "Спонсор"
     }
   },
   "messages": {
@@ -694,8 +695,9 @@
         "about": "О программе",
         "version": "Версия",
         "localSetting": {
-          "multiDeviceSync": "Синхронизация между устройствами"
-        }
+          "multiDeviceSync": "Синхронизация нескольких устройств"
+        },
+        "sponsor": "Спонсор"
       }
     }
   }

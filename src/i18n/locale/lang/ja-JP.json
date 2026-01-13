@@ -221,10 +221,11 @@
     "About": {
       "name": "名前",
       "description": "説明",
-      "author": "著者",
+      "author": "作者",
       "version": "バージョン",
       "github": "GitHub",
-      "email": "メール"
+      "email": "メール",
+      "sponsor": "スポンサー"
     }
   },
   "messages": {
@@ -691,11 +692,12 @@
           "h5Vibration": "振動フィードバック",
           "h5WeekScreen": "画面常時点灯"
         },
-        "about": "アプリについて",
+        "about": "について",
         "version": "バージョン",
         "localSetting": {
           "multiDeviceSync": "マルチデバイス同期"
-        }
+        },
+        "sponsor": "スポンサー"
       }
     }
   }

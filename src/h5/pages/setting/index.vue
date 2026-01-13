@@ -580,6 +580,7 @@ onMounted(() => {
 
       <van-cell-group inset :title="t('h5.pages.setting.about')">
         <van-cell :title="t('h5.pages.setting.version')" :value="appInfo.version" />
+        <van-cell :title="t('h5.pages.setting.sponsor')" is-link :url="appInfo.afdian" />
       </van-cell-group>
     </div>
   </div>

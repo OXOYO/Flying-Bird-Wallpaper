@@ -224,7 +224,8 @@
       "author": "Auteur",
       "version": "Version",
       "github": "GitHub",
-      "email": "Email"
+      "email": "Email",
+      "sponsor": "Sponsor"
     }
   },
   "messages": {
@@ -695,7 +696,8 @@
         "version": "Version",
         "localSetting": {
           "multiDeviceSync": "Synchronisation multi-appareils"
-        }
+        },
+        "sponsor": "Sponsor"
       }
     }
   }

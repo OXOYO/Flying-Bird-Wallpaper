@@ -222,9 +222,10 @@
       "name": "الاسم",
       "description": "الوصف",
       "author": "المؤلف",
-      "version": "الإصدار",
-      "github": "GitHub",
-      "email": "البريد الإلكتروني"
+      "version": "النسخة",
+      "github": "جيت هب",
+      "email": "البريد الإلكتروني",
+      "sponsor": "التبرع"
     }
   },
   "messages": {
@@ -692,10 +693,11 @@
           "h5WeekScreen": "شاشة مفعلة دائماً"
         },
         "about": "حول",
-        "version": "الإصدار",
+        "version": "النسخة",
         "localSetting": {
           "multiDeviceSync": "مزامنة متعددة الأجهزة"
-        }
+        },
+        "sponsor": "التبرع"
       }
     }
   }

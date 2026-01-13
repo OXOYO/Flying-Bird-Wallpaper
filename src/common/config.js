@@ -13,5 +13,6 @@ export const appInfo = {
   github: 'https://github.com/OXOYO/Flying-Bird-Wallpaper',
   releases: `https://github.com/OXOYO/Flying-Bird-Wallpaper/releases/tag/v${version}`,
   repository: 'OXOYO/Flying-Bird-Wallpaper',
-  email: 'zmn2007.hi@163.com'
+  email: 'zmn2007.hi@163.com',
+  afdian: 'https://afdian.com/a/OXOYO'
 }

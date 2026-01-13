@@ -58,6 +58,16 @@ const openUrl = (url) => {
             {{ appInfo.email }}
           </el-link>
         </el-form-item>
+        <el-form-item :label="$t('pages.About.sponsor')">
+          <el-link
+            type="primary"
+            :herf="appInfo.afdian"
+            target="_blank"
+            @click="openUrl(appInfo.afdian)"
+          >
+            {{ appInfo.afdian }}
+          </el-link>
+        </el-form-item>
       </div>
     </el-form>
   </el-main>

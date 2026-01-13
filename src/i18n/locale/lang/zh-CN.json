@@ -224,7 +224,8 @@
       "author": "作者",
       "version": "版本",
       "github": "GitHub",
-      "email": "Email"
+      "email": "Email",
+      "sponsor": "赞助"
     }
   },
   "messages": {
@@ -695,7 +696,8 @@
         "version": "版本",
         "localSetting": {
           "multiDeviceSync": "多设备同步"
-        }
+        },
+        "sponsor": "赞助"
       }
     }
   }
