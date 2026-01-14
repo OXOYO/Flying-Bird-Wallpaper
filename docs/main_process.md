@@ -11,10 +11,10 @@ src/main/
 ├── index.mjs                # 主进程入口，应用初始化、全局事件、窗口/服务创建
 ├── ApiBase.js               # API 插件开发基类
 ├── cache.mjs                # 缓存管理
-├── logger.mjs               # 日志系统
 ├── updater.mjs              # 自动更新逻辑
-├── jobs/                    # 定时任务相关模块
-│   └── CleanOldLogs.mjs     # 日志清理任务
+├── logger/                  # 日志系统
+│   ├── logger.mjs           # 日志记录器
+│   └── CleanLogs.mjs        # 日志清理任务
 ├── store/                   # 数据与业务核心模块（Manager/Store）
 │   ├── index.mjs            # Store聚合与IPC注册
 │   ├── ApiManager.mjs       # API统一管理
@@ -53,8 +53,7 @@ src/main/
 - **windows/**：所有 Electron 窗口的创建、管理与事件处理。
 - **utils/**：主进程常用工具函数、文件操作、动态壁纸处理等。
 - **child_server/**：本地 API、文件、Socket 服务，提升性能与安全性，支持 H5 端和多端同步。
-- **jobs/**：定时任务相关模块，如日志清理等。
-- **logger.mjs**：日志系统，支持多级别日志输出与持久化。
+- **logger/**：日志系统，支持多级别日志输出与持久化，包含日志清理任务。
 - **updater.mjs**：自动更新逻辑，集成 Electron 的更新机制。
 - **ApiBase.js**：API 插件开发基类，便于扩展第三方壁纸源。
 
@@ -1134,9 +1133,14 @@ if (savedPosition) {
 - **WallpaperManager**：壁纸管理
   - 负责壁纸的切换和调度
   - 支持自动切换和手动切换模式
-  - 实现壁纸切换的智能算法
+  - 实现壁纸切换的智能算法（随机/顺序）
   - 提供壁纸历史记录和收藏功能
   - 支持多显示器壁纸同步
+  - 实现动态壁纸和视频壁纸
+  - 支持网页壁纸和颜色壁纸
+  - 提供自动下载壁纸功能
+  - 支持壁纸质量评估和筛选
+  - 实现电池模式下的省电策略
 
 - **FileManager**：文件管理
   - 处理文件下载、存储和清理
@@ -1362,6 +1366,7 @@ class CacheManager {
   - 实现文件去重和增量更新
   - 提供文件元数据计算和缓存
   - 支持大文件目录的高效处理
+  - 实现图片质量分析和处理
 
 - **H5Server**：H5 服务子进程
   - 提供 Web API 和 Socket 服务
@@ -1369,6 +1374,8 @@ class CacheManager {
   - 实现实时通信和数据同步
   - 提供静态资源服务和文件下载
   - 支持多客户端连接和状态管理
+  - 集成 Koa 框架和 Socket.IO
+  - 支持 HTTP/2 协议和自动证书生成
 
 **主要功能：**
 
@@ -1681,39 +1688,132 @@ protocol.handle('fbwtp', async (request) => {
     case '/api/images/get': {
       const w = urlObj.searchParams.get('w')
       const h = urlObj.searchParams.get('h')
-      const res = await handleFileResponse({ filePath, w, h })
+      const res = await handleImageResponse({ filePath, w, h })
       return new Response(res.data, { status: res.status, headers: res.headers })
     }
     case '/api/videos/get': {
-      const res = await handleFileResponse({ filePath })
+      const res = await handleVideoResponse({ filePath, request })
       return new Response(res.data, { status: res.status, headers: res.headers })
     }
   }
 })
 
-// 文件响应处理
-export const handleFileResponse = async (query) => {
-  const ret = { status: 404, headers: {}, data: null }
-
+// 视频响应处理
+export const handleVideoResponse = async ({ filePath, request }) => {
+  const ret = {
+    status: 500,
+    headers: {},
+    data: null
+  }
   try {
-    let { filePath, w, compressStartSize } = query
-    if (!filePath) return ret
+    // 转换文件路径（包含URL解码）
+    filePath = transFilePath(filePath)
+    // 获取文件信息
+    const stats = await fs.promises.stat(filePath)
+    const extension = path.extname(filePath).toLowerCase()
+    const mimeType = mimeTypes[extension] || 'video/mp4'
+    const fileSize = stats.size
 
+    // 处理范围请求
+    let start = 0
+    let end = fileSize - 1
+    let statusCode = 200
+    let contentRange = `bytes ${start}-${end}/${fileSize}`
+    let contentLength = fileSize
+
+    // 检查是否是范围请求
+    if (request && request.headers && request.headers.get('range')) {
+      const range = request.headers.get('range')
+      const parts = range.replace(/bytes=/, '').split('-')
+      const partialStart = parts[0]
+      const partialEnd = parts[1]
+
+      start = parseInt(partialStart, 10)
+      end = partialEnd ? parseInt(partialEnd, 10) : fileSize - 1
+
+      if (start >= fileSize) {
+        // 范围无效，返回416状态码
+        ret.status = 416
+        ret.headers = {
+          'Content-Range': contentRange
+        }
+        return ret
+      }
+
+      if (end >= fileSize) {
+        end = fileSize - 1
+      }
+
+      contentLength = end - start + 1
+      contentRange = `bytes ${start}-${end}/${fileSize}`
+      statusCode = 206 // 部分内容
+    }
+
+    // 创建文件流，支持范围请求
+    const streamData = fs.createReadStream(filePath, { start, end })
+
+    // 设置响应头
+    const headers = {
+      'Content-Type': mimeType,
+      'Content-Length': contentLength,
+      'Accept-Ranges': 'bytes',
+      'Content-Range': contentRange,
+      'Cache-Control': 'max-age=3600',
+      'Last-Modified': stats.mtime.toUTCString(),
+      ETag: `"${stats.mtimeMs}-${stats.size}"`
+    }
+
+    ret.status = statusCode
+    ret.headers = headers
+    ret.data = streamData
+    return ret
+  } catch (err) {
+    console.error('Video file error:', err)
+    // 根据错误类型设置适当的状态码
+    if (err.code === 'ENOENT') {
+      // 文件不存在，设置为404
+      ret.status = 404
+    }
+    return ret
+  }
+}
+
+// 图片响应处理
+export const handleImageResponse = async (query) => {
+  const ret = {
+    status: 500,
+    headers: {},
+    data: null
+  }
+  try {
+    let T1, T2, T3, T4
+    T1 = Date.now()
+    // 获取图片 URL 和尺寸
+    let { filePath, w, compressStartSize } = query
+    if (!filePath) {
+      // 缺少文件路径参数，返回400错误
+      ret.status = 400
+      return ret
+    }
     // 转换文件路径
     filePath = transFilePath(filePath)
+    // 计算图片尺寸
     const width = w ? parseInt(w, 10) : null
-
     // 生成缓存键
     const cacheKey = `filePath=${filePath}&width=${width}`
-
     // 1. 先查缓存（只缓存小图/小文件）
     if (cache.has(cacheKey)) {
       const cacheData = cache.get(cacheKey)
+      // 返回文件内容和 MIME 类型
       ret.status = 200
-      ret.headers = { ...cacheData.headers, 'Server-Timing': `cache-hit;dur=${Date.now() - T1}` }
+      ret.headers = {
+        ...cacheData.headers,
+        'Server-Timing': `cache-hit;dur=${Date.now() - T1}`
+      }
       ret.data = cacheData.data
       return ret
     }
+    T2 = Date.now()
 
     // 2. 未命中缓存，获取文件信息
     const stats = await fs.promises.stat(filePath)
@@ -1721,14 +1821,15 @@ export const handleFileResponse = async (query) => {
     const extension = path.extname(filePath).toLowerCase()
     const mimeType = mimeTypes[extension] || 'application/octet-stream'
     const CACHE_LIMIT = 10 * 1024 * 1024 // 10MB
-
-    // 判断是否需要缩放
+    T3 = Date.now()
+    // 计算压缩起始大小（单位字节）
+    const startSize = (compressStartSize ? parseInt(compressStartSize, 10) : 0) * 1024 * 1024
+    // 判断是否需要 sharp 缩放（需满足格式、width、且大于compressStartSize）
     const canResize =
       ['.png', '.jpg', '.jpeg', '.avif', '.webp', '.gif'].includes(extension) && width
     const needResize = canResize && originalFileSize > startSize
-
     if (originalFileSize < CACHE_LIMIT) {
-      // 小图缓存处理
+      // 小图缓存
       let fileBuffer
       if (needResize) {
         fileBuffer = await sharp(filePath)
@@ -1743,32 +1844,40 @@ export const handleFileResponse = async (query) => {
       } else {
         fileBuffer = await fs.promises.readFile(filePath)
       }
-
+      const fileSize = fileBuffer.length.toString()
+      T4 = Date.now()
       const headers = {
         'Content-Type': mimeType,
-        'Content-Length': fileBuffer.length.toString(),
+        'Content-Length': fileSize,
+        'Original-Size': originalFileSize,
+        'Compressed-Size': fileSize,
         'Cache-Control': 'max-age=3600',
         ETag: `"${stats.mtimeMs}-${originalFileSize}"`,
-        'Last-Modified': stats.mtime.toUTCString()
+        'Last-Modified': stats.mtime.toUTCString(),
+        'Server-Timing': `file-check;dur=${T2 - T1}, file-stat;dur=${T3 - T2}, resize;dur=${T4 - T3}, total;dur=${T4 - T1}`,
+        'X-File-Check-Time': T2 - T1 + 'ms',
+        'X-File-Stat-Time': T3 - T2 + 'ms',
+        'X-Resize-Time': T4 - T3 + 'ms',
+        'X-Total-Time': T4 - T1 + 'ms'
       }
-
-      // 缓存处理结果
-      cache.set(cacheKey, { data: fileBuffer, headers })
-
+      cache.set(cacheKey, {
+        data: fileBuffer,
+        headers
+      })
       ret.status = 200
       ret.headers = headers
       ret.data = fileBuffer
+      return ret
     } else {
-      // 大图流式处理
+      // 大图流式
       let streamData
-      const headers = {
+      let headers = {
         'Content-Type': mimeType,
         'Cache-Control': 'max-age=3600',
         'Original-Size': originalFileSize,
         'Last-Modified': stats.mtime.toUTCString(),
         ETag: `"${stats.mtimeMs}-${originalFileSize}"`
       }
-
       if (needResize) {
         const inputStream = fs.createReadStream(filePath)
         const transformer = sharp().resize({
@@ -1784,31 +1893,45 @@ export const handleFileResponse = async (query) => {
         streamData = fs.createReadStream(filePath)
         headers['Content-Length'] = originalFileSize
       }
+      T4 = Date.now()
+      headers['Server-Timing'] =
+        `file-check;dur=${T2 - T1}, file-stat;dur=${T3 - T2}, resize;dur=${T4 - T3}, total;dur=${T4 - T1}`
+      headers['X-File-Check-Time'] = T2 - T1 + 'ms'
+      headers['X-File-Stat-Time'] = T3 - T2 + 'ms'
+      headers['X-Resize-Time'] = T4 - T3 + 'ms'
+      headers['X-Total-Time'] = T4 - T1 + 'ms'
 
       ret.status = 200
       ret.headers = headers
       ret.data = streamData
+      return ret
     }
-
-    return ret
   } catch (err) {
+    console.error('Image file error:', err)
+    // 根据错误类型设置适当的状态码
+    if (err.code === 'ENOENT') {
+      // 文件不存在，设置为404
+      ret.status = 404
+    }
     return ret
   }
 }
 
 // 文件路径转换
 export const transFilePath = (filePath) => {
-  // 处理 Windows 上的绝对路径
+  // 处理 Windows 上的绝对路径（例如 'E:/xx/yy'）
   if (process.platform === 'win32') {
-    filePath = filePath.replace(/\//g, '\\')
-    filePath = filePath.replace(/^([a-zA-Z])\\/, '$1:\\')
+    filePath = filePath.replace(/\//g, '\\') // 将所有斜杠替换为反斜杠
+    // 修复丢失的冒号（:），假设路径是 e\xx\yy 应该是 e:\xx\yy
+    filePath = filePath.replace(/^([a-zA-Z])\\/, '$1:\\') // 在盘符后面补上冒号
   } else {
     // macOS 和 Linux 确保是绝对路径
     if (!filePath.startsWith('/')) {
       filePath = '/' + filePath
     }
   }
-  filePath = decodeURIComponent(filePath)
+  // 注意：这里不再需要 decodeURIComponent，因为 URL.searchParams.get() 已经自动解码了
+  // filePath = decodeURIComponent(filePath)
   return filePath
 }
 

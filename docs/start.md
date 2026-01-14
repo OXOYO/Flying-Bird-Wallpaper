@@ -44,8 +44,9 @@ Flying-Bird-Wallpaper/
 │   │   ├── ApiBase.js          # API基类
 │   │   ├── cache.mjs           # 缓存管理
 │   │   ├── child_server/       # 子进程服务
-│   │   ├── jobs/               # 定时任务
-│   │   ├── logger.mjs          # 日志系统
+│   │   ├── logger/              # 日志系统
+│   │   │   ├── logger.mjs       # 日志记录器
+│   │   │   └── CleanLogs.mjs    # 日志清理任务
 │   │   ├── store/              # 主进程数据存储
 │   │   ├── updater.mjs         # 自动更新
 │   │   ├── utils/              # 主进程工具函数

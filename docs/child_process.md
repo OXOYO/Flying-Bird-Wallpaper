@@ -17,14 +17,24 @@ H5 Server 负责启动本地 HTTP/HTTPS Web 服务，运行 H5 前端页面、�
 **关键代码片段：**
 
 ```js:src/main/child_server/h5_server/server.mjs
-if (useHttps) {
-  // 检查证书文件，不存在则自动生成
-  // ...
-  httpServer = http2.createSecureServer(sslOptions, app.callback())
+if (useHttps && sslOptions) {
+  httpServer = http2.createSecureServer({
+    ...sslOptions,
+    allowHTTP1: true // 允许HTTP/1.1连接，支持WebSocket
+  })
+  logger.info('[H5Server] INFO => 已创建支持HTTP/1.1和HTTP/2的HTTPS服务器')
 } else {
-  httpServer = http.createServer(app.callback())
+  httpServer = http2.createServer({ allowHTTP1: true })
 }
-httpServer.listen(port, host, ...)
+
+// 将 Koa 应用挂载到 HTTP/2 服务器
+httpServer.on('request', app.callback())
+
+httpServer.listen(port, host, () => {
+  const protocol = useHttps ? 'https' : 'http'
+  const serverUrl = `${protocol}://${host}:${port}`
+  typeof onStartSuccess === 'function' && onStartSuccess(serverUrl)
+})
 ```
 
 ---
@@ -56,7 +66,7 @@ app.use(
 ### 3. 接口路由（API）
 
 - 只注册 `/api/images/get` 路由，GET 方法，参数为 filePath、w、h、compressStartSize。
-- 由 `handleFileResponse` 处理图片本地读取、缩放、压缩、缓存等。
+- 由 `handleImageResponse` 处理图片本地读取、缩放、压缩、缓存等。
 - 通过 `useApi(router)` 注册所有 API 路由。
 
 **关键代码片段：**
@@ -68,7 +78,7 @@ router.get('/api/images/get', getImage)
 // api/images.mjs
 export const getImage = async (ctx) => {
   const { filePath, w, h, compressStartSize } = ctx.request.query
-  const res = await handleFileResponse({ filePath, w, h, compressStartSize })
+  const res = await handleImageResponse({ filePath, w, h, compressStartSize })
   ctx.set(res.headers)
   ctx.status = res.status
   ctx.body = res.data
@@ -83,10 +93,28 @@ export const getImage = async (ctx) => {
 - 事件包括：getSettingData、h5UpdateSettingData、getResourceMap、searchImages、toggleFavorite、addToFavorites、removeFavorites、deleteImage、updateFavoriteCount、updateDownloadCount 等。
 - 所有事件均为“请求-回调”模式，参数和返回值结构与主进程/数据库一致。
 - 断开连接时记录日志。
+- 配置了性能优化参数：pingTimeout、pingInterval、upgradeTimeout、maxHttpBufferSize 等。
 
 **关键代码片段：**
 
+```js:src/main/child_server/h5_server/server.mjs
+// 创建 Socket.IO 实例
+ioServer = new Server(httpServer, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  },
+  // 添加性能优化配置
+  transports: ['websocket', 'polling'], // 优先使用websocket
+  pingTimeout: 30000,
+  pingInterval: 25000,
+  upgradeTimeout: 10000,
+  maxHttpBufferSize: 1e6 // 1MB
+})
+```
+
 ```js:src/main/child_server/h5_server/socket/index.mjs
+// Socket.IO 事件处理
 ioServer.on('connection', (socket) => {
   socket.on('getSettingData', async (params, callback) => { ... })
   socket.on('h5UpdateSettingData', async (data, callback) => { ... })
