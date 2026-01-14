@@ -927,13 +927,8 @@ const debouncedGetNextList = debounce(() => {
   getNextList()
 }, 300)
 
-const onScroll = (scrollInfo) => {
-  // 直接从参数中获取滚动信息
-  const { scrollTop, scrollHeight, clientHeight } = scrollInfo
-
-  // 检测是否接近底部（可以调整 buffer 区域）
-  const isCloseBottom = scrollHeight - scrollTop - clientHeight < cardForm.buffer
-  if (!isCloseBottom || flags.loading || !flags.hasMore) {
+const onCloseBottom = () => {
+  if (flags.loading || !flags.hasMore) {
     return
   }
   debouncedGetNextList()
@@ -1630,6 +1625,17 @@ onBeforeUnmount(() => {
   }
   resizeObserver.disconnect()
 
+  // 清理视频元素引用
+  videoRefs.value.forEach((video) => {
+    if (video) {
+      video.pause()
+      video.src = ''
+      video.load()
+    }
+  })
+  videoRefs.value = []
+  videoPlayState.playSources.clear()
+
   // 清空大型数据结构
   cardList.value = []
 })
@@ -1836,7 +1842,7 @@ onBeforeUnmount(() => {
           :buffer="cardForm.buffer"
           key-field="uniqueKey"
           style="height: 100%; margin: 0 10px"
-          @scroll="onScroll"
+          @close-bottom="onCloseBottom"
         >
           <template #default="{ item, index }">
             <div

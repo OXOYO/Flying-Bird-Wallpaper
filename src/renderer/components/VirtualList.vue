@@ -1,4 +1,6 @@
 <script setup>
+import { throttle } from '@renderer/utils/index.js'
+
 defineOptions({
   name: 'VirtualList'
 })
@@ -30,7 +32,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['scroll'])
+const emit = defineEmits(['scroll', 'close-bottom'])
 
 const scrollbarRef = ref(null)
 const wrapperRef = ref(null)
@@ -71,20 +73,15 @@ const visibleRange = computed(() => {
 // 计算可见的项目
 const visibleItems = computed(() => {
   const { start, end } = visibleRange.value
-  const items = []
 
   // 确保 start 和 end 是有效索引
   const startIndex = Math.max(0, start)
   const endIndex = Math.min(props.items.length - 1, end)
 
-  for (let i = startIndex; i <= endIndex; i++) {
-    items.push({
-      ...props.items[i],
-      index: i
-    })
-  }
-
-  return items
+  return props.items.slice(startIndex, endIndex + 1).map((item, offset) => ({
+    ...item,
+    index: startIndex + offset
+  }))
 })
 
 // 包装器样式
@@ -94,8 +91,16 @@ const wrapperStyle = computed(() => {
   }
 })
 
+const styleCache = new Map()
+
 // 获取项目样式
 const getItemStyle = (item) => {
+  const cacheKey = `${item.index}_${props.gridSize}_${props.itemHeight}_${props.gridGap}_${props.itemWidth}`
+
+  if (styleCache.has(cacheKey)) {
+    return styleCache.get(cacheKey)
+  }
+
   const row = Math.floor(item.index / props.gridSize)
   const col = item.index % props.gridSize
 
@@ -114,28 +119,36 @@ const getItemStyle = (item) => {
     ? `${props.itemWidth}px`
     : `calc(${itemWidthPercent}% - ${(totalGap / props.gridSize).toFixed(4)}px)` // 使用toFixed提高精度
 
-  return {
+  const style = {
     top: `${row * (props.itemHeight + gridGap)}px`,
     left,
     width,
     height: `${props.itemHeight}px`
   }
+
+  styleCache.set(cacheKey, style)
+  return style
 }
 
 // 处理滚动事件
-const handleScroll = (event) => {
+const handleScroll = throttle((event) => {
   const scrollElement = scrollbarRef.value?.wrapRef
   if (scrollElement) {
-    scrollTop.value = scrollElement.scrollTop
-    wrapperHeight.value = scrollElement.clientHeight
+    const { scrollHeight, clientHeight, scrollTop: scrollTopValue } = scrollElement
+    scrollTop.value = scrollTopValue
+    wrapperHeight.value = clientHeight
     // 传递滚动信息给父组件
     emit('scroll', {
-      scrollTop: scrollElement.scrollTop,
-      scrollHeight: scrollElement.scrollHeight,
-      clientHeight: scrollElement.clientHeight
+      scrollTop: scrollTopValue,
+      scrollHeight,
+      clientHeight
     })
+    const isCloseBottom = scrollHeight - scrollTopValue - clientHeight < props.buffer
+    if (isCloseBottom) {
+      emit('close-bottom')
+    }
   }
-}
+}, 16) // 约60fps
 
 // 更新可见项目
 const updateVisibleItems = (resetScrollTop = false) => {
@@ -173,6 +186,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
+  styleCache.clear()
 })
 
 // 滚动到指定位置
@@ -208,6 +222,7 @@ defineExpose({
       <div
         v-for="item in visibleItems"
         :key="item.uniqueKey"
+        v-memo="[item.uniqueKey, props.gridSize, props.itemHeight, props.gridGap, props.itemWidth]"
         class="virtual-list-item"
         :style="getItemStyle(item)"
       >
