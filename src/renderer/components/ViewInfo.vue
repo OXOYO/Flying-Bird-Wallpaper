@@ -10,18 +10,82 @@ const flags = reactive({
 })
 
 const info = ref({})
+const transform = reactive({
+  scale: 1,
+  originX: '50%',
+  originY: '50%'
+})
+const showResetBtn = ref(false)
 
 const view = (item) => {
   flags.visible = true
   info.value = item
+  // 重置变换状态
+  transform.scale = 1
+  transform.originX = '50%'
+  transform.originY = '50%'
 }
 
 const handleClose = () => {
   flags.visible = false
+  // 重置变换状态
+  transform.scale = 1
+  transform.originX = '50%'
+  transform.originY = '50%'
 }
 
 const onContainerClick = (e) => {
   e.stopPropagation()
+}
+
+const handleImageBlockMouseEnter = () => {
+  // 当图片有缩放时显示还原按钮
+  if (transform.scale !== 1) {
+    showResetBtn.value = true
+  }
+}
+
+const handleImageBlockMouseLeave = () => {
+  // 鼠标离开时隐藏还原按钮
+  showResetBtn.value = false
+}
+
+const handleResetZoom = () => {
+  // 还原缩放比例和中心点
+  transform.scale = 1
+  transform.originX = '50%'
+  transform.originY = '50%'
+  showResetBtn.value = false
+}
+
+const handleWheel = (e) => {
+  e.preventDefault()
+
+  // 获取鼠标在图片容器中的位置
+  const rect = e.currentTarget.getBoundingClientRect()
+  const mouseX = e.clientX - rect.left
+  const mouseY = e.clientY - rect.top
+
+  // 计算鼠标在容器中的相对位置（百分比）
+  const originXPercent = (mouseX / rect.width) * 100
+  const originYPercent = (mouseY / rect.height) * 100
+
+  // 更新变换原点为鼠标位置
+  transform.originX = `${originXPercent}%`
+  transform.originY = `${originYPercent}%`
+
+  // 计算缩放因子，向上滚动放大，向下滚动缩小
+  // 对于触摸板，使用 deltaY 或 deltaZ 来判断缩放方向
+  const deltaY = e.deltaY || e.deltaZ || 0
+  const delta = deltaY > 0 ? 0.9 : 1.1
+
+  // 执行缩放
+  const newScale = Math.max(0.1, Math.min(5, transform.scale * delta))
+  transform.scale = newScale
+
+  if (transform.scale !== 1) {
+    showResetBtn.value = true
+  }
 }
 
 defineExpose({
@@ -36,8 +100,24 @@ defineExpose({
       <IconifyIcon class="close-icon" icon="custom:close-rounded" />
     </div>
     <div class="view-info-container" @click="onContainerClick">
-      <div class="image-block">
-        <el-image :src="info.imageSrc" style="pointer-events: auto" />
+      <div
+        class="image-block"
+        @wheel="handleWheel"
+        @mouseenter="handleImageBlockMouseEnter"
+        @mouseleave="handleImageBlockMouseLeave"
+      >
+        <el-image
+          :src="info.imageSrc"
+          :style="{
+            pointerEvents: 'auto',
+            transform: `scale(${transform.scale})`,
+            transition: 'transform 0.2s ease',
+            transformOrigin: `${transform.originX} ${transform.originY}`
+          }"
+        />
+        <div v-if="showResetBtn" class="reset-zoom-btn" @click="handleResetZoom">
+          <IconifyIcon class="reset-icon" icon="custom:fit" />
+        </div>
       </div>
       <el-scrollbar class="info-block">
         <div v-for="key in infoKeys" :key="key" class="info-row">
@@ -86,6 +166,7 @@ defineExpose({
   border-radius: 50%;
   overflow: hidden;
   transition: background-color 0.15s;
+  pointer-events: auto;
   cursor: pointer;
 
   &:focus,
@@ -120,9 +201,39 @@ defineExpose({
   display: flex;
   justify-content: center;
   align-items: center;
-  img {
-    max-width: 100%;
-    max-height: 100%;
+  position: relative;
+
+  .reset-zoom-btn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.6);
+    border: none;
+    border-radius: 20px;
+    padding: 8px;
+    pointer-events: auto;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s ease;
+    z-index: 10;
+
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.8);
+
+      .reset-icon {
+        transform: scale(1.05);
+      }
+    }
+
+    .reset-icon {
+      cursor: pointer;
+      font-size: 30px;
+      color: #fff;
+      transition: all 0.3s ease;
+    }
   }
 }
 .info-block {
