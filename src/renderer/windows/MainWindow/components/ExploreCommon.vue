@@ -15,7 +15,7 @@ import {
   autoRefreshListOptions
 } from '@common/publicData.js'
 import { hex2RGB } from '@renderer/utils/gen-color.js'
-import { debounce } from '@renderer/utils/index.js'
+import { debounce } from '@common/utils.js'
 
 const { t } = useTranslation()
 const commonStore = UseCommonStore()
@@ -315,9 +315,7 @@ const fixedBtns = computed(() => {
     actionParams: [],
     title: t('exploreCommon.onLoadMore'),
     icon: 'custom:load-more',
-    iconStyle: {
-      transform: 'rotate(90deg)'
-    },
+    iconStyle: {},
     style: {
       bottom: getBottom()
     }
@@ -368,7 +366,7 @@ const fixedBtns = computed(() => {
       iconStyle: {},
       style: {
         bottom: getBottom(),
-        backgroundColor: flags.inPrivacySpace ? '#FF0000' : 'rgba(50, 57, 65, 0.6)'
+        backgroundColor: flags.inPrivacySpace ? '#FF0000' : 'rgba(50, 57, 65, 0.2)'
       }
     })
   }
@@ -2116,7 +2114,8 @@ onBeforeUnmount(() => {
   z-index: 5;
   font-size: 20px;
   font-weight: bolder;
-  background-color: rgba(50, 57, 65, 0.6);
+  background-color: rgba(50, 57, 65, 0.2);
+  backdrop-filter: blur(10px);
   box-shadow: 0 0 6px rgba(0, 0, 0, 0.12);
   border: none;
   border-radius: 40px;
@@ -2129,7 +2128,6 @@ onBeforeUnmount(() => {
   will-change: transform, opacity;
 
   &:hover {
-    background-color: rgba(50, 57, 65, 0.9);
     .fixed-btn-children {
       transform: translateX(0);
       width: auto;
@@ -2174,7 +2172,7 @@ onBeforeUnmount(() => {
     z-index: 5;
     font-size: 20px;
     font-weight: bolder;
-    background-color: rgba(50, 57, 65, 0.6);
+    background-color: rgba(50, 57, 65, 0.2);
     box-shadow: 0 0 6px rgba(0, 0, 0, 0.12);
     border: none;
     color: #ffffff;

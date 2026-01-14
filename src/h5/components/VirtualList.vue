@@ -1,4 +1,6 @@
 <script setup>
+import { throttle } from '@common/utils.js'
+
 const props = defineProps({
   items: {
     type: Array,
@@ -61,9 +63,11 @@ const visibleRange = computed(() => {
   const bufferSize = scrollPerformance.dynamicBufferSize
 
   const scrollTop = virtualListScrollTop.value || 0
+  const containerHeightVal = containerHeight.value
 
+  // 避免重复计算
   const start = Math.floor(scrollTop / itemHeight)
-  const end = Math.ceil((scrollTop + containerHeight.value) / itemHeight)
+  const end = Math.ceil((scrollTop + containerHeightVal) / itemHeight)
 
   const bufferStart = Math.max(0, start - bufferSize)
   const bufferEnd = Math.min(itemsLength, end + bufferSize)
@@ -136,6 +140,39 @@ const clearAllTimers = () => {
   }
 }
 
+// 安全地设置定时器并添加到管理列表
+const setSafeTimer = (type, callback, delay) => {
+  // 先清理同类型的旧定时器
+  if (type === 'scroll' || type === 'resize') {
+    if (timers[type]) {
+      clearTimeout(timers[type])
+      timers[type] = null
+    }
+  }
+
+  const timer = setTimeout(() => {
+    callback()
+    // 执行后清理引用
+    if (type === 'scroll' || type === 'resize') {
+      timers[type] = null
+    } else if (type === 'animation') {
+      const index = timers.animation.indexOf(timer)
+      if (index > -1) {
+        timers.animation.splice(index, 1)
+      }
+    }
+  }, delay)
+
+  // 添加到管理列表
+  if (type === 'scroll' || type === 'resize') {
+    timers[type] = timer
+  } else if (type === 'animation') {
+    timers.animation.push(timer)
+  }
+
+  return timer
+}
+
 // 动态计算防抖时间
 const calculateDynamicDebounceTime = (newScrollTop) => {
   const now = Date.now()
@@ -165,19 +202,13 @@ const calculateDynamicDebounceTime = (newScrollTop) => {
   return scrollPerformance.debounceTime
 }
 
-// 防抖滚动处理
-const debouncedScroll = (event) => {
+// 节流滚动处理
+const throttledScroll = throttle((event) => {
   const newScrollTop = event.target.scrollTop
-  const debounceTime = calculateDynamicDebounceTime(newScrollTop)
-
-  if (timers.scroll) {
-    clearTimeout(timers.scroll)
-  }
-
-  timers.scroll = setTimeout(() => {
-    handleScroll(event)
-  }, debounceTime)
-}
+  // 动态计算性能参数
+  calculateDynamicDebounceTime(newScrollTop)
+  handleScroll(event)
+}, 16) // 约60fps
 
 // 滚动处理
 const handleScroll = (event) => {
@@ -186,7 +217,10 @@ const handleScroll = (event) => {
 
   const target = event.target
   const newScrollTop = target.scrollTop
-  const scrollTop = virtualListRef.value.scrollTop
+
+  // 实时更新滚动位置，确保计算属性依赖正确
+  virtualListScrollTop.value = newScrollTop
+
   // 检查是否需要加载更多
   const { end } = visibleRange.value
   if (end >= props.items.length - 3 && !props.loading && !props.finished) {
@@ -272,63 +306,75 @@ const scrollTo = (options) => {
     const distance = Math.abs(scrollTop - targetScrollTop)
     const duration = useAnimation ? Math.min(300, Math.max(50, distance / 3)) : 0
 
+    // 更新滚动位置状态
+    virtualListScrollTop.value = targetScrollTop
+
     if (useAnimation && duration > 0) {
       // 使用 requestAnimationFrame 确保在下一帧执行，提高性能
       requestAnimationFrame(() => {
         // 临时设置滚动动画
-        virtualListRef.value.style.scrollBehavior = 'smooth'
-        virtualListRef.value.scrollTop = targetScrollTop
-        virtualListScrollTop.value = targetScrollTop
-        // 动画完成后恢复默认设置
-        const animationTimer = setTimeout(() => {
-          if (virtualListRef.value) {
-            virtualListRef.value.style.scrollBehavior = ''
-          }
-          // 清除同步标志
+        const element = virtualListRef.value
+        if (element) {
+          element.style.scrollBehavior = 'smooth'
+          element.scrollTop = targetScrollTop
+
+          // 动画完成后恢复默认设置
+          setSafeTimer(
+            'animation',
+            () => {
+              if (virtualListRef.value) {
+                virtualListRef.value.style.scrollBehavior = ''
+
+                // 清除同步标志
+                isSyncing.value = false
+
+                // 触发滚动事件，确保父组件能收到正确的滚动数据
+                const scrollEvent = {
+                  scrollTop: targetScrollTop,
+                  scrollHeight: virtualListRef.value.scrollHeight,
+                  clientHeight: virtualListRef.value.clientHeight,
+                  visibleStart: visibleRange.value.visibleStart,
+                  visibleEnd: visibleRange.value.visibleEnd
+                }
+                emit('scroll', scrollEvent)
+              }
+
+              resolve()
+            },
+            duration
+          )
+        } else {
           isSyncing.value = false
-
-          // 触发滚动事件，确保父组件能收到正确的滚动数据
-          if (virtualListRef.value) {
-            const scrollEvent = {
-              scrollTop: targetScrollTop,
-              scrollHeight: virtualListRef.value.scrollHeight,
-              clientHeight: virtualListRef.value.clientHeight,
-              visibleStart: visibleRange.value.visibleStart,
-              visibleEnd: visibleRange.value.visibleEnd
-            }
-            emit('scroll', scrollEvent)
-          }
-
           resolve()
-        }, duration)
-
-        // 保存定时器引用以便清理
-        timers.animation.push(animationTimer)
+        }
       })
     } else {
       // 不使用动画，直接设置位置
-      virtualListRef.value.style.scrollBehavior = ''
-      virtualListRef.value.scrollTop = targetScrollTop
-      virtualListScrollTop.value = targetScrollTop
+      const element = virtualListRef.value
+      if (element) {
+        element.style.scrollBehavior = ''
+        element.scrollTop = targetScrollTop
 
-      // 使用nextTick确保DOM更新后再解除同步标志
-      nextTick(() => {
-        isSyncing.value = false
+        // 使用nextTick确保DOM更新后再解除同步标志
+        nextTick(() => {
+          isSyncing.value = false
 
-        // 触发滚动事件
-        if (virtualListRef.value) {
+          // 触发滚动事件
           const scrollEvent = {
             scrollTop: targetScrollTop,
-            scrollHeight: virtualListRef.value.scrollHeight,
-            clientHeight: virtualListRef.value.clientHeight,
+            scrollHeight: element.scrollHeight,
+            clientHeight: element.clientHeight,
             visibleStart: visibleRange.value.visibleStart,
             visibleEnd: visibleRange.value.visibleEnd
           }
           emit('scroll', scrollEvent)
-        }
 
+          resolve()
+        })
+      } else {
+        isSyncing.value = false
         resolve()
-      })
+      }
     }
   })
 }
@@ -356,18 +402,18 @@ onMounted(() => {
   if (window.ResizeObserver) {
     resizeObserver.value = new ResizeObserver((entries) => {
       // 使用防抖处理尺寸变化，避免频繁更新
-      if (timers.resize) {
-        clearTimeout(timers.resize)
-      }
-
-      timers.resize = setTimeout(() => {
-        for (const entry of entries) {
-          if (entry.target === virtualListRef.value) {
-            const height = entry.contentRect.height
-            updateContainerHeight(height)
+      setSafeTimer(
+        'resize',
+        () => {
+          for (const entry of entries) {
+            if (entry.target === virtualListRef.value) {
+              const height = entry.contentRect.height
+              updateContainerHeight(height)
+            }
           }
-        }
-      }, 100) // 100ms防抖
+        },
+        100
+      ) // 100ms防抖
     })
 
     if (virtualListRef.value) {
@@ -380,10 +426,55 @@ onUnmounted(() => {
   // 清理所有定时器
   clearAllTimers()
 
-  // 断开ResizeObserver连接
+  // 断开ResizeObserver连接并清理引用
   if (resizeObserver.value) {
     resizeObserver.value.disconnect()
+    resizeObserver.value = null
   }
+
+  // 清理组件引用
+  if (virtualListRef.value) {
+    // 移除所有事件监听器
+    const element = virtualListRef.value
+    const clonedElement = element.cloneNode(true)
+    element.parentNode?.replaceChild(clonedElement, element)
+    virtualListRef.value = null
+  }
+
+  // 清理响应式状态
+  virtualListScrollTop.value = 0
+
+  // 清理滚动性能状态
+  Object.keys(scrollPerformance).forEach((key) => {
+    if (typeof scrollPerformance[key] === 'number') {
+      scrollPerformance[key] = 0
+    } else if (Array.isArray(scrollPerformance[key])) {
+      scrollPerformance[key] = []
+    }
+  })
+
+  // 清理触摸状态
+  Object.keys(touchState).forEach((key) => {
+    touchState[key] = 0
+  })
+  touchState.isScrolling = false
+
+  // 清理定时器引用
+  Object.keys(timers).forEach((key) => {
+    if (timers[key]) {
+      if (Array.isArray(timers[key])) {
+        timers[key].forEach((timer) => clearTimeout(timer))
+        timers[key] = []
+      } else {
+        clearTimeout(timers[key])
+        timers[key] = null
+      }
+    }
+  })
+
+  // 重置同步标志
+  isSyncing.value = false
+  containerHeight.value = 0
 })
 
 // 监听 props 变化
@@ -410,7 +501,7 @@ defineExpose({
   <div
     ref="virtualListRef"
     class="virtual-list"
-    @scroll="debouncedScroll"
+    @scroll="throttledScroll"
     @touchstart="onTouchStart"
     @touchmove="onTouchMove"
     @touchend="onTouchEnd"

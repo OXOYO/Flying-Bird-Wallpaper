@@ -4,7 +4,7 @@ import UseSettingStore from '@h5/stores/settingStore.js'
 import * as api from '@h5/api/index.js'
 import { useTranslation } from 'i18next-vue'
 import { infoKeys } from '@common/publicData.js'
-import { handleInfoVal } from '@common/utils.js'
+import { handleInfoVal, throttle } from '@common/utils.js'
 import VirtualList from '@h5/components/VirtualList.vue'
 
 const { t } = useTranslation()
@@ -395,7 +395,7 @@ const onTouchMove = (event) => {
 }
 
 // 虚拟列表滚动处理
-const onVirtualListScroll = (scrollData) => {
+const onVirtualListScroll = throttle((scrollData) => {
   // 使用滚动位置直接计算当前索引，这样更准确
   let currentIndex = Math.round(scrollData.scrollTop / imageItemHeight.value)
   currentIndex = Math.max(0, Math.min(currentIndex, autoSwitch.imageList.length - 1))
@@ -408,7 +408,7 @@ const onVirtualListScroll = (scrollData) => {
     // 立即更新索引，避免指示器闪烁
     autoSwitch.currentIndex = currentIndex
   }
-}
+}, 16) // 约60fps
 
 // 触摸结束
 const onTouchEnd = (event) => {
@@ -420,10 +420,7 @@ const onTouchEnd = (event) => {
   // 判断滑动方向
   if (Math.abs(deltaY) > 50) {
     if (deltaY > 0 && autoSwitch.currentIndex === 0) {
-      showNotify({
-        type: 'warning',
-        message: t('messages.noMoreData')
-      })
+      onRefresh()
     } else if (deltaY > 0 && autoSwitch.currentIndex > 0) {
       // 向下滑动，显示上一张
       virtualListRef.value?.scrollToIndex(autoSwitch.currentIndex - 1)
@@ -1261,12 +1258,41 @@ onUnmounted(() => {
     clearTimeout(autoSwitch.scrollUpdateTimer)
     autoSwitch.scrollUpdateTimer = null
   }
+  if (favoriteClick.timer) {
+    clearTimeout(favoriteClick.timer)
+    favoriteClick.timer = null
+  }
+  if (longPress.timer) {
+    clearTimeout(longPress.timer)
+    longPress.timer = null
+  }
+  if (favoriteHold.timer) {
+    clearTimeout(favoriteHold.timer)
+    favoriteHold.timer = null
+  }
+  if (favoriteHold.interval) {
+    clearInterval(favoriteHold.interval)
+    favoriteHold.interval = null
+  }
+  if (tabbarBtnTouch.timer) {
+    clearTimeout(tabbarBtnTouch.timer)
+    tabbarBtnTouch.timer = null
+  }
+  if (imageTouch.timer) {
+    clearTimeout(imageTouch.timer)
+    imageTouch.timer = null
+  }
 
   // 移除事件监听
   document.removeEventListener('visibilitychange', handleVisibilityChange)
   window.removeEventListener('pagehide', handlePageHide)
   window.removeEventListener('pageshow', handlePageShow)
   window.removeEventListener('resize', handleResize)
+
+  // 清理图片缩放状态
+  Object.keys(imageScales).forEach((key) => {
+    delete imageScales[key]
+  })
 })
 
 // 处理页面可见性变化

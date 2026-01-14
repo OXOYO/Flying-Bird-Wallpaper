@@ -35,27 +35,3 @@ export const updateThemeColorVar = (colors) => {
     }
   }
 }
-
-// 防抖
-export const debounce = (fn, delay) => {
-  let timer = null
-  return function (...args) {
-    if (timer) clearTimeout(timer)
-    timer = setTimeout(() => {
-      fn.apply(this, args)
-      timer = null
-    }, delay)
-  }
-}
-
-// 节流
-export const throttle = (fn, delay) => {
-  let lastCall = 0
-  return function (...args) {
-    const now = Date.now()
-    if (now - lastCall >= delay) {
-      lastCall = now
-      fn.apply(this, args)
-    }
-  }
-}

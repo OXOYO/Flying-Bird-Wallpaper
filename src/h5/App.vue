@@ -144,12 +144,16 @@ const onTabbarTrigger = (name) => {
       const refreshPromise = pageRef.value.refresh()
       if (refreshPromise && typeof refreshPromise.finally === 'function') {
         refreshPromise.finally(() => {
-          // 刷新完成后清除loading状态
-          loadingTab.value = ''
+          setTimeout(() => {
+            // 刷新完成后清除loading状态
+            loadingTab.value = ''
+          }, 500)
         })
       } else {
-        // 如果不是Promise，直接清除loading状态
-        loadingTab.value = ''
+        setTimeout(() => {
+          // 如果不是Promise，直接清除loading状态
+          loadingTab.value = ''
+        }, 500)
       }
     }
     // 更新previousActiveTabbar
@@ -209,6 +213,10 @@ onUnmounted(() => {
   releaseWakeLock()
   // 移除事件监听
   document.removeEventListener('visibilitychange', handleVisibilityChange)
+  // 清理 wakeLock 引用
+  wakeLock = null
+  // 清空大型数据结构
+  tabbarList.length = 0
 })
 </script>
 
@@ -254,7 +262,7 @@ body {
 }
 
 .loading-spin {
-  animation: spin 1s linear infinite;
+  animation: spin 0.5s linear infinite;
 }
 
 @keyframes spin {
@@ -262,7 +270,7 @@ body {
     transform: rotate(0deg);
   }
   to {
-    transform: rotate(360deg);
+    transform: rotate(180deg);
   }
 }
 </style>

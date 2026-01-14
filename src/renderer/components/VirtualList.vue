@@ -1,5 +1,5 @@
 <script setup>
-import { throttle } from '@renderer/utils/index.js'
+import { throttle } from '@common/utils.js'
 
 defineOptions({
   name: 'VirtualList'
@@ -222,7 +222,6 @@ defineExpose({
       <div
         v-for="item in visibleItems"
         :key="item.uniqueKey"
-        v-memo="[item.uniqueKey, props.gridSize, props.itemHeight, props.gridGap, props.itemWidth]"
         class="virtual-list-item"
         :style="getItemStyle(item)"
       >
