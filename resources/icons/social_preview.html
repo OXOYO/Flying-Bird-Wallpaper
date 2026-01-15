@@ -17,15 +17,16 @@
         margin: 0;
         padding: 0;
         background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+        overflow: hidden;
       }
 
       .card {
-        width: 640px;
-        height: 320px;
-        background: linear-gradient(135deg, #334d6e, #3a7bd5);
-        border-radius: 20px;
+        width: 1280px;
+        height: 640px;
+        background: linear-gradient(135deg, #2c3e50, #3498db, #9b59b6);
+        border-radius: 24px;
         box-shadow:
-          0 20px 40px rgba(0, 0, 0, 0.2),
+          0 30px 60px rgba(0, 0, 0, 0.3),
           0 0 0 1px rgba(255, 255, 255, 0.1) inset;
         display: flex;
         flex-direction: column;
@@ -33,8 +34,9 @@
         align-items: center;
         overflow: hidden;
         position: relative;
-        backdrop-filter: blur(10px);
-        padding: 30px;
+        backdrop-filter: blur(15px);
+        padding: 60px;
+        transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       }
 
       .card::before {
@@ -45,41 +47,58 @@
         width: 100%;
         height: 100%;
         background:
-          radial-gradient(circle at 10% 10%, rgba(255, 255, 255, 0.1), transparent 40%),
+          radial-gradient(circle at 10% 10%, rgba(255, 255, 255, 0.15), transparent 40%),
+          radial-gradient(circle at 90% 90%, rgba(155, 89, 182, 0.1), transparent 40%),
           linear-gradient(45deg, rgba(255, 255, 255, 0.08), transparent);
         z-index: 1;
+        animation: backgroundShift 15s ease-in-out infinite;
+      }
+
+      @keyframes backgroundShift {
+        0% {
+          background-position: 0% 0%;
+        }
+        50% {
+          background-position: 100% 100%;
+        }
+        100% {
+          background-position: 0% 0%;
+        }
       }
 
       .content-container {
         display: flex;
         flex-direction: column;
-        align-items: flex-start;
+        align-items: center;
         justify-content: center;
         z-index: 2;
-        gap: 20px;
+        gap: 30px;
+        text-align: center;
+        width: 100%;
+        max-width: 1000px;
       }
 
       .logo-container {
-        width: 120px;
-        height: 120px;
+        width: 180px;
+        height: 180px;
         display: flex;
-        justify-content: flex-start;
+        justify-content: center;
         align-items: center;
         padding: 0;
-        margin: 0;
+        margin: 40px 0 30px 0;
         position: relative;
       }
 
       .logo {
-        width: 120px;
-        height: 120px;
-        filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.4));
+        width: 180px;
+        height: 180px;
+        filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.4));
         transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       }
 
       .logo:hover {
         transform: scale(1.15) rotate(5deg);
-        filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.5));
+        filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.5));
       }
 
       .text-container {
@@ -87,74 +106,197 @@
         margin: 0;
         color: white;
         position: relative;
+        width: 100%;
       }
 
-      .title {
-        font-size: 42px;
-        font-weight: 700;
-        margin: 0;
-        letter-spacing: 1.5px;
-        text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-        background: linear-gradient(to right, #ffffff, #e0e0e0);
+      .chinese-title {
+        font-size: 84px;
+        font-weight: 800;
+        margin: 0 0 20px 0;
+        letter-spacing: 5px;
+        text-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+        background: linear-gradient(to right, #ffffff, #f0f0f0, #ffffff);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         position: relative;
+        text-align: center;
+        animation: textGlow 3s ease-in-out infinite alternate;
+      }
+
+      @keyframes textGlow {
+        from {
+          text-shadow:
+            0 8px 16px rgba(0, 0, 0, 0.4),
+            0 0 20px rgba(255, 255, 255, 0.2);
+        }
+        to {
+          text-shadow:
+            0 8px 16px rgba(0, 0, 0, 0.4),
+            0 0 30px rgba(255, 255, 255, 0.4);
+        }
+      }
+
+      .title {
+        font-size: 56px;
+        font-weight: 700;
+        margin: 0 0 28px 0;
+        letter-spacing: 2.5px;
+        text-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        background: linear-gradient(to right, #e3f2fd, #ffffff, #e3f2fd);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        position: relative;
+        text-align: center;
       }
 
       .title::after {
         content: '';
         position: absolute;
-        bottom: -10px;
-        left: 0;
-        width: 60px;
-        height: 3px;
-        background: linear-gradient(to right, #64b5f6, #1976d2);
-        border-radius: 3px;
+        bottom: -18px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 140px;
+        height: 5px;
+        background: linear-gradient(to right, #64b5f6, #9b59b6, #64b5f6);
+        border-radius: 5px;
+        animation: gradientFlow 4s ease-in-out infinite;
+      }
+
+      @keyframes gradientFlow {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
       }
 
       .subtitle {
-        font-size: 18px;
-        font-weight: 300;
-        margin-top: 20px;
-        opacity: 0.9;
-        letter-spacing: 0.5px;
-      }
-
-      .decoration {
-        position: absolute;
-        bottom: 20px;
-        right: 20px;
-        font-size: 14px;
-        opacity: 0.6;
-        font-weight: 300;
-        letter-spacing: 1px;
+        font-size: 28px;
+        font-weight: 400;
+        margin: 0;
+        opacity: 0.95;
+        letter-spacing: 1.2px;
+        text-align: center;
+        text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        line-height: 1.4;
+        max-width: 950px;
       }
 
       /* 添加一些装饰元素 */
       .card::after {
         content: '';
         position: absolute;
-        bottom: -50px;
-        right: -50px;
-        width: 200px;
-        height: 200px;
+        bottom: -80px;
+        right: -80px;
+        width: 300px;
+        height: 300px;
         background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
         border-radius: 50%;
+        animation: decorationPulse 8s ease-in-out infinite;
+      }
+
+      @keyframes decorationPulse {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 0.1;
+        }
+        50% {
+          transform: scale(1.1);
+          opacity: 0.15;
+        }
+      }
+
+      /* 添加额外的装饰元素 */
+      .floating-elements {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      .floating-element {
+        position: absolute;
+        width: 6px;
+        height: 6px;
+        background: white;
+        border-radius: 50%;
+        opacity: 0.6;
+        animation: float 15s ease-in-out infinite;
+      }
+
+      .floating-element:nth-child(1) {
+        top: 20%;
+        left: 10%;
+        animation-delay: 0s;
+      }
+
+      .floating-element:nth-child(2) {
+        top: 60%;
+        left: 20%;
+        animation-delay: 3s;
+      }
+
+      .floating-element:nth-child(3) {
+        top: 30%;
+        right: 15%;
+        animation-delay: 6s;
+      }
+
+      .floating-element:nth-child(4) {
+        top: 70%;
+        right: 25%;
+        animation-delay: 9s;
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0px) translateX(0px);
+          opacity: 0.6;
+        }
+        25% {
+          transform: translateY(-20px) translateX(10px);
+          opacity: 0.8;
+        }
+        50% {
+          transform: translateY(-10px) translateX(-10px);
+          opacity: 1;
+        }
+        75% {
+          transform: translateY(-30px) translateX(5px);
+          opacity: 0.8;
+        }
       }
     </style>
   </head>
   <body>
     <div class="card">
+      <!-- 浮动装饰元素 -->
+      <div class="floating-elements">
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+      </div>
+
       <div class="content-container">
         <div class="logo-container">
           <img src="icon.svg" alt="Flying Bird Wallpaper Logo" class="logo" />
         </div>
         <div class="text-container">
-          <h1 class="title">Flying Bird Wallpaper</h1>
-          <!-- <p class="subtitle">飞鸟壁纸，让您的桌面焕然一新！</p> -->
+          <h1 class="chinese-title">飞鸟壁纸</h1>
+          <h2 class="title">Flying Bird Wallpaper</h2>
+          <p class="subtitle">支持图片、视频、律动、纯色等多种壁纸类型，让您的桌面焕发独特魅力</p>
         </div>
       </div>
-      <!-- <div class="decoration">© 2025</div> -->
     </div>
   </body>
 </html>
