@@ -1,3 +1,12 @@
+## [1.3.5](https://github.com/OXOYO/Flying-Bird-Wallpaper/compare/v1.3.4...v1.3.5) (2026-01-15)
+
+
+### Features
+
+* 支持预览信息中缩放图片 ([5d078bc](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/5d078bc0fbeb907998ec100a3865ea05004a1faa))
+
+
+
 ## [1.3.4](https://github.com/OXOYO/Flying-Bird-Wallpaper/compare/v1.3.3...v1.3.4) (2025-12-22)
 
 
