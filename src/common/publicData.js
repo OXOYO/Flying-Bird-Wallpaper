@@ -356,8 +356,8 @@ export const filterTypeOptions = [
 ]
 
 export const orientationIcons = {
-  0: 'custom:crop-portrait-outline',
-  1: 'custom:crop-landscape-outline'
+  0: 'custom:portrait-outline',
+  1: 'custom:landscape-outline'
 }
 
 export const orientationOptions = [

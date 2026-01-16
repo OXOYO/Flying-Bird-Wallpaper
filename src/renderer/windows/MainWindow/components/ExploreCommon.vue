@@ -325,7 +325,7 @@ const fixedBtns = computed(() => {
     action: 'onRefresh',
     actionParams: [false],
     title: t('exploreCommon.onRefresh'),
-    icon: 'custom:refresh_right',
+    icon: 'custom:refresh-right',
     iconStyle: {},
     style: {
       bottom: getBottom()
@@ -348,7 +348,7 @@ const fixedBtns = computed(() => {
       action: 'isRandom',
       actionParams: [],
       title: searchForm.isRandom ? t('exploreCommon.isRandom.on') : t('exploreCommon.isRandom.off'),
-      icon: searchForm.isRandom ? 'custom:shuffle-line' : 'custom:repeat-line',
+      icon: searchForm.isRandom ? 'custom:shuffle-line' : 'custom:order-line',
       iconStyle: {},
       style: {
         bottom: getBottom()
@@ -1891,7 +1891,7 @@ onBeforeUnmount(() => {
                   :title="t('orientationOptions.landscape')"
                   @click.stop="onTagClick('orientation', 1)"
                 >
-                  <IconifyIcon icon="custom:crop-landscape-outline" />
+                  <IconifyIcon icon="custom:landscape-outline" />
                 </div>
                 <div
                   v-else-if="item.isLandscape === 0"
@@ -1899,7 +1899,7 @@ onBeforeUnmount(() => {
                   :title="t('orientationOptions.portrait')"
                   @click.stop="onTagClick('orientation', 0)"
                 >
-                  <IconifyIcon icon="custom:crop-portrait-outline" />
+                  <IconifyIcon icon="custom:portrait-outline" />
                 </div>
                 <!-- 收藏 -->
                 <div
@@ -1909,7 +1909,6 @@ onBeforeUnmount(() => {
                 >
                   <IconifyIcon icon="custom:star-fill" />
                 </div>
-                <div class="tag-item">{{ item.fileType }}</div>
               </div>
               <div v-if="item.fileType === 'image'" class="card-item-image-wrapper">
                 <!-- 高清图 -->
@@ -2172,8 +2171,7 @@ onBeforeUnmount(() => {
     z-index: 5;
     font-size: 20px;
     font-weight: bolder;
-    background-color: rgba(50, 57, 65, 0.2);
-    box-shadow: 0 0 6px rgba(0, 0, 0, 0.12);
+    background-color: transparent;
     border: none;
     color: #ffffff;
 
@@ -2181,7 +2179,7 @@ onBeforeUnmount(() => {
       color: #95d475;
     }
     &:active {
-      opacity: 0.8;
+      transform: scale(0.8);
     }
   }
 
@@ -2419,14 +2417,16 @@ onBeforeUnmount(() => {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
 }
 
 .tag-item {
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
   padding: 2px 4px;
-  border-radius: 4px;
+  border-radius: 2px;
+  line-height: 1;
   cursor: pointer;
   &:hover {
     background-color: rgba(0, 0, 0, 0.8);
@@ -2436,7 +2436,7 @@ onBeforeUnmount(() => {
 .tag-item__disabled {
   cursor: not-allowed;
   &:hover {
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: rgba(0, 0, 0, 0.5);
   }
 }
 
