@@ -148,7 +148,7 @@ onBeforeUnmount(() => {
 
   &:hover {
     .window-inner {
-      background-color: rgba(50, 57, 65, 0.6);
+      background-color: rgba(50, 57, 65, 0.8);
       box-shadow: 0 0 6px rgba(0, 0, 0, 0.12);
     }
 

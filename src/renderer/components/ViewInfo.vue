@@ -208,7 +208,8 @@ defineExpose({
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
     border: none;
     border-radius: 20px;
     padding: 8px;

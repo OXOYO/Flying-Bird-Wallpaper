@@ -1464,8 +1464,7 @@ const jumpToIndex = async () => {
     >
       <IconifyIcon
         class="floating-button-icon"
-        :icon="isRandom ? 'custom:shuffle-line' : 'custom:repeat-line'"
-        style="transform: scale(0.9)"
+        :icon="isRandom ? 'custom:shuffle-line' : 'custom:order-line'"
       />
     </div>
 
@@ -1650,6 +1649,7 @@ const jumpToIndex = async () => {
   align-items: center;
   justify-content: center;
   background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
   color: white;
   border: none;
   border-radius: 50%;
@@ -1659,8 +1659,8 @@ const jumpToIndex = async () => {
   transition: all 0.2s ease;
 
   &:active {
-    transform: scale(0.6);
-    background-color: rgba(0, 0, 0, 0.7);
+    transform: scale(0.8);
+    background-color: rgba(0, 0, 0, 0.8);
   }
 }
 

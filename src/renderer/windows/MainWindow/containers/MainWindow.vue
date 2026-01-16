@@ -64,6 +64,12 @@ onBeforeUnmount(() => {
 .window-container {
   width: 100%;
   height: 100%;
+
+  &:hover {
+    .side-expand-btn {
+      visibility: visible;
+    }
+  }
 }
 .window-side-wrapper {
   position: relative;
@@ -78,6 +84,7 @@ onBeforeUnmount(() => {
 }
 
 .side-expand-btn {
+  visibility: hidden;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -87,9 +94,9 @@ onBeforeUnmount(() => {
   right: -18px;
   width: 18px;
   transform: translate(0, -50%);
-  color: var(--el-color-primary);
-  backdrop-filter: blur(4px);
-  background-color: rgba(255, 255, 255, 0.5);
+  transition: all 0.3s ease-in-out;
+  color: var(--el-text-color-regular);
+  background-color: #f6f7f9;
   border-top-right-radius: 50%;
   border-bottom-right-radius: 50%;
   padding: 5px 0;
@@ -97,16 +104,15 @@ onBeforeUnmount(() => {
   overflow: hidden;
 
   &:hover {
-    background-color: rgba(255, 255, 255, 0.6);
+    color: var(--el-color-primary);
   }
 
   &:active {
-    background-color: rgba(255, 255, 255, 0.8);
+    color: var(--el-color-primary);
   }
 
   .expand-btn-icon {
     cursor: pointer;
-    font-size: 30px;
   }
 }
 </style>
