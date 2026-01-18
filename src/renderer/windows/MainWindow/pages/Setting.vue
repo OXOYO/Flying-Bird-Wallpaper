@@ -567,6 +567,23 @@ onBeforeUnmount(() => {
               />
             </el-form-item>
             <el-form-item
+              :label="t('pages.Setting.settingDataForm.defaultMenu')"
+              prop="defaultMenu"
+            >
+              <el-select
+                v-model="settingDataForm.defaultMenu"
+                style="width: 140px"
+                @change="onSettingDataFormChange"
+              >
+                <el-option
+                  v-for="item in menuList"
+                  :key="item.name"
+                  :label="t(item.locale)"
+                  :value="item.name"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item
               :label="t('pages.Setting.settingDataForm.enabledMenus')"
               prop="enabledMenus"
             >

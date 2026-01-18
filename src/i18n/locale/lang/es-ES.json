@@ -52,6 +52,7 @@
       },
       "settingDataForm": {
         "locale": "Idioma",
+        "defaultMenu": "Menú predeterminado",
         "startup": "Inicio automático",
         "openMainWindowOnStartup": "Abrir ventana principal al iniciar",
         "startH5ServerOnStartup": "Iniciar servidor H5 al iniciar",

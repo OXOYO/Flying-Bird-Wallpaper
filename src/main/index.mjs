@@ -239,7 +239,7 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
 
     // 监听托盘图标点击事件
     tray.on('click', () => {
-      global.FBW.mainWindow.toggle()
+      handleJumpToPage(global.FBW.store?.settingData?.defaultMenu || 'Search')
     })
     // 监听托盘图标点击事件右键点击事件
     tray.on('right-click', () => {

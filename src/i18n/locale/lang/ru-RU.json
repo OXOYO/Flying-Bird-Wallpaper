@@ -52,7 +52,8 @@
       },
       "settingDataForm": {
         "locale": "Язык",
-        "startup": "Автозагрузка",
+        "defaultMenu": "Меню по умолчанию",
+        "startup": "Автозапуск",
         "openMainWindowOnStartup": "Открывать главное окно при запуске",
         "startH5ServerOnStartup": "Запускать H5-сервер при запуске",
         "suspensionBallVisible": "Показывать плавающий шар",

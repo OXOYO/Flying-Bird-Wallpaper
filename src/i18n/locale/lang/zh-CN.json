@@ -52,6 +52,7 @@
       },
       "settingDataForm": {
         "locale": "语言",
+        "defaultMenu": "默认菜单",
         "startup": "开机启动",
         "openMainWindowOnStartup": "启动时打开主窗口",
         "startH5ServerOnStartup": "启动时启动H5服务",

@@ -52,6 +52,7 @@
       },
       "settingDataForm": {
         "locale": "言語",
+        "defaultMenu": "デフォルトメニュー",
         "startup": "起動時自動実行",
         "openMainWindowOnStartup": "起動時にメインウィンドウを開く",
         "startH5ServerOnStartup": "起動時にH5サーバーを起動",

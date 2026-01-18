@@ -133,6 +133,8 @@ export const defaultSettingData = {
   startup: true,
   openMainWindowOnStartup: false,
   startH5ServerOnStartup: false,
+  // 默认菜单设置
+  defaultMenu: 'Search',
   autoSwitchWallpaper: false,
   switchIntervalTime: 15,
   switchIntervalUnit: 'm',

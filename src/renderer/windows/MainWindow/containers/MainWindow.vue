@@ -29,8 +29,8 @@ onBeforeMount(() => {
 })
 
 onMounted(() => {
-  // 设置菜单默认选中
-  menuStore.setSelected('Search')
+  // 主窗口挂载后，根据用户配置的defaultMenu设置默认菜单
+  menuStore.setSelected(settingData.value.defaultMenu || 'Search')
 })
 
 onBeforeUnmount(() => {

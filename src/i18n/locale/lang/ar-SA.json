@@ -52,6 +52,7 @@
       },
       "settingDataForm": {
         "locale": "اللغة",
+        "defaultMenu": "القائمة الافتراضية",
         "startup": "التشغيل التلقائي",
         "openMainWindowOnStartup": "فتح النافذة الرئيسية عند بدء التشغيل",
         "startH5ServerOnStartup": "تشغيل خادم H5 عند بدء التشغيل",
