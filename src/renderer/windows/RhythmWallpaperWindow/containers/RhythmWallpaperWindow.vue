@@ -46,27 +46,72 @@ const init = async () => {
   const audioInputs = devices.filter((d) => d.kind === 'audioinput')
 
   // 查找虚拟声卡设备
-  const virtualDevice = audioInputs.find(
-    (d) =>
-      d.label.includes('VB-Audio') ||
-      d.label.includes('BlackHole') ||
-      d.label.includes('立体声混音') || // 新增
-      d.label.toLowerCase().includes('stereo mix') // 英文系统
-  )
-  // 用虚拟声卡 deviceId 采集音频
-  if (virtualDevice) {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: { deviceId: virtualDevice.deviceId }
+  // 定义设备优先级
+  const devicePriority = [
+    'vb-audio',
+    'blackhole',
+    'stereo mix',
+    '立体声混音',
+    'virtual audio cable',
+    'voicemeeter',
+    'loopback',
+    'soundflower',
+    'jack audio',
+    'pulseaudio monitor',
+    'alsa loopback'
+  ]
+
+  // 首先找到所有匹配的设备
+  const matchingDevices = audioInputs.filter((d) => {
+    const lowerLabel = d.label?.toLowerCase() || ''
+    return devicePriority.some((priority) => lowerLabel.includes(priority))
+  })
+
+  // 按照优先级排序匹配的设备
+  if (matchingDevices.length > 1) {
+    matchingDevices.sort((a, b) => {
+      const aLabel = a.label?.toLowerCase() || ''
+      const bLabel = b.label?.toLowerCase() || ''
+      const aPriority = devicePriority.findIndex((priority) => aLabel.includes(priority))
+      const bPriority = devicePriority.findIndex((priority) => bLabel.includes(priority))
+      return aPriority - bPriority
     })
-    source = audioContext.createMediaStreamSource(stream)
-    analyser = audioContext.createAnalyser()
-    analyser.fftSize = 1024
-    dataArray = new Uint8Array(analyser.frequencyBinCount)
-    source.connect(analyser)
-    // 执行效果
-    runEffect()
+  }
+  // 递归尝试使用设备
+  const tryDevice = async (devices, index = 0) => {
+    if (index >= devices.length) {
+      // 所有设备都尝试过了，发送系统通知
+      window.FBW.sendNotification({
+        title: t('appInfo.appName'),
+        body: t('messages.rhythmWallpaperNeedVirtualAudio'),
+        silent: false
+      })
+      return
+    }
+
+    const device = devices[index]
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { deviceId: device.deviceId }
+      })
+      source = audioContext.createMediaStreamSource(stream)
+      analyser = audioContext.createAnalyser()
+      analyser.fftSize = 1024
+      dataArray = new Uint8Array(analyser.frequencyBinCount)
+      source.connect(analyser)
+      // 执行效果
+      runEffect()
+    } catch (error) {
+      console.error(`虚拟声卡设备 ${device.label} 不可用:`, error)
+      // 尝试下一个设备
+      await tryDevice(devices, index + 1)
+    }
+  }
+
+  // 用虚拟声卡 deviceId 采集音频
+  if (matchingDevices.length > 0) {
+    await tryDevice(matchingDevices)
   } else {
-    // console.log('请先安装并切换系统音频输出到虚拟声卡（如 VB-Audio/BlackHole）')
     // 发送系统通知
     window.FBW.sendNotification({
       title: t('appInfo.appName'),
@@ -95,11 +140,11 @@ const runEffect = async () => {
   }
 
   // 清理容器中的所有子元素（仅对Three.js效果需要）
-  // if (containerRef.value && isThreeEffect.value) {
-  //   while (containerRef.value.firstChild) {
-  //     containerRef.value.removeChild(containerRef.value.firstChild)
-  //   }
-  // }
+  if (containerRef.value && isThreeEffect.value) {
+    while (containerRef.value.firstChild) {
+      containerRef.value.removeChild(containerRef.value.firstChild)
+    }
+  }
 
   const EffectClass = Effects[config.value.effect]
 
