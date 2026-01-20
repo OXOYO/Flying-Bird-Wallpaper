@@ -1770,6 +1770,7 @@ const jumpToIndex = async () => {
   left: 50%;
   transform: translateX(-50%);
   background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
   color: #fff;
   padding: 4px 8px;
   border-radius: 16px;
