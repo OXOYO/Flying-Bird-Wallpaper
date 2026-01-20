@@ -29,7 +29,6 @@ const { wordTypeList, wordDrawerVisible } = storeToRefs(wordsStore)
 const cardBlockRef = ref(null)
 const scrollRef = ref(null)
 let hoverCardIndex = ref(-1)
-let hoverBtnName = ref(null)
 
 const viewImageRef = ref(null)
 const viewImageOptions = {
@@ -1384,11 +1383,10 @@ const onLeaveCard = (item, index) => {
   }
 }
 
-const onOverBtn = (key) => {
-  hoverBtnName.value = key
-}
-const onOutBtn = () => {
-  hoverBtnName.value = null
+const onDblClickCard = (item, index) => {
+  if (item.fileType === 'image') {
+    doViewImage(item, index, true)
+  }
 }
 
 // 鼠标移入视频区域
@@ -1858,6 +1856,7 @@ onBeforeUnmount(() => {
               }"
               @mouseenter="onOverCard(item, index)"
               @mouseleave="onLeaveCard(item, index)"
+              @dblclick="onDblClickCard(item, index)"
             >
               <div class="card-item-btns__trigger"></div>
               <div v-if="isShowTag" class="card-item-tags">
@@ -1918,7 +1917,6 @@ onBeforeUnmount(() => {
                   loading="lazy"
                   lazy
                   fit="cover"
-                  @dblclick="doViewImage(item, index, true)"
                 >
                   <template #error>
                     <div class="image-error-inner">
@@ -1957,7 +1955,7 @@ onBeforeUnmount(() => {
                   @click="toggleVideo(item, index)"
                 />
               </div>
-              <div class="card-item-btns">
+              <div class="card-item-btns" @dblclick.stop>
                 <el-button
                   v-for="btn in cardItemBtns"
                   :key="btn.action"
@@ -1967,8 +1965,6 @@ onBeforeUnmount(() => {
                   :title="btn.title"
                   @click="onCardItemBtnClick(btn.action, item, index)"
                   @dblclick.stop
-                  @mouseenter="onOverBtn(btn.action)"
-                  @mouseleave="onOutBtn()"
                 >
                   <IconifyIcon class="card-item-btn-icon" :icon="btn.icon" />
                 </el-button>
