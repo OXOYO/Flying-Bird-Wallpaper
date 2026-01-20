@@ -8,6 +8,8 @@
       "start": "بدء التبديل التلقائي",
       "stop": "إيقاف التبديل التلقائي"
     },
+    "closeDynamicWallpaper": "إغلاق الخلفية الديناميكية",
+    "closeRhythmWallpaper": "إغلاق الخلفية الإيقاعية",
     "nextWallpaper": "الخلفية التالية",
     "prevWallpaper": "الخلفية السابقة",
     "closeSuspensionBall": "إغلاق الكرة المعلقة",
@@ -94,7 +96,6 @@
           "label": "ملف الخلفية الديناميكية",
           "placeholder": "يرجى تحديد ملف الخلفية الديناميكية"
         },
-        "dynamicAutoPlayOnStartup": "تشغيل تلقائي عند بدء التشغيل",
         "dynamicMuteAudio": "تشغيل صامت",
         "dynamicBackgroundColor": "لون الخلفية",
         "dynamicOpacity": "الشفافية",
@@ -216,8 +217,8 @@
       "setColorWallpaper": "تعيين خلفية ملونة",
       "setDynamicWallpaper": "تعيين خلفية ديناميكية",
       "closeDynamicWallpaper": "إغلاق الخلفية الديناميكية",
-      "openRhythmWallpaperWindow": "فتح خلفية إيقاعية",
-      "closeRhythmWallpaperWindow": "إغلاق خلفية إيقاعية"
+      "setRhythmWallpaper": "فتح خلفية إيقاعية",
+      "closeRhythmWallpaper": "إغلاق خلفية إيقاعية"
     },
     "About": {
       "name": "الاسم",

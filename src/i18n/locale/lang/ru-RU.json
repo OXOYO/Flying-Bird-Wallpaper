@@ -8,6 +8,8 @@
       "start": "Начать автоматическое переключение",
       "stop": "Остановить автоматическое переключение"
     },
+    "closeDynamicWallpaper": "Закрыть динамические обои",
+    "closeRhythmWallpaper": "Закрыть ритмические обои",
     "nextWallpaper": "Следующие обои",
     "prevWallpaper": "Предыдущие обои",
     "closeSuspensionBall": "Закрыть плавающий шар",
@@ -94,7 +96,6 @@
           "label": "Файл динамических обоев",
           "placeholder": "Выберите файл динамических обоев"
         },
-        "dynamicAutoPlayOnStartup": "Автовоспроизведение при запуске",
         "dynamicMuteAudio": "Воспроизведение без звука",
         "dynamicBackgroundColor": "Фоновый цвет",
         "dynamicOpacity": "Прозрачность",
@@ -216,8 +217,8 @@
       "setColorWallpaper": "Установить цветные обои",
       "setDynamicWallpaper": "Установить динамические обои",
       "closeDynamicWallpaper": "Закрыть динамические обои",
-      "openRhythmWallpaperWindow": "Открыть ритмические обои",
-      "closeRhythmWallpaperWindow": "Закрыть ритмические обои"
+      "setRhythmWallpaper": "Открыть ритмические обои",
+      "closeRhythmWallpaper": "Закрыть ритмические обои"
     },
     "About": {
       "name": "Название",

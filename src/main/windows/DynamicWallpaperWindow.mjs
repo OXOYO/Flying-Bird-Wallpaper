@@ -1,3 +1,4 @@
+import fs from 'node:fs'
 import path from 'node:path'
 import { screen, app, BrowserWindow, ipcMain } from 'electron'
 import { getWindowURL, preventContextMenu, isDev, isMac, isWin } from '../utils/utils.mjs'
@@ -173,6 +174,12 @@ export default class DynamicWallpaperWindow {
 
   async setDynamicWallpaper(videoPath) {
     try {
+      if (!videoPath || !fs.existsSync(videoPath)) {
+        return {
+          success: false,
+          message: t('messages.fileNotExist')
+        }
+      }
       // 创建动态壁纸窗口
       await this.create()
 
@@ -188,6 +195,8 @@ export default class DynamicWallpaperWindow {
           global.FBW.store?.toggleRefreshWebWallpaperTask(false)
           // 更新设置数据中“最后视频地址”
           global.FBW.store?.updateSettingData({
+            // 更新壁纸类型
+            wallpaperType: 'dynamic',
             dynamicLastVideoPath: videoPath
           })
 
@@ -331,6 +340,9 @@ export default class DynamicWallpaperWindow {
 
   closeDynamicWallpaper() {
     this.close()
+    // 更新设置数据中“壁纸类型”
+    global.FBW.store?.updateSettingData({ wallpaperType: 'image' })
+
     return {
       success: true,
       message: t('messages.operationSuccess')

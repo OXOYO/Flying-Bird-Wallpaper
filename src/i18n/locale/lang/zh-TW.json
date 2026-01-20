@@ -8,6 +8,8 @@
       "start": "啟動自動切換",
       "stop": "停止自動切換"
     },
+    "closeDynamicWallpaper": "關閉動態桌布",
+    "closeRhythmWallpaper": "關閉律動桌布",
     "nextWallpaper": "下一個桌布",
     "prevWallpaper": "上一個桌布",
     "closeSuspensionBall": "關閉懸浮球",
@@ -94,7 +96,6 @@
           "label": "動態桌布檔案",
           "placeholder": "請選擇動態桌布檔案"
         },
-        "dynamicAutoPlayOnStartup": "啟動時自動播放",
         "dynamicMuteAudio": "靜音播放",
         "dynamicBackgroundColor": "背景色",
         "dynamicOpacity": "透明度",
@@ -216,8 +217,8 @@
       "setColorWallpaper": "設定顏色桌布",
       "setDynamicWallpaper": "設定動態桌布",
       "closeDynamicWallpaper": "關閉動態桌布",
-      "openRhythmWallpaperWindow": "打開律動桌布",
-      "closeRhythmWallpaperWindow": "關閉律動桌布"
+      "setRhythmWallpaper": "打開律動桌布",
+      "closeRhythmWallpaper": "關閉律動桌布"
     },
     "About": {
       "name": "名稱",

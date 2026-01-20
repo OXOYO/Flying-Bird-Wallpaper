@@ -56,15 +56,15 @@ const utilGroups = ref([
         confirm: true
       },
       {
-        name: 'openRhythmWallpaperWindow',
+        name: 'setRhythmWallpaper',
         text: '打开律动壁纸',
-        locale: 'pages.Utils.openRhythmWallpaperWindow',
+        locale: 'pages.Utils.setRhythmWallpaper',
         confirm: true
       },
       {
-        name: 'closeRhythmWallpaperWindow',
+        name: 'closeRhythmWallpaper',
         text: '关闭律动壁纸',
-        locale: 'pages.Utils.closeRhythmWallpaperWindow',
+        locale: 'pages.Utils.closeRhythmWallpaper',
         confirm: true
       }
     ]

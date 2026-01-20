@@ -8,6 +8,8 @@
       "start": "자동 전환 시작",
       "stop": "자동 전환 중지"
     },
+    "closeDynamicWallpaper": "동적 배경화면 닫기",
+    "closeRhythmWallpaper": "리듬 배경화면 닫기",
     "nextWallpaper": "다음 배경화면",
     "prevWallpaper": "이전 배경화면",
     "closeSuspensionBall": "서스펜션 볼 닫기",
@@ -94,7 +96,6 @@
           "label": "동적 배경화면 파일",
           "placeholder": "동적 배경화면 파일을 선택해 주세요"
         },
-        "dynamicAutoPlayOnStartup": "시작 시 자동 재생",
         "dynamicMuteAudio": "음소거 재생",
         "dynamicBackgroundColor": "배경색",
         "dynamicOpacity": "불투명도",
@@ -216,8 +217,8 @@
       "setColorWallpaper": "색상 배경화면 설정",
       "setDynamicWallpaper": "동적 배경화면 설정",
       "closeDynamicWallpaper": "동적 배경화면 닫기",
-      "openRhythmWallpaperWindow": "리듬 배경화면 열기",
-      "closeRhythmWallpaperWindow": "리듬 배경화면 닫기"
+      "setRhythmWallpaper": "리듬 배경화면 열기",
+      "closeRhythmWallpaper": "리듬 배경화면 닫기"
     },
     "About": {
       "name": "이름",

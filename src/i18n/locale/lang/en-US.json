@@ -8,6 +8,8 @@
       "start": "Start automatic switching",
       "stop": "Stop automatic switching"
     },
+    "closeDynamicWallpaper": "Close dynamic wallpaper",
+    "closeRhythmWallpaper": "Close rhythm wallpaper",
     "nextWallpaper": "Next wallpaper",
     "prevWallpaper": "Previous wallpaper",
     "closeSuspensionBall": "Close the suspension ball",
@@ -94,7 +96,6 @@
           "label": "Dynamic wallpaper file",
           "placeholder": "Please select dynamic wallpaper file"
         },
-        "dynamicAutoPlayOnStartup": "Automatically play on startup",
         "dynamicMuteAudio": "Mute audio",
         "dynamicBackgroundColor": "Background Color",
         "dynamicOpacity": "Opacity",
@@ -216,8 +217,8 @@
       "setColorWallpaper": "Set color wallpaper",
       "setDynamicWallpaper": "Set dynamic wallpaper",
       "closeDynamicWallpaper": "Close dynamic wallpaper",
-      "openRhythmWallpaperWindow": "Open Rhythm wallpaper",
-      "closeRhythmWallpaperWindow": "Close Rhythm wallpaper"
+      "setRhythmWallpaper": "Open Rhythm wallpaper",
+      "closeRhythmWallpaper": "Close Rhythm wallpaper"
     },
     "About": {
       "name": "Name",

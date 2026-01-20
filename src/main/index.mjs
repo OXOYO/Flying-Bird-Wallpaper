@@ -606,15 +606,11 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
       // 等待 Store 初始化完成
       await global.FBW.store?.waitForInitialization()
 
-      // 如果设置了自动播放动态壁纸
-      if (
-        global.FBW.store?.settingData?.dynamicAutoPlayOnStartup &&
-        global.FBW.store?.settingData?.dynamicLastVideoPath
-      ) {
-        // 创建动态壁纸窗口并设置上次的视频
-        global.FBW.dynamicWallpaperWindow?.setDynamicWallpaper(
-          global.FBW.store?.settingData?.dynamicLastVideoPath
-        )
+      // 恢复上次设置的动态壁纸或律动壁纸
+      if (global.FBW.store?.settingData?.wallpaperType === 'dynamic') {
+        global.FBW.setDynamicWallpaper(global.FBW.store?.settingData?.dynamicLastVideoPath)
+      } else if (global.FBW.store?.settingData?.wallpaperType === 'rhythm') {
+        global.FBW.setRhythmWallpaper()
       }
 
       // 创建托盘

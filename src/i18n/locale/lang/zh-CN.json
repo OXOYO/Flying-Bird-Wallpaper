@@ -8,6 +8,8 @@
       "start": "启动自动切换",
       "stop": "停止自动切换"
     },
+    "closeDynamicWallpaper": "关闭动态壁纸",
+    "closeRhythmWallpaper": "关闭律动壁纸",
     "nextWallpaper": "下一个壁纸",
     "prevWallpaper": "上一个壁纸",
     "closeSuspensionBall": "关闭悬浮球",
@@ -94,7 +96,6 @@
           "label": "动态壁纸文件",
           "placeholder": "请选择动态壁纸文件"
         },
-        "dynamicAutoPlayOnStartup": "启动时自动播放",
         "dynamicMuteAudio": "静音播放",
         "dynamicBackgroundColor": "背景色",
         "dynamicOpacity": "透明度",
@@ -216,8 +217,8 @@
       "setColorWallpaper": "设置颜色壁纸",
       "setDynamicWallpaper": "设置动态壁纸",
       "closeDynamicWallpaper": "关闭动态壁纸",
-      "openRhythmWallpaperWindow": "打开律动壁纸",
-      "closeRhythmWallpaperWindow": "关闭律动壁纸"
+      "setRhythmWallpaper": "打开律动壁纸",
+      "closeRhythmWallpaper": "关闭律动壁纸"
     },
     "About": {
       "name": "名称",

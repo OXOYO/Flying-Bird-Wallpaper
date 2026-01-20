@@ -8,6 +8,8 @@
       "start": "Avvia cambio automatico",
       "stop": "Ferma cambio automatico"
     },
+    "closeDynamicWallpaper": "Chiudi sfondo dinamico",
+    "closeRhythmWallpaper": "Chiudi sfondo ritmico",
     "nextWallpaper": "Sfondo successivo",
     "prevWallpaper": "Sfondo precedente",
     "closeSuspensionBall": "Chiudi pallina di sospensione",
@@ -94,7 +96,6 @@
           "label": "File dello sfondo dinamico",
           "placeholder": "Per favore, seleziona un file di sfondo dinamico"
         },
-        "dynamicAutoPlayOnStartup": "Riproduzione automatica all'avvio",
         "dynamicMuteAudio": "Riproduzione silenziata",
         "dynamicBackgroundColor": "Colore di sfondo",
         "dynamicOpacity": "Opacità",
@@ -216,8 +217,8 @@
       "setColorWallpaper": "Imposta sfondo colorato",
       "setDynamicWallpaper": "Imposta sfondo dinamico",
       "closeDynamicWallpaper": "Chiudi sfondo dinamico",
-      "openRhythmWallpaperWindow": "Apri sfondo ritmico",
-      "closeRhythmWallpaperWindow": "Chiudi sfondo ritmico"
+      "setRhythmWallpaper": "Apri sfondo ritmico",
+      "closeRhythmWallpaper": "Chiudi sfondo ritmico"
     },
     "About": {
       "name": "Nome",

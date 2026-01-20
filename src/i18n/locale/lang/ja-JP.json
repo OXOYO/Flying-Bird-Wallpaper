@@ -8,6 +8,8 @@
       "start": "自動切り替えを開始",
       "stop": "自動切り替えを停止"
     },
+    "closeDynamicWallpaper": "動的壁紙を閉じる",
+    "closeRhythmWallpaper": "リズム壁紙を閉じる",
     "nextWallpaper": "次の壁紙",
     "prevWallpaper": "前の壁紙",
     "closeSuspensionBall": "サスペンションボールを閉じる",
@@ -94,7 +96,6 @@
           "label": "動的壁紙ファイル",
           "placeholder": "動的壁紙ファイルを選択してください"
         },
-        "dynamicAutoPlayOnStartup": "起動時に自動再生",
         "dynamicMuteAudio": "音声をミュート",
         "dynamicBackgroundColor": "背景色",
         "dynamicOpacity": "不透明度",
@@ -216,8 +217,8 @@
       "setColorWallpaper": "カラーバリ紙を設定",
       "setDynamicWallpaper": "動的壁紙を設定",
       "closeDynamicWallpaper": "動的壁紙を閉じる",
-      "openRhythmWallpaperWindow": "リズム壁紙を開く",
-      "closeRhythmWallpaperWindow": "リズム壁紙を閉じる"
+      "setRhythmWallpaper": "リズム壁紙を開く",
+      "closeRhythmWallpaper": "リズム壁紙を閉じる"
     },
     "About": {
       "name": "名前",

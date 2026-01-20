@@ -132,7 +132,7 @@ onBeforeUnmount(() => {
           link
           @click="onToolClick('closeSuspensionBall')"
         >
-          <IconifyIcon class="tool-btn-icon" icon="custom:circle-close" />
+          <IconifyIcon class="tool-btn-icon" icon="custom:close-circle" />
         </el-button>
       </div>
     </div>

@@ -490,7 +490,7 @@ export default class WallpaperManager {
         // 关闭视频壁纸
         this.closeDynamicWallpaper()
         // 设置静态壁纸
-        res = await this.setImageWallpaper(item.filePath)
+        res = await this.setImageWallpaper(item.filePath, 'image')
       }
       if (!res?.success) {
         return {
@@ -524,7 +524,7 @@ export default class WallpaperManager {
   }
 
   // 设置图片壁纸
-  async setImageWallpaper(imgPath) {
+  async setImageWallpaper(imgPath, wallpaperType = 'image') {
     if (!imgPath || !fs.existsSync(imgPath)) {
       return {
         success: false,
@@ -537,6 +537,8 @@ export default class WallpaperManager {
         screen: this.settingData.allScreen && isMac() ? 'all' : 'main',
         scale: this.settingData.scaleType
       })
+      // 更新设置数据中“壁纸类型”
+      await global.FBW.store?.updateSettingData({ wallpaperType })
 
       return {
         success: true,
@@ -563,7 +565,7 @@ export default class WallpaperManager {
       const buffer = createSolidColorBMP(color)
       const colorImagePath = path.join(process.env.FBW_TEMP_PATH, 'fbw-color-wallpaper.png')
       fs.writeFileSync(colorImagePath, buffer)
-      return await this.setImageWallpaper(colorImagePath)
+      return await this.setImageWallpaper(colorImagePath, 'color')
     } catch (err) {
       this.logger.error(`设置壁纸失败: error => ${err}`)
       return {

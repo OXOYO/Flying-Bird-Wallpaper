@@ -8,6 +8,8 @@
       "start": "Iniciar troca automática",
       "stop": "Parar troca automática"
     },
+    "closeDynamicWallpaper": "Fechar papel de parede dinâmico",
+    "closeRhythmWallpaper": "Fechar papel de parede rítmico",
     "nextWallpaper": "Próximo papel de parede",
     "prevWallpaper": "Papel de parede anterior",
     "closeSuspensionBall": "Fechar bola de suspensão",
@@ -94,7 +96,6 @@
           "label": "Arquivo de papel de parede dinâmico",
           "placeholder": "Por favor, selecione um arquivo de papel de parede dinâmico"
         },
-        "dynamicAutoPlayOnStartup": "Reprodução automática na inicialização",
         "dynamicMuteAudio": "Reprodução silenciada",
         "dynamicBackgroundColor": "Cor de fundo",
         "dynamicOpacity": "Opacidade",
@@ -216,8 +217,8 @@
       "setColorWallpaper": "Definir papel de parede colorido",
       "setDynamicWallpaper": "Definir papel de parede dinâmico",
       "closeDynamicWallpaper": "Fechar papel de parede dinâmico",
-      "openRhythmWallpaperWindow": "Abrir papel de parede rítmico",
-      "closeRhythmWallpaperWindow": "Fechar papel de parede rítmico"
+      "setRhythmWallpaper": "Abrir papel de parede rítmico",
+      "closeRhythmWallpaper": "Fechar papel de parede rítmico"
     },
     "About": {
       "name": "Nome",

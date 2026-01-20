@@ -42,12 +42,12 @@ export default class RhythmWallpaperWindow {
       }
     }
 
-    ipcMain.handle('main:openRhythmWallpaperWindow', async (event) => {
-      return await this.openRhythmWallpaperWindow()
+    ipcMain.handle('main:setRhythmWallpaper', async (event) => {
+      return await this.setRhythmWallpaper()
     })
 
-    ipcMain.handle('main:closeRhythmWallpaperWindow', (event) => {
-      return this.closeRhythmWallpaperWindow()
+    ipcMain.handle('main:closeRhythmWallpaper', (event) => {
+      return this.closeRhythmWallpaper()
     })
 
     // 保存实例
@@ -130,9 +130,10 @@ export default class RhythmWallpaperWindow {
     this.win?.destroy()
   }
 
-  async openRhythmWallpaperWindow() {
+  async setRhythmWallpaper() {
     try {
       await this.create()
+      await global.FBW.store?.updateSettingData({ wallpaperType: 'rhythm' })
       return { success: true, message: t('messages.operationSuccess') }
     } catch (err) {
       global.logger.error(`打开律动壁纸窗口失败: ${err}`)
@@ -140,8 +141,11 @@ export default class RhythmWallpaperWindow {
     }
   }
 
-  closeRhythmWallpaperWindow() {
+  closeRhythmWallpaper() {
     this.close()
+    // 更新设置数据中“壁纸类型”
+    global.FBW.store?.updateSettingData({ wallpaperType: 'image' })
+
     return {
       success: true,
       message: t('messages.operationSuccess')

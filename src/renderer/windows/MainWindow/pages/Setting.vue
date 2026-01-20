@@ -314,7 +314,7 @@ const onDynamicSettingChange = (field, value) => {
 
 const onSetRhythmWallpaper = async () => {
   flags.settingRhythmWallpaper = true
-  const res = await window.FBW.openRhythmWallpaperWindow()
+  const res = await window.FBW.setRhythmWallpaper()
   flags.settingRhythmWallpaper = false
   ElMessage({
     type: res.success ? 'success' : 'error',
@@ -1073,7 +1073,7 @@ onBeforeUnmount(() => {
                     :disabled="!settingDataForm.downloadFolder"
                     @click="onRemoveFolder('downloadFolder')"
                   >
-                    <IconifyIcon icon="custom:close" />
+                    <IconifyIcon icon="custom:close-rounded" />
                   </el-button>
                   <el-button
                     :disabled="!settingDataForm.downloadFolder"
@@ -1177,7 +1177,7 @@ onBeforeUnmount(() => {
                 :disabled="flags.settingWebWallpaper"
                 clearable
                 :placeholder="t('pages.Setting.settingDataForm.webWallpaperUrl.placeholder')"
-                style="max-width: 450px"
+                style="flex: 1"
                 @change="onSettingDataFormChange"
               />
               <el-button
@@ -1268,7 +1268,7 @@ onBeforeUnmount(() => {
                 v-model="settingDataForm.dynamicLastVideoPath"
                 clearable
                 :placeholder="t('pages.Setting.settingDataForm.dynamicLastVideoPath.placeholder')"
-                style="max-width: 450px"
+                style="flex: 1"
                 @click="onSelectDynamicVideo"
                 @change="onSettingDataFormChange"
               />
@@ -1280,15 +1280,6 @@ onBeforeUnmount(() => {
               >
                 <IconifyIcon icon="custom:wallpaper" />
               </el-button>
-            </el-form-item>
-            <el-form-item
-              :label="t('pages.Setting.settingDataForm.dynamicAutoPlayOnStartup')"
-              prop="dynamicAutoPlayOnStartup"
-            >
-              <el-checkbox
-                v-model="settingDataForm.dynamicAutoPlayOnStartup"
-                @change="onSettingDataFormChange"
-              />
             </el-form-item>
             <el-form-item
               :label="t('pages.Setting.settingDataForm.dynamicMuteAudio')"

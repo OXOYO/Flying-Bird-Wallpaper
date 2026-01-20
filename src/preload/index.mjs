@@ -185,10 +185,6 @@ const api = {
   closeViewImageWindow: (...args) => ipcRenderer.invoke('main:closeViewImageWindow', ...args),
   openSuspensionBall: (...args) => ipcRenderer.invoke('main:openSuspensionBall', ...args),
   closeSuspensionBall: (...args) => ipcRenderer.invoke('main:closeSuspensionBall', ...args),
-  openRhythmWallpaperWindow: (...args) =>
-    ipcRenderer.invoke('main:openRhythmWallpaperWindow', ...args),
-  closeRhythmWallpaperWindow: (...args) =>
-    ipcRenderer.invoke('main:closeRhythmWallpaperWindow', ...args),
 
   // 壁纸操作
   search: (...args) => ipcRenderer.invoke('main:search', ...args),
@@ -228,6 +224,9 @@ const api = {
   // 设置动态壁纸对比度
   setDynamicWallpaperContrast: (value) =>
     ipcRenderer.invoke('main:setDynamicWallpaperContrast', value),
+  // 律动壁纸相关API
+  setRhythmWallpaper: (...args) => ipcRenderer.invoke('main:setRhythmWallpaper', ...args),
+  closeRhythmWallpaper: (...args) => ipcRenderer.invoke('main:closeRhythmWallpaper', ...args),
 
   // 数据库操作
   clearDB: (...args) => ipcRenderer.invoke('main:clearDB', ...args),

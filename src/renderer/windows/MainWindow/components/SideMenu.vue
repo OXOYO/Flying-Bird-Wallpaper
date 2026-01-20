@@ -225,6 +225,26 @@ const onCopyH5ServerUrl = () => {
         </template>
       </el-tooltip>
       <el-button
+        v-if="settingData.wallpaperType === 'dynamic'"
+        class="side-footer-btn btn-close"
+        :title="$t('actions.closeDynamicWallpaper')"
+        size="large"
+        link
+        @click="onToolClick('closeDynamicWallpaper')"
+      >
+        <IconifyIcon class="footer-btn-icon" icon="custom:close-circle" />
+      </el-button>
+      <el-button
+        v-if="settingData.wallpaperType === 'rhythm'"
+        class="side-footer-btn btn-close"
+        :title="$t('actions.closeRhythmWallpaper')"
+        size="large"
+        link
+        @click="onToolClick('closeRhythmWallpaper')"
+      >
+        <IconifyIcon class="footer-btn-icon" icon="custom:close-circle" />
+      </el-button>
+      <el-button
         class="side-footer-btn"
         :title="
           settingData.autoSwitchWallpaper
@@ -361,6 +381,14 @@ const onCopyH5ServerUrl = () => {
 
       &.active {
         color: #67c23a;
+      }
+    }
+
+    &.btn-close {
+      &:active {
+        .footer-btn-icon {
+          color: red;
+        }
       }
     }
   }

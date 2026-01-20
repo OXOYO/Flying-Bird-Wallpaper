@@ -878,7 +878,7 @@ export default class Store {
       }
       const imgPath = await this.getWebImage(url)
       if (imgPath) {
-        return await this.wallpaperManager.setImageWallpaper(imgPath)
+        return await this.wallpaperManager.setImageWallpaper(imgPath, 'web')
       } else {
         return {
           success: false,

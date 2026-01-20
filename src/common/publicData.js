@@ -128,13 +128,34 @@ export const menuList = [
 ]
 
 export const defaultSettingData = {
-  // 多语言
+  /*** 基础配置 ***/
   locale: 'zhCN',
+  // 主题配置
+  themes: {
+    dark: false,
+    primary: '#71956C'
+  },
+  // 默认菜单设置
+  defaultMenu: 'Search',
+  // 启用菜单
+  enabledMenus: ['Search', 'Favorites', 'History', 'Setting', 'Utils', 'About'],
+  suspensionBallVisible: false,
+  // 启用展开侧边菜单
+  enableExpandSideMenu: true,
+  // 展开侧边菜单
+  expandSideMenu: true,
+  // 显示侧边栏文本
+  showSideMenuLabel: true,
+  /*** 功能配置 ***/
   startup: true,
   openMainWindowOnStartup: false,
   startH5ServerOnStartup: false,
-  // 默认菜单设置
-  defaultMenu: 'Search',
+  // 启用分词计算任务
+  enableSegmentationTask: false,
+  powerSaveMode: true,
+  /*** 壁纸类型 ***/
+  wallpaperType: '',
+  /*** 图片壁纸配置 ***/
   autoSwitchWallpaper: false,
   switchIntervalTime: 15,
   switchIntervalUnit: 'm',
@@ -150,12 +171,14 @@ export const defaultSettingData = {
   refreshDirectoryIntervalUnit: 'd',
   allowedFileExt: ['.jpg', '.png', '.jpeg'],
   localResourceFolders: [],
+  /*** 网页壁纸配置 ***/
   webWallpaperUrl: '',
   autoRefreshWebWallpaper: false,
   refreshWebWallpaperIntervalTime: 1,
   refreshWebWallpaperIntervalUnit: 'h',
+  /*** 颜色壁纸配置 ***/
   colorWallpaperVal: '#999999',
-  dynamicAutoPlayOnStartup: false,
+  /*** 动态壁纸配置 ***/
   dynamicMuteAudio: true,
   dynamicLastVideoPath: '',
   dynamicBackgroundColor: '#999999',
@@ -164,6 +187,7 @@ export const defaultSettingData = {
   dynamicContrast: 100,
   dynamicPerformanceMode: 'balanced',
   dynamicScaleMode: 'contain',
+  /*** 律动壁纸配置 ***/
   rhythmEffect: 'LeaferBar',
   rhythmWidthRatio: 100,
   rhythmHeightRatio: 30,
@@ -185,6 +209,7 @@ export const defaultSettingData = {
   rhythmDensity: 'normal',
   rhythmPosition: 'bottom',
   rhythmSampleRange: [0, 100],
+  /*** 远程资源配置 ***/
   remoteResourceSecretKeys: {},
   autoDownload: false,
   downloadSources: [],
@@ -196,9 +221,7 @@ export const defaultSettingData = {
   autoClearDownloaded: false,
   clearDownloadedExpiredTime: 7,
   clearDownloadedExpiredUnit: 'd',
-  // 启用菜单
-  enabledMenus: ['Search', 'Favorites', 'History', 'Setting', 'Utils', 'About'],
-  suspensionBallVisible: false,
+  /*** 浏览配置 ***/
   sortField: 'created_at',
   sortType: -1,
   // 格子大小
@@ -207,17 +230,6 @@ export const defaultSettingData = {
   gridHWRatio: 0.618,
   // 查询列表自动刷新
   autoRefreshList: false,
-  // 主题配置
-  themes: {
-    dark: false,
-    primary: '#71956C'
-  },
-  // 启用展开侧边菜单
-  enableExpandSideMenu: true,
-  // 展开侧边菜单
-  expandSideMenu: true,
-  // 显示侧边栏文本
-  showSideMenuLabel: true,
   // 预览图片播放间隔
   viewImageIntervalTime: 5,
   viewImageIntervalUnit: 's',
@@ -225,9 +237,7 @@ export const defaultSettingData = {
   showTag: true,
   // 删除文件时是否需要确认
   confirmOnDeleteFile: true,
-  // 启用分词计算任务
-  enableSegmentationTask: false,
-  /* h5服务配置 */
+  /*** h5服务配置 ***/
   h5AutoSwitch: true,
   h5SwitchType: 1,
   h5SwitchIntervalTime: 3,
@@ -252,8 +262,7 @@ export const defaultSettingData = {
   ],
   h5NumberIndicatorPosition: 'top',
   h5Vibration: true,
-  h5WeekScreen: true,
-  powerSaveMode: true
+  h5WeekScreen: true
 }
 
 export const colorList = [
