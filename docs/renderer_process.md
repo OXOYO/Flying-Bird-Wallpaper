@@ -396,7 +396,7 @@ export class BaseEffect {
 ### 2. 组件化设计
 
 - 高度模块化的组件结构
-- 可复用的自定义组件（如 CustomTitleBar、ViewImage）
+- 可复用的自定义组件（如 CustomTitleBar、ViewImage、ViewInfo）
 - 统一的组件注册和导入机制
 
 ### 3. 响应式布局

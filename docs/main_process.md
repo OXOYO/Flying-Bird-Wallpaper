@@ -982,7 +982,7 @@ const createTray = () => {
 
   // 托盘点击事件
   tray.on('click', () => {
-    global.FBW.mainWindow.toggle()
+    handleJumpToPage(global.FBW.store?.settingData?.defaultMenu || 'Search')
   })
 
   // 托盘右键菜单
@@ -1115,6 +1115,7 @@ if (savedPosition) {
   - 提供配置验证和默认值管理
   - 支持多语言配置和国际化
   - 实现配置的持久化和恢复
+  - 支持设置默认菜单，控制应用启动时显示的默认页面
 
 - **ApiManager**：API 管理
   - 统一管理所有壁纸源的 API 调用
