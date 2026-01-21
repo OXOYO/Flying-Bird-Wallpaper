@@ -608,9 +608,11 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
 
       // 恢复上次设置的动态壁纸或律动壁纸
       if (global.FBW.store?.settingData?.wallpaperType === 'dynamic') {
-        global.FBW.setDynamicWallpaper(global.FBW.store?.settingData?.dynamicLastVideoPath)
+        global.FBW.dynamicWallpaperWindow?.setDynamicWallpaper(
+          global.FBW.store?.settingData?.dynamicLastVideoPath
+        )
       } else if (global.FBW.store?.settingData?.wallpaperType === 'rhythm') {
-        global.FBW.setRhythmWallpaper()
+        global.FBW.rhythmWallpaperWindow?.setRhythmWallpaper()
       }
 
       // 创建托盘
