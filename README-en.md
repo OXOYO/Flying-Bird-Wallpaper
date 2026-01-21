@@ -117,6 +117,9 @@ Copyright (c) 2025-present OXOYO
     </a>
 </p>
 
+## Stargazers over time
+[![Stargazers over time](https://starchart.cc/OXOYO/Flying-Bird-Wallpaper.svg?variant=adaptive)](https://starchart.cc/OXOYO/Flying-Bird-Wallpaper)
+
 ---
 
 Flying Bird Wallpaper, make your desktop brand new!
