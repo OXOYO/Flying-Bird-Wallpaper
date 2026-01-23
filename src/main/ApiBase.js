@@ -15,4 +15,10 @@ export default class ApiBase {
   async search() {
     throw new Error('子类必须实现search方法')
   }
+
+  // 获取热门标签
+  async getHotTags() {
+    // 默认实现，返回空数组
+    return []
+  }
 }

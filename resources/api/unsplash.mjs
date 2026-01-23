@@ -103,4 +103,22 @@ export default class ResourceUnsplash extends ApiBase {
 
     return ret
   }
+
+  async getHotTags(query) {
+    // Unsplash API使用topics作为热门标签
+    const tags = []
+    try {
+      const res = await axios.get('https://api.unsplash.com/topics', {
+        params: { per_page: 20 },
+        headers: { Authorization: `Client-ID ${query.secretKey}` }
+      })
+
+      if (res.status === 200 && res.data && Array.isArray(res.data)) {
+        tags.push(...res.data.map((topic) => topic.title))
+      }
+    } catch (error) {
+      console.error('获取Unsplash热门标签失败:', error)
+    }
+    return tags
+  }
 }

@@ -156,6 +156,18 @@ export default class ApiManager {
     return ret
   }
 
+  // 获取热门标签
+  async getHotTags(resourceName, params = {}) {
+    const api = this.apiMap[resourceName]
+    if (!api) {
+      throw new Error(`未找到API插件: ${resourceName}`)
+    }
+    if (!api.getHotTags || typeof api.getHotTags !== 'function') {
+      return []
+    }
+    return await api.getHotTags(params)
+  }
+
   // 调用API
   async call(resourceName, funcName, params) {
     const api = this.apiMap[resourceName]

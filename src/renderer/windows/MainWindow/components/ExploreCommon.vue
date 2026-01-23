@@ -259,6 +259,10 @@ const searchForm = reactive({
   total: 0
 })
 
+// 热门标签相关状态
+const hotTags = ref([])
+const isLoadingTags = ref(false)
+
 const selectedResource = computed(() => {
   const { resourceType, resourceName } = searchForm
   return {
@@ -845,6 +849,34 @@ const onRefreshDirectory = () => {
   window.FBW.refreshDirectory()
 }
 
+// 获取热门标签
+const fetchHotTags = async () => {
+  if (!isSearchMenu.value || searchForm.resourceType !== 'remoteResource') {
+    hotTags.value = []
+    return
+  }
+
+  try {
+    isLoadingTags.value = true
+    const result = await window.FBW.getHotTags({
+      resourceName: searchForm.resourceName
+    })
+    console.log('getHotTags', result)
+    if (result.success && result.data?.tags && result.data.tags.length > 0) {
+      hotTags.value = result.data.tags.map((value) => {
+        return { label: value, value }
+      })
+    } else {
+      hotTags.value = []
+    }
+  } catch (error) {
+    console.error('获取热门标签失败:', error)
+    hotTags.value = []
+  } finally {
+    isLoadingTags.value = false
+  }
+}
+
 const onResourceChange = (value) => {
   searchForm.resourceType = value.resourceType
   searchForm.resourceName = value.resourceName
@@ -857,6 +889,10 @@ const onResourceChange = (value) => {
   } else if (isArray && !includes) {
     searchForm.filterType = types[0] || 'images'
   }
+
+  // 获取热门标签
+  fetchHotTags()
+
   onSearch()
 }
 
@@ -958,7 +994,7 @@ const getNextList = async () => {
     isRandom,
     sortField,
     sortType,
-    filterKeywords,
+    filterKeywords: filterKeywords.replace(/^#/, ''),
     filterType,
     quality: quality.toString(),
     orientation: orientation.toString()
@@ -1645,110 +1681,114 @@ onBeforeUnmount(() => {
     element-loading-background="rgba(0, 0, 0, 0.2)"
   >
     <div class="header-block">
-      <el-input
-        v-model="searchForm.filterKeywords"
-        class="header-search-input"
+      <el-select
+        v-if="isSearchMenu"
+        :model-value="selectedResource"
+        value-key="key"
+        class="condition-item"
         :disabled="flags.loading"
+        :placeholder="t('exploreCommon.searchForm.resourceName.placeholder')"
+        size="large"
+        style="width: 140px"
+        @change="onResourceChange"
+      >
+        <template #label="{ label, value }">
+          <IconifyIcon
+            :icon="resourceTypeIcons[value.resourceType]"
+            style="vertical-align: middle; margin-right: 10px"
+          />
+          <span>{{ label }}</span>
+        </template>
+        <el-option-group
+          v-for="group in resourceGroupList"
+          :key="group.value"
+          :label="t(group.locale)"
+        >
+          <el-option
+            v-for="item in group.children"
+            :key="item.optionValue.key"
+            :label="t(item.locale) || item.value"
+            :value="item.optionValue"
+          >
+            <IconifyIcon :icon="group.icon" style="vertical-align: middle; margin-right: 10px" />
+            <span>{{ t(item.locale) || item.value }}</span>
+          </el-option>
+        </el-option-group>
+      </el-select>
+
+      <el-select
+        v-if="supportSearchTypes.length > 1"
+        v-model="searchForm.filterType"
+        class="condition-item"
+        :disabled="flags.loading"
+        :placeholder="t('exploreCommon.searchForm.filterType.placeholder')"
+        size="large"
+        style="width: 100px"
+        @change="onSearch"
+      >
+        <el-option
+          v-for="item in filterTypeOptions"
+          :key="item.value"
+          :label="t(item.locale)"
+          :value="item.value"
+        />
+      </el-select>
+
+      <el-select
+        v-model="searchForm.orientation"
+        class="condition-item"
+        :disabled="flags.loading"
+        :placeholder="t('exploreCommon.searchForm.orientation.placeholder')"
+        size="large"
+        multiple
+        collapse-tags
+        style="width: 140px"
+        @change="onSearch"
+      >
+        <el-option
+          v-for="item in orientationOptions"
+          :key="item.value"
+          :label="t(item.locale)"
+          :value="item.value"
+        >
+          <IconifyIcon :icon="item.icon" style="vertical-align: middle; margin-right: 10px" />
+          <span>{{ t(item.locale) }}</span>
+        </el-option>
+      </el-select>
+
+      <el-select
+        v-if="isLocalResource"
+        v-model="searchForm.quality"
+        class="condition-item"
+        :disabled="flags.loading"
+        :placeholder="t('exploreCommon.searchForm.quality.placeholder')"
+        size="large"
+        multiple
+        collapse-tags
+        style="width: 140px"
+        @change="onSearch"
+      >
+        <el-option v-for="text in qualityList" :key="text" :label="text" :value="text" />
+      </el-select>
+
+      <el-mention
+        v-model="searchForm.filterKeywords"
+        class="condition-item"
+        :disabled="flags.loading"
+        :options="hotTags"
+        :prefix="['#']"
         :placeholder="t('exploreCommon.searchForm.filterKeywords.placeholder')"
         clearable
         size="large"
         @keyup.enter="onSearch"
       >
-        <template #prepend>
-          <el-select
-            v-if="isSearchMenu"
-            :model-value="selectedResource"
-            value-key="key"
-            :disabled="flags.loading"
-            :placeholder="t('exploreCommon.searchForm.resourceName.placeholder')"
-            size="large"
-            style="width: 140px"
-            @change="onResourceChange"
-          >
-            <template #label="{ label, value }">
-              <IconifyIcon
-                :icon="resourceTypeIcons[value.resourceType]"
-                style="vertical-align: middle; margin-right: 10px"
-              />
-              <span>{{ label }}</span>
-            </template>
-            <el-option-group
-              v-for="group in resourceGroupList"
-              :key="group.value"
-              :label="t(group.locale)"
-            >
-              <el-option
-                v-for="item in group.children"
-                :key="item.optionValue.key"
-                :label="t(item.locale) || item.value"
-                :value="item.optionValue"
-              >
-                <IconifyIcon
-                  :icon="group.icon"
-                  style="vertical-align: middle; margin-right: 10px"
-                />
-                <span>{{ t(item.locale) || item.value }}</span>
-              </el-option>
-            </el-option-group>
-          </el-select>
+      </el-mention>
 
-          <el-select
-            v-if="supportSearchTypes.length > 1"
-            v-model="searchForm.filterType"
-            :disabled="flags.loading"
-            :placeholder="t('exploreCommon.searchForm.filterType.placeholder')"
-            size="large"
-            style="width: 140px; margin-left: 20px"
-            @change="onSearch"
-          >
-            <el-option
-              v-for="item in filterTypeOptions"
-              :key="item.value"
-              :label="t(item.locale)"
-              :value="item.value"
-            />
-          </el-select>
-
-          <el-select
-            v-model="searchForm.orientation"
-            :disabled="flags.loading"
-            :placeholder="t('exploreCommon.searchForm.orientation.placeholder')"
-            size="large"
-            multiple
-            collapse-tags
-            style="width: 140px; margin-left: 20px"
-            @change="onSearch"
-          >
-            <el-option
-              v-for="item in orientationOptions"
-              :key="item.value"
-              :label="t(item.locale)"
-              :value="item.value"
-            >
-              <IconifyIcon :icon="item.icon" style="vertical-align: middle; margin-right: 10px" />
-              <span>{{ t(item.locale) }}</span>
-            </el-option>
-          </el-select>
-          <el-select
-            v-if="isLocalResource"
-            v-model="searchForm.quality"
-            :disabled="flags.loading"
-            :placeholder="t('exploreCommon.searchForm.quality.placeholder')"
-            size="large"
-            multiple
-            collapse-tags
-            style="width: 140px; margin-left: 20px"
-            @change="onSearch"
-          >
-            <el-option v-for="text in qualityList" :key="text" :label="text" :value="text" />
-          </el-select>
-        </template>
-        <!-- <template v-if="isSearchMenu && isLocalResource" #append>
+      <!-- <template v-if="isSearchMenu && isLocalResource" #append>
           <el-button type="primary" size="large" @click="onSyncToWallpaperSetting">{{
             t('exploreCommon.onSyncToWallpaperSetting')
           }}</el-button>
         </template> -->
-      </el-input>
     </div>
     <div class="body-block">
       <div
@@ -2004,46 +2044,11 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  margin-bottom: 10px;
-  padding: 10px;
-}
+  margin: 10px;
+  border-bottom: 1px solid #ffffff;
 
-.header-search-input {
-  :deep(.el-input-group__prepend) {
-    border-radius: 0;
-    background-color: transparent !important;
-    box-shadow: 0 -1px 0px 0px var(--el-input-border-color, var(--el-border-color)) inset;
-
-    .el-select__wrapper {
-      border-radius: 0;
-      box-shadow: 0 -1px 0px 0px var(--el-input-border-color, var(--el-border-color)) inset;
-
-      .el-select__placeholder {
-        color: #ffffff;
-      }
-      .el-tag {
-        background-color: transparent;
-        color: #ffffff;
-
-        .el-tag__close {
-          display: none;
-        }
-      }
-    }
-  }
-  :deep(.el-input__wrapper) {
-    border-radius: 0;
-    background-color: transparent !important;
-    box-shadow: 0 -1px 0px 0px var(--el-input-border-color, var(--el-border-color)) inset;
-    .el-input__inner {
-      color: #ffffff;
-    }
-  }
-  :deep(.el-input-group__append) {
-    border-radius: 0;
-    background-color: transparent !important;
-    box-shadow: 0 -1px 0px 0px var(--el-input-border-color, var(--el-border-color)) inset;
-    color: #ffffff;
+  .condition-item {
+    flex: none;
   }
 }
 
@@ -2441,5 +2446,41 @@ onBeforeUnmount(() => {
   bottom: 4px;
   right: 40px;
   font-size: 12px;
+}
+</style>
+
+<style lang="scss">
+.header-block {
+  .el-select__wrapper {
+    width: 100% !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+
+    .el-select__placeholder {
+      color: #ffffff;
+    }
+
+    .el-select__caret {
+      color: #ffffff;
+    }
+  }
+
+  .el-mention {
+    width: 100% !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .el-input__wrapper {
+    width: 100% !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+  }
 }
 </style>

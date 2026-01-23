@@ -260,6 +260,56 @@ export default class ResourcesManager {
     return ret
   }
 
+  // 获取热门标签
+  async getHotTags(params) {
+    const { resourceName } = params
+    const { remoteResourceSecretKeys } = this.settingData
+
+    let ret = {
+      success: false,
+      message: t('messages.operationFail'),
+      data: {
+        tags: []
+      }
+    }
+
+    // 先获取资源数据
+    const resourceMapRes = await this.dbManager.getResourceMap()
+    if (!resourceMapRes.success) {
+      ret.message = resourceMapRes.message
+      return ret
+    }
+    const resourceMap = resourceMapRes.data
+
+    const resourceInfo = resourceMap.remoteResourceMap[resourceName]
+    if (!resourceInfo) {
+      ret.message = t('messages.resourceNotFound')
+      return ret
+    }
+
+    if (resourceInfo.requireSecretKey && !remoteResourceSecretKeys[resourceName]) {
+      ret.message = t('messages.resourceSecretKeyUnset')
+      return ret
+    }
+
+    try {
+      const tags = await this.apiManager.call(resourceName, 'getHotTags', {
+        secretKey: resourceMap.remoteResourceKeyNames.includes(resourceName)
+          ? remoteResourceSecretKeys[resourceName]
+          : ''
+      })
+      this.logger.info(`获取热门标签成功: ${JSON.stringify(tags)}`)
+      ret.data.tags = Array.isArray(tags) ? tags : []
+      ret.success = true
+      ret.message = t(ret.data.tags.length ? 'messages.querySuccess' : 'messages.queryEmpty')
+      return ret
+    } catch (err) {
+      this.logger.error(`获取热门标签失败: error => ${err}`)
+      ret.message = err.message || t('messages.operationFail')
+      return ret
+    }
+  }
+
   /**
    * 检查资源是否已收藏
    * @param {number|string} resourceId - 资源ID

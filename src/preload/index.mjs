@@ -188,6 +188,8 @@ const api = {
 
   // 壁纸操作
   search: (...args) => ipcRenderer.invoke('main:search', ...args),
+  // 获取热门标签
+  getHotTags: (...args) => ipcRenderer.invoke('main:getHotTags', ...args),
   toggleAutoSwitchWallpaper: (...args) =>
     ipcRenderer.invoke('main:toggleAutoSwitchWallpaper', ...args),
   setAsWallpaperWithDownload: (...args) =>

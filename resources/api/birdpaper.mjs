@@ -129,5 +129,14 @@ export default class ResourceBirdPaper extends ApiBase {
     }
 
     return ret
-  }
+}
+
+async getHotTags(query) {
+  // BirdPaper API没有直接提供热门标签列表，使用常用标签作为默认值
+  return [
+    '4K', '美女', '爱情', '风景', '小清新', '动漫', '明星', 
+    '萌宠', '游戏', '汽车', '炫酷时尚', '月历壁纸', '影视剧照', 
+    '节日美图', '军事天地', '劲爆体育', 'BABY秀', '文字控', '秦时明月', '国漫'
+  ]
+}
 }

@@ -143,5 +143,14 @@ export default class ResourcePexels extends ApiBase {
     }
 
     return ret
-  }
+}
+
+async getHotTags(query) {
+  // Pixabay API没有直接提供热门标签端点，返回常用默认标签
+  return [
+    'nature', 'landscape', 'animals', 'food', 'technology', 'travel', 
+    'people', 'abstract', 'business', 'fashion', 'sports', 'education',
+    'health', 'science', 'music', 'art', 'cars', 'architecture', 'space', 'flowers'
+  ]
+}
 }

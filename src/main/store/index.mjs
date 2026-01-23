@@ -640,6 +640,11 @@ export default class Store {
       return await this.resourcesManager.search(params)
     })
 
+    // 获取热门标签
+    ipcMain.handle('main:getHotTags', async (event, params) => {
+      return await this.resourcesManager.getHotTags(params)
+    })
+
     // 设置为壁纸
     ipcMain.handle('main:setAsWallpaperWithDownload', async (event, item) => {
       return await this.wallpaperManager.setAsWallpaperWithDownload(item)

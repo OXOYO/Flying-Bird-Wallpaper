@@ -102,5 +102,14 @@ export default class ResourceOpenverse extends ApiBase {
     }
 
     return ret
-  }
+}
+
+async getHotTags(query) {
+  // Openverse API没有直接提供热门标签端点，返回常用开源图片主题
+  return [
+    'nature', 'landscape', 'animals', 'plants', 'technology', 'art', 
+    'science', 'education', 'business', 'food', 'travel', 'people',
+    'architecture', 'music', 'sports', 'health', 'space', 'environment', 'history', 'culture'
+  ]
+}
 }
