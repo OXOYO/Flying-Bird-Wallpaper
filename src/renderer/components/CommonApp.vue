@@ -39,7 +39,7 @@ const settingStore = UseSettingStore()
 
 // Element Plus 全局配置
 const elGlobalConfig = reactive({
-  locale: zhCn,
+  locale: lang.enUS,
   message: {
     grouping: true
   }
@@ -65,10 +65,14 @@ const init = async () => {
 }
 
 const updateElLocale = (locale) => {
+  // 处理空值
+  if (!locale || !lang[locale]) {
+    locale = 'enUS'
+  }
   // 更新 Element Plus 语言
   i18next.changeLanguage(locale)
   // 使用对应的语言包
-  elGlobalConfig.locale = lang[locale] || zhCn
+  elGlobalConfig.locale = lang[locale]
 }
 
 const onSettingDataUpdateCallback = (event, data) => {

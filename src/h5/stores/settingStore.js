@@ -2,8 +2,16 @@ import { defaultSettingData } from '@common/publicData.js'
 import * as api from '@h5/api/index.js'
 import LocalStore from '../utils/localStore'
 import i18next from '@i18n/i18next.js'
+import { systemLocaleMap } from '@i18n/locale/index.js'
 
 const localStore = new LocalStore()
+
+// 检测设备语言
+const getDeviceLocale = () => {
+  const systemLocale = navigator.language || navigator.languages?.[0] || 'en-US'
+  // 从统一配置获取语言映射
+  return systemLocaleMap[systemLocale] || systemLocaleMap[systemLocale.split('-')[0]] || 'enUS'
+}
 
 const UseSettingStore = defineStore('setting', {
   state: () => {
@@ -17,7 +25,9 @@ const UseSettingStore = defineStore('setting', {
     }
     return {
       settingData: {
-        ...JSON.parse(JSON.stringify(defaultSettingData))
+        ...JSON.parse(JSON.stringify(defaultSettingData)),
+        // 使用设备语言作为初始默认值
+        locale: getDeviceLocale()
       },
       localSetting
     }
@@ -26,6 +36,14 @@ const UseSettingStore = defineStore('setting', {
     async getSettingData() {
       const res = await api.getSettingData()
       if (res.success) {
+        // 如果从服务器获取的是默认语言，则使用设备语言覆盖
+        if (res.data.locale === defaultSettingData.locale) {
+          // 使用顶部定义的设备语言检测函数
+          const deviceLocale = getDeviceLocale()
+          res.data.locale = deviceLocale
+          // 同步设备语言到服务器
+          await api.h5UpdateSettingData({ locale: deviceLocale })
+        }
         this.settingData = Object.assign({}, this.settingData, res.data)
       }
       return res

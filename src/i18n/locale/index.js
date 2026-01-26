@@ -64,3 +64,43 @@ export const localeOptions = [
   { label: 'Italiano', value: 'itIT' },
   { label: 'العربية', value: 'arSA' }
 ]
+
+// 系统语言到应用语言的映射
+// 用于将系统返回的语言代码映射到应用支持的语言代码
+export const systemLocaleMap = {
+  // 中文
+  'zh-CN': 'zhCN',
+  'zh-TW': 'zhTW',
+  'zh-HK': 'zhTW',
+  // 英语
+  en: 'enUS',
+  'en-US': 'enUS',
+  'en-GB': 'enUS',
+  // 俄语
+  ru: 'ruRU',
+  'ru-RU': 'ruRU',
+  // 德语
+  de: 'deDE',
+  'de-DE': 'deDE',
+  // 法语
+  fr: 'frFR',
+  'fr-FR': 'frFR',
+  // 日语
+  ja: 'jaJP',
+  'ja-JP': 'jaJP',
+  // 韩语
+  ko: 'koKR',
+  'ko-KR': 'koKR',
+  // 西班牙语
+  es: 'esES',
+  'es-ES': 'esES',
+  // 葡萄牙语
+  'pt-BR': 'ptBR',
+  pt: 'ptBR',
+  // 意大利语
+  it: 'itIT',
+  'it-IT': 'itIT',
+  // 阿拉伯语
+  ar: 'arSA',
+  'ar-SA': 'arSA'
+}

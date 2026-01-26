@@ -129,7 +129,7 @@ export const menuList = [
 
 export const defaultSettingData = {
   /*** 基础配置 ***/
-  locale: 'zhCN',
+  locale: 'enUS',
   // 主题配置
   themes: {
     dark: false,

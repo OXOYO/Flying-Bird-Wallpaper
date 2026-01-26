@@ -1,5 +1,7 @@
 import EventEmitter from 'node:events'
+import { app } from 'electron'
 import { t, changeLanguage } from '../../i18n/server.js'
+import { systemLocaleMap } from '../../i18n/locale/index.js'
 import { defaultSettingData } from '../../common/publicData.js'
 import { generateSalt, hashPassword, verifyPassword } from '../utils/utils.mjs'
 
@@ -32,10 +34,31 @@ export default class SettingManager extends EventEmitter {
     SettingManager._instance = this
   }
 
+  // 映射系统语言到应用支持的语言
+  mapSystemLocale(systemLocale) {
+    return systemLocaleMap[systemLocale] || systemLocaleMap[systemLocale.split('-')[0]]
+  }
+
   // 初始化方法
   async _init() {
     try {
       await this.getSettingData()
+
+      // 如果是首次启动，没有语言设置，自动检测系统语言
+      if (this._settingData.locale === defaultSettingData.locale) {
+        const systemLocale = app.getLocale()
+        this.logger.info(`检测到系统语言: ${systemLocale}`)
+
+        // 映射系统语言到应用支持的语言
+        const mappedLocale = this.mapSystemLocale(systemLocale)
+        if (mappedLocale && mappedLocale !== defaultSettingData.locale) {
+          this.logger.info(`映射系统语言到应用语言: ${mappedLocale}`)
+          this._settingData.locale = mappedLocale
+          // 更新语言设置
+          await this.updateSettingData({ locale: mappedLocale })
+        }
+      }
+
       this._initialized = true
       this.emit('SETTING_INITIALIZED', this._settingData)
       return true

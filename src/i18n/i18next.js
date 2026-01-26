@@ -2,7 +2,7 @@ import i18next from 'i18next'
 import { resources } from './locale/index.js'
 
 i18next.init({
-  lng: 'zhCN',
+  lng: 'enUS',
   fallbackLng: 'enUS',
   resources,
   // 设置占位符与vue-i18n保持一致

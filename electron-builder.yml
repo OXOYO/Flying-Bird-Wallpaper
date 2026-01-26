@@ -68,6 +68,8 @@ mac:
     - NSMicrophoneUsageDescription: Application requests access to the device's microphone.
     - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
     - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
+    - CFBundleDevelopmentRegion: zh_CN
+    - CFBundleLocalizations: [zh_CN, zh_TW, en_US, ru_RU, de_DE, fr_FR, ja_JP, ko_KR, es_ES, pt_BR, it_IT, ar_SA]
   notarize: false
   target:
     - target: dmg

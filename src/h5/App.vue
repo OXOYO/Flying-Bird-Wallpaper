@@ -19,6 +19,8 @@ import esES from 'vant/es/locale/lang/es-ES'
 import ptBR from 'vant/es/locale/lang/pt-BR'
 import itIT from 'vant/es/locale/lang/it-IT'
 import arSA from 'vant/es/locale/lang/ar-SA'
+// 导入系统语言映射
+import { systemLocaleMap } from '@i18n/locale/index.js'
 
 const { t, i18next } = useTranslation()
 
@@ -99,6 +101,18 @@ const vantLocales = {
 watch(
   () => settingData.value,
   (val) => {
+    // 如果设置数据中的语言为空或无效，使用设备语言
+    if (!val.locale || !vantLocales[val.locale]) {
+      // 检测设备语言
+      const systemLocale = navigator.language || navigator.languages?.[0] || 'en-US'
+      // 从统一配置获取语言映射
+      const deviceLocale =
+        systemLocaleMap[systemLocale] || systemLocaleMap[systemLocale.split('-')[0]] || 'enUS'
+      val.locale = deviceLocale
+      // 同步到服务器
+      settingStore.h5UpdateSettingData({ locale: deviceLocale })
+    }
+
     i18next.changeLanguage(val.locale)
     // 使用对应的语言包
     const localeInfo = vantLocales[val.locale]

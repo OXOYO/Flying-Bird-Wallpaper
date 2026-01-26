@@ -35,6 +35,32 @@ CloseApplications=yes
 Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "chinesesimplified"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
 
+[Code]
+; 自动检测系统语言
+function .onInit
+  ; 获取系统语言ID
+  System::Call "kernel32::GetSystemDefaultLangID() i .r0"
+  ; 根据语言ID设置安装程序语言
+  StrCmp $0 0x0804 "Chinese"
+  ; 默认使用英语
+  Goto "English"
+  
+  Chinese:
+    ; 设置为简体中文
+    Push "chinesesimplified"
+    Goto "End"
+  
+  English:
+    ; 设置为英语
+    Push "english"
+  
+  End:
+    ; 设置安装程序语言
+    Pop $1
+    StrCmp $1 "" ""
+    ExecShell "open" "$INSTDIR\" /L=$1
+function end
+
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
