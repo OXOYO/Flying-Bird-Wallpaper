@@ -21,6 +21,7 @@ export default class ViewImageWindow {
 
     this.url = getWindowURL('ViewImageWindow')
     this.win = null
+    this.postData = null
     this.options = {
       width: 1200,
       height: 800,
@@ -57,6 +58,7 @@ export default class ViewImageWindow {
 
   create(data) {
     this.win = new BrowserWindow(this.options)
+    this.postData = data
 
     this.win.once('ready-to-show', () => {
       this.win.show()
@@ -72,7 +74,7 @@ export default class ViewImageWindow {
     preventContextMenu(this.win)
 
     ipcMain.handle('main:getPostData', () => {
-      return data
+      return this.postData
     })
 
     this.win.on('closed', () => {
@@ -98,6 +100,7 @@ export default class ViewImageWindow {
   createOrOpen(data) {
     if (this.win) {
       if (data) {
+        this.postData = data
         this.win.webContents.send('main:sendPostData', data)
       }
       this.win.show()
