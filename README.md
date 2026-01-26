@@ -31,7 +31,7 @@
     <img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki">
   </a>
 
-  <h3>English | <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/blob/main/README.md">简体中文</a></h3>
+  <h3>English | <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/blob/main/README_ZH.md">简体中文</a></h3>
   
 </div>
 
@@ -114,11 +114,9 @@ Copyright (c) 2025-present OXOYO
 [afdian](https://afdian.com/a/OXOYO)
 ---
 
-<p style="display: flex; flex-wrap: wrap; justify-content: center; gap: 5px;">
-    <a target="_blank" href="https://github.com/hantangtouzi">
-        <img width="40" title="hantangtouzi" src="https://avatars.githubusercontent.com/u/17481448?v=4" loading="lazy" />
-    </a>
-</p>
+| Name | Amount |
+|------|------|
+| [hantangtouzi](https://github.com/hantangtouzi) | 10￥ |
 
 ## Stargazers over time
 [![Stargazers over time](https://starchart.cc/OXOYO/Flying-Bird-Wallpaper.svg?variant=adaptive)](https://starchart.cc/OXOYO/Flying-Bird-Wallpaper)
