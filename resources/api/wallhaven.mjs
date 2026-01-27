@@ -27,7 +27,7 @@ export default class ResourceWallhaven extends ApiBase {
       // 是否远程，插件都是远程的
       remote: true,
       // 是否需要密钥
-      requireSecretKey: false,
+      requireSecretKey: true,
       // 密钥
       secretKey: '',
       // 是否支持搜索
@@ -95,15 +95,33 @@ export default class ResourceWallhaven extends ApiBase {
     }
 
     return ret
-}
+  }
 
-async getHotTags(query) {
-  // Wallhaven API没有直接提供热门标签端点，返回常用壁纸主题
-  return [
-    'nature', 'landscape', 'anime', 'city', 'space', 'abstract',
-    'cars', 'gaming', 'minimal', 'mountain', 'forest', 'ocean',
-    'sunset', 'night', 'technology', 'art', 'music', 'movies',
-    'sports', 'animals', 'flowers', 'architecture'
-  ]
-}
+  async getHotTags(query) {
+    // Wallhaven API没有直接提供热门标签端点，返回常用壁纸主题
+    return [
+      'nature',
+      'landscape',
+      'anime',
+      'city',
+      'space',
+      'abstract',
+      'cars',
+      'gaming',
+      'minimal',
+      'mountain',
+      'forest',
+      'ocean',
+      'sunset',
+      'night',
+      'technology',
+      'art',
+      'music',
+      'movies',
+      'sports',
+      'animals',
+      'flowers',
+      'architecture'
+    ]
+  }
 }
