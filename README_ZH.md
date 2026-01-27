@@ -33,11 +33,16 @@
 
   <h3>简体中文 | <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/blob/main/README.md">English</a></h3>
 
-  <h3 align=center>Download for Mac & Windows</h3>
-  <p align="center">
-    <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/releases"><img src="https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white" height=40/></a>
-    <a href="https://sourceforge.net/projects/flying-bird-wallpaper/files/latest/download"><img alt="Download Flying-Bird-Wallpaper" src="https://a.fsdn.com/con/app/sf-download-button" height=40 srcset="https://a.fsdn.com/con/app/sf-download-button?button_size=2x 2x"></a>   </p>
-    
+  <h3>Download for Mac & Windows</h3>
+  <p>
+    <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/releases">
+      <img src="https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white" alt="Download from GitHub" height=40>
+    </a>
+    <a href="https://sourceforge.net/projects/flying-bird-wallpaper/files/latest/download">
+      <img alt="Download from SourceForge" src="https://a.fsdn.com/con/app/sf-download-button" height=40 srcset="https://a.fsdn.com/con/app/sf-download-button?button_size=2x 2x" >
+    </a>
+  </p>
+   
 </div>
 
 ## 项目简介
