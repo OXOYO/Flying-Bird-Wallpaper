@@ -361,9 +361,24 @@ export const unitToValField = {
 
 export const qualityList = ['2K', '4K', '5K', '8K']
 
+export const filterTypeIcons = {
+  images: 'custom:image',
+  videos: 'custom:video'
+}
+
 export const filterTypeOptions = [
-  { label: '图片', value: 'images', locale: 'filterTypeOptions.images' },
-  { label: '视频', value: 'videos', locale: 'filterTypeOptions.videos' }
+  {
+    label: '图片',
+    value: 'images',
+    locale: 'filterTypeOptions.images',
+    icon: filterTypeIcons.images
+  },
+  {
+    label: '视频',
+    value: 'videos',
+    locale: 'filterTypeOptions.videos',
+    icon: filterTypeIcons.videos
+  }
 ]
 
 export const orientationIcons = {

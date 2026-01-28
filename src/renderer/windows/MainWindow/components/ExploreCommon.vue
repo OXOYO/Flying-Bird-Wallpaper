@@ -10,7 +10,9 @@ import {
   resourceTypeList,
   resourceTypeIcons,
   qualityList,
+  filterTypeIcons,
   filterTypeOptions,
+  orientationIcons,
   orientationOptions,
   autoRefreshListOptions
 } from '@common/publicData.js'
@@ -896,6 +898,11 @@ const onResourceChange = (value) => {
   onSearch()
 }
 
+const onCloseOrientationTag = (index) => {
+  searchForm.orientation.splice(index, 1)
+  onSearch()
+}
+
 const onRefresh = async (flag = true) => {
   // 重置数据
   searchForm.startPage = 1
@@ -1686,10 +1693,11 @@ onBeforeUnmount(() => {
         :model-value="selectedResource"
         value-key="key"
         class="condition-item"
+        filterable
         :disabled="flags.loading"
         :placeholder="t('exploreCommon.searchForm.resourceName.placeholder')"
         size="large"
-        style="width: 140px"
+        style="width: 180px"
         @change="onResourceChange"
       >
         <template #label="{ label, value }">
@@ -1697,7 +1705,7 @@ onBeforeUnmount(() => {
             :icon="resourceTypeIcons[value.resourceType]"
             style="vertical-align: middle; margin-right: 10px"
           />
-          <span>{{ label }}</span>
+          <span style="vertical-align: middle">{{ label }}</span>
         </template>
         <el-option-group
           v-for="group in resourceGroupList"
@@ -1711,7 +1719,7 @@ onBeforeUnmount(() => {
             :value="item.optionValue"
           >
             <IconifyIcon :icon="group.icon" style="vertical-align: middle; margin-right: 10px" />
-            <span>{{ t(item.locale) || item.value }}</span>
+            <span style="vertical-align: middle">{{ t(item.locale) || item.value }}</span>
           </el-option>
         </el-option-group>
       </el-select>
@@ -1731,7 +1739,18 @@ onBeforeUnmount(() => {
           :key="item.value"
           :label="t(item.locale)"
           :value="item.value"
-        />
+        >
+          <IconifyIcon :icon="item.icon" style="vertical-align: middle; margin-right: 10px" />
+          <span style="vertical-align: middle">{{ t(item.locale) }}</span>
+        </el-option>
+        <template #label>
+          <el-tag type="info">
+            <IconifyIcon
+              :icon="filterTypeIcons[searchForm.filterType]"
+              style="vertical-align: middle"
+            />
+          </el-tag>
+        </template>
       </el-select>
 
       <el-select
@@ -1741,8 +1760,7 @@ onBeforeUnmount(() => {
         :placeholder="t('exploreCommon.searchForm.orientation.placeholder')"
         size="large"
         multiple
-        collapse-tags
-        style="width: 140px"
+        style="width: 160px"
         @change="onSearch"
       >
         <el-option
@@ -1752,8 +1770,19 @@ onBeforeUnmount(() => {
           :value="item.value"
         >
           <IconifyIcon :icon="item.icon" style="vertical-align: middle; margin-right: 10px" />
-          <span>{{ t(item.locale) }}</span>
+          <span style="vertical-align: middle">{{ t(item.locale) }}</span>
         </el-option>
+        <template #tag>
+          <el-tag
+            v-for="(value, index) in searchForm.orientation"
+            :key="value"
+            type="info"
+            closable
+            @close="() => onCloseOrientationTag(index)"
+          >
+            <IconifyIcon :icon="orientationIcons[value]" style="vertical-align: middle" />
+          </el-tag>
+        </template>
       </el-select>
 
       <el-select
@@ -1765,7 +1794,7 @@ onBeforeUnmount(() => {
         size="large"
         multiple
         collapse-tags
-        style="width: 140px"
+        style="width: 160px"
         @change="onSearch"
       >
         <el-option v-for="text in qualityList" :key="text" :label="text" :value="text" />
@@ -2043,7 +2072,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 0;
   margin: 10px;
   border-bottom: 1px solid #ffffff;
 
