@@ -1,3 +1,21 @@
+## [1.3.6](https://github.com/OXOYO/Flying-Bird-Wallpaper/compare/v1.3.5...v1.3.6) (2026-02-04)
+
+
+### Bug Fixes
+
+* Fix the data caching issue in the image preview window. ([770a808](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/770a808fb245be7376a6d98282d37d9730b1a182))
+* **wallhaven:** change requireSecretKey to true for API access ([0aba8b5](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/0aba8b53d78abb6de0c753ade80c729029e27196))
+
+
+### Features
+
+* **explore:** enhance filter UI with icons and tag display ([b9e02e0](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/b9e02e041eb39e07a688c5794bda9819e703c660))
+* Implement device language auto-detection and switching ([b36a784](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/b36a78460cc397b31a9a6548ab94f37695c46c53))
+* 支持热门标签筛选 ([c14c134](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/c14c1343f07d22cf5cb224ad41840ce477434e95))
+* 支持设置默认菜单 ([dfeb93a](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/dfeb93a77d8dd692f8a542080ed83bde7541e6b9))
+
+
+
 ## [1.3.5](https://github.com/OXOYO/Flying-Bird-Wallpaper/compare/v1.3.4...v1.3.5) (2026-01-15)
 
 
