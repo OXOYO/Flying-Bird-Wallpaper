@@ -139,14 +139,5 @@ export default class ResourcePexels extends ApiBase {
     }
 
     return ret
-}
-
-async getHotTags(query) {
-  // Pexels API没有直接提供热门标签端点，返回常用摄影主题
-  return [
-    'nature', 'landscape', 'city', 'people', 'travel', 'food', 
-    'animals', 'sports', 'business', 'fashion', 'technology', 'health',
-    'education', 'science', 'music', 'art', 'cars', 'architecture', 'space', 'flowers'
-  ]
-}
+  }
 }

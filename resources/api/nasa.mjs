@@ -108,14 +108,5 @@ export default class ResourceNasa extends ApiBase {
     }
 
     return ret
-}
-
-async getHotTags(query) {
-  // NASA API没有直接提供热门标签端点，返回太空相关主题标签
-  return [
-    'space', 'planets', 'nebula', 'galaxy', 'astronauts', 'moon', 
-    'sun', 'stars', 'cosmos', 'spacecraft', 'satellite', 'black hole',
-    'milky way', 'jupiter', 'mars', 'venus', 'saturn', 'earth', 'asteroid', 'comet'
-  ]
-}
+  }
 }
