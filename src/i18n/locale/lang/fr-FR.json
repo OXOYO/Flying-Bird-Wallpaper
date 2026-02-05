@@ -46,11 +46,7 @@
         "dynamicWallpaper": "Fond d'écran dynamique",
         "rhythmWallpaper": "Fond d'écran rythmique",
         "remoteResource": "Ressources à distance",
-        "privacyPassword": "Mot de passe de confidentialité",
-        "h5Settings": "Paramètres H5",
-        "h5ExploreSettings": "Paramètres d'exploration",
-        "h5ResourcesSettings": "Paramètres des ressources",
-        "h5FunctionSettings": "Paramètres de fonction"
+        "privacyPassword": "Mot de passe de confidentialité"
       },
       "settingDataForm": {
         "locale": "Langue",
@@ -156,25 +152,6 @@
         "showTag": "Afficher le tag",
         "confirmOnDeleteFile": "Confirmation avant suppression",
         "enableSegmentationTask": "Activer la tâche de segmentation",
-        "h5AutoSwitch": "Changement automatique",
-        "h5SwitchType": "Mode de changement",
-        "h5SwitchIntervalTime": "Intervalle de changement",
-        "h5Resource": "Ressources d'images",
-        "h5Orientation": "Filtrer la direction",
-        "h5Quality": "Filtrer la qualité",
-        "h5SortField": "Champ de tri",
-        "h5SortType": "Méthode de tri",
-        "h5ImageDisplaySize": "Taille d'affichage",
-        "h5ImageCompress": "Compression d'images",
-        "h5ImageCompressStartSize": "Taille de départ de la compression",
-        "h5FloatingButtonPosition": "Position du bouton flottant",
-        "h5EnabledFloatingButtons": {
-          "label": "Boutons flottants activés",
-          "placeholder": "Veuillez sélectionner les boutons flottants"
-        },
-        "h5NumberIndicatorPosition": "Position de l'indicateur",
-        "h5Vibration": "Retour haptique",
-        "h5WeekScreen": "Écran toujours allumé",
         "powerSaveMode": "Mode économie d'énergie"
       },
       "privacyPasswordForm": {
@@ -630,11 +607,11 @@
         "title": "Paramètres",
         "form": {
           "h5ApplicationSettings": "Paramètres de l'application",
-          "locale": {
+          "h5Locale": {
             "label": "Langue",
             "placeholder": "Veuillez sélectionner une langue"
           },
-          "themes": {
+          "h5Themes": {
             "dark": {
               "label": "Mode sombre",
               "placeholder": "Activer le mode sombre"

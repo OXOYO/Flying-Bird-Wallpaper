@@ -46,11 +46,7 @@
         "dynamicWallpaper": "动态壁纸",
         "rhythmWallpaper": "律动壁纸",
         "remoteResource": "远程资源",
-        "privacyPassword": "隐私密码",
-        "h5Settings": "H5设置",
-        "h5ExploreSettings": "浏览设置",
-        "h5ResourcesSettings": "资源设置",
-        "h5FunctionSettings": "功能设置"
+        "privacyPassword": "隐私密码"
       },
       "settingDataForm": {
         "locale": "语言",
@@ -156,25 +152,6 @@
         "showTag": "显示标签",
         "confirmOnDeleteFile": "删除前确认",
         "enableSegmentationTask": "启用分词任务",
-        "h5AutoSwitch": "自动切换",
-        "h5SwitchType": "切换方式",
-        "h5SwitchIntervalTime": "切换间隔",
-        "h5Resource": "图片资源",
-        "h5Orientation": "筛选方向",
-        "h5Quality": "筛选质量",
-        "h5SortField": "排序字段",
-        "h5SortType": "排序方式",
-        "h5ImageDisplaySize": "显示尺寸",
-        "h5ImageCompress": "图片压缩",
-        "h5ImageCompressStartSize": "压缩起始大小",
-        "h5FloatingButtonPosition": "悬浮按钮位置",
-        "h5EnabledFloatingButtons": {
-          "label": "启用悬浮按钮",
-          "placeholder": "请选择悬浮按钮"
-        },
-        "h5NumberIndicatorPosition": "指示器位置",
-        "h5Vibration": "震动反馈",
-        "h5WeekScreen": "屏幕常亮",
         "powerSaveMode": "省电模式"
       },
       "privacyPasswordForm": {
@@ -630,11 +607,11 @@
         "title": "设置",
         "form": {
           "h5ApplicationSettings": "应用设置",
-          "locale": {
+          "h5Locale": {
             "label": "语言",
             "placeholder": "请选择语言"
           },
-          "themes": {
+          "h5Themes": {
             "dark": {
               "label": "深色模式",
               "placeholder": "是否开启深色模式"

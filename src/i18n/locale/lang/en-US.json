@@ -46,11 +46,7 @@
         "dynamicWallpaper": "Dynamic wallpaper",
         "rhythmWallpaper": "Rhythm wallpaper",
         "remoteResource": "Remote resources",
-        "privacyPassword": "Privacy password",
-        "h5Settings": "H5 settings",
-        "h5ExploreSettings": "Explore settings",
-        "h5ResourcesSettings": "Resources settings",
-        "h5FunctionSettings": "Function settings"
+        "privacyPassword": "Privacy password"
       },
       "settingDataForm": {
         "locale": "Language",
@@ -156,25 +152,6 @@
         "showTag": "Show tag",
         "confirmOnDeleteFile": "Confirm on delete",
         "enableSegmentationTask": "Enable segmentation task",
-        "h5AutoSwitch": "Automatic switching",
-        "h5SwitchType": "Switch mode",
-        "h5Resource": "Image resource",
-        "h5SwitchIntervalTime": "Switching interval",
-        "h5Orientation": "Filter direction",
-        "h5Quality": "Filter quality",
-        "h5SortField": "Sort field",
-        "h5SortType": "Sort mode",
-        "h5ImageDisplaySize": "Display size",
-        "h5ImageCompress": "Image compress",
-        "h5ImageCompressStartSize": "Start compress size",
-        "h5FloatingButtonPosition": "Floating button position",
-        "h5EnabledFloatingButtons": {
-          "label": "Enabled Floating Buttons",
-          "placeholder": "Please select enabled floating buttons"
-        },
-        "h5NumberIndicatorPosition": "Number indicator Position",
-        "h5Vibration": "Vibration feedback",
-        "h5WeekScreen": "Screen always on",
         "powerSaveMode": "Power save mode"
       },
       "privacyPasswordForm": {
@@ -630,11 +607,11 @@
         "title": "Settings",
         "form": {
           "h5ApplicationSettings": "Application Settings",
-          "locale": {
+          "h5Locale": {
             "label": "Language",
             "placeholder": "Select language"
           },
-          "themes": {
+          "h5Themes": {
             "dark": {
               "label": "Dark Mode",
               "placeholder": "Whether to enable dark mode"

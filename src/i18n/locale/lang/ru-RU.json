@@ -46,11 +46,7 @@
         "dynamicWallpaper": "Динамические обои",
         "rhythmWallpaper": "Ритмические обои",
         "remoteResource": "Удаленные ресурсы",
-        "privacyPassword": "Пароль конфиденциальности",
-        "h5Settings": "Настройки H5",
-        "h5ExploreSettings": "Настройки обзора",
-        "h5ResourcesSettings": "Настройки ресурсов",
-        "h5FunctionSettings": "Функциональные настройки"
+        "privacyPassword": "Пароль конфиденциальности"
       },
       "settingDataForm": {
         "locale": "Язык",
@@ -156,25 +152,6 @@
         "showTag": "Показать тег",
         "confirmOnDeleteFile": "Подтверждение перед удалением",
         "enableSegmentationTask": "Включить задачу сегментации",
-        "h5AutoSwitch": "Автоматическое переключение",
-        "h5SwitchType": "Режим переключения",
-        "h5SwitchIntervalTime": "Интервал переключения",
-        "h5Resource": "Ресурсы изображений",
-        "h5Orientation": "Фильтр направления",
-        "h5Quality": "Фильтр качества",
-        "h5SortField": "Поле сортировки",
-        "h5SortType": "Метод сортировки",
-        "h5ImageDisplaySize": "Размер отображения",
-        "h5ImageCompress": "Сжатие изображения",
-        "h5ImageCompressStartSize": "Начальный размер сжатия",
-        "h5FloatingButtonPosition": "Позиция плавающей кнопки",
-        "h5EnabledFloatingButtons": {
-          "label": "Включенные плавающие кнопки",
-          "placeholder": "Выберите плавающие кнопки"
-        },
-        "h5NumberIndicatorPosition": "Позиция цифрового индикатора",
-        "h5Vibration": "Вибрационная обратная связь",
-        "h5WeekScreen": "Экран всегда включен",
         "powerSaveMode": "Режим энергосбережения"
       },
       "privacyPasswordForm": {
@@ -630,11 +607,11 @@
         "title": "Настройки",
         "form": {
           "h5ApplicationSettings": "Настройки приложения",
-          "locale": {
+          "h5Locale": {
             "label": "Язык",
             "placeholder": "Выберите язык"
           },
-          "themes": {
+          "h5Themes": {
             "dark": {
               "label": "Темный режим",
               "placeholder": "Включить темный режим"

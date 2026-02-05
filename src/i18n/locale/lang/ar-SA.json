@@ -46,11 +46,7 @@
         "dynamicWallpaper": "خلفية ديناميكية",
         "rhythmWallpaper": "خلفية إيقاعية",
         "remoteResource": "الموارد عن بُعد",
-        "privacyPassword": "كلمة مرور الخصوصية",
-        "h5Settings": "إعدادات H5",
-        "h5ExploreSettings": "إعدادات الاستكشاف",
-        "h5ResourcesSettings": "إعدادات الموارد",
-        "h5FunctionSettings": "إعدادات الوظائف"
+        "privacyPassword": "كلمة مرور الخصوصية"
       },
       "settingDataForm": {
         "locale": "اللغة",
@@ -156,25 +152,6 @@
         "showTag": "عرض العلامات",
         "confirmOnDeleteFile": "تأكيد قبل الحذف",
         "enableSegmentationTask": "تمكين مهمة التجزئة",
-        "h5AutoSwitch": "تبديل تلقائي",
-        "h5SwitchType": "وضع التبديل",
-        "h5SwitchIntervalTime": "فترة التبديل",
-        "h5Resource": "موارد الصور",
-        "h5Orientation": "تصفية الاتجاه",
-        "h5Quality": "تصفية الجودة",
-        "h5SortField": "حقل الفرز",
-        "h5SortType": "طريقة الفرز",
-        "h5ImageDisplaySize": "حجم العرض",
-        "h5ImageCompress": "ضغط الصورة",
-        "h5ImageCompressStartSize": "حجم بدء الضغط",
-        "h5FloatingButtonPosition": "موضع الزر العائم",
-        "h5EnabledFloatingButtons": {
-          "label": "الأزرار العائمة الممكّنة",
-          "placeholder": "يرجى تحديد الأزرار العائمة"
-        },
-        "h5NumberIndicatorPosition": "موضع المؤشر الرقمي",
-        "h5Vibration": "ردود الفعل الاهتزازية",
-        "h5WeekScreen": "شاشة مفعلة دائماً",
         "powerSaveMode": "وضع توفير الطاقة"
       },
       "privacyPasswordForm": {
@@ -630,11 +607,11 @@
         "title": "الإعدادات",
         "form": {
           "h5ApplicationSettings": "إعدادات التطبيق",
-          "locale": {
+          "h5Locale": {
             "label": "اللغة",
             "placeholder": "حدد اللغة"
           },
-          "themes": {
+          "h5Themes": {
             "dark": {
               "label": "الوضع الداكن",
               "placeholder": "تمكين الوضع الداكن؟"

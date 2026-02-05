@@ -46,11 +46,7 @@
         "dynamicWallpaper": "動態桌布",
         "rhythmWallpaper": "律動桌布",
         "remoteResource": "遠程資源",
-        "privacyPassword": "隱私密碼",
-        "h5Settings": "H5設定",
-        "h5ExploreSettings": "瀏覽設定",
-        "h5ResourcesSettings": "資源設定",
-        "h5FunctionSettings": "功能設定"
+        "privacyPassword": "隱私密碼"
       },
       "settingDataForm": {
         "locale": "語言",
@@ -156,25 +152,6 @@
         "showTag": "顯示標籤",
         "confirmOnDeleteFile": "刪除前確認",
         "enableSegmentationTask": "啟用分詞任務",
-        "h5AutoSwitch": "自動切換",
-        "h5SwitchType": "切換方式",
-        "h5SwitchIntervalTime": "切換間隔",
-        "h5Resource": "圖片資源",
-        "h5Orientation": "篩選方向",
-        "h5Quality": "篩選品質",
-        "h5SortField": "排序欄位",
-        "h5SortType": "排序方式",
-        "h5ImageDisplaySize": "顯示尺寸",
-        "h5ImageCompress": "圖片壓縮",
-        "h5ImageCompressStartSize": "壓縮起始大小",
-        "h5FloatingButtonPosition": "懸浮按鈕位置",
-        "h5EnabledFloatingButtons": {
-          "label": "啟用懸浮按鈕",
-          "placeholder": "請選擇懸浮按鈕"
-        },
-        "h5NumberIndicatorPosition": "指示器位置",
-        "h5Vibration": "震動回饋",
-        "h5WeekScreen": "螢幕常亮",
         "powerSaveMode": "省電模式"
       },
       "privacyPasswordForm": {
@@ -630,11 +607,11 @@
         "title": "設定",
         "form": {
           "h5ApplicationSettings": "應用設定",
-          "locale": {
+          "h5Locale": {
             "label": "語言",
             "placeholder": "請選擇語言"
           },
-          "themes": {
+          "h5Themes": {
             "dark": {
               "label": "深色模式",
               "placeholder": "是否開啟深色模式"

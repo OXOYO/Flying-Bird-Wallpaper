@@ -46,11 +46,7 @@
         "dynamicWallpaper": "Dynamische Hintergründe",
         "rhythmWallpaper": "Rhythmus-Hintergründe",
         "remoteResource": "Remote-Ressourcen",
-        "privacyPassword": "Datenschutz-Passwort",
-        "h5Settings": "H5-Einstellungen",
-        "h5ExploreSettings": "Erkundungseinstellungen",
-        "h5ResourcesSettings": "Ressourceneinstellungen",
-        "h5FunctionSettings": "Funktionseinstellungen"
+        "privacyPassword": "Datenschutz-Passwort"
       },
       "settingDataForm": {
         "locale": "Sprache",
@@ -156,25 +152,6 @@
         "showTag": "Tag anzeigen",
         "confirmOnDeleteFile": "Bestätigung vor Löschen",
         "enableSegmentationTask": "Segmentierungsaufgabe aktivieren",
-        "h5AutoSwitch": "Automatischer Wechsel",
-        "h5SwitchType": "Wechselmodus",
-        "h5SwitchIntervalTime": "Wechselintervall",
-        "h5Resource": "Bildressourcen",
-        "h5Orientation": "Richtungsfilter",
-        "h5Quality": "Qualitätsfilter",
-        "h5SortField": "Sortierfeld",
-        "h5SortType": "Sortiermethode",
-        "h5ImageDisplaySize": "Anzeigegröße",
-        "h5ImageCompress": "Bildkomprimierung",
-        "h5ImageCompressStartSize": "Komprimierungsstartgröße",
-        "h5FloatingButtonPosition": "Position der Schwebeschaltfläche",
-        "h5EnabledFloatingButtons": {
-          "label": "Aktivierte Schwebeschaltflächen",
-          "placeholder": ""
-        },
-        "h5NumberIndicatorPosition": "Position des Zahlenindikators",
-        "h5Vibration": "Vibrationsrückmeldung",
-        "h5WeekScreen": "Bildschirm immer an",
         "powerSaveMode": "Energiesparmodus"
       },
       "privacyPasswordForm": {
@@ -630,11 +607,11 @@
         "title": "Einstellungen",
         "form": {
           "h5ApplicationSettings": "Anwendungseinstellungen",
-          "locale": {
+          "h5Locale": {
             "label": "Sprache",
             "placeholder": "Bitte Sprache auswählen"
           },
-          "themes": {
+          "h5Themes": {
             "dark": {
               "label": "Dunkelmodus",
               "placeholder": "Dunkelmodus aktivieren"

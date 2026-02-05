@@ -46,11 +46,7 @@
         "dynamicWallpaper": "Fondo dinámico",
         "rhythmWallpaper": "Fondo rítmico",
         "remoteResource": "Recursos remotos",
-        "privacyPassword": "Contraseña de privacidad",
-        "h5Settings": "Configuración H5",
-        "h5ExploreSettings": "Configuración de exploración",
-        "h5ResourcesSettings": "Configuración de recursos",
-        "h5FunctionSettings": "Configuración de funciones"
+        "privacyPassword": "Contraseña de privacidad"
       },
       "settingDataForm": {
         "locale": "Idioma",
@@ -156,25 +152,6 @@
         "showTag": "Mostrar etiqueta",
         "confirmOnDeleteFile": "Confirmación antes de eliminar",
         "enableSegmentationTask": "Habilitar tarea de segmentación",
-        "h5AutoSwitch": "Cambio automático",
-        "h5SwitchType": "Modo de cambio",
-        "h5SwitchIntervalTime": "Intervalo de cambio",
-        "h5Resource": "Recursos de imágenes",
-        "h5Orientation": "Filtrar dirección",
-        "h5Quality": "Filtrar calidad",
-        "h5SortField": "Campo de ordenación",
-        "h5SortType": "Método de ordenación",
-        "h5ImageDisplaySize": "Tamaño de visualización",
-        "h5ImageCompress": "Compresión de imágenes",
-        "h5ImageCompressStartSize": "Tamaño inicial de compresión",
-        "h5FloatingButtonPosition": "Posición del botón flotante",
-        "h5EnabledFloatingButtons": {
-          "label": "Botones flotantes habilitados",
-          "placeholder": "Por favor, seleccione botones flotantes"
-        },
-        "h5NumberIndicatorPosition": "Posición del indicador numérico",
-        "h5Vibration": "Respuesta háptica",
-        "h5WeekScreen": "Pantalla siempre encendida",
         "powerSaveMode": "Modo de ahorro de energía"
       },
       "privacyPasswordForm": {
@@ -630,11 +607,11 @@
         "title": "Configuración",
         "form": {
           "h5ApplicationSettings": "Configuración de la aplicación",
-          "locale": {
+          "h5Locale": {
             "label": "Idioma",
             "placeholder": "Seleccione idioma"
           },
-          "themes": {
+          "h5Themes": {
             "dark": {
               "label": "Modo oscuro",
               "placeholder": "¿Habilitar modo oscuro?"

@@ -46,11 +46,7 @@
         "dynamicWallpaper": "동적 배경화면",
         "rhythmWallpaper": "리듬 배경화면",
         "remoteResource": "원격 리소스",
-        "privacyPassword": "프라이버시 비밀번호",
-        "h5Settings": "H5 설정",
-        "h5ExploreSettings": "탐색 설정",
-        "h5ResourcesSettings": "리소스 설정",
-        "h5FunctionSettings": "기능 설정"
+        "privacyPassword": "프라이버시 비밀번호"
       },
       "settingDataForm": {
         "locale": "언어",
@@ -156,25 +152,6 @@
         "showTag": "태그 표시",
         "confirmOnDeleteFile": "삭제 전 확인",
         "enableSegmentationTask": "분할 작업 활성화",
-        "h5AutoSwitch": "자동 전환",
-        "h5SwitchType": "전환 방식",
-        "h5SwitchIntervalTime": "전환 간격",
-        "h5Resource": "이미지 리소스",
-        "h5Orientation": "방향 필터",
-        "h5Quality": "품질 필터",
-        "h5SortField": "정렬 필드",
-        "h5SortType": "정렬 방식",
-        "h5ImageDisplaySize": "표시 크기",
-        "h5ImageCompress": "이미지 압축",
-        "h5ImageCompressStartSize": "압축 시작 크기",
-        "h5FloatingButtonPosition": "플로팅 버튼 위치",
-        "h5EnabledFloatingButtons": {
-          "label": "활성화된 플로팅 버튼",
-          "placeholder": "플로팅 버튼을 선택해 주세요"
-        },
-        "h5NumberIndicatorPosition": "숫자 표시기 위치",
-        "h5Vibration": "진동 피드백",
-        "h5WeekScreen": "화면 항상 켜짐",
         "powerSaveMode": "절전 모드"
       },
       "privacyPasswordForm": {
@@ -630,11 +607,11 @@
         "title": "설정",
         "form": {
           "h5ApplicationSettings": "애플리케이션 설정",
-          "locale": {
+          "h5Locale": {
             "label": "언어",
             "placeholder": "언어를 선택해 주세요"
           },
-          "themes": {
+          "h5Themes": {
             "dark": {
               "label": "다크 모드",
               "placeholder": "다크 모드를 활성화할지 여부"

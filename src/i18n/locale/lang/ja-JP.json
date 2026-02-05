@@ -46,11 +46,7 @@
         "dynamicWallpaper": "動的壁紙",
         "rhythmWallpaper": "リズム壁紙",
         "remoteResource": "リモートリソース",
-        "privacyPassword": "プライバシーパスワード",
-        "h5Settings": "H5設定",
-        "h5ExploreSettings": "探索設定",
-        "h5ResourcesSettings": "リソース設定",
-        "h5FunctionSettings": "機能設定"
+        "privacyPassword": "プライバシーパスワード"
       },
       "settingDataForm": {
         "locale": "言語",
@@ -156,25 +152,6 @@
         "showTag": "タグを表示",
         "confirmOnDeleteFile": "削除前に確認",
         "enableSegmentationTask": "セグメンテーションタスクを有効化",
-        "h5AutoSwitch": "自動切り替え",
-        "h5SwitchType": "切り替え方式",
-        "h5SwitchIntervalTime": "切り替え間隔",
-        "h5Resource": "画像リソース",
-        "h5Orientation": "方向フィルター",
-        "h5Quality": "品質フィルター",
-        "h5SortField": "ソートフィールド",
-        "h5SortType": "ソート方法",
-        "h5ImageDisplaySize": "表示サイズ",
-        "h5ImageCompress": "画像圧縮",
-        "h5ImageCompressStartSize": "圧縮開始サイズ",
-        "h5FloatingButtonPosition": "フローティングボタンの位置",
-        "h5EnabledFloatingButtons": {
-          "label": "有効なフローティングボタン",
-          "placeholder": "フローティングボタンを選択してください"
-        },
-        "h5NumberIndicatorPosition": "数値インジケーターの位置",
-        "h5Vibration": "振動フィードバック",
-        "h5WeekScreen": "画面常時点灯",
         "powerSaveMode": "省電力モード"
       },
       "privacyPasswordForm": {
@@ -630,11 +607,11 @@
         "title": "設定",
         "form": {
           "h5ApplicationSettings": "アプリケーション設定",
-          "locale": {
+          "h5Locale": {
             "label": "言語",
             "placeholder": "言語を選択してください"
           },
-          "themes": {
+          "h5Themes": {
             "dark": {
               "label": "ダークモード",
               "placeholder": "ダークモードを有効にする"
