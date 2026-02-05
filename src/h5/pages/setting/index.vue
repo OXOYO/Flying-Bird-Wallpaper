@@ -27,7 +27,7 @@ const settingDataForm = reactive(settingData.value)
 const localSettingForm = reactive(localSetting.value)
 
 const showPickers = reactive({
-  locale: false,
+  h5Locale: false,
   h5SwitchType: false,
   h5Resource: false,
   h5Orientation: false,
@@ -73,7 +73,7 @@ const resourceMap = computed(() => {
 
 const pickerColumns = computed(() => {
   return {
-    locale: optionsToColumns(localeOptions),
+    h5Locale: optionsToColumns(localeOptions),
     h5SwitchType: optionsToColumns(switchTypeOptions),
     h5SwitchIntervalUnit: optionsToColumns(intervalUnits.h5SwitchIntervalUnit),
     h5Resource: optionsToColumns(toRaw(resourceMap.value.wallpaperResourceList)),
@@ -90,7 +90,7 @@ const pickerColumns = computed(() => {
 
 const fieldsData = computed(() => {
   let ret = {
-    locale: '',
+    h5Locale: '',
     h5SwitchType: '',
     h5Resource: '',
     h5Orientation: '',
@@ -142,7 +142,10 @@ const onShowPicker = (field) => {
 const onConfirmPicker = (field, { selectedValues }) => {
   showPickers[field] = false
   switch (field) {
-    case 'locale':
+    case 'h5Locale':
+      settingDataForm.h5Locale = selectedValues[0]
+      settingDataForm.isH5LocaleSet = true
+      break
     case 'h5SwitchType':
     case 'h5SwitchIntervalUnit':
     case 'h5Resource':
@@ -172,16 +175,11 @@ const onCancelPicker = (field) => {
 
 const onSettingDataChange = async (field) => {
   let payload = {}
-  if (field === 'themes.primary') {
+  if (field === 'h5Themes.primary' || field === 'h5Themes.dark') {
     payload = {
-      themes: {
-        primary: settingDataForm.themes.primary
-      }
-    }
-  } else if (field === 'themes.dark') {
-    payload = {
-      themes: {
-        dark: settingDataForm.themes.dark
+      h5Themes: {
+        primary: settingDataForm.h5Themes.primary,
+        dark: settingDataForm.h5Themes.dark
       }
     }
   } else {
@@ -226,6 +224,10 @@ const onLocalSettingChange = (field) => {
   })
 }
 
+const onOpenLink = (url) => {
+  window.open(url, '_blank')
+}
+
 onMounted(() => {
   init()
 })
@@ -238,38 +240,38 @@ onMounted(() => {
     <div class="page-setting-inner">
       <van-cell-group inset :title="t('h5.pages.setting.form.h5ApplicationSettings')">
         <van-field
-          v-model="fieldsData.locale"
+          v-model="fieldsData.h5Locale"
           is-link
           readonly
-          name="locale"
-          :label="t('h5.pages.setting.form.locale.label')"
-          :placeholder="t('h5.pages.setting.form.locale.placeholder')"
-          @click="onShowPicker('locale')"
+          name="h5Locale"
+          :label="t('h5.pages.setting.form.h5Locale.label')"
+          :placeholder="t('h5.pages.setting.form.h5Locale.placeholder')"
+          @click="onShowPicker('h5Locale')"
         />
-        <van-popup v-model:show="showPickers.locale" destroy-on-close position="bottom">
+        <van-popup v-model:show="showPickers.h5Locale" destroy-on-close position="bottom">
           <van-picker
-            :columns="pickerColumns.locale"
-            :model-value="[settingDataForm.locale]"
-            @confirm="(...args) => onConfirmPicker('locale', ...args)"
-            @cancel="(...args) => onCancelPicker('locale', ...args)"
+            :columns="pickerColumns.h5Locale"
+            :model-value="[settingDataForm.h5Locale]"
+            @confirm="(...args) => onConfirmPicker('h5Locale', ...args)"
+            @cancel="(...args) => onCancelPicker('h5Locale', ...args)"
           />
         </van-popup>
 
         <van-field
-          v-model="settingDataForm.themes.primary"
-          name="themes.primary"
+          v-model="settingDataForm.h5Themes.primary"
+          name="h5Themes.primary"
           type="color"
-          :label="t('h5.pages.setting.form.themes.primary.label')"
-          :placeholder="t('h5.pages.setting.form.themes.primary.placeholder')"
-          @update:model-value="onSettingDataChange('themes.primary')"
+          :label="t('h5.pages.setting.form.h5Themes.primary.label')"
+          :placeholder="t('h5.pages.setting.form.h5Themes.primary.placeholder')"
+          @update:model-value="onSettingDataChange('h5Themes.primary')"
         />
 
-        <van-cell :title="t('h5.pages.setting.form.themes.dark.label')">
+        <van-cell :title="t('h5.pages.setting.form.h5Themes.dark.label')">
           <template #right-icon>
             <van-switch
-              v-model="settingDataForm.themes.dark"
+              v-model="settingDataForm.h5Themes.dark"
               size="20px"
-              @change="onSettingDataChange('themes.dark')"
+              @change="onSettingDataChange('h5Themes.dark')"
             />
           </template>
         </van-cell>
@@ -580,7 +582,11 @@ onMounted(() => {
 
       <van-cell-group inset :title="t('h5.pages.setting.about')">
         <van-cell :title="t('h5.pages.setting.version')" :value="appInfo.version" />
-        <van-cell :title="t('h5.pages.setting.sponsor')" is-link :url="appInfo.afdian" />
+        <van-cell
+          :title="t('h5.pages.setting.sponsor')"
+          is-link
+          @click="onOpenLink(appInfo.afdian)"
+        />
       </van-cell-group>
     </div>
   </div>

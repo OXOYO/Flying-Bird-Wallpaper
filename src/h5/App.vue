@@ -56,7 +56,7 @@ let wakeLock = null
 
 const themeVars = computed(() => {
   return {
-    primaryColor: settingData.value.themes.primary
+    primaryColor: settingData.value.h5Themes.primary
   }
 })
 
@@ -101,21 +101,22 @@ const vantLocales = {
 watch(
   () => settingData.value,
   (val) => {
+    let h5Locale = val.h5Locale
     // 如果设置数据中的语言为空或无效，使用设备语言
-    if (!val.locale || !vantLocales[val.locale]) {
+    if (!h5Locale || !vantLocales[h5Locale]) {
       // 检测设备语言
       const systemLocale = navigator.language || navigator.languages?.[0] || 'en-US'
       // 从统一配置获取语言映射
       const deviceLocale =
         systemLocaleMap[systemLocale] || systemLocaleMap[systemLocale.split('-')[0]] || 'enUS'
-      val.locale = deviceLocale
+      h5Locale = deviceLocale
       // 同步到服务器
-      settingStore.h5UpdateSettingData({ locale: deviceLocale })
+      settingStore.h5UpdateSettingData({ h5Locale: deviceLocale })
     }
 
-    i18next.changeLanguage(val.locale)
+    i18next.changeLanguage(h5Locale)
     // 使用对应的语言包
-    const localeInfo = vantLocales[val.locale]
+    const localeInfo = vantLocales[h5Locale]
     if (localeInfo) {
       Locale.use(localeInfo[0], localeInfo[1])
     } else {
@@ -236,7 +237,7 @@ onUnmounted(() => {
 
 <template>
   <van-config-provider
-    :theme="settingData.themes.dark ? 'dark' : 'light'"
+    :theme="settingData.h5Themes.dark ? 'dark' : 'light'"
     :theme-vars="themeVars"
     theme-vars-scope="global"
   >

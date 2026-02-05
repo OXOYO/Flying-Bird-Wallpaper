@@ -411,21 +411,22 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
     })
 
     // 监听系统语言变更事件
-      app.on('locale-changed', () => {
-        const newLocale = app.getLocale()
-        global.logger.info(`系统语言已变更为: ${newLocale}`)
-        
-        if (global.FBW.store) {
-          const mappedLocale = global.FBW.store.settingManager.mapSystemLocale(newLocale)
-          if (mappedLocale && mappedLocale !== global.FBW.store.settingData?.locale) {
-            global.logger.info(`自动更新应用语言为: ${mappedLocale}`)
-            global.FBW.store.updateSettingData({ locale: mappedLocale })
+    app.on('locale-changed', () => {
+      if (global.FBW.store) {
+        const deviceLocale = global.FBW.store.getDeviceLocale()
+        global.logger.info(`系统语言已变更为: ${deviceLocale}`)
+
+        if (!global.FBW.store.settingData?.isLocaleSet) {
+          if (deviceLocale && deviceLocale !== global.FBW.store.settingData?.locale) {
+            global.logger.info(`自动更新应用语言为: ${deviceLocale}`)
+            global.FBW.store.updateSettingData({ locale: deviceLocale })
           }
         }
-      })
+      }
+    })
 
-      // 初始化
-      app.whenReady().then(async () => {
+    // 初始化
+    app.whenReady().then(async () => {
       if (isDev()) {
         // 安装vue-devtools
         installExtension(VUEJS_DEVTOOLS_BETA)

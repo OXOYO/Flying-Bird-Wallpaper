@@ -8,9 +8,9 @@ const localStore = new LocalStore()
 
 // 检测设备语言
 const getDeviceLocale = () => {
-  const systemLocale = navigator.language || navigator.languages?.[0] || 'en-US'
+  const deviceLocale = navigator.language || navigator.languages?.[0] || 'en-US'
   // 从统一配置获取语言映射
-  return systemLocaleMap[systemLocale] || systemLocaleMap[systemLocale.split('-')[0]] || 'enUS'
+  return systemLocaleMap[deviceLocale] || systemLocaleMap[deviceLocale.split('-')[0]] || 'enUS'
 }
 
 const UseSettingStore = defineStore('setting', {
@@ -25,9 +25,7 @@ const UseSettingStore = defineStore('setting', {
     }
     return {
       settingData: {
-        ...JSON.parse(JSON.stringify(defaultSettingData)),
-        // 使用设备语言作为初始默认值
-        locale: getDeviceLocale()
+        ...JSON.parse(JSON.stringify(defaultSettingData))
       },
       localSetting
     }
@@ -36,13 +34,12 @@ const UseSettingStore = defineStore('setting', {
     async getSettingData() {
       const res = await api.getSettingData()
       if (res.success) {
-        // 如果从服务器获取的是默认语言，则使用设备语言覆盖
-        if (res.data.locale === defaultSettingData.locale) {
+        if (!this.settingData?.isH5LocaleSet) {
           // 使用顶部定义的设备语言检测函数
           const deviceLocale = getDeviceLocale()
-          res.data.locale = deviceLocale
+          res.data.h5Locale = deviceLocale
           // 同步设备语言到服务器
-          await api.h5UpdateSettingData({ locale: deviceLocale })
+          await api.h5UpdateSettingData({ h5Locale: deviceLocale })
         }
         this.settingData = Object.assign({}, this.settingData, res.data)
       }
@@ -52,7 +49,7 @@ const UseSettingStore = defineStore('setting', {
       if (!this.localSetting.multiDeviceSync) {
         this.settingData = Object.assign({}, this.settingData, data)
         // 更新语言
-        i18next.changeLanguage(this.settingData.locale)
+        i18next.changeLanguage(this.settingData.h5Locale)
         return {
           success: false,
           message: i18next.t('messages.multiDeviceSyncWarning')

@@ -34,7 +34,7 @@ export default async function setupSocketIO(
     // 更新设置
     socket.on('h5UpdateSettingData', async (data, callback) => {
       try {
-        const res = await settingManager.updateSettingData(data)
+        const res = await settingManager.updateSettingData(data, true)
 
         if (res.success && res.data) {
           // 向主进程发送设置更新消息

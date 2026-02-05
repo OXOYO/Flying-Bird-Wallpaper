@@ -130,6 +130,8 @@ export const menuList = [
 export const defaultSettingData = {
   /*** 基础配置 ***/
   locale: 'enUS',
+  // 是否已设置了语言
+  isLocaleSet: false,
   // 主题配置
   themes: {
     dark: false,
@@ -238,6 +240,14 @@ export const defaultSettingData = {
   // 删除文件时是否需要确认
   confirmOnDeleteFile: true,
   /*** h5服务配置 ***/
+  h5Locale: 'enUS',
+  // 是否已设置了语言
+  isH5LocaleSet: false,
+  // 主题配置
+  h5Themes: {
+    dark: false,
+    primary: '#71956C'
+  },
   h5AutoSwitch: true,
   h5SwitchType: 1,
   h5SwitchIntervalTime: 3,

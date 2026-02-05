@@ -3,6 +3,7 @@ import path from 'node:path'
 import fs from 'node:fs'
 import { createFileServer, createH5Server } from '../child_server/index.mjs'
 import { t } from '../../i18n/server.js'
+import { systemLocaleMap } from '../../i18n/locale/index.js'
 import DatabaseManager from './DatabaseManager.mjs'
 import ApiManager from './ApiManager.mjs'
 import ResourcesManager from './ResourcesManager.mjs'
@@ -56,6 +57,15 @@ export default class Store {
       this.settingManager = SettingManager.getInstance(global.logger, this.dbManager)
       // 等待设置管理器初始化完成
       await this.settingManager.waitForInitialization()
+
+      // 检测是否已手动设置语言，未设置则使用系统语言
+      if (!this.settingManager.settingData.isLocaleSet) {
+        const deviceLocale = this.getDeviceLocale()
+        if (deviceLocale && deviceLocale !== this.settingData.locale) {
+          global.logger.info(`映射系统语言到应用语言: ${deviceLocale}`)
+          await this.updateSettingData({ locale: deviceLocale })
+        }
+      }
       // 初始化API管理器
       this.apiManager = ApiManager.getInstance(global.logger, this.dbManager)
       // 等待API管理器初始化完成
@@ -143,6 +153,15 @@ export default class Store {
 
   get settingData() {
     return this.settingManager.settingData
+  }
+
+  // 获取设备当前语言
+  getDeviceLocale() {
+    const deviceLocale = app.getLocale()
+    global.logger.info(`检测到系统语言: ${deviceLocale}`)
+
+    // 映射系统语言到应用支持的语言
+    return systemLocaleMap[deviceLocale] || systemLocaleMap[deviceLocale.split('-')[0]] || 'enUS'
   }
 
   // 更新开机自启动设置
