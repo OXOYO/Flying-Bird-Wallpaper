@@ -233,6 +233,10 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
       .resize({ width: 20, height: 20 })
     trayIcon.setTemplateImage(true) // 设置为模板图标
 
+    if (tray) {
+      tray.destroy()
+    }
+
     tray = new Tray(trayIcon)
 
     tray.setToolTip(t('appInfo.appName'))
@@ -416,11 +420,13 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
         const deviceLocale = global.FBW.store.getDeviceLocale()
         global.logger.info(`系统语言已变更为: ${deviceLocale}`)
 
-        if (!global.FBW.store.settingData?.isLocaleSet) {
-          if (deviceLocale && deviceLocale !== global.FBW.store.settingData?.locale) {
-            global.logger.info(`自动更新应用语言为: ${deviceLocale}`)
-            global.FBW.store.updateSettingData({ locale: deviceLocale })
-          }
+        if (
+          !global.FBW.store.settingData?.isLocaleSet &&
+          deviceLocale &&
+          deviceLocale !== global.FBW.store.settingData?.locale
+        ) {
+          global.logger.info(`系统语言变更，更新应用语言为系统语言: ${deviceLocale}`)
+          global.FBW.store.updateSettingData({ locale: deviceLocale })
         }
       }
     })

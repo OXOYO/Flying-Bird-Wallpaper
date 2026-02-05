@@ -121,8 +121,10 @@ export default class SettingManager extends EventEmitter {
         const localeVal = isH5 ? newStoreData.h5Locale : newStoreData.locale
         // 更新语言
         await changeLanguage(localeVal)
-        // 触发语言变更事件
-        this.emit('LANGUAGE_CHANGED', localeVal)
+        if (!isH5) {
+          // 触发语言变更事件
+          this.emit('LANGUAGE_CHANGED', localeVal)
+        }
         ret = {
           success: true,
           message: t('messages.operationSuccess'),

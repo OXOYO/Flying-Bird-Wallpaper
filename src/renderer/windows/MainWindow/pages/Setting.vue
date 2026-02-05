@@ -124,6 +124,11 @@ const onTimeUnitChange = (unitField, unitValue) => {
   onSettingDataFormChange()
 }
 
+const onLocaleChange = () => {
+  settingDataForm.isLocaleSet = true
+  onSettingDataFormChange()
+}
+
 const onSettingDataFormChange = (field) => {
   // 处理互斥字段
   if (field === 'autoSwitchWallpaper') {
@@ -521,7 +526,7 @@ onBeforeUnmount(() => {
               <el-select
                 v-model="settingDataForm.locale"
                 style="width: 140px"
-                @change="onSettingDataFormChange"
+                @change="onLocaleChange"
               >
                 <el-option
                   v-for="item in localeOptions"

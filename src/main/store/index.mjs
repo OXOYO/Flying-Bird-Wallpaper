@@ -2,7 +2,7 @@ import { app, ipcMain, BrowserWindow, screen, powerMonitor } from 'electron'
 import path from 'node:path'
 import fs from 'node:fs'
 import { createFileServer, createH5Server } from '../child_server/index.mjs'
-import { t } from '../../i18n/server.js'
+import { t, changeLanguage } from '../../i18n/server.js'
 import { systemLocaleMap } from '../../i18n/locale/index.js'
 import DatabaseManager from './DatabaseManager.mjs'
 import ApiManager from './ApiManager.mjs'
@@ -59,12 +59,19 @@ export default class Store {
       await this.settingManager.waitForInitialization()
 
       // 检测是否已手动设置语言，未设置则使用系统语言
-      if (!this.settingManager.settingData.isLocaleSet) {
-        const deviceLocale = this.getDeviceLocale()
-        if (deviceLocale && deviceLocale !== this.settingData.locale) {
-          global.logger.info(`映射系统语言到应用语言: ${deviceLocale}`)
-          await this.updateSettingData({ locale: deviceLocale })
-        }
+      const deviceLocale = this.getDeviceLocale()
+
+      if (
+        !this.settingData.isLocaleSet &&
+        deviceLocale &&
+        deviceLocale !== this.settingData.locale
+      ) {
+        global.logger.info(`应用初始化，更新应用语言为系统语言: ${deviceLocale}`)
+        await this.updateSettingData({ locale: deviceLocale })
+      } else {
+        global.logger.info(`应用初始化，手动设置语言: ${this.settingData.locale}`)
+        // 手动设置语言，应用语言变更
+        await changeLanguage(this.settingData.locale)
       }
       // 初始化API管理器
       this.apiManager = ApiManager.getInstance(global.logger, this.dbManager)
