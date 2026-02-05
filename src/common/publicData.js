@@ -127,6 +127,19 @@ export const menuList = [
   }
 ]
 
+export const defaultMenuList = [
+  {
+    name: 'LastMenu',
+    title: '上次打开菜单',
+    locale: 'defaultMenuList.LastMenu',
+    icon: '',
+    canBeEnabled: false,
+    // 放置位置
+    placement: []
+  },
+  ...menuList
+]
+
 export const defaultSettingData = {
   /*** 基础配置 ***/
   locale: 'enUS',
@@ -138,7 +151,9 @@ export const defaultSettingData = {
     primary: '#71956C'
   },
   // 默认菜单设置
-  defaultMenu: 'Search',
+  defaultMenu: 'LastMenu',
+  // 上次打开菜单
+  selectedMenu: 'Search',
   // 启用菜单
   enabledMenus: ['Search', 'Favorites', 'History', 'Setting', 'Utils', 'About'],
   suspensionBallVisible: false,

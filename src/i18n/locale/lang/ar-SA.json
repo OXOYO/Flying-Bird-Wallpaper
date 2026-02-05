@@ -320,6 +320,9 @@
     "Utils": "الأدوات",
     "About": "حول"
   },
+  "defaultMenuList": {
+    "LastMenu": "القائمة الأخيرة"
+  },
   "scaleTypes": {
     "auto": "تلقائي",
     "span": "تلقائي",

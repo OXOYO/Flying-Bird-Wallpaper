@@ -320,6 +320,9 @@
     "Utils": "Утилиты",
     "About": "О программе"
   },
+  "defaultMenuList": {
+    "LastMenu": "Последнее открытое меню"
+  },
   "scaleTypes": {
     "auto": "авто",
     "span": "авто",

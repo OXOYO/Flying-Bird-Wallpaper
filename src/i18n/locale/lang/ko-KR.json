@@ -320,6 +320,9 @@
     "Utils": "도구",
     "About": "정보"
   },
+  "defaultMenuList": {
+    "LastMenu": "마지막으로 열린 메뉴"
+  },
   "scaleTypes": {
     "auto": "자동",
     "span": "자동",

@@ -320,6 +320,9 @@
     "Utils": "ツール",
     "About": "アプリについて"
   },
+  "defaultMenuList": {
+    "LastMenu": "最後に開いたメニュー"
+  },
   "scaleTypes": {
     "auto": "自動",
     "span": "自動",

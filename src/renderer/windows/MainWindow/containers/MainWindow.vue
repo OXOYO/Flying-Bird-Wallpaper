@@ -30,7 +30,11 @@ onBeforeMount(() => {
 
 onMounted(() => {
   // 主窗口挂载后，根据用户配置的defaultMenu设置默认菜单
-  menuStore.setSelected(settingData.value.defaultMenu || 'Search')
+  const menu =
+    settingData.value.defaultMenu === 'LastMenu'
+      ? settingData.value.selectedMenu
+      : settingData.value.defaultMenu
+  menuStore.setSelected(menu || 'Search')
 })
 
 onBeforeUnmount(() => {

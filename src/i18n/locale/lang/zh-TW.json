@@ -320,6 +320,9 @@
     "Utils": "工具",
     "About": "關於"
   },
+  "defaultMenuList": {
+    "LastMenu": "上次打開菜單"
+  },
   "scaleTypes": {
     "auto": "自動",
     "span": "自動",

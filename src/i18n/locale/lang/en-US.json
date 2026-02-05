@@ -320,6 +320,9 @@
     "Utils": "Tools",
     "About": "About"
   },
+  "defaultMenuList": {
+    "LastMenu": "Last opened menu"
+  },
   "scaleTypes": {
     "auto": "auto",
     "span": "span",

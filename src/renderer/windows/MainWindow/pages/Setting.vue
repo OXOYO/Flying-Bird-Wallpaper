@@ -18,7 +18,8 @@ import {
   rhythmEffectOptions,
   rhythmAnimationOptions,
   rhythmDensityOptions,
-  positionOptions
+  positionOptions,
+  defaultMenuList
 } from '@common/publicData.js'
 import { localeOptions } from '@i18n/locale/index.js'
 import { useTranslation } from 'i18next-vue'
@@ -553,7 +554,7 @@ onBeforeUnmount(() => {
                 @change="onSettingDataFormChange"
               >
                 <el-option
-                  v-for="item in menuList"
+                  v-for="item in defaultMenuList"
                   :key="item.name"
                   :label="t(item.locale)"
                   :value="item.name"
