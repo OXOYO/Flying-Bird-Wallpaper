@@ -523,10 +523,17 @@ onBeforeUnmount(() => {
             <div id="divider-app" class="divider-sub">
               {{ t('pages.Setting.divider.application') }}
             </div>
-            <el-form-item :label="t('pages.Setting.settingDataForm.locale')" prop="locale">
+            <el-form-item prop="locale">
+              <template #label>
+                <IconifyIcon
+                  icon="custom:language"
+                  style="align-self: center; margin-right: 10px"
+                />
+                <span>{{ t('pages.Setting.settingDataForm.locale') }}</span>
+              </template>
               <el-select
                 v-model="settingDataForm.locale"
-                style="width: 140px"
+                style="width: 290px"
                 @change="onLocaleChange"
               >
                 <el-option
@@ -550,7 +557,7 @@ onBeforeUnmount(() => {
             >
               <el-select
                 v-model="settingDataForm.defaultMenu"
-                style="width: 140px"
+                style="width: 290px"
                 @change="onSettingDataFormChange"
               >
                 <el-option
@@ -558,7 +565,13 @@ onBeforeUnmount(() => {
                   :key="item.name"
                   :label="t(item.locale)"
                   :value="item.name"
-                />
+                >
+                  <IconifyIcon
+                    :icon="item.icon"
+                    style="vertical-align: middle; margin-right: 10px"
+                  />
+                  <span style="vertical-align: middle">{{ t(item.locale) }}</span>
+                </el-option>
               </el-select>
             </el-form-item>
             <el-form-item
@@ -577,6 +590,14 @@ onBeforeUnmount(() => {
                   :value="item.name"
                   style="width: 100px"
                 >
+                  <IconifyIcon
+                    :icon="item.icon"
+                    style="
+                      vertical-align: middle;
+                      margin-right: 10px;
+                      color: var(--el-text-color-regular);
+                    "
+                  />
                   <span class="checkbox-label">{{ t(item.locale) }}</span>
                 </el-checkbox>
               </el-checkbox-group>
@@ -830,6 +851,14 @@ onBeforeUnmount(() => {
                   :value="item.value"
                   style="width: 100px"
                 >
+                  <IconifyIcon
+                    :icon="item.icon"
+                    style="
+                      vertical-align: middle;
+                      margin-right: 10px;
+                      color: var(--el-text-color-regular);
+                    "
+                  />
                   <span class="checkbox-label">{{ t(item.locale) }}</span>
                 </el-checkbox>
               </el-checkbox-group>
@@ -1016,6 +1045,14 @@ onBeforeUnmount(() => {
                   :value="item.value"
                   style="width: 100px"
                 >
+                  <IconifyIcon
+                    :icon="item.icon"
+                    style="
+                      vertical-align: middle;
+                      margin-right: 10px;
+                      color: var(--el-text-color-regular);
+                    "
+                  />
                   <span class="checkbox-label">{{ t(item.locale) }}</span>
                 </el-checkbox>
               </el-checkbox-group>
