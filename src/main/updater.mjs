@@ -24,8 +24,11 @@ export default class Updater {
 
     // 监听渲染进程的检查更新事件，触发检查更新
     ipcMain.on('main:checkUpdate', () => {
-      autoUpdater.checkForUpdatesAndNotify()
+      autoUpdater.checkForUpdates()
     })
+
+    this.startupCheckUpdate()
+    // this.setIntervalCheckUpdate()
   }
 
   on(event, callback = () => {}) {
@@ -35,8 +38,31 @@ export default class Updater {
     autoUpdater.on(event, callback)
   }
 
+  // 应用启动时检查更新
+  startupCheckUpdate() {
+    if (app.isPackaged) {
+      // 延迟执行，避免应用启动时过于卡顿
+      setTimeout(() => {
+        global.logger.info('应用启动时检查更新')
+        autoUpdater.checkForUpdates()
+      }, 10 * 1000)
+    }
+  }
+
+  // 设置定时检查更新
+  setIntervalCheckUpdate() {
+    if (app.isPackaged) {
+      setInterval(
+        () => {
+          global.logger.info('定时检查更新')
+          autoUpdater.checkForUpdates()
+        },
+        8 * 60 * 60 * 1000
+      )
+    }
+  }
+
   checkUpdate() {
-    // 检测是否有更新包并通知
-    autoUpdater.checkForUpdatesAndNotify()
+    autoUpdater.checkForUpdates()
   }
 }
