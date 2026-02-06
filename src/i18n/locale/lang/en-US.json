@@ -15,9 +15,9 @@
     "closeSuspensionBall": "Close the suspension ball",
     "openSuspensionBall": "Show the suspension ball",
     "quit": "Quit",
-    "checkUpdate": "Check update",
+    "checkUpdate": "Check for updates",
     "menu": "Menu",
-    "wordDrawer": "Word",
+    "wordDrawer": "Word Library",
     "qrCode": "QR Code"
   },
   "qrCode": {
@@ -52,11 +52,11 @@
         "locale": "Language",
         "defaultMenu": "Default Menu",
         "startup": "Startup",
-        "openMainWindowOnStartup": "Open on startup",
+        "openMainWindowOnStartup": "Open main window on startup",
         "startH5ServerOnStartup": "Start H5 server on startup",
         "suspensionBallVisible": "Show suspension ball",
-        "enabledMenus": "Enable menu",
-        "autoSwitchWallpaper": "Automatically switch",
+        "enabledMenus": "Enabled menus",
+        "autoSwitchWallpaper": "Auto switch",
         "switchType": "Switch mode",
         "switchIntervalTime": "Switch interval",
         "allScreen": "Apply to all screens",
@@ -76,13 +76,13 @@
           "label": "Allowed file extensions",
           "placeholder": "Please select allowed file extensions"
         },
-        "autoRefreshDirectory": "Timed refresh",
+        "autoRefreshDirectory": "Auto refresh",
         "refreshDirectoryIntervalTime": "Refresh interval",
         "webWallpaperUrl": {
           "label": "Web URL",
           "placeholder": "Please enter URL"
         },
-        "autoRefreshWebWallpaper": "Timed refresh",
+        "autoRefreshWebWallpaper": "Auto refresh",
         "refreshWebWallpaperIntervalTime": "Refresh interval",
         "colorWallpaperVal": {
           "label": "Color",
@@ -135,7 +135,7 @@
           "label": "Download keywords",
           "placeholder": "Please enter keywords"
         },
-        "autoDownload": "Automatically download",
+        "autoDownload": "Auto download",
         "downloadIntervalTime": "Download interval",
         "downloadFolder": {
           "label": "Download directory",
@@ -179,8 +179,8 @@
       "clearHistoryDB": "Clear the history data",
       "clearStatisticsDB": "Clear the statistics data",
       "clearCache": "Clear the cache data",
-      "clearDownloadedAll": "Clean up all downloaded",
-      "clearDownloadedExpired": "Clean up expired downloaded",
+      "clearDownloadedAll": "Clean up all downloads",
+      "clearDownloadedExpired": "Clean up expired downloads",
       "nextWallpaper": "Next wallpaper",
       "prevWallpaper": "Previous wallpaper",
       "execute": "Execute",
@@ -282,7 +282,7 @@
     "updateAvailable": "New version {version} found, click to download!",
     "checkUpdateFail": "Check for update failed!",
     "checkUpdateSuccess": "Check for update successful!",
-    "updateNotAvailable": "The latest version is now available!",
+    "updateNotAvailable": "You are already using the latest version!",
     "updateDownloaded": "Download completed, click to install!",
     "saveSuccess": "Save successfully!",
     "saveFail": "Save failed!",
@@ -303,13 +303,13 @@
     "downloadTaskDone": "Download task completed!"
   },
   "resourceTypeList": {
-    "localResource": "Local resources",
-    "remoteResource": "Remote resources"
+    "localResource": "Local Resources",
+    "remoteResource": "Remote Resources"
   },
   "resourceList": {
-    "resources": "resource library",
-    "local": "local resources",
-    "favorites": "favorites"
+    "resources": "Resource Library",
+    "local": "Local Resources",
+    "favorites": "Favorites"
   },
   "menuList": {
     "Search": "Search",
@@ -371,26 +371,26 @@
     "cover": "cover"
   },
   "h5FloatingButtonPositionOptions": {
-    "left": "left",
-    "right": "right"
+    "left": "Left",
+    "right": "Right"
   },
   "h5FloatingButtonsOptions": {
-    "autoSwitch": "auto switch",
-    "intervalTime": "interval time",
-    "switchType": "switch type",
-    "favorites": "favorites",
-    "displaySize": "display size",
-    "toggleTabbar": "toggle tabbar",
-    "backtop": "backtop"
+    "autoSwitch": "Auto Switch",
+    "intervalTime": "Interval Time",
+    "switchType": "Switch Type",
+    "favorites": "Favorites",
+    "displaySize": "Display Size",
+    "toggleTabbar": "Toggle Tabbar",
+    "backtop": "Back to Top"
   },
   "h5NumberIndicatorPositionOptions": {
-    "top": "top",
-    "bottom": "bottom"
+    "top": "Top",
+    "bottom": "Bottom"
   },
   "dynamicPerformanceModeOptions": {
-    "high": "high",
-    "balanced": "balanced",
-    "powersave": "powersave"
+    "high": "High",
+    "balanced": "Balanced",
+    "powersave": "Power Save"
   },
   "dynamicScaleModeOptions": {
     "cover": "cover",
