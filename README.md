@@ -19,8 +19,8 @@
     <img src="https://img.shields.io/github/v/release/OXOYO/Flying-Bird-Wallpaper" alt="release">
   </a>
   <!-- Workflow status -->
-  <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/releases">
-    <img src="https://img.shields.io/github/actions/workflow/status/OXOYO/Flying-Bird-Wallpaper/release.yml" alt="release status">
+  <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/actions">
+    <img src="https://img.shields.io/github/actions/workflow/status/OXOYO/Flying-Bird-Wallpaper/release.yml" alt="GitHub Actions Workflow Status">
   </a>
   <!-- Commitizen friendly -->
   <a href="http://commitizen.github.io/cz-cli/">
