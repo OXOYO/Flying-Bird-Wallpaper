@@ -31,7 +31,8 @@
     "Setting": {
       "tabs": {
         "baseSetting": "기본 설정",
-        "privacySpace": "프라이버시 공간"
+        "privacySpace": "프라이버시 공간",
+        "shortcutSetting": "단축키 설정"
       },
       "divider": {
         "base": "기본 설정",
@@ -166,6 +167,23 @@
           "tooltip": "비밀번호는 숫자로 구성되며, 최소 3자리에서 최대 6자리입니다"
         },
         "confirm": "비밀번호 업데이트"
+      },
+      "shortcutSetting": {
+        "conflict": "충돌",
+        "function": "기능",
+        "shortcut": "단축키",
+        "operation": "작업",
+        "reset": "초기화",
+        "empty": "비우기",
+        "notSet": "설정되지 않음",
+        "pressShortcut": "단축키를 눌러주세요...",
+        "categories": {
+          "system": "시스템 작업",
+          "window": "창 작업",
+          "wallpaper": "배경화면 작업",
+          "text": "텍스트 작업",
+          "settings": "설정 관리"
+        }
       }
     },
     "Utils": {
@@ -300,7 +318,16 @@
     "indexOutOfRange": "인덱스가 범위를 벗어났습니다",
     "indexTooLarge": "인덱스가 너무 큽니다",
     "downloadTask": "다운로드 작업",
-    "downloadTaskDone": "다운로드 작업 완료!"
+    "downloadTaskDone": "다운로드 작업 완료!",
+    "conflictSystemShortcut": "이 단축키는 이미 시스템 또는 다른 응용 프로그램에서 사용 중입니다!",
+    "conflictAppShortcut": "이 단축키는 응용 프로그램 내에서 중복됩니다!",
+    "notEditableShortcut": "이 단축키는 수정할 수 없습니다!",
+    "invalidShortcutFormat": "유효하지 않은 단축키 형식입니다!",
+    "shortcutUpdateSuccess": "단축키 업데이트 성공!",
+    "shortcutUpdateFailed": "단축키 업데이트 실패!",
+    "shortcutResetSuccess": "단축키 초기화 성공!",
+    "shortcutResetFailed": "단축키 초기화 실패!",
+    "shortcutEmptySuccess": "단축키 비우기 성공!"
   },
   "resourceTypeList": {
     "localResource": "로컬 리소스",
@@ -533,6 +560,23 @@
     "square": "정사각형",
     "rectangle": "직사각형",
     "verticalRectangle": "세로 직사각형"
+  },
+  "keyboardShortcuts": {
+    "quitApp": "응용 프로그램 완전히 종료",
+    "closeWindow": "현재 창 닫기",
+    "minimizeWindow": "현재 창 최소화",
+    "toggleMainWindow": "주 창 전환",
+    "toggleSuspensionBall": "서스펜션 볼 전환",
+    "nextWallpaper": "다음 배경화면",
+    "prevWallpaper": "이전 배경화면",
+    "toggleAutoSwitchWallpaper": "자동 배경화면 모드 전환",
+    "editSelectAll": "전체 선택",
+    "editCopy": "복사",
+    "editPaste": "붙여넣기",
+    "openSettings": "설정 열기",
+    "openUtils": "도구 열기",
+    "openAbout": "정보 열기",
+    "checkUpdate": "업데이트 확인"
   },
   "comingSoon": "곧 출시",
   "viewInfo": {

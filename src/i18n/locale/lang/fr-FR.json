@@ -31,7 +31,8 @@
     "Setting": {
       "tabs": {
         "baseSetting": "Paramètres de base",
-        "privacySpace": "Espace privé"
+        "privacySpace": "Espace privé",
+        "shortcutSetting": "Raccourcis clavier"
       },
       "divider": {
         "base": "Paramètres de base",
@@ -166,6 +167,23 @@
           "tooltip": "Le mot de passe est composé de chiffres, au minimum 3 chiffres et au maximum 6 chiffres"
         },
         "confirm": "Mettre à jour le mot de passe"
+      },
+      "shortcutSetting": {
+        "conflict": "Conflit",
+        "function": "Fonction",
+        "shortcut": "Raccourci",
+        "operation": "Opération",
+        "reset": "Réinitialiser",
+        "empty": "Vider",
+        "notSet": "Non défini",
+        "pressShortcut": "Appuyez sur le raccourci...",
+        "categories": {
+          "system": "Opérations système",
+          "window": "Opérations fenêtre",
+          "wallpaper": "Opérations fond d'écran",
+          "text": "Opérations texte",
+          "settings": "Gestion des paramètres"
+        }
       }
     },
     "Utils": {
@@ -300,7 +318,16 @@
     "indexOutOfRange": "Index hors limites",
     "indexTooLarge": "Index trop grand",
     "downloadTask": "Télécharger une tâche",
-    "downloadTaskDone": "Tâche de téléchargement terminée !"
+    "downloadTaskDone": "Tâche de téléchargement terminée !",
+    "conflictSystemShortcut": "Ce raccourci est déjà utilisé par le système ou d'autres applications !",
+    "conflictAppShortcut": "Ce raccourci est dupliqué dans l'application !",
+    "notEditableShortcut": "Ce raccourci ne peut pas être modifié !",
+    "invalidShortcutFormat": "Format de raccourci invalide !",
+    "shortcutUpdateSuccess": "Raccourci mis à jour avec succès !",
+    "shortcutUpdateFailed": "Échec de la mise à jour du raccourci !",
+    "shortcutResetSuccess": "Raccourci réinitialisé avec succès !",
+    "shortcutResetFailed": "Échec de la réinitialisation du raccourci !",
+    "shortcutEmptySuccess": "Raccourci vidé avec succès !"
   },
   "resourceTypeList": {
     "localResource": "Ressources locales",
@@ -533,6 +560,23 @@
     "square": "Carré",
     "rectangle": "Rectangle",
     "verticalRectangle": "Rectangle vertical"
+  },
+  "keyboardShortcuts": {
+    "quitApp": "Quitter complètement l'application",
+    "closeWindow": "Fermer la fenêtre actuelle",
+    "minimizeWindow": "Minimiser la fenêtre actuelle",
+    "toggleMainWindow": "Basculer la fenêtre principale",
+    "toggleSuspensionBall": "Basculer la balle de suspension",
+    "nextWallpaper": "Passage au fond d'écran suivant",
+    "prevWallpaper": "Passage au fond d'écran précédent",
+    "toggleAutoSwitchWallpaper": "Basculer le mode de fond d'écran automatique",
+    "editSelectAll": "Sélectionner tout",
+    "editCopy": "Copier",
+    "editPaste": "Coller",
+    "openSettings": "Ouvrir les paramètres",
+    "openUtils": "Ouvrir les outils",
+    "openAbout": "Ouvrir à propos",
+    "checkUpdate": "Vérifier les mises à jour"
   },
   "comingSoon": "Bientôt disponible",
   "viewInfo": {

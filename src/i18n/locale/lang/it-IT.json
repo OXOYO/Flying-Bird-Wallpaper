@@ -31,7 +31,8 @@
     "Setting": {
       "tabs": {
         "baseSetting": "Impostazioni di base",
-        "privacySpace": "Spazio privato"
+        "privacySpace": "Spazio privato",
+        "shortcutSetting": "Scorciatoie tastiera"
       },
       "divider": {
         "base": "Impostazioni di base",
@@ -166,6 +167,23 @@
           "tooltip": "La password consiste in numeri, minimo 3 cifre e massimo 6 cifre"
         },
         "confirm": "Aggiorna password"
+      },
+      "shortcutSetting": {
+        "conflict": "Conflitto",
+        "function": "Funzione",
+        "shortcut": "Scorciatoia",
+        "operation": "Operazione",
+        "reset": "Reimposta",
+        "empty": "Vuota",
+        "notSet": "Non impostato",
+        "pressShortcut": "Premi la scorciatoia...",
+        "categories": {
+          "system": "Operazioni di sistema",
+          "window": "Operazioni finestra",
+          "wallpaper": "Operazioni sfondo",
+          "text": "Operazioni testo",
+          "settings": "Gestione impostazioni"
+        }
       }
     },
     "Utils": {
@@ -300,7 +318,16 @@
     "indexOutOfRange": "Indice fuori intervallo",
     "indexTooLarge": "Indice troppo grande",
     "downloadTask": "Attività di download",
-    "downloadTaskDone": "Attività di download completata!"
+    "downloadTaskDone": "Attività di download completata!",
+    "conflictSystemShortcut": "Questa scorciatoia è già utilizzata dal sistema o da altre applicazioni!",
+    "conflictAppShortcut": "Questa scorciatoia è duplicata nell'applicazione!",
+    "notEditableShortcut": "Questa scorciatoia non può essere modificata!",
+    "invalidShortcutFormat": "Formato scorciatoia non valido!",
+    "shortcutUpdateSuccess": "Scorciatoia aggiornata con successo!",
+    "shortcutUpdateFailed": "Impossibile aggiornare la scorciatoia!",
+    "shortcutResetSuccess": "Scorciatoia reimpostata con successo!",
+    "shortcutResetFailed": "Impossibile reimpostare la scorciatoia!",
+    "shortcutEmptySuccess": "Scorciatoia svuotata con successo!"
   },
   "resourceTypeList": {
     "localResource": "Risorse locali",
@@ -533,6 +560,23 @@
     "square": "Quadrato",
     "rectangle": "Rettangolo",
     "verticalRectangle": "Rettangolo verticale"
+  },
+  "keyboardShortcuts": {
+    "quitApp": "Esci completamente dall'applicazione",
+    "closeWindow": "Chiudi la finestra corrente",
+    "minimizeWindow": "Minimizza la finestra corrente",
+    "toggleMainWindow": "Attiva/disattiva la finestra principale",
+    "toggleSuspensionBall": "Attiva/disattiva la pallina di sospensione",
+    "nextWallpaper": "Passa al prossimo sfondo",
+    "prevWallpaper": "Passa al precedente sfondo",
+    "toggleAutoSwitchWallpaper": "Attiva/disattiva la modalità sfondo automatico",
+    "editSelectAll": "Seleziona tutto",
+    "editCopy": "Copia",
+    "editPaste": "Incolla",
+    "openSettings": "Apri impostazioni",
+    "openUtils": "Apri strumenti",
+    "openAbout": "Apri informazioni",
+    "checkUpdate": "Controlla aggiornamenti"
   },
   "comingSoon": "Prossimamente",
   "viewInfo": {

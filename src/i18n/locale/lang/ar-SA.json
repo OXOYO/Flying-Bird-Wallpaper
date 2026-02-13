@@ -31,7 +31,8 @@
     "Setting": {
       "tabs": {
         "baseSetting": "الإعدادات الأساسية",
-        "privacySpace": "المساحة الخاصة"
+        "privacySpace": "المساحة الخاصة",
+        "shortcutSetting": "إعدادات الإختصارات"
       },
       "divider": {
         "base": "الإعدادات الأساسية",
@@ -166,6 +167,23 @@
           "tooltip": "تتكون كلمة المرور من أرقام، بحد أدنى 3 أرقام وحد أقصى 6 أرقام"
         },
         "confirm": "تحديث كلمة المرور"
+      },
+      "shortcutSetting": {
+        "conflict": "تعارض",
+        "function": "الوظيفة",
+        "shortcut": "الاختصار",
+        "operation": "العملية",
+        "reset": "إعادة تعيين",
+        "empty": "تفريغ",
+        "notSet": "غير محدد",
+        "pressShortcut": "اضغط على الاختصار...",
+        "categories": {
+          "system": "عمليات النظام",
+          "window": "عمليات النافذة",
+          "wallpaper": "عمليات الخلفية",
+          "text": "عمليات النص",
+          "settings": "إدارة الإعدادات"
+        }
       }
     },
     "Utils": {
@@ -300,7 +318,16 @@
     "indexOutOfRange": "الفهرس خارج النطاق",
     "indexTooLarge": "الفهرس كبير جداً",
     "downloadTask": "مهمة التحميل",
-    "downloadTaskDone": "اكتملت مهمة التحميل!"
+    "downloadTaskDone": "اكتملت مهمة التحميل!",
+    "conflictSystemShortcut": "هذا الاختصار مستخدم بالفعل من قبل النظام أو التطبيقات الأخرى!",
+    "conflictAppShortcut": "هذا الاختصار مكرر داخل التطبيق!",
+    "notEditableShortcut": "هذا الاختصار لا يدعم التعديل!",
+    "invalidShortcutFormat": "تنسيق اختصار غير صالح!",
+    "shortcutUpdateSuccess": "تم تحديث الاختصار بنجاح!",
+    "shortcutUpdateFailed": "فشل تحديث الاختصار!",
+    "shortcutResetSuccess": "تم إعادة تعيين الاختصار بنجاح!",
+    "shortcutResetFailed": "فشل إعادة تعيين الاختصار!",
+    "shortcutEmptySuccess": "تم تفريغ الاختصار بنجاح!"
   },
   "resourceTypeList": {
     "localResource": "الموارد المحلية",
@@ -533,6 +560,23 @@
     "square": "مربع",
     "rectangle": "مستطيل",
     "verticalRectangle": "مستطيل عمودي"
+  },
+  "keyboardShortcuts": {
+    "quitApp": "خروج من التطبيق بالكامل",
+    "closeWindow": "إغلاق النافذة الحالية",
+    "minimizeWindow": "تصغير النافذة الحالية",
+    "toggleMainWindow": "تبديل النافذة الرئيسية",
+    "toggleSuspensionBall": "تبديل الكرة المعلقة",
+    "nextWallpaper": "تبديل إلى الخلفية التالية",
+    "prevWallpaper": "تبديل إلى الخلفية السابقة",
+    "toggleAutoSwitchWallpaper": "تبديل وضع الخلفية التلقائي",
+    "editSelectAll": "تحديد الكل",
+    "editCopy": "نسخ",
+    "editPaste": "لصق",
+    "openSettings": "فتح الإعدادات",
+    "openUtils": "فتح الأدوات",
+    "openAbout": "فتح عن",
+    "checkUpdate": "التحقق من التحديثات"
   },
   "comingSoon": "قريباً",
   "viewInfo": {

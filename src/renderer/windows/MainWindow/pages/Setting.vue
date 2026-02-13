@@ -19,7 +19,8 @@ import {
   rhythmAnimationOptions,
   rhythmDensityOptions,
   positionOptions,
-  defaultMenuList
+  defaultMenuList,
+  keyboardShortcuts
 } from '@common/publicData.js'
 import { localeOptions } from '@i18n/locale/index.js'
 import { useTranslation } from 'i18next-vue'
@@ -72,6 +73,24 @@ const flags = reactive({
   settingColorWallpaper: false,
   settingDynamicWallpaper: false,
   settingRhythmWallpaper: false
+})
+
+// 快捷键设置相关数据
+const shortcuts = ref({})
+const shortcutsConflicts = ref([])
+const editingShortcut = ref('')
+const editingShortcutName = ref(null)
+const isShortcutRecording = ref(false)
+
+// 计算属性
+const shortcutCategories = computed(() => {
+  const cats = new Set()
+  Object.values(shortcuts.value).forEach((item) => {
+    if (item.visible === true) {
+      cats.add(item.category)
+    }
+  })
+  return Array.from(cats)
 })
 
 // 可以启用/停用的菜单列表
@@ -389,10 +408,379 @@ const onTabChange = (tab) => {
     case 'privacySpace':
       formEl = privacyPasswordFormRef.value
       break
+    case 'shortcutSetting':
+      stopEditing()
+      break
   }
   if (!formEl) return
   formEl.resetFields()
 }
+
+// 快捷键设置相关方法
+const getShortcutsByCategory = (category) => {
+  return Object.values(shortcuts.value).filter(
+    (item) => item.category === category && item.visible === true
+  )
+}
+
+const isEditing = (name) => {
+  return editingShortcutName.value === name
+}
+
+// 获取默认快捷键
+const getDefaultShortcut = (name) => {
+  const shortcutItem = keyboardShortcuts.find((item) => item.name === name)
+  if (!shortcutItem) return ''
+
+  const platform = commonData.value?.isMac ? 'mac' : commonData.value?.isWin ? 'win' : 'linux'
+  return shortcutItem.shortcuts[platform] || ''
+}
+
+// 检查快捷键是否被修改
+const isShortcutModified = (name, currentShortcut) => {
+  const defaultShortcut = getDefaultShortcut(name)
+  return currentShortcut !== defaultShortcut
+}
+
+// 输入框refs
+const inputRefs = ref({})
+
+const startEdit = async (name) => {
+  editingShortcutName.value = name
+  editingShortcut.value = ''
+
+  // 禁用所有快捷键，防止在编辑时触发已注册的快捷键
+  await window.FBW.disableShortcuts()
+
+  // 延迟一下让DOM更新，然后自动focus输入框
+  setTimeout(() => {
+    if (inputRefs.value[name]) {
+      inputRefs.value[name].focus()
+    }
+  }, 100)
+}
+
+const stopEditing = async () => {
+  editingShortcutName.value = null
+  editingShortcut.value = ''
+
+  // 重新启用所有快捷键
+  await window.FBW.enableShortcuts()
+}
+
+const startRecording = async (name) => {
+  // 检查是否可编辑
+  const shortcutItem = shortcuts.value[name]
+  if (shortcutItem && !shortcutItem.editable) {
+    return
+  }
+
+  // 禁用所有快捷键，防止在编辑时触发已注册的快捷键
+  await window.FBW.disableShortcuts()
+
+  isShortcutRecording.value = true
+  editingShortcutName.value = name
+  editingShortcut.value = ''
+}
+
+const stopRecording = async () => {
+  isShortcutRecording.value = false
+  editingShortcutName.value = null
+  editingShortcut.value = ''
+
+  // 重新启用所有快捷键
+  await window.FBW.enableShortcuts()
+}
+
+const handleBlur = async (name) => {
+  // 检查是否可编辑
+  const shortcutItem = shortcuts.value[name]
+  if (shortcutItem && !shortcutItem.editable) {
+    return
+  }
+
+  if (editingShortcutName.value === name && editingShortcut.value) {
+    await updateShortcut(name, editingShortcut.value)
+  }
+  await stopRecording()
+}
+
+const handleKeydown = (event, name) => {
+  if (!isShortcutRecording.value) return
+
+  // 检查是否可编辑
+  const shortcutItem = shortcuts.value[name]
+  if (shortcutItem && !shortcutItem.editable) {
+    return
+  }
+
+  // 阻止默认行为
+  event.preventDefault()
+  event.stopPropagation()
+
+  // 构建快捷键字符串
+  const keys = []
+  if (event.metaKey || event.ctrlKey) {
+    keys.push(commonData.value?.isMac ? 'Command' : 'Ctrl')
+  }
+  if (event.shiftKey) {
+    keys.push('Shift')
+  }
+  if (event.altKey) {
+    keys.push('Alt')
+  }
+
+  // 只处理字母、数字和功能键
+  let key = event.key
+  // 转换箭头键名格式
+  if (key.startsWith('Arrow')) {
+    key = key.replace('Arrow', '')
+  }
+  // 将单字母键转换为大写
+  if (key.length === 1 && /[a-zA-Z]/.test(key)) {
+    key = key.toUpperCase()
+  }
+  // 过滤掉修饰键
+  if (key && !['Meta', 'Control', 'Shift', 'Alt'].includes(key)) {
+    keys.push(key)
+  }
+
+  // 确保修饰键顺序一致，与主进程保持统一
+  const modifierOrder = ['Command', 'Ctrl', 'Shift', 'Alt']
+  const sortedKeys = []
+  // 先添加修饰键，按照统一顺序
+  modifierOrder.forEach((modifier) => {
+    if (keys.includes(modifier)) {
+      sortedKeys.push(modifier)
+    }
+  })
+  // 再添加非修饰键
+  keys.forEach((k) => {
+    if (!modifierOrder.includes(k)) {
+      sortedKeys.push(k)
+    }
+  })
+  // 使用排序后的键数组
+  keys.splice(0, keys.length, ...sortedKeys)
+
+  if (keys.length > 0) {
+    const shortcut = keys.join('+')
+    editingShortcut.value = shortcut
+  }
+}
+
+const handleKeyup = async (event, name) => {
+  if (!isShortcutRecording.value) return
+
+  // 检查是否可编辑
+  const shortcutItem = shortcuts.value[name]
+  if (shortcutItem && !shortcutItem.editable) {
+    return
+  }
+
+  // 阻止默认行为
+  event.preventDefault()
+  event.stopPropagation()
+
+  // 构建快捷键字符串
+  const keys = []
+  if (event.metaKey || event.ctrlKey) {
+    keys.push(commonData.value?.isMac ? 'Command' : 'Ctrl')
+  }
+  if (event.shiftKey) {
+    keys.push('Shift')
+  }
+  if (event.altKey) {
+    keys.push('Alt')
+  }
+
+  // 只处理字母、数字和功能键
+  let key = event.key
+  // 转换箭头键名格式
+  if (key.startsWith('Arrow')) {
+    key = key.replace('Arrow', '')
+  }
+  // 将单字母键转换为大写
+  if (key.length === 1 && /[a-zA-Z]/.test(key)) {
+    key = key.toUpperCase()
+  }
+  // 过滤掉修饰键
+  if (key && !['Meta', 'Control', 'Shift', 'Alt'].includes(key)) {
+    keys.push(key)
+  }
+
+  // 确保修饰键顺序一致，与主进程保持统一
+  const modifierOrder = ['Command', 'Ctrl', 'Shift', 'Alt']
+  const sortedKeys = []
+  // 先添加修饰键，按照统一顺序
+  modifierOrder.forEach((modifier) => {
+    if (keys.includes(modifier)) {
+      sortedKeys.push(modifier)
+    }
+  })
+  // 再添加非修饰键
+  keys.forEach((k) => {
+    if (!modifierOrder.includes(k)) {
+      sortedKeys.push(k)
+    }
+  })
+  // 使用排序后的键数组
+  keys.splice(0, keys.length, ...sortedKeys)
+
+  if (keys.length > 1) {
+    const shortcut = keys.join('+')
+    editingShortcut.value = shortcut
+
+    // 检查是否只包含修饰键
+    const modifiers = ['Command', 'Ctrl', 'Shift', 'Alt']
+    const nonModifierKeys = keys.filter((key) => !modifiers.includes(key))
+    if (nonModifierKeys.length === 0) {
+      ElMessage.warning(t('messages.invalidShortcutOnlyModifiers'))
+      // 重置编辑状态，允许用户重新输入
+      stopRecording()
+      return
+    }
+
+    // 检查快捷键格式是否有效
+    const isValidFormat = /^([A-Za-z]+([+][A-Za-z0-9]+)*)$/.test(shortcut)
+    if (!isValidFormat) {
+      ElMessage.warning(t('messages.invalidShortcutFormat'))
+      // 重置编辑状态，允许用户重新输入
+      stopRecording()
+      return
+    }
+
+    // 检查冲突
+    const conflictRes = await window.FBW.checkShortcutConflict(shortcut, name)
+    if (!conflictRes.success) {
+      ElMessage.warning(conflictRes.message)
+      // 重置编辑状态，允许用户重新输入
+      stopRecording()
+      return
+    }
+
+    // 保存快捷键
+    await updateShortcut(name, shortcut)
+    await stopRecording()
+  }
+}
+
+// 检查快捷键是否有冲突
+const hasConflict = (shortcutName) => {
+  return shortcutsConflicts.value.some((conflict) => conflict.name === shortcutName)
+}
+
+// 表格行样式
+const tableRowClassName = ({ row }) => {
+  if (hasConflict(row.name)) {
+    return 'conflict-row'
+  }
+  return ''
+}
+
+// 获取冲突信息
+const getConflictMessage = (shortcutName) => {
+  const conflict = shortcutsConflicts.value.find((conflict) => conflict.name === shortcutName)
+  return conflict ? conflict.message : ''
+}
+
+const updateShortcut = async (name, shortcut, successMessage = '') => {
+  // 检查是否可编辑
+  const shortcutItem = shortcuts.value[name]
+  if (shortcutItem && !shortcutItem.editable) {
+    ElMessage.warning(t('messages.notEditableShortcut'))
+    // 重置编辑状态
+    stopRecording()
+    return
+  }
+
+  try {
+    const res = await window.FBW.updateShortcut(name, shortcut)
+    if (res.success) {
+      ElMessage.success(successMessage || res.message)
+      // 重新加载快捷键
+      await loadShortcuts()
+      await loadConflicts()
+    } else {
+      ElMessage.error(res.message)
+      // 重置编辑状态
+      await stopRecording()
+    }
+  } catch (error) {
+    ElMessage.error(t('messages.shortcutUpdateFailed'))
+    console.error('更新快捷键失败:', error)
+    // 重置编辑状态
+    await stopRecording()
+  }
+}
+
+// 重置快捷键到默认值
+const resetShortcut = async (name) => {
+  try {
+    // 如果当前正在编辑这个快捷键，清除编辑状态
+    if (editingShortcutName.value === name) {
+      editingShortcutName.value = null
+      editingShortcut.value = ''
+    }
+
+    const res = await window.FBW.resetShortcut(name)
+    if (res.success) {
+      ElMessage.success(res.message)
+      // 重新加载快捷键
+      await loadShortcuts()
+      await loadConflicts()
+    } else {
+      ElMessage.error(res.message)
+    }
+  } catch (error) {
+    ElMessage.error(t('messages.shortcutResetFailed'))
+    console.error('重置快捷键失败:', error)
+  }
+}
+
+// 清空快捷键
+const emptyShortcut = async (name) => {
+  // 如果当前正在编辑这个快捷键，清除编辑状态
+  if (editingShortcutName.value === name) {
+    editingShortcutName.value = null
+    editingShortcut.value = ''
+  }
+  // 立即更新本地数据，确保输入框立即显示为空
+  if (shortcuts.value[name]) {
+    // 使用展开运算符创建新对象，确保Vue能够检测到变化
+    shortcuts.value = {
+      ...shortcuts.value,
+      [name]: {
+        ...shortcuts.value[name],
+        shortcut: ''
+      }
+    }
+  }
+  await updateShortcut(name, '', t('messages.shortcutEmptySuccess'))
+}
+
+const loadShortcuts = async () => {
+  try {
+    const data = await window.FBW.getShortcuts()
+    shortcuts.value = data
+  } catch (error) {
+    console.error('加载快捷键失败:', error)
+  }
+}
+
+const loadConflicts = async () => {
+  try {
+    const res = await window.FBW.getShortcutConflicts()
+
+    if (res.success && res.data) {
+      shortcutsConflicts.value = res.data
+    }
+  } catch (error) {
+    console.error('加载冲突信息失败:', error)
+  }
+}
+
+// 辅助函数
 const onPrivacyPasswordFormConfirm = (formEl) => {
   if (!formEl) return
   formEl.validate(async (valid) => {
@@ -418,8 +806,21 @@ const onPrivacyPasswordFormConfirm = (formEl) => {
   })
 }
 
-onMounted(() => {
+onMounted(async () => {
   initMinTimes()
+  // 加载快捷键数据
+  if (activeTab.value === 'shortcutSetting') {
+    await loadShortcuts()
+    await loadConflicts()
+  }
+})
+
+// 监听标签页变化
+watch(activeTab, async (newTab) => {
+  if (newTab === 'shortcutSetting') {
+    await loadShortcuts()
+    await loadConflicts()
+  }
 })
 
 onBeforeUnmount(() => {
@@ -434,6 +835,10 @@ onBeforeUnmount(() => {
     <el-tabs v-model="activeTab" @tab-click="onTabChange">
       <el-tab-pane :label="t('pages.Setting.tabs.baseSetting')" name="baseSetting"></el-tab-pane>
       <el-tab-pane :label="t('pages.Setting.tabs.privacySpace')" name="privacySpace"></el-tab-pane>
+      <el-tab-pane
+        :label="t('pages.Setting.tabs.shortcutSetting')"
+        name="shortcutSetting"
+      ></el-tab-pane>
     </el-tabs>
     <!-- 内容区域 -->
     <div v-show="activeTab === 'baseSetting'" class="base-settings-wrapper">
@@ -1552,87 +1957,184 @@ onBeforeUnmount(() => {
         </el-form>
       </el-scrollbar>
     </div>
-    <el-scrollbar v-show="activeTab === 'privacySpace'" style="height: calc(100vh - 110px)">
-      <!-- 隐私空间 -->
-      <el-form ref="privacyPasswordFormRef" :model="privacyPasswordForm" label-width="auto">
-        <div class="form-card">
-          <div class="divider">{{ t('pages.Setting.divider.privacyPassword') }}</div>
-          <el-form-item :label="t('pages.Setting.privacyPasswordForm.old.label')" prop="old">
-            <el-input
-              v-model="privacyPasswordForm.old"
-              :type="privacyPasswordView.old ? 'text' : 'password'"
-              minlength="3"
-              maxlength="6"
-              clearable
-              :placeholder="t('pages.Setting.privacyPasswordForm.old.placeholder')"
-              style="width: 290px"
-              @input="(val) => handlePasswordInput('old', val)"
-            >
-              <template #suffix>
+    <div v-show="activeTab === 'privacySpace'" class="privacy-space-wrapper">
+      <el-scrollbar style="height: 100%">
+        <!-- 隐私空间 -->
+        <el-form ref="privacyPasswordFormRef" :model="privacyPasswordForm" label-width="auto">
+          <div class="form-card">
+            <div class="divider">{{ t('pages.Setting.divider.privacyPassword') }}</div>
+            <el-form-item :label="t('pages.Setting.privacyPasswordForm.old.label')" prop="old">
+              <el-input
+                v-model="privacyPasswordForm.old"
+                :type="privacyPasswordView.old ? 'text' : 'password'"
+                minlength="3"
+                maxlength="6"
+                clearable
+                :placeholder="t('pages.Setting.privacyPasswordForm.old.placeholder')"
+                style="width: 290px"
+                @input="(val) => handlePasswordInput('old', val)"
+              >
+                <template #suffix>
+                  <IconifyIcon
+                    :icon="privacyPasswordView.old ? 'custom:view' : 'custom:hide'"
+                    style="cursor: pointer"
+                    @mousedown="togglePasswordView('old')"
+                    @mouseup="togglePasswordView('old')"
+                  />
+                </template>
+              </el-input>
+              <el-tooltip effect="light">
+                <template #content>
+                  <div style="max-width: 300px; word-break: break-word; white-space: break-spaces">
+                    {{ t('pages.Setting.privacyPasswordForm.old.tooltip') }}
+                  </div>
+                </template>
                 <IconifyIcon
-                  :icon="privacyPasswordView.old ? 'custom:view' : 'custom:hide'"
-                  style="cursor: pointer"
-                  @mousedown="togglePasswordView('old')"
-                  @mouseup="togglePasswordView('old')"
+                  icon="custom:info-filled"
+                  style="color: var(--el-text-color-regular); margin-left: 10px"
                 />
-              </template>
-            </el-input>
-            <el-tooltip effect="light">
-              <template #content>
-                <div style="max-width: 300px; word-break: break-word; white-space: break-spaces">
-                  {{ t('pages.Setting.privacyPasswordForm.old.tooltip') }}
-                </div>
-              </template>
-              <IconifyIcon
-                icon="custom:info-filled"
-                style="color: var(--el-text-color-regular); margin-left: 10px"
-              />
-            </el-tooltip>
-          </el-form-item>
-          <el-form-item :label="t('pages.Setting.privacyPasswordForm.new.label')" prop="new">
-            <el-input
-              v-model="privacyPasswordForm.new"
-              :type="privacyPasswordView.new ? 'text' : 'password'"
-              minlength="3"
-              maxlength="6"
-              clearable
-              :placeholder="t('pages.Setting.privacyPasswordForm.new.placeholder')"
-              style="width: 290px"
-              @input="(val) => handlePasswordInput('new', val)"
-            >
-              <template #suffix>
+              </el-tooltip>
+            </el-form-item>
+            <el-form-item :label="t('pages.Setting.privacyPasswordForm.new.label')" prop="new">
+              <el-input
+                v-model="privacyPasswordForm.new"
+                :type="privacyPasswordView.new ? 'text' : 'password'"
+                minlength="3"
+                maxlength="6"
+                clearable
+                :placeholder="t('pages.Setting.privacyPasswordForm.new.placeholder')"
+                style="width: 290px"
+                @input="(val) => handlePasswordInput('new', val)"
+              >
+                <template #suffix>
+                  <IconifyIcon
+                    :icon="privacyPasswordView.new ? 'custom:view' : 'custom:hide'"
+                    style="cursor: pointer"
+                    @mousedown="togglePasswordView('new')"
+                    @mouseup="togglePasswordView('new')"
+                  />
+                </template>
+              </el-input>
+              <el-tooltip effect="light">
+                <template #content>
+                  <div style="max-width: 300px; word-break: break-word; white-space: break-spaces">
+                    {{ t('pages.Setting.privacyPasswordForm.new.tooltip') }}
+                  </div>
+                </template>
                 <IconifyIcon
-                  :icon="privacyPasswordView.new ? 'custom:view' : 'custom:hide'"
-                  style="cursor: pointer"
-                  @mousedown="togglePasswordView('new')"
-                  @mouseup="togglePasswordView('new')"
+                  icon="custom:info-filled"
+                  style="color: var(--el-text-color-regular); margin-left: 10px"
                 />
-              </template>
-            </el-input>
-            <el-tooltip effect="light">
-              <template #content>
-                <div style="max-width: 300px; word-break: break-word; white-space: break-spaces">
-                  {{ t('pages.Setting.privacyPasswordForm.new.tooltip') }}
-                </div>
-              </template>
-              <IconifyIcon
-                icon="custom:info-filled"
-                style="color: var(--el-text-color-regular); margin-left: 10px"
-              />
-            </el-tooltip>
-          </el-form-item>
-          <el-form-item label="&nbsp;&nbsp;" style="margin-top: 40px">
-            <el-button
-              type="primary"
-              style="width: 140px"
-              @click="onPrivacyPasswordFormConfirm(privacyPasswordFormRef)"
+              </el-tooltip>
+            </el-form-item>
+            <el-form-item label="&nbsp;&nbsp;" style="margin-top: 40px">
+              <el-button
+                type="primary"
+                style="width: 140px"
+                @click="onPrivacyPasswordFormConfirm(privacyPasswordFormRef)"
+              >
+                {{ t('pages.Setting.privacyPasswordForm.confirm') }}
+              </el-button>
+            </el-form-item>
+          </div>
+        </el-form>
+      </el-scrollbar>
+    </div>
+
+    <div v-show="activeTab === 'shortcutSetting'" class="shortcut-settings-wrapper">
+      <el-scrollbar style="height: 100%">
+        <div class="shortcut-settings">
+          <!-- 快捷键列表 -->
+          <div v-for="category in shortcutCategories" :key="category" class="form-card">
+            <h4 class="category-title">
+              {{ t('pages.Setting.shortcutSetting.categories.' + category) }}
+            </h4>
+            <el-table
+              :data="getShortcutsByCategory(category)"
+              style="width: 100%"
+              border
+              :row-class-name="tableRowClassName"
             >
-              {{ t('pages.Setting.privacyPasswordForm.confirm') }}
-            </el-button>
-          </el-form-item>
+              <el-table-column
+                prop="description"
+                :label="t('pages.Setting.shortcutSetting.function')"
+                width="200"
+              >
+                <template #default="scope">
+                  {{ t(scope.row.locale) }}
+                  <el-tooltip
+                    v-if="hasConflict(scope.row.name)"
+                    effect="dark"
+                    :content="getConflictMessage(scope.row.name)"
+                    placement="top"
+                  >
+                    <el-tag size="small" type="danger" style="margin-left: 10px">
+                      {{ t('pages.Setting.shortcutSetting.conflict') }}
+                    </el-tag>
+                  </el-tooltip>
+                </template>
+              </el-table-column>
+              <el-table-column prop="shortcut" :label="t('pages.Setting.shortcutSetting.shortcut')">
+                <template #default="scope">
+                  <div class="shortcut-input">
+                    <el-input
+                      :value="isEditing(scope.row.name) ? editingShortcut : scope.row.shortcut"
+                      :placeholder="
+                        isEditing(scope.row.name)
+                          ? t('pages.Setting.shortcutSetting.pressShortcut')
+                          : t('pages.Setting.shortcutSetting.notSet')
+                      "
+                      @focus="startRecording(scope.row.name)"
+                      @blur="handleBlur(scope.row.name)"
+                      @keydown="handleKeydown($event, scope.row.name)"
+                      @keyup="handleKeyup($event, scope.row.name)"
+                      :disabled="!scope.row.editable"
+                      :class="{ 'shortcut-input-editing': isEditing(scope.row.name) }"
+                      :ref="
+                        (el) => {
+                          if (el) {
+                            inputRefs[scope.row.name] = el
+                          } else {
+                            delete inputRefs[scope.row.name]
+                          }
+                        }
+                      "
+                    />
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column
+                :label="t('pages.Setting.shortcutSetting.operation')"
+                width="180"
+                fixed="right"
+              >
+                <template #default="scope">
+                  <el-button
+                    size="small"
+                    :disabled="!scope.row.editable"
+                    @click="resetShortcut(scope.row.name)"
+                    v-if="
+                      scope.row.editable && isShortcutModified(scope.row.name, scope.row.shortcut)
+                    "
+                  >
+                    {{ t('pages.Setting.shortcutSetting.reset') }}
+                  </el-button>
+                  <el-button
+                    size="small"
+                    type="danger"
+                    :disabled="!scope.row.editable"
+                    @click="emptyShortcut(scope.row.name)"
+                    v-if="scope.row.editable && scope.row.shortcut"
+                  >
+                    {{ t('pages.Setting.shortcutSetting.empty') }}
+                  </el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
         </div>
-      </el-form>
-    </el-scrollbar>
+      </el-scrollbar>
+    </div>
   </el-main>
 </template>
 
@@ -1650,6 +2152,74 @@ onBeforeUnmount(() => {
   gap: 20px;
   height: calc(100vh - 110px);
   overflow: hidden;
+}
+
+.privacy-space-wrapper {
+  height: calc(100vh - 110px);
+  position: relative;
+}
+
+.shortcut-settings-wrapper {
+  height: calc(100vh - 110px);
+  position: relative;
+}
+
+.shortcut-settings {
+  margin: 0 auto;
+}
+
+.conflict-warning {
+  padding: 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.conflict-item {
+  margin-top: 5px;
+  font-size: 14px;
+}
+
+.conflict-shortcut {
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.shortcut-input {
+  position: relative;
+}
+
+.shortcut-input-editing {
+  border-color: var(--el-color-primary) !important;
+  box-shadow: 0 0 0 2px rgba(144, 147, 153, 0.1) !important;
+}
+
+.shortcut-input-editing:hover {
+  border-color: var(--el-color-primary) !important;
+}
+
+.shortcut-input-editing:focus-within {
+  border-color: var(--el-color-primary) !important;
+  box-shadow: 0 0 0 2px rgba(144, 147, 153, 0.2) !important;
+}
+
+.category-title {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 16px;
+  font-weight: bold;
+  color: var(--el-text-color-primary);
+  border-bottom: 1px solid var(--el-border-color);
+  padding-bottom: 8px;
+}
+
+/* 冲突行样式 */
+:deep(.conflict-row) {
+  background-color: rgba(245, 108, 108, 0.1) !important;
+}
+
+:deep(.conflict-row:hover) {
+  background-color: rgba(245, 108, 108, 0.2) !important;
 }
 
 .color-picker-block {

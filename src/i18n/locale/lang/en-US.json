@@ -31,7 +31,8 @@
     "Setting": {
       "tabs": {
         "baseSetting": "Basic settings",
-        "privacySpace": "Privacy space"
+        "privacySpace": "Privacy space",
+        "shortcutSetting": "Keyboard shortcuts"
       },
       "divider": {
         "base": "Basic settings",
@@ -166,6 +167,23 @@
           "tooltip": "The password consists of numbers, at least 3 digits and at most 6 digits"
         },
         "confirm": "Update password"
+      },
+      "shortcutSetting": {
+        "conflict": "Conflict",
+        "function": "Function",
+        "shortcut": "Shortcut",
+        "operation": "Operation",
+        "reset": "Reset",
+        "empty": "Empty",
+        "notSet": "Not set",
+        "pressShortcut": "Press shortcut...",
+        "categories": {
+          "system": "System Operations",
+          "window": "Window Operations",
+          "wallpaper": "Wallpaper Operations",
+          "text": "Text Operations",
+          "settings": "Settings Management"
+        }
       }
     },
     "Utils": {
@@ -300,7 +318,16 @@
     "indexOutOfRange": "Index out of range",
     "indexTooLarge": "Index too large",
     "downloadTask": "Download task",
-    "downloadTaskDone": "Download task completed!"
+    "downloadTaskDone": "Download task completed!",
+    "conflictSystemShortcut": "This shortcut is already occupied by the system or other applications!",
+    "conflictAppShortcut": "This shortcut is duplicated within the application!",
+    "notEditableShortcut": "This shortcut does not support modification!",
+    "invalidShortcutFormat": "Invalid shortcut format!",
+    "shortcutUpdateSuccess": "Shortcut updated successfully!",
+    "shortcutUpdateFailed": "Shortcut update failed!",
+    "shortcutResetSuccess": "Shortcut reset successfully!",
+    "shortcutResetFailed": "Shortcut reset failed!",
+    "shortcutEmptySuccess": "Shortcut cleared successfully!"
   },
   "resourceTypeList": {
     "localResource": "Local Resources",
@@ -533,6 +560,23 @@
     "square": "Square",
     "rectangle": "Rectangle",
     "verticalRectangle": "Vertical rectangle"
+  },
+  "keyboardShortcuts": {
+    "quitApp": "Quit application",
+    "closeWindow": "Close current window",
+    "minimizeWindow": "Minimize current window",
+    "toggleMainWindow": "Toggle main window",
+    "toggleSuspensionBall": "Toggle suspension ball",
+    "nextWallpaper": "Next wallpaper",
+    "prevWallpaper": "Previous wallpaper",
+    "toggleAutoSwitchWallpaper": "Toggle auto wallpaper mode",
+    "editSelectAll": "Select all",
+    "editCopy": "Copy",
+    "editPaste": "Paste",
+    "openSettings": "Open settings",
+    "openUtils": "Open tools",
+    "openAbout": "Open about",
+    "checkUpdate": "Check for updates"
   },
   "comingSoon": "Coming soon",
   "viewInfo": {

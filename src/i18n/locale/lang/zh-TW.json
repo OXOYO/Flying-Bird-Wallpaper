@@ -31,7 +31,8 @@
     "Setting": {
       "tabs": {
         "baseSetting": "基礎設定",
-        "privacySpace": "隱私空間"
+        "privacySpace": "隱私空間",
+        "shortcutSetting": "快捷鍵設定"
       },
       "divider": {
         "base": "基礎設定",
@@ -166,6 +167,23 @@
           "tooltip": "密碼由數字組成，最少3位，最多6位數字"
         },
         "confirm": "更新密碼"
+      },
+      "shortcutSetting": {
+        "conflict": "衝突",
+        "function": "功能",
+        "shortcut": "快捷鍵",
+        "operation": "操作",
+        "reset": "重置",
+        "empty": "清空",
+        "notSet": "未設定",
+        "pressShortcut": "按快捷鍵...",
+        "categories": {
+          "system": "系統操作",
+          "window": "視窗操作",
+          "wallpaper": "桌布操作",
+          "text": "文字操作",
+          "settings": "設定管理"
+        }
       }
     },
     "Utils": {
@@ -300,7 +318,16 @@
     "indexOutOfRange": "序號超出範圍",
     "indexTooLarge": "序號過大",
     "downloadTask": "下載任務",
-    "downloadTaskDone": "下載任務完成！"
+    "downloadTaskDone": "下載任務完成！",
+    "conflictSystemShortcut": "此快捷鍵已被系統或其他應用佔用！",
+    "conflictAppShortcut": "此快捷鍵在應用內重複！",
+    "notEditableShortcut": "此快捷鍵不支援修改！",
+    "invalidShortcutFormat": "無效的快捷鍵格式！",
+    "shortcutUpdateSuccess": "快捷鍵更新成功！",
+    "shortcutUpdateFailed": "快捷鍵更新失敗！",
+    "shortcutResetSuccess": "快捷鍵重置成功！",
+    "shortcutResetFailed": "快捷鍵重置失敗！",
+    "shortcutEmptySuccess": "快捷鍵清空成功！"
   },
   "resourceTypeList": {
     "localResource": "本地資源",
@@ -533,6 +560,23 @@
     "square": "正方形",
     "rectangle": "長方形",
     "verticalRectangle": "豎長方形"
+  },
+  "keyboardShortcuts": {
+    "quitApp": "完全退出應用",
+    "closeWindow": "關閉目前視窗",
+    "minimizeWindow": "最小化目前視窗",
+    "toggleMainWindow": "切換主視窗",
+    "toggleSuspensionBall": "切換懸浮球",
+    "nextWallpaper": "切換下一張桌布",
+    "prevWallpaper": "切換上一張桌布",
+    "toggleAutoSwitchWallpaper": "切換自動桌布模式",
+    "editSelectAll": "全選",
+    "editCopy": "複製",
+    "editPaste": "貼上",
+    "openSettings": "打開設定",
+    "openUtils": "打開工具",
+    "openAbout": "打開關於",
+    "checkUpdate": "檢查更新"
   },
   "comingSoon": "敬請期待",
   "viewInfo": {

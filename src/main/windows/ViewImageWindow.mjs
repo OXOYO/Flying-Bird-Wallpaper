@@ -58,6 +58,9 @@ export default class ViewImageWindow {
 
   create(data) {
     this.win = new BrowserWindow(this.options)
+    // 注册窗口级快捷键
+    global.FBW.store.shortcutManager.registerLocalShortcuts('viewImageWindow', true)
+
     this.postData = data
 
     this.win.once('ready-to-show', () => {
@@ -94,6 +97,9 @@ export default class ViewImageWindow {
   }
 
   destroy() {
+    // 注销窗口级快捷键
+    global.FBW.store.shortcutManager.unregisterLocalShortcuts('viewImageWindow')
+
     this.win?.destroy()
   }
 

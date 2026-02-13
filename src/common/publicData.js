@@ -70,6 +70,7 @@ export const resourceTypeList = [
 export const menuList = [
   {
     name: 'Search',
+    shortcutName: '',
     title: '搜索',
     locale: 'menuList.Search',
     icon: 'custom:search',
@@ -79,6 +80,7 @@ export const menuList = [
   },
   {
     name: 'Words',
+    shortcutName: '',
     title: '词库',
     locale: 'menuList.Words',
     icon: 'custom:cloud',
@@ -87,6 +89,7 @@ export const menuList = [
   },
   {
     name: 'Favorites',
+    shortcutName: '',
     title: '收藏',
     locale: 'menuList.Favorites',
     icon: 'custom:star',
@@ -95,6 +98,7 @@ export const menuList = [
   },
   {
     name: 'History',
+    shortcutName: '',
     title: '回忆',
     locale: 'menuList.History',
     icon: 'custom:clock',
@@ -103,6 +107,7 @@ export const menuList = [
   },
   {
     name: 'Setting',
+    shortcutName: 'openSettings',
     title: '设置',
     locale: 'menuList.Setting',
     icon: 'custom:settings',
@@ -111,6 +116,7 @@ export const menuList = [
   },
   {
     name: 'Utils',
+    shortcutName: 'openUtils',
     title: '工具',
     locale: 'menuList.Utils',
     icon: 'custom:tools',
@@ -119,6 +125,7 @@ export const menuList = [
   },
   {
     name: 'About',
+    shortcutName: 'openAbout',
     title: '关于',
     locale: 'menuList.About',
     icon: 'custom:about',
@@ -131,6 +138,7 @@ export const defaultMenuList = [
   {
     name: 'LastMenu',
     title: '上次打开菜单',
+    shortcutName: '',
     locale: 'defaultMenuList.LastMenu',
     icon: '',
     canBeEnabled: false,
@@ -646,4 +654,237 @@ export const infoKeys = [
   'mtimeMs',
   'created_at',
   'updated_at'
+]
+
+// 快捷键默认配置
+export const keyboardShortcuts = [
+  // 基础系统操作
+  {
+    name: 'quitApp',
+    locale: 'keyboardShortcuts.quitApp',
+    description: '完全退出应用',
+    type: 'local',
+    windowNames: ['mainWindow', 'loadingWindow', 'viewImageWindow', 'suspensionBall'],
+    category: 'system',
+    editable: false,
+    visible: true,
+    shortcuts: {
+      mac: 'Command+Q',
+      win: 'Ctrl+Q',
+      linux: 'Ctrl+Q'
+    }
+  },
+  // 窗口操作
+  {
+    name: 'closeWindow',
+    locale: 'keyboardShortcuts.closeWindow',
+    description: '关闭当前窗口',
+    type: 'local',
+    windowNames: ['mainWindow', 'loadingWindow', 'viewImageWindow', 'suspensionBall'],
+    category: 'window',
+    editable: false,
+    visible: true,
+    shortcuts: {
+      mac: 'Command+W',
+      win: 'Ctrl+W',
+      linux: 'Ctrl+W'
+    }
+  },
+  {
+    name: 'minimizeWindow',
+    locale: 'keyboardShortcuts.minimizeWindow',
+    description: '最小化当前窗口',
+    type: 'local',
+    windowNames: ['mainWindow', 'loadingWindow', 'viewImageWindow', 'suspensionBall'],
+    category: 'window',
+    editable: false,
+    visible: true,
+    shortcuts: {
+      mac: 'Command+M',
+      win: 'Win+M',
+      linux: 'Super+H'
+    }
+  },
+  {
+    name: 'toggleMainWindow',
+    locale: 'keyboardShortcuts.toggleMainWindow',
+    description: '显示/隐藏主窗口',
+    type: 'global',
+    windowNames: ['mainWindow', 'loadingWindow', 'viewImageWindow', 'suspensionBall'],
+    category: 'window',
+    editable: true,
+    visible: true,
+    shortcuts: {
+      mac: 'Command+Shift+M',
+      win: 'Ctrl+Shift+M',
+      linux: 'Ctrl+Shift+M'
+    }
+  },
+  {
+    name: 'toggleSuspensionBall',
+    locale: 'keyboardShortcuts.toggleSuspensionBall',
+    description: '显示/隐藏悬浮球',
+    type: 'global',
+    category: 'window',
+    editable: true,
+    visible: true,
+    shortcuts: {
+      mac: 'Command+Shift+B',
+      win: 'Ctrl+Shift+B',
+      linux: 'Ctrl+Shift+B'
+    }
+  },
+
+  // 壁纸管理
+  {
+    name: 'nextWallpaper',
+    locale: 'keyboardShortcuts.nextWallpaper',
+    description: '切换到下一张壁纸',
+    type: 'global',
+    category: 'wallpaper',
+    editable: true,
+    visible: true,
+    shortcuts: {
+      mac: 'Command+Shift+Right',
+      win: 'Ctrl+Shift+Right',
+      linux: 'Ctrl+Shift+Right'
+    }
+  },
+  {
+    name: 'prevWallpaper',
+    locale: 'keyboardShortcuts.prevWallpaper',
+    description: '切换到上一张壁纸',
+    type: 'global',
+    category: 'wallpaper',
+    editable: true,
+    visible: true,
+    shortcuts: {
+      mac: 'Command+Shift+Left',
+      win: 'Ctrl+Shift+Left',
+      linux: 'Ctrl+Shift+Left'
+    }
+  },
+  {
+    name: 'toggleAutoSwitchWallpaper',
+    locale: 'keyboardShortcuts.toggleAutoSwitchWallpaper',
+    description: '切换自动壁纸模式',
+    type: 'global',
+    category: 'wallpaper',
+    editable: true,
+    visible: true,
+    shortcuts: {
+      mac: 'Command+Shift+A',
+      win: 'Ctrl+Shift+A',
+      linux: 'Ctrl+Shift+A'
+    }
+  },
+
+  // 文本操作
+  {
+    name: 'editSelectAll',
+    locale: 'keyboardShortcuts.editSelectAll',
+    description: '全选',
+    type: 'local',
+    windowNames: ['mainWindow', 'viewImageWindow'],
+    category: 'text',
+    editable: false,
+    visible: false,
+    shortcuts: {
+      mac: 'Command+A',
+      win: 'Ctrl+A',
+      linux: 'Ctrl+A'
+    }
+  },
+  {
+    name: 'editCopy',
+    locale: 'keyboardShortcuts.editCopy',
+    description: '复制',
+    type: 'local',
+    windowNames: ['mainWindow', 'viewImageWindow'],
+    category: 'text',
+    editable: false,
+    visible: false,
+    shortcuts: {
+      mac: 'Command+C',
+      win: 'Ctrl+C',
+      linux: 'Ctrl+C'
+    }
+  },
+  {
+    name: 'editPaste',
+    locale: 'keyboardShortcuts.editPaste',
+    description: '粘贴',
+    type: 'local',
+    windowNames: ['mainWindow', 'viewImageWindow'],
+    category: 'text',
+    editable: false,
+    visible: false,
+    shortcuts: {
+      mac: 'Command+V',
+      win: 'Ctrl+V',
+      linux: 'Ctrl+V'
+    }
+  },
+
+  // 设置管理
+  {
+    name: 'openSettings',
+    locale: 'keyboardShortcuts.openSettings',
+    description: '打开设置',
+    type: 'local',
+    windowNames: ['mainWindow', 'loadingWindow', 'viewImageWindow', 'suspensionBall'],
+    category: 'settings',
+    editable: true,
+    visible: true,
+    shortcuts: {
+      mac: 'Command+,',
+      win: 'Ctrl+,',
+      linux: 'Ctrl+,'
+    }
+  },
+  {
+    name: 'openUtils',
+    locale: 'keyboardShortcuts.openUtils',
+    description: '打开工具',
+    type: 'local',
+    windowNames: ['mainWindow', 'loadingWindow', 'viewImageWindow', 'suspensionBall'],
+    category: 'settings',
+    editable: true,
+    visible: true,
+    shortcuts: {
+      mac: 'Command+Shift+U',
+      win: 'Ctrl+Shift+U',
+      linux: 'Ctrl+Shift+U'
+    }
+  },
+  {
+    name: 'openAbout',
+    locale: 'keyboardShortcuts.openAbout',
+    description: '打开关于',
+    type: 'local',
+    windowNames: ['mainWindow', 'loadingWindow', 'viewImageWindow', 'suspensionBall'],
+    category: 'settings',
+    editable: true,
+    visible: true,
+    shortcuts: {
+      mac: 'Command+Shift+I',
+      win: 'Ctrl+Shift+I',
+      linux: 'Ctrl+Shift+I'
+    }
+  },
+  {
+    name: 'checkUpdate',
+    locale: 'keyboardShortcuts.checkUpdate',
+    description: '检查更新',
+    type: 'local',
+    windowNames: ['mainWindow', 'loadingWindow', 'viewImageWindow', 'suspensionBall'],
+    category: 'settings',
+    editable: true,
+    visible: true,
+    shortcuts: {
+      mac: 'Command+Shift+R',
+      win: 'Ctrl+Shift+R',
+      linux: 'Ctrl+Shift+R'
+    }
+  }
 ]

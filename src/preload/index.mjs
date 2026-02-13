@@ -244,7 +244,16 @@ const api = {
   checkUpdate: (...args) => ipcRenderer.invoke('main:checkUpdate', ...args),
 
   // 发送系统通知
-  sendNotification: (...args) => ipcRenderer.invoke('main:sendNotification', ...args)
+  sendNotification: (...args) => ipcRenderer.invoke('main:sendNotification', ...args),
+
+  // 快捷键相关
+  getShortcuts: (...args) => ipcRenderer.invoke('main:getShortcuts', ...args),
+  getShortcutConflicts: (...args) => ipcRenderer.invoke('main:getShortcutConflicts', ...args),
+  updateShortcut: (...args) => ipcRenderer.invoke('main:updateShortcut', ...args),
+  resetShortcut: (...args) => ipcRenderer.invoke('main:resetShortcut', ...args),
+  checkShortcutConflict: (...args) => ipcRenderer.invoke('main:checkShortcutConflict', ...args),
+  disableShortcuts: (...args) => ipcRenderer.invoke('main:disableShortcuts', ...args),
+  enableShortcuts: (...args) => ipcRenderer.invoke('main:enableShortcuts', ...args)
 }
 
 if (process.contextIsolated) {

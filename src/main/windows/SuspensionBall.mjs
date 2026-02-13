@@ -62,6 +62,9 @@ export default class SuspensionBall {
   create() {
     this.win = new BrowserWindow(this.options)
 
+    // 注册窗口级快捷键
+    global.FBW.store.shortcutManager.registerLocalShortcuts('suspensionBall', true)
+
     if (isDev()) {
       this.win.loadURL(this.url)
     } else {
@@ -77,6 +80,9 @@ export default class SuspensionBall {
   }
 
   destroy() {
+    // 注销窗口级快捷键
+    global.FBW.store.shortcutManager.unregisterLocalShortcuts('suspensionBall')
+
     this.win?.destroy()
   }
 

@@ -54,6 +54,9 @@ export default class MainWindow {
   create(callback) {
     this.win = new BrowserWindow(this.options)
 
+    // 注册窗口级快捷键
+    global.FBW.store.shortcutManager.registerLocalShortcuts('mainWindow', true)
+
     if (process.platform === 'darwin') {
       app.dock.setIcon(global.FBW.iconLogo)
     }
@@ -116,6 +119,8 @@ export default class MainWindow {
 
   destroy() {
     this.win?.destroy()
+    // 注销窗口级快捷键
+    global.FBW.store.shortcutManager.unregisterLocalShortcuts('mainWindow')
   }
 
   reopen(callback) {

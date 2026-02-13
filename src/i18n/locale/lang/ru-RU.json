@@ -31,7 +31,8 @@
     "Setting": {
       "tabs": {
         "baseSetting": "Базовые настройки",
-        "privacySpace": "Приватное пространство"
+        "privacySpace": "Приватное пространство",
+        "shortcutSetting": "Горячие клавиши"
       },
       "divider": {
         "base": "Базовые настройки",
@@ -166,6 +167,23 @@
           "tooltip": "Пароль состоит из цифр, минимум 3 цифры и максимум 6 цифр"
         },
         "confirm": "Обновить пароль"
+      },
+      "shortcutSetting": {
+        "conflict": "Конфликт",
+        "function": "Функция",
+        "shortcut": "Горячая клавиша",
+        "operation": "Операция",
+        "reset": "Сбросить",
+        "empty": "Очистить",
+        "notSet": "Не установлено",
+        "pressShortcut": "Нажмите горячую клавишу...",
+        "categories": {
+          "system": "Системные операции",
+          "window": "Операции с окном",
+          "wallpaper": "Операции с обоями",
+          "text": "Текстовые операции",
+          "settings": "Управление настройками"
+        }
       }
     },
     "Utils": {
@@ -300,7 +318,16 @@
     "indexOutOfRange": "Индекс вне диапазона",
     "indexTooLarge": "Индекс слишком большой",
     "downloadTask": "Задача загрузки",
-    "downloadTaskDone": "Задача загрузки завершена!"
+    "downloadTaskDone": "Задача загрузки завершена!",
+    "conflictSystemShortcut": "Эта горячая клавиша уже используется системой или другими приложениями!",
+    "conflictAppShortcut": "Эта горячая клавиша дублируется в приложении!",
+    "notEditableShortcut": "Эта горячая клавиша не может быть изменена!",
+    "invalidShortcutFormat": "Недопустимый формат горячей клавиши!",
+    "shortcutUpdateSuccess": "Горячая клавиша успешно обновлена!",
+    "shortcutUpdateFailed": "Ошибка обновления горячей клавиши!",
+    "shortcutResetSuccess": "Горячая клавиша успешно сброшена!",
+    "shortcutResetFailed": "Ошибка сброса горячей клавиши!",
+    "shortcutEmptySuccess": "Горячая клавиша успешно очищена!"
   },
   "resourceTypeList": {
     "localResource": "Локальные ресурсы",
@@ -533,6 +560,23 @@
     "square": "Квадрат",
     "rectangle": "Прямоугольник",
     "verticalRectangle": "Вертикальный прямоугольник"
+  },
+  "keyboardShortcuts": {
+    "quitApp": "Полностью выйти из приложения",
+    "closeWindow": "Закрыть текущее окно",
+    "minimizeWindow": "Минимизировать текущее окно",
+    "toggleMainWindow": "Переключить главное окно",
+    "toggleSuspensionBall": "Переключить плавающий шар",
+    "nextWallpaper": "Следующие обои",
+    "prevWallpaper": "Предыдущие обои",
+    "toggleAutoSwitchWallpaper": "Переключить режим автоматических обоев",
+    "editSelectAll": "Выделить все",
+    "editCopy": "Копировать",
+    "editPaste": "Вставить",
+    "openSettings": "Открыть настройки",
+    "openUtils": "Открыть утилиты",
+    "openAbout": "Открыть о программе",
+    "checkUpdate": "Проверить обновления"
   },
   "comingSoon": "Скоро будет",
   "viewInfo": {

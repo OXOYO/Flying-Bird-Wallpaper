@@ -31,7 +31,8 @@
     "Setting": {
       "tabs": {
         "baseSetting": "Configurações básicas",
-        "privacySpace": "Espaço privado"
+        "privacySpace": "Espaço privado",
+        "shortcutSetting": "Atalhos de teclado"
       },
       "divider": {
         "base": "Configurações básicas",
@@ -166,6 +167,23 @@
           "tooltip": "A senha consiste em números, mínimo de 3 dígitos e máximo de 6 dígitos"
         },
         "confirm": "Atualizar senha"
+      },
+      "shortcutSetting": {
+        "conflict": "Conflito",
+        "function": "Função",
+        "shortcut": "Atalho",
+        "operation": "Operação",
+        "reset": "Redefinir",
+        "empty": "Esvaziar",
+        "notSet": "Não definido",
+        "pressShortcut": "Pressione o atalho...",
+        "categories": {
+          "system": "Operações do sistema",
+          "window": "Operações da janela",
+          "wallpaper": "Operações do papel de parede",
+          "text": "Operações de texto",
+          "settings": "Gerenciamento de configurações"
+        }
       }
     },
     "Utils": {
@@ -300,7 +318,16 @@
     "indexOutOfRange": "Índice fora do intervalo",
     "indexTooLarge": "Índice muito grande",
     "downloadTask": "Tarefa de download",
-    "downloadTaskDone": "Tarefa de download concluída!"
+    "downloadTaskDone": "Tarefa de download concluída!",
+    "conflictSystemShortcut": "Este atalho já está sendo usado pelo sistema ou por outros aplicativos!",
+    "conflictAppShortcut": "Este atalho está duplicado no aplicativo!",
+    "notEditableShortcut": "Este atalho não pode ser modificado!",
+    "invalidShortcutFormat": "Formato de atalho inválido!",
+    "shortcutUpdateSuccess": "Atalho atualizado com sucesso!",
+    "shortcutUpdateFailed": "Falha ao atualizar atalho!",
+    "shortcutResetSuccess": "Atalho redefinido com sucesso!",
+    "shortcutResetFailed": "Falha ao redefinir atalho!",
+    "shortcutEmptySuccess": "Atalho esvaziado com sucesso!"
   },
   "resourceTypeList": {
     "localResource": "Recursos locais",
@@ -533,6 +560,23 @@
     "square": "Quadrado",
     "rectangle": "Retângulo",
     "verticalRectangle": "Retângulo vertical"
+  },
+  "keyboardShortcuts": {
+    "quitApp": "Sair completamente do aplicativo",
+    "closeWindow": "Fechar janela atual",
+    "minimizeWindow": "Minimizar janela atual",
+    "toggleMainWindow": "Alternar janela principal",
+    "toggleSuspensionBall": "Alternar bola de suspensão",
+    "nextWallpaper": "Avançar para o próximo papel de parede",
+    "prevWallpaper": "Voltar para o papel de parede anterior",
+    "toggleAutoSwitchWallpaper": "Alternar modo de papel de parede automático",
+    "editSelectAll": "Selecionar tudo",
+    "editCopy": "Copiar",
+    "editPaste": "Colar",
+    "openSettings": "Abrir configurações",
+    "openUtils": "Abrir ferramentas",
+    "openAbout": "Abrir sobre",
+    "checkUpdate": "Verificar atualizações"
   },
   "comingSoon": "Em breve",
   "viewInfo": {

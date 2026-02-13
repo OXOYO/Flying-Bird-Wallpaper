@@ -31,7 +31,8 @@
     "Setting": {
       "tabs": {
         "baseSetting": "Configuración básica",
-        "privacySpace": "Espacio privado"
+        "privacySpace": "Espacio privado",
+        "shortcutSetting": "Atajos de teclado"
       },
       "divider": {
         "base": "Configuración básica",
@@ -166,6 +167,23 @@
           "tooltip": "La contraseña se compone de números, mínimo 3 dígitos y máximo 6 dígitos"
         },
         "confirm": "Actualizar contraseña"
+      },
+      "shortcutSetting": {
+        "conflict": "Conflicto",
+        "function": "Función",
+        "shortcut": "Atajo",
+        "operation": "Operación",
+        "reset": "Restablecer",
+        "empty": "Vaciar",
+        "notSet": "No establecido",
+        "pressShortcut": "Presione el atajo...",
+        "categories": {
+          "system": "Operaciones del sistema",
+          "window": "Operaciones de ventana",
+          "wallpaper": "Operaciones de fondo",
+          "text": "Operaciones de texto",
+          "settings": "Gestión de configuración"
+        }
       }
     },
     "Utils": {
@@ -300,7 +318,16 @@
     "indexOutOfRange": "Índice fuera de rango",
     "indexTooLarge": "Índice demasiado grande",
     "downloadTask": "Tarea de descarga",
-    "downloadTaskDone": "¡Tarea de descarga completada!"
+    "downloadTaskDone": "¡Tarea de descarga completada!",
+    "conflictSystemShortcut": "¡Este atajo ya está siendo utilizado por el sistema u otras aplicaciones!",
+    "conflictAppShortcut": "¡Este atajo está duplicado dentro de la aplicación!",
+    "notEditableShortcut": "¡Este atajo no se puede modificar!",
+    "invalidShortcutFormat": "¡Formato de atajo inválido!",
+    "shortcutUpdateSuccess": "¡Atajo actualizado correctamente!",
+    "shortcutUpdateFailed": "¡Error al actualizar atajo!",
+    "shortcutResetSuccess": "¡Atajo restablecido correctamente!",
+    "shortcutResetFailed": "¡Error al restablecer atajo!",
+    "shortcutEmptySuccess": "¡Atajo vaciado correctamente!"
   },
   "resourceTypeList": {
     "localResource": "Recursos locales",
@@ -533,6 +560,23 @@
     "square": "Cuadrado",
     "rectangle": "Rectángulo",
     "verticalRectangle": "Rectángulo vertical"
+  },
+  "keyboardShortcuts": {
+    "quitApp": "Salir completamente de la aplicación",
+    "closeWindow": "Cerrar ventana actual",
+    "minimizeWindow": "Minimizar ventana actual",
+    "toggleMainWindow": "Alternar ventana principal",
+    "toggleSuspensionBall": "Alternar bola de suspensión",
+    "nextWallpaper": "Cambiar al siguiente fondo",
+    "prevWallpaper": "Cambiar al fondo anterior",
+    "toggleAutoSwitchWallpaper": "Alternar modo de fondo automático",
+    "editSelectAll": "Seleccionar todo",
+    "editCopy": "Copiar",
+    "editPaste": "Pegar",
+    "openSettings": "Abrir configuración",
+    "openUtils": "Abrir herramientas",
+    "openAbout": "Abrir acerca de",
+    "checkUpdate": "Comprobar actualizaciones"
   },
   "comingSoon": "Próximamente",
   "viewInfo": {

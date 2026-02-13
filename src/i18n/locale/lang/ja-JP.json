@@ -31,7 +31,8 @@
     "Setting": {
       "tabs": {
         "baseSetting": "基本設定",
-        "privacySpace": "プライバシー空間"
+        "privacySpace": "プライバシー空間",
+        "shortcutSetting": "キーボードショートカット"
       },
       "divider": {
         "base": "基本設定",
@@ -166,6 +167,23 @@
           "tooltip": "パスワードは数字で構成され、最低3桁、最大6桁です"
         },
         "confirm": "パスワードを更新"
+      },
+      "shortcutSetting": {
+        "conflict": "競合",
+        "function": "機能",
+        "shortcut": "ショートカット",
+        "operation": "操作",
+        "reset": "リセット",
+        "empty": "空にする",
+        "notSet": "未設定",
+        "pressShortcut": "ショートカットを押してください...",
+        "categories": {
+          "system": "システム操作",
+          "window": "ウィンドウ操作",
+          "wallpaper": "壁紙操作",
+          "text": "テキスト操作",
+          "settings": "設定管理"
+        }
       }
     },
     "Utils": {
@@ -300,7 +318,16 @@
     "indexOutOfRange": "インデックスが範囲外です",
     "indexTooLarge": "インデックスが大きすぎます",
     "downloadTask": "ダウンロードタスク",
-    "downloadTaskDone": "ダウンロードタスクが完了しました！"
+    "downloadTaskDone": "ダウンロードタスクが完了しました！",
+    "conflictSystemShortcut": "このショートカットはシステムまたは他のアプリケーションによって使用されています！",
+    "conflictAppShortcut": "このショートカットはアプリ内で重複しています！",
+    "notEditableShortcut": "このショートカットは変更をサポートしていません！",
+    "invalidShortcutFormat": "無効なショートカット形式です！",
+    "shortcutUpdateSuccess": "ショートカットの更新に成功しました！",
+    "shortcutUpdateFailed": "ショートカットの更新に失敗しました！",
+    "shortcutResetSuccess": "ショートカットのリセットに成功しました！",
+    "shortcutResetFailed": "ショートカットのリセットに失敗しました！",
+    "shortcutEmptySuccess": "ショートカットのクリアに成功しました！"
   },
   "resourceTypeList": {
     "localResource": "ローカルリソース",
@@ -533,6 +560,23 @@
     "square": "正方形",
     "rectangle": "長方形",
     "verticalRectangle": "縦長長方形"
+  },
+  "keyboardShortcuts": {
+    "quitApp": "アプリケーションを終了",
+    "closeWindow": "現在のウィンドウを閉じる",
+    "minimizeWindow": "現在のウィンドウを最小化",
+    "toggleMainWindow": "メインウィンドウを切り替え",
+    "toggleSuspensionBall": "サスペンションボールを切り替え",
+    "nextWallpaper": "次の壁紙",
+    "prevWallpaper": "前の壁紙",
+    "toggleAutoSwitchWallpaper": "自動壁紙モードを切り替え",
+    "editSelectAll": "すべて選択",
+    "editCopy": "コピー",
+    "editPaste": "貼り付け",
+    "openSettings": "設定を開く",
+    "openUtils": "ツールを開く",
+    "openAbout": "アプリについてを開く",
+    "checkUpdate": "更新を確認"
   },
   "comingSoon": "近日公開",
   "viewInfo": {

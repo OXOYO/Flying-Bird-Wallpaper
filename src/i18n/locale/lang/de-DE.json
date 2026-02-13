@@ -31,7 +31,8 @@
     "Setting": {
       "tabs": {
         "baseSetting": "Grundeinstellungen",
-        "privacySpace": "Privatbereich"
+        "privacySpace": "Privatbereich",
+        "shortcutSetting": "Tastenkürzel"
       },
       "divider": {
         "base": "Grundeinstellungen",
@@ -166,6 +167,23 @@
           "tooltip": "Das Passwort besteht aus Zahlen, mindestens 3 Ziffern und maximal 6 Ziffern"
         },
         "confirm": "Passwort aktualisieren"
+      },
+      "shortcutSetting": {
+        "conflict": "Konflikt",
+        "function": "Funktion",
+        "shortcut": "Tastenkürzel",
+        "operation": "Operation",
+        "reset": "Zurücksetzen",
+        "empty": "Leeren",
+        "notSet": "Nicht festgelegt",
+        "pressShortcut": "Drücken Sie das Tastenkürzel...",
+        "categories": {
+          "system": "Systemoperationen",
+          "window": "Fensteroperationen",
+          "wallpaper": "Hintergrundoperationen",
+          "text": "Textoperationen",
+          "settings": "Einstellungsverwaltung"
+        }
       }
     },
     "Utils": {
@@ -300,7 +318,16 @@
     "indexOutOfRange": "Index außerhalb des gültigen Bereichs",
     "indexTooLarge": "Index zu groß",
     "downloadTask": "Download-Aufgabe",
-    "downloadTaskDone": "Download-Aufgabe abgeschlossen!"
+    "downloadTaskDone": "Download-Aufgabe abgeschlossen!",
+    "conflictSystemShortcut": "Dieses Tastenkürzel wird bereits vom System oder anderen Anwendungen verwendet!",
+    "conflictAppShortcut": "Dieses Tastenkürzel ist innerhalb der Anwendung doppelt vorhanden!",
+    "notEditableShortcut": "Dieses Tastenkürzel kann nicht bearbeitet werden!",
+    "invalidShortcutFormat": "Ungültiges Tastenkürzel-Format!",
+    "shortcutUpdateSuccess": "Tastenkürzel erfolgreich aktualisiert!",
+    "shortcutUpdateFailed": "Tastenkürzel-Update fehlgeschlagen!",
+    "shortcutResetSuccess": "Tastenkürzel erfolgreich zurückgesetzt!",
+    "shortcutResetFailed": "Tastenkürzel-Rücksetzung fehlgeschlagen!",
+    "shortcutEmptySuccess": "Tastenkürzel erfolgreich geleert!"
   },
   "resourceTypeList": {
     "localResource": "Lokale Ressourcen",
@@ -533,6 +560,23 @@
     "square": "Quadrat",
     "rectangle": "Rechteck",
     "verticalRectangle": "Vertikales Rechteck"
+  },
+  "keyboardShortcuts": {
+    "quitApp": "Anwendung vollständig beenden",
+    "closeWindow": "Aktuelles Fenster schließen",
+    "minimizeWindow": "Aktuelles Fenster minimieren",
+    "toggleMainWindow": "Hauptfenster umschalten",
+    "toggleSuspensionBall": "Schwebekugel umschalten",
+    "nextWallpaper": "Nächstes Hintergrundbild",
+    "prevWallpaper": "Vorheriges Hintergrundbild",
+    "toggleAutoSwitchWallpaper": "Automatischer Hintergrundmodus umschalten",
+    "editSelectAll": "Alles auswählen",
+    "editCopy": "Kopieren",
+    "editPaste": "Einfügen",
+    "openSettings": "Einstellungen öffnen",
+    "openUtils": "Werkzeuge öffnen",
+    "openAbout": "Über öffnen",
+    "checkUpdate": "Auf Updates prüfen"
   },
   "comingSoon": "Demnächst verfügbar",
   "viewInfo": {

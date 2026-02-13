@@ -13,6 +13,7 @@ import FileManager from './FileManager.mjs'
 import WordsManager from './WordsManager.mjs'
 import SettingManager from './SettingManager.mjs'
 import VersionManager from './VersionManager.mjs'
+import ShortcutManager from './ShortcutManager.mjs'
 import { handleTimeByUnit } from '../utils/utils.mjs'
 
 export default class Store {
@@ -57,6 +58,11 @@ export default class Store {
       this.settingManager = SettingManager.getInstance(global.logger, this.dbManager)
       // 等待设置管理器初始化完成
       await this.settingManager.waitForInitialization()
+
+      // 初始化快捷键管理器
+      this.shortcutManager = ShortcutManager.getInstance(global.logger, this.dbManager)
+      // 等待快捷键管理器初始化完成
+      await this.shortcutManager.waitForInitialization()
 
       // 检测是否已手动设置语言，未设置则使用系统语言
       const deviceLocale = this.getDeviceLocale()
@@ -736,6 +742,37 @@ export default class Store {
 
     ipcMain.handle('main:clearDownloadedExpired', async () => {
       return await this.wallpaperManager.clearDownloadedExpired()
+    })
+
+    // 快捷键相关IPC处理器
+    ipcMain.handle('main:getShortcuts', () => {
+      return this.shortcutManager.getPlatformShortcuts()
+    })
+
+    ipcMain.handle('main:getShortcutConflicts', () => {
+      return this.shortcutManager.getShortcutConflicts()
+    })
+
+    ipcMain.handle('main:updateShortcut', async (event, name, newShortcut) => {
+      return await this.shortcutManager.updateShortcut(name, newShortcut)
+    })
+
+    ipcMain.handle('main:resetShortcut', async (event, name) => {
+      return await this.shortcutManager.resetShortcut(name)
+    })
+
+    ipcMain.handle('main:checkShortcutConflict', (event, shortcut, excludeName) => {
+      return this.shortcutManager.checkShortcutConflict(shortcut, excludeName)
+    })
+
+    ipcMain.handle('main:disableShortcuts', () => {
+      this.shortcutManager.unregisterAllShortcuts()
+      return { success: true }
+    })
+
+    ipcMain.handle('main:enableShortcuts', () => {
+      this.shortcutManager.registerAllShortcuts()
+      return { success: true }
     })
   }
 

@@ -4,18 +4,15 @@ import {
   Tray,
   Menu,
   shell,
-  BrowserWindow,
   ipcMain,
   dialog,
   protocol,
-  screen,
   webContents,
   nativeImage,
   Notification
 } from 'electron'
 import { electronApp, optimizer } from '@electron-toolkit/utils'
 import installExtension, { VUEJS_DEVTOOLS_BETA } from 'electron-devtools-installer'
-import localShortcut from 'electron-localshortcut'
 import logger from './logger/logger.mjs'
 import Store from './store/index.mjs'
 import {
@@ -140,7 +137,6 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
   global.FBW.dynamicWallpaperWindow = DynamicWallpaperWindow.getInstance()
   global.FBW.rhythmWallpaperWindow = RhythmWallpaperWindow.getInstance()
   let tray
-  let updater
 
   // 获取窗口位置
   const getWindowPosition = (name) => {
@@ -257,18 +253,23 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
           label: global.FBW.store?.settingData?.autoSwitchWallpaper
             ? t('actions.autoSwitchWallpaper.stop')
             : t('actions.autoSwitchWallpaper.start'),
+          accelerator: global.FBW.store?.shortcutManager?.getShortcutByName(
+            'toggleAutoSwitchWallpaper'
+          ),
           click: () => {
             global.FBW.store?.toggleAutoSwitchWallpaper()
           }
         },
         {
           label: t('actions.nextWallpaper'),
+          accelerator: global.FBW.store?.shortcutManager?.getShortcutByName('nextWallpaper'),
           click: () => {
             global.FBW.store?.doManualSwitchWallpaper('next')
           }
         },
         {
           label: t('actions.prevWallpaper'),
+          accelerator: global.FBW.store?.shortcutManager?.getShortcutByName('prevWallpaper'),
           click: () => {
             global.FBW.store?.doManualSwitchWallpaper('prev')
           }
@@ -277,6 +278,7 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
           label: global.FBW.store?.settingData?.suspensionBallVisible
             ? t('actions.closeSuspensionBall')
             : t('actions.openSuspensionBall'),
+          accelerator: global.FBW.store?.shortcutManager?.getShortcutByName('toggleSuspensionBall'),
           click: () => {
             global.FBW.suspensionBall.toggle()
           }
@@ -312,6 +314,7 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
         } else if (item.placement.includes('trayFuncMenu')) {
           trayFuncMenuList.push({
             label: t(item.locale),
+            accelerator: global.FBW.store?.shortcutManager?.getShortcutByName(item.shortcutName),
             click: () => handleJumpToPage(item.name)
           })
         }
@@ -339,9 +342,10 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
         },
         {
           label: t('actions.checkUpdate'),
+          accelerator: global.FBW.store?.shortcutManager?.getShortcutByName('checkUpdate'),
           click: () => {
             // "检查更新"功能
-            updater.checkUpdate()
+            global.FBW.updater.checkUpdate()
           }
         },
         {
@@ -349,6 +353,7 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
         },
         {
           label: t('actions.quit'),
+          accelerator: global.FBW.store?.shortcutManager?.getShortcutByName('quitApp'),
           click: () => {
             global.FBW.flags.isQuitting = true
             app.quit()
@@ -468,9 +473,9 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
       }
 
       // 检查更新
-      updater = new Updater()
+      global.FBW.updater = new Updater()
       // 绑定事件
-      updater.on('update-available', (info) => {
+      global.FBW.updater.on('update-available', (info) => {
         global.logger.info('有可用更新', info)
         // 显示系统通知
         const notice = new Notification({
@@ -487,7 +492,7 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
       })
 
       // 添加更新下载完成的事件监听器
-      updater.on('update-downloaded', (info) => {
+      global.FBW.updater.on('update-downloaded', (info) => {
         global.logger.info('更新下载完成', info)
         // 显示系统通知提示用户安装更新
         const notice = new Notification({
@@ -502,7 +507,7 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
         })
         notice.show()
       })
-      updater.on('update-not-available', (info) => {
+      global.FBW.updater.on('update-not-available', (info) => {
         global.logger.info('无需更新', info)
         // 显示系统通知
         new Notification({
@@ -510,7 +515,7 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
           body: t('messages.updateNotAvailable')
         }).show()
       })
-      updater.on('error', (err) => {
+      global.FBW.updater.on('error', (err) => {
         global.logger.error(`更新失败： error => ${err}`)
         // 显示系统通知
         new Notification({
@@ -528,19 +533,6 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
       // 清空任务栏
       if (isWin()) {
         app.setUserTasks([])
-      }
-
-      // 注册快捷键
-      if (isMac()) {
-        localShortcut.register('CommandOrControl+A', () => {
-          global.FBW.mainWindow.win.webContents.selectAll()
-        })
-        localShortcut.register('CommandOrControl+C', () => {
-          global.FBW.mainWindow.win.webContents.copy()
-        })
-        localShortcut.register('CommandOrControl+V', () => {
-          global.FBW.mainWindow.win.webContents.paste()
-        })
       }
 
       ipcMain.handle('main:sendNotification', async (event, options) => {

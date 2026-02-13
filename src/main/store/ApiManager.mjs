@@ -88,9 +88,9 @@ export default class ApiManager {
     // 写入数据库
     const res = await this.dbManager.setSysRecord('remoteResourceMap', remoteResourceMap, 'object')
     if (res.success) {
-      this.logger.info('写入remoteResourceMap信息成功')
+      this.logger.info('写入 remoteResourceMap 信息成功')
     } else {
-      this.logger.error(`写入remoteResourceMap信息失败: ${res.message}`)
+      this.logger.error(`写入 remoteResourceMap 信息失败: ${res.message}`)
     }
   }
 
