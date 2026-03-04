@@ -319,6 +319,7 @@
     "indexTooLarge": "Índice demasiado grande",
     "downloadTask": "Tarea de descarga",
     "downloadTaskDone": "¡Tarea de descarga completada!",
+    "allDownloadTasksDone": "¡Todas las tareas de descarga completadas!",
     "conflictSystemShortcut": "¡Este atajo ya está siendo utilizado por el sistema u otras aplicaciones!",
     "conflictAppShortcut": "¡Este atajo está duplicado dentro de la aplicación!",
     "notEditableShortcut": "¡Este atajo no se puede modificar!",

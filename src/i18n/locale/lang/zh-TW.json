@@ -319,6 +319,7 @@
     "indexTooLarge": "序號過大",
     "downloadTask": "下載任務",
     "downloadTaskDone": "下載任務完成！",
+    "allDownloadTasksDone": "所有下載任務已完成！",
     "conflictSystemShortcut": "此快捷鍵已被系統或其他應用佔用！",
     "conflictAppShortcut": "此快捷鍵在應用內重複！",
     "notEditableShortcut": "此快捷鍵不支援修改！",

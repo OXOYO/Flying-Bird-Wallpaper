@@ -319,6 +319,7 @@
     "indexTooLarge": "インデックスが大きすぎます",
     "downloadTask": "ダウンロードタスク",
     "downloadTaskDone": "ダウンロードタスクが完了しました！",
+    "allDownloadTasksDone": "すべてのダウンロードタスクが完了しました！",
     "conflictSystemShortcut": "このショートカットはシステムまたは他のアプリケーションによって使用されています！",
     "conflictAppShortcut": "このショートカットはアプリ内で重複しています！",
     "notEditableShortcut": "このショートカットは変更をサポートしていません！",

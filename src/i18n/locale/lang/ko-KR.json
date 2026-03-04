@@ -319,6 +319,7 @@
     "indexTooLarge": "인덱스가 너무 큽니다",
     "downloadTask": "다운로드 작업",
     "downloadTaskDone": "다운로드 작업 완료!",
+    "allDownloadTasksDone": "모든 다운로드 작업 완료!",
     "conflictSystemShortcut": "이 단축키는 이미 시스템 또는 다른 응용 프로그램에서 사용 중입니다!",
     "conflictAppShortcut": "이 단축키는 응용 프로그램 내에서 중복됩니다!",
     "notEditableShortcut": "이 단축키는 수정할 수 없습니다!",

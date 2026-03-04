@@ -319,6 +319,7 @@
     "indexTooLarge": "الفهرس كبير جداً",
     "downloadTask": "مهمة التحميل",
     "downloadTaskDone": "اكتملت مهمة التحميل!",
+    "allDownloadTasksDone": "اكتملت جميع مهام التحميل!",
     "conflictSystemShortcut": "هذا الاختصار مستخدم بالفعل من قبل النظام أو التطبيقات الأخرى!",
     "conflictAppShortcut": "هذا الاختصار مكرر داخل التطبيق!",
     "notEditableShortcut": "هذا الاختصار لا يدعم التعديل!",

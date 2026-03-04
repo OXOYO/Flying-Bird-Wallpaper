@@ -319,6 +319,7 @@
     "indexTooLarge": "Índice muito grande",
     "downloadTask": "Tarefa de download",
     "downloadTaskDone": "Tarefa de download concluída!",
+    "allDownloadTasksDone": "Todas as tarefas de download concluídas!",
     "conflictSystemShortcut": "Este atalho já está sendo usado pelo sistema ou por outros aplicativos!",
     "conflictAppShortcut": "Este atalho está duplicado no aplicativo!",
     "notEditableShortcut": "Este atalho não pode ser modificado!",

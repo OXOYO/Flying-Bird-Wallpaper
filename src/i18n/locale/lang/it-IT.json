@@ -319,6 +319,7 @@
     "indexTooLarge": "Indice troppo grande",
     "downloadTask": "Attività di download",
     "downloadTaskDone": "Attività di download completata!",
+    "allDownloadTasksDone": "Tutte le attività di download completate!",
     "conflictSystemShortcut": "Questa scorciatoia è già utilizzata dal sistema o da altre applicazioni!",
     "conflictAppShortcut": "Questa scorciatoia è duplicata nell'applicazione!",
     "notEditableShortcut": "Questa scorciatoia non può essere modificata!",

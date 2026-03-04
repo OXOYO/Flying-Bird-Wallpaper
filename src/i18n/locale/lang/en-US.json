@@ -319,6 +319,7 @@
     "indexTooLarge": "Index too large",
     "downloadTask": "Download task",
     "downloadTaskDone": "Download task completed!",
+    "allDownloadTasksDone": "All download tasks completed!",
     "conflictSystemShortcut": "This shortcut is already occupied by the system or other applications!",
     "conflictAppShortcut": "This shortcut is duplicated within the application!",
     "notEditableShortcut": "This shortcut does not support modification!",

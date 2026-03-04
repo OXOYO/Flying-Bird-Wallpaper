@@ -319,7 +319,9 @@
     "indexTooLarge": "Индекс слишком большой",
     "downloadTask": "Задача загрузки",
     "downloadTaskDone": "Задача загрузки завершена!",
+    "allDownloadTasksDone": "Все задачи загрузки завершены!",
     "conflictSystemShortcut": "Эта горячая клавиша уже используется системой или другими приложениями!",
+
     "conflictAppShortcut": "Эта горячая клавиша дублируется в приложении!",
     "notEditableShortcut": "Эта горячая клавиша не может быть изменена!",
     "invalidShortcutFormat": "Недопустимый формат горячей клавиши!",

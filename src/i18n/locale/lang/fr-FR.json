@@ -319,6 +319,7 @@
     "indexTooLarge": "Index trop grand",
     "downloadTask": "Télécharger une tâche",
     "downloadTaskDone": "Tâche de téléchargement terminée !",
+    "allDownloadTasksDone": "Toutes les tâches de téléchargement terminées !",
     "conflictSystemShortcut": "Ce raccourci est déjà utilisé par le système ou d'autres applications !",
     "conflictAppShortcut": "Ce raccourci est dupliqué dans l'application !",
     "notEditableShortcut": "Ce raccourci ne peut pas être modifié !",

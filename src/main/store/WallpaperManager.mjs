@@ -891,7 +891,7 @@ export default class WallpaperManager {
           // 发送系统通知
           const notification = new Notification({
             title: t('messages.downloadTask'),
-            body: t('messages.downloadTaskDone')
+            body: t('messages.allDownloadTasksDone')
           })
           notification.show()
         }
