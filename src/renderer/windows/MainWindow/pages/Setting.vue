@@ -20,7 +20,8 @@ import {
   rhythmDensityOptions,
   positionOptions,
   defaultMenuList,
-  keyboardShortcuts
+  keyboardShortcuts,
+  notificationsOptions
 } from '@common/publicData.js'
 import { localeOptions } from '@i18n/locale/index.js'
 import { useTranslation } from 'i18next-vue'
@@ -867,6 +868,11 @@ onBeforeUnmount(() => {
             />
             <el-anchor-link
               class="anchor-sub-link"
+              href="#divider-notifications"
+              :title="t('pages.Setting.divider.notifications')"
+            />
+            <el-anchor-link
+              class="anchor-sub-link"
               href="#divider-explore"
               :title="t('pages.Setting.divider.explore')"
             />
@@ -1076,6 +1082,28 @@ onBeforeUnmount(() => {
                 v-model="settingDataForm.powerSaveMode"
                 @change="onSettingDataFormChange"
               />
+            </el-form-item>
+
+            <div id="divider-notifications" class="divider-sub">
+              {{ t('pages.Setting.divider.notifications') }}
+            </div>
+            <el-form-item
+              v-for="group in notificationsOptions"
+              :key="group.name"
+              :label="t(group.locale)"
+            >
+              <el-checkbox-group
+                v-model="settingDataForm.notifications"
+                @change="onSettingDataFormChange"
+              >
+                <el-checkbox
+                  v-for="item in group.children"
+                  :key="item.value"
+                  :label="t(item.locale)"
+                  :value="item.value"
+                  style="width: 100px"
+                />
+              </el-checkbox-group>
             </el-form-item>
 
             <div id="divider-explore" class="divider-sub">

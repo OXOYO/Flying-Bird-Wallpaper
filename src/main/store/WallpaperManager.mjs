@@ -3,7 +3,6 @@ import path from 'node:path'
 import { setWallpaper } from 'wallpaper'
 import axios from 'axios'
 import { t } from '../../i18n/server.js'
-import { Notification } from 'electron'
 import { isMac, handleTimeByUnit, createSolidColorBMP } from '../utils/utils.mjs'
 
 export default class WallpaperManager {
@@ -11,12 +10,20 @@ export default class WallpaperManager {
   static _instance = null
 
   // 获取单例实例
-  static getInstance(logger, dbManager, settingManager, fileManager, apiManager) {
+  static getInstance(
+    logger,
+    dbManager,
+    settingManager,
+    notificationManager,
+    fileManager,
+    apiManager
+  ) {
     if (!WallpaperManager._instance) {
       WallpaperManager._instance = new WallpaperManager(
         logger,
         dbManager,
         settingManager,
+        notificationManager,
         fileManager,
         apiManager
       )
@@ -24,7 +31,7 @@ export default class WallpaperManager {
     return WallpaperManager._instance
   }
 
-  constructor(logger, dbManager, settingManager, fileManager, apiManager) {
+  constructor(logger, dbManager, settingManager, notificationManager, fileManager, apiManager) {
     // 防止直接实例化
     if (WallpaperManager._instance) {
       return WallpaperManager._instance
@@ -34,6 +41,7 @@ export default class WallpaperManager {
     this.dbManager = dbManager
     this.db = dbManager.db
     this.settingManager = settingManager
+    this.notificationManager = notificationManager
     this.fileManager = fileManager
     this.apiManager = apiManager
 
@@ -889,11 +897,14 @@ export default class WallpaperManager {
           await this.saveDownloadParams()
 
           // 发送系统通知
-          const notification = new Notification({
-            title: t('messages.downloadTask'),
-            body: t('messages.allDownloadTasksDone')
-          })
-          notification.show()
+          const notice = this.notificationManager.send(
+            {
+              title: t('messages.downloadTask'),
+              body: t('messages.downloadTaskAllCompleted')
+            },
+            'downloadTaskAllCompleted'
+          )
+          notice?.show()
         }
         return
       }
@@ -982,17 +993,29 @@ export default class WallpaperManager {
       // 如果有成功的下载任务，发送系统通知
       if (successfulTasks.length > 0) {
         // 发送系统通知
-        const notification = new Notification({
-          title: t('messages.downloadTask'),
-          body: t('messages.downloadTaskDone')
-        })
-        notification.show()
+        const notice = this.notificationManager.send(
+          {
+            title: t('messages.downloadTask'),
+            body: t('messages.downloadTaskCompleted')
+          },
+          'downloadTaskCompleted'
+        )
+        notice?.show()
       }
 
       // 清理不再使用的资源-关键词组合参数
       await this.cleanupUnusedResourceKeywordParams(downloadSources, currentKeywords)
     } catch (err) {
       this.logger.error(`下载壁纸失败: error => ${err}`)
+      // 发送系统通知
+      const notice = this.notificationManager.send(
+        {
+          title: t('messages.downloadTask'),
+          body: t('messages.downloadTaskFailed')
+        },
+        'downloadTaskFailed'
+      )
+      notice?.show()
     }
   }
 

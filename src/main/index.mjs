@@ -478,50 +478,52 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
       global.FBW.updater.on('update-available', (info) => {
         global.logger.info('有可用更新', info)
         // 显示系统通知
-        const notice = new Notification({
+        const notice = global.FBW.notificationManager.send({
           title: t('actions.checkUpdate'),
           body: t('messages.updateAvailable', {
             version: `v${info.version}`
           })
         })
-        notice.on('click', () => {
+        notice?.on('click', () => {
           // 打开更新页面
           shell.openExternal(appInfo.github + '/releases')
         })
-        notice.show()
+        notice?.show()
       })
 
       // 添加更新下载完成的事件监听器
       global.FBW.updater.on('update-downloaded', (info) => {
         global.logger.info('更新下载完成', info)
         // 显示系统通知提示用户安装更新
-        const notice = new Notification({
+        const notice = global.FBW.notificationManager.send({
           title: t('actions.checkUpdate'),
           body: t('messages.updateDownloaded', {
             version: `v${info.version}`
           })
         })
-        notice.on('click', () => {
+        notice?.on('click', () => {
           // 退出并安装更新
           autoUpdater.quitAndInstall()
         })
-        notice.show()
+        notice?.show()
       })
       global.FBW.updater.on('update-not-available', (info) => {
         global.logger.info('无需更新', info)
         // 显示系统通知
-        new Notification({
+        const notice = global.FBW.notificationManager.send({
           title: t('actions.checkUpdate'),
           body: t('messages.updateNotAvailable')
-        }).show()
+        })
+        notice?.show()
       })
       global.FBW.updater.on('error', (err) => {
         global.logger.error(`更新失败： error => ${err}`)
         // 显示系统通知
-        new Notification({
+        const notice = global.FBW.notificationManager.send({
           title: t('actions.checkUpdate'),
           body: t('messages.checkUpdateFail')
-        }).show()
+        })
+        notice?.show()
       })
 
       electronApp.setAppUserModelId('co.oxoyo.flying-bird-wallpaper')
@@ -536,18 +538,21 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
       }
 
       ipcMain.handle('main:sendNotification', async (event, options) => {
-        const notice = new Notification({
-          title: options.title || t('appInfo.appName'),
-          body: options.body || '',
-          icon: global.FBW.iconLogo,
-          silent: options.silent || false
-        })
+        const notice = global.FBW.notificationManager.send(
+          {
+            title: options.title || t('appInfo.appName'),
+            body: options.body || '',
+            icon: global.FBW.iconLogo,
+            silent: options.silent || false
+          },
+          options.notificationName
+        )
 
         if (options.onClick) {
-          notice.on('click', options.onClick)
+          notice?.on('click', options.onClick)
         }
 
-        notice.show()
+        notice?.show()
         return { success: true }
       })
 

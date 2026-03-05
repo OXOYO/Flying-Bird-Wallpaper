@@ -178,6 +178,14 @@ export const defaultSettingData = {
   // 启用分词计算任务
   enableSegmentationTask: false,
   powerSaveMode: true,
+  // 系统通知
+  notifications: [
+    'downloadTaskCompleted',
+    'downloadTaskFailed',
+    'downloadTaskAllCompleted',
+    'autoClearDownloadedTaskSuccess',
+    'autoClearDownloadedTaskFailed'
+  ],
   /*** 壁纸类型 ***/
   wallpaperType: '',
   /*** 图片壁纸配置 ***/
@@ -886,5 +894,64 @@ export const keyboardShortcuts = [
       win: 'Ctrl+Shift+R',
       linux: 'Ctrl+Shift+R'
     }
+  }
+]
+
+export const notificationsOptions = [
+  {
+    label: '刷新目录任务',
+    name: 'autoRefreshDirectoryTask',
+    locale: 'notificationsOptions.autoRefreshDirectoryTask',
+    children: [
+      {
+        label: '任务成功',
+        locale: 'notificationsOptions.autoRefreshDirectoryTaskSuccess',
+        value: 'autoRefreshDirectoryTaskSuccess'
+      },
+      {
+        label: '任务失败',
+        locale: 'notificationsOptions.autoRefreshDirectoryTaskFailed',
+        value: 'autoRefreshDirectoryTaskFailed'
+      }
+    ]
+  },
+  {
+    label: '下载任务',
+    name: 'downloadTask',
+    locale: 'notificationsOptions.downloadTask',
+    children: [
+      {
+        label: '任务完成',
+        locale: 'notificationsOptions.downloadTaskCompleted',
+        value: 'downloadTaskCompleted'
+      },
+      {
+        label: '任务失败',
+        locale: 'notificationsOptions.downloadTaskFailed',
+        value: 'downloadTaskFailed'
+      },
+      {
+        label: '所有下载任务完成',
+        locale: 'notificationsOptions.downloadTaskAllCompleted',
+        value: 'downloadTaskAllCompleted'
+      }
+    ]
+  },
+  {
+    label: '自动清理任务',
+    name: 'autoClearDownloadedTask',
+    locale: 'notificationsOptions.autoClearDownloadedTask',
+    children: [
+      {
+        label: '任务成功',
+        locale: 'notificationsOptions.autoClearDownloadedTaskSuccess',
+        value: 'autoClearDownloadedTaskSuccess'
+      },
+      {
+        label: '任务失败',
+        locale: 'notificationsOptions.autoClearDownloadedTaskFailed',
+        value: 'autoClearDownloadedTaskFailed'
+      }
+    ]
   }
 ]

@@ -14,6 +14,7 @@ import WordsManager from './WordsManager.mjs'
 import SettingManager from './SettingManager.mjs'
 import VersionManager from './VersionManager.mjs'
 import ShortcutManager from './ShortcutManager.mjs'
+import NotificationManager from './NotificationManager.mjs'
 import { handleTimeByUnit } from '../utils/utils.mjs'
 
 export default class Store {
@@ -58,6 +59,11 @@ export default class Store {
       this.settingManager = SettingManager.getInstance(global.logger, this.dbManager)
       // 等待设置管理器初始化完成
       await this.settingManager.waitForInitialization()
+
+      // 初始化通知管理器
+      this.notificationManager = NotificationManager.getInstance(global.logger, this.settingManager)
+      // 等待通知管理器初始化完成
+      await this.notificationManager.waitForInitialization()
 
       // 初始化快捷键管理器
       this.shortcutManager = ShortcutManager.getInstance(global.logger, this.dbManager)
@@ -115,6 +121,7 @@ export default class Store {
         global.logger,
         this.dbManager,
         this.settingManager,
+        this.notificationManager,
         this.fileManager,
         this.apiManager
       )
@@ -1007,7 +1014,16 @@ export default class Store {
     if (this.settingData[key]) {
       // 设置定时刷新目录
       this.taskScheduler.scheduleTask(key, this.handleInterval(key), () => {
-        this.fileManager.refreshDirectory(this.locks)
+        const res = this.fileManager.refreshDirectory(this.locks)
+        // 发送系统通知
+        const notice = this.notificationManager.send(
+          {
+            title: t('messages.autoRefreshDirectoryTask'),
+            body: res.message
+          },
+          res.success ? 'autoRefreshDirectoryTaskSuccess' : 'autoRefreshDirectoryTaskFailed'
+        )
+        notice?.show()
       })
     }
   }
@@ -1146,7 +1162,18 @@ export default class Store {
     if (this.settingData[key]) {
       // 设置定时清理过期的下载的壁纸，每小时执行一次
       this.taskScheduler.scheduleTask(key, 60 * 60 * 1000, async () => {
-        await this.wallpaperManager.clearDownloadedExpired()
+        const res = await this.wallpaperManager.clearDownloadedExpired()
+        // 发送系统通知
+        const notice = this.notificationManager.send(
+          {
+            title: t('messages.autoClearDownloadedTask'),
+            body: res.success
+              ? t('messages.autoClearDownloadedTaskSuccess')
+              : t('messages.autoClearDownloadedTaskFailed')
+          },
+          res.success ? 'autoClearDownloadedTaskSuccess' : 'autoClearDownloadedTaskFailed'
+        )
+        notice?.show()
       })
     }
   }
