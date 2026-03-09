@@ -709,8 +709,8 @@ export const keyboardShortcuts = [
     visible: true,
     shortcuts: {
       mac: 'Command+M',
-      win: 'Win+M',
-      linux: 'Super+H'
+      win: 'Ctrl+M',
+      linux: 'Super+M'
     }
   },
   {
@@ -846,8 +846,8 @@ export const keyboardShortcuts = [
     visible: true,
     shortcuts: {
       mac: 'Command+,',
-      win: 'Ctrl+,',
-      linux: 'Ctrl+,'
+      win: 'Ctrl+P',
+      linux: 'Ctrl+P'
     }
   },
   {

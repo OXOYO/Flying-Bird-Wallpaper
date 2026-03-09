@@ -337,7 +337,7 @@ class ShortcutManager {
           global.FBW.store.doManualSwitchWallpaper('prev')
         }
         break
-      case 'toggleAutoSwitch':
+      case 'toggleAutoSwitchWallpaper':
         if (global.FBW?.store) {
           global.FBW.store.toggleAutoSwitchWallpaper()
         }
@@ -349,9 +349,11 @@ class ShortcutManager {
           })
         }
         break
-      case 'checkUpdate':
-        if (global.FBW?.updater) {
-          global.FBW.updater.checkUpdate()
+      case 'openUtils':
+        if (global.FBW?.mainWindow) {
+          global.FBW.mainWindow.reopen(() => {
+            global.FBW.mainWindow.win.webContents.send('main:jumpToPage', 'Utils')
+          })
         }
         break
       case 'openAbout':
@@ -359,6 +361,11 @@ class ShortcutManager {
           global.FBW.mainWindow.reopen(() => {
             global.FBW.mainWindow.win.webContents.send('main:jumpToPage', 'About')
           })
+        }
+        break
+      case 'checkUpdate':
+        if (global.FBW?.updater) {
+          global.FBW.updater.checkUpdate()
         }
         break
       case 'editSelectAll':
@@ -822,6 +829,7 @@ class ShortcutManager {
       // macOS平台的修饰键名称
       const macModifiers = {
         Command: 'Cmd',
+        CommandOrControl: 'Cmd',
         Ctrl: 'Ctrl',
         Option: 'Opt',
         Shift: 'Shift'
@@ -831,6 +839,7 @@ class ShortcutManager {
       // Linux平台的修饰键名称
       const linuxModifiers = {
         Control: 'Ctrl',
+        CommandOrControl: 'Ctrl',
         Meta: 'Super',
         Shift: 'Shift',
         Alt: 'Alt'
@@ -840,6 +849,7 @@ class ShortcutManager {
       // Windows平台的修饰键名称
       const winModifiers = {
         Control: 'Ctrl',
+        CommandOrControl: 'Ctrl',
         Shift: 'Shift',
         Alt: 'Alt',
         Windows: 'Win'

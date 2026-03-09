@@ -253,23 +253,23 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
           label: global.FBW.store?.settingData?.autoSwitchWallpaper
             ? t('actions.autoSwitchWallpaper.stop')
             : t('actions.autoSwitchWallpaper.start'),
-          accelerator: global.FBW.store?.shortcutManager?.getShortcutByName(
-            'toggleAutoSwitchWallpaper'
-          ),
+          // accelerator: global.FBW.store?.shortcutManager?.getShortcutByName(
+          //   'toggleAutoSwitchWallpaper'
+          // ),
           click: () => {
             global.FBW.store?.toggleAutoSwitchWallpaper()
           }
         },
         {
           label: t('actions.nextWallpaper'),
-          accelerator: global.FBW.store?.shortcutManager?.getShortcutByName('nextWallpaper'),
+          // accelerator: global.FBW.store?.shortcutManager?.getShortcutByName('nextWallpaper'),
           click: () => {
             global.FBW.store?.doManualSwitchWallpaper('next')
           }
         },
         {
           label: t('actions.prevWallpaper'),
-          accelerator: global.FBW.store?.shortcutManager?.getShortcutByName('prevWallpaper'),
+          // accelerator: global.FBW.store?.shortcutManager?.getShortcutByName('prevWallpaper'),
           click: () => {
             global.FBW.store?.doManualSwitchWallpaper('prev')
           }
@@ -278,7 +278,7 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
           label: global.FBW.store?.settingData?.suspensionBallVisible
             ? t('actions.closeSuspensionBall')
             : t('actions.openSuspensionBall'),
-          accelerator: global.FBW.store?.shortcutManager?.getShortcutByName('toggleSuspensionBall'),
+          // accelerator: global.FBW.store?.shortcutManager?.getShortcutByName('toggleSuspensionBall'),
           click: () => {
             global.FBW.suspensionBall.toggle()
           }
@@ -314,7 +314,7 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
         } else if (item.placement.includes('trayFuncMenu')) {
           trayFuncMenuList.push({
             label: t(item.locale),
-            accelerator: global.FBW.store?.shortcutManager?.getShortcutByName(item.shortcutName),
+            // accelerator: global.FBW.store?.shortcutManager?.getShortcutByName(item.shortcutName),
             click: () => handleJumpToPage(item.name)
           })
         }
@@ -342,7 +342,7 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
         },
         {
           label: t('actions.checkUpdate'),
-          accelerator: global.FBW.store?.shortcutManager?.getShortcutByName('checkUpdate'),
+          // accelerator: global.FBW.store?.shortcutManager?.getShortcutByName('checkUpdate'),
           click: () => {
             // "检查更新"功能
             global.FBW.updater.checkUpdate()
@@ -353,7 +353,7 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
         },
         {
           label: t('actions.quit'),
-          accelerator: global.FBW.store?.shortcutManager?.getShortcutByName('quitApp'),
+          // accelerator: global.FBW.store?.shortcutManager?.getShortcutByName('quitApp'),
           click: () => {
             global.FBW.flags.isQuitting = true
             app.quit()

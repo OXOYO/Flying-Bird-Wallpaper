@@ -2106,7 +2106,7 @@ onBeforeUnmount(() => {
                 <template #default="scope">
                   <div class="shortcut-input">
                     <el-input
-                      :value="isEditing(scope.row.name) ? editingShortcut : scope.row.shortcut"
+                      :value="isEditing(scope.row.name) ? editingShortcut : scope.row.displayShortcut"
                       :placeholder="
                         isEditing(scope.row.name)
                           ? t('pages.Setting.shortcutSetting.pressShortcut')

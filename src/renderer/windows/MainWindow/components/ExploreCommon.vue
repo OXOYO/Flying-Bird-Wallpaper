@@ -1802,7 +1802,7 @@ onBeforeUnmount(() => {
 
       <el-mention
         v-model="searchForm.filterKeywords"
-        class="condition-item"
+        class="condition-item condition-keywords"
         :disabled="flags.loading"
         :options="hotTags"
         :prefix="['#']"
@@ -2078,6 +2078,11 @@ onBeforeUnmount(() => {
 
   .condition-item {
     flex: none;
+  }
+  :deep(.condition-keywords) {
+    .el-input__inner {
+      color: #ffffff !important;
+    }
   }
 }
 
