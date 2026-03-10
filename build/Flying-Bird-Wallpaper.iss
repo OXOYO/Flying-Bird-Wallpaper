@@ -1,11 +1,11 @@
 #define MyAppName "飞鸟壁纸"
-#define MyAppVersion "1.3.7"
+#define MyAppVersion "1.3.8"
 #define MyAppPublisher "OXOYO"
 #define MyAppURL "https://github.com/OXOYO/Flying-Bird-Wallpaper"
 #define MyAppExeName "Flying Bird Wallpaper.exe"
 
 [Setup]
-AppId={{38CA1441-B5F8-4955-8246-F5D46F7AC5D0}
+AppId={38CA1441-B5F8-4955-8246-F5D46F7AC5D0}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
@@ -44,16 +44,16 @@ function .onInit
   StrCmp $0 0x0804 "Chinese"
   ; 默认使用英语
   Goto "English"
-  
+
   Chinese:
     ; 设置为简体中文
     Push "chinesesimplified"
     Goto "End"
-  
+
   English:
     ; 设置为英语
     Push "english"
-  
+
   End:
     ; 设置安装程序语言
     Pop $1

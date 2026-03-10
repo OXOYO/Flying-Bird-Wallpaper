@@ -1,3 +1,17 @@
+## [1.3.8](https://github.com/OXOYO/Flying-Bird-Wallpaper/compare/v1.3.7...v1.3.8) (2026-03-10)
+
+
+### Features
+
+* **i18n:** add "allDownloadTasksDone" message for multiple locales ([dc6d504](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/dc6d50414294a10ce0da0796a39f4f92156bc57e))
+* **notifications:** add system notifications feature for task events ([8ab71fd](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/8ab71fd952d1ad9498500a7623483b03f4e935a6))
+* **settings:** add icons to form elements and language icon ([007a757](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/007a7574933d69100243543b378cf1b7d21c3424))
+* **shortcuts:** implement global and window-level keyboard shortcuts management ([10a850a](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/10a850a3eea59789d016835f3ae9eaeb42c958ab))
+* **shortcuts:** update keyboard shortcuts and menu accelerators ([dc76432](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/dc764327d014b5ffdac0e2b7ac3b83415be268d2))
+* **updater:** add startup and interval update checks ([3ca3ba9](https://github.com/OXOYO/Flying-Bird-Wallpaper/commit/3ca3ba90bbeaad4ea18437db1ece396fbe908630))
+
+
+
 ## [1.3.7](https://github.com/OXOYO/Flying-Bird-Wallpaper/compare/v1.3.6...v1.3.7) (2026-02-05)
 
 
