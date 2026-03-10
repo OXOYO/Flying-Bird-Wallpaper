@@ -72,7 +72,7 @@ class ShortcutManager {
   // 加载用户自定义快捷键
   async loadUserCustomShortcuts() {
     try {
-      const res = await this.dbManager.setSysRecord('customShortcuts')
+      const res = await this.dbManager.getSysRecord('customShortcuts')
       if (res.success && res.data?.storeData) {
         this.userCustomShortcuts = res.data.storeData || {}
       }
@@ -85,7 +85,7 @@ class ShortcutManager {
   // 保存用户自定义快捷键
   async saveUserCustomShortcuts() {
     try {
-      await this.dbManager.setSysRecord('customShortcuts', this.userCustomShortcuts)
+      await this.dbManager.setSysRecord('customShortcuts', this.userCustomShortcuts, 'object')
       this.logger.info('用户自定义快捷键保存成功')
     } catch (error) {
       this.logger.error(`保存用户自定义快捷键失败: ${error.message}`)
