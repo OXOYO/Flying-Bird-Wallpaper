@@ -67,6 +67,8 @@ const maxFolderCount = 5
 
 const maxColorCount = 20
 
+const maxDownloadKeywordsCount = 20
+
 const flags = reactive({
   saving: false,
   selectFolder: false,
@@ -391,8 +393,8 @@ const onDownloadKeywordsChange = (val) => {
       .filter((item) => item.length > 0)
       .filter((item, index, self) => self.indexOf(item) === index)
 
-    // 限制最多5个关键词
-    const limited = processed.slice(0, 5)
+    // 限制最多 maxDownloadKeywordsCount 个关键词
+    const limited = processed.slice(0, maxDownloadKeywordsCount)
 
     // 更新数据
     settingDataForm.downloadKeywords = limited
@@ -1500,7 +1502,7 @@ onBeforeUnmount(() => {
                 clearable
                 :placeholder="t('pages.Setting.settingDataForm.downloadKeywords.placeholder')"
                 style="max-width: 450px"
-                :max="5"
+                :max="maxDownloadKeywordsCount"
                 @change="onDownloadKeywordsChange"
               />
             </el-form-item>
@@ -2106,7 +2108,9 @@ onBeforeUnmount(() => {
                 <template #default="scope">
                   <div class="shortcut-input">
                     <el-input
-                      :value="isEditing(scope.row.name) ? editingShortcut : scope.row.displayShortcut"
+                      :value="
+                        isEditing(scope.row.name) ? editingShortcut : scope.row.displayShortcut
+                      "
                       :placeholder="
                         isEditing(scope.row.name)
                           ? t('pages.Setting.shortcutSetting.pressShortcut')
