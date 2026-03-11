@@ -734,25 +734,25 @@ export default class WallpaperManager {
           // 存储到本地
           for (let i = 0; i < res.list.length; i++) {
             const item = res.list[i]
-            const filePath = `${downloadFolder}/${item.fileName}.${item.fileExt}`
+            const filePath = path.join(downloadFolder, `${item.fileName}.${item.fileExt}`)
             try {
               if (fs.existsSync(filePath)) {
                 // 文件已存在，取消写入
-                this.logger.warn(`文件 ${filePath} 已存在，跳过写入`)
+                this.logger.warn(`搜索并下载壁纸文件 ${filePath} 已存在，跳过写入`)
               } else {
                 // 方式一：同步写入
                 const fileRes = await axios.get(item.imageUrl, { responseType: 'arraybuffer' })
                 fs.writeFileSync(filePath, fileRes.data)
-                const stats = fs.statSync(filePath)
-                docs.push({
-                  ...item,
-                  filePath,
-                  fileSize: stats.size,
-                  atimeMs: stats.atimeMs,
-                  mtimeMs: stats.mtimeMs,
-                  ctimeMs: stats.ctimeMs
-                })
               }
+              const stats = fs.statSync(filePath)
+              docs.push({
+                ...item,
+                filePath,
+                fileSize: stats.size,
+                atimeMs: stats.atimeMs,
+                mtimeMs: stats.mtimeMs,
+                ctimeMs: stats.ctimeMs
+              })
             } catch (err) {
               this.logger.error(`searchWallpaperWithDownload writeFileSync ERROR:: ${err}`)
             }
@@ -807,6 +807,11 @@ export default class WallpaperManager {
               this.logger.error(`searchWallpaperWithDownload insert ERROR:: ${err}`)
             }
           }
+          this.logger.warn(
+            `搜索并下载壁纸成功，总计 ${res.list.length} 条数据，有效 ${docs.length} 条数据，插入 ${inserted_ids.length} 条数据，跳过 ${duplicate_filePaths.length} 条重复数据`
+          )
+        } else {
+          this.logger.info('搜索并下载壁纸无可用数据')
         }
         ret.success = true
         ret.message = t(res.list.length ? 'messages.querySuccess' : 'messages.queryEmpty')
@@ -1044,10 +1049,12 @@ export default class WallpaperManager {
     try {
       const key = `download_params_${source}_${keyword}`
       await this.dbManager.setSysRecord(key, params, 'object')
-      this.logger.info(`保存资源${source}关键词${keyword}参数成功:`, params)
+      this.logger.info(`保存资源: ${source} 关键词: ${keyword} 参数成功: ${JSON.stringify(params)}`)
       return true
     } catch (err) {
-      this.logger.error(`保存资源${source}关键词${keyword}参数失败: ${err}`)
+      this.logger.error(
+        `保存资源: ${source} 关键词: ${keyword} 参数失败: ${JSON.stringify(params)} ERROR: ${err}`
+      )
       return false
     }
   }
