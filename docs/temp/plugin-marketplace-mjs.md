@@ -33,9 +33,7 @@
 Flying-Bird-Wallpaper-Plugins/
 ├── README.md           # 项目说明
 ├── package.json        # 项目配置和依赖
-├── shared/             # 共享代码和工具
-│   ├── utils.js        # 通用工具函数
-│   └── constants.js    # 常量定义
+├── plugins.json        # 插件列表文件（用于CDN获取）
 └── plugins/            # API插件目录
     ├── unsplash/       # Unsplash API插件
     │   ├── manifest.json  # 插件配置文件
@@ -51,9 +49,6 @@ Flying-Bird-Wallpaper-Plugins/
 ```
 resources/
 ├── api/           # 内置API插件
-└── plugins/       # 用户安装的插件
-    ├── api/       # API插件（从集中式仓库下载）
-    └── local/     # 本地开发插件
 ```
 
 ## 3. 插件格式设计
@@ -77,7 +72,7 @@ ApiBase类负责提供公共的manifest加载方法，所有API插件都继承�
 const fs = require('fs')
 const path = require('path')
 
-class ApiBase {
+export default class ApiBase {
   constructor(resourceName) {
     this.resourceName = resourceName
     // 加载manifest.json文件
@@ -153,7 +148,7 @@ class ApiBase {
         this._setDefaultInfo()
       }
     } catch (error) {
-      console.error('加载manifest.json失败:', error)
+      this.logger?.error('加载manifest.json失败:', error)
       //  fallback到默认值
       this._setDefaultInfo()
     }
@@ -183,6 +178,11 @@ class ApiBase {
       downloadRequired: {
         keywords: true,
         orientation: false
+      },
+      // 应用版本支持
+      appVersion: {
+        min: '1.0.0',
+        max: '*'
       }
     }
   }
@@ -197,56 +197,23 @@ class ApiBase {
     throw new Error('子类必须实现getHotTags方法')
   }
 }
-
-module.exports = ApiBase
 ```
 
 ### 3.2 插件配置文件 (manifest.json)
 
 ### 3.2.1 插件列表文件 (plugins.json)
 
-为了支持通过CDN获取插件列表，需要在仓库根目录创建一个`plugins.json`文件，包含所有插件的基本信息：
+为了支持通过CDN获取插件列表，需要在仓库根目录创建一个`plugins.json`文件，包含仓库信息和插件名称列表：
 
 ```json
-[
-  {
-    "name": "unsplash",
-    "version": "1.0.0",
-    "displayName": "Unsplash",
-    "description": "高质量免费图片API",
-    "author": "OXOYO",
-    "site": "https://unsplash.com/",
-    "appVersion": {
-      "min": "1.0.0",
-      "max": "2.0.0"
-    }
-  },
-  {
-    "name": "pexels",
-    "version": "1.0.0",
-    "displayName": "Pexels",
-    "description": "免费图片和视频API",
-    "author": "OXOYO",
-    "site": "https://www.pexels.com/",
-    "appVersion": {
-      "min": "1.0.0",
-      "max": "2.0.0"
-    }
-  },
-  {
-    "name": "pixabay",
-    "version": "1.0.0",
-    "displayName": "Pixabay",
-    "description": "免费图片和视频API",
-    "author": "OXOYO",
-    "site": "https://pixabay.com/",
-    "appVersion": {
-      "min": "1.0.0",
-      "max": "2.0.0"
-    }
-  }
-]
+{
+  "name": "OXOYO/Flying-Bird-Wallpaper-Plugins",
+  "repo": "https://github.com/OXOYO/Flying-Bird-Wallpaper-Plugins",
+  "plugins": ["unsplash", "pexels", "pixabay"]
+}
 ```
+
+每个插件都有一个独立的`manifest.json`文件，包含插件的详细信息和配置。
 
 ```json
 {
@@ -328,11 +295,17 @@ const path = require('path')
 const https = require('https')
 
 class PluginManager {
-  constructor() {
+  constructor(logger, dbManager, settingManager) {
     this.pluginDir = path.join(app.getPath('userData'), 'plugins')
     this.apiPluginsDir = path.join(this.pluginDir, 'api')
     this.ensureDirectories()
-    this.centralRepo = 'OXOYO/Flying-Bird-Wallpaper-Plugins'
+    // 保存服务引用
+    this.logger = logger
+    this.dbManager = dbManager
+    this.settingManager = settingManager
+
+    // 从settingData中获取插件源配置
+    this.loadPluginSources()
     // 获取应用版本
     this.appVersion = app.getVersion() || '1.0.0'
     // CDN配置
@@ -349,6 +322,36 @@ class PluginManager {
       }
     ]
     this.currentCdnIndex = 0
+  }
+
+  // 加载插件源配置
+  loadPluginSources() {
+    // 从settingData中获取官方插件源和用户自定义插件源
+    const settingData = this.settingManager?.getAll() || {}
+
+    // 官方插件源
+    const officialSource = settingData.officialPluginSource || {
+      id: 'official',
+      name: 'OXOYO/Flying-Bird-Wallpaper-Plugins',
+      repo: 'https://github.com/OXOYO/Flying-Bird-Wallpaper-Plugins',
+      isOfficial: true,
+      enabled: true
+    }
+
+    // 确保官方源的isOfficial为true
+    officialSource.isOfficial = true
+
+    // 用户自定义插件源
+    const customSources = settingData.customPluginSources || []
+
+    // 确保自定义源的isOfficial为false
+    const processedCustomSources = customSources.map((source) => ({
+      ...source,
+      isOfficial: false
+    }))
+
+    // 合并官方源和自定义源
+    this.pluginSources = [officialSource, ...processedCustomSources]
   }
 
   // 版本比较函数
@@ -419,7 +422,7 @@ class PluginManager {
           return pluginsList
         }
       } catch (cdnError) {
-        console.error('CDN 获取插件列表失败，尝试使用GitHub API:', cdnError)
+        this.logger?.error('CDN 获取插件列表失败，尝试使用GitHub API:', cdnError)
       }
 
       // 尝试从GitHub API获取插件列表
@@ -459,19 +462,19 @@ class PluginManager {
               appVersion: manifest.appVersion || { min: '1.0.0', max: '*' }
             })
           } catch (error) {
-            console.error(`获取插件 ${pluginName} 信息失败:`, error)
+            this.logger?.error(`获取插件 ${pluginName} 信息失败:`, error)
           }
         }
 
         return plugins
       } catch (apiError) {
-        console.error('GitHub API 失败，使用缓存的插件列表:', apiError)
+        this.logger?.error('GitHub API 失败，使用缓存的插件列表:', apiError)
       }
 
       // 返回缓存的插件列表
       return this.getCachedPluginsList()
     } catch (error) {
-      console.error('获取可用插件列表失败:', error)
+      this.logger?.error('获取可用插件列表失败:', error)
       // 返回缓存的插件列表
       return this.getCachedPluginsList()
     }
@@ -479,47 +482,74 @@ class PluginManager {
 
   // 从CDN获取插件列表
   async getPluginsListFromCdn() {
-    let retries = 0
-    const maxRetries = this.cdnProviders.length
+    const allPlugins = []
 
-    while (retries < maxRetries) {
-      const cdn = this.getCurrentCdn()
-      try {
-        // 尝试从CDN获取插件列表
-        // 假设在仓库根目录有一个plugins.json文件，包含所有插件的信息
-        let pluginsUrl
-        if (cdn.name === 'github') {
-          pluginsUrl = `${cdn.baseUrl}/${this.centralRepo}/main/plugins.json`
-        } else {
-          pluginsUrl = `${cdn.baseUrl}/${this.centralRepo}@main/plugins.json`
-        }
+    // 遍历所有启用的插件源
+    for (const source of this.pluginSources.filter((s) => s.enabled)) {
+      let retries = 0
+      const maxRetries = this.cdnProviders.length
 
-        const pluginsData = await this.fetchUrl(pluginsUrl)
-
-        // 验证版本兼容性
-        const compatiblePlugins = pluginsData.map((plugin) => {
-          const compatible = this.isVersionCompatible(
-            plugin.appVersion || { min: '1.0.0', max: '*' }
-          )
-          return {
-            ...plugin,
-            compatible: compatible
+      while (retries < maxRetries) {
+        const cdn = this.getCurrentCdn()
+        try {
+          // 尝试从CDN获取插件列表
+          // 假设在仓库根目录有一个plugins.json文件，包含所有插件的信息
+          let pluginsUrl
+          if (cdn.name === 'github') {
+            pluginsUrl = `${cdn.baseUrl}/${source.name}/main/plugins.json`
+          } else {
+            pluginsUrl = `${cdn.baseUrl}/${source.name}@main/plugins.json`
           }
-        })
 
-        return compatiblePlugins
-      } catch (error) {
-        console.error(`CDN ${cdn.name} 获取插件列表失败:`, error)
-        this.switchToNextCdn()
-        retries++
+          const pluginsData = await this.fetchUrl(pluginsUrl)
+
+          // 从plugins数组中获取插件名称并逐个获取manifest.json
+          for (const pluginName of pluginsData.plugins) {
+            try {
+              const manifest = await this.getPluginManifest(pluginName, 'main', source.name)
+              // 验证版本兼容性
+              const compatible = this.isVersionCompatible(
+                manifest.appVersion || { min: '1.0.0', max: '*' }
+              )
+              allPlugins.push({
+                name: manifest.name,
+                version: manifest.version,
+                displayName: manifest.displayName,
+                description: manifest.description,
+                author: manifest.author,
+                site: manifest.site,
+                compatible: compatible,
+                appVersion: manifest.appVersion || { min: '1.0.0', max: '*' },
+                source: source.id
+              })
+            } catch (error) {
+              this.logger?.error(`获取插件 ${pluginName} 信息失败:`, error)
+            }
+          }
+
+          // 成功获取当前插件源的插件列表，停止重试
+          break
+        } catch (error) {
+          this.logger?.error(`CDN ${cdn.name} 获取插件列表失败:`, error)
+          this.switchToNextCdn()
+          retries++
+        }
       }
     }
 
-    throw new Error('所有CDN源获取插件列表都失败')
+    if (allPlugins.length === 0) {
+      throw new Error('所有CDN源获取插件列表都失败')
+    }
+
+    return allPlugins
   }
 
   // 获取插件manifest.json
-  async getPluginManifest(pluginName, version = 'main') {
+  async getPluginManifest(
+    pluginName,
+    version = 'main',
+    sourceName = 'OXOYO/Flying-Bird-Wallpaper-Plugins'
+  ) {
     let retries = 0
     const maxRetries = this.cdnProviders.length
 
@@ -528,15 +558,15 @@ class PluginManager {
       try {
         let manifestUrl
         if (cdn.name === 'github') {
-          manifestUrl = `${cdn.baseUrl}/${this.centralRepo}/${version}/plugins/${pluginName}/manifest.json`
+          manifestUrl = `${cdn.baseUrl}/${sourceName}/${version}/plugins/${pluginName}/manifest.json`
         } else {
-          manifestUrl = `${cdn.baseUrl}/${this.centralRepo}@${version}/plugins/${pluginName}/manifest.json`
+          manifestUrl = `${cdn.baseUrl}/${sourceName}@${version}/plugins/${pluginName}/manifest.json`
         }
 
         const manifest = await this.fetchUrl(manifestUrl)
         return manifest
       } catch (error) {
-        console.error(`CDN ${cdn.name} 失败:`, error)
+        this.logger?.error(`CDN ${cdn.name} 失败:`, error)
         this.switchToNextCdn()
         retries++
       }
@@ -546,7 +576,11 @@ class PluginManager {
   }
 
   // 安装插件
-  async installPlugin(pluginName, version = 'main') {
+  async installPlugin(
+    pluginName,
+    version = 'main',
+    sourceName = 'OXOYO/Flying-Bird-Wallpaper-Plugins'
+  ) {
     try {
       const pluginDir = path.join(this.apiPluginsDir, pluginName)
       if (!fs.existsSync(pluginDir)) {
@@ -554,29 +588,34 @@ class PluginManager {
       }
 
       // 下载manifest.json
-      const manifest = await this.getPluginManifest(pluginName, version)
+      const manifest = await this.getPluginManifest(pluginName, version, sourceName)
 
       // 验证版本兼容性
       if (!this.isVersionCompatible(manifest.appVersion || { min: '1.0.0', max: '*' })) {
-        console.error(`插件 ${pluginName} 与当前应用版本 ${this.appVersion} 不兼容`)
+        this.logger?.error(`插件 ${pluginName} 与当前应用版本 ${this.appVersion} 不兼容`)
         return false
       }
 
       fs.writeFileSync(path.join(pluginDir, 'manifest.json'), JSON.stringify(manifest, null, 2))
 
       // 下载main.mjs
-      const mainContent = await this.downloadPluginFile(pluginName, 'main.mjs', version)
+      const mainContent = await this.downloadPluginFile(pluginName, 'main.mjs', version, sourceName)
       fs.writeFileSync(path.join(pluginDir, 'main.mjs'), mainContent)
 
       return true
     } catch (error) {
-      console.error('安装插件失败:', error)
+      this.logger?.error('安装插件失败:', error)
       return false
     }
   }
 
   // 下载插件文件
-  async downloadPluginFile(pluginName, fileName, version = 'main') {
+  async downloadPluginFile(
+    pluginName,
+    fileName,
+    version = 'main',
+    sourceName = 'OXOYO/Flying-Bird-Wallpaper-Plugins'
+  ) {
     let retries = 0
     const maxRetries = this.cdnProviders.length
 
@@ -585,15 +624,15 @@ class PluginManager {
       try {
         let fileUrl
         if (cdn.name === 'github') {
-          fileUrl = `${cdn.baseUrl}/${this.centralRepo}/${version}/plugins/${pluginName}/${fileName}`
+          fileUrl = `${cdn.baseUrl}/${sourceName}/${version}/plugins/${pluginName}/${fileName}`
         } else {
-          fileUrl = `${cdn.baseUrl}/${this.centralRepo}@${version}/plugins/${pluginName}/${fileName}`
+          fileUrl = `${cdn.baseUrl}/${sourceName}@${version}/plugins/${pluginName}/${fileName}`
         }
 
         const content = await this.fetchUrl(fileUrl, false)
         return content
       } catch (error) {
-        console.error(`CDN ${cdn.name} 失败:`, error)
+        this.logger?.error(`CDN ${cdn.name} 失败:`, error)
         this.switchToNextCdn()
         retries++
       }
@@ -612,7 +651,7 @@ class PluginManager {
       }
       return false
     } catch (error) {
-      console.error('卸载插件失败:', error)
+      this.logger?.error('卸载插件失败:', error)
       return false
     }
   }
@@ -625,9 +664,92 @@ class PluginManager {
       // 再安装新版本
       return await this.installPlugin(pluginName)
     } catch (error) {
-      console.error('更新插件失败:', error)
+      this.logger?.error('更新插件失败:', error)
       return false
     }
+  }
+
+  // 插件源管理方法
+
+  // 保存插件源配置到settingData
+  savePluginSources() {
+    const settingData = this.settingManager?.getAll() || {}
+
+    // 分离官方源和自定义源
+    const officialSource = this.pluginSources.find((s) => s.isOfficial)
+    const customSources = this.pluginSources.filter((s) => !s.isOfficial)
+
+    // 更新settingData
+    settingData.officialPluginSource = officialSource
+    settingData.customPluginSources = customSources
+
+    // 保存到settingManager
+    this.settingManager?.setAll(settingData)
+  }
+
+  // 添加插件源
+  addPluginSource(name, repo) {
+    // 检查是否已存在
+    if (this.pluginSources.some((s) => s.name === name)) {
+      return false
+    }
+
+    const newSource = {
+      id: `source_${Date.now()}`,
+      name: name,
+      repo: repo,
+      isOfficial: false,
+      enabled: true
+    }
+
+    this.pluginSources.push(newSource)
+    this.savePluginSources()
+    return true
+  }
+
+  // 删除插件源
+  removePluginSource(sourceId) {
+    const source = this.pluginSources.find((s) => s.id === sourceId)
+    if (!source) {
+      return false
+    }
+
+    // 官方源不可删除
+    if (source.isOfficial) {
+      return false
+    }
+
+    const index = this.pluginSources.findIndex((s) => s.id === sourceId)
+    this.pluginSources.splice(index, 1)
+    this.savePluginSources()
+    return true
+  }
+
+  // 启用插件源
+  enablePluginSource(sourceId) {
+    const source = this.pluginSources.find((s) => s.id === sourceId)
+    if (source) {
+      source.enabled = true
+      this.savePluginSources()
+      return true
+    }
+    return false
+  }
+
+  // 禁用插件源
+  disablePluginSource(sourceId) {
+    const source = this.pluginSources.find((s) => s.id === sourceId)
+    if (source && !source.isOfficial) {
+      source.enabled = false
+      this.savePluginSources()
+      return true
+    }
+    return false
+  }
+
+  // 获取插件源列表
+  getPluginSources() {
+    return this.pluginSources
   }
 
   // 获取已安装插件列表
@@ -653,7 +775,7 @@ class PluginManager {
               api: manifest.api
             })
           } catch (error) {
-            console.error('读取插件配置失败:', error)
+            this.logger?.error('读取插件配置失败:', error)
           }
         }
       })
@@ -672,7 +794,7 @@ class PluginManager {
         return new PluginClass()
       }
     } catch (error) {
-      console.error('加载插件失败:', error)
+      this.logger?.error('加载插件失败:', error)
     }
     return null
   }
@@ -925,75 +1047,76 @@ Flying-Bird-Wallpaper-Plugins/
   </div>
 </template>
 
-<script>
-export default {
-  data() {
-    return {
-      activeTab: 'marketplace',
-      searchQuery: '',
-      availablePlugins: [],
-      installedPlugins: []
-    }
-  },
-  computed: {
-    filteredPlugins() {
-      if (!this.searchQuery) {
-        return this.availablePlugins
-      }
-      return this.availablePlugins.filter((plugin) => {
-        const name = plugin.name.toLowerCase()
-        const displayName = (plugin.displayName || '').toLowerCase()
-        const description = (plugin.description || '').toLowerCase()
-        const query = this.searchQuery.toLowerCase()
-        return name.includes(query) || displayName.includes(query) || description.includes(query)
-      })
-    }
-  },
-  mounted() {
-    this.loadAvailablePlugins()
-    this.loadInstalledPlugins()
-  },
-  methods: {
-    async loadAvailablePlugins() {
-      // 从集中式仓库获取可用插件
-      const result = await window.electron.ipcRenderer.invoke('get-available-plugins')
-      this.availablePlugins = result
-    },
-    async loadInstalledPlugins() {
-      // 加载已安装插件
-      const result = await window.electron.ipcRenderer.invoke('get-installed-plugins')
-      this.installedPlugins = result
-    },
-    async installPlugin(pluginName) {
-      // 安装插件
-      const success = await window.electron.ipcRenderer.invoke('install-plugin', pluginName)
-      if (success) {
-        this.loadInstalledPlugins()
-      }
-    },
-    async uninstallPlugin(pluginName) {
-      // 卸载插件
-      const success = await window.electron.ipcRenderer.invoke('uninstall-plugin', pluginName)
-      if (success) {
-        this.loadInstalledPlugins()
-      }
-    },
-    async updatePlugin(pluginName) {
-      // 更新插件
-      const success = await window.electron.ipcRenderer.invoke('update-plugin', pluginName)
-      if (success) {
-        this.loadInstalledPlugins()
-      }
-    },
-    async configurePlugin(plugin) {
-      // 配置插件
-      await window.electron.ipcRenderer.invoke('configure-plugin', plugin)
-    },
-    filterPlugins() {
-      // 过滤插件（已在computed中实现）
-    }
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+
+const activeTab = ref('marketplace')
+const searchQuery = ref('')
+const availablePlugins = ref([])
+const installedPlugins = ref([])
+
+const filteredPlugins = computed(() => {
+  if (!searchQuery.value) {
+    return availablePlugins.value
+  }
+  return availablePlugins.value.filter((plugin) => {
+    const name = plugin.name.toLowerCase()
+    const displayName = (plugin.displayName || '').toLowerCase()
+    const description = (plugin.description || '').toLowerCase()
+    const query = searchQuery.value.toLowerCase()
+    return name.includes(query) || displayName.includes(query) || description.includes(query)
+  })
+})
+
+async function loadAvailablePlugins() {
+  // 从集中式仓库获取可用插件
+  const result = await window.electron.ipcRenderer.invoke('get-available-plugins')
+  availablePlugins.value = result
+}
+
+async function loadInstalledPlugins() {
+  // 加载已安装插件
+  const result = await window.electron.ipcRenderer.invoke('get-installed-plugins')
+  installedPlugins.value = result
+}
+
+async function installPlugin(pluginName) {
+  // 安装插件
+  const success = await window.electron.ipcRenderer.invoke('install-plugin', pluginName)
+  if (success) {
+    loadInstalledPlugins()
   }
 }
+
+async function uninstallPlugin(pluginName) {
+  // 卸载插件
+  const success = await window.electron.ipcRenderer.invoke('uninstall-plugin', pluginName)
+  if (success) {
+    loadInstalledPlugins()
+  }
+}
+
+async function updatePlugin(pluginName) {
+  // 更新插件
+  const success = await window.electron.ipcRenderer.invoke('update-plugin', pluginName)
+  if (success) {
+    loadInstalledPlugins()
+  }
+}
+
+async function configurePlugin(plugin) {
+  // 配置插件
+  await window.electron.ipcRenderer.invoke('configure-plugin', plugin)
+}
+
+function filterPlugins() {
+  // 过滤插件（已在computed中实现）
+}
+
+onMounted(() => {
+  loadAvailablePlugins()
+  loadInstalledPlugins()
+})
 </script>
 ```
 
