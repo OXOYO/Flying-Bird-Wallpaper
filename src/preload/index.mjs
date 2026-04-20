@@ -253,7 +253,14 @@ const api = {
   resetShortcut: (...args) => ipcRenderer.invoke('main:resetShortcut', ...args),
   checkShortcutConflict: (...args) => ipcRenderer.invoke('main:checkShortcutConflict', ...args),
   disableShortcuts: (...args) => ipcRenderer.invoke('main:disableShortcuts', ...args),
-  enableShortcuts: (...args) => ipcRenderer.invoke('main:enableShortcuts', ...args)
+  enableShortcuts: (...args) => ipcRenderer.invoke('main:enableShortcuts', ...args),
+
+  // 插件管理相关
+  getAvailablePlugins: (...args) => ipcRenderer.invoke('main:getAvailablePlugins', ...args),
+  getInstalledPlugins: (...args) => ipcRenderer.invoke('main:getInstalledPlugins', ...args),
+  installPlugin: (...args) => ipcRenderer.invoke('main:installPlugin', ...args),
+  uninstallPlugin: (...args) => ipcRenderer.invoke('main:uninstallPlugin', ...args),
+  updatePlugin: (...args) => ipcRenderer.invoke('main:updatePlugin', ...args)
 }
 
 if (process.contextIsolated) {

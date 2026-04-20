@@ -80,17 +80,23 @@ export default class ApiManager {
     }
     // 处理API信息，写入数据库
     const remoteResourceMap = {}
+    const plugins = {}
     for (const [resourceName, api] of Object.entries(apiMap)) {
       const apiInfo = api.info()
       remoteResourceMap[resourceName] = apiInfo
+      plugins[resourceName] = {
+        ...apiInfo,
+        type: 'api',
+        installedAt: new Date().toISOString()
+      }
     }
 
     // 写入数据库
-    const res = await this.dbManager.setSysRecord('remoteResourceMap', remoteResourceMap, 'object')
+    const res = await this.dbManager.setSysRecord('plugins', plugins, 'object')
     if (res.success) {
-      this.logger.info('写入 remoteResourceMap 信息成功')
+      this.logger.info('写入 plugins 信息成功')
     } else {
-      this.logger.error(`写入 remoteResourceMap 信息失败: ${res.message}`)
+      this.logger.error(`写入 plugins 信息失败: ${res.message}`)
     }
   }
 
@@ -146,13 +152,22 @@ export default class ApiManager {
       message: '',
       data: []
     }
-    const res = await this.dbManager.getSysRecord('api')
+
+    const res = await this.dbManager.getSysRecord('plugins')
     if (res.success && res.data?.storeData) {
+      const plugins = res.data.storeData
+
+      for (const [pluginName, pluginInfo] of Object.entries(plugins)) {
+        if (pluginInfo && pluginInfo.type === 'api') {
+          ret.data.push(pluginInfo)
+        }
+      }
+
       ret.success = true
-      ret.data = res.data.storeData
     } else {
-      ret.message = res.message
+      ret.message = res.message || '获取API列表失败'
     }
+
     return ret
   }
 

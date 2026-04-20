@@ -32,7 +32,8 @@
       "tabs": {
         "baseSetting": "Basic settings",
         "privacySpace": "Privacy space",
-        "shortcutSetting": "Keyboard shortcuts"
+        "shortcutSetting": "Keyboard shortcuts",
+        "pluginMarketplace": "Plugin Marketplace"
       },
       "divider": {
         "base": "Basic settings",
@@ -185,6 +186,27 @@
           "text": "Text Operations",
           "settings": "Settings Management"
         }
+      },
+      "pluginMarketplace": {
+        "tabs": {
+          "marketplace": "Plugin Marketplace",
+          "installed": "Installed"
+        },
+        "searchPlaceholder": "Search plugins...",
+        "refresh": "Refresh",
+        "name": "Plugin Name",
+        "version": "Version",
+        "author": "Author",
+        "description": "Description",
+        "website": "Website",
+        "install": "Install",
+        "installed": "Installed",
+        "update": "Update",
+        "uninstall": "Uninstall",
+        "details": "Details",
+        "close": "Close",
+        "incompatible": "Incompatible",
+        "appVersion": "App Version"
       }
     },
     "Utils": {

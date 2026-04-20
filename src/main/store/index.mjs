@@ -15,6 +15,7 @@ import SettingManager from './SettingManager.mjs'
 import VersionManager from './VersionManager.mjs'
 import ShortcutManager from './ShortcutManager.mjs'
 import NotificationManager from './NotificationManager.mjs'
+import PluginManager from './PluginManager.mjs'
 import { handleTimeByUnit } from '../utils/utils.mjs'
 
 export default class Store {
@@ -64,6 +65,9 @@ export default class Store {
       this.notificationManager = NotificationManager.getInstance(global.logger, this.settingManager)
       // 等待通知管理器初始化完成
       await this.notificationManager.waitForInitialization()
+
+      // 初始化插件管理器
+      this.pluginManager = PluginManager.getInstance(global.logger, this.dbManager)
 
       // 初始化快捷键管理器
       this.shortcutManager = ShortcutManager.getInstance(global.logger, this.dbManager)
@@ -780,6 +784,27 @@ export default class Store {
     ipcMain.handle('main:enableShortcuts', () => {
       this.shortcutManager.registerAllShortcuts()
       return { success: true }
+    })
+
+    // 插件管理相关IPC处理器
+    ipcMain.handle('main:getAvailablePlugins', () => {
+      return this.pluginManager.getAvailablePlugins()
+    })
+
+    ipcMain.handle('main:getInstalledPlugins', () => {
+      return this.pluginManager.getInstalledPlugins()
+    })
+
+    ipcMain.handle('main:installPlugin', async (event, pluginName, version = 'main') => {
+      return await this.pluginManager.installPlugin(pluginName, version)
+    })
+
+    ipcMain.handle('main:uninstallPlugin', async (event, pluginName) => {
+      return await this.pluginManager.uninstallPlugin(pluginName)
+    })
+
+    ipcMain.handle('main:updatePlugin', async (event, pluginName) => {
+      return await this.pluginManager.updatePlugin(pluginName)
     })
   }
 

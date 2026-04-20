@@ -32,7 +32,8 @@
       "tabs": {
         "baseSetting": "基础设置",
         "privacySpace": "隐私空间",
-        "shortcutSetting": "快捷键设置"
+        "shortcutSetting": "快捷键设置",
+        "pluginMarketplace": "插件市场"
       },
       "divider": {
         "base": "基础设置",
@@ -185,6 +186,27 @@
           "text": "文本操作",
           "settings": "设置管理"
         }
+      },
+      "pluginMarketplace": {
+        "tabs": {
+          "marketplace": "插件市场",
+          "installed": "已安装"
+        },
+        "searchPlaceholder": "搜索插件...",
+        "refresh": "刷新",
+        "name": "插件名称",
+        "version": "版本",
+        "author": "作者",
+        "description": "描述",
+        "website": "官网",
+        "install": "安装",
+        "installed": "已安装",
+        "update": "更新",
+        "uninstall": "卸载",
+        "details": "详情",
+        "close": "关闭",
+        "incompatible": "不兼容",
+        "appVersion": "应用版本"
       }
     },
     "Utils": {
