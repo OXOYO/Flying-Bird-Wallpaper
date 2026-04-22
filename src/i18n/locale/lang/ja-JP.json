@@ -185,6 +185,95 @@
           "text": "テキスト操作",
           "settings": "設定管理"
         }
+      },
+      "pluginMarketplace": {
+        "searchPlaceholder": "プラグインを検索...",
+        "searchInstalledPlaceholder": "インストール済みプラグインを検索...",
+        "refresh": "更新",
+        "name": "プラグイン名",
+        "version": "Version",
+        "author": "作者",
+        "description": "説明",
+        "website": "公式サイト",
+        "install": "インストール",
+        "installed": "インストール済み",
+        "update": "更新",
+        "uninstall": "アンインストール",
+        "details": "詳細",
+        "close": "閉じる",
+        "incompatible": "非互換",
+        "appVersion": "アプリ対応バージョン",
+        "supportSearch": "検索対応",
+        "supportDownload": "ダウンロード対応",
+        "yes": "はい",
+        "no": "いいえ",
+        "tabs": { "marketplace": "プラグインマーケット", "installed": "インストール済み", "sources": "ソース" },
+        "sources": {
+          "addSource": "ソースを追加",
+          "refreshSources": "ソースを更新",
+          "official": "公式",
+          "renameSource": "名前変更",
+          "deleteSource": "削除",
+          "renameTitle": "ソース名を変更",
+          "renamePrompt": "新しいソース名を入力してください"
+        },
+        "sourceForm": {
+          "title": "プラグインソースを追加",
+          "name": "ソース名",
+          "namePlaceholder": "例：official、LOCAL",
+          "type": "タイプ",
+          "local": "ローカルフォルダ",
+          "githubLocation": "GitHub リポジトリ",
+          "localLocation": "ローカルフォルダ",
+          "githubPlaceholder": "例：OXOYO/Flying-Bird-Wallpaper-Plugins",
+          "localPlaceholder": "ローカルのプラグインソースフォルダを選択してください",
+          "cancel": "キャンセル",
+          "confirm": "追加",
+          "validation": {
+            "nameRequired": "ソース名を入力してください",
+            "namePattern": "英字（大文字小文字区別）、数字、-、_ のみ使用できます",
+            "locationRequired": "ソースの場所を入力してください"
+          }
+        },
+        "confirm": {
+          "confirm": "確認",
+          "cancel": "キャンセル",
+          "removeSourceTitle": "ソースを削除",
+          "removeSourceMessage": "ソース {sourceName} を削除してもよろしいですか？",
+          "uninstallTitle": "プラグインをアンインストール",
+          "uninstallMessage": "プラグイン {pluginName} をアンインストールしてもよろしいですか？"
+        },
+        "secretKey": {
+          "config": "キーを設定",
+          "title": "シークレットキーを設定",
+          "prompt": "プラグイン {pluginName} のシークレットキーを設定してください",
+          "placeholder": "シークレットキーを入力してください",
+          "saveSuccess": "シークレットキーを保存しました",
+          "saveFail": "シークレットキーの保存に失敗しました",
+          "missing": "キー未設定",
+          "status": "シークレットキー状態",
+          "configured": "設定済み",
+          "notRequired": "不要"
+        },
+        "feedback": {
+          "getAvailableFail": "利用可能なプラグインの取得に失敗しました",
+          "getInstalledFail": "インストール済みプラグインの取得に失敗しました",
+          "getSourcesFail": "プラグインソースの取得に失敗しました",
+          "getSettingFail": "設定の取得に失敗しました",
+          "installSuccess": "プラグインのインストールに成功しました",
+          "installFail": "プラグインのインストールに失敗しました",
+          "uninstallSuccess": "プラグインのアンインストールに成功しました",
+          "uninstallFail": "プラグインのアンインストールに失敗しました",
+          "updateSuccess": "プラグインの更新に成功しました",
+          "updateFail": "プラグインの更新に失敗しました",
+          "selectLocalFolderFail": "ローカルのプラグインソースフォルダ選択に失敗しました",
+          "addSourceSuccess": "プラグインソースの追加に成功しました",
+          "addSourceFail": "プラグインソースの追加に失敗しました",
+          "updateSourceSuccess": "プラグインソースの更新に成功しました",
+          "updateSourceFail": "プラグインソースの更新に失敗しました",
+          "removeSourceSuccess": "プラグインソースの削除に成功しました",
+          "removeSourceFail": "プラグインソースの削除に失敗しました"
+        }
       }
     },
     "Utils": {

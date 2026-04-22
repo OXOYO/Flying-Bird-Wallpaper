@@ -258,6 +258,10 @@ const api = {
   // 插件管理相关
   getAvailablePlugins: (...args) => ipcRenderer.invoke('main:getAvailablePlugins', ...args),
   getInstalledPlugins: (...args) => ipcRenderer.invoke('main:getInstalledPlugins', ...args),
+  getPluginSources: (...args) => ipcRenderer.invoke('main:getPluginSources', ...args),
+  addPluginSource: (...args) => ipcRenderer.invoke('main:addPluginSource', ...args),
+  updatePluginSource: (...args) => ipcRenderer.invoke('main:updatePluginSource', ...args),
+  removePluginSource: (...args) => ipcRenderer.invoke('main:removePluginSource', ...args),
   installPlugin: (...args) => ipcRenderer.invoke('main:installPlugin', ...args),
   uninstallPlugin: (...args) => ipcRenderer.invoke('main:uninstallPlugin', ...args),
   updatePlugin: (...args) => ipcRenderer.invoke('main:updatePlugin', ...args)

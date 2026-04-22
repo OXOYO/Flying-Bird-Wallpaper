@@ -795,16 +795,32 @@ export default class Store {
       return this.pluginManager.getInstalledPlugins()
     })
 
-    ipcMain.handle('main:installPlugin', async (event, pluginName, version = 'main') => {
-      return await this.pluginManager.installPlugin(pluginName, version)
+    ipcMain.handle('main:getPluginSources', async () => {
+      return await this.pluginManager.getPluginSources()
     })
 
-    ipcMain.handle('main:uninstallPlugin', async (event, pluginName) => {
-      return await this.pluginManager.uninstallPlugin(pluginName)
+    ipcMain.handle('main:addPluginSource', async (event, source) => {
+      return await this.pluginManager.addPluginSource(source)
     })
 
-    ipcMain.handle('main:updatePlugin', async (event, pluginName) => {
-      return await this.pluginManager.updatePlugin(pluginName)
+    ipcMain.handle('main:updatePluginSource', async (event, sourceName, patch) => {
+      return await this.pluginManager.updatePluginSource(sourceName, patch)
+    })
+
+    ipcMain.handle('main:removePluginSource', async (event, sourceName) => {
+      return await this.pluginManager.removePluginSource(sourceName)
+    })
+
+    ipcMain.handle('main:installPlugin', async (event, sourceName, pluginName, version = 'main') => {
+      return await this.pluginManager.installPlugin(sourceName, pluginName, version)
+    })
+
+    ipcMain.handle('main:uninstallPlugin', async (event, sourceName, pluginName) => {
+      return await this.pluginManager.uninstallPlugin(sourceName, pluginName)
+    })
+
+    ipcMain.handle('main:updatePlugin', async (event, sourceName, pluginName) => {
+      return await this.pluginManager.updatePlugin(sourceName, pluginName)
     })
   }
 

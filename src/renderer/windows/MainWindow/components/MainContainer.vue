@@ -4,7 +4,7 @@ import Search from '../pages/Search.vue'
 import Favorites from '../pages/Favorites.vue'
 import History from '../pages/History.vue'
 import Words from '../pages/Words.vue'
-import Setting from '../pages/Setting.vue'
+import Setting from '../pages/Setting/Setting.vue'
 import Utils from '../pages/Utils.vue'
 import About from '../pages/About.vue'
 

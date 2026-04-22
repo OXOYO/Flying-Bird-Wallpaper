@@ -185,6 +185,95 @@
           "text": "Operações de texto",
           "settings": "Gerenciamento de configurações"
         }
+      },
+      "pluginMarketplace": {
+        "searchPlaceholder": "Buscar plugins...",
+        "searchInstalledPlaceholder": "Buscar plugins instalados...",
+        "refresh": "Atualizar",
+        "name": "Nome do plugin",
+        "version": "Versão",
+        "author": "Autor",
+        "description": "Descrição",
+        "website": "Site",
+        "install": "Instalar",
+        "installed": "Instalado",
+        "update": "Atualizar",
+        "uninstall": "Desinstalar",
+        "details": "Detalhes",
+        "close": "Fechar",
+        "incompatible": "Incompatível",
+        "appVersion": "Versão do app",
+        "supportSearch": "Suporta busca",
+        "supportDownload": "Suporta download",
+        "yes": "Sim",
+        "no": "Não",
+        "tabs": { "marketplace": "Loja de plugins", "installed": "Instalados", "sources": "Fontes" },
+        "sources": {
+          "addSource": "Adicionar fonte",
+          "refreshSources": "Atualizar fontes",
+          "official": "Oficial",
+          "renameSource": "Renomear",
+          "deleteSource": "Excluir",
+          "renameTitle": "Renomear fonte",
+          "renamePrompt": "Digite um novo nome de fonte"
+        },
+        "sourceForm": {
+          "title": "Adicionar fonte de plugins",
+          "name": "Nome da fonte",
+          "namePlaceholder": "ex.: official, LOCAL",
+          "type": "Tipo",
+          "local": "Diretório local",
+          "githubLocation": "Repositório GitHub",
+          "localLocation": "Diretório local",
+          "githubPlaceholder": "ex.: OXOYO/Flying-Bird-Wallpaper-Plugins",
+          "localPlaceholder": "Selecione um diretório local de fonte de plugins",
+          "cancel": "Cancelar",
+          "confirm": "Adicionar",
+          "validation": {
+            "nameRequired": "Digite o nome da fonte",
+            "namePattern": "Apenas letras (sensível a maiúsculas), números, - e _ são permitidos",
+            "locationRequired": "Digite o local da fonte"
+          }
+        },
+        "confirm": {
+          "confirm": "Confirmar",
+          "cancel": "Cancelar",
+          "removeSourceTitle": "Excluir fonte",
+          "removeSourceMessage": "Tem certeza de que deseja excluir a fonte {sourceName}?",
+          "uninstallTitle": "Desinstalar plugin",
+          "uninstallMessage": "Tem certeza de que deseja desinstalar o plugin {pluginName}?"
+        },
+        "secretKey": {
+          "config": "Configurar chave",
+          "title": "Configurar chave secreta",
+          "prompt": "Configure a chave secreta para o plugin {pluginName}",
+          "placeholder": "Digite a chave secreta",
+          "saveSuccess": "Chave secreta salva",
+          "saveFail": "Falha ao salvar chave secreta",
+          "missing": "Chave ausente",
+          "status": "Status da chave secreta",
+          "configured": "Configurada",
+          "notRequired": "Não necessária"
+        },
+        "feedback": {
+          "getAvailableFail": "Falha ao obter plugins disponíveis",
+          "getInstalledFail": "Falha ao obter plugins instalados",
+          "getSourcesFail": "Falha ao obter fontes de plugins",
+          "getSettingFail": "Falha ao obter configurações",
+          "installSuccess": "Plugin instalado com sucesso",
+          "installFail": "Falha ao instalar plugin",
+          "uninstallSuccess": "Plugin desinstalado com sucesso",
+          "uninstallFail": "Falha ao desinstalar plugin",
+          "updateSuccess": "Plugin atualizado com sucesso",
+          "updateFail": "Falha ao atualizar plugin",
+          "selectLocalFolderFail": "Falha ao selecionar pasta local de fonte de plugins",
+          "addSourceSuccess": "Fonte de plugins adicionada com sucesso",
+          "addSourceFail": "Falha ao adicionar fonte de plugins",
+          "updateSourceSuccess": "Fonte de plugins atualizada com sucesso",
+          "updateSourceFail": "Falha ao atualizar fonte de plugins",
+          "removeSourceSuccess": "Fonte de plugins removida com sucesso",
+          "removeSourceFail": "Falha ao remover fonte de plugins"
+        }
       }
     },
     "Utils": {

@@ -185,6 +185,95 @@
           "text": "Текстовые операции",
           "settings": "Управление настройками"
         }
+      },
+      "pluginMarketplace": {
+        "searchPlaceholder": "Поиск плагинов...",
+        "searchInstalledPlaceholder": "Поиск установленных плагинов...",
+        "refresh": "Обновить",
+        "name": "Название плагина",
+        "version": "Version",
+        "author": "Автор",
+        "description": "Описание",
+        "website": "Сайт",
+        "install": "Установить",
+        "installed": "Установлен",
+        "update": "Обновить",
+        "uninstall": "Удалить",
+        "details": "Подробности",
+        "close": "Закрыть",
+        "incompatible": "Несовместим",
+        "appVersion": "Версия приложения",
+        "supportSearch": "Поддержка поиска",
+        "supportDownload": "Поддержка загрузки",
+        "yes": "Да",
+        "no": "Нет",
+        "tabs": { "marketplace": "Маркетплейс плагинов", "installed": "Установленные", "sources": "Источники" },
+        "sources": {
+          "addSource": "Добавить источник",
+          "refreshSources": "Обновить источники",
+          "official": "Официальный",
+          "renameSource": "Переименовать",
+          "deleteSource": "Удалить",
+          "renameTitle": "Переименовать источник",
+          "renamePrompt": "Введите новое имя источника"
+        },
+        "sourceForm": {
+          "title": "Добавить источник плагинов",
+          "name": "Имя источника",
+          "namePlaceholder": "например: official, LOCAL",
+          "type": "Тип",
+          "local": "Локальная папка",
+          "githubLocation": "Репозиторий GitHub",
+          "localLocation": "Локальная папка",
+          "githubPlaceholder": "например: OXOYO/Flying-Bird-Wallpaper-Plugins",
+          "localPlaceholder": "Выберите локальную папку источника плагинов",
+          "cancel": "Отмена",
+          "confirm": "Добавить",
+          "validation": {
+            "nameRequired": "Введите имя источника",
+            "namePattern": "Разрешены только буквы (с учетом регистра), цифры, - и _",
+            "locationRequired": "Введите расположение источника"
+          }
+        },
+        "confirm": {
+          "confirm": "Подтвердить",
+          "cancel": "Отмена",
+          "removeSourceTitle": "Удалить источник",
+          "removeSourceMessage": "Удалить источник {sourceName}?",
+          "uninstallTitle": "Удалить плагин",
+          "uninstallMessage": "Удалить плагин {pluginName}?"
+        },
+        "secretKey": {
+          "config": "Настроить ключ",
+          "title": "Настроить секретный ключ",
+          "prompt": "Настройте секретный ключ для плагина {pluginName}",
+          "placeholder": "Введите секретный ключ",
+          "saveSuccess": "Секретный ключ сохранен",
+          "saveFail": "Не удалось сохранить секретный ключ",
+          "missing": "Ключ отсутствует",
+          "status": "Статус секретного ключа",
+          "configured": "Настроен",
+          "notRequired": "Не требуется"
+        },
+        "feedback": {
+          "getAvailableFail": "Не удалось получить доступные плагины",
+          "getInstalledFail": "Не удалось получить установленные плагины",
+          "getSourcesFail": "Не удалось получить источники плагинов",
+          "getSettingFail": "Не удалось получить настройки",
+          "installSuccess": "Плагин успешно установлен",
+          "installFail": "Не удалось установить плагин",
+          "uninstallSuccess": "Плагин успешно удален",
+          "uninstallFail": "Не удалось удалить плагин",
+          "updateSuccess": "Плагин успешно обновлен",
+          "updateFail": "Не удалось обновить плагин",
+          "selectLocalFolderFail": "Не удалось выбрать локальную папку источника плагинов",
+          "addSourceSuccess": "Источник плагинов успешно добавлен",
+          "addSourceFail": "Не удалось добавить источник плагинов",
+          "updateSourceSuccess": "Источник плагинов успешно обновлен",
+          "updateSourceFail": "Не удалось обновить источник плагинов",
+          "removeSourceSuccess": "Источник плагинов успешно удален",
+          "removeSourceFail": "Не удалось удалить источник плагинов"
+        }
       }
     },
     "Utils": {

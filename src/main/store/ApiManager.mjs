@@ -25,13 +25,11 @@ export default class ApiManager {
     // API插件列表
     this.apiMap = {}
 
-    // API目录 - 内置API
-    this.sysApiDir = path.join(process.env.FBW_RESOURCES_PATH, 'api')
-    // API目录 - 用户API
-    this.userApiDir = path.join(process.env.FBW_PLUGINS_PATH, 'api')
-    // 确保用户API目录存在
-    if (!fs.existsSync(this.userApiDir)) {
-      fs.mkdirSync(this.userApiDir, { recursive: true })
+    // API目录 - 外部插件
+    this.runtimePluginsDir = path.join(process.env.FBW_PLUGINS_PATH, 'installed')
+    // 确保运行时插件目录存在
+    if (!fs.existsSync(this.runtimePluginsDir)) {
+      fs.mkdirSync(this.runtimePluginsDir, { recursive: true })
     }
 
     this._initialized = false
@@ -63,17 +61,17 @@ export default class ApiManager {
   async loadApi() {
     const apiMap = {}
 
-    // 加载内置API
-    await this.loadApiFromDir(this.sysApiDir, apiMap)
-
-    // 加载用户API
-    await this.loadApiFromDir(this.userApiDir, apiMap)
+    // 仅加载外部插件API（installed/<source>/<plugin>）
+    await this.loadInstalledApi(this.runtimePluginsDir, apiMap)
 
     this.apiMap = apiMap
 
     const count = Object.keys(apiMap).length
     if (count === 0) {
       this.logger.error(`未加载任何API插件`)
+      // 没有可用插件时，清空运行时映射，避免残留旧数据
+      await this.dbManager.setSysRecord('apiPlugins', {}, 'object')
+      await this.dbManager.setSysRecord('remoteResourceMap', {}, 'object')
       return
     } else {
       this.logger.info(`成功加载 ${count} 个API插件`)
@@ -82,7 +80,7 @@ export default class ApiManager {
     const remoteResourceMap = {}
     const plugins = {}
     for (const [resourceName, api] of Object.entries(apiMap)) {
-      const apiInfo = api.info()
+      const apiInfo = this.buildApiInfo(api)
       remoteResourceMap[resourceName] = apiInfo
       plugins[resourceName] = {
         ...apiInfo,
@@ -92,11 +90,27 @@ export default class ApiManager {
     }
 
     // 写入数据库
-    const res = await this.dbManager.setSysRecord('plugins', plugins, 'object')
+    const res = await this.dbManager.setSysRecord('apiPlugins', plugins, 'object')
     if (res.success) {
-      this.logger.info('写入 plugins 信息成功')
+      this.logger.info('写入 apiPlugins 信息成功')
     } else {
-      this.logger.error(`写入 plugins 信息失败: ${res.message}`)
+      this.logger.error(`写入 apiPlugins 信息失败: ${res.message}`)
+    }
+    await this.dbManager.setSysRecord('remoteResourceMap', remoteResourceMap, 'object')
+  }
+
+  buildApiInfo(api) {
+    const manifest = api.manifest || {}
+    const resourceName = api.resourceName
+    return {
+      label: manifest.displayName || manifest.name || resourceName,
+      value: resourceName,
+      name: manifest.name || resourceName,
+      displayName: manifest.displayName || manifest.name || resourceName,
+      description: manifest.description || '',
+      author: manifest.author || '',
+      site: manifest.site || '',
+      requireSecretKey: manifest.requireSecretKey || false
     }
   }
 
@@ -145,6 +159,40 @@ export default class ApiManager {
     )
   }
 
+  async loadInstalledApi(installedDir, plugins) {
+    if (!fs.existsSync(installedDir)) return
+    const sourceDirs = fs.readdirSync(installedDir, { withFileTypes: true }).filter((d) => d.isDirectory())
+    for (const sourceDir of sourceDirs) {
+      const sourceName = sourceDir.name
+      const sourcePath = path.join(installedDir, sourceName)
+      const pluginDirs = fs.readdirSync(sourcePath, { withFileTypes: true }).filter((d) => d.isDirectory())
+      for (const pluginDir of pluginDirs) {
+        const pluginPath = path.join(sourcePath, pluginDir.name)
+        const manifestPath = path.join(pluginPath, 'manifest.json')
+        const mainPath = path.join(pluginPath, 'main.mjs')
+        if (!fs.existsSync(manifestPath) || !fs.existsSync(mainPath)) continue
+        try {
+          const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'))
+          const module = await import(/* @vite-ignore */ `file://${mainPath}`)
+          const PluginClass = module.default
+          if (PluginClass && PluginClass.prototype instanceof ApiBase) {
+            const pluginInstance = new PluginClass()
+            const resourceName = `${sourceName}:${manifest.name || pluginDir.name}`
+            pluginInstance.resourceName = resourceName
+            pluginInstance.manifest = manifest
+            if (plugins[resourceName]) {
+              this.logger.warn(`发现重复的API插件: ${resourceName}，将使用新加载的版本`)
+            }
+            plugins[resourceName] = pluginInstance
+            this.logger.info(`成功加载API插件: ${resourceName}`)
+          }
+        } catch (err) {
+          this.logger.error(`加载插件 ${sourceName}/${pluginDir.name} 失败: ${err}`)
+        }
+      }
+    }
+  }
+
   // 获取API列表
   async getApiList() {
     let ret = {
@@ -153,7 +201,7 @@ export default class ApiManager {
       data: []
     }
 
-    const res = await this.dbManager.getSysRecord('plugins')
+    const res = await this.dbManager.getSysRecord('apiPlugins')
     if (res.success && res.data?.storeData) {
       const plugins = res.data.storeData
 

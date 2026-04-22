@@ -188,11 +188,8 @@
         }
       },
       "pluginMarketplace": {
-        "tabs": {
-          "marketplace": "插件市场",
-          "installed": "已安装"
-        },
         "searchPlaceholder": "搜索插件...",
+        "searchInstalledPlaceholder": "搜索已安装插件...",
         "refresh": "刷新",
         "name": "插件名称",
         "version": "版本",
@@ -206,7 +203,82 @@
         "details": "详情",
         "close": "关闭",
         "incompatible": "不兼容",
-        "appVersion": "应用版本"
+        "appVersion": "应用版本",
+        "supportSearch": "支持搜索",
+        "supportDownload": "支持下载",
+        "yes": "是",
+        "no": "否",
+        "tabs": {
+          "marketplace": "插件市场",
+          "installed": "已安装",
+          "sources": "插件源"
+        },
+        "sources": {
+          "addSource": "添加插件源",
+          "refreshSources": "刷新插件源",
+          "official": "官方",
+          "renameSource": "修改源名",
+          "deleteSource": "删除源",
+          "renameTitle": "修改插件源名称",
+          "renamePrompt": "请输入新的插件源名称"
+        },
+        "sourceForm": {
+          "title": "添加插件源",
+          "name": "源名",
+          "namePlaceholder": "例如：official、LOCAL",
+          "type": "类型",
+          "local": "本地目录",
+          "githubLocation": "GitHub 仓库",
+          "localLocation": "本地目录",
+          "githubPlaceholder": "例如：OXOYO/Flying-Bird-Wallpaper-Plugins",
+          "localPlaceholder": "请选择本地插件源目录",
+          "cancel": "取消",
+          "confirm": "确认添加",
+          "validation": {
+            "nameRequired": "请输入源名",
+            "namePattern": "仅支持字母（大小写）、数字、-、_",
+            "locationRequired": "请输入源地址"
+          }
+        },
+        "confirm": {
+          "confirm": "确认",
+          "cancel": "取消",
+          "removeSourceTitle": "删除插件源",
+          "removeSourceMessage": "确认删除插件源 {sourceName} 吗？",
+          "uninstallTitle": "卸载插件",
+          "uninstallMessage": "确认卸载插件 {pluginName} 吗？"
+        },
+        "secretKey": {
+          "config": "配置密钥",
+          "title": "配置资源密钥",
+          "prompt": "请配置插件 {pluginName} 的资源密钥",
+          "placeholder": "请输入密钥",
+          "saveSuccess": "密钥保存成功",
+          "saveFail": "密钥保存失败",
+          "missing": "缺少密钥",
+          "status": "密钥状态",
+          "configured": "已配置",
+          "notRequired": "无需密钥"
+        },
+        "feedback": {
+          "getAvailableFail": "获取可用插件列表失败",
+          "getInstalledFail": "获取已安装插件列表失败",
+          "getSourcesFail": "获取插件源失败",
+          "getSettingFail": "获取配置失败",
+          "installSuccess": "插件安装成功",
+          "installFail": "插件安装失败",
+          "uninstallSuccess": "插件卸载成功",
+          "uninstallFail": "插件卸载失败",
+          "updateSuccess": "插件更新成功",
+          "updateFail": "插件更新失败",
+          "selectLocalFolderFail": "选择本地插件源目录失败",
+          "addSourceSuccess": "添加插件源成功",
+          "addSourceFail": "添加插件源失败",
+          "updateSourceSuccess": "更新插件源成功",
+          "updateSourceFail": "更新插件源失败",
+          "removeSourceSuccess": "删除插件源成功",
+          "removeSourceFail": "删除插件源失败"
+        }
       }
     },
     "Utils": {

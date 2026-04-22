@@ -185,6 +185,95 @@
           "text": "텍스트 작업",
           "settings": "설정 관리"
         }
+      },
+      "pluginMarketplace": {
+        "searchPlaceholder": "플러그인 검색...",
+        "searchInstalledPlaceholder": "설치된 플러그인 검색...",
+        "refresh": "새로고침",
+        "name": "플러그인 이름",
+        "version": "버전",
+        "author": "작성자",
+        "description": "설명",
+        "website": "웹사이트",
+        "install": "설치",
+        "installed": "설치됨",
+        "update": "업데이트",
+        "uninstall": "제거",
+        "details": "상세",
+        "close": "닫기",
+        "incompatible": "호환되지 않음",
+        "appVersion": "앱 버전",
+        "supportSearch": "검색 지원",
+        "supportDownload": "다운로드 지원",
+        "yes": "예",
+        "no": "아니요",
+        "tabs": { "marketplace": "플러그인 마켓", "installed": "설치됨", "sources": "소스" },
+        "sources": {
+          "addSource": "소스 추가",
+          "refreshSources": "소스 새로고침",
+          "official": "공식",
+          "renameSource": "이름 변경",
+          "deleteSource": "삭제",
+          "renameTitle": "소스 이름 변경",
+          "renamePrompt": "새 소스 이름을 입력하세요"
+        },
+        "sourceForm": {
+          "title": "플러그인 소스 추가",
+          "name": "소스 이름",
+          "namePlaceholder": "예: official, LOCAL",
+          "type": "유형",
+          "local": "로컬 디렉터리",
+          "githubLocation": "GitHub 저장소",
+          "localLocation": "로컬 디렉터리",
+          "githubPlaceholder": "예: OXOYO/Flying-Bird-Wallpaper-Plugins",
+          "localPlaceholder": "로컬 플러그인 소스 디렉터리를 선택하세요",
+          "cancel": "취소",
+          "confirm": "추가",
+          "validation": {
+            "nameRequired": "소스 이름을 입력하세요",
+            "namePattern": "영문자(대소문자 구분), 숫자, -, _ 만 허용됩니다",
+            "locationRequired": "소스 위치를 입력하세요"
+          }
+        },
+        "confirm": {
+          "confirm": "확인",
+          "cancel": "취소",
+          "removeSourceTitle": "소스 삭제",
+          "removeSourceMessage": "소스 {sourceName} 를 삭제하시겠습니까?",
+          "uninstallTitle": "플러그인 제거",
+          "uninstallMessage": "플러그인 {pluginName} 를 제거하시겠습니까?"
+        },
+        "secretKey": {
+          "config": "키 설정",
+          "title": "비밀 키 설정",
+          "prompt": "플러그인 {pluginName} 의 비밀 키를 설정하세요",
+          "placeholder": "비밀 키를 입력하세요",
+          "saveSuccess": "비밀 키 저장 성공",
+          "saveFail": "비밀 키 저장 실패",
+          "missing": "키 누락",
+          "status": "비밀 키 상태",
+          "configured": "설정됨",
+          "notRequired": "불필요"
+        },
+        "feedback": {
+          "getAvailableFail": "사용 가능한 플러그인을 가져오지 못했습니다",
+          "getInstalledFail": "설치된 플러그인을 가져오지 못했습니다",
+          "getSourcesFail": "플러그인 소스를 가져오지 못했습니다",
+          "getSettingFail": "설정을 가져오지 못했습니다",
+          "installSuccess": "플러그인 설치 성공",
+          "installFail": "플러그인 설치 실패",
+          "uninstallSuccess": "플러그인 제거 성공",
+          "uninstallFail": "플러그인 제거 실패",
+          "updateSuccess": "플러그인 업데이트 성공",
+          "updateFail": "플러그인 업데이트 실패",
+          "selectLocalFolderFail": "로컬 플러그인 소스 폴더 선택 실패",
+          "addSourceSuccess": "플러그인 소스 추가 성공",
+          "addSourceFail": "플러그인 소스 추가 실패",
+          "updateSourceSuccess": "플러그인 소스 업데이트 성공",
+          "updateSourceFail": "플러그인 소스 업데이트 실패",
+          "removeSourceSuccess": "플러그인 소스 제거 성공",
+          "removeSourceFail": "플러그인 소스 제거 실패"
+        }
       }
     },
     "Utils": {

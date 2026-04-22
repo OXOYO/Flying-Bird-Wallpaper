@@ -185,6 +185,99 @@
           "text": "文字操作",
           "settings": "設定管理"
         }
+      },
+      "pluginMarketplace": {
+        "searchPlaceholder": "搜尋插件...",
+        "searchInstalledPlaceholder": "搜尋已安裝插件...",
+        "refresh": "刷新",
+        "name": "插件名稱",
+        "version": "版本",
+        "author": "作者",
+        "description": "描述",
+        "website": "官網",
+        "install": "安裝",
+        "installed": "已安裝",
+        "update": "更新",
+        "uninstall": "卸載",
+        "details": "詳情",
+        "close": "關閉",
+        "incompatible": "不相容",
+        "appVersion": "應用版本",
+        "supportSearch": "支援搜尋",
+        "supportDownload": "支援下載",
+        "yes": "是",
+        "no": "否",
+        "tabs": {
+          "marketplace": "插件市場",
+          "installed": "已安裝",
+          "sources": "插件源"
+        },
+        "sources": {
+          "addSource": "新增插件源",
+          "refreshSources": "刷新插件源",
+          "official": "官方",
+          "renameSource": "修改源名",
+          "deleteSource": "刪除源",
+          "renameTitle": "修改插件源名稱",
+          "renamePrompt": "請輸入新的插件源名稱"
+        },
+        "sourceForm": {
+          "title": "新增插件源",
+          "name": "源名",
+          "namePlaceholder": "例如：official、LOCAL",
+          "type": "類型",
+          "local": "本地目錄",
+          "githubLocation": "GitHub 倉庫",
+          "localLocation": "本地目錄",
+          "githubPlaceholder": "例如：OXOYO/Flying-Bird-Wallpaper-Plugins",
+          "localPlaceholder": "請選擇本地插件源目錄",
+          "cancel": "取消",
+          "confirm": "確認新增",
+          "validation": {
+            "nameRequired": "請輸入源名",
+            "namePattern": "僅支援字母（大小寫）、數字、-、_",
+            "locationRequired": "請輸入源地址"
+          }
+        },
+        "confirm": {
+          "confirm": "確認",
+          "cancel": "取消",
+          "removeSourceTitle": "刪除插件源",
+          "removeSourceMessage": "確認刪除插件源 {sourceName} 嗎？",
+          "uninstallTitle": "卸載插件",
+          "uninstallMessage": "確認卸載插件 {pluginName} 嗎？"
+        },
+        "secretKey": {
+          "config": "配置密鑰",
+          "title": "配置資源密鑰",
+          "prompt": "請配置插件 {pluginName} 的資源密鑰",
+          "placeholder": "請輸入密鑰",
+          "saveSuccess": "密鑰儲存成功",
+          "saveFail": "密鑰儲存失敗",
+          "missing": "缺少密鑰",
+          "status": "密鑰狀態",
+          "configured": "已配置",
+          "notRequired": "無需密鑰"
+        },
+        "feedback": {
+          "getAvailableFail": "獲取可用插件列表失敗",
+          "getInstalledFail": "獲取已安裝插件列表失敗",
+          "getSourcesFail": "獲取插件源失敗",
+          "getSettingFail": "獲取配置失敗",
+          "installSuccess": "插件安裝成功",
+          "installFail": "插件安裝失敗",
+          "uninstallSuccess": "插件卸載成功",
+          "uninstallFail": "插件卸載失敗",
+          "updateSuccess": "插件更新成功",
+          "updateFail": "插件更新失敗",
+          "selectLocalFolderFail": "選擇本地插件源目錄失敗",
+          "addSourceSuccess": "新增插件源成功",
+          "addSourceFail": "新增插件源失敗",
+          "updateSourceSuccess": "更新插件源成功",
+          "updateSourceFail": "更新插件源失敗",
+          "removeSourceSuccess": "刪除插件源成功",
+          "removeSourceFail": "刪除插件源失敗"
+        }
       }
     },
     "Utils": {

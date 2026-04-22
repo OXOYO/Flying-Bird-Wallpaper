@@ -185,6 +185,95 @@
           "text": "Textoperationen",
           "settings": "Einstellungsverwaltung"
         }
+      },
+      "pluginMarketplace": {
+        "searchPlaceholder": "Plugins suchen...",
+        "searchInstalledPlaceholder": "Installierte Plugins suchen...",
+        "refresh": "Aktualisieren",
+        "name": "Plugin-Name",
+        "version": "Version",
+        "author": "Autor",
+        "description": "Beschreibung",
+        "website": "Webseite",
+        "install": "Installieren",
+        "installed": "Installiert",
+        "update": "Aktualisieren",
+        "uninstall": "Deinstallieren",
+        "details": "Einzelheiten",
+        "close": "Schließen",
+        "incompatible": "Inkompatibel",
+        "appVersion": "App-Version",
+        "supportSearch": "Suche unterstützt",
+        "supportDownload": "Download unterstützt",
+        "yes": "Ja",
+        "no": "Nein",
+        "tabs": { "marketplace": "Plugin-Marktplatz", "installed": "Installiert", "sources": "Quellen" },
+        "sources": {
+          "addSource": "Quelle hinzufügen",
+          "refreshSources": "Quellen aktualisieren",
+          "official": "Offiziell",
+          "renameSource": "Umbenennen",
+          "deleteSource": "Löschen",
+          "renameTitle": "Quelle umbenennen",
+          "renamePrompt": "Bitte geben Sie einen neuen Quellnamen ein"
+        },
+        "sourceForm": {
+          "title": "Plugin-Quelle hinzufügen",
+          "name": "Quellname",
+          "namePlaceholder": "z. B. official, LOCAL",
+          "type": "Typ",
+          "local": "Lokales Verzeichnis",
+          "githubLocation": "GitHub-Repository",
+          "localLocation": "Lokales Verzeichnis",
+          "githubPlaceholder": "z. B. OXOYO/Flying-Bird-Wallpaper-Plugins",
+          "localPlaceholder": "Bitte lokales Plugin-Quellverzeichnis auswählen",
+          "cancel": "Abbrechen",
+          "confirm": "Hinzufügen",
+          "validation": {
+            "nameRequired": "Bitte Quellnamen eingeben",
+            "namePattern": "Nur Buchstaben (Groß/Kleinschreibung), Zahlen, - und _ sind erlaubt",
+            "locationRequired": "Bitte Quellpfad eingeben"
+          }
+        },
+        "confirm": {
+          "confirm": "Bestätigen",
+          "cancel": "Abbrechen",
+          "removeSourceTitle": "Quelle löschen",
+          "removeSourceMessage": "Quelle {sourceName} wirklich löschen?",
+          "uninstallTitle": "Plugin deinstallieren",
+          "uninstallMessage": "Plugin {pluginName} wirklich deinstallieren?"
+        },
+        "secretKey": {
+          "config": "Schlüssel konfigurieren",
+          "title": "Geheimschlüssel konfigurieren",
+          "prompt": "Bitte Geheimschlüssel für Plugin {pluginName} konfigurieren",
+          "placeholder": "Geheimschlüssel eingeben",
+          "saveSuccess": "Geheimschlüssel gespeichert",
+          "saveFail": "Geheimschlüssel konnte nicht gespeichert werden",
+          "missing": "Schlüssel fehlt",
+          "status": "Geheimschlüssel-Status",
+          "configured": "Konfiguriert",
+          "notRequired": "Nicht erforderlich"
+        },
+        "feedback": {
+          "getAvailableFail": "Verfügbare Plugins konnten nicht geladen werden",
+          "getInstalledFail": "Installierte Plugins konnten nicht geladen werden",
+          "getSourcesFail": "Plugin-Quellen konnten nicht geladen werden",
+          "getSettingFail": "Einstellungen konnten nicht geladen werden",
+          "installSuccess": "Plugin erfolgreich installiert",
+          "installFail": "Plugin konnte nicht installiert werden",
+          "uninstallSuccess": "Plugin erfolgreich deinstalliert",
+          "uninstallFail": "Plugin konnte nicht deinstalliert werden",
+          "updateSuccess": "Plugin erfolgreich aktualisiert",
+          "updateFail": "Plugin konnte nicht aktualisiert werden",
+          "selectLocalFolderFail": "Lokales Plugin-Quellverzeichnis konnte nicht ausgewählt werden",
+          "addSourceSuccess": "Plugin-Quelle erfolgreich hinzugefügt",
+          "addSourceFail": "Plugin-Quelle konnte nicht hinzugefügt werden",
+          "updateSourceSuccess": "Plugin-Quelle erfolgreich aktualisiert",
+          "updateSourceFail": "Plugin-Quelle konnte nicht aktualisiert werden",
+          "removeSourceSuccess": "Plugin-Quelle erfolgreich entfernt",
+          "removeSourceFail": "Plugin-Quelle konnte nicht entfernt werden"
+        }
       }
     },
     "Utils": {

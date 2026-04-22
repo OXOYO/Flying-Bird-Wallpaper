@@ -188,11 +188,8 @@
         }
       },
       "pluginMarketplace": {
-        "tabs": {
-          "marketplace": "Plugin Marketplace",
-          "installed": "Installed"
-        },
         "searchPlaceholder": "Search plugins...",
+        "searchInstalledPlaceholder": "Search installed plugins...",
         "refresh": "Refresh",
         "name": "Plugin Name",
         "version": "Version",
@@ -206,7 +203,82 @@
         "details": "Details",
         "close": "Close",
         "incompatible": "Incompatible",
-        "appVersion": "App Version"
+        "appVersion": "App Version",
+        "supportSearch": "Supports Search",
+        "supportDownload": "Supports Download",
+        "yes": "Yes",
+        "no": "No",
+        "tabs": {
+          "marketplace": "Plugin Marketplace",
+          "installed": "Installed",
+          "sources": "Sources"
+        },
+        "sources": {
+          "addSource": "Add Source",
+          "refreshSources": "Refresh Sources",
+          "official": "Official",
+          "renameSource": "Rename",
+          "deleteSource": "Delete",
+          "renameTitle": "Rename Source",
+          "renamePrompt": "Please enter a new source name"
+        },
+        "sourceForm": {
+          "title": "Add Plugin Source",
+          "name": "Source Name",
+          "namePlaceholder": "e.g. official, LOCAL",
+          "type": "Type",
+          "local": "Local Directory",
+          "githubLocation": "GitHub Repository",
+          "localLocation": "Local Directory",
+          "githubPlaceholder": "e.g. OXOYO/Flying-Bird-Wallpaper-Plugins",
+          "localPlaceholder": "Please select a local plugin source directory",
+          "cancel": "Cancel",
+          "confirm": "Add",
+          "validation": {
+            "nameRequired": "Please enter source name",
+            "namePattern": "Only letters (case-sensitive), numbers, -, _ are allowed",
+            "locationRequired": "Please enter source location"
+          }
+        },
+        "confirm": {
+          "confirm": "Confirm",
+          "cancel": "Cancel",
+          "removeSourceTitle": "Delete Source",
+          "removeSourceMessage": "Are you sure to delete source {sourceName}?",
+          "uninstallTitle": "Uninstall Plugin",
+          "uninstallMessage": "Are you sure to uninstall plugin {pluginName}?"
+        },
+        "secretKey": {
+          "config": "Configure Key",
+          "title": "Configure Secret Key",
+          "prompt": "Please configure secret key for plugin {pluginName}",
+          "placeholder": "Please input secret key",
+          "saveSuccess": "Secret key saved",
+          "saveFail": "Failed to save secret key",
+          "missing": "Missing Key",
+          "status": "Secret Key Status",
+          "configured": "Configured",
+          "notRequired": "Not Required"
+        },
+        "feedback": {
+          "getAvailableFail": "Failed to get available plugins",
+          "getInstalledFail": "Failed to get installed plugins",
+          "getSourcesFail": "Failed to get plugin sources",
+          "getSettingFail": "Failed to get settings",
+          "installSuccess": "Plugin installed successfully",
+          "installFail": "Failed to install plugin",
+          "uninstallSuccess": "Plugin uninstalled successfully",
+          "uninstallFail": "Failed to uninstall plugin",
+          "updateSuccess": "Plugin updated successfully",
+          "updateFail": "Failed to update plugin",
+          "selectLocalFolderFail": "Failed to select local plugin source folder",
+          "addSourceSuccess": "Plugin source added successfully",
+          "addSourceFail": "Failed to add plugin source",
+          "updateSourceSuccess": "Plugin source updated successfully",
+          "updateSourceFail": "Failed to update plugin source",
+          "removeSourceSuccess": "Plugin source removed successfully",
+          "removeSourceFail": "Failed to remove plugin source"
+        }
       }
     },
     "Utils": {

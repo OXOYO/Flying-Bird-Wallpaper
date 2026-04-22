@@ -185,6 +185,95 @@
           "text": "Operaciones de texto",
           "settings": "Gestión de configuración"
         }
+      },
+      "pluginMarketplace": {
+        "searchPlaceholder": "Buscar plugins...",
+        "searchInstalledPlaceholder": "Buscar plugins instalados...",
+        "refresh": "Actualizar",
+        "name": "Nombre del plugin",
+        "version": "Versión",
+        "author": "Autor",
+        "description": "Descripción",
+        "website": "Sitio web",
+        "install": "Instalar",
+        "installed": "Instalado",
+        "update": "Actualizar",
+        "uninstall": "Desinstalar",
+        "details": "Detalles",
+        "close": "Cerrar",
+        "incompatible": "No compatible",
+        "appVersion": "Versión de la app",
+        "supportSearch": "Admite búsqueda",
+        "supportDownload": "Admite descarga",
+        "yes": "Sí",
+        "no": "No",
+        "tabs": { "marketplace": "Mercado de plugins", "installed": "Instalados", "sources": "Fuentes" },
+        "sources": {
+          "addSource": "Agregar fuente",
+          "refreshSources": "Actualizar fuentes",
+          "official": "Oficial",
+          "renameSource": "Renombrar",
+          "deleteSource": "Eliminar",
+          "renameTitle": "Renombrar fuente",
+          "renamePrompt": "Ingrese un nuevo nombre de fuente"
+        },
+        "sourceForm": {
+          "title": "Agregar fuente de plugins",
+          "name": "Nombre de la fuente",
+          "namePlaceholder": "p. ej. official, LOCAL",
+          "type": "Tipo",
+          "local": "Directorio local",
+          "githubLocation": "Repositorio de GitHub",
+          "localLocation": "Directorio local",
+          "githubPlaceholder": "p. ej. OXOYO/Flying-Bird-Wallpaper-Plugins",
+          "localPlaceholder": "Seleccione un directorio local de fuente de plugins",
+          "cancel": "Cancelar",
+          "confirm": "Agregar",
+          "validation": {
+            "nameRequired": "Ingrese el nombre de la fuente",
+            "namePattern": "Solo se permiten letras (distingue mayúsculas), números, - y _",
+            "locationRequired": "Ingrese la ubicación de la fuente"
+          }
+        },
+        "confirm": {
+          "confirm": "Confirmar",
+          "cancel": "Cancelar",
+          "removeSourceTitle": "Eliminar fuente",
+          "removeSourceMessage": "¿Seguro que desea eliminar la fuente {sourceName}?",
+          "uninstallTitle": "Desinstalar plugin",
+          "uninstallMessage": "¿Seguro que desea desinstalar el plugin {pluginName}?"
+        },
+        "secretKey": {
+          "config": "Configurar clave",
+          "title": "Configurar clave secreta",
+          "prompt": "Configure la clave secreta para el plugin {pluginName}",
+          "placeholder": "Ingrese la clave secreta",
+          "saveSuccess": "Clave secreta guardada",
+          "saveFail": "No se pudo guardar la clave secreta",
+          "missing": "Falta la clave",
+          "status": "Estado de la clave secreta",
+          "configured": "Configurada",
+          "notRequired": "No requerida"
+        },
+        "feedback": {
+          "getAvailableFail": "No se pudieron obtener los plugins disponibles",
+          "getInstalledFail": "No se pudieron obtener los plugins instalados",
+          "getSourcesFail": "No se pudieron obtener las fuentes de plugins",
+          "getSettingFail": "No se pudieron obtener los ajustes",
+          "installSuccess": "Plugin instalado correctamente",
+          "installFail": "No se pudo instalar el plugin",
+          "uninstallSuccess": "Plugin desinstalado correctamente",
+          "uninstallFail": "No se pudo desinstalar el plugin",
+          "updateSuccess": "Plugin actualizado correctamente",
+          "updateFail": "No se pudo actualizar el plugin",
+          "selectLocalFolderFail": "No se pudo seleccionar la carpeta local de fuente de plugins",
+          "addSourceSuccess": "Fuente de plugins agregada correctamente",
+          "addSourceFail": "No se pudo agregar la fuente de plugins",
+          "updateSourceSuccess": "Fuente de plugins actualizada correctamente",
+          "updateSourceFail": "No se pudo actualizar la fuente de plugins",
+          "removeSourceSuccess": "Fuente de plugins eliminada correctamente",
+          "removeSourceFail": "No se pudo eliminar la fuente de plugins"
+        }
       }
     },
     "Utils": {

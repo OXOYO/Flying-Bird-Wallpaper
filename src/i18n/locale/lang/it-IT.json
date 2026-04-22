@@ -185,6 +185,95 @@
           "text": "Operazioni testo",
           "settings": "Gestione impostazioni"
         }
+      },
+      "pluginMarketplace": {
+        "searchPlaceholder": "Cerca plugin...",
+        "searchInstalledPlaceholder": "Cerca plugin installati...",
+        "refresh": "Aggiorna",
+        "name": "Nome plugin",
+        "version": "Version",
+        "author": "Autore",
+        "description": "Descrizione",
+        "website": "Sito web",
+        "install": "Installa",
+        "installed": "Installato",
+        "update": "Aggiorna",
+        "uninstall": "Disinstalla",
+        "details": "Dettagli",
+        "close": "Chiudi",
+        "incompatible": "Incompatibile",
+        "appVersion": "Versione app",
+        "supportSearch": "Supporta ricerca",
+        "supportDownload": "Supporta download",
+        "yes": "Sì",
+        "no": "No",
+        "tabs": { "marketplace": "Marketplace plugin", "installed": "Installati", "sources": "Sorgenti" },
+        "sources": {
+          "addSource": "Aggiungi sorgente",
+          "refreshSources": "Aggiorna sorgenti",
+          "official": "Ufficiale",
+          "renameSource": "Rinomina",
+          "deleteSource": "Elimina",
+          "renameTitle": "Rinomina sorgente",
+          "renamePrompt": "Inserisci un nuovo nome sorgente"
+        },
+        "sourceForm": {
+          "title": "Aggiungi sorgente plugin",
+          "name": "Nome sorgente",
+          "namePlaceholder": "es. official, LOCAL",
+          "type": "Tipo",
+          "local": "Directory locale",
+          "githubLocation": "Repository GitHub",
+          "localLocation": "Directory locale",
+          "githubPlaceholder": "es. OXOYO/Flying-Bird-Wallpaper-Plugins",
+          "localPlaceholder": "Seleziona una directory locale sorgente plugin",
+          "cancel": "Annulla",
+          "confirm": "Aggiungi",
+          "validation": {
+            "nameRequired": "Inserisci il nome sorgente",
+            "namePattern": "Sono consentiti solo lettere (case-sensitive), numeri, - e _",
+            "locationRequired": "Inserisci la posizione della sorgente"
+          }
+        },
+        "confirm": {
+          "confirm": "Conferma",
+          "cancel": "Annulla",
+          "removeSourceTitle": "Elimina sorgente",
+          "removeSourceMessage": "Sei sicuro di eliminare la sorgente {sourceName}?",
+          "uninstallTitle": "Disinstalla plugin",
+          "uninstallMessage": "Sei sicuro di disinstallare il plugin {pluginName}?"
+        },
+        "secretKey": {
+          "config": "Configura chiave",
+          "title": "Configura chiave segreta",
+          "prompt": "Configura la chiave segreta per il plugin {pluginName}",
+          "placeholder": "Inserisci chiave segreta",
+          "saveSuccess": "Chiave segreta salvata",
+          "saveFail": "Impossibile salvare la chiave segreta",
+          "missing": "Chiave mancante",
+          "status": "Stato chiave segreta",
+          "configured": "Configurata",
+          "notRequired": "Non richiesta"
+        },
+        "feedback": {
+          "getAvailableFail": "Impossibile ottenere i plugin disponibili",
+          "getInstalledFail": "Impossibile ottenere i plugin installati",
+          "getSourcesFail": "Impossibile ottenere le sorgenti plugin",
+          "getSettingFail": "Impossibile ottenere le impostazioni",
+          "installSuccess": "Plugin installato con successo",
+          "installFail": "Impossibile installare il plugin",
+          "uninstallSuccess": "Plugin disinstallato con successo",
+          "uninstallFail": "Impossibile disinstallare il plugin",
+          "updateSuccess": "Plugin aggiornato con successo",
+          "updateFail": "Impossibile aggiornare il plugin",
+          "selectLocalFolderFail": "Impossibile selezionare la cartella sorgente plugin locale",
+          "addSourceSuccess": "Sorgente plugin aggiunta con successo",
+          "addSourceFail": "Impossibile aggiungere la sorgente plugin",
+          "updateSourceSuccess": "Sorgente plugin aggiornata con successo",
+          "updateSourceFail": "Impossibile aggiornare la sorgente plugin",
+          "removeSourceSuccess": "Sorgente plugin rimossa con successo",
+          "removeSourceFail": "Impossibile rimuovere la sorgente plugin"
+        }
       }
     },
     "Utils": {

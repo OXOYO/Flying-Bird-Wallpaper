@@ -185,6 +185,95 @@
           "text": "عمليات النص",
           "settings": "إدارة الإعدادات"
         }
+      },
+      "pluginMarketplace": {
+        "searchPlaceholder": "البحث عن الإضافات...",
+        "searchInstalledPlaceholder": "البحث في الإضافات المثبتة...",
+        "refresh": "تحديث",
+        "name": "اسم الإضافة",
+        "version": "الإصدار",
+        "author": "المؤلف",
+        "description": "الوصف",
+        "website": "الموقع",
+        "install": "تثبيت",
+        "installed": "مثبت",
+        "update": "تحديث",
+        "uninstall": "إزالة التثبيت",
+        "details": "التفاصيل",
+        "close": "إغلاق",
+        "incompatible": "غير متوافق",
+        "appVersion": "إصدار التطبيق",
+        "supportSearch": "يدعم البحث",
+        "supportDownload": "يدعم التنزيل",
+        "yes": "نعم",
+        "no": "لا",
+        "tabs": { "marketplace": "متجر الإضافات", "installed": "المثبتة", "sources": "المصادر" },
+        "sources": {
+          "addSource": "إضافة مصدر",
+          "refreshSources": "تحديث المصادر",
+          "official": "رسمي",
+          "renameSource": "إعادة تسمية",
+          "deleteSource": "حذف",
+          "renameTitle": "إعادة تسمية المصدر",
+          "renamePrompt": "يرجى إدخال اسم مصدر جديد"
+        },
+        "sourceForm": {
+          "title": "إضافة مصدر إضافات",
+          "name": "اسم المصدر",
+          "namePlaceholder": "مثال: official, LOCAL",
+          "type": "النوع",
+          "local": "مجلد محلي",
+          "githubLocation": "مستودع GitHub",
+          "localLocation": "مجلد محلي",
+          "githubPlaceholder": "مثال: OXOYO/Flying-Bird-Wallpaper-Plugins",
+          "localPlaceholder": "يرجى اختيار مجلد مصدر إضافات محلي",
+          "cancel": "إلغاء",
+          "confirm": "إضافة",
+          "validation": {
+            "nameRequired": "يرجى إدخال اسم المصدر",
+            "namePattern": "يُسمح فقط بالأحرف (مع مراعاة حالة الأحرف) والأرقام و - و _",
+            "locationRequired": "يرجى إدخال موقع المصدر"
+          }
+        },
+        "confirm": {
+          "confirm": "تأكيد",
+          "cancel": "إلغاء",
+          "removeSourceTitle": "حذف المصدر",
+          "removeSourceMessage": "هل أنت متأكد من حذف المصدر {sourceName}؟",
+          "uninstallTitle": "إزالة تثبيت الإضافة",
+          "uninstallMessage": "هل أنت متأكد من إزالة تثبيت الإضافة {pluginName}؟"
+        },
+        "secretKey": {
+          "config": "تهيئة المفتاح",
+          "title": "تهيئة المفتاح السري",
+          "prompt": "يرجى تهيئة المفتاح السري للإضافة {pluginName}",
+          "placeholder": "يرجى إدخال المفتاح السري",
+          "saveSuccess": "تم حفظ المفتاح السري",
+          "saveFail": "فشل حفظ المفتاح السري",
+          "missing": "المفتاح مفقود",
+          "status": "حالة المفتاح السري",
+          "configured": "مهيأ",
+          "notRequired": "غير مطلوب"
+        },
+        "feedback": {
+          "getAvailableFail": "فشل جلب الإضافات المتاحة",
+          "getInstalledFail": "فشل جلب الإضافات المثبتة",
+          "getSourcesFail": "فشل جلب مصادر الإضافات",
+          "getSettingFail": "فشل جلب الإعدادات",
+          "installSuccess": "تم تثبيت الإضافة بنجاح",
+          "installFail": "فشل تثبيت الإضافة",
+          "uninstallSuccess": "تمت إزالة الإضافة بنجاح",
+          "uninstallFail": "فشلت إزالة الإضافة",
+          "updateSuccess": "تم تحديث الإضافة بنجاح",
+          "updateFail": "فشل تحديث الإضافة",
+          "selectLocalFolderFail": "فشل اختيار مجلد مصدر الإضافات المحلي",
+          "addSourceSuccess": "تمت إضافة مصدر الإضافات بنجاح",
+          "addSourceFail": "فشلت إضافة مصدر الإضافات",
+          "updateSourceSuccess": "تم تحديث مصدر الإضافات بنجاح",
+          "updateSourceFail": "فشل تحديث مصدر الإضافات",
+          "removeSourceSuccess": "تمت إزالة مصدر الإضافات بنجاح",
+          "removeSourceFail": "فشلت إزالة مصدر الإضافات"
+        }
       }
     },
     "Utils": {
