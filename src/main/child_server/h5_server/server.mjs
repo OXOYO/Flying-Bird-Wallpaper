@@ -2,7 +2,6 @@ import Koa from 'koa'
 import KoaRouter from '@koa/router'
 import staticServe from 'koa-static'
 import compress from 'koa-compress'
-import { Server } from 'socket.io'
 import http2 from 'node:http2'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -11,7 +10,6 @@ import { fileURLToPath } from 'node:url'
 import { getLocalIP, findAvailablePort, generateSelfSignedCert, isDev } from '../../utils/utils.mjs'
 import useApi from './api/index.mjs'
 import { t } from '../../../i18n/server.js'
-import setupSocketIO from './socket/index.mjs'
 
 // 创建 Koa 服务器
 export default async ({
@@ -28,7 +26,6 @@ export default async ({
   onStartFail = () => {}
 } = {}) => {
   let httpServer
-  let ioServer
   try {
     const __dirname = path.dirname(fileURLToPath(import.meta.url))
     port = await findAvailablePort(port)
@@ -36,6 +33,20 @@ export default async ({
 
     // 创建 Koa 应用
     const app = new Koa()
+
+    const sseHub = {
+      clients: new Set(),
+      broadcast(event, payload) {
+        const msg = `event: ${event}\ndata: ${JSON.stringify(payload)}\n\n`
+        for (const client of this.clients) {
+          try {
+            client.res.write(msg)
+          } catch (err) {
+            this.clients.delete(client)
+          }
+        }
+      }
+    }
 
     let sslOptions
     if (useHttps) {
@@ -80,20 +91,6 @@ export default async ({
       httpServer = http2.createServer({ allowHTTP1: true })
     }
 
-    // 创建 Socket.IO 实例
-    ioServer = new Server(httpServer, {
-      cors: {
-        origin: '*',
-        methods: ['GET', 'POST']
-      },
-      // 添加性能优化配置
-      transports: ['websocket', 'polling'], // 优先使用websocket
-      pingTimeout: 30000,
-      pingInterval: 25000,
-      upgradeTimeout: 10000,
-      maxHttpBufferSize: 1e6 // 1MB
-    })
-
     // 包装 postMessage 函数，确保它能正常工作
     const safePostMessage = (data) => {
       try {
@@ -110,7 +107,7 @@ export default async ({
       ctx.t = t
       ctx.logger = logger
       ctx.postMessage = safePostMessage
-      ctx.ioServer = ioServer // 将 Socket.IO 实例添加到上下文
+      ctx.sseHub = sseHub
 
       await next()
     })
@@ -157,7 +154,16 @@ export default async ({
     const router = new KoaRouter()
 
     // 注册 http 接口
-    useApi(router)
+    useApi(router, {
+      t,
+      dbManager,
+      settingManager,
+      resourcesManager,
+      fileManager,
+      logger,
+      postMessage: safePostMessage,
+      sseHub
+    })
 
     // 注册路由中间件
     app.use(router.routes()).use(router.allowedMethods())
@@ -165,25 +171,7 @@ export default async ({
     // 将 Koa 应用挂载到 HTTP/2 服务器
     httpServer.on('request', app.callback())
 
-    try {
-      // 设置 Socket.IO - 等待初始化完成
-      await setupSocketIO(ioServer, {
-        t,
-        dbManager,
-        settingManager,
-        resourcesManager,
-        fileManager,
-        logger,
-        postMessage: safePostMessage
-      })
-    } catch (err) {
-      typeof onStartFail === 'function' &&
-        onStartFail({
-          message: `Socket.IO 初始化失败: ${err}`
-        })
-    }
-
-    logger.info('[H5Server] INFO => Socket.IO 初始化完成，准备启动服务器')
+    logger.info('[H5Server] INFO => SSE/HTTP API 初始化完成，准备启动服务器')
 
     // 添加性能优化中间件
     app.use(async (ctx, next) => {
@@ -234,6 +222,8 @@ export default async ({
   }
   return {
     httpServer,
-    ioServer
+    broadcastSettingUpdated: (payload) => {
+      sseHub.broadcast('settingUpdated', payload)
+    }
   }
 }

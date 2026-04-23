@@ -1,8 +1,9 @@
-import { getImage } from './images.mjs'
+import { registerImageApi } from './images.mjs'
+import { registerBusinessApi } from './business.mjs'
 
-const useApi = (router) => {
-  // 图片相关接口
-  router.get('/api/images/get', getImage)
+const useApi = (router, deps) => {
+  registerImageApi(router)
+  registerBusinessApi(router, deps)
 }
 
 export default useApi

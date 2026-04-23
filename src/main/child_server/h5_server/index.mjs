@@ -5,9 +5,21 @@ import DatabaseManager from '../../store/DatabaseManager.mjs'
 import SettingManager from '../../store/SettingManager.mjs'
 import ResourcesManager from '../../store/ResourcesManager.mjs'
 import FileManager from '../../store/FileManager.mjs'
+import ApiManager from '../../store/ApiManager.mjs'
+import ApiBase from '../../ApiBase.js'
+import axios from 'axios'
+import { calculateImageOrientation, calculateImageQuality } from '../../utils/utils.mjs'
 import server from './server.mjs'
 
 process.parentPort.on('message', (e) => {
+  global.FBW = global.FBW || {}
+  global.FBW.apiHelpers = {
+    axios,
+    ApiBase,
+    calculateImageOrientation,
+    calculateImageQuality
+  }
+
   const [port] = e.ports
 
   const handleLogger = (type = 'info') => {
@@ -43,7 +55,8 @@ process.parentPort.on('message', (e) => {
   let settingManager
   let resourcesManager
   let fileManager
-  let ioServer
+  let apiManager
+  let broadcastSettingUpdated
   // 监听消息
   port.on('message', async (e) => {
     try {
@@ -59,11 +72,13 @@ process.parentPort.on('message', (e) => {
         await settingManager.waitForInitialization()
 
         fileManager = FileManager.getInstance(logger, dbManager, settingManager)
+        apiManager = ApiManager.getInstance(logger, dbManager)
+        await apiManager.waitForInitialization()
         resourcesManager = ResourcesManager.getInstance(
           logger,
           dbManager,
           settingManager,
-          fileManager
+          apiManager
         )
         const serverRes = await server({
           dbManager,
@@ -85,11 +100,11 @@ process.parentPort.on('message', (e) => {
             })
           }
         })
-        ioServer = serverRes.ioServer
+        broadcastSettingUpdated = serverRes.broadcastSettingUpdated
       } else if (data.event === 'APP_SETTING_UPDATED') {
         await settingManager.getSettingData()
-        // 广播设置更新给所有客户端
-        ioServer?.emit('settingUpdated', {
+        // 通过 SSE 广播设置更新给所有客户端
+        broadcastSettingUpdated?.({
           success: true,
           data: settingManager.settingData
         })

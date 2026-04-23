@@ -71,10 +71,10 @@ const UseSettingStore = defineStore('setting', {
         return false
       }
     },
-    // 初始化 Socket.IO 监听
+    // 初始化 SSE 监听
     initSocketListeners() {
-      // 监听多设备设置更新事件
-      api.socketInstance.on('settingUpdated', (res) => {
+      api.initEventStream()
+      api.on('settingUpdated', (res) => {
         // 本地可控制多设备数据是否同步
         if (res.success && this.localSetting.multiDeviceSync) {
           this.settingData = Object.assign({}, this.settingData, res.data)

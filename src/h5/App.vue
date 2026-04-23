@@ -2,6 +2,7 @@
 import UseCommonStore from './stores/commonStore.js'
 import UseSettingStore from './stores/settingStore.js'
 import home from './pages/home/index.vue'
+import search from './pages/search/index.vue'
 import setting from './pages/setting/index.vue'
 import pageEmpty from './components/pageEmpty.vue'
 import { useTranslation } from 'i18next-vue'
@@ -32,6 +33,7 @@ const { settingData } = storeToRefs(settingStore)
 
 const pages = {
   home,
+  search,
   setting
 }
 
