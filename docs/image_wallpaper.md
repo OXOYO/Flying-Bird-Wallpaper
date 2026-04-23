@@ -200,7 +200,7 @@ async getWebImage(url) {
 
 **设置页面壁纸操作：**
 
-```js:src/renderer/windows/MainWindow/pages/Setting.vue
+```js:src/renderer/windows/MainWindow/pages/Setting/components/BaseSetting.vue
 // 设置网页壁纸
 const onSetWebWallpaper = async () => {
   flags.settingWebWallpaper = true

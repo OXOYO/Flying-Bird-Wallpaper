@@ -229,7 +229,7 @@ BMP 格式使用 BGR（蓝-绿-红）颜色顺序，而不是常见的 RGB 顺�
 
 **colorList 定义：**
 
-```js:src/renderer/windows/MainWindow/pages/Setting.vue
+```js:src/renderer/windows/MainWindow/pages/Setting/components/BaseSetting.vue
 export const colorList = [
   '#71956C', // 深绿色
   '#E6A23C', // 橙黄色

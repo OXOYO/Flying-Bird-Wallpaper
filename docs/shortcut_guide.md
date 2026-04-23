@@ -88,7 +88,7 @@
 
 - **ShortcutManager**：快捷键管理器，负责注册、管理和处理快捷键
 - **publicData.js**：快捷键配置文件，定义默认快捷键映射
-- **Setting.vue**：快捷键设置界面组件
+- **BaseSetting.vue**：快捷键设置界面组件
 
 ### 5.2 实现原理
 
