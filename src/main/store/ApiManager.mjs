@@ -110,7 +110,22 @@ export default class ApiManager {
       description: manifest.description || '',
       author: manifest.author || '',
       site: manifest.site || '',
-      requireSecretKey: manifest.requireSecretKey || false
+      enabled: manifest.enabled !== false,
+      requireSecretKey: manifest.requireSecretKey || false,
+      supportSearch: manifest.supportSearch === true,
+      supportDownload: manifest.supportDownload === true,
+      supportSearchTypes: Array.isArray(manifest.supportSearchTypes)
+        ? manifest.supportSearchTypes
+        : [],
+      searchRequired:
+        manifest.searchRequired && typeof manifest.searchRequired === 'object'
+          ? manifest.searchRequired
+          : { keywords: false, orientation: false },
+      downloadRequired:
+        manifest.downloadRequired && typeof manifest.downloadRequired === 'object'
+          ? manifest.downloadRequired
+          : { keywords: false, orientation: false },
+      appVersion: manifest.appVersion || { min: '1.0.0', max: '*' }
     }
   }
 

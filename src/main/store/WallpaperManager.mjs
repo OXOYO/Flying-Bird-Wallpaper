@@ -710,7 +710,7 @@ export default class WallpaperManager {
       ret.message = t('messages.resourceSecretKeyUnset')
       return ret
     }
-    if (resourceInfo.downloadRequired.keywords && !keywords) {
+    if (resourceInfo.downloadRequired?.keywords && !keywords) {
       ret.message = t('messages.enterKeywords')
       return ret
     }

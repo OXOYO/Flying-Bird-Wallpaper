@@ -1,9 +1,11 @@
 <script setup>
 import { useTranslation } from 'i18next-vue'
 import UseSettingStore from '@renderer/stores/settingStore.js'
+import UseCommonStore from '@renderer/stores/commonStore.js'
 
 const { t } = useTranslation()
 const settingStore = UseSettingStore()
+const commonStore = UseCommonStore()
 
 const activeTab = ref('marketplace')
 const marketplaceSearchQuery = ref('')
@@ -126,7 +128,9 @@ const loadPluginSources = async () => {
     if (result.success) {
       pluginSources.value = result.data || []
     } else {
-      ElMessage.error(result.message || t('pages.Setting.pluginMarketplace.feedback.getSourcesFail'))
+      ElMessage.error(
+        result.message || t('pages.Setting.pluginMarketplace.feedback.getSourcesFail')
+      )
     }
   } catch (error) {
     console.error(t('pages.Setting.pluginMarketplace.feedback.getSourcesFail'), error)
@@ -148,6 +152,17 @@ const loadSettingData = async () => {
   }
 }
 
+const refreshResourceMap = async () => {
+  try {
+    const result = await window.FBW.getResourceMap()
+    if (result.success && result.data) {
+      commonStore.setResourceMap(result.data)
+    }
+  } catch (error) {
+    console.error(error)
+  }
+}
+
 const installPlugin = async (sourceName, pluginName) => {
   const actionKey = `${sourceName}:${pluginName}`
   actionLoading.installingKey = actionKey
@@ -155,7 +170,10 @@ const installPlugin = async (sourceName, pluginName) => {
   try {
     const result = await window.FBW.installPlugin(sourceName, pluginName)
     if (result.success) {
-      ElMessage.success(result.message || t('pages.Setting.pluginMarketplace.feedback.installSuccess'))
+      ElMessage.success(
+        result.message || t('pages.Setting.pluginMarketplace.feedback.installSuccess')
+      )
+      await refreshResourceMap()
       await loadInstalledPlugins()
       await loadAvailablePlugins()
     } else {
@@ -193,6 +211,7 @@ const uninstallPlugin = async (sourceName, pluginName) => {
       ElMessage.success(
         result.message || t('pages.Setting.pluginMarketplace.feedback.uninstallSuccess')
       )
+      await refreshResourceMap()
       await loadInstalledPlugins()
       await loadAvailablePlugins()
     } else {
@@ -214,7 +233,10 @@ const updatePlugin = async (sourceName, pluginName) => {
   try {
     const result = await window.FBW.updatePlugin(sourceName, pluginName)
     if (result.success) {
-      ElMessage.success(result.message || t('pages.Setting.pluginMarketplace.feedback.updateSuccess'))
+      ElMessage.success(
+        result.message || t('pages.Setting.pluginMarketplace.feedback.updateSuccess')
+      )
+      await refreshResourceMap()
       await loadInstalledPlugins()
       await loadAvailablePlugins()
     } else {
@@ -333,12 +355,16 @@ const addPluginSource = async () => {
         location: sourceForm.location
       })
       if (result.success) {
-        ElMessage.success(result.message || t('pages.Setting.pluginMarketplace.feedback.addSourceSuccess'))
+        ElMessage.success(
+          result.message || t('pages.Setting.pluginMarketplace.feedback.addSourceSuccess')
+        )
         showAddSourceDialog.value = false
         await loadPluginSources()
         await loadAvailablePlugins()
       } else {
-        ElMessage.error(result.message || t('pages.Setting.pluginMarketplace.feedback.addSourceFail'))
+        ElMessage.error(
+          result.message || t('pages.Setting.pluginMarketplace.feedback.addSourceFail')
+        )
       }
     } catch (error) {
       console.error(t('pages.Setting.pluginMarketplace.feedback.addSourceFail'), error)
@@ -352,7 +378,9 @@ const addPluginSource = async () => {
 const toggleSourceEnabled = async (source) => {
   const result = await window.FBW.updatePluginSource(source.name, { enabled: source.enabled })
   if (!result.success) {
-    ElMessage.error(result.message || t('pages.Setting.pluginMarketplace.feedback.updateSourceFail'))
+    ElMessage.error(
+      result.message || t('pages.Setting.pluginMarketplace.feedback.updateSourceFail')
+    )
   }
 }
 
@@ -379,7 +407,9 @@ const renamePluginSource = async (source) => {
       await loadPluginSources()
       await loadAvailablePlugins()
     } else {
-      ElMessage.error(result.message || t('pages.Setting.pluginMarketplace.feedback.updateSourceFail'))
+      ElMessage.error(
+        result.message || t('pages.Setting.pluginMarketplace.feedback.updateSourceFail')
+      )
     }
   } catch (error) {
     if (error !== 'cancel' && error !== 'close') {
@@ -410,7 +440,9 @@ const removePluginSource = async (sourceName) => {
     await loadPluginSources()
     await loadAvailablePlugins()
   } else {
-    ElMessage.error(result.message || t('pages.Setting.pluginMarketplace.feedback.removeSourceFail'))
+    ElMessage.error(
+      result.message || t('pages.Setting.pluginMarketplace.feedback.removeSourceFail')
+    )
   }
 }
 
@@ -420,6 +452,19 @@ onMounted(() => {
   loadInstalledPlugins()
   loadPluginSources()
 })
+
+watch(
+  () => activeTab.value,
+  (tab) => {
+    if (tab === 'marketplace') {
+      loadAvailablePlugins()
+    } else if (tab === 'installed') {
+      loadInstalledPlugins()
+    } else if (tab === 'sources') {
+      loadPluginSources()
+    }
+  }
+)
 
 defineExpose({
   resetForm: () => {
@@ -431,303 +476,306 @@ defineExpose({
 
 <template>
   <div class="plugin-marketplace-wrapper">
-    <el-scrollbar style="height: 100%">
-      <div class="plugin-marketplace">
-        <el-tabs v-model="activeTab">
-          <el-tab-pane
-            :label="t('pages.Setting.pluginMarketplace.tabs.marketplace')"
-            name="marketplace"
-          >
-            <div class="marketplace-content">
-              <div class="search-box">
-                <el-input
-                  v-model="marketplaceSearchQuery"
-                  :placeholder="t('pages.Setting.pluginMarketplace.searchPlaceholder')"
-                  clearable
-                  style="width: 400px"
-                >
-                  <template #prefix>
-                    <IconifyIcon icon="custom:search" />
-                  </template>
-                </el-input>
+    <div class="plugin-marketplace">
+      <el-tabs v-model="activeTab">
+        <el-tab-pane
+          :label="t('pages.Setting.pluginMarketplace.tabs.marketplace')"
+          name="marketplace"
+        >
+          <div class="marketplace-content">
+            <div class="search-box">
+              <el-input
+                v-model="marketplaceSearchQuery"
+                :placeholder="t('pages.Setting.pluginMarketplace.searchPlaceholder')"
+                clearable
+                style="width: 400px"
+              >
+                <template #prefix>
+                  <IconifyIcon icon="custom:search" />
+                </template>
+              </el-input>
+              <div class="toolbar-actions">
                 <el-button
                   type="primary"
                   :loading="loading.available"
                   @click="loadAvailablePlugins"
-                  style="margin-left: 10px"
                 >
                   <IconifyIcon icon="custom:refresh" />
                   {{ t('pages.Setting.pluginMarketplace.refresh') }}
                 </el-button>
               </div>
-
-              <el-empty v-if="!loading.available && filteredAvailablePlugins.length === 0" />
-
-              <div v-loading="loading.available" class="plugin-grid">
-                <div
-                  v-for="plugin in filteredAvailablePlugins"
-                  :key="toPluginKey(plugin)"
-                  class="plugin-card"
-                >
-                  <div class="plugin-header">
-                    <div class="plugin-icon">
-                      <img
-                        v-if="plugin.logoUrl"
-                        :src="plugin.logoUrl"
-                        class="plugin-logo"
-                        :alt="plugin.displayName || plugin.name"
-                      />
-                      <span v-else>{{ getPluginAvatarText(plugin) }}</span>
-                    </div>
-                    <div class="plugin-title">
-                      <h3>{{ plugin.displayName || plugin.name }}</h3>
-                      <div class="plugin-meta-line">
-                        <div class="plugin-meta-main">
-                          <el-tag size="small">{{ plugin.sourceName }}</el-tag>
-                          <span class="plugin-version">v{{ plugin.version }}</span>
-                          <el-button
-                            v-if="plugin.site"
-                            link
-                            class="inline-link-btn"
-                            @click="window.FBW.openUrl(plugin.site)"
-                          >
-                            <IconifyIcon icon="custom:link" />
-                            {{ t('pages.Setting.pluginMarketplace.website') }}
-                          </el-button>
-                          <el-tag v-if="isPluginInstalled(plugin)" type="success" size="small">
-                            {{ t('pages.Setting.pluginMarketplace.installed') }}
-                          </el-tag>
-                          <el-button link circle @click="togglePluginDetail(plugin)">
-                            <IconifyIcon
-                              class="detail-toggle-icon"
-                              :class="{ 'is-expanded': isDetailExpanded(plugin) }"
-                              icon="custom:arrow-right"
-                            />
-                          </el-button>
-                        </div>
-                        <div class="plugin-meta-actions">
-                          <el-button
-                            v-if="!isPluginInstalled(plugin)"
-                            type="primary"
-                            :disabled="!plugin.compatible"
-                            :loading="isInstalling(plugin)"
-                            @click="installPlugin(plugin.sourceName, plugin.name)"
-                          >
-                            <IconifyIcon icon="custom:download" />
-                            {{ t('pages.Setting.pluginMarketplace.install') }}
-                          </el-button>
+            </div>
+            <div class="tab-scroll-wrap" v-loading="loading.available">
+              <div class="tab-scroll-content">
+                <el-empty v-if="!loading.available && filteredAvailablePlugins.length === 0" />
+                <div v-else class="plugin-grid">
+                  <div
+                    v-for="plugin in filteredAvailablePlugins"
+                    :key="toPluginKey(plugin)"
+                    class="plugin-card"
+                  >
+                    <div class="plugin-header">
+                      <div class="plugin-icon">
+                        <img
+                          v-if="plugin.logoUrl"
+                          :src="plugin.logoUrl"
+                          class="plugin-logo"
+                          :alt="plugin.displayName || plugin.name"
+                        />
+                        <span v-else>{{ getPluginAvatarText(plugin) }}</span>
+                      </div>
+                      <div class="plugin-title">
+                        <h3>{{ plugin.displayName || plugin.name }}</h3>
+                        <div class="plugin-meta-line">
+                          <div class="plugin-meta-main">
+                            <el-tag size="small">{{ plugin.sourceName }}</el-tag>
+                            <span class="plugin-version">v{{ plugin.version }}</span>
+                            <el-button
+                              v-if="plugin.site"
+                              link
+                              class="inline-link-btn"
+                              @click="window.FBW.openUrl(plugin.site)"
+                            >
+                              <IconifyIcon icon="custom:link" />
+                              {{ t('pages.Setting.pluginMarketplace.website') }}
+                            </el-button>
+                            <el-tag v-if="isPluginInstalled(plugin)" type="success" size="small">
+                              {{ t('pages.Setting.pluginMarketplace.installed') }}
+                            </el-tag>
+                            <el-button link circle @click="togglePluginDetail(plugin)">
+                              <IconifyIcon
+                                class="detail-toggle-icon"
+                                :class="{ 'is-expanded': isDetailExpanded(plugin) }"
+                                icon="custom:arrow-right"
+                              />
+                            </el-button>
+                          </div>
+                          <div class="plugin-meta-actions">
+                            <el-button
+                              v-if="!isPluginInstalled(plugin)"
+                              type="primary"
+                              :disabled="!plugin.compatible"
+                              :loading="isInstalling(plugin)"
+                              @click="installPlugin(plugin.sourceName, plugin.name)"
+                            >
+                              <IconifyIcon icon="custom:download" />
+                              {{ t('pages.Setting.pluginMarketplace.install') }}
+                            </el-button>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                  <div class="plugin-body">
-                    <p class="plugin-description">{{ plugin.description }}</p>
-                    <div class="plugin-meta">
-                      <el-tag v-if="!plugin.compatible" type="danger" size="small">
-                        {{ t('pages.Setting.pluginMarketplace.incompatible') }}
-                      </el-tag>
+                    <div class="plugin-body">
+                      <p class="plugin-description">{{ plugin.description }}</p>
+                      <div class="plugin-meta">
+                        <el-tag v-if="!plugin.compatible" type="danger" size="small">
+                          {{ t('pages.Setting.pluginMarketplace.incompatible') }}
+                        </el-tag>
+                      </div>
                     </div>
-                  </div>
-                  <div v-show="isDetailExpanded(plugin)" class="plugin-detail-panel">
-                    <div class="detail-item">
-                      <span>{{ t('pages.Setting.pluginMarketplace.supportSearch') }}</span>
-                      <el-tag :type="plugin.supportSearch ? 'success' : 'info'" size="small">
-                        {{
-                          plugin.supportSearch
-                            ? t('pages.Setting.pluginMarketplace.yes')
-                            : t('pages.Setting.pluginMarketplace.no')
-                        }}
-                      </el-tag>
-                    </div>
-                    <div class="detail-item">
-                      <span>{{ t('pages.Setting.pluginMarketplace.supportDownload') }}</span>
-                      <el-tag :type="plugin.supportDownload ? 'success' : 'info'" size="small">
-                        {{
-                          plugin.supportDownload
-                            ? t('pages.Setting.pluginMarketplace.yes')
-                            : t('pages.Setting.pluginMarketplace.no')
-                        }}
-                      </el-tag>
-                    </div>
-                    <div class="detail-item">
-                      <span>{{ t('pages.Setting.pluginMarketplace.appVersion') }}</span>
-                      <span
-                        >{{ plugin.appVersion?.min || '*' }} -
-                        {{ plugin.appVersion?.max || '*' }}</span
-                      >
+                    <div v-show="isDetailExpanded(plugin)" class="plugin-detail-panel">
+                      <div class="detail-item">
+                        <span>{{ t('pages.Setting.pluginMarketplace.supportSearch') }}</span>
+                        <el-tag :type="plugin.supportSearch ? 'success' : 'info'" size="small">
+                          {{
+                            plugin.supportSearch
+                              ? t('pages.Setting.pluginMarketplace.yes')
+                              : t('pages.Setting.pluginMarketplace.no')
+                          }}
+                        </el-tag>
+                      </div>
+                      <div class="detail-item">
+                        <span>{{ t('pages.Setting.pluginMarketplace.supportDownload') }}</span>
+                        <el-tag :type="plugin.supportDownload ? 'success' : 'info'" size="small">
+                          {{
+                            plugin.supportDownload
+                              ? t('pages.Setting.pluginMarketplace.yes')
+                              : t('pages.Setting.pluginMarketplace.no')
+                          }}
+                        </el-tag>
+                      </div>
+                      <div class="detail-item">
+                        <span>{{ t('pages.Setting.pluginMarketplace.appVersion') }}</span>
+                        <span
+                          >{{ plugin.appVersion?.min || '*' }} -
+                          {{ plugin.appVersion?.max || '*' }}</span
+                        >
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </el-tab-pane>
+          </div>
+        </el-tab-pane>
 
-          <el-tab-pane
-            :label="t('pages.Setting.pluginMarketplace.tabs.installed')"
-            name="installed"
-          >
-            <div class="installed-content">
-              <div class="search-box">
-                <el-input
-                  v-model="installedSearchQuery"
-                  :placeholder="t('pages.Setting.pluginMarketplace.searchInstalledPlaceholder')"
-                  clearable
-                  style="width: 400px"
-                >
-                  <template #prefix>
-                    <IconifyIcon icon="custom:search" />
-                  </template>
-                </el-input>
+        <el-tab-pane :label="t('pages.Setting.pluginMarketplace.tabs.installed')" name="installed">
+          <div class="installed-content">
+            <div class="search-box">
+              <el-input
+                v-model="installedSearchQuery"
+                :placeholder="t('pages.Setting.pluginMarketplace.searchInstalledPlaceholder')"
+                clearable
+                style="width: 400px"
+              >
+                <template #prefix>
+                  <IconifyIcon icon="custom:search" />
+                </template>
+              </el-input>
+              <div class="toolbar-actions">
                 <el-button
                   type="primary"
                   :loading="loading.installed"
                   @click="loadInstalledPlugins"
-                  style="margin-left: 10px"
                 >
                   <IconifyIcon icon="custom:refresh" />
                   {{ t('pages.Setting.pluginMarketplace.refresh') }}
                 </el-button>
               </div>
-
-              <el-empty v-if="!loading.installed && filteredInstalledPlugins.length === 0" />
-
-              <div v-loading="loading.installed" class="plugin-grid">
-                <div
-                  v-for="plugin in filteredInstalledPlugins"
-                  :key="toPluginKey(plugin)"
-                  class="plugin-card"
-                >
-                  <div class="plugin-header">
-                    <div class="plugin-icon">
-                      <img
-                        v-if="plugin.logoUrl"
-                        :src="plugin.logoUrl"
-                        class="plugin-logo"
-                        :alt="plugin.displayName || plugin.name"
-                      />
-                      <span v-else>{{ getPluginAvatarText(plugin) }}</span>
-                    </div>
-                    <div class="plugin-title">
-                      <h3>{{ plugin.displayName || plugin.name }}</h3>
-                      <div class="plugin-meta-line">
-                        <div class="plugin-meta-main">
-                          <el-tag size="small">{{ plugin.sourceName }}</el-tag>
-                          <span class="plugin-version">v{{ plugin.version }}</span>
-                          <el-button
-                            v-if="plugin.site"
-                            link
-                            class="inline-link-btn"
-                            @click="window.FBW.openUrl(plugin.site)"
-                          >
-                            <IconifyIcon icon="custom:link" />
-                            {{ t('pages.Setting.pluginMarketplace.website') }}
-                          </el-button>
-                          <el-tag type="success" size="small">
-                            {{ t('pages.Setting.pluginMarketplace.installed') }}
-                          </el-tag>
-                          <el-button link circle @click="togglePluginDetail(plugin)">
-                            <IconifyIcon
-                              class="detail-toggle-icon"
-                              :class="{ 'is-expanded': isDetailExpanded(plugin) }"
-                              icon="custom:arrow-right"
-                            />
-                          </el-button>
-                        </div>
-                        <div class="plugin-meta-actions">
-                          <el-button
-                            v-if="plugin.requireSecretKey"
-                            type="warning"
-                            plain
-                            @click="configureSecretKey(plugin)"
-                          >
-                            <IconifyIcon icon="custom:key" />
-                            {{ t('pages.Setting.pluginMarketplace.secretKey.config') }}
-                          </el-button>
-                          <el-button
-                            type="primary"
-                            :loading="isUpdating(plugin)"
-                            @click="updatePlugin(plugin.sourceName, plugin.name)"
-                          >
-                            <IconifyIcon icon="custom:refresh" />
-                            {{ t('pages.Setting.pluginMarketplace.update') }}
-                          </el-button>
-                          <el-button
-                            type="danger"
-                            :loading="isUninstalling(plugin)"
-                            @click="uninstallPlugin(plugin.sourceName, plugin.name)"
-                          >
-                            <IconifyIcon icon="custom:delete" />
-                            {{ t('pages.Setting.pluginMarketplace.uninstall') }}
-                          </el-button>
+            </div>
+            <div class="tab-scroll-wrap" v-loading="loading.installed">
+              <div class="tab-scroll-content">
+                <el-empty v-if="!loading.installed && filteredInstalledPlugins.length === 0" />
+                <div v-else class="plugin-grid">
+                  <div
+                    v-for="plugin in filteredInstalledPlugins"
+                    :key="toPluginKey(plugin)"
+                    class="plugin-card"
+                  >
+                    <div class="plugin-header">
+                      <div class="plugin-icon">
+                        <img
+                          v-if="plugin.logoUrl"
+                          :src="plugin.logoUrl"
+                          class="plugin-logo"
+                          :alt="plugin.displayName || plugin.name"
+                        />
+                        <span v-else>{{ getPluginAvatarText(plugin) }}</span>
+                      </div>
+                      <div class="plugin-title">
+                        <h3>{{ plugin.displayName || plugin.name }}</h3>
+                        <div class="plugin-meta-line">
+                          <div class="plugin-meta-main">
+                            <el-tag size="small">{{ plugin.sourceName }}</el-tag>
+                            <span class="plugin-version">v{{ plugin.version }}</span>
+                            <el-button
+                              v-if="plugin.site"
+                              link
+                              class="inline-link-btn"
+                              @click="window.FBW.openUrl(plugin.site)"
+                            >
+                              <IconifyIcon icon="custom:link" />
+                              {{ t('pages.Setting.pluginMarketplace.website') }}
+                            </el-button>
+                            <el-tag type="success" size="small">
+                              {{ t('pages.Setting.pluginMarketplace.installed') }}
+                            </el-tag>
+                            <el-button link circle @click="togglePluginDetail(plugin)">
+                              <IconifyIcon
+                                class="detail-toggle-icon"
+                                :class="{ 'is-expanded': isDetailExpanded(plugin) }"
+                                icon="custom:arrow-right"
+                              />
+                            </el-button>
+                          </div>
+                          <div class="plugin-meta-actions">
+                            <el-button
+                              v-if="plugin.requireSecretKey"
+                              type="warning"
+                              plain
+                              @click="configureSecretKey(plugin)"
+                            >
+                              <IconifyIcon icon="custom:key" />
+                              {{ t('pages.Setting.pluginMarketplace.secretKey.config') }}
+                            </el-button>
+                            <el-button
+                              type="primary"
+                              :loading="isUpdating(plugin)"
+                              @click="updatePlugin(plugin.sourceName, plugin.name)"
+                            >
+                              <IconifyIcon icon="custom:refresh" />
+                              {{ t('pages.Setting.pluginMarketplace.update') }}
+                            </el-button>
+                            <el-button
+                              type="danger"
+                              :loading="isUninstalling(plugin)"
+                              @click="uninstallPlugin(plugin.sourceName, plugin.name)"
+                            >
+                              <IconifyIcon icon="custom:delete" />
+                              {{ t('pages.Setting.pluginMarketplace.uninstall') }}
+                            </el-button>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                  <div class="plugin-body">
-                    <p class="plugin-description">{{ plugin.description }}</p>
-                    <div class="plugin-meta">
-                      <el-tag
-                        v-if="plugin.requireSecretKey && !hasSecretKey(plugin)"
-                        type="warning"
-                        size="small"
-                      >
-                        {{ t('pages.Setting.pluginMarketplace.secretKey.missing') }}
-                      </el-tag>
+                    <div class="plugin-body">
+                      <p class="plugin-description">{{ plugin.description }}</p>
+                      <div class="plugin-meta">
+                        <el-tag
+                          v-if="plugin.requireSecretKey && !hasSecretKey(plugin)"
+                          type="warning"
+                          size="small"
+                        >
+                          {{ t('pages.Setting.pluginMarketplace.secretKey.missing') }}
+                        </el-tag>
+                      </div>
                     </div>
-                  </div>
-                  <div v-show="isDetailExpanded(plugin)" class="plugin-detail-panel">
-                    <div class="detail-item">
-                      <span>{{ t('pages.Setting.pluginMarketplace.supportSearch') }}</span>
-                      <el-tag :type="plugin.supportSearch ? 'success' : 'info'" size="small">
-                        {{
-                          plugin.supportSearch
-                            ? t('pages.Setting.pluginMarketplace.yes')
-                            : t('pages.Setting.pluginMarketplace.no')
-                        }}
-                      </el-tag>
-                    </div>
-                    <div class="detail-item">
-                      <span>{{ t('pages.Setting.pluginMarketplace.supportDownload') }}</span>
-                      <el-tag :type="plugin.supportDownload ? 'success' : 'info'" size="small">
-                        {{
-                          plugin.supportDownload
-                            ? t('pages.Setting.pluginMarketplace.yes')
-                            : t('pages.Setting.pluginMarketplace.no')
-                        }}
-                      </el-tag>
-                    </div>
-                    <div class="detail-item">
-                      <span>{{ t('pages.Setting.pluginMarketplace.appVersion') }}</span>
-                      <span
-                        >{{ plugin.appVersion?.min || '*' }} -
-                        {{ plugin.appVersion?.max || '*' }}</span
-                      >
-                    </div>
-                    <div class="detail-item">
-                      <span>{{ t('pages.Setting.pluginMarketplace.secretKey.status') }}</span>
-                      <el-tag
-                        v-if="plugin.requireSecretKey"
-                        :type="hasSecretKey(plugin) ? 'success' : 'warning'"
-                        size="small"
-                      >
-                        {{
-                          hasSecretKey(plugin)
-                            ? t('pages.Setting.pluginMarketplace.secretKey.configured')
-                            : t('pages.Setting.pluginMarketplace.secretKey.missing')
-                        }}
-                      </el-tag>
-                      <el-tag v-else type="info" size="small">{{
-                        t('pages.Setting.pluginMarketplace.secretKey.notRequired')
-                      }}</el-tag>
+                    <div v-show="isDetailExpanded(plugin)" class="plugin-detail-panel">
+                      <div class="detail-item">
+                        <span>{{ t('pages.Setting.pluginMarketplace.supportSearch') }}</span>
+                        <el-tag :type="plugin.supportSearch ? 'success' : 'info'" size="small">
+                          {{
+                            plugin.supportSearch
+                              ? t('pages.Setting.pluginMarketplace.yes')
+                              : t('pages.Setting.pluginMarketplace.no')
+                          }}
+                        </el-tag>
+                      </div>
+                      <div class="detail-item">
+                        <span>{{ t('pages.Setting.pluginMarketplace.supportDownload') }}</span>
+                        <el-tag :type="plugin.supportDownload ? 'success' : 'info'" size="small">
+                          {{
+                            plugin.supportDownload
+                              ? t('pages.Setting.pluginMarketplace.yes')
+                              : t('pages.Setting.pluginMarketplace.no')
+                          }}
+                        </el-tag>
+                      </div>
+                      <div class="detail-item">
+                        <span>{{ t('pages.Setting.pluginMarketplace.appVersion') }}</span>
+                        <span
+                          >{{ plugin.appVersion?.min || '*' }} -
+                          {{ plugin.appVersion?.max || '*' }}</span
+                        >
+                      </div>
+                      <div class="detail-item">
+                        <span>{{ t('pages.Setting.pluginMarketplace.secretKey.status') }}</span>
+                        <el-tag
+                          v-if="plugin.requireSecretKey"
+                          :type="hasSecretKey(plugin) ? 'success' : 'warning'"
+                          size="small"
+                        >
+                          {{
+                            hasSecretKey(plugin)
+                              ? t('pages.Setting.pluginMarketplace.secretKey.configured')
+                              : t('pages.Setting.pluginMarketplace.secretKey.missing')
+                          }}
+                        </el-tag>
+                        <el-tag v-else type="info" size="small">{{
+                          t('pages.Setting.pluginMarketplace.secretKey.notRequired')
+                        }}</el-tag>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </el-tab-pane>
-          <el-tab-pane :label="t('pages.Setting.pluginMarketplace.tabs.sources')" name="sources">
-            <div class="installed-content">
-              <div style="display: flex; gap: 10px; margin-bottom: 20px">
+          </div>
+        </el-tab-pane>
+        <el-tab-pane :label="t('pages.Setting.pluginMarketplace.tabs.sources')" name="sources">
+          <div class="sources-content">
+            <div class="search-box">
+              <div class="toolbar-actions">
                 <el-button type="primary" @click="openAddSourceDialog">
                   {{ t('pages.Setting.pluginMarketplace.sources.addSource') }}
                 </el-button>
@@ -736,7 +784,9 @@ defineExpose({
                   {{ t('pages.Setting.pluginMarketplace.sources.refreshSources') }}
                 </el-button>
               </div>
-              <div v-loading="loading.sources" class="plugin-list">
+            </div>
+            <div class="tab-scroll-wrap" v-loading="loading.sources">
+              <div class="tab-scroll-content">
                 <div
                   v-for="source in pluginSources"
                   :key="source.id"
@@ -764,10 +814,10 @@ defineExpose({
                 </div>
               </div>
             </div>
-          </el-tab-pane>
-        </el-tabs>
-      </div>
-    </el-scrollbar>
+          </div>
+        </el-tab-pane>
+      </el-tabs>
+    </div>
 
     <el-dialog
       v-model="showAddSourceDialog"
@@ -835,19 +885,73 @@ defineExpose({
 }
 
 .plugin-marketplace {
+  height: 100%;
+  background-color: #ffffff;
+  border-radius: 6px;
   padding: 20px;
+}
+
+:deep(.el-tabs) {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+:deep(.el-tabs__header) {
+  flex-shrink: 0;
+}
+
+:deep(.el-tabs__content) {
+  flex: 1;
+  min-height: 0;
+}
+
+:deep(.el-tab-pane) {
+  height: 100%;
+}
+
+.marketplace-content,
+.installed-content,
+.sources-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .search-box {
   display: flex;
   align-items: center;
   margin-bottom: 20px;
+  flex-shrink: 0;
+  gap: 10px;
+}
+
+.toolbar-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tab-scroll-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.tab-scroll-content {
+  height: 100%;
+  overflow-y: auto;
+  padding: 10px 14px 10px 0;
 }
 
 .plugin-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 20px;
+  min-height: 200px;
 }
 
 .plugin-card {
@@ -972,6 +1076,12 @@ defineExpose({
   padding: 20px;
   border: 1px solid var(--el-border-color);
   border-radius: 8px;
+  transition: all 0.3s;
+
+  &:hover {
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
 }
 
 .plugin-details {
@@ -988,6 +1098,10 @@ defineExpose({
 
 .source-item {
   align-items: flex-start;
+}
+
+.source-item + .source-item {
+  margin-top: 20px;
 }
 
 .source-header {

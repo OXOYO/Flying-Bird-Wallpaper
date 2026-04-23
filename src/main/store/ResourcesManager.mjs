@@ -224,7 +224,7 @@ export default class ResourcesManager {
           ret.message = t('messages.resourceSecretKeyUnset')
           return ret
         }
-        if (resourceInfo.searchRequired.keywords && !filterKeywords) {
+        if (resourceInfo.searchRequired?.keywords && !filterKeywords) {
           ret.message = t('messages.enterKeywords')
           return ret
         }

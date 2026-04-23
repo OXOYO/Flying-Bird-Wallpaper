@@ -903,30 +903,6 @@ defineExpose({
             {{ t('pages.Setting.divider.remoteResource') }}
           </div>
           <el-form-item
-            :label="t('pages.Setting.settingDataForm.remoteResourceSecretKeys.label')"
-          >
-            <el-input
-              v-for="resourceName in resourceMap.remoteResourceKeyNames"
-              :key="resourceName"
-              v-model="settingDataForm.remoteResourceSecretKeys[resourceName]"
-              clearable
-              :placeholder="
-                t('pages.Setting.settingDataForm.remoteResourceSecretKeys.placeholder')
-              "
-              style="max-width: 450px; margin: 0 10px 10px 0"
-              @change="onSettingDataFormChange"
-            >
-              <template #prepend>
-                <span style="width: 67px">{{ resourceName }}</span>
-              </template>
-              <template #append>
-                <el-link :href="resourceMap.remoteResourceMap[resourceName].site" target="_blank">
-                  <IconifyIcon icon="custom:link" />
-                </el-link>
-              </template>
-            </el-input>
-          </el-form-item>
-          <el-form-item
             :label="t('pages.Setting.settingDataForm.downloadSources')"
             prop="downloadSources"
           >

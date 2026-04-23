@@ -812,15 +812,27 @@ export default class Store {
     })
 
     ipcMain.handle('main:installPlugin', async (event, sourceName, pluginName, version = 'main') => {
-      return await this.pluginManager.installPlugin(sourceName, pluginName, version)
+      const ret = await this.pluginManager.installPlugin(sourceName, pluginName, version)
+      if (ret.success) {
+        await this.apiManager.loadApi()
+      }
+      return ret
     })
 
     ipcMain.handle('main:uninstallPlugin', async (event, sourceName, pluginName) => {
-      return await this.pluginManager.uninstallPlugin(sourceName, pluginName)
+      const ret = await this.pluginManager.uninstallPlugin(sourceName, pluginName)
+      if (ret.success) {
+        await this.apiManager.loadApi()
+      }
+      return ret
     })
 
     ipcMain.handle('main:updatePlugin', async (event, sourceName, pluginName) => {
-      return await this.pluginManager.updatePlugin(sourceName, pluginName)
+      const ret = await this.pluginManager.updatePlugin(sourceName, pluginName)
+      if (ret.success) {
+        await this.apiManager.loadApi()
+      }
+      return ret
     })
   }
 
