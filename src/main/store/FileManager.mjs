@@ -128,6 +128,10 @@ export default class FileManager {
         existingFiles, // 传递现有文件信息
         refreshDirStartTime: Date.now()
       })
+      return {
+        success: true,
+        message: t('messages.operationSuccess')
+      }
     } catch (err) {
       this.logger.error(`获取现有文件信息失败: ${err}`)
       locks.refreshDirectory = false

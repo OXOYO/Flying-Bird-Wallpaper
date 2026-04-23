@@ -26,6 +26,19 @@ export default async ({
   onStartFail = () => {}
 } = {}) => {
   let httpServer
+  const sseHub = {
+    clients: new Set(),
+    broadcast(event, payload) {
+      const msg = `event: ${event}\ndata: ${JSON.stringify(payload)}\n\n`
+      for (const client of this.clients) {
+        try {
+          client.res.write(msg)
+        } catch (err) {
+          this.clients.delete(client)
+        }
+      }
+    }
+  }
   try {
     const __dirname = path.dirname(fileURLToPath(import.meta.url))
     port = await findAvailablePort(port)
@@ -33,20 +46,6 @@ export default async ({
 
     // 创建 Koa 应用
     const app = new Koa()
-
-    const sseHub = {
-      clients: new Set(),
-      broadcast(event, payload) {
-        const msg = `event: ${event}\ndata: ${JSON.stringify(payload)}\n\n`
-        for (const client of this.clients) {
-          try {
-            client.res.write(msg)
-          } catch (err) {
-            this.clients.delete(client)
-          }
-        }
-      }
-    }
 
     let sslOptions
     if (useHttps) {
