@@ -322,6 +322,7 @@
   "messages": {
     "operationSuccess": "操作成功！",
     "operationFail": "操作失敗！",
+    "pluginOperationSuccessButRefreshFailed": "{message}，但資源插件映射刷新失敗，請重啟應用後重試",
     "operationIllegal": "非法操作！",
     "operationInProgress": "操作執行中！",
     "folderAlreadyExist": "資源目錄重複！",

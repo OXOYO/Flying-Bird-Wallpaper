@@ -318,6 +318,7 @@
   "messages": {
     "operationSuccess": "Operation erfolgreich!",
     "operationFail": "Operation fehlgeschlagen!",
+    "pluginOperationSuccessButRefreshFailed": "{message}, aber die Aktualisierung der Ressourcen-Plugin-Zuordnung ist fehlgeschlagen. Bitte starten Sie die App neu und versuchen Sie es erneut.",
     "operationIllegal": "Ungültige Operation!",
     "operationInProgress": "Operation wird ausgeführt!",
     "folderAlreadyExist": "Ressourcenverzeichnis ist doppelt vorhanden!",

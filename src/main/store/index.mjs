@@ -816,7 +816,17 @@ export default class Store {
       async (event, sourceName, pluginName, version = 'main') => {
         const ret = await this.pluginManager.installPlugin(sourceName, pluginName, version)
         if (ret.success) {
-          await this.apiManager.loadApi()
+          try {
+            await this.apiManager.loadApi()
+          } catch (err) {
+            this.logger.error(`安装插件后刷新资源插件映射失败: ${err}`)
+            return {
+              ...ret,
+              message: t('messages.pluginOperationSuccessButRefreshFailed', {
+                message: ret.message
+              })
+            }
+          }
         }
         return ret
       }
@@ -825,7 +835,17 @@ export default class Store {
     ipcMain.handle('main:uninstallPlugin', async (event, sourceName, pluginName) => {
       const ret = await this.pluginManager.uninstallPlugin(sourceName, pluginName)
       if (ret.success) {
-        await this.apiManager.loadApi()
+        try {
+          await this.apiManager.loadApi()
+        } catch (err) {
+          this.logger.error(`卸载插件后刷新资源插件映射失败: ${err}`)
+          return {
+            ...ret,
+            message: t('messages.pluginOperationSuccessButRefreshFailed', {
+              message: ret.message
+            })
+          }
+        }
       }
       return ret
     })
@@ -833,7 +853,17 @@ export default class Store {
     ipcMain.handle('main:updatePlugin', async (event, sourceName, pluginName) => {
       const ret = await this.pluginManager.updatePlugin(sourceName, pluginName)
       if (ret.success) {
-        await this.apiManager.loadApi()
+        try {
+          await this.apiManager.loadApi()
+        } catch (err) {
+          this.logger.error(`更新插件后刷新资源插件映射失败: ${err}`)
+          return {
+            ...ret,
+            message: t('messages.pluginOperationSuccessButRefreshFailed', {
+              message: ret.message
+            })
+          }
+        }
       }
       return ret
     })

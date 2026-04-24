@@ -318,6 +318,7 @@
   "messages": {
     "operationSuccess": "Operazione riuscita!",
     "operationFail": "Operazione fallita!",
+    "pluginOperationSuccessButRefreshFailed": "{message}, ma l'aggiornamento della mappatura dei plugin risorsa non è riuscito. Riavvia l'app e riprova.",
     "operationIllegal": "Operazione illegale!",
     "operationInProgress": "Operazione in corso!",
     "folderAlreadyExist": "La directory delle risorse è duplicata!",

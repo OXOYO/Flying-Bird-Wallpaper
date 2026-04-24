@@ -318,6 +318,7 @@
   "messages": {
     "operationSuccess": "Opération réussie !",
     "operationFail": "Échec de l'opération !",
+    "pluginOperationSuccessButRefreshFailed": "{message}, mais l'actualisation du mappage des plugins de ressources a échoué. Veuillez redémarrer l'application puis réessayer.",
     "operationIllegal": "Opération illégale !",
     "operationInProgress": "Opération en cours !",
     "folderAlreadyExist": "Le répertoire de ressources est dupliqué !",

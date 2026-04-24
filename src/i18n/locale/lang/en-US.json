@@ -323,6 +323,7 @@
   "messages": {
     "operationSuccess": "Operation successful!",
     "operationFail": "Operation failed!",
+    "pluginOperationSuccessButRefreshFailed": "{message}, but resource plugin mapping refresh failed. Please restart the app and try again.",
     "operationIllegal": "Illegal operation!",
     "operationInProgress": "Operation in progress!",
     "folderAlreadyExist": "Resource directory is duplicated!",

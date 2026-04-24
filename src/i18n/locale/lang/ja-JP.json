@@ -318,6 +318,7 @@
   "messages": {
     "operationSuccess": "操作成功！",
     "operationFail": "操作失敗！",
+    "pluginOperationSuccessButRefreshFailed": "{message}。ただし、リソースプラグインマッピングの更新に失敗しました。アプリを再起動して再試行してください。",
     "operationIllegal": "不正な操作！",
     "operationInProgress": "操作実行中！",
     "folderAlreadyExist": "リソースディレクトリが重複しています！",
