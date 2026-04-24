@@ -4,6 +4,8 @@ import UseSettingStore from '@h5/stores/settingStore.js'
 import * as api from '@h5/api/index.js'
 import { resourceTypeList, filterTypeOptions, orientationOptions, qualityList } from '@common/publicData.js'
 import { useTranslation } from 'i18next-vue'
+import { infoKeys } from '@common/publicData.js'
+import { handleInfoVal } from '@common/utils.js'
 
 const { t } = useTranslation()
 const commonStore = UseCommonStore()
@@ -31,10 +33,20 @@ const state = reactive({
   loading: false,
   refreshing: false,
   finished: false,
-  showFilters: false
+  showFilters: false,
+  showActionPopup: false,
+  showPreview: false
 })
+const imageInfoPanelAnchors = [0, Math.round(0.55 * window.innerHeight)]
+const imageInfoPanelHeight = ref(imageInfoPanelAnchors[0])
 
 const list = ref([])
+const longPress = reactive({
+  timer: null,
+  selectedIndex: -1,
+  startX: 0,
+  startY: 0
+})
 
 const resourceTypeOptions = computed(() => {
   return resourceTypeList.map((item) => ({
@@ -63,16 +75,6 @@ const filterTypeDropdownOptions = computed(() => {
     text: t(item.locale),
     value: item.value
   }))
-})
-
-const resourceTypeLabel = computed(() => {
-  const row = resourceTypeOptions.value.find((item) => item.value === form.resourceType)
-  return row?.text || ''
-})
-
-const sourceLabel = computed(() => {
-  const row = sourceOptions.value.find((item) => item.value === form.resourceName)
-  return row?.text || ''
 })
 
 const normalizeItem = (item) => {
@@ -152,12 +154,10 @@ const onChangeResourceType = () => {
   const first = sourceOptions.value[0]
   form.resourceName = first ? first.value : ''
   syncFilterType()
-  onSearch()
 }
 
 const onChangeSource = () => {
   syncFilterType()
-  onSearch()
 }
 
 const onToggleFavorite = async (item) => {
@@ -169,6 +169,147 @@ const onToggleFavorite = async (item) => {
     showNotify({ type: 'danger', message: res?.message || t('messages.operationFail') })
   }
 }
+
+const onResetFilters = () => {
+  form.resourceType = 'localResource'
+  const first = sourceOptions.value[0]
+  form.resourceName = first ? first.value : ''
+  form.filterType = 'images'
+  form.orientation = ''
+  form.quality = ''
+  onSearch()
+}
+
+const previewImages = computed(() => list.value.map((item) => item.imageSrc).filter(Boolean))
+const previewStartPosition = computed(() => Math.max(0, longPress.selectedIndex))
+
+const openPreview = (index) => {
+  if (!list.value[index]?.imageSrc) return
+  longPress.selectedIndex = index
+  state.showPreview = true
+}
+
+const onImageTouchStart = (index, event) => {
+  if (!event.touches?.length) return
+  longPress.startX = event.touches[0].clientX
+  longPress.startY = event.touches[0].clientY
+  longPress.timer = setTimeout(() => {
+    longPress.selectedIndex = index
+    state.showActionPopup = true
+  }, 500)
+}
+
+const onImageTouchMove = (event) => {
+  if (!longPress.timer || !event.touches?.length) return
+  const moveX = event.touches[0].clientX - longPress.startX
+  const moveY = event.touches[0].clientY - longPress.startY
+  if (Math.sqrt(moveX * moveX + moveY * moveY) > 10) {
+    clearTimeout(longPress.timer)
+    longPress.timer = null
+  }
+}
+
+const onImageTouchEnd = () => {
+  if (longPress.timer) {
+    clearTimeout(longPress.timer)
+    longPress.timer = null
+  }
+}
+
+const selectedItem = computed(() =>
+  longPress.selectedIndex >= 0 ? list.value[longPress.selectedIndex] || null : null
+)
+
+const showImageInfo = () => {
+  if (!selectedItem.value) return
+  state.showActionPopup = false
+  imageInfoPanelHeight.value = imageInfoPanelAnchors[1]
+}
+
+const saveImage = async () => {
+  const item = selectedItem.value
+  if (!item) return
+  try {
+    const link = document.createElement('a')
+    link.href = item.imageSrc
+    link.download = `${item.fileName || item.id || Date.now()}.${item.fileExt || 'jpg'}`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    if (item.id) {
+      await api.updateDownloadCount(item.id, 1)
+    }
+    showNotify({ type: 'success', message: t('messages.saveSuccess') })
+  } catch (error) {
+    showNotify({ type: 'danger', message: t('messages.saveFail') })
+  } finally {
+    state.showActionPopup = false
+  }
+}
+
+const deleteImage = async () => {
+  const item = selectedItem.value
+  if (!item) return
+  try {
+    await showConfirmDialog({
+      title: t('h5.pages.home.actions.confirmDelete'),
+      message: t('h5.pages.home.actions.confirmDeleteMessage'),
+      confirmButtonText: t('h5.pages.home.actions.confirmDeleteBtn'),
+      cancelButtonText: t('h5.pages.home.actions.cancelDeleteBtn'),
+      confirmButtonColor: '#ee0a24',
+      closeOnClickOverlay: true
+    })
+    const res = await api.deleteImage(toRaw(item))
+    if (res?.success) {
+      list.value = list.value.filter((row) => (row.id || row.uniqueKey) !== (item.id || item.uniqueKey))
+      showNotify({ type: 'success', message: t('messages.deleteSuccess') })
+    } else {
+      showNotify({ type: 'danger', message: res?.message || t('messages.deleteFail') })
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      showNotify({ type: 'danger', message: t('messages.deleteFail') })
+    }
+  } finally {
+    state.showActionPopup = false
+  }
+}
+
+const toggleSelectedFavorite = async () => {
+  const item = selectedItem.value
+  if (!item) return
+  await onToggleFavorite(item)
+  state.showActionPopup = false
+}
+
+const openActionByIndex = (index) => {
+  longPress.selectedIndex = index
+  state.showActionPopup = true
+}
+
+const onFilterResourceTypeChange = () => {
+  const first = sourceOptions.value[0]
+  form.resourceName = first ? first.value : ''
+  syncFilterType()
+}
+
+const onApplyFilters = async () => {
+  state.showFilters = false
+  await onSearch()
+}
+
+const onImageInfoHeightChange = (height) => {
+  if (height === 0 && !state.showActionPopup) {
+    longPress.selectedIndex = -1
+  }
+}
+
+onUnmounted(() => {
+  if (longPress.timer) {
+    clearTimeout(longPress.timer)
+    longPress.timer = null
+  }
+})
 
 const init = async () => {
   const first = sourceOptions.value[0]
@@ -186,31 +327,19 @@ onMounted(init)
 
 <template>
   <div class="page-wrapper page-search">
-    <van-nav-bar :title="t('h5.pages.search.title')" fixed safe-area-inset-top />
     <div class="page-search-inner">
-      <van-search
-        v-model="form.keywords"
-        :placeholder="t('exploreCommon.searchForm.filterKeywords.placeholder')"
-        @search="onSearch"
-      />
-
-      <div class="selectors">
-        <van-dropdown-menu class="selectors-main">
-          <van-dropdown-item v-model="form.resourceType" :options="resourceTypeOptions" @change="onChangeResourceType" />
-          <van-dropdown-item v-model="form.resourceName" :options="sourceOptions" @change="onChangeSource" />
-        </van-dropdown-menu>
-      </div>
-      <div class="selectors selectors-sub">
-        <van-dropdown-menu class="selectors-main">
-          <van-dropdown-item
-            v-model="form.filterType"
-            :options="filterTypeDropdownOptions"
-            @change="onSearch"
+      <div class="search-toolbar">
+        <div class="search-row">
+          <van-search
+            v-model="form.keywords"
+            class="search-input"
+            :placeholder="t('h5.pages.search.keywordPlaceholder')"
+            @search="onSearch"
           />
-        </van-dropdown-menu>
-        <van-button class="filter-btn" size="small" type="primary" @click="state.showFilters = true"
-          >高级筛选</van-button
-        >
+          <van-button class="filter-btn" plain @click="state.showFilters = true">
+            <van-icon name="arrow-down" />
+          </van-button>
+        </div>
       </div>
 
       <van-pull-refresh v-model="state.refreshing" :disabled="state.loading" @refresh="onRefresh">
@@ -220,24 +349,22 @@ onMounted(init)
           :finished-text="t('messages.noMoreData')"
           @load="onLoadMore"
         >
+          <div v-if="state.loading && !list.length" class="result-list result-list-skeleton">
+            <van-skeleton v-for="i in 4" :key="i" avatar :row="2" />
+          </div>
           <div v-if="list.length" class="result-list">
-            <div v-for="item in list" :key="item.id || item.uniqueKey" class="result-item">
-              <img class="preview" :src="item.imageSrc" alt="preview" />
-              <div class="meta">
-                <div class="title">{{ item.title || item.fileName || item.resourceName || '-' }}</div>
-                <div class="sub">{{ item.resourceName }} · {{ item.quality || '-' }}</div>
-                <div class="actions">
-                  <van-button size="small" plain type="primary" @click="onToggleFavorite(item)">
-                    {{ item.isFavorite ? '取消收藏' : '收藏' }}
-                  </van-button>
-                  <van-button
-                    size="small"
-                    plain
-                    @click="window.open(item.imageSrc, '_blank')"
-                  >
-                    预览
-                  </van-button>
-                </div>
+            <div
+              v-for="(item, index) in list"
+              :key="item.id || item.uniqueKey"
+              class="result-item"
+              @touchstart="(e) => onImageTouchStart(index, e)"
+              @touchmove="onImageTouchMove"
+              @touchend="onImageTouchEnd"
+              @touchcancel="onImageTouchEnd"
+              @contextmenu.prevent="openActionByIndex(index)"
+            >
+              <div class="preview-wrap" @click="openPreview(index)">
+                <img class="preview" :src="item.imageSrc" alt="preview" loading="lazy" />
               </div>
             </div>
           </div>
@@ -248,90 +375,293 @@ onMounted(init)
 
     <van-popup v-model:show="state.showFilters" position="bottom" round>
       <div class="filter-panel">
-        <div class="filter-title">高级筛选</div>
-        <van-cell :title="t('exploreCommon.searchForm.orientation.placeholder')" />
-        <van-radio-group v-model="form.orientation" direction="horizontal">
-          <van-radio name="">全部</van-radio>
-          <van-radio v-for="o in orientationOptions" :key="o.value" :name="String(o.value)">
-            {{ t(o.locale) }}
-          </van-radio>
-        </van-radio-group>
-        <van-cell :title="t('exploreCommon.searchForm.quality.placeholder')" />
-        <van-radio-group v-model="form.quality" direction="horizontal">
-          <van-radio name="">全部</van-radio>
-          <van-radio v-for="q in qualityList" :key="q" :name="q">{{ q }}</van-radio>
-        </van-radio-group>
+        <div class="filter-title">{{ t('h5.pages.search.filters.title') }}</div>
+        <van-search
+          v-model="form.keywords"
+          class="filter-keyword-input"
+          :placeholder="t('h5.pages.search.keywordPlaceholder')"
+          @search="onApplyFilters"
+        />
+        <div class="filter-group">
+          <div class="group-title">{{ t('exploreCommon.searchForm.resourceType.placeholder') }}</div>
+          <van-radio-group
+            v-model="form.resourceType"
+            class="filter-options"
+            direction="horizontal"
+            @change="onFilterResourceTypeChange"
+          >
+            <van-radio v-for="o in resourceTypeOptions" :key="o.value" :name="o.value">{{ o.text }}</van-radio>
+          </van-radio-group>
+        </div>
+        <div class="filter-group">
+          <div class="group-title">{{ t('exploreCommon.searchForm.resourceName.placeholder') }}</div>
+          <van-radio-group v-model="form.resourceName" class="filter-options" direction="horizontal" @change="onChangeSource">
+            <van-radio v-for="o in sourceOptions" :key="o.value" :name="o.value">{{ o.text }}</van-radio>
+          </van-radio-group>
+        </div>
+        <div class="filter-group">
+          <div class="group-title">{{ t('exploreCommon.searchForm.filterType.placeholder') }}</div>
+          <van-radio-group v-model="form.filterType" class="filter-options" direction="horizontal">
+            <van-radio v-for="o in filterTypeDropdownOptions" :key="o.value" :name="o.value">
+              {{ o.text }}
+            </van-radio>
+          </van-radio-group>
+        </div>
+        <div class="filter-group">
+          <div class="group-title">{{ t('exploreCommon.searchForm.orientation.placeholder') }}</div>
+          <van-radio-group v-model="form.orientation" class="filter-options" direction="horizontal">
+            <van-radio name="">{{ t('h5.pages.search.filters.all') }}</van-radio>
+            <van-radio v-for="o in orientationOptions" :key="o.value" :name="String(o.value)">
+              {{ t(o.locale) }}
+            </van-radio>
+          </van-radio-group>
+        </div>
+        <div class="filter-group">
+          <div class="group-title">{{ t('exploreCommon.searchForm.quality.placeholder') }}</div>
+          <van-radio-group v-model="form.quality" class="filter-options" direction="horizontal">
+            <van-radio name="">{{ t('h5.pages.search.filters.all') }}</van-radio>
+            <van-radio v-for="q in qualityList" :key="q" :name="q">{{ q }}</van-radio>
+          </van-radio-group>
+        </div>
         <div class="filter-actions">
-          <van-button block type="primary" @click="state.showFilters = false; onSearch()">应用筛选</van-button>
+          <van-button class="filter-reset-btn" plain @click="onResetFilters">
+            <van-icon name="replay" />
+          </van-button>
+          <van-button class="filter-search-btn" type="primary" @click="onApplyFilters">
+            <van-icon name="search" />
+          </van-button>
         </div>
       </div>
     </van-popup>
+
+    <van-image-preview
+      v-model:show="state.showPreview"
+      :images="previewImages"
+      :start-position="previewStartPosition"
+      closeable
+    />
+
+    <van-popup
+      v-model:show="state.showActionPopup"
+      destroy-on-close
+      position="bottom"
+      :style="{ padding: '16px' }"
+    >
+      <div class="action-popup-content">
+        <div class="action-item" @click="showImageInfo">
+          <div class="action-icon-wrapper">
+            <IconifyIcon class="action-icon-inner" icon="custom:info-line" />
+          </div>
+          <span class="action-label">{{ t('h5.pages.home.actions.imageInfo') }}</span>
+        </div>
+        <div class="action-item" @click="toggleSelectedFavorite">
+          <div class="action-icon-wrapper">
+            <IconifyIcon
+              class="action-icon-inner"
+              :icon="selectedItem?.isFavorite ? 'custom:star-fill' : 'custom:star'"
+              :style="{ color: selectedItem?.isFavorite ? 'gold' : '' }"
+            />
+          </div>
+          <span class="action-label">{{
+            selectedItem?.isFavorite ? t('exploreCommon.removeFavorites') : t('exploreCommon.addToFavorites')
+          }}</span>
+        </div>
+        <div class="action-item" @click="saveImage">
+          <div class="action-icon-wrapper">
+            <IconifyIcon class="action-icon-inner" icon="custom:download-line" />
+          </div>
+          <span class="action-label">{{ t('h5.pages.home.actions.saveImage') }}</span>
+        </div>
+        <div class="action-item delete-action" @click="deleteImage">
+          <div class="action-icon-wrapper">
+            <IconifyIcon class="action-icon-inner" icon="custom:delete-line" />
+          </div>
+          <span class="action-label">{{ t('h5.pages.home.actions.deleteImage') }}</span>
+        </div>
+      </div>
+    </van-popup>
+
+    <van-floating-panel
+      v-model:height="imageInfoPanelHeight"
+      :anchors="imageInfoPanelAnchors"
+      @height-change="onImageInfoHeightChange"
+    >
+      <div class="image-info-content">
+        <van-cell-group v-if="selectedItem">
+          <van-cell
+            v-for="key in infoKeys"
+            :key="key"
+            value-class="image-info-value"
+            :title="t(`h5.pages.home.imageInfo.${key}`)"
+            :value="handleInfoVal(selectedItem, key)"
+          />
+        </van-cell-group>
+      </div>
+    </van-floating-panel>
   </div>
 </template>
 
 <style scoped lang="scss">
 .page-search-inner {
-  padding-top: var(--van-nav-bar-height);
   padding-bottom: var(--fbw-tabbar-height);
 }
-.selectors {
+.search-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #fff;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06);
+}
+.search-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 0 12px 10px;
+  gap: 8px;
+  padding: 8px 12px 10px;
 }
-.selectors-sub {
-  padding-top: 0;
-}
-.selectors-main {
+.search-input {
   flex: 1;
 }
 .filter-btn {
-  min-width: 84px;
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  border-radius: 8px;
+  padding: 0;
 }
 .result-list {
   padding: 0 12px 12px;
+  column-count: 2;
+  column-gap: 10px;
+}
+.result-list-skeleton {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
 }
 .result-item {
-  display: flex;
-  gap: 10px;
-  padding: 10px;
-  margin-bottom: 8px;
+  display: inline-block;
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 0;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  break-inside: avoid;
+}
+.preview-wrap {
+  border-radius: 0;
+  overflow: hidden;
   background: rgba(0, 0, 0, 0.05);
-  border-radius: 8px;
 }
 .preview {
-  width: 96px;
-  height: 64px;
-  object-fit: cover;
-  border-radius: 6px;
-}
-.meta {
-  flex: 1;
-}
-.title {
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.4;
-}
-.sub {
-  margin-top: 4px;
-  font-size: 12px;
-  opacity: 0.8;
-}
-.actions {
-  margin-top: 8px;
-  display: flex;
-  gap: 8px;
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: contain;
 }
 .filter-panel {
   padding: 16px;
+  max-width: 820px;
+  margin: 0 auto;
 }
 .filter-title {
-  margin-bottom: 8px;
+  margin-bottom: 12px;
   font-weight: 600;
+  font-size: 15px;
+}
+.filter-group {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--van-border-color);
+}
+.group-title {
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: var(--van-text-color-2);
+}
+.filter-keyword-input {
+  margin-bottom: 10px;
+}
+.filter-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+}
+.filter-options :deep(.van-radio) {
+  min-width: 96px;
 }
 .filter-actions {
   margin-top: 16px;
+  display: flex;
+  gap: 10px;
+}
+.filter-reset-btn {
+  width: 44px;
+  min-width: 44px;
+  padding: 0;
+}
+.filter-search-btn {
+  flex: 1;
+}
+
+.action-popup-content {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  flex-direction: row;
+  gap: 16px;
+}
+
+.action-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+}
+
+.action-icon-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #eee;
+  border-radius: 10px;
+  padding: 14px;
+  font-size: 24px;
+}
+
+.action-icon-inner {
+  transition: transform 0.3s ease-out;
+}
+
+.action-label {
+  font-size: 12px;
+}
+
+.delete-action {
+  color: #ff4d4f;
+}
+
+.image-info-content {
+  max-height: 60vh;
+  overflow: auto;
+}
+
+@media (min-width: 768px) {
+  .page-search-inner {
+    max-width: 1080px;
+    margin: 0 auto;
+  }
+
+  .result-list {
+    column-count: 3;
+  }
+}
+
+@media (min-width: 1200px) {
+  .result-list {
+    column-count: 4;
+  }
 }
 </style>

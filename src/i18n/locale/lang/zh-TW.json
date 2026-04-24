@@ -763,7 +763,14 @@
         }
       },
       "search": {
-        "title": "搜尋"
+        "title": "搜尋",
+        "keywordPlaceholder": "請輸入關鍵字",
+        "filters": {
+          "title": "搜尋條件",
+          "all": "全部",
+          "reset": "重置篩選",
+          "apply": "套用篩選"
+        }
       },
       "setting": {
         "title": "設定",

@@ -764,7 +764,14 @@
         }
       },
       "search": {
-        "title": "Search"
+        "title": "Search",
+        "keywordPlaceholder": "Enter keywords",
+        "filters": {
+          "title": "Search Filters",
+          "all": "All",
+          "reset": "Reset Filters",
+          "apply": "Apply Filters"
+        }
       },
       "setting": {
         "title": "Settings",

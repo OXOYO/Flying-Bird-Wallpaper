@@ -762,7 +762,14 @@
         }
       },
       "search": {
-        "title": "搜索"
+        "title": "搜索",
+        "keywordPlaceholder": "请输入关键词",
+        "filters": {
+          "title": "搜索条件",
+          "all": "全部",
+          "reset": "重置筛选",
+          "apply": "应用筛选"
+        }
       },
       "setting": {
         "title": "设置",

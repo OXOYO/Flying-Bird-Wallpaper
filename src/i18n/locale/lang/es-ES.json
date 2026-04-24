@@ -759,7 +759,14 @@
         }
       },
       "search": {
-        "title": "Buscar"
+        "title": "Buscar",
+        "keywordPlaceholder": "Introduce palabras clave",
+        "filters": {
+          "title": "Filtros de búsqueda",
+          "all": "Todos",
+          "reset": "Restablecer filtros",
+          "apply": "Aplicar filtros"
+        }
       },
       "setting": {
         "title": "Configuración",

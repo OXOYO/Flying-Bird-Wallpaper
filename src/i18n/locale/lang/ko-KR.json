@@ -759,7 +759,14 @@
         }
       },
       "search": {
-        "title": "검색"
+        "title": "검색",
+        "keywordPlaceholder": "키워드를 입력하세요",
+        "filters": {
+          "title": "검색 조건",
+          "all": "전체",
+          "reset": "필터 초기화",
+          "apply": "필터 적용"
+        }
       },
       "setting": {
         "title": "설정",

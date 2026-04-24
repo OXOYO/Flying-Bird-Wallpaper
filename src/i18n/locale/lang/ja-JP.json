@@ -759,7 +759,14 @@
         }
       },
       "search": {
-        "title": "検索"
+        "title": "検索",
+        "keywordPlaceholder": "キーワードを入力",
+        "filters": {
+          "title": "検索条件",
+          "all": "すべて",
+          "reset": "条件をリセット",
+          "apply": "条件を適用"
+        }
       },
       "setting": {
         "title": "設定",

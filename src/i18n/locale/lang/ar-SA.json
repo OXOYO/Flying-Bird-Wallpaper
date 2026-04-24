@@ -759,7 +759,14 @@
         }
       },
       "search": {
-        "title": "بحث"
+        "title": "بحث",
+        "keywordPlaceholder": "أدخل كلمات البحث",
+        "filters": {
+          "title": "شروط البحث",
+          "all": "الكل",
+          "reset": "إعادة تعيين الفلاتر",
+          "apply": "تطبيق الفلاتر"
+        }
       },
       "setting": {
         "title": "الإعدادات",
