@@ -35,18 +35,28 @@ const state = reactive({
   finished: false,
   showFilters: false,
   showActionPopup: false,
-  showPreview: false
+  showPreview: false,
+  viewportHeight: typeof window !== 'undefined' ? window.innerHeight : 800,
+  scrollTop: 0,
+  viewportWidth: typeof window !== 'undefined' ? window.innerWidth : 375
 })
 const imageInfoPanelAnchors = [0, Math.round(0.55 * window.innerHeight)]
 const imageInfoPanelHeight = ref(imageInfoPanelAnchors[0])
+const pageWrapperRef = ref(null)
 
 const list = ref([])
+const FALLBACK_ITEM_HEIGHT = 220
+const GRID_GAP = 10
+const GRID_BUFFER_PX = 900
 const longPress = reactive({
   timer: null,
   selectedIndex: -1,
   startX: 0,
   startY: 0
 })
+const imageErrorState = reactive({})
+const imageRetrySeed = reactive({})
+const imageLoadFailText = computed(() => t('messages.imageLoadRetryHint'))
 
 const resourceTypeOptions = computed(() => {
   return resourceTypeList.map((item) => ({
@@ -82,13 +92,35 @@ const normalizeItem = (item) => {
     const rawUrl = `/api/images/get?filePath=${encodeURIComponent(item.filePath)}`
     return {
       ...item,
-      imageSrc: rawUrl
+      imageSrc: rawUrl,
+      imageRawSrc: rawUrl
     }
   }
   return {
     ...item,
-    imageSrc: item.imageUrl || ''
+    imageSrc: item.imageUrl || '',
+    imageRawSrc: item.imageUrl || ''
   }
+}
+
+const getItemKey = (item) => String(item?.id || item?.uniqueKey || item?.filePath || item?.imageSrc || '')
+const getDisplayImageSrc = (item) => {
+  const key = getItemKey(item)
+  const seed = imageRetrySeed[key] || 0
+  if (!seed) return item.imageSrc
+  const separator = item.imageRawSrc?.includes('?') ? '&' : '?'
+  return `${item.imageRawSrc}${separator}_retry=${seed}`
+}
+const onImageLoadError = (item) => {
+  const key = getItemKey(item)
+  if (!key) return
+  imageErrorState[key] = true
+}
+const retryLoadImage = (item) => {
+  const key = getItemKey(item)
+  if (!key) return
+  imageErrorState[key] = false
+  imageRetrySeed[key] = Date.now()
 }
 
 const syncFilterType = () => {
@@ -180,8 +212,88 @@ const onResetFilters = () => {
   onSearch()
 }
 
-const previewImages = computed(() => list.value.map((item) => item.imageSrc).filter(Boolean))
+// 仅在打开预览时生成数组，避免列表更新时频繁全量 map/filter
+const previewImages = computed(() => {
+  if (!state.showPreview) return []
+  return list.value.map((item) => item.imageSrc).filter(Boolean)
+})
 const previewStartPosition = computed(() => Math.max(0, longPress.selectedIndex))
+const gridColumns = computed(() => {
+  const width = state.viewportWidth
+  if (width >= 1200) return 4
+  if (width >= 768) return 3
+  return 2
+})
+const cardWidth = computed(() => {
+  const pageWidth = Math.min(state.viewportWidth, 1080)
+  const contentWidth = Math.max(0, pageWidth - 24)
+  return Math.max(80, (contentWidth - GRID_GAP * (gridColumns.value - 1)) / gridColumns.value)
+})
+
+const getItemHeight = (item) => {
+  const width = Number(item?.width) || 0
+  const height = Number(item?.height) || 0
+  if (width > 0 && height > 0) {
+    const calculated = (cardWidth.value * height) / width
+    return Math.max(100, Math.min(520, Math.round(calculated)))
+  }
+  return FALLBACK_ITEM_HEIGHT
+}
+
+const virtualColumns = computed(() => {
+  const columns = Array.from({ length: gridColumns.value }, () => ({
+    items: [],
+    totalHeight: 0,
+    topSpacer: 0,
+    bottomSpacer: 0
+  }))
+  list.value.forEach((item, index) => {
+    const columnIndex = index % gridColumns.value
+    const height = getItemHeight(item)
+    columns[columnIndex].items.push({
+      item,
+      globalIndex: index,
+      height
+    })
+  })
+
+  const viewportTop = state.scrollTop - GRID_BUFFER_PX
+  const viewportBottom = state.scrollTop + state.viewportHeight + GRID_BUFFER_PX
+
+  return columns.map((column) => {
+    let accumulated = 0
+    let start = 0
+    while (start < column.items.length) {
+      const rowHeight = column.items[start].height + GRID_GAP
+      if (accumulated + rowHeight >= viewportTop) break
+      accumulated += rowHeight
+      start += 1
+    }
+
+    let end = start
+    let visibleHeight = accumulated
+    while (end < column.items.length) {
+      const rowHeight = column.items[end].height + GRID_GAP
+      if (visibleHeight >= viewportBottom) break
+      visibleHeight += rowHeight
+      end += 1
+    }
+
+    const topSpacer = accumulated
+    let totalHeight = 0
+    for (let i = 0; i < column.items.length; i += 1) {
+      totalHeight += column.items[i].height + GRID_GAP
+    }
+    const renderedHeight = Math.max(0, visibleHeight - accumulated)
+    const bottomSpacer = Math.max(0, totalHeight - topSpacer - renderedHeight)
+    return {
+      items: column.items.slice(start, end),
+      totalHeight,
+      topSpacer,
+      bottomSpacer
+    }
+  })
+})
 
 const openPreview = (index) => {
   if (!list.value[index]?.imageSrc) return
@@ -287,6 +399,27 @@ const openActionByIndex = (index) => {
   state.showActionPopup = true
 }
 
+const onPageScroll = (event) => {
+  const container = event?.target || pageWrapperRef.value
+  if (!container) return
+  const scrollTop = container.scrollTop || 0
+  state.scrollTop = scrollTop
+  const clientHeight = container.clientHeight || state.viewportHeight
+  const scrollHeight = container.scrollHeight || clientHeight
+  if (
+    scrollHeight - (scrollTop + clientHeight) < 240 &&
+    !state.loading &&
+    !state.finished
+  ) {
+    onLoadMore()
+  }
+}
+
+const onPageResize = () => {
+  state.viewportHeight = window.innerHeight
+  state.viewportWidth = window.innerWidth
+}
+
 const onFilterResourceTypeChange = () => {
   const first = sourceOptions.value[0]
   form.resourceName = first ? first.value : ''
@@ -309,9 +442,14 @@ onUnmounted(() => {
     clearTimeout(longPress.timer)
     longPress.timer = null
   }
+  window.removeEventListener('resize', onPageResize)
 })
 
 const init = async () => {
+  state.viewportHeight = window.innerHeight
+  state.viewportWidth = window.innerWidth
+  state.scrollTop = pageWrapperRef.value?.scrollTop || 0
+  window.addEventListener('resize', onPageResize, { passive: true })
   const first = sourceOptions.value[0]
   form.resourceName = first ? first.value : ''
   syncFilterType()
@@ -326,7 +464,7 @@ onMounted(init)
 </script>
 
 <template>
-  <div class="page-wrapper page-search">
+  <div ref="pageWrapperRef" class="page-wrapper page-search" @scroll.passive="onPageScroll">
     <div class="page-search-inner">
       <div class="search-toolbar">
         <div class="search-row">
@@ -343,33 +481,53 @@ onMounted(init)
       </div>
 
       <van-pull-refresh v-model="state.refreshing" :disabled="state.loading" @refresh="onRefresh">
-        <van-list
-          v-model:loading="state.loading"
-          :finished="state.finished"
-          :finished-text="t('messages.noMoreData')"
-          @load="onLoadMore"
-        >
+        <div>
           <div v-if="state.loading && !list.length" class="result-list result-list-skeleton">
             <van-skeleton v-for="i in 4" :key="i" avatar :row="2" />
           </div>
-          <div v-if="list.length" class="result-list">
-            <div
-              v-for="(item, index) in list"
-              :key="item.id || item.uniqueKey"
-              class="result-item"
-              @touchstart="(e) => onImageTouchStart(index, e)"
-              @touchmove="onImageTouchMove"
-              @touchend="onImageTouchEnd"
-              @touchcancel="onImageTouchEnd"
-              @contextmenu.prevent="openActionByIndex(index)"
-            >
-              <div class="preview-wrap" @click="openPreview(index)">
-                <img class="preview" :src="item.imageSrc" alt="preview" loading="lazy" />
+          <div v-if="list.length" class="result-list-wrap">
+            <div class="result-list">
+              <div
+                v-for="(column, columnIndex) in virtualColumns"
+                :key="`col-${columnIndex}`"
+                class="result-column"
+              >
+                <div class="virtual-spacer" :style="{ height: `${column.topSpacer}px` }"></div>
+                <div
+                  v-for="row in column.items"
+                  :key="row.item.id || row.item.uniqueKey"
+                  class="result-item"
+                  @touchstart="(e) => onImageTouchStart(row.globalIndex, e)"
+                  @touchmove="onImageTouchMove"
+                  @touchend="onImageTouchEnd"
+                  @touchcancel="onImageTouchEnd"
+                  @contextmenu.prevent="openActionByIndex(row.globalIndex)"
+                >
+                  <div class="preview-wrap" :style="{ height: `${row.height}px` }" @click="openPreview(row.globalIndex)">
+                    <div v-if="imageErrorState[getItemKey(row.item)]" class="preview-fallback" @click.stop="retryLoadImage(row.item)">
+                      <van-icon name="photo-fail" size="22" />
+                      <div class="preview-fallback-text">{{ imageLoadFailText }}</div>
+                    </div>
+                    <img
+                      v-else
+                      class="preview"
+                      :src="getDisplayImageSrc(row.item)"
+                      alt="preview"
+                      loading="lazy"
+                      decoding="async"
+                      :style="{ height: `${row.height}px` }"
+                      @error="onImageLoadError(row.item)"
+                    />
+                  </div>
+                </div>
+                <div class="virtual-spacer" :style="{ height: `${column.bottomSpacer}px` }"></div>
               </div>
             </div>
           </div>
           <van-empty v-else-if="state.finished && !state.loading" image="default" :description="t('messages.noData')" />
-        </van-list>
+          <div v-if="state.loading && list.length" class="load-more-text">{{ t('messages.loading') }}</div>
+          <div v-else-if="state.finished && list.length" class="load-more-text">{{ t('messages.noMoreData') }}</div>
+        </div>
       </van-pull-refresh>
     </div>
 
@@ -529,9 +687,17 @@ onMounted(init)
   padding: 0;
 }
 .result-list {
-  padding: 0 12px 12px;
-  column-count: 2;
-  column-gap: 10px;
+  padding: 0 12px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.result-column {
+  flex: 1;
+  min-width: 0;
+}
+.result-list-wrap {
+  padding-bottom: 12px;
 }
 .result-list-skeleton {
   display: grid;
@@ -539,7 +705,6 @@ onMounted(init)
   gap: 10px;
 }
 .result-item {
-  display: inline-block;
   width: 100%;
   margin-bottom: 10px;
   padding: 0;
@@ -549,17 +714,48 @@ onMounted(init)
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
   overflow: hidden;
   break-inside: avoid;
+  content-visibility: auto;
+  contain-intrinsic-size: 280px;
 }
 .preview-wrap {
   border-radius: 0;
   overflow: hidden;
   background: rgba(0, 0, 0, 0.05);
 }
+.preview-fallback {
+  width: 100%;
+  height: 100%;
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--van-text-color-2);
+  background: rgba(0, 0, 0, 0.03);
+}
+.preview-fallback-text {
+  font-size: 12px;
+  line-height: 1.2;
+  max-width: calc(100% - 20px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+}
 .preview {
   width: 100%;
-  height: auto;
   display: block;
   object-fit: contain;
+}
+.virtual-spacer {
+  width: 100%;
+}
+.load-more-text {
+  text-align: center;
+  color: var(--van-text-color-3);
+  font-size: 12px;
+  padding: 8px 0 12px;
 }
 .filter-panel {
   padding: 16px;
@@ -655,13 +851,13 @@ onMounted(init)
   }
 
   .result-list {
-    column-count: 3;
+    gap: 10px;
   }
 }
 
 @media (min-width: 1200px) {
   .result-list {
-    column-count: 4;
+    gap: 10px;
   }
 }
 </style>

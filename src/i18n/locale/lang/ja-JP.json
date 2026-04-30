@@ -318,6 +318,7 @@
   "messages": {
     "operationSuccess": "操作成功！",
     "operationFail": "操作失敗！",
+    "imageLoadRetryHint": "画像失敗、タップで再試行",
     "pluginOperationSuccessButRefreshFailed": "{message}。ただし、リソースプラグインマッピングの更新に失敗しました。アプリを再起動して再試行してください。",
     "operationIllegal": "不正な操作！",
     "operationInProgress": "操作実行中！",

@@ -323,6 +323,7 @@
   "messages": {
     "operationSuccess": "操作成功！",
     "operationFail": "操作失败！",
+    "imageLoadRetryHint": "图片加载失败，点击重试",
     "pluginOperationSuccessButRefreshFailed": "{message}，但资源插件映射刷新失败，请重启应用后重试",
     "operationIllegal": "非法操作！",
     "operationInProgress": "操作执行中！",

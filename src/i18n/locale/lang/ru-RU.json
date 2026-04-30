@@ -318,6 +318,7 @@
   "messages": {
     "operationSuccess": "Операция выполнена успешно!",
     "operationFail": "Ошибка операции!",
+    "imageLoadRetryHint": "Ошибка изображения, нажмите повтор",
     "pluginOperationSuccessButRefreshFailed": "{message}, но обновление сопоставления плагинов ресурсов не удалось. Перезапустите приложение и попробуйте снова.",
     "operationIllegal": "Недопустимая операция!",
     "operationInProgress": "Операция выполняется!",

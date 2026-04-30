@@ -94,7 +94,7 @@ export const handleImageResponse = async (query) => {
     let T1, T2, T3, T4
     T1 = Date.now()
     // 获取图片 URL 和尺寸
-    let { filePath, w, compressStartSize } = query
+    let { filePath, w, compressStartSize, requestHeaders } = query
     if (!filePath) {
       // 缺少文件路径参数，返回400错误
       ret.status = 400
@@ -105,10 +105,24 @@ export const handleImageResponse = async (query) => {
     // 计算图片尺寸
     const width = w ? parseInt(w, 10) : null
     // 生成缓存键
-    const cacheKey = `filePath=${filePath}&width=${width}`
+    const normalizedCompressStartSize = Number.parseInt(compressStartSize, 10) || 0
+    const cacheKey = `filePath=${filePath}&width=${width}&compressStartSize=${normalizedCompressStartSize}`
     // 1. 先查缓存（只缓存小图/小文件）
     if (cache.has(cacheKey)) {
       const cacheData = cache.get(cacheKey)
+      const cacheEtag = cacheData?.headers?.ETag
+      const cacheLastModified = cacheData?.headers?.['Last-Modified']
+      if (isNotModified(requestHeaders, cacheEtag, cacheLastModified)) {
+        ret.status = 304
+        ret.headers = {
+          ETag: cacheEtag,
+          'Last-Modified': cacheLastModified,
+          'Cache-Control': cacheData?.headers?.['Cache-Control'] || 'max-age=3600',
+          'Server-Timing': `cache-hit-304;dur=${Date.now() - T1}`
+        }
+        ret.data = null
+        return ret
+      }
       // 返回文件内容和 MIME 类型
       ret.status = 200
       ret.headers = {
@@ -125,10 +139,22 @@ export const handleImageResponse = async (query) => {
     const originalFileSize = stats.size
     const extension = path.extname(filePath).toLowerCase()
     const mimeType = mimeTypes[extension] || 'application/octet-stream'
+    const etag = `"${stats.mtimeMs}-${originalFileSize}"`
+    const lastModified = stats.mtime.toUTCString()
+    if (isNotModified(requestHeaders, etag, lastModified)) {
+      ret.status = 304
+      ret.headers = {
+        ETag: etag,
+        'Last-Modified': lastModified,
+        'Cache-Control': 'max-age=3600'
+      }
+      ret.data = null
+      return ret
+    }
     const CACHE_LIMIT = 10 * 1024 * 1024 // 10MB
     T3 = Date.now()
     // 计算压缩起始大小（单位字节）
-    const startSize = (compressStartSize ? parseInt(compressStartSize, 10) : 0) * 1024 * 1024
+    const startSize = normalizedCompressStartSize * 1024 * 1024
     // 判断是否需要 sharp 缩放（需满足格式、width、且大于compressStartSize）
     const canResize =
       ['.png', '.jpg', '.jpeg', '.avif', '.webp', '.gif'].includes(extension) && width
@@ -157,8 +183,8 @@ export const handleImageResponse = async (query) => {
         'Original-Size': originalFileSize,
         'Compressed-Size': fileSize,
         'Cache-Control': 'max-age=3600',
-        ETag: `"${stats.mtimeMs}-${originalFileSize}"`,
-        'Last-Modified': stats.mtime.toUTCString(),
+        ETag: etag,
+        'Last-Modified': lastModified,
         'Server-Timing': `file-check;dur=${T2 - T1}, file-stat;dur=${T3 - T2}, resize;dur=${T4 - T3}, total;dur=${T4 - T1}`,
         'X-File-Check-Time': T2 - T1 + 'ms',
         'X-File-Stat-Time': T3 - T2 + 'ms',
@@ -180,8 +206,8 @@ export const handleImageResponse = async (query) => {
         'Content-Type': mimeType,
         'Cache-Control': 'max-age=3600',
         'Original-Size': originalFileSize,
-        'Last-Modified': stats.mtime.toUTCString(),
-        ETag: `"${stats.mtimeMs}-${originalFileSize}"`
+        'Last-Modified': lastModified,
+        ETag: etag
       }
       if (needResize) {
         const inputStream = fs.createReadStream(filePath)
@@ -220,6 +246,22 @@ export const handleImageResponse = async (query) => {
     }
     return ret
   }
+}
+
+const isNotModified = (requestHeaders = {}, etag = '', lastModified = '') => {
+  const ifNoneMatch = requestHeaders?.['if-none-match']
+  if (ifNoneMatch && etag && ifNoneMatch === etag) {
+    return true
+  }
+  const ifModifiedSince = requestHeaders?.['if-modified-since']
+  if (ifModifiedSince && lastModified) {
+    const requestTime = Date.parse(ifModifiedSince)
+    const lastModifiedTime = Date.parse(lastModified)
+    if (!Number.isNaN(requestTime) && !Number.isNaN(lastModifiedTime) && requestTime >= lastModifiedTime) {
+      return true
+    }
+  }
+  return false
 }
 
 export const transFilePath = (filePath) => {

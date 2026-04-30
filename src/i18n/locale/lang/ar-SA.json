@@ -318,6 +318,7 @@
   "messages": {
     "operationSuccess": "نجحت العملية!",
     "operationFail": "فشلت العملية!",
+    "imageLoadRetryHint": "فشل تحميل الصورة، اضغط لإعادة المحاولة",
     "pluginOperationSuccessButRefreshFailed": "{message}، لكن فشل تحديث تعيين ملحقات الموارد. يرجى إعادة تشغيل التطبيق ثم المحاولة مرة أخرى.",
     "operationIllegal": "عملية غير قانونية!",
     "operationInProgress": "العملية قيد التنفيذ!",

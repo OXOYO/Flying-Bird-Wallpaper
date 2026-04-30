@@ -318,6 +318,7 @@
   "messages": {
     "operationSuccess": "작업 성공!",
     "operationFail": "작업 실패!",
+    "imageLoadRetryHint": "이미지 실패, 탭하여 재시도",
     "pluginOperationSuccessButRefreshFailed": "{message}, 하지만 리소스 플러그인 매핑 새로고침에 실패했습니다. 앱을 재시작한 뒤 다시 시도해 주세요.",
     "operationIllegal": "잘못된 작업!",
     "operationInProgress": "작업 실행 중!",

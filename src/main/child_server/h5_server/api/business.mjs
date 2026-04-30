@@ -41,12 +41,17 @@ export const registerBusinessApi = (router, deps) => {
     ctx.req.setTimeout(0)
     ctx.respond = false
     const res = ctx.res
-    res.writeHead(200, {
+    const isHttp2 = Number(ctx.req?.httpVersionMajor || 1) >= 2
+    const sseHeaders = {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache, no-transform',
-      Connection: 'keep-alive',
       'Access-Control-Allow-Origin': '*'
-    })
+    }
+    // HTTP/2 禁止 connection 头，否则可能触发协议错误
+    if (!isHttp2) {
+      sseHeaders.Connection = 'keep-alive'
+    }
+    res.writeHead(200, sseHeaders)
     res.write(': connected\n\n')
     const client = { id: `${Date.now()}_${Math.random()}`, res }
     sseHub.clients.add(client)

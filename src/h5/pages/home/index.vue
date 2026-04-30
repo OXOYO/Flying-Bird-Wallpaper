@@ -96,6 +96,28 @@ const tabbarBtnTouch = reactive({
   timer: null
 })
 
+// 禁止双击缩放相关状态（用于移除监听，避免内存泄漏）
+let pullToRefreshLastTouchEnd = 0
+const handlePreventDoubleTapZoom = (e) => {
+  const now = Date.now()
+  if (now - pullToRefreshLastTouchEnd <= 300) {
+    e.preventDefault()
+  }
+  pullToRefreshLastTouchEnd = now
+}
+
+// “无更多数据”提示节流，避免重复弹出
+let noMoreNotifyAt = 0
+const notifyNoMoreData = () => {
+  const now = Date.now()
+  if (now - noMoreNotifyAt < 1200) return
+  noMoreNotifyAt = now
+  showNotify({
+    type: 'warning',
+    message: t('messages.noMoreData')
+  })
+}
+
 // 是否随机
 const isRandom = computed(() => {
   // 1:随机 2:顺序
@@ -366,10 +388,7 @@ const loadData = async (isRefresh) => {
   // 如果加载完成但有数据，显示没有更多数据的提示
   if (flags.finished && autoSwitch.imageList.length > 0) {
     stopAutoSwitch()
-    showNotify({
-      type: 'warning',
-      message: t('messages.noMoreData')
-    })
+    notifyNoMoreData()
     return
   }
 }
@@ -443,10 +462,7 @@ const onTouchEnd = (event) => {
     settingData.value.h5AutoSwitch
   ) {
     stopAutoSwitch()
-    showNotify({
-      type: 'warning',
-      message: t('messages.noMoreData')
-    })
+    notifyNoMoreData()
     return
   }
 }
@@ -471,10 +487,7 @@ const startAutoSwitch = () => {
   // 如果已经到达最后一张且已加载完所有数据，则不启动自动翻页
   if (autoSwitch.currentIndex === autoSwitch.imageList.length - 1 && flags.finished) {
     stopAutoSwitch()
-    showNotify({
-      type: 'warning',
-      message: t('messages.noMoreData')
-    })
+    notifyNoMoreData()
     return
   }
 
@@ -512,10 +525,7 @@ const startAutoSwitch = () => {
       }
     } else {
       stopAutoSwitch() // 如果已经加载完成，则停止自动翻页
-      showNotify({
-        type: 'warning',
-        message: t('messages.noMoreData')
-      })
+      notifyNoMoreData()
     }
   }, settingData.value.h5SwitchIntervalTime * 1000)
 }
@@ -1229,18 +1239,7 @@ onDeactivated(() => {
 // 禁用下拉刷新功能
 const disablePullToRefresh = () => {
   // 阻止双击缩放
-  let lastTouchEnd = 0
-  document.addEventListener(
-    'touchend',
-    (e) => {
-      const now = new Date().getTime()
-      if (now - lastTouchEnd <= 300) {
-        e.preventDefault()
-      }
-      lastTouchEnd = now
-    },
-    { passive: false }
-  )
+  document.addEventListener('touchend', handlePreventDoubleTapZoom, { passive: false })
 }
 
 // 组件卸载时停止自动翻页并移除事件监听
@@ -1288,6 +1287,7 @@ onUnmounted(() => {
   window.removeEventListener('pagehide', handlePageHide)
   window.removeEventListener('pageshow', handlePageShow)
   window.removeEventListener('resize', handleResize)
+  document.removeEventListener('touchend', handlePreventDoubleTapZoom)
 
   // 清理图片缩放状态
   Object.keys(imageScales).forEach((key) => {

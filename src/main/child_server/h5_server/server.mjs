@@ -78,16 +78,16 @@ export default async ({
       }
     }
 
-    // 创建支持HTTP/1.1和HTTP/2的服务器
-    // 使用allowHTTP1选项允许HTTP/1.1连接（用于WebSocket）
+    // 启用 HTTP/2，同时兼容 HTTP/1.1
     if (useHttps && sslOptions) {
       httpServer = http2.createSecureServer({
         ...sslOptions,
-        allowHTTP1: true // 允许HTTP/1.1连接，支持WebSocket
+        allowHTTP1: true
       })
-      logger.info('[H5Server] INFO => 已创建支持HTTP/1.1和HTTP/2的HTTPS服务器')
+      logger.info('[H5Server] INFO => 已创建HTTPS服务器(HTTP/2 + HTTP/1.1)')
     } else {
       httpServer = http2.createServer({ allowHTTP1: true })
+      logger.info('[H5Server] INFO => 已创建HTTP服务器(HTTP/2 + HTTP/1.1)')
     }
 
     // 包装 postMessage 函数，确保它能正常工作

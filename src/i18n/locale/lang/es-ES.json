@@ -318,6 +318,7 @@
   "messages": {
     "operationSuccess": "¡Operación exitosa!",
     "operationFail": "¡Operación fallida!",
+    "imageLoadRetryHint": "Error de imagen, toque para reintentar",
     "pluginOperationSuccessButRefreshFailed": "{message}, pero falló la actualización del mapeo de plugins de recursos. Reinicie la aplicación e inténtelo de nuevo.",
     "operationIllegal": "¡Operación ilegal!",
     "operationInProgress": "¡Operación en ejecución!",
