@@ -36,6 +36,7 @@ const state = reactive({
   showFilters: false,
   showActionPopup: false,
   showPreview: false,
+  showVideoPreview: false,
   viewportHeight: typeof window !== 'undefined' ? window.innerHeight : 800,
   scrollTop: 0,
   viewportWidth: typeof window !== 'undefined' ? window.innerWidth : 375
@@ -43,6 +44,7 @@ const state = reactive({
 const imageInfoPanelAnchors = [0, Math.round(0.55 * window.innerHeight)]
 const imageInfoPanelHeight = ref(imageInfoPanelAnchors[0])
 const pageWrapperRef = ref(null)
+const videoPreviewRef = ref(null)
 
 const list = ref([])
 const FALLBACK_ITEM_HEIGHT = 220
@@ -88,22 +90,61 @@ const filterTypeDropdownOptions = computed(() => {
 })
 
 const normalizeItem = (item) => {
+  const isVideo = item.fileType === 'video'
+
+  if (isVideo) {
+    let posterRaw = ''
+    let videoSrc = ''
+
+    if (item.srcType === 'file') {
+      videoSrc = `/api/videos/get?filePath=${encodeURIComponent(item.filePath)}`
+      const iu = item.imageUrl || ''
+      if (iu) {
+        posterRaw = /^https?:\/\//i.test(iu)
+          ? iu
+          : `/api/images/get?filePath=${encodeURIComponent(iu)}`
+      }
+    } else {
+      videoSrc = item.videoUrl || ''
+      posterRaw = item.imageUrl || ''
+    }
+
+    return {
+      ...item,
+      isVideo: true,
+      posterSrc: posterRaw,
+      posterRawSrc: posterRaw,
+      videoSrc,
+      imageSrc: posterRaw,
+      imageRawSrc: posterRaw
+    }
+  }
+
   if (item.srcType === 'file') {
     const rawUrl = `/api/images/get?filePath=${encodeURIComponent(item.filePath)}`
     return {
       ...item,
+      isVideo: false,
+      posterSrc: '',
+      posterRawSrc: '',
+      videoSrc: '',
       imageSrc: rawUrl,
       imageRawSrc: rawUrl
     }
   }
   return {
     ...item,
+    isVideo: false,
+    posterSrc: '',
+    posterRawSrc: '',
+    videoSrc: '',
     imageSrc: item.imageUrl || '',
     imageRawSrc: item.imageUrl || ''
   }
 }
 
-const getItemKey = (item) => String(item?.id || item?.uniqueKey || item?.filePath || item?.imageSrc || '')
+const getItemKey = (item) =>
+  String(item?.id || item?.uniqueKey || item?.filePath || item?.videoSrc || item?.imageSrc || '')
 const getDisplayImageSrc = (item) => {
   const key = getItemKey(item)
   const seed = imageRetrySeed[key] || 0
@@ -111,17 +152,28 @@ const getDisplayImageSrc = (item) => {
   const separator = item.imageRawSrc?.includes('?') ? '&' : '?'
   return `${item.imageRawSrc}${separator}_retry=${seed}`
 }
+const getDisplayPosterSrc = (item) => {
+  const key = getItemKey(item)
+  const seed = imageRetrySeed[key] || 0
+  const raw = item.posterRawSrc || ''
+  if (!raw) return ''
+  if (!seed) return item.posterSrc || raw
+  const separator = raw.includes('?') ? '&' : '?'
+  return `${raw}${separator}_retry=${seed}`
+}
 const onImageLoadError = (item) => {
   const key = getItemKey(item)
   if (!key) return
   imageErrorState[key] = true
 }
+const onPosterLoadError = onImageLoadError
 const retryLoadImage = (item) => {
   const key = getItemKey(item)
   if (!key) return
   imageErrorState[key] = false
   imageRetrySeed[key] = Date.now()
 }
+const retryLoadPoster = retryLoadImage
 
 const syncFilterType = () => {
   const target = filterTypeAvailable.value.find((item) => item.value === form.filterType)
@@ -212,12 +264,27 @@ const onResetFilters = () => {
   onSearch()
 }
 
-// 仅在打开预览时生成数组，避免列表更新时频繁全量 map/filter
+// 仅在打开预览时生成数组；排除视频项，避免与 van-image-preview 下标错位
 const previewImages = computed(() => {
   if (!state.showPreview) return []
-  return list.value.map((item) => item.imageSrc).filter(Boolean)
+  return list.value.filter((item) => item.fileType !== 'video').map((item) => item.imageSrc).filter(Boolean)
 })
-const previewStartPosition = computed(() => Math.max(0, longPress.selectedIndex))
+const previewStartPosition = computed(() => {
+  if (!state.showPreview || longPress.selectedIndex < 0) return 0
+  const sel = list.value[longPress.selectedIndex]
+  if (!sel || sel.fileType === 'video') return 0
+  let pos = 0
+  for (let i = 0; i < longPress.selectedIndex; i++) {
+    const row = list.value[i]
+    if (row?.fileType !== 'video' && row?.imageSrc) pos++
+  }
+  return pos
+})
+
+const videoPreviewItem = computed(() => {
+  if (!state.showVideoPreview || longPress.selectedIndex < 0) return null
+  return list.value[longPress.selectedIndex] || null
+})
 const gridColumns = computed(() => {
   const width = state.viewportWidth
   if (width >= 1200) return 4
@@ -295,9 +362,38 @@ const virtualColumns = computed(() => {
   })
 })
 
+const closeVideoPreview = () => {
+  state.showVideoPreview = false
+}
+
+const onVideoPreviewClosed = () => {
+  const el = videoPreviewRef.value
+  if (!el) return
+  try {
+    el.pause()
+    el.removeAttribute('src')
+    el.load()
+  } catch (_) {
+    /* noop */
+  }
+}
+
 const openPreview = (index) => {
-  if (!list.value[index]?.imageSrc) return
+  const row = list.value[index]
+  if (!row) return
   longPress.selectedIndex = index
+  if (row.fileType === 'video') {
+    if (!row.videoSrc) {
+      showNotify({
+        type: 'warning',
+        message: t('messages.noData')
+      })
+      return
+    }
+    state.showVideoPreview = true
+    return
+  }
+  if (!row.imageSrc) return
   state.showPreview = true
 }
 
@@ -343,8 +439,10 @@ const saveImage = async () => {
   if (!item) return
   try {
     const link = document.createElement('a')
-    link.href = item.imageSrc
-    link.download = `${item.fileName || item.id || Date.now()}.${item.fileExt || 'jpg'}`
+    const isVideo = item.fileType === 'video'
+    link.href = isVideo ? item.videoSrc : item.imageSrc
+    const defaultExt = isVideo ? 'mp4' : 'jpg'
+    link.download = `${item.fileName || item.id || Date.now()}.${item.fileExt || defaultExt}`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -503,21 +601,61 @@ onMounted(init)
                   @touchcancel="onImageTouchEnd"
                   @contextmenu.prevent="openActionByIndex(row.globalIndex)"
                 >
-                  <div class="preview-wrap" :style="{ height: `${row.height}px` }" @click="openPreview(row.globalIndex)">
-                    <div v-if="imageErrorState[getItemKey(row.item)]" class="preview-fallback" @click.stop="retryLoadImage(row.item)">
-                      <van-icon name="photo-fail" size="22" />
-                      <div class="preview-fallback-text">{{ imageLoadFailText }}</div>
-                    </div>
-                    <img
-                      v-else
-                      class="preview"
-                      :src="getDisplayImageSrc(row.item)"
-                      alt="preview"
-                      loading="lazy"
-                      decoding="async"
-                      :style="{ height: `${row.height}px` }"
-                      @error="onImageLoadError(row.item)"
-                    />
+                  <div
+                    class="preview-wrap"
+                    :class="{ 'preview-wrap--video': row.item.fileType === 'video' }"
+                    :style="{ height: `${row.height}px` }"
+                    role="button"
+                    tabindex="0"
+                    @click="openPreview(row.globalIndex)"
+                    @keydown.enter.prevent="openPreview(row.globalIndex)"
+                  >
+                    <template v-if="row.item.fileType === 'video'">
+                      <div
+                        v-if="row.item.posterSrc && imageErrorState[getItemKey(row.item)]"
+                        class="preview-fallback"
+                        @click.stop="retryLoadPoster(row.item)"
+                      >
+                        <van-icon name="photo-fail" size="22" />
+                        <div class="preview-fallback-text">{{ imageLoadFailText }}</div>
+                      </div>
+                      <img
+                        v-else-if="row.item.posterSrc"
+                        class="preview preview--poster"
+                        :src="getDisplayPosterSrc(row.item)"
+                        alt=""
+                        loading="lazy"
+                        decoding="async"
+                        :style="{ height: `${row.height}px` }"
+                        @error="onPosterLoadError(row.item)"
+                      />
+                      <div v-else class="preview-video-placeholder" :style="{ minHeight: `${row.height}px` }">
+                        <IconifyIcon class="preview-video-ph-icon" icon="custom:video" />
+                      </div>
+                      <div class="video-play-badge" aria-hidden="true">
+                        <IconifyIcon class="video-play-badge-icon" icon="custom:play-circle" />
+                      </div>
+                    </template>
+                    <template v-else>
+                      <div
+                        v-if="imageErrorState[getItemKey(row.item)]"
+                        class="preview-fallback"
+                        @click.stop="retryLoadImage(row.item)"
+                      >
+                        <van-icon name="photo-fail" size="22" />
+                        <div class="preview-fallback-text">{{ imageLoadFailText }}</div>
+                      </div>
+                      <img
+                        v-else
+                        class="preview"
+                        :src="getDisplayImageSrc(row.item)"
+                        alt="preview"
+                        loading="lazy"
+                        decoding="async"
+                        :style="{ height: `${row.height}px` }"
+                        @error="onImageLoadError(row.item)"
+                      />
+                    </template>
                   </div>
                 </div>
                 <div class="virtual-spacer" :style="{ height: `${column.bottomSpacer}px` }"></div>
@@ -589,6 +727,31 @@ onMounted(init)
             <van-icon name="search" />
           </van-button>
         </div>
+      </div>
+    </van-popup>
+
+    <van-popup
+      v-model:show="state.showVideoPreview"
+      position="center"
+      teleport="body"
+      class="h5-video-preview-popup"
+      :overlay-style="{ background: 'rgba(0,0,0,0.92)' }"
+      @closed="onVideoPreviewClosed"
+    >
+      <div class="h5-video-preview-shell">
+        <button type="button" class="h5-video-preview-close" @click="closeVideoPreview">×</button>
+        <video
+          ref="videoPreviewRef"
+          class="h5-video-preview-el"
+          controls
+          playsinline
+          webkit-playsinline
+          x5-video-player-type="h5"
+          x5-playsinline
+          preload="metadata"
+          :poster="videoPreviewItem?.posterSrc || ''"
+          :src="videoPreviewItem?.videoSrc || ''"
+        />
       </div>
     </van-popup>
 
@@ -747,6 +910,78 @@ onMounted(init)
   width: 100%;
   display: block;
   object-fit: contain;
+}
+.preview-wrap--video {
+  position: relative;
+  cursor: pointer;
+}
+.preview-video-placeholder {
+  width: 100%;
+  height: 100%;
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--van-text-color-3);
+  background: rgba(0, 0, 0, 0.06);
+}
+.video-play-badge {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  color: rgba(255, 255, 255, 0.95);
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.45));
+}
+.preview-video-ph-icon {
+  font-size: 40px;
+  opacity: 0.55;
+}
+.video-play-badge-icon {
+  font-size: 44px;
+}
+.h5-video-preview-shell {
+  position: relative;
+  width: min(100vw, 960px);
+  margin: 0 auto;
+  padding: 44px 12px 20px;
+  box-sizing: border-box;
+}
+.h5-video-preview-el {
+  display: block;
+  width: 100%;
+  max-height: min(78vh, 720px);
+  border-radius: 8px;
+  background: #000;
+}
+.h5-video-preview-close {
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  z-index: 2;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  font-size: 28px;
+  line-height: 40px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+}
+.h5-video-preview-close:active {
+  background: rgba(0, 0, 0, 0.5);
+}
+:deep(.h5-video-preview-popup.van-popup) {
+  width: 100%;
+  max-width: 100vw;
+  height: 100%;
+  max-height: 100vh;
+  overflow: hidden;
+  background: transparent;
 }
 .virtual-spacer {
   width: 100%;
