@@ -1272,13 +1272,41 @@ const getRecords = (startIndex, size = 5) => {
   return toRaw(cardList.value).slice(start, end)
 }
 
+// 列表在异步操作过程中可能刷新或重排，用 uniqueKey / id 对齐 cardList 下标（避免误删、误改）
+const resolveCardListIndex = (slotItem, slotIndex) => {
+  const list = cardList.value
+  if (!list.length) {
+    return -1
+  }
+  if (
+    slotIndex >= 0 &&
+    slotIndex < list.length &&
+    list[slotIndex].uniqueKey === slotItem.uniqueKey
+  ) {
+    return slotIndex
+  }
+  let i = list.findIndex((r) => r.uniqueKey === slotItem.uniqueKey)
+  if (i >= 0) {
+    return i
+  }
+  if (slotItem.id != null) {
+    i = list.findIndex((r) => r.id === slotItem.id)
+  }
+  return i
+}
+
 // 加入收藏夹或隐私空间
 const addToFavorites = async (item, index, isPrivacySpace = false) => {
   const res = await window.FBW.addToFavorites(item.id, isPrivacySpace)
   // 在加入隐私空间后需要将该条记录从收藏夹移除
   let callback
   if (res.success) {
-    item.isFavorite = 1
+    const rowIndex = resolveCardListIndex(item, index)
+    if (rowIndex >= 0) {
+      cardList.value[rowIndex].isFavorite = 1
+    } else {
+      item.isFavorite = 1
+    }
     if (isPrivacySpace) {
       if (isFavoritesMenu.value) {
         callback = async () => {
@@ -1298,7 +1326,12 @@ const removeFavorites = async (item, index, isPrivacySpace = false) => {
   const res = await window.FBW.removeFavorites(item.id, isPrivacySpace)
   let callback
   if (res.success) {
-    item.isFavorite = 0
+    const rowIndex = resolveCardListIndex(item, index)
+    if (rowIndex >= 0) {
+      cardList.value[rowIndex].isFavorite = 0
+    } else {
+      item.isFavorite = 0
+    }
     if (isFavoritesMenu.value || isPrivacySpace) {
       callback = async () => {
         await onRefresh(true)
@@ -1332,7 +1365,10 @@ const onDeleteFile = (item, index) => {
     let callback
     if (res.success) {
       callback = async () => {
-        cardList.value.splice(index, 1)
+        const idx = resolveCardListIndex(item, index)
+        if (idx >= 0) {
+          cardList.value.splice(idx, 1)
+        }
         searchForm.total = Math.max(0, searchForm.total - 1)
         await doCompleteList()
         // 强制更新

@@ -70,7 +70,7 @@ const visibleRange = computed(() => {
   return { start, end }
 })
 
-// 计算可见的项目
+// 计算可见的项目（必须传 props.items 中的原始引用，避免浅拷贝导致子组件改不动源数据）
 const visibleItems = computed(() => {
   const { start, end } = visibleRange.value
 
@@ -79,7 +79,7 @@ const visibleItems = computed(() => {
   const endIndex = Math.min(props.items.length - 1, end)
 
   return props.items.slice(startIndex, endIndex + 1).map((item, offset) => ({
-    ...item,
+    item,
     index: startIndex + offset
   }))
 })
@@ -93,16 +93,16 @@ const wrapperStyle = computed(() => {
 
 const styleCache = new Map()
 
-// 获取项目样式
-const getItemStyle = (item) => {
-  const cacheKey = `${item.index}_${props.gridSize}_${props.itemHeight}_${props.gridGap}_${props.itemWidth}`
+// 获取项目样式（row: { item, index }）
+const getItemStyle = (row) => {
+  const cacheKey = `${row.index}_${props.gridSize}_${props.itemHeight}_${props.gridGap}_${props.itemWidth}`
 
   if (styleCache.has(cacheKey)) {
     return styleCache.get(cacheKey)
   }
 
-  const row = Math.floor(item.index / props.gridSize)
-  const col = item.index % props.gridSize
+  const gridRow = Math.floor(row.index / props.gridSize)
+  const col = row.index % props.gridSize
 
   const gridGap = props.gridGap
 
@@ -120,7 +120,7 @@ const getItemStyle = (item) => {
     : `calc(${itemWidthPercent}% - ${(totalGap / props.gridSize).toFixed(4)}px)` // 使用toFixed提高精度
 
   const style = {
-    top: `${row * (props.itemHeight + gridGap)}px`,
+    top: `${gridRow * (props.itemHeight + gridGap)}px`,
     left,
     width,
     height: `${props.itemHeight}px`
@@ -220,12 +220,12 @@ defineExpose({
   <el-scrollbar ref="scrollbarRef" class="virtual-list-scrollbar" @scroll="handleScroll">
     <div ref="wrapperRef" class="virtual-list-wrapper" :style="wrapperStyle">
       <div
-        v-for="item in visibleItems"
-        :key="item.uniqueKey"
+        v-for="row in visibleItems"
+        :key="row.item.uniqueKey"
         class="virtual-list-item"
-        :style="getItemStyle(item)"
+        :style="getItemStyle(row)"
       >
-        <slot :item="item" :index="item.index"></slot>
+        <slot :item="row.item" :index="row.index"></slot>
       </div>
     </div>
   </el-scrollbar>
