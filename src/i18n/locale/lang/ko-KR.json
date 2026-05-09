@@ -762,6 +762,11 @@
       "search": {
         "title": "검색",
         "keywordPlaceholder": "키워드를 입력하세요",
+        "displayMode": {
+          "toggleToFullscreen": "Full screen view",
+          "toggleToWaterfall": "Waterfall grid",
+          "indicator": "{current} / {total}"
+        },
         "filters": {
           "title": "검색 조건",
           "all": "전체",

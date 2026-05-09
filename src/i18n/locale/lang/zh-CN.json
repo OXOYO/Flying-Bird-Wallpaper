@@ -765,6 +765,11 @@
       "search": {
         "title": "搜索",
         "keywordPlaceholder": "请输入关键词",
+        "displayMode": {
+          "toggleToFullscreen": "切换为铺满",
+          "toggleToWaterfall": "切换为瀑布流",
+          "indicator": "{current} / {total}"
+        },
         "filters": {
           "title": "搜索条件",
           "all": "全部",

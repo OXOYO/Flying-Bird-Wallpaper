@@ -766,6 +766,11 @@
       "search": {
         "title": "搜尋",
         "keywordPlaceholder": "請輸入關鍵字",
+        "displayMode": {
+          "toggleToFullscreen": "切換為鋪滿",
+          "toggleToWaterfall": "切換為瀑布流",
+          "indicator": "{current} / {total}"
+        },
         "filters": {
           "title": "搜尋條件",
           "all": "全部",

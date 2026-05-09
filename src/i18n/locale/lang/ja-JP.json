@@ -762,6 +762,11 @@
       "search": {
         "title": "検索",
         "keywordPlaceholder": "キーワードを入力",
+        "displayMode": {
+          "toggleToFullscreen": "Full screen view",
+          "toggleToWaterfall": "Waterfall grid",
+          "indicator": "{current} / {total}"
+        },
         "filters": {
           "title": "検索条件",
           "all": "すべて",

@@ -763,6 +763,11 @@
       "search": {
         "title": "Поиск",
         "keywordPlaceholder": "Введите ключевые слова",
+        "displayMode": {
+          "toggleToFullscreen": "Full screen view",
+          "toggleToWaterfall": "Waterfall grid",
+          "indicator": "{current} / {total}"
+        },
         "filters": {
           "title": "Фильтры поиска",
           "all": "Все",

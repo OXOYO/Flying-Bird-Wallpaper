@@ -767,6 +767,11 @@
       "search": {
         "title": "Search",
         "keywordPlaceholder": "Enter keywords",
+        "displayMode": {
+          "toggleToFullscreen": "Full screen view",
+          "toggleToWaterfall": "Waterfall grid",
+          "indicator": "{current} / {total}"
+        },
         "filters": {
           "title": "Search Filters",
           "all": "All",

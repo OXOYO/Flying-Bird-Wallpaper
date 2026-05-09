@@ -6,6 +6,7 @@ import { resourceTypeList, filterTypeOptions, orientationOptions, qualityList } 
 import { useTranslation } from 'i18next-vue'
 import { infoKeys } from '@common/publicData.js'
 import { handleInfoVal } from '@common/utils.js'
+import VirtualList from '@h5/components/VirtualList.vue'
 
 const { t } = useTranslation()
 const commonStore = UseCommonStore()
@@ -45,6 +46,21 @@ const imageInfoPanelAnchors = [0, Math.round(0.55 * window.innerHeight)]
 const imageInfoPanelHeight = ref(imageInfoPanelAnchors[0])
 const pageWrapperRef = ref(null)
 const videoPreviewRef = ref(null)
+const fullscreenListRef = ref(null)
+const fullscreenSliderRef = ref(null)
+const fullscreenMeasuredHeight = ref(420)
+const fullscreenVisibleIndex = ref(0)
+let fullscreenResizeObserver = null
+
+const DISPLAY_MODE_STORAGE_KEY = 'fbw_h5_search_display_mode'
+const readStoredDisplayMode = () => {
+  try {
+    return localStorage.getItem(DISPLAY_MODE_STORAGE_KEY) === 'fullscreen' ? 'fullscreen' : 'waterfall'
+  } catch {
+    return 'waterfall'
+  }
+}
+const displayMode = ref(readStoredDisplayMode())
 
 const list = ref([])
 const FALLBACK_ITEM_HEIGHT = 220
@@ -362,6 +378,98 @@ const virtualColumns = computed(() => {
   })
 })
 
+const slideObjectFit = computed(() =>
+  settingStore.settingData?.h5ImageDisplaySize === 'cover' ? 'cover' : 'contain'
+)
+
+const measureFullscreenHeight = () => {
+  const el = fullscreenSliderRef.value
+  if (el?.clientHeight) {
+    fullscreenMeasuredHeight.value = Math.round(el.clientHeight)
+  }
+}
+
+const bindFullscreenResizeObserver = () => {
+  fullscreenResizeObserver?.disconnect()
+  const el = fullscreenSliderRef.value
+  if (!el || typeof ResizeObserver === 'undefined') return
+  fullscreenResizeObserver = new ResizeObserver((entries) => {
+    const h = entries[0]?.contentRect?.height
+    if (h) {
+      fullscreenMeasuredHeight.value = Math.round(h)
+    }
+  })
+  fullscreenResizeObserver.observe(el)
+}
+
+const fullscreenItemHeight = computed(() =>
+  Math.max(240, fullscreenMeasuredHeight.value || Math.floor(state.viewportHeight * 0.72))
+)
+
+const slideBgUrl = (item) => {
+  if (!item) return ''
+  if (item.fileType === 'video') return getDisplayPosterSrc(item) || ''
+  return getDisplayImageSrc(item) || ''
+}
+
+const layoutToggleTitle = computed(() =>
+  displayMode.value === 'waterfall'
+    ? t('h5.pages.search.displayMode.toggleToFullscreen')
+    : t('h5.pages.search.displayMode.toggleToWaterfall')
+)
+
+const toggleDisplayMode = () => {
+  displayMode.value = displayMode.value === 'waterfall' ? 'fullscreen' : 'waterfall'
+  try {
+    localStorage.setItem(DISPLAY_MODE_STORAGE_KEY, displayMode.value)
+  } catch (_) {
+    /* noop */
+  }
+}
+
+const onFullscreenVirtualScroll = (payload) => {
+  const len = list.value.length
+  if (!len) {
+    fullscreenVisibleIndex.value = 0
+    return
+  }
+  const ih = Math.max(1, fullscreenItemHeight.value)
+  const scrollTop = Math.max(0, Number(payload.scrollTop) || 0)
+  const clientH = Math.max(ih, Number(payload.clientHeight) || ih)
+  // 以视口垂直中心所在项为准，避免半屏滑动时与 visibleStart 不一致
+  const center = scrollTop + clientH / 2
+  const idx = Math.min(Math.max(0, Math.floor(center / ih)), len - 1)
+  fullscreenVisibleIndex.value = idx
+}
+
+const fullscreenIndicatorText = computed(() => {
+  const cur = fullscreenVisibleIndex.value + 1
+  const tot = Math.max(1, page.total || list.value.length)
+  return t('h5.pages.search.displayMode.indicator', { current: cur, total: tot })
+})
+
+watch(displayMode, (mode) => {
+  if (mode !== 'fullscreen') {
+    fullscreenResizeObserver?.disconnect()
+    fullscreenResizeObserver = null
+    return
+  }
+  nextTick(() => {
+    bindFullscreenResizeObserver()
+    measureFullscreenHeight()
+  })
+})
+
+watch(
+  () => list.value.length,
+  () => {
+    const maxIdx = Math.max(0, list.value.length - 1)
+    if (fullscreenVisibleIndex.value > maxIdx) {
+      fullscreenVisibleIndex.value = maxIdx
+    }
+  }
+)
+
 const closeVideoPreview = () => {
   state.showVideoPreview = false
 }
@@ -498,6 +606,7 @@ const openActionByIndex = (index) => {
 }
 
 const onPageScroll = (event) => {
+  if (displayMode.value === 'fullscreen') return
   const container = event?.target || pageWrapperRef.value
   if (!container) return
   const scrollTop = container.scrollTop || 0
@@ -516,6 +625,9 @@ const onPageScroll = (event) => {
 const onPageResize = () => {
   state.viewportHeight = window.innerHeight
   state.viewportWidth = window.innerWidth
+  if (displayMode.value === 'fullscreen') {
+    nextTick(() => measureFullscreenHeight())
+  }
 }
 
 const onFilterResourceTypeChange = () => {
@@ -540,6 +652,8 @@ onUnmounted(() => {
     clearTimeout(longPress.timer)
     longPress.timer = null
   }
+  fullscreenResizeObserver?.disconnect()
+  fullscreenResizeObserver = null
   window.removeEventListener('resize', onPageResize)
 })
 
@@ -558,11 +672,24 @@ defineExpose({
   refresh: onRefresh
 })
 
-onMounted(init)
+onMounted(async () => {
+  await init()
+  if (displayMode.value === 'fullscreen') {
+    nextTick(() => {
+      bindFullscreenResizeObserver()
+      measureFullscreenHeight()
+    })
+  }
+})
 </script>
 
 <template>
-  <div ref="pageWrapperRef" class="page-wrapper page-search" @scroll.passive="onPageScroll">
+  <div
+    ref="pageWrapperRef"
+    class="page-wrapper page-search"
+    :class="{ 'page-search--fullscreen': displayMode === 'fullscreen' }"
+    @scroll.passive="onPageScroll"
+  >
     <div class="page-search-inner">
       <div class="search-toolbar">
         <div class="search-row">
@@ -572,6 +699,15 @@ onMounted(init)
             :placeholder="t('h5.pages.search.keywordPlaceholder')"
             @search="onSearch"
           />
+          <van-button
+            class="layout-mode-btn"
+            plain
+            :title="layoutToggleTitle"
+            :aria-label="layoutToggleTitle"
+            @click="toggleDisplayMode"
+          >
+            <van-icon :name="displayMode === 'waterfall' ? 'expand-o' : 'apps-o'" />
+          </van-button>
           <van-button class="filter-btn" plain @click="state.showFilters = true">
             <van-icon name="arrow-down" />
           </van-button>
@@ -579,92 +715,142 @@ onMounted(init)
       </div>
 
       <van-pull-refresh v-model="state.refreshing" :disabled="state.loading" @refresh="onRefresh">
-        <div>
+        <div
+          class="search-pull-inner"
+          :class="{ 'search-pull-inner--fullscreen': displayMode === 'fullscreen' }"
+        >
           <div v-if="state.loading && !list.length" class="result-list result-list-skeleton">
             <van-skeleton v-for="i in 4" :key="i" avatar :row="2" />
           </div>
-          <div v-if="list.length" class="result-list-wrap">
-            <div class="result-list">
-              <div
-                v-for="(column, columnIndex) in virtualColumns"
-                :key="`col-${columnIndex}`"
-                class="result-column"
-              >
-                <div class="virtual-spacer" :style="{ height: `${column.topSpacer}px` }"></div>
+          <template v-else-if="displayMode === 'waterfall'">
+            <div v-if="list.length" class="result-list-wrap">
+              <div class="result-list">
                 <div
-                  v-for="row in column.items"
-                  :key="row.item.id || row.item.uniqueKey"
-                  class="result-item"
-                  @touchstart="(e) => onImageTouchStart(row.globalIndex, e)"
-                  @touchmove="onImageTouchMove"
-                  @touchend="onImageTouchEnd"
-                  @touchcancel="onImageTouchEnd"
-                  @contextmenu.prevent="openActionByIndex(row.globalIndex)"
+                  v-for="(column, columnIndex) in virtualColumns"
+                  :key="`col-${columnIndex}`"
+                  class="result-column"
                 >
+                  <div class="virtual-spacer" :style="{ height: `${column.topSpacer}px` }"></div>
                   <div
-                    class="preview-wrap"
-                    :class="{ 'preview-wrap--video': row.item.fileType === 'video' }"
-                    :style="{ height: `${row.height}px` }"
-                    role="button"
-                    tabindex="0"
-                    @click="openPreview(row.globalIndex)"
-                    @keydown.enter.prevent="openPreview(row.globalIndex)"
+                    v-for="row in column.items"
+                    :key="row.item.id || row.item.uniqueKey"
+                    class="result-item"
+                    @touchstart="(e) => onImageTouchStart(row.globalIndex, e)"
+                    @touchmove="onImageTouchMove"
+                    @touchend="onImageTouchEnd"
+                    @touchcancel="onImageTouchEnd"
+                    @contextmenu.prevent="openActionByIndex(row.globalIndex)"
                   >
-                    <template v-if="row.item.fileType === 'video'">
-                      <div
-                        v-if="row.item.posterSrc && imageErrorState[getItemKey(row.item)]"
-                        class="preview-fallback"
-                        @click.stop="retryLoadPoster(row.item)"
-                      >
-                        <van-icon name="photo-fail" size="22" />
-                        <div class="preview-fallback-text">{{ imageLoadFailText }}</div>
-                      </div>
-                      <img
-                        v-else-if="row.item.posterSrc"
-                        class="preview preview--poster"
-                        :src="getDisplayPosterSrc(row.item)"
-                        alt=""
-                        loading="lazy"
-                        decoding="async"
-                        :style="{ height: `${row.height}px` }"
-                        @error="onPosterLoadError(row.item)"
-                      />
-                      <div v-else class="preview-video-placeholder" :style="{ minHeight: `${row.height}px` }">
-                        <IconifyIcon class="preview-video-ph-icon" icon="custom:video" />
-                      </div>
-                      <div class="video-play-badge" aria-hidden="true">
-                        <IconifyIcon class="video-play-badge-icon" icon="custom:play-circle" />
-                      </div>
-                    </template>
-                    <template v-else>
-                      <div
-                        v-if="imageErrorState[getItemKey(row.item)]"
-                        class="preview-fallback"
-                        @click.stop="retryLoadImage(row.item)"
-                      >
-                        <van-icon name="photo-fail" size="22" />
-                        <div class="preview-fallback-text">{{ imageLoadFailText }}</div>
-                      </div>
-                      <img
-                        v-else
-                        class="preview"
-                        :src="getDisplayImageSrc(row.item)"
-                        alt="preview"
-                        loading="lazy"
-                        decoding="async"
-                        :style="{ height: `${row.height}px` }"
-                        @error="onImageLoadError(row.item)"
-                      />
-                    </template>
+                    <div
+                      class="preview-wrap"
+                      :class="{ 'preview-wrap--video': row.item.fileType === 'video' }"
+                      :style="{ height: `${row.height}px` }"
+                      role="button"
+                      tabindex="0"
+                      @click="openPreview(row.globalIndex)"
+                      @keydown.enter.prevent="openPreview(row.globalIndex)"
+                    >
+                      <template v-if="row.item.fileType === 'video'">
+                        <div
+                          v-if="row.item.posterSrc && imageErrorState[getItemKey(row.item)]"
+                          class="preview-fallback"
+                          @click.stop="retryLoadPoster(row.item)"
+                        >
+                          <van-icon name="photo-fail" size="22" />
+                          <div class="preview-fallback-text">{{ imageLoadFailText }}</div>
+                        </div>
+                        <img
+                          v-else-if="row.item.posterSrc"
+                          class="preview preview--poster"
+                          :src="getDisplayPosterSrc(row.item)"
+                          alt=""
+                          loading="lazy"
+                          decoding="async"
+                          :style="{ height: `${row.height}px` }"
+                          @error="onPosterLoadError(row.item)"
+                        />
+                        <div v-else class="preview-video-placeholder" :style="{ minHeight: `${row.height}px` }">
+                          <IconifyIcon class="preview-video-ph-icon" icon="custom:video" />
+                        </div>
+                        <div class="video-play-badge" aria-hidden="true">
+                          <IconifyIcon class="video-play-badge-icon" icon="custom:play-circle" />
+                        </div>
+                      </template>
+                      <template v-else>
+                        <div
+                          v-if="imageErrorState[getItemKey(row.item)]"
+                          class="preview-fallback"
+                          @click.stop="retryLoadImage(row.item)"
+                        >
+                          <van-icon name="photo-fail" size="22" />
+                          <div class="preview-fallback-text">{{ imageLoadFailText }}</div>
+                        </div>
+                        <img
+                          v-else
+                          class="preview"
+                          :src="getDisplayImageSrc(row.item)"
+                          alt="preview"
+                          loading="lazy"
+                          decoding="async"
+                          :style="{ height: `${row.height}px` }"
+                          @error="onImageLoadError(row.item)"
+                        />
+                      </template>
+                    </div>
                   </div>
+                  <div class="virtual-spacer" :style="{ height: `${column.bottomSpacer}px` }"></div>
                 </div>
-                <div class="virtual-spacer" :style="{ height: `${column.bottomSpacer}px` }"></div>
               </div>
             </div>
-          </div>
-          <van-empty v-else-if="state.finished && !state.loading" image="default" :description="t('messages.noData')" />
-          <div v-if="state.loading && list.length" class="load-more-text">{{ t('messages.loading') }}</div>
-          <div v-else-if="state.finished && list.length" class="load-more-text">{{ t('messages.noMoreData') }}</div>
+            <van-empty v-else-if="state.finished && !state.loading" image="default" :description="t('messages.noData')" />
+            <div v-if="state.loading && list.length" class="load-more-text">{{ t('messages.loading') }}</div>
+            <div v-else-if="state.finished && list.length" class="load-more-text">{{ t('messages.noMoreData') }}</div>
+          </template>
+          <template v-else>
+            <div ref="fullscreenSliderRef" class="fullscreen-slider">
+              <VirtualList
+                v-if="list.length"
+                ref="fullscreenListRef"
+                :items="list"
+                :item-height="fullscreenItemHeight"
+                :container-height="fullscreenItemHeight"
+                :loading="state.loading"
+                :finished="state.finished"
+                @scroll="onFullscreenVirtualScroll"
+                @load-more="onLoadMore"
+              >
+                <template #default="{ item, index }">
+                  <div
+                    class="fullscreen-slide"
+                    :style="{
+                      backgroundImage: slideBgUrl(item) ? `url(${slideBgUrl(item)})` : 'none',
+                      backgroundSize: slideObjectFit,
+                      backgroundPosition: 'center',
+                      backgroundRepeat: 'no-repeat',
+                      backgroundColor: 'rgba(0, 0, 0, 0.07)'
+                    }"
+                    @touchstart="(e) => onImageTouchStart(index, e)"
+                    @touchmove="onImageTouchMove"
+                    @touchend="onImageTouchEnd"
+                    @touchcancel="onImageTouchEnd"
+                    @contextmenu.prevent="openActionByIndex(index)"
+                    @click="openPreview(index)"
+                  >
+                    <div v-if="item.fileType === 'video'" class="fullscreen-slide-video-hint" aria-hidden="true">
+                      <IconifyIcon class="fullscreen-slide-play-icon" icon="custom:play-circle" />
+                    </div>
+                  </div>
+                </template>
+              </VirtualList>
+              <van-empty
+                v-else-if="state.finished && !state.loading"
+                image="default"
+                :description="t('messages.noData')"
+              />
+              <div v-if="state.loading && list.length" class="load-more-text">{{ t('messages.loading') }}</div>
+              <div v-else-if="state.finished && list.length" class="load-more-text">{{ t('messages.noMoreData') }}</div>
+            </div>
+          </template>
         </div>
       </van-pull-refresh>
     </div>
@@ -819,12 +1005,98 @@ onMounted(init)
         </van-cell-group>
       </div>
     </van-floating-panel>
+
+    <div v-if="displayMode === 'fullscreen' && list.length" class="fullscreen-page-indicator">
+      {{ fullscreenIndicatorText }}
+    </div>
   </div>
 </template>
 
 <style scoped lang="scss">
 .page-search-inner {
   padding-bottom: var(--fbw-tabbar-height);
+}
+.page-search.page-search--fullscreen {
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+.page-search--fullscreen .page-search-inner {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.page-search--fullscreen :deep(.van-pull-refresh) {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.page-search--fullscreen :deep(.van-pull-refresh__track) {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.search-pull-inner--fullscreen {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.page-search--fullscreen .fullscreen-slider {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.page-search--fullscreen :deep(.virtual-list) {
+  flex: 1;
+  min-height: 0;
+}
+.fullscreen-slide {
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  position: relative;
+  box-sizing: border-box;
+}
+.fullscreen-slide-video-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  color: rgba(255, 255, 255, 0.92);
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.45));
+}
+.fullscreen-slide-play-icon {
+  font-size: 56px;
+}
+.fullscreen-page-indicator {
+  position: fixed;
+  z-index: 200;
+  right: 12px;
+  bottom: calc(var(--fbw-tabbar-height, 50px) + 12px);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+.layout-mode-btn {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  border-radius: 8px;
+  padding: 0;
 }
 .search-toolbar {
   position: sticky;
