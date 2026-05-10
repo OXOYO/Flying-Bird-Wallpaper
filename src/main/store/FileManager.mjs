@@ -398,13 +398,27 @@ export default class FileManager {
         // 提交事务
         this.db.exec('COMMIT')
 
-        // 处理删除资源的分词
-        this.wordsManager?.handleDeletedResource(item)
-
         ret = {
           success: true,
           message: t('messages.operationSuccess')
         }
+
+        // 分词更新（jieba 等）较慢，延后到下一轮事件循环，先让 HTTP 响应返回，减轻 H5 侧长时间等待与并发请求失败
+        const wm = this.wordsManager
+        const resourceSnapshot = {
+          id: item.id,
+          title: item.title,
+          desc: item.desc,
+          fileName: item.fileName
+        }
+        setImmediate(() => {
+          try {
+            wm?.handleDeletedResource(resourceSnapshot)
+          } catch (err) {
+            this.logger.error(`异步清理删除资源分词失败: ${err}`)
+          }
+        })
+
         return ret
       } catch (err) {
         // 回滚事务

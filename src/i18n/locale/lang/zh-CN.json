@@ -336,6 +336,8 @@
     "exitedPrivacySpaceSuccess": "已退出隐私空间！",
     "noMoreData": "没有更多数据了！",
     "getDataFail": "获取数据失败！",
+    "networkRequestFailed": "网络异常，请检查连接后重试。",
+    "invalidServerResponse": "服务器响应异常，请稍后重试。",
     "copySuccess": "已复制！",
     "copyFail": "复制失败！",
     "confirmDelete": "删除后无法恢复，确认删除吗？",
@@ -768,7 +770,8 @@
         "displayMode": {
           "toggleToFullscreen": "切换为铺满",
           "toggleToWaterfall": "切换为瀑布流",
-          "indicator": "{current} / {total}"
+          "indicator": "{current} / {total}",
+          "indicatorLoadedTotal": "{loaded} / {total}"
         },
         "filters": {
           "title": "搜索条件",

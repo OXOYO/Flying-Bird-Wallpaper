@@ -1,3 +1,5 @@
+import { API_ERROR_CODE, isTransientSearchFailure } from '@common/utils.js'
+
 const request = async (path, options = {}) => {
   try {
     const response = await fetch(path, {
@@ -8,13 +10,70 @@ const request = async (path, options = {}) => {
       },
       body: options.body ? JSON.stringify(options.body) : undefined
     })
-    return await response.json()
+    const text = await response.text()
+    if (!text) {
+      return response.ok
+        ? { success: false, errorCode: API_ERROR_CODE.EMPTY_RESPONSE, message: '' }
+        : {
+            success: false,
+            errorCode: API_ERROR_CODE.HTTP_ERROR,
+            httpStatus: response.status,
+            message: ''
+          }
+    }
+    let data
+    try {
+      data = JSON.parse(text)
+    } catch {
+      return response.ok
+        ? { success: false, errorCode: API_ERROR_CODE.INVALID_JSON, message: '' }
+        : {
+            success: false,
+            errorCode: API_ERROR_CODE.HTTP_ERROR,
+            httpStatus: response.status,
+            message: ''
+          }
+    }
+    if (!response.ok) {
+      if (data && typeof data === 'object') {
+        const serverMsg = data.message != null ? String(data.message) : ''
+        return {
+          ...data,
+          success: false,
+          message: serverMsg,
+          errorCode: data.errorCode || API_ERROR_CODE.HTTP_ERROR,
+          httpStatus: response.status
+        }
+      }
+      return {
+        success: false,
+        errorCode: API_ERROR_CODE.HTTP_ERROR,
+        httpStatus: response.status,
+        message: ''
+      }
+    }
+    return data
   } catch (err) {
     return {
       success: false,
-      message: err?.message || 'network error'
+      errorCode: API_ERROR_CODE.FETCH_FAILED,
+      message: '',
+      rawMessage: err?.message || ''
     }
   }
+}
+
+/** POST 失败后对瞬时网络错误重试（删除等不宜被并发搜索拖垮连接） */
+const requestPostWithRetry = async (path, body, { retries = 2, baseDelayMs = 320 } = {}) => {
+  let last = null
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    last = await request(path, { method: 'POST', body })
+    if (last?.success !== false) return last
+    const retryable = isTransientSearchFailure(last)
+    if (!retryable || attempt === retries) break
+    await new Promise((r) => setTimeout(r, baseDelayMs * (attempt + 1)))
+  }
+  return last
 }
 
 let eventSource = null
@@ -93,10 +152,15 @@ export const removeFavorites = async (id) => {
 }
 
 export const deleteImage = async (item) => {
-  return await request('/api/images/delete', {
-    method: 'POST',
-    body: item
-  })
+  const raw = item && typeof item === 'object' ? item : {}
+  const body = {
+    id: raw.id,
+    filePath: raw.filePath,
+    fileName: raw.fileName,
+    title: raw.title,
+    desc: raw.desc
+  }
+  return await requestPostWithRetry('/api/images/delete', body)
 }
 
 export const updateDownloadCount = async (id, count) => {

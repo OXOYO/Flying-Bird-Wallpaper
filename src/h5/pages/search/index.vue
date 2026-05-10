@@ -5,7 +5,7 @@ import * as api from '@h5/api/index.js'
 import { resourceTypeList, filterTypeOptions, orientationOptions, qualityList } from '@common/publicData.js'
 import { useTranslation } from 'i18next-vue'
 import { infoKeys } from '@common/publicData.js'
-import { handleInfoVal } from '@common/utils.js'
+import { handleInfoVal, resolveApiUserMessage, isTransientSearchFailure } from '@common/utils.js'
 import VirtualList from '@h5/components/VirtualList.vue'
 
 const { t } = useTranslation()
@@ -61,6 +61,15 @@ const readStoredDisplayMode = () => {
   }
 }
 const displayMode = ref(readStoredDisplayMode())
+
+// 瀑布流模式下防止触底滚动在短时间内多次触发加载（与 VirtualList 侧 latch 同理）
+const waterfallLoadMoreLatch = ref(false)
+watch(
+  () => state.loading,
+  (loading) => {
+    if (!loading) waterfallLoadMoreLatch.value = false
+  }
+)
 
 const list = ref([])
 const FALLBACK_ITEM_HEIGHT = 220
@@ -198,6 +207,23 @@ const syncFilterType = () => {
   }
 }
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
+const fetchSearchPageWithRetry = async (payload) => {
+  const maxAttempts = 3
+  let lastRes = null
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    lastRes = await api.searchImages(payload)
+    if (lastRes?.success && Array.isArray(lastRes?.data?.list)) {
+      return lastRes
+    }
+    const retryable = isTransientSearchFailure(lastRes)
+    if (!retryable || attempt === maxAttempts - 1) break
+    await sleep(320 * (attempt + 1))
+  }
+  return lastRes
+}
+
 const loadList = async (reset = false) => {
   if (state.loading) return
   if (reset) {
@@ -207,33 +233,53 @@ const loadList = async (reset = false) => {
     state.finished = false
   }
   state.loading = true
-  const payload = {
-    ...form,
-    filterKeywords: form.keywords,
-    keywords: form.keywords,
-    startPage: page.startPage,
-    pageSize: page.pageSize
-  }
-  const res = await api.searchImages(payload)
-  if (res?.success && Array.isArray(res?.data?.list)) {
-    const merged = [...list.value, ...res.data.list.map(normalizeItem)]
-    const map = new Map()
-    merged.forEach((item) => map.set(item.id || item.uniqueKey, item))
-    list.value = [...map.values()]
-    page.total = res.data.total || list.value.length
-    page.startPage += 1
-    if (!res.data.list.length || list.value.length >= page.total) {
+  try {
+    const rawForm = toRaw(form)
+    const payload = {
+      ...rawForm,
+      filterKeywords: rawForm.keywords,
+      keywords: rawForm.keywords,
+      startPage: page.startPage,
+      pageSize: page.pageSize,
+      sortType: Number(rawForm.sortType) || -1,
+      isRandom: !!rawForm.isRandom
+    }
+    const res = await fetchSearchPageWithRetry(payload)
+    if (res?.success && Array.isArray(res?.data?.list)) {
+      const merged = [...list.value, ...res.data.list.map(normalizeItem)]
+      const map = new Map()
+      merged.forEach((item) => map.set(item.id || item.uniqueKey, item))
+      list.value = [...map.values()]
+      if (typeof res.data.total === 'number' && res.data.total >= 0) {
+        page.total = res.data.total
+      } else if (reset || page.total === 0) {
+        page.total = list.value.length
+      }
+      page.startPage += 1
+      if (!res.data.list.length || list.value.length >= page.total) {
+        state.finished = true
+      }
+    } else {
+      if (!isTransientSearchFailure(res)) {
+        state.finished = true
+      }
+      showNotify({
+        type: 'danger',
+        message: resolveApiUserMessage(res, t)
+      })
+    }
+  } catch (err) {
+    if (!isTransientSearchFailure(err)) {
       state.finished = true
     }
-  } else {
-    state.finished = true
     showNotify({
       type: 'danger',
-      message: res?.message || t('messages.getDataFail')
+      message: resolveApiUserMessage(err, t)
     })
+  } finally {
+    state.loading = false
+    state.refreshing = false
   }
-  state.loading = false
-  state.refreshing = false
 }
 
 const onSearch = async () => {
@@ -246,7 +292,7 @@ const onRefresh = async () => {
 }
 
 const onLoadMore = async () => {
-  if (state.finished) return
+  if (state.finished || state.showActionPopup) return
   await loadList(false)
 }
 
@@ -266,7 +312,7 @@ const onToggleFavorite = async (item) => {
     item.isFavorite = !item.isFavorite
     showNotify({ type: 'success', message: t('messages.operationSuccess') })
   } else {
-    showNotify({ type: 'danger', message: res?.message || t('messages.operationFail') })
+    showNotify({ type: 'danger', message: resolveApiUserMessage(res, t) || t('messages.operationFail') })
   }
 }
 
@@ -378,6 +424,13 @@ const virtualColumns = computed(() => {
   })
 })
 
+// 瀑布流指示器：仅展示「已加载条数 / 总数」数字（文案与铺满一致为 `{n} / {m}`，语义不同）
+const waterfallIndicatorText = computed(() => {
+  const loaded = list.value.length
+  const tot = Math.max(1, page.total || loaded)
+  return t('h5.pages.search.displayMode.indicatorLoadedTotal', { loaded, total: tot })
+})
+
 const slideObjectFit = computed(() =>
   settingStore.settingData?.h5ImageDisplaySize === 'cover' ? 'cover' : 'contain'
 )
@@ -442,16 +495,24 @@ const onFullscreenVirtualScroll = (payload) => {
   fullscreenVisibleIndex.value = idx
 }
 
+// 铺满模式：当前所在张（从 1 计）/ 总数
 const fullscreenIndicatorText = computed(() => {
   const cur = fullscreenVisibleIndex.value + 1
   const tot = Math.max(1, page.total || list.value.length)
   return t('h5.pages.search.displayMode.indicator', { current: cur, total: tot })
 })
 
+const syncWaterfallScrollMetrics = () => {
+  const wrap = pageWrapperRef.value
+  if (!wrap || displayMode.value !== 'waterfall') return
+  state.scrollTop = wrap.scrollTop || 0
+}
+
 watch(displayMode, (mode) => {
   if (mode !== 'fullscreen') {
     fullscreenResizeObserver?.disconnect()
     fullscreenResizeObserver = null
+    nextTick(() => syncWaterfallScrollMetrics())
     return
   }
   nextTick(() => {
@@ -582,11 +643,17 @@ const deleteImage = async () => {
       list.value = list.value.filter((row) => (row.id || row.uniqueKey) !== (item.id || item.uniqueKey))
       showNotify({ type: 'success', message: t('messages.deleteSuccess') })
     } else {
-      showNotify({ type: 'danger', message: res?.message || t('messages.deleteFail') })
+      showNotify({
+        type: 'danger',
+        message: resolveApiUserMessage(res, t) || t('messages.deleteFail')
+      })
     }
   } catch (error) {
     if (error !== 'cancel') {
-      showNotify({ type: 'danger', message: t('messages.deleteFail') })
+      showNotify({
+        type: 'danger',
+        message: resolveApiUserMessage(error, t) || t('messages.deleteFail')
+      })
     }
   } finally {
     state.showActionPopup = false
@@ -615,9 +682,12 @@ const onPageScroll = (event) => {
   const scrollHeight = container.scrollHeight || clientHeight
   if (
     scrollHeight - (scrollTop + clientHeight) < 240 &&
+    !state.showActionPopup &&
     !state.loading &&
-    !state.finished
+    !state.finished &&
+    !waterfallLoadMoreLatch.value
   ) {
+    waterfallLoadMoreLatch.value = true
     onLoadMore()
   }
 }
@@ -625,9 +695,11 @@ const onPageScroll = (event) => {
 const onPageResize = () => {
   state.viewportHeight = window.innerHeight
   state.viewportWidth = window.innerWidth
-  if (displayMode.value === 'fullscreen') {
-    nextTick(() => measureFullscreenHeight())
-  }
+  nextTick(() => {
+    if (displayMode.value === 'fullscreen') {
+      measureFullscreenHeight()
+    }
+  })
 }
 
 const onFilterResourceTypeChange = () => {
@@ -647,7 +719,28 @@ const onImageInfoHeightChange = (height) => {
   }
 }
 
+// 预览弹层挂载在 body，长按 img 会触发浏览器默认菜单；捕获阶段阻止
+const onImagePreviewContextMenu = (e) => {
+  const el = e.target
+  if (!(el instanceof Element)) return
+  if (el.closest('.van-image-preview')) {
+    e.preventDefault()
+  }
+}
+
+watch(
+  () => state.showPreview,
+  (show) => {
+    if (show) {
+      document.addEventListener('contextmenu', onImagePreviewContextMenu, true)
+    } else {
+      document.removeEventListener('contextmenu', onImagePreviewContextMenu, true)
+    }
+  }
+)
+
 onUnmounted(() => {
+  document.removeEventListener('contextmenu', onImagePreviewContextMenu, true)
   if (longPress.timer) {
     clearTimeout(longPress.timer)
     longPress.timer = null
@@ -674,12 +767,13 @@ defineExpose({
 
 onMounted(async () => {
   await init()
-  if (displayMode.value === 'fullscreen') {
-    nextTick(() => {
+  nextTick(() => {
+    syncWaterfallScrollMetrics()
+    if (displayMode.value === 'fullscreen') {
       bindFullscreenResizeObserver()
       measureFullscreenHeight()
-    })
-  }
+    }
+  })
 })
 </script>
 
@@ -766,7 +860,6 @@ onMounted(async () => {
                           alt=""
                           loading="lazy"
                           decoding="async"
-                          :style="{ height: `${row.height}px` }"
                           @error="onPosterLoadError(row.item)"
                         />
                         <div v-else class="preview-video-placeholder" :style="{ minHeight: `${row.height}px` }">
@@ -792,7 +885,6 @@ onMounted(async () => {
                           alt="preview"
                           loading="lazy"
                           decoding="async"
-                          :style="{ height: `${row.height}px` }"
                           @error="onImageLoadError(row.item)"
                         />
                       </template>
@@ -1006,8 +1098,8 @@ onMounted(async () => {
       </div>
     </van-floating-panel>
 
-    <div v-if="displayMode === 'fullscreen' && list.length" class="fullscreen-page-indicator">
-      {{ fullscreenIndicatorText }}
+    <div v-if="list.length" class="search-page-indicator">
+      {{ displayMode === 'fullscreen' ? fullscreenIndicatorText : waterfallIndicatorText }}
     </div>
   </div>
 </template>
@@ -1079,10 +1171,11 @@ onMounted(async () => {
 .fullscreen-slide-play-icon {
   font-size: 56px;
 }
-.fullscreen-page-indicator {
+.search-page-indicator {
   position: fixed;
   z-index: 200;
-  right: 12px;
+  left: 50%;
+  transform: translateX(-50%);
   bottom: calc(var(--fbw-tabbar-height, 50px) + 12px);
   padding: 4px 10px;
   border-radius: 999px;
@@ -1156,6 +1249,7 @@ onMounted(async () => {
   border-radius: 0;
   overflow: hidden;
   background: rgba(0, 0, 0, 0.05);
+  position: relative;
 }
 .preview-fallback {
   width: 100%;
@@ -1180,8 +1274,10 @@ onMounted(async () => {
 }
 .preview {
   width: 100%;
+  height: 100%;
   display: block;
-  object-fit: contain;
+  object-fit: cover;
+  object-position: center;
 }
 .preview-wrap--video {
   position: relative;
@@ -1366,5 +1462,18 @@ onMounted(async () => {
   .result-list {
     gap: 10px;
   }
+}
+</style>
+
+<!-- 预览 teleport 到 body，需非 scoped：禁用长按系统菜单/保存图片等 -->
+<style lang="scss">
+.van-image-preview {
+  -webkit-touch-callout: none;
+}
+.van-image-preview img,
+.van-image-preview__image img {
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
 }
 </style>

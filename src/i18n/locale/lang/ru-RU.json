@@ -331,6 +331,8 @@
     "exitedPrivacySpaceSuccess": "Вы вышли из приватного пространства!",
     "noMoreData": "Больше нет данных!",
     "getDataFail": "Не удалось получить данные!",
+    "networkRequestFailed": "Ошибка сети. Проверьте подключение и повторите попытку.",
+    "invalidServerResponse": "Некорректный ответ сервера. Повторите попытку позже.",
     "copySuccess": "Скопировано!",
     "copyFail": "Ошибка копирования!",
     "confirmDelete": "Удаленные данные не могут быть восстановлены. Подтвердить удаление?",
@@ -766,7 +768,8 @@
         "displayMode": {
           "toggleToFullscreen": "Full screen view",
           "toggleToWaterfall": "Waterfall grid",
-          "indicator": "{current} / {total}"
+          "indicator": "{current} / {total}",
+          "indicatorLoadedTotal": "{loaded} / {total}"
         },
         "filters": {
           "title": "Фильтры поиска",

@@ -4,7 +4,7 @@ import UseSettingStore from '@h5/stores/settingStore.js'
 import * as api from '@h5/api/index.js'
 import { useTranslation } from 'i18next-vue'
 import { infoKeys } from '@common/publicData.js'
-import { handleInfoVal, throttle } from '@common/utils.js'
+import { handleInfoVal, throttle, resolveApiUserMessage } from '@common/utils.js'
 import VirtualList from '@h5/components/VirtualList.vue'
 
 const { t } = useTranslation()
@@ -33,7 +33,9 @@ const flags = reactive({
   // 是否操作弹层
   showActionPopup: false,
   // 是否显示跳转弹窗
-  showJumpPopup: false
+  showJumpPopup: false,
+  // 快速跳转后短暂忽略滚动推导索引，避免列表刷新首帧 scrollTop=0 把指示器打回第 1 张
+  jumpScrollLock: false
 })
 
 // 图片信息面板高度
@@ -63,9 +65,7 @@ const autoSwitch = reactive({
   // 图片列表
   imageList: [],
   // 总数
-  total: 0,
-  // 滚动更新定时器
-  scrollUpdateTimer: null
+  total: 0
 })
 
 // 收藏双击相关状态
@@ -108,6 +108,9 @@ const handlePreventDoubleTapZoom = (e) => {
 
 // “无更多数据”提示节流，避免重复弹出
 let noMoreNotifyAt = 0
+// 指示器序号防抖（勿与 resize 同步共用定时器，否则会互相 clear）
+let displayIndexDebounceTimer = null
+let resizeLayoutTimer = null
 const notifyNoMoreData = () => {
   const now = Date.now()
   if (now - noMoreNotifyAt < 1200) return
@@ -129,18 +132,17 @@ const isCurrentFavorite = computed(() => {
   return autoSwitch.imageList[autoSwitch.currentIndex]?.isFavorite
 })
 
-// 指示器样式
+// 指示器样式（底部水平居中；是否显示仍由 h5NumberIndicatorPosition 配置）
 const numberIndicatorStyle = computed(() => {
   const position = settingData.value.h5NumberIndicatorPosition
-  const ret = {
-    display: autoSwitch.total && position ? 'inline-block' : 'none'
+  return {
+    display: autoSwitch.total && position ? 'inline-block' : 'none',
+    left: '50%',
+    right: 'auto',
+    top: 'auto',
+    transform: 'translateX(-50%)',
+    bottom: 'calc(var(--fbw-tabbar-height) + 12px)'
   }
-
-  if (position) {
-    ret[position] = position === 'bottom' ? 'calc(var(--fbw-tabbar-height) + 12px)' : '12px'
-  }
-
-  return ret
 })
 
 // 防抖的显示索引，避免指示器频繁变化
@@ -148,11 +150,10 @@ const debouncedDisplayIndex = ref(1)
 watch(
   () => autoSwitch.currentIndex,
   (newIndex) => {
-    // 使用防抖更新显示索引
-    clearTimeout(autoSwitch.scrollUpdateTimer)
-    autoSwitch.scrollUpdateTimer = setTimeout(() => {
+    clearTimeout(displayIndexDebounceTimer)
+    displayIndexDebounceTimer = setTimeout(() => {
       debouncedDisplayIndex.value = newIndex + 1
-    }, 50) // 50ms防抖，确保指示器稳定
+    }, 50)
   },
   { immediate: true }
 )
@@ -296,11 +297,20 @@ const initImageTouch = () => {
 
 // 加载更多图片
 const onLoad = async () => {
-  if (flags.finished || !autoSwitch.imageList.length) return
+  if (flags.loading || flags.finished || !autoSwitch.imageList.length) return
   flags.loading = true
   pageInfo.startPage += 1
   await loadData()
   flags.loading = false
+}
+
+// 已在最后一张时向上滑：先请求下一页再滚到新条目（否则仅靠 VirtualList 触底，全屏逐张滑永远进不了「近底部」条件）
+const loadNextPageThenAdvance = async () => {
+  await onLoad()
+  await nextTick()
+  if (autoSwitch.currentIndex < autoSwitch.imageList.length - 1) {
+    virtualListRef.value?.scrollToIndex(autoSwitch.currentIndex + 1)
+  }
 }
 
 const onLoadMore = () => {
@@ -320,20 +330,32 @@ const onRefresh = async () => {
   flags.refreshing = false
 }
 
+// 首页搜索请求串行化，避免跳转批量分页 + 触底 load-more 等与本地 HTTPS/HTTP/2、SQLite 并发叠加导致连接复位（DevTools 表现为大量 net::ERR_HTTP2_*）
+let searchImagesQueueTail = Promise.resolve()
+const searchImagesSerialized = (payload) => {
+  const next = searchImagesQueueTail.then(() => api.searchImages(payload))
+  searchImagesQueueTail = next.then(
+    () => {},
+    () => {}
+  )
+  return next
+}
+
 const loadData = async (isRefresh) => {
   const payload = {
     ...pageInfo,
     resourceType: 'localResource',
     resourceName: settingData.value.h5Resource,
-    // 是否随机
-    isRandom: isRandom.value,
+    // 分页必须与 OFFSET 的稳定顺序一致，否则每页 ORDER BY RANDOM() 会整体重排，序号/跳转/拼接列表全部错乱。
+    // h5SwitchType「随机」仅保留 UI（如图标）；若需真正洗牌列表需单次拉全量或 seed 方案，不能沿用分页随机排序。
+    isRandom: false,
     orientation: settingData.value.h5Orientation.toString(),
     quality: settingData.value.h5Quality.toString(),
     sortField: settingData.value.h5SortField,
     sortType: settingData.value.h5SortType
   }
 
-  const res = await api.searchImages(payload)
+  const res = await searchImagesSerialized(payload)
   if (res?.success && res?.data?.list.length > 0) {
     const width = imageSliderRef.value.clientWidth
     // 拼接后用 id 去重
@@ -354,11 +376,11 @@ const loadData = async (isRefresh) => {
       }
     }
     autoSwitch.imageList = uniqueList
-    // 保存 total
-    autoSwitch.total = res.data.total || autoSwitch.imageList.length
-    if (res.data.list.length < pageInfo.pageSize) {
-      flags.finished = true
-    }
+    const serverTotal = typeof res.data.total === 'number' ? res.data.total : 0
+    autoSwitch.total = serverTotal > 0 ? serverTotal : autoSwitch.total || uniqueList.length
+    const shortPage = res.data.list.length < pageInfo.pageSize
+    const allLoaded = serverTotal > 0 && uniqueList.length >= serverTotal
+    flags.finished = shortPage || allLoaded
 
     // 数据加载完成后延迟同步虚拟列表状态，避免闪屏
     nextTick(() => {
@@ -367,12 +389,15 @@ const loadData = async (isRefresh) => {
       }, 50) // 延迟50ms，确保DOM完全更新后再同步
     })
   } else {
-    // 如果没有数据，清空列表并设置完成状态
     if (isRefresh) {
       autoSwitch.imageList = []
       autoSwitch.total = 0
+      flags.finished = true
+    } else if (res?.success && Array.isArray(res?.data?.list) && res.data.list.length === 0) {
+      // 追加时服务端明确返回空页：无更多
+      flags.finished = true
     }
-    flags.finished = true
+    // 网络错误等：保留已有列表且不强行 finished，避免无法再加载
   }
 
   // 如果加载完成且没有数据，显示提示
@@ -385,12 +410,8 @@ const loadData = async (isRefresh) => {
     return
   }
 
-  // 如果加载完成但有数据，显示没有更多数据的提示
-  if (flags.finished && autoSwitch.imageList.length > 0) {
-    stopAutoSwitch()
-    notifyNoMoreData()
-    return
-  }
+  // 不在此处提示「没有更多数据」：finished 仅表示服务端已无下一页，列表仍有数据是正常状态。
+  // 误提示会打断跳转流程观感，且误触 stopAutoSwitch；滑到底时的提示由 onTouchEnd / 列表逻辑处理。
 }
 
 // 触摸开始
@@ -415,6 +436,8 @@ const onTouchMove = (event) => {
 
 // 虚拟列表滚动处理
 const onVirtualListScroll = throttle((scrollData) => {
+  if (flags.jumpScrollLock) return
+
   // 使用滚动位置直接计算当前索引，这样更准确
   let currentIndex = Math.round(scrollData.scrollTop / imageItemHeight.value)
   currentIndex = Math.max(0, Math.min(currentIndex, autoSwitch.imageList.length - 1))
@@ -443,9 +466,13 @@ const onTouchEnd = (event) => {
     } else if (deltaY > 0 && autoSwitch.currentIndex > 0) {
       // 向下滑动，显示上一张
       virtualListRef.value?.scrollToIndex(autoSwitch.currentIndex - 1)
-    } else if (deltaY < 0 && autoSwitch.currentIndex < autoSwitch.imageList.length - 1) {
+    } else if (deltaY < 0) {
       // 向上滑动，显示下一张
-      virtualListRef.value?.scrollToIndex(autoSwitch.currentIndex + 1)
+      if (autoSwitch.currentIndex < autoSwitch.imageList.length - 1) {
+        virtualListRef.value?.scrollToIndex(autoSwitch.currentIndex + 1)
+      } else if (!flags.finished && !flags.loading) {
+        void loadNextPageThenAdvance()
+      }
     }
   }
 
@@ -1061,7 +1088,7 @@ const deleteImage = async () => {
     } else {
       showNotify({
         type: 'danger',
-        message: t('messages.deleteFail')
+        message: resolveApiUserMessage(res, t) || t('messages.deleteFail')
       })
     }
   } catch (error) {
@@ -1069,7 +1096,7 @@ const deleteImage = async () => {
     if (error !== 'cancel') {
       showNotify({
         type: 'danger',
-        message: t('messages.deleteFail')
+        message: resolveApiUserMessage(error, t) || t('messages.deleteFail')
       })
     }
   } finally {
@@ -1121,6 +1148,9 @@ defineExpose({
 
 // 强制同步虚拟列表状态
 const syncVirtualListState = () => {
+  if (flags.jumpScrollLock) {
+    return
+  }
   if (!virtualListRef.value || autoSwitch.imageList.length === 0) {
     return
   }
@@ -1130,54 +1160,52 @@ const syncVirtualListState = () => {
     return
   }
 
+  const itemH = imageItemHeight.value
+  if (!itemH || itemH <= 0) {
+    return
+  }
+
   // 重新计算容器高度
   const newHeight = imageSliderRef.value?.clientHeight || window.innerHeight - 60
   virtualListRef.value.updateContainerHeight(newHeight)
 
-  // 获取当前滚动位置
   const currentScrollTop = virtualListRef.value.getScrollTop() || 0
+  const calculatedIndex = Math.round(currentScrollTop / itemH)
+  const validIndex = Math.max(0, Math.min(calculatedIndex, autoSwitch.imageList.length - 1))
 
-  // 如果当前滚动位置为0但索引不为0，说明需要强制滚动到正确位置
-  if (currentScrollTop === 0 && autoSwitch.currentIndex > 0) {
-    // 使用新的统一API强制滚动到正确的索引位置
+  // 列表追加数据或快速跳转后，scrollTop 往往尚未跟上 currentIndex；若用滚动反推索引会错误改成 0，界面回到第 1 张。
+  const INDEX_DRIFT_THRESHOLD = 2
+  const drift = Math.abs(validIndex - autoSwitch.currentIndex)
+  if (drift > INDEX_DRIFT_THRESHOLD) {
     virtualListRef.value.scrollToIndex(autoSwitch.currentIndex, false)
     return
   }
 
-  // 根据当前滚动位置计算正确的索引
-  const calculatedIndex = Math.round(currentScrollTop / imageItemHeight.value)
-  const validIndex = Math.max(0, Math.min(calculatedIndex, autoSwitch.imageList.length - 1))
-
-  // 如果计算出的索引与当前索引不同，先更新索引
+  // 小偏差（≤2）：以 currentIndex 为准对齐滚动。若反向把 currentIndex 改成 validIndex，会把指示器跳转（如输入 100）改成约 97（scrollTop 舍入误差）。
   if (validIndex !== autoSwitch.currentIndex) {
-    autoSwitch.currentIndex = validIndex
+    virtualListRef.value.scrollToIndex(autoSwitch.currentIndex, false)
+    return
   }
 
-  // 同步滚动位置到当前索引
-  const targetScrollTop = autoSwitch.currentIndex * imageItemHeight.value
+  const targetScrollTop = autoSwitch.currentIndex * itemH
 
-  // 只有当位置真正不同时才同步，避免不必要的操作
   if (Math.abs(targetScrollTop - currentScrollTop) > 1) {
-    // 清除之前的滚动更新定时器
-    if (autoSwitch.scrollUpdateTimer) {
-      clearTimeout(autoSwitch.scrollUpdateTimer)
-      autoSwitch.scrollUpdateTimer = null
+    if (resizeLayoutTimer) {
+      clearTimeout(resizeLayoutTimer)
+      resizeLayoutTimer = null
     }
-
-    // 使用新的统一API滚动到指定索引
-    virtualListRef.value.scrollToIndex(autoSwitch.currentIndex)
+    virtualListRef.value.scrollToIndex(autoSwitch.currentIndex, false)
   }
 }
 
 // 监听窗口大小变化，更新容器高度
 const handleResize = () => {
-  // 使用防抖，避免频繁更新
-  clearTimeout(autoSwitch.scrollUpdateTimer)
-  autoSwitch.scrollUpdateTimer = setTimeout(() => {
+  clearTimeout(resizeLayoutTimer)
+  resizeLayoutTimer = setTimeout(() => {
     nextTick(() => {
       syncVirtualListState()
     })
-  }, 100) // 延迟100ms，避免频繁更新
+  }, 100)
 }
 
 // 初始化加载数据
@@ -1253,9 +1281,13 @@ onUnmounted(() => {
     clearInterval(autoSwitch.countdownTimer)
     autoSwitch.countdownTimer = null
   }
-  if (autoSwitch.scrollUpdateTimer) {
-    clearTimeout(autoSwitch.scrollUpdateTimer)
-    autoSwitch.scrollUpdateTimer = null
+  if (resizeLayoutTimer) {
+    clearTimeout(resizeLayoutTimer)
+    resizeLayoutTimer = null
+  }
+  if (displayIndexDebounceTimer) {
+    clearTimeout(displayIndexDebounceTimer)
+    displayIndexDebounceTimer = null
   }
   if (favoriteClick.timer) {
     clearTimeout(favoriteClick.timer)
@@ -1289,6 +1321,9 @@ onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
   document.removeEventListener('touchend', handlePreventDoubleTapZoom)
 
+  unbindJumpDialogViewport()
+  document.documentElement.style.removeProperty(JUMP_DIALOG_TOP_VAR)
+
   // 清理图片缩放状态
   Object.keys(imageScales).forEach((key) => {
     delete imageScales[key]
@@ -1315,6 +1350,70 @@ const handlePageHide = () => {
 // 处理页面显示事件（可能是解锁或切回应用）
 const handlePageShow = () => {}
 
+// 跳转弹窗：用 visualViewport 计算 top，避免软键盘遮挡（纯 CSS 在部分 WebView/机型上无效）
+const JUMP_DIALOG_TOP_VAR = '--fbw-jump-dialog-top'
+let jumpDialogViewportBound = false
+const onJumpDialogViewportChange = (forceTightTop = false) => {
+  if (!flags.showJumpPopup) return
+  const vv = window.visualViewport
+  const layoutH = window.innerHeight || document.documentElement.clientHeight || 0
+  let topPx
+  if (vv && typeof vv.height === 'number' && layoutH > 0) {
+    const offTop = Math.max(0, vv.offsetTop)
+    // 可视高度明显小于布局高度时视为键盘顶起；部分机型键盘弹出后 vv.height 不变，输入框 focus 时用 forceTightTop 强制贴上可视区上沿
+    const keyboardLikely = forceTightTop || vv.height < layoutH * 0.72
+    const pad = keyboardLikely
+      ? Math.max(8, Math.min(40, vv.height * 0.03))
+      : Math.max(16, Math.min(72, vv.height * 0.08))
+    topPx = Math.round(offTop + pad)
+  } else {
+    topPx = Math.round(Math.max(48, layoutH * 0.08))
+  }
+  document.documentElement.style.setProperty(JUMP_DIALOG_TOP_VAR, `${topPx}px`)
+}
+
+const bindJumpDialogViewport = () => {
+  if (jumpDialogViewportBound) return
+  jumpDialogViewportBound = true
+  const vv = window.visualViewport
+  if (vv) {
+    vv.addEventListener('resize', onJumpDialogViewportChange)
+    vv.addEventListener('scroll', onJumpDialogViewportChange)
+  }
+  window.addEventListener('resize', onJumpDialogViewportChange)
+}
+
+const unbindJumpDialogViewport = () => {
+  if (!jumpDialogViewportBound) return
+  jumpDialogViewportBound = false
+  const vv = window.visualViewport
+  if (vv) {
+    vv.removeEventListener('resize', onJumpDialogViewportChange)
+    vv.removeEventListener('scroll', onJumpDialogViewportChange)
+  }
+  window.removeEventListener('resize', onJumpDialogViewportChange)
+}
+
+watch(
+  () => flags.showJumpPopup,
+  (show) => {
+    if (show) {
+      nextTick(() => {
+        onJumpDialogViewportChange()
+        bindJumpDialogViewport()
+        requestAnimationFrame(() => {
+          onJumpDialogViewportChange()
+          setTimeout(onJumpDialogViewportChange, 120)
+          setTimeout(onJumpDialogViewportChange, 320)
+        })
+      })
+    } else {
+      unbindJumpDialogViewport()
+      document.documentElement.style.removeProperty(JUMP_DIALOG_TOP_VAR)
+    }
+  }
+)
+
 // 新增跳转索引
 const jumpIndex = ref('')
 
@@ -1330,59 +1429,65 @@ const jumpToIndex = async () => {
     return
   }
 
-  // 如果索引超出当前图片列表范围，需要加载更多数据
-  if (index >= autoSwitch.imageList.length) {
-    // 计算需要加载的页数
-    let neededPage = Math.ceil((index + 1) / pageInfo.pageSize)
-    const currentPage = pageInfo.startPage
+  flags.jumpScrollLock = true
+  try {
+    // 如果索引超出当前图片列表范围，需要加载更多数据
+    if (index >= autoSwitch.imageList.length) {
+      const neededPage = Math.ceil((index + 1) / pageInfo.pageSize)
+      const currentPage = pageInfo.startPage
 
-    // 如果需要加载更多数据
-    if (neededPage > currentPage) {
-      flags.loading = true
-      const pagesToLoad = neededPage - currentPage
+      if (neededPage > currentPage) {
+        flags.loading = true
+        const pagesToLoad = neededPage - currentPage
 
-      // 限制最多加载10页数据
-      if (pagesToLoad > 10) {
-        flags.loading = false
-        showNotify({
-          type: 'warning',
-          message: t('messages.indexTooLarge')
-        })
-        jumpIndex.value = ''
-        return
-      }
-
-      for (let i = 0; i < pagesToLoad; i++) {
-        if (!flags.finished) {
-          pageInfo.startPage += 1
-          await loadData()
-        } else {
-          break
+        if (pagesToLoad > 10) {
+          flags.loading = false
+          showNotify({
+            type: 'warning',
+            message: t('messages.indexTooLarge')
+          })
+          jumpIndex.value = ''
+          return
         }
+
+        for (let i = 0; i < pagesToLoad; i++) {
+          if (!flags.finished) {
+            pageInfo.startPage += 1
+            await loadData()
+            if (i < pagesToLoad - 1) {
+              await new Promise((r) => setTimeout(r, 48))
+            }
+          } else {
+            break
+          }
+        }
+
+        flags.loading = false
       }
-
-      flags.loading = false
     }
-  }
 
-  // 再次检查索引是否有效
-  if (index >= autoSwitch.imageList.length) {
+    if (index >= autoSwitch.imageList.length) {
+      jumpIndex.value = ''
+      showNotify({
+        type: 'warning',
+        message: t('messages.indexOutOfRange')
+      })
+      return
+    }
+
+    autoSwitch.currentIndex = index
+    flags.showJumpPopup = false
     jumpIndex.value = ''
-    showNotify({
-      type: 'warning',
-      message: t('messages.indexOutOfRange')
-    })
-    return
+    await nextTick()
+    if (virtualListRef.value) {
+      await virtualListRef.value.scrollToIndex(index, false)
+    }
+    await new Promise((r) => setTimeout(r, 120))
+  } finally {
+    setTimeout(() => {
+      flags.jumpScrollLock = false
+    }, 280)
   }
-
-  // 跳转到指定索引
-  autoSwitch.currentIndex = index
-  // 确保在DOM更新后执行滚动，并使用nextTick和setTimeout确保虚拟列表完全更新
-  nextTick(() => {
-    virtualListRef.value?.scrollToIndex(index, false)
-  })
-  flags.showJumpPopup = false
-  jumpIndex.value = ''
 }
 </script>
 
@@ -1404,6 +1509,7 @@ const jumpToIndex = async () => {
         :container-height="containerHeight"
         :loading="flags.loading"
         :finished="flags.finished"
+        :suppress-load-more="flags.jumpScrollLock"
         @scroll="onVirtualListScroll"
         @load-more="onLoadMore"
       >
@@ -1585,11 +1691,13 @@ const jumpToIndex = async () => {
     </template>
   </van-toast>
 
-  <!-- 跳转弹窗 -->
+  <!-- 跳转弹窗（上移避免移动端键盘遮挡；teleport 到 body，样式见底部非 scoped 块） -->
   <van-dialog
     v-model:show="flags.showJumpPopup"
+    class-name="home-jump-dialog"
     :title="t('h5.pages.home.actions.jumpToIndex')"
     show-cancel-button
+    @opened="() => onJumpDialogViewportChange()"
     @confirm="jumpToIndex"
     @cancel="jumpIndex = ''"
   >
@@ -1598,6 +1706,7 @@ const jumpToIndex = async () => {
       :placeholder="t('h5.pages.home.actions.enterIndex')"
       type="digit"
       :maxlength="String(autoSwitch.total).length"
+      @focus="onJumpDialogViewportChange(true)"
     />
   </van-dialog>
 </template>
@@ -1794,5 +1903,12 @@ const jumpToIndex = async () => {
 <style lang="scss">
 .image-info-value > * {
   // user-select: text;
+}
+
+/* H5 跳转索引弹窗：top 由 visualViewport 写入 --fbw-jump-dialog-top；!important 覆盖 Vant 加载顺序 */
+.home-jump-dialog.van-dialog.van-popup.van-popup--center {
+  top: var(--fbw-jump-dialog-top, max(8vh, calc(env(safe-area-inset-top, 0px) + 44px))) !important;
+  transform: none !important;
+  margin-top: 0 !important;
 }
 </style>

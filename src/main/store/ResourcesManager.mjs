@@ -181,6 +181,7 @@ export default class ResourcesManager {
 
         const query_stmt = this.db.prepare(query_sql)
         const query_result = query_stmt.all(...query_params, pageSize, (startPage - 1) * pageSize)
+        ret.data.list = []
         if (Array.isArray(query_result) && query_result.length) {
           ret.data.list = query_result.map((item) => {
             return {
@@ -197,12 +198,13 @@ export default class ResourcesManager {
             }
           })
           await this.batchUpdateStatistics(updateParams)
-          if (count_sql) {
-            const count_stmt = this.db.prepare(count_sql)
-            const count_result = count_stmt.get(...query_params)
-            if (count_result && count_result.total) {
-              ret.data.total = count_result.total
-            }
+        }
+        // 无论当前页是否有数据都要统计总数，否则分页后续页 total 为 0 会导致前端误判「已结束」或错乱
+        if (count_sql) {
+          const count_stmt = this.db.prepare(count_sql)
+          const count_result = count_stmt.get(...query_params)
+          if (count_result && typeof count_result.total === 'number') {
+            ret.data.total = count_result.total
           }
         }
         ret.success = true
@@ -239,8 +241,11 @@ export default class ResourcesManager {
             : ''
         })
         if (res) {
-          if (Array.isArray(res.list) && res.list.length) {
+          if (typeof res.total === 'number' && res.total >= 0) {
             ret.data.total = res.total
+          }
+          ret.data.list = []
+          if (Array.isArray(res.list) && res.list.length) {
             ret.data.list = res.list.map((item) => {
               return {
                 ...item,

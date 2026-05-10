@@ -335,6 +335,8 @@
     "exitedPrivacySpaceSuccess": "已退出隱私空間！",
     "noMoreData": "沒有更多資料了！",
     "getDataFail": "獲取資料失敗！",
+    "networkRequestFailed": "網路異常，請檢查連線後重試。",
+    "invalidServerResponse": "伺服器回應異常，請稍後再試。",
     "copySuccess": "已複製！",
     "copyFail": "複製失敗！",
     "confirmDelete": "刪除後無法恢復，確認刪除嗎？",
@@ -769,7 +771,8 @@
         "displayMode": {
           "toggleToFullscreen": "切換為鋪滿",
           "toggleToWaterfall": "切換為瀑布流",
-          "indicator": "{current} / {total}"
+          "indicator": "{current} / {total}",
+          "indicatorLoadedTotal": "{loaded} / {total}"
         },
         "filters": {
           "title": "搜尋條件",

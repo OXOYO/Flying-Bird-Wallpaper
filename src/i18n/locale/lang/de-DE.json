@@ -331,6 +331,8 @@
     "exitedPrivacySpaceSuccess": "Den Privatbereich verlassen!",
     "noMoreData": "Keine weiteren Daten!",
     "getDataFail": "Daten konnten nicht abgerufen werden!",
+    "networkRequestFailed": "Netzwerkfehler. Bitte Verbindung prüfen und erneut versuchen.",
+    "invalidServerResponse": "Ungültige Serverantwort. Bitte später erneut versuchen.",
     "copySuccess": "Kopiert!",
     "copyFail": "Kopieren fehlgeschlagen!",
     "confirmDelete": "Nach dem Löschen kann nicht wiederhergestellt werden, Löschen bestätigen?",
@@ -765,7 +767,8 @@
         "displayMode": {
           "toggleToFullscreen": "Full screen view",
           "toggleToWaterfall": "Waterfall grid",
-          "indicator": "{current} / {total}"
+          "indicator": "{current} / {total}",
+          "indicatorLoadedTotal": "{loaded} / {total}"
         },
         "filters": {
           "title": "Suchfilter",

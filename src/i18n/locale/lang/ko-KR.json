@@ -331,6 +331,8 @@
     "exitedPrivacySpaceSuccess": "프라이버시 공간에서 나갔습니다!",
     "noMoreData": "데이터가 더 이상 없습니다!",
     "getDataFail": "데이터를 가져오지 못했습니다!",
+    "networkRequestFailed": "네트워크 오류입니다. 연결을 확인한 뒤 다시 시도하세요.",
+    "invalidServerResponse": "서버 응답이 올바르지 않습니다. 잠시 후 다시 시도하세요.",
     "copySuccess": "복사되었습니다!",
     "copyFail": "복사에 실패했습니다!",
     "confirmDelete": "삭제 후 복구할 수 없습니다. 삭제하시겠습니까?",
@@ -765,7 +767,8 @@
         "displayMode": {
           "toggleToFullscreen": "Full screen view",
           "toggleToWaterfall": "Waterfall grid",
-          "indicator": "{current} / {total}"
+          "indicator": "{current} / {total}",
+          "indicatorLoadedTotal": "{loaded} / {total}"
         },
         "filters": {
           "title": "검색 조건",

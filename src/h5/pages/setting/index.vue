@@ -15,6 +15,7 @@ import { localeOptions } from '@i18n/locale/index.js'
 import { appInfo } from '@common/config.js'
 import UseCommonStore from '@h5/stores/commonStore.js'
 import UseSettingStore from '@h5/stores/settingStore.js'
+import { resolveApiUserMessage } from '@common/utils.js'
 import { useTranslation } from 'i18next-vue'
 
 const { t } = useTranslation()
@@ -189,7 +190,9 @@ const onSettingDataChange = async (field) => {
   const res = await settingStore.h5UpdateSettingData(payload)
   showNotify({
     type: res.success ? 'success' : 'danger',
-    message: res.message
+    message: res.success
+      ? String(res.message ?? '').trim() || t('messages.operationSuccess')
+      : resolveApiUserMessage(res, t)
   })
 }
 

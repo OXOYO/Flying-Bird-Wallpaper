@@ -25,10 +25,24 @@ const props = defineProps({
   finished: {
     type: Boolean,
     default: false
+  },
+  /** 为 true 时不触发 load-more（例如首页跳转对齐期间，避免与分页请求并发压垮 HTTP/2） */
+  suppressLoadMore: {
+    type: Boolean,
+    default: false
   }
 })
 
 const emit = defineEmits(['scroll', 'load-more'])
+
+// 防止Near底部时连续多帧触发多次 load-more（父组件 loading 尚未传到子组件前的竞态）
+const loadMoreLatch = ref(false)
+watch(
+  () => props.loading,
+  (loading) => {
+    if (!loading) loadMoreLatch.value = false
+  }
+)
 
 const virtualListRef = ref(null)
 const containerHeight = ref(props.containerHeight)
@@ -223,7 +237,14 @@ const handleScroll = (event) => {
 
   // 检查是否需要加载更多
   const { end } = visibleRange.value
-  if (end >= props.items.length - 3 && !props.loading && !props.finished) {
+  if (
+    !props.suppressLoadMore &&
+    end >= props.items.length - 3 &&
+    !props.loading &&
+    !props.finished &&
+    !loadMoreLatch.value
+  ) {
+    loadMoreLatch.value = true
     emit('load-more')
   }
 

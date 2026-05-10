@@ -331,6 +331,8 @@
     "exitedPrivacySpaceSuccess": "Saiu do espaço privado!",
     "noMoreData": "Não há mais dados!",
     "getDataFail": "Falha ao obter dados!",
+    "networkRequestFailed": "Erro de rede. Verifique a conexão e tente novamente.",
+    "invalidServerResponse": "Resposta inválida do servidor. Tente novamente mais tarde.",
     "copySuccess": "Copiado!",
     "copyFail": "Falha ao copiar!",
     "confirmDelete": "Após a exclusão, não será possível restaurar. Confirma a exclusão?",
@@ -765,7 +767,8 @@
         "displayMode": {
           "toggleToFullscreen": "Full screen view",
           "toggleToWaterfall": "Waterfall grid",
-          "indicator": "{current} / {total}"
+          "indicator": "{current} / {total}",
+          "indicatorLoadedTotal": "{loaded} / {total}"
         },
         "filters": {
           "title": "Filtros de busca",

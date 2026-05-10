@@ -26,11 +26,17 @@ const sendJson = (ctx, payload) => {
 }
 
 const normalizeSearchPayload = (payload = {}) => {
+  const rawPage = Number(payload.startPage ?? payload.page ?? 1)
+  const startPage =
+    Number.isFinite(rawPage) && rawPage >= 1 ? Math.min(Math.floor(rawPage), 1_000_000) : 1
+  const rawSize = Number(payload.pageSize ?? 20)
+  const pageSize =
+    Number.isFinite(rawSize) && rawSize >= 1 ? Math.min(Math.floor(rawSize), 200) : 20
   return {
     ...payload,
     filterKeywords: payload.filterKeywords ?? payload.keywords ?? '',
-    startPage: Number(payload.startPage || payload.page || 1),
-    pageSize: Number(payload.pageSize || 20)
+    startPage,
+    pageSize
   }
 }
 
