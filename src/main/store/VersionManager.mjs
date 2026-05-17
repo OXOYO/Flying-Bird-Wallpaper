@@ -1,5 +1,6 @@
 import { appInfo } from '../../common/config.js'
 import semver from 'semver'
+import { t } from '../../i18n/server.js'
 import fs from 'node:fs'
 import path from 'node:path'
 
@@ -150,7 +151,7 @@ export default class VersionManager {
 
     // 如果是首次安装或版本相同，不需要迁移
     if (!prevVersion || prevVersion === currentVersion) {
-      return { success: true, message: '无需迁移' }
+      return { success: true, message: t('messages.migrationNotNeeded') }
     }
 
     this.logger.info(`检测到版本升级: ${prevVersion} -> ${currentVersion}`)
@@ -167,7 +168,7 @@ export default class VersionManager {
         this.logger.info(`没有找到适用的迁移脚本`)
         // 更新版本记录
         this.db.prepare('INSERT INTO fbw_version (version) VALUES (?)').run(currentVersion)
-        return { success: true, message: '无需迁移脚本' }
+        return { success: true, message: t('messages.migrationNoScripts') }
       }
 
       // 执行迁移脚本
@@ -179,10 +180,16 @@ export default class VersionManager {
       // 更新版本记录
       this.db.prepare('INSERT INTO fbw_version (version) VALUES (?)').run(currentVersion)
 
-      return { success: true, message: `成功从 ${prevVersion} 迁移到 ${currentVersion}` }
+      return {
+        success: true,
+        message: t('messages.migrationSuccess', { from: prevVersion, to: currentVersion })
+      }
     } catch (error) {
       this.logger.error(`版本迁移失败: ${error}`)
-      return { success: false, message: `迁移失败: ${error.message}` }
+      return {
+        success: false,
+        message: t('messages.migrationFail', { error: error.message })
+      }
     }
   }
 }

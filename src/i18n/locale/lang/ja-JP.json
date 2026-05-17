@@ -207,7 +207,11 @@
         "supportDownload": "ダウンロード対応",
         "yes": "はい",
         "no": "いいえ",
-        "tabs": { "marketplace": "プラグインマーケット", "installed": "インストール済み", "sources": "ソース" },
+        "tabs": {
+          "marketplace": "プラグインマーケット",
+          "installed": "インストール済み",
+          "sources": "ソース"
+        },
         "sources": {
           "addSource": "ソースを追加",
           "refreshSources": "ソースを更新",
@@ -215,7 +219,13 @@
           "renameSource": "名前変更",
           "deleteSource": "削除",
           "renameTitle": "ソース名を変更",
-          "renamePrompt": "新しいソース名を入力してください"
+          "renamePrompt": "新しいソース名を入力してください",
+          "openGithub": "ブラウザで GitHub リポジトリを開く",
+          "openLocal": "ファイルマネージャーでローカルフォルダを開く",
+          "openGithubFail": "GitHub リポジトリを開けませんでした",
+          "openLocalFail": "ローカルフォルダを開けませんでした",
+          "openLocalNotFound": "フォルダが見つかりません: {path}",
+          "openLocalNeedRestart": "フォルダを開く機能を有効にするには、アプリを完全に終了して再起動してください。"
         },
         "sourceForm": {
           "title": "プラグインソースを追加",
@@ -241,19 +251,26 @@
           "removeSourceTitle": "ソースを削除",
           "removeSourceMessage": "ソース {sourceName} を削除してもよろしいですか？",
           "uninstallTitle": "プラグインをアンインストール",
-          "uninstallMessage": "プラグイン {pluginName} をアンインストールしてもよろしいですか？"
+          "uninstallMessage": "プラグイン {pluginName} をアンインストールしますか？関連する検索リソースは利用できなくなります。",
+          "updateTitle": "プラグインを更新",
+          "updateMessage": "「{pluginName}」を v{currentVersion} から v{latestVersion} に更新しますか？インストール済みファイルが上書きされます。"
         },
         "secretKey": {
           "config": "キーを設定",
           "title": "シークレットキーを設定",
           "prompt": "プラグイン {pluginName} のシークレットキーを設定してください",
-          "placeholder": "シークレットキーを入力してください",
+          "placeholder": "API キーのみ（プレフィックス不要）",
           "saveSuccess": "シークレットキーを保存しました",
           "saveFail": "シークレットキーの保存に失敗しました",
           "missing": "キー未設定",
           "status": "シークレットキー状態",
           "configured": "設定済み",
-          "notRequired": "不要"
+          "notRequired": "不要",
+          "hint": {
+            "unsplash": "Unsplash: Access Key のみ（Client-ID プレフィックス不要）",
+            "pexels": "Pexels: API Key のみ（Bearer プレフィックス不要）",
+            "pixabay": "Pixabay: API Key"
+          }
         },
         "feedback": {
           "getAvailableFail": "利用可能なプラグインの取得に失敗しました",
@@ -272,7 +289,55 @@
           "updateSourceSuccess": "プラグインソースの更新に成功しました",
           "updateSourceFail": "プラグインソースの更新に失敗しました",
           "removeSourceSuccess": "プラグインソースの削除に成功しました",
-          "removeSourceFail": "プラグインソースの削除に失敗しました"
+          "removeSourceFail": "プラグインソースの削除に失敗しました",
+          "getApiListFail": "API リストの取得に失敗しました"
+        },
+        "updateVersionLabel": "v{current} → v{latest}",
+        "loadAlert": {
+          "title": "プラグインソースのお知らせ"
+        },
+        "loadErrors": {
+          "errorsSeparator": "; ",
+          "sourceItem": "{sourceName}（{hint}）",
+          "network": "ネットワーク接続に失敗しました。接続を確認して再試行してください",
+          "server5xx": "リモートサービスは一時的に利用できません。しばらくしてから再試行してください",
+          "notFound": "プラグイン一覧が見つかりません",
+          "localPath": "ローカルプラグインソースのパスまたは plugins.json が存在しません",
+          "jsonInvalid": "プラグイン一覧ファイルの形式が正しくありません",
+          "generic": "読み込みに失敗しました",
+          "partialFailed": "一部のプラグインソースの読み込みに失敗しました: {errors}",
+          "partialFailedWithCache": "一部のプラグインソースの読み込みに失敗し、ローカルキャッシュを使用しています: {errors}",
+          "allFailed": "プラグインソースの読み込みに失敗しました: {errors}",
+          "noPlugins": "利用可能なプラグインがありません",
+          "exceptionWithCache": "プラグインソースでエラーが発生し、キャッシュを使用しています: {error}",
+          "getAvailableFail": "利用可能なプラグイン一覧の取得に失敗しました: {error}"
+        },
+        "operationErrors": {
+          "invalidSourceName": "ソース名の形式が無効です。英字、数字、ハイフン、アンダースコアのみ使用できます。",
+          "invalidSourceType": "ソースタイプが無効です。",
+          "locationRequired": "ソースの場所を入力してください。",
+          "sourceNameExists": "ソース名は既に存在します。一意の名前を使用してください。",
+          "sourceNotFound": "プラグインソースが見つかりません。",
+          "officialSourceCannotDelete": "公式ソースは削除できません。",
+          "officialSourceCannotRename": "公式ソース名は変更できません。",
+          "installedPluginsBlockDelete": "このソースには {count} 個のインストール済みプラグインがあります。ソースを削除する前にアンインストールしてください。",
+          "installedPluginsBlockRename": "このソースには {count} 個のインストール済みプラグインがあります。名前を変更する前にアンインストールしてください。",
+          "pluginsJsonMissingArray": "ソース {sourceName} の plugins.json が無効です：plugins 配列がありません。",
+          "pluginsJsonInvalidPlugins": "ソース {sourceName} の plugins.json が無効です：plugins は空でない文字列配列である必要があります。",
+          "sourceValidateFail": "ソース {sourceName} の検証に失敗しました：{error}",
+          "invalidGithubRepo": "GitHub リポジトリのアドレスが無効です。",
+          "noSourceEnabled": "有効なプラグインソースがありません。ソースを追加または有効にしてください。",
+          "pluginsJsonMissingArrayShort": "plugins.json が無効です：plugins 配列がありません。",
+          "pluginsJsonInvalidPluginsShort": "plugins.json が無効です：plugins は空でない文字列配列である必要があります。",
+          "pluginNotFound": "プラグインが見つかりません。",
+          "pluginIncompatible": "プラグインのバージョンが互換性がありません。",
+          "systemPluginCannotUninstall": "システムプラグインはアンインストールできません。",
+          "addSourceFailDetail": "プラグインソースの追加に失敗しました：{error}",
+          "installFailDetail": "プラグインのインストールに失敗しました：{error}",
+          "uninstallFailDetail": "プラグインのアンインストールに失敗しました：{error}",
+          "updateFailDetail": "プラグインの更新に失敗しました：{error}",
+          "getInstalledFailDetail": "インストール済みプラグインの取得に失敗しました：{error}",
+          "unknownError": "不明なエラー"
         }
       }
     },
@@ -429,7 +494,23 @@
     "shortcutUpdateFailed": "ショートカットの更新に失敗しました！",
     "shortcutResetSuccess": "ショートカットのリセットに成功しました！",
     "shortcutResetFailed": "ショートカットのリセットに失敗しました！",
-    "shortcutEmptySuccess": "ショートカットのクリアに成功しました！"
+    "shortcutEmptySuccess": "ショートカットのクリアに成功しました！",
+    "apiPluginNotFound": "API プラグインが見つかりません：{resourceName}",
+    "apiPluginMethodMissing": "API プラグイン {resourceName} にメソッドがありません：{funcName}",
+    "openDirInvalidPath": "パスが無効です",
+    "openDirNotFound": "ディレクトリが存在しません：{path}",
+    "videoErrAborted": "動画の読み込みがキャンセルされました",
+    "videoErrNetwork": "動画のネットワークエラー",
+    "videoErrDecode": "動画のデコードエラー",
+    "videoErrUnsupported": "サポートされていない動画形式です",
+    "videoErrUnknown": "動画再生エラー（{code}）",
+    "migrationNotNeeded": "移行は不要です",
+    "migrationNoScripts": "移行スクリプトは不要です",
+    "migrationSuccess": "{from} から {to} への移行に成功しました",
+    "migrationFail": "移行に失敗しました：{error}",
+    "h5ServerFindPortFail": "利用可能なポートの検出に失敗しました：{error}",
+    "h5ServerError": "H5 サーバーエラー：{error}",
+    "h5ServerStartFailDetail": "H5 サーバーの起動に失敗しました：{error}"
   },
   "resourceTypeList": {
     "localResource": "ローカルリソース",
@@ -775,6 +856,11 @@
           "all": "すべて",
           "reset": "条件をリセット",
           "apply": "条件を適用"
+        },
+        "videoPreview": {
+          "close": "動画プレビューを閉じる",
+          "enterLandscape": "横向き再生",
+          "exitLandscape": "横向きを終了"
         }
       },
       "setting": {
@@ -843,7 +929,9 @@
             "placeholder": "数値インジケーターの位置を選択してください"
           },
           "h5Vibration": "振動フィードバック",
-          "h5WeekScreen": "画面常時点灯"
+          "h5WeekScreen": "画面常時点灯",
+          "h5HomeSettings": "ホーム設定",
+          "h5GeneralSettings": "一般設定"
         },
         "about": "について",
         "version": "バージョン",

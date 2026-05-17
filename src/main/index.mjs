@@ -1,4 +1,6 @@
+import fs from 'node:fs'
 import path from 'node:path'
+import { spawn } from 'node:child_process'
 import {
   app,
   Tray,
@@ -32,6 +34,7 @@ import { handleImageResponse, handleVideoResponse } from './utils/file.mjs'
 import ApiBase from './ApiBase.js'
 // import setMacDynamicWallpaper from './utils/setMacDynamicWallpaper.mjs'
 import { t } from '../i18n/server.js'
+import { API_ERROR_CODE } from '../common/utils.js'
 import cache from './cache.mjs'
 import { menuList } from '../common/publicData.js'
 import axios from 'axios'
@@ -45,6 +48,39 @@ import DynamicWallpaperWindow from './windows/DynamicWallpaperWindow.mjs'
 import RhythmWallpaperWindow from './windows/RhythmWallpaperWindow.mjs'
 
 const userDataPath = app.getPath('userData')
+
+const isAbsoluteDirPath = (value) => {
+  const trimmed = String(value || '').trim()
+  return path.isAbsolute(trimmed) || /^[A-Za-z]:[\\/]/.test(trimmed)
+}
+
+/** 在系统文件管理器中打开目录（支持绝对路径） */
+const openDirectoryAt = async (targetPath) => {
+  if (!targetPath || typeof targetPath !== 'string') {
+    return { success: false, errorCode: API_ERROR_CODE.OPEN_DIR_INVALID_PATH }
+  }
+  const trimmed = targetPath.trim()
+  const resolved = isAbsoluteDirPath(trimmed) ? path.normalize(trimmed) : path.resolve(trimmed)
+  if (!fs.existsSync(resolved)) {
+    return {
+      success: false,
+      errorCode: API_ERROR_CODE.OPEN_DIR_NOT_FOUND,
+      errorParams: { path: trimmed }
+    }
+  }
+  const stat = fs.statSync(resolved)
+  const toOpen = stat.isDirectory() ? resolved : path.dirname(resolved)
+  const err = await shell.openPath(toOpen)
+  if (!err) {
+    return { success: true }
+  }
+  if (isWin()) {
+    spawn('explorer.exe', [toOpen], { detached: true, stdio: 'ignore' }).unref()
+    return { success: true }
+  }
+  return { success: false, message: err }
+}
+
 // 目录
 process.env.FBW_USER_DATA_PATH = userDataPath
 process.env.FBW_LOGS_PATH = getDirPathByName(userDataPath, 'logs')
@@ -94,6 +130,7 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
 
   // 初始化日志
   logger()
+  global.FBW.apiHelpers.logger = global.logger
   global.logger.info(`isDev: ${isDev()} process.env.NODE_ENV: ${process.env.NODE_ENV}`)
   global.logger.info(`getIconPath FBW_RESOURCES_PATH: ${process.env.FBW_RESOURCES_PATH}`)
   global.logger.info(`getIconPath resourcesPath: ${process.resourcesPath}`)
@@ -575,13 +612,23 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
         })
       })
 
-      ipcMain.handle('main:openDir', (event, dirName) => {
-        const dirPath = getDirPathByName(userDataPath, dirName)
-        shell.openPath(dirPath)
+      ipcMain.handle('main:openDir', async (event, dirName) => {
+        if (!dirName) {
+          return { success: false, errorCode: API_ERROR_CODE.OPEN_DIR_INVALID_PATH }
+        }
+        const trimmed = String(dirName).trim()
+        const dirPath = isAbsoluteDirPath(trimmed)
+          ? path.normalize(trimmed)
+          : getDirPathByName(userDataPath, trimmed)
+        return openDirectoryAt(dirPath)
       })
 
       ipcMain.handle('main:openUrl', (event, url) => {
         shell.openExternal(url)
+      })
+
+      ipcMain.handle('main:openPath', async (event, targetPath) => {
+        return openDirectoryAt(targetPath)
       })
 
       ipcMain.handle('main:setWindowPosition', (event, name, position) => {

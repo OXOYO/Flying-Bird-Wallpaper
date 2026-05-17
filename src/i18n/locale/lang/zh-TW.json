@@ -219,7 +219,13 @@
           "renameSource": "修改源名",
           "deleteSource": "刪除源",
           "renameTitle": "修改插件源名稱",
-          "renamePrompt": "請輸入新的插件源名稱"
+          "renamePrompt": "請輸入新的插件源名稱",
+          "openGithub": "在瀏覽器中開啟 GitHub 儲存庫",
+          "openLocal": "在檔案管理器中開啟本機目錄",
+          "openGithubFail": "無法開啟 GitHub 儲存庫連結",
+          "openLocalFail": "無法開啟本機目錄",
+          "openLocalNotFound": "目錄不存在：{path}",
+          "openLocalNeedRestart": "開啟目錄功能尚未生效，請完全結束應用後重新啟動"
         },
         "sourceForm": {
           "title": "新增插件源",
@@ -245,19 +251,26 @@
           "removeSourceTitle": "刪除插件源",
           "removeSourceMessage": "確認刪除插件源 {sourceName} 嗎？",
           "uninstallTitle": "卸載插件",
-          "uninstallMessage": "確認卸載插件 {pluginName} 嗎？"
+          "uninstallMessage": "確認卸載插件 {pluginName} 嗎？卸載後相關搜尋資源將不可用。",
+          "updateTitle": "更新插件",
+          "updateMessage": "確認將「{pluginName}」從 v{currentVersion} 更新到 v{latestVersion} 嗎？更新將覆蓋目前插件檔案。"
         },
         "secretKey": {
           "config": "配置密鑰",
           "title": "配置資源密鑰",
           "prompt": "請配置插件 {pluginName} 的資源密鑰",
-          "placeholder": "請輸入密鑰",
+          "placeholder": "請輸入 API Key（僅金鑰本身）",
           "saveSuccess": "密鑰儲存成功",
           "saveFail": "密鑰儲存失敗",
           "missing": "缺少密鑰",
           "status": "密鑰狀態",
           "configured": "已配置",
-          "notRequired": "無需密鑰"
+          "notRequired": "無需密鑰",
+          "hint": {
+            "unsplash": "Unsplash：僅填 Access Key，不要加 Client-ID 前綴",
+            "pexels": "Pexels：僅填 API Key，不要加 Bearer 前綴",
+            "pixabay": "Pixabay：填寫 API Key"
+          }
         },
         "feedback": {
           "getAvailableFail": "獲取可用插件列表失敗",
@@ -276,7 +289,55 @@
           "updateSourceSuccess": "更新插件源成功",
           "updateSourceFail": "更新插件源失敗",
           "removeSourceSuccess": "刪除插件源成功",
-          "removeSourceFail": "刪除插件源失敗"
+          "removeSourceFail": "刪除插件源失敗",
+          "getApiListFail": "取得 API 列表失敗"
+        },
+        "updateVersionLabel": "v{current} → v{latest}",
+        "loadAlert": {
+          "title": "插件源載入提示"
+        },
+        "loadErrors": {
+          "errorsSeparator": "；",
+          "sourceItem": "{sourceName}（{hint}）",
+          "network": "網路連線失敗，請檢查網路後重試",
+          "server5xx": "遠端服務暫時不可用，請稍後重試",
+          "notFound": "未找到插件列表",
+          "localPath": "本機插件源路徑或 plugins.json 不存在",
+          "jsonInvalid": "插件列表檔案格式錯誤",
+          "generic": "載入失敗",
+          "partialFailed": "部分插件源載入失敗：{errors}",
+          "partialFailedWithCache": "部分插件源載入失敗，已使用本機快取：{errors}",
+          "allFailed": "插件源載入失敗：{errors}",
+          "noPlugins": "未取得可用插件",
+          "exceptionWithCache": "插件源異常，已使用快取：{error}",
+          "getAvailableFail": "取得可用插件列表失敗：{error}"
+        },
+        "operationErrors": {
+          "invalidSourceName": "源名格式非法，僅支援字母（大小寫）、數字、-、_",
+          "invalidSourceType": "源類型非法",
+          "locationRequired": "源地址不能為空",
+          "sourceNameExists": "源名已存在，請使用唯一源名",
+          "sourceNotFound": "插件源不存在",
+          "officialSourceCannotDelete": "官方源不允許刪除",
+          "officialSourceCannotRename": "官方源不允許修改源名",
+          "installedPluginsBlockDelete": "該源下仍有 {count} 個已安裝插件，請先卸載後再刪除插件源",
+          "installedPluginsBlockRename": "該源下仍有 {count} 個已安裝插件，請先卸載後再修改源名",
+          "pluginsJsonMissingArray": "插件源 {sourceName} 的 plugins.json 格式非法：缺少 plugins 陣列",
+          "pluginsJsonInvalidPlugins": "插件源 {sourceName} 的 plugins.json 格式非法：plugins 必須為非空字串陣列",
+          "sourceValidateFail": "插件源 {sourceName} 校驗失敗：{error}",
+          "invalidGithubRepo": "GitHub 倉庫地址不合法",
+          "noSourceEnabled": "未啟用任何插件源，請先新增或啟用插件源",
+          "pluginsJsonMissingArrayShort": "plugins.json 格式非法：缺少 plugins 陣列",
+          "pluginsJsonInvalidPluginsShort": "plugins.json 格式非法：plugins 必須為非空字串陣列",
+          "pluginNotFound": "插件不存在",
+          "pluginIncompatible": "插件版本不相容",
+          "systemPluginCannotUninstall": "系統插件不允許卸載",
+          "addSourceFailDetail": "新增插件源失敗：{error}",
+          "installFailDetail": "插件安裝失敗：{error}",
+          "uninstallFailDetail": "插件卸載失敗：{error}",
+          "updateFailDetail": "插件更新失敗：{error}",
+          "getInstalledFailDetail": "取得已安裝插件列表失敗：{error}",
+          "unknownError": "未知錯誤"
         }
       }
     },
@@ -433,7 +494,23 @@
     "shortcutUpdateFailed": "快捷鍵更新失敗！",
     "shortcutResetSuccess": "快捷鍵重置成功！",
     "shortcutResetFailed": "快捷鍵重置失敗！",
-    "shortcutEmptySuccess": "快捷鍵清空成功！"
+    "shortcutEmptySuccess": "快捷鍵清空成功！",
+    "apiPluginNotFound": "未找到 API 插件：{resourceName}",
+    "apiPluginMethodMissing": "API 插件 {resourceName} 未提供方法：{funcName}",
+    "openDirInvalidPath": "路徑無效",
+    "openDirNotFound": "目錄不存在：{path}",
+    "videoErrAborted": "影片載入已取消",
+    "videoErrNetwork": "影片網路錯誤",
+    "videoErrDecode": "影片解碼錯誤",
+    "videoErrUnsupported": "不支援的影片格式",
+    "videoErrUnknown": "影片播放錯誤（{code}）",
+    "migrationNotNeeded": "無需遷移",
+    "migrationNoScripts": "無需遷移腳本",
+    "migrationSuccess": "已成功從 {from} 遷移到 {to}",
+    "migrationFail": "遷移失敗：{error}",
+    "h5ServerFindPortFail": "尋找可用連接埠失敗：{error}",
+    "h5ServerError": "H5 伺服器錯誤：{error}",
+    "h5ServerStartFailDetail": "H5 伺服器啟動失敗：{error}"
   },
   "resourceTypeList": {
     "localResource": "本地資源",
@@ -779,6 +856,11 @@
           "all": "全部",
           "reset": "重置篩選",
           "apply": "套用篩選"
+        },
+        "videoPreview": {
+          "close": "關閉影片預覽",
+          "enterLandscape": "橫向播放",
+          "exitLandscape": "退出橫向"
         }
       },
       "setting": {
@@ -847,7 +929,9 @@
             "placeholder": "請選擇指示器位置"
           },
           "h5Vibration": "震動回饋",
-          "h5WeekScreen": "螢幕常亮"
+          "h5WeekScreen": "螢幕常亮",
+          "h5HomeSettings": "首頁設定",
+          "h5GeneralSettings": "通用設定"
         },
         "about": "關於",
         "version": "版本",

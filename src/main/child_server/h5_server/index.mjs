@@ -11,15 +11,19 @@ import axios from 'axios'
 import { calculateImageOrientation, calculateImageQuality } from '../../utils/utils.mjs'
 import server from './server.mjs'
 
-process.parentPort.on('message', (e) => {
+const bindPluginApiHelpers = (logger) => {
   global.FBW = global.FBW || {}
+  global.logger = logger
   global.FBW.apiHelpers = {
     axios,
     ApiBase,
     calculateImageOrientation,
-    calculateImageQuality
+    calculateImageQuality,
+    logger
   }
+}
 
+process.parentPort.on('message', (e) => {
   const [port] = e.ports
 
   const handleLogger = (type = 'info') => {
@@ -45,6 +49,7 @@ process.parentPort.on('message', (e) => {
     warn: handleLogger('warn'),
     error: handleLogger('error')
   }
+  bindPluginApiHelpers(logger)
   const postMessage = (data) => {
     if (!data) {
       return
@@ -108,6 +113,12 @@ process.parentPort.on('message', (e) => {
           success: true,
           data: settingManager.settingData
         })
+      } else if (data.event === 'API_PLUGINS_RELOAD') {
+        bindPluginApiHelpers(logger)
+        if (apiManager) {
+          await apiManager.loadApi()
+          logger.info('[H5Server] API 插件已重新加载')
+        }
       }
     } catch (err) {
       logger.error(`[H5Server] ERROR => ${err}`)

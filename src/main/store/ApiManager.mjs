@@ -1,6 +1,15 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import { pathToFileURL } from 'node:url'
 import ApiBase from '../ApiBase.js'
+import { t } from '../../i18n/server.js'
+import { API_ERROR_CODE, createCodedError } from '../../common/utils.js'
+
+/** 绕过 ESM 模块缓存，安装/更新插件后需重新加载 main.mjs */
+const importFresh = async (modulePath) => {
+  const href = pathToFileURL(path.resolve(modulePath)).href
+  return import(/* @vite-ignore */ `${href}?fbw-reload=${Date.now()}`)
+}
 
 export default class ApiManager {
   // 单例实例
@@ -144,7 +153,7 @@ export default class ApiManager {
             const pluginPath = path.join(dir, file)
 
             // 使用await直接等待插件加载
-            const module = await import(/* @vite-ignore */ `file://${pluginPath}`)
+            const module = await importFresh(pluginPath)
             const PluginClass = module.default
 
             // 检查是否是有效的插件类
@@ -188,7 +197,7 @@ export default class ApiManager {
         if (!fs.existsSync(manifestPath) || !fs.existsSync(mainPath)) continue
         try {
           const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'))
-          const module = await import(/* @vite-ignore */ `file://${mainPath}`)
+          const module = await importFresh(mainPath)
           const PluginClass = module.default
           if (PluginClass && PluginClass.prototype instanceof ApiBase) {
             const pluginInstance = new PluginClass()
@@ -228,7 +237,7 @@ export default class ApiManager {
 
       ret.success = true
     } else {
-      ret.message = res.message || '获取API列表失败'
+      ret.message = res.message || t('pages.Setting.pluginMarketplace.feedback.getApiListFail')
     }
 
     return ret
@@ -238,7 +247,7 @@ export default class ApiManager {
   async getHotTags(resourceName, params = {}) {
     const api = this.apiMap[resourceName]
     if (!api) {
-      throw new Error(`未找到API插件: ${resourceName}`)
+      throw createCodedError(API_ERROR_CODE.API_PLUGIN_NOT_FOUND, { resourceName })
     }
     if (!api.getHotTags || typeof api.getHotTags !== 'function') {
       return []
@@ -250,10 +259,10 @@ export default class ApiManager {
   async call(resourceName, funcName, params) {
     const api = this.apiMap[resourceName]
     if (!api) {
-      throw new Error(`未找到API插件: ${resourceName}`)
+      throw createCodedError(API_ERROR_CODE.API_PLUGIN_NOT_FOUND, { resourceName })
     }
     if (!api[funcName] || typeof api[funcName] !== 'function') {
-      throw new Error(`API插件 ${resourceName} 未提供函数: ${funcName}`)
+      throw createCodedError(API_ERROR_CODE.API_PLUGIN_METHOD_MISSING, { resourceName, funcName })
     }
     return await api[funcName](params)
   }

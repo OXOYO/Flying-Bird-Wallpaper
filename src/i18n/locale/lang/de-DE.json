@@ -207,7 +207,11 @@
         "supportDownload": "Download unterstützt",
         "yes": "Ja",
         "no": "Nein",
-        "tabs": { "marketplace": "Plugin-Marktplatz", "installed": "Installiert", "sources": "Quellen" },
+        "tabs": {
+          "marketplace": "Plugin-Marktplatz",
+          "installed": "Installiert",
+          "sources": "Quellen"
+        },
         "sources": {
           "addSource": "Quelle hinzufügen",
           "refreshSources": "Quellen aktualisieren",
@@ -215,7 +219,13 @@
           "renameSource": "Umbenennen",
           "deleteSource": "Löschen",
           "renameTitle": "Quelle umbenennen",
-          "renamePrompt": "Bitte geben Sie einen neuen Quellnamen ein"
+          "renamePrompt": "Bitte geben Sie einen neuen Quellnamen ein",
+          "openGithub": "GitHub-Repository im Browser öffnen",
+          "openLocal": "Lokales Verzeichnis im Dateimanager öffnen",
+          "openGithubFail": "GitHub-Repository konnte nicht geöffnet werden",
+          "openLocalFail": "Lokales Verzeichnis konnte nicht geöffnet werden",
+          "openLocalNotFound": "Verzeichnis nicht gefunden: {path}",
+          "openLocalNeedRestart": "Bitte die App vollständig beenden und neu starten, um „Verzeichnis öffnen“ zu aktivieren."
         },
         "sourceForm": {
           "title": "Plugin-Quelle hinzufügen",
@@ -241,19 +251,26 @@
           "removeSourceTitle": "Quelle löschen",
           "removeSourceMessage": "Quelle {sourceName} wirklich löschen?",
           "uninstallTitle": "Plugin deinstallieren",
-          "uninstallMessage": "Plugin {pluginName} wirklich deinstallieren?"
+          "uninstallMessage": "Plugin {pluginName} deinstallieren? Zugehörige Suchressourcen sind danach nicht mehr verfügbar.",
+          "updateTitle": "Plugin aktualisieren",
+          "updateMessage": "{pluginName} von v{currentVersion} auf v{latestVersion} aktualisieren? Installierte Plugin-Dateien werden überschrieben."
         },
         "secretKey": {
           "config": "Schlüssel konfigurieren",
           "title": "Geheimschlüssel konfigurieren",
           "prompt": "Bitte Geheimschlüssel für Plugin {pluginName} konfigurieren",
-          "placeholder": "Geheimschlüssel eingeben",
+          "placeholder": "Nur API-Key (ohne Präfix)",
           "saveSuccess": "Geheimschlüssel gespeichert",
           "saveFail": "Geheimschlüssel konnte nicht gespeichert werden",
           "missing": "Schlüssel fehlt",
           "status": "Geheimschlüssel-Status",
           "configured": "Konfiguriert",
-          "notRequired": "Nicht erforderlich"
+          "notRequired": "Nicht erforderlich",
+          "hint": {
+            "unsplash": "Unsplash: nur Access Key, ohne Client-ID-Präfix",
+            "pexels": "Pexels: nur API-Key, ohne Bearer-Präfix",
+            "pixabay": "Pixabay: API-Key"
+          }
         },
         "feedback": {
           "getAvailableFail": "Verfügbare Plugins konnten nicht geladen werden",
@@ -272,7 +289,55 @@
           "updateSourceSuccess": "Plugin-Quelle erfolgreich aktualisiert",
           "updateSourceFail": "Plugin-Quelle konnte nicht aktualisiert werden",
           "removeSourceSuccess": "Plugin-Quelle erfolgreich entfernt",
-          "removeSourceFail": "Plugin-Quelle konnte nicht entfernt werden"
+          "removeSourceFail": "Plugin-Quelle konnte nicht entfernt werden",
+          "getApiListFail": "API-Liste konnte nicht abgerufen werden"
+        },
+        "updateVersionLabel": "v{current} → v{latest}",
+        "loadAlert": {
+          "title": "Hinweis zur Plugin-Quelle"
+        },
+        "loadErrors": {
+          "errorsSeparator": "; ",
+          "sourceItem": "{sourceName} ({hint})",
+          "network": "Netzwerkverbindung fehlgeschlagen. Bitte Netzwerk prüfen und erneut versuchen.",
+          "server5xx": "Remote-Dienst vorübergehend nicht verfügbar. Bitte später erneut versuchen.",
+          "notFound": "Plugin-Liste nicht gefunden",
+          "localPath": "Lokaler Plugin-Quellpfad oder plugins.json existiert nicht",
+          "jsonInvalid": "Ungültiges Format der Plugin-Liste",
+          "generic": "Laden fehlgeschlagen",
+          "partialFailed": "Einige Plugin-Quellen konnten nicht geladen werden: {errors}",
+          "partialFailedWithCache": "Einige Plugin-Quellen fehlgeschlagen, lokaler Cache wird verwendet: {errors}",
+          "allFailed": "Plugin-Quellen konnten nicht geladen werden: {errors}",
+          "noPlugins": "Keine verfügbaren Plugins gefunden",
+          "exceptionWithCache": "Plugin-Quellenfehler, Cache wird verwendet: {error}",
+          "getAvailableFail": "Verfügbare Plugins konnten nicht geladen werden: {error}"
+        },
+        "operationErrors": {
+          "invalidSourceName": "Ungültiger Quellenname. Nur Buchstaben, Ziffern, Bindestrich und Unterstrich sind erlaubt.",
+          "invalidSourceType": "Ungültiger Quellentyp.",
+          "locationRequired": "Quellpfad ist erforderlich.",
+          "sourceNameExists": "Quellenname existiert bereits. Verwenden Sie einen eindeutigen Namen.",
+          "sourceNotFound": "Plugin-Quelle nicht gefunden.",
+          "officialSourceCannotDelete": "Offizielle Quellen können nicht gelöscht werden.",
+          "officialSourceCannotRename": "Der Name der offiziellen Quelle kann nicht geändert werden.",
+          "installedPluginsBlockDelete": "{count} Plugin(s) von dieser Quelle sind noch installiert. Deinstallieren Sie sie vor dem Löschen der Quelle.",
+          "installedPluginsBlockRename": "{count} Plugin(s) von dieser Quelle sind noch installiert. Deinstallieren Sie sie vor dem Umbenennen der Quelle.",
+          "pluginsJsonMissingArray": "plugins.json für Quelle {sourceName} ist ungültig: plugins-Array fehlt.",
+          "pluginsJsonInvalidPlugins": "plugins.json für Quelle {sourceName} ist ungültig: plugins muss ein nicht leeres String-Array sein.",
+          "sourceValidateFail": "Validierung der Quelle {sourceName} fehlgeschlagen: {error}",
+          "invalidGithubRepo": "Ungültige GitHub-Repository-Adresse.",
+          "noSourceEnabled": "Keine Plugin-Quelle aktiviert. Fügen Sie eine Quelle hinzu oder aktivieren Sie sie.",
+          "pluginsJsonMissingArrayShort": "Ungültige plugins.json: plugins-Array fehlt.",
+          "pluginsJsonInvalidPluginsShort": "Ungültige plugins.json: plugins muss ein nicht leeres String-Array sein.",
+          "pluginNotFound": "Plugin nicht gefunden.",
+          "pluginIncompatible": "Plugin-Version ist inkompatibel.",
+          "systemPluginCannotUninstall": "System-Plugins können nicht deinstalliert werden.",
+          "addSourceFailDetail": "Plugin-Quelle konnte nicht hinzugefügt werden: {error}",
+          "installFailDetail": "Plugin-Installation fehlgeschlagen: {error}",
+          "uninstallFailDetail": "Plugin-Deinstallation fehlgeschlagen: {error}",
+          "updateFailDetail": "Plugin-Update fehlgeschlagen: {error}",
+          "getInstalledFailDetail": "Installierte Plugins konnten nicht geladen werden: {error}",
+          "unknownError": "Unbekannter Fehler"
         }
       }
     },
@@ -429,7 +494,23 @@
     "shortcutUpdateFailed": "Tastenkürzel-Update fehlgeschlagen!",
     "shortcutResetSuccess": "Tastenkürzel erfolgreich zurückgesetzt!",
     "shortcutResetFailed": "Tastenkürzel-Rücksetzung fehlgeschlagen!",
-    "shortcutEmptySuccess": "Tastenkürzel erfolgreich geleert!"
+    "shortcutEmptySuccess": "Tastenkürzel erfolgreich geleert!",
+    "apiPluginNotFound": "API-Plugin nicht gefunden: {resourceName}",
+    "apiPluginMethodMissing": "API-Plugin {resourceName} bietet keine Methode: {funcName}",
+    "openDirInvalidPath": "Ungültiger Pfad",
+    "openDirNotFound": "Verzeichnis nicht gefunden: {path}",
+    "videoErrAborted": "Videoladen wurde abgebrochen",
+    "videoErrNetwork": "Netzwerkfehler beim Video",
+    "videoErrDecode": "Fehler beim Videodekodieren",
+    "videoErrUnsupported": "Nicht unterstütztes Videoformat",
+    "videoErrUnknown": "Videowiedergabefehler ({code})",
+    "migrationNotNeeded": "Keine Migration erforderlich",
+    "migrationNoScripts": "Keine Migrationsskripte erforderlich",
+    "migrationSuccess": "Erfolgreich von {from} nach {to} migriert",
+    "migrationFail": "Migration fehlgeschlagen: {error}",
+    "h5ServerFindPortFail": "Kein verfügbarer Port gefunden: {error}",
+    "h5ServerError": "H5-Serverfehler: {error}",
+    "h5ServerStartFailDetail": "H5-Server konnte nicht gestartet werden: {error}"
   },
   "resourceTypeList": {
     "localResource": "Lokale Ressourcen",
@@ -775,6 +856,11 @@
           "all": "Alle",
           "reset": "Filter zurücksetzen",
           "apply": "Filter anwenden"
+        },
+        "videoPreview": {
+          "close": "Videovorschau schließen",
+          "enterLandscape": "Querformat-Wiedergabe",
+          "exitLandscape": "Querformat beenden"
         }
       },
       "setting": {
@@ -843,7 +929,9 @@
             "placeholder": "Bitte Position des Zahlenindikators auswählen"
           },
           "h5Vibration": "Vibrationsrückmeldung",
-          "h5WeekScreen": "Bildschirm immer an"
+          "h5WeekScreen": "Bildschirm immer an",
+          "h5HomeSettings": "Startseiten-Einstellungen",
+          "h5GeneralSettings": "Allgemeine Einstellungen"
         },
         "about": "Über",
         "version": "Version",

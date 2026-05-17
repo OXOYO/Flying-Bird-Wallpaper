@@ -207,7 +207,11 @@
         "supportDownload": "Suporta download",
         "yes": "Sim",
         "no": "Não",
-        "tabs": { "marketplace": "Loja de plugins", "installed": "Instalados", "sources": "Fontes" },
+        "tabs": {
+          "marketplace": "Loja de plugins",
+          "installed": "Instalados",
+          "sources": "Fontes"
+        },
         "sources": {
           "addSource": "Adicionar fonte",
           "refreshSources": "Atualizar fontes",
@@ -215,7 +219,13 @@
           "renameSource": "Renomear",
           "deleteSource": "Excluir",
           "renameTitle": "Renomear fonte",
-          "renamePrompt": "Digite um novo nome de fonte"
+          "renamePrompt": "Digite um novo nome de fonte",
+          "openGithub": "Abrir repositório GitHub no navegador",
+          "openLocal": "Abrir pasta local no gerenciador de arquivos",
+          "openGithubFail": "Falha ao abrir repositório GitHub",
+          "openLocalFail": "Falha ao abrir pasta local",
+          "openLocalNotFound": "Pasta não encontrada: {path}",
+          "openLocalNeedRestart": "Encerre o app completamente e reinicie para habilitar abrir pasta."
         },
         "sourceForm": {
           "title": "Adicionar fonte de plugins",
@@ -241,19 +251,26 @@
           "removeSourceTitle": "Excluir fonte",
           "removeSourceMessage": "Tem certeza de que deseja excluir a fonte {sourceName}?",
           "uninstallTitle": "Desinstalar plugin",
-          "uninstallMessage": "Tem certeza de que deseja desinstalar o plugin {pluginName}?"
+          "uninstallMessage": "Desinstalar {pluginName}? Os recursos de pesquisa relacionados ficarão indisponíveis.",
+          "updateTitle": "Atualizar plugin",
+          "updateMessage": "Atualizar {pluginName} de v{currentVersion} para v{latestVersion}? Os arquivos instalados serão substituídos."
         },
         "secretKey": {
           "config": "Configurar chave",
           "title": "Configurar chave secreta",
           "prompt": "Configure a chave secreta para o plugin {pluginName}",
-          "placeholder": "Digite a chave secreta",
+          "placeholder": "Somente chave API (sem prefixo)",
           "saveSuccess": "Chave secreta salva",
           "saveFail": "Falha ao salvar chave secreta",
           "missing": "Chave ausente",
           "status": "Status da chave secreta",
           "configured": "Configurada",
-          "notRequired": "Não necessária"
+          "notRequired": "Não necessária",
+          "hint": {
+            "unsplash": "Unsplash: apenas Access Key, sem prefixo Client-ID",
+            "pexels": "Pexels: apenas API Key, sem prefixo Bearer",
+            "pixabay": "Pixabay: API Key"
+          }
         },
         "feedback": {
           "getAvailableFail": "Falha ao obter plugins disponíveis",
@@ -272,7 +289,55 @@
           "updateSourceSuccess": "Fonte de plugins atualizada com sucesso",
           "updateSourceFail": "Falha ao atualizar fonte de plugins",
           "removeSourceSuccess": "Fonte de plugins removida com sucesso",
-          "removeSourceFail": "Falha ao remover fonte de plugins"
+          "removeSourceFail": "Falha ao remover fonte de plugins",
+          "getApiListFail": "Falha ao obter lista de API"
+        },
+        "updateVersionLabel": "v{current} → v{latest}",
+        "loadAlert": {
+          "title": "Aviso da fonte de plugins"
+        },
+        "loadErrors": {
+          "errorsSeparator": "; ",
+          "sourceItem": "{sourceName} ({hint})",
+          "network": "Falha na conexão de rede. Verifique a rede e tente novamente.",
+          "server5xx": "Serviço remoto temporariamente indisponível. Tente novamente mais tarde.",
+          "notFound": "Lista de plugins não encontrada",
+          "localPath": "Caminho da fonte local ou plugins.json não existe",
+          "jsonInvalid": "Formato inválido do arquivo de lista de plugins",
+          "generic": "Falha ao carregar",
+          "partialFailed": "Falha ao carregar algumas fontes de plugins: {errors}",
+          "partialFailedWithCache": "Algumas fontes falharam; usando cache local: {errors}",
+          "allFailed": "Falha ao carregar fontes de plugins: {errors}",
+          "noPlugins": "Nenhum plugin disponível encontrado",
+          "exceptionWithCache": "Erro na fonte de plugins; usando cache: {error}",
+          "getAvailableFail": "Falha ao carregar lista de plugins disponíveis: {error}"
+        },
+        "operationErrors": {
+          "invalidSourceName": "Nome da fonte inválido. Apenas letras, dígitos, hífen e sublinhado são permitidos.",
+          "invalidSourceType": "Tipo de fonte inválido.",
+          "locationRequired": "O local da fonte é obrigatório.",
+          "sourceNameExists": "O nome da fonte já existe. Use um nome único.",
+          "sourceNotFound": "Fonte de plugin não encontrada.",
+          "officialSourceCannotDelete": "Fontes oficiais não podem ser excluídas.",
+          "officialSourceCannotRename": "O nome da fonte oficial não pode ser alterado.",
+          "installedPluginsBlockDelete": "{count} plugin(s) desta fonte ainda estão instalados. Desinstale-os antes de excluir a fonte.",
+          "installedPluginsBlockRename": "{count} plugin(s) desta fonte ainda estão instalados. Desinstale-os antes de renomear a fonte.",
+          "pluginsJsonMissingArray": "plugins.json da fonte {sourceName} é inválido: falta o array plugins.",
+          "pluginsJsonInvalidPlugins": "plugins.json da fonte {sourceName} é inválido: plugins deve ser um array de strings não vazio.",
+          "sourceValidateFail": "Falha ao validar a fonte {sourceName}: {error}",
+          "invalidGithubRepo": "Endereço do repositório GitHub inválido.",
+          "noSourceEnabled": "Nenhuma fonte de plugin habilitada. Adicione ou habilite uma fonte.",
+          "pluginsJsonMissingArrayShort": "plugins.json inválido: falta o array plugins.",
+          "pluginsJsonInvalidPluginsShort": "plugins.json inválido: plugins deve ser um array de strings não vazio.",
+          "pluginNotFound": "Plugin não encontrado.",
+          "pluginIncompatible": "Versão do plugin incompatível.",
+          "systemPluginCannotUninstall": "Plugins do sistema não podem ser desinstalados.",
+          "addSourceFailDetail": "Falha ao adicionar fonte de plugin: {error}",
+          "installFailDetail": "Falha ao instalar plugin: {error}",
+          "uninstallFailDetail": "Falha ao desinstalar plugin: {error}",
+          "updateFailDetail": "Falha ao atualizar plugin: {error}",
+          "getInstalledFailDetail": "Falha ao carregar plugins instalados: {error}",
+          "unknownError": "Erro desconhecido"
         }
       }
     },
@@ -429,7 +494,23 @@
     "shortcutUpdateFailed": "Falha ao atualizar atalho!",
     "shortcutResetSuccess": "Atalho redefinido com sucesso!",
     "shortcutResetFailed": "Falha ao redefinir atalho!",
-    "shortcutEmptySuccess": "Atalho esvaziado com sucesso!"
+    "shortcutEmptySuccess": "Atalho esvaziado com sucesso!",
+    "apiPluginNotFound": "Plugin de API não encontrado: {resourceName}",
+    "apiPluginMethodMissing": "O plugin de API {resourceName} não fornece o método: {funcName}",
+    "openDirInvalidPath": "Caminho inválido",
+    "openDirNotFound": "Diretório não encontrado: {path}",
+    "videoErrAborted": "Carregamento do vídeo cancelado",
+    "videoErrNetwork": "Erro de rede do vídeo",
+    "videoErrDecode": "Erro de decodificação do vídeo",
+    "videoErrUnsupported": "Formato de vídeo não suportado",
+    "videoErrUnknown": "Erro de reprodução de vídeo ({code})",
+    "migrationNotNeeded": "Nenhuma migração necessária",
+    "migrationNoScripts": "Nenhum script de migração necessário",
+    "migrationSuccess": "Migração de {from} para {to} concluída com sucesso",
+    "migrationFail": "Falha na migração: {error}",
+    "h5ServerFindPortFail": "Falha ao encontrar uma porta disponível: {error}",
+    "h5ServerError": "Erro do servidor H5: {error}",
+    "h5ServerStartFailDetail": "Falha ao iniciar o servidor H5: {error}"
   },
   "resourceTypeList": {
     "localResource": "Recursos locais",
@@ -775,6 +856,11 @@
           "all": "Todos",
           "reset": "Redefinir filtros",
           "apply": "Aplicar filtros"
+        },
+        "videoPreview": {
+          "close": "Fechar pré-visualização de vídeo",
+          "enterLandscape": "Reprodução horizontal",
+          "exitLandscape": "Sair do horizontal"
         }
       },
       "setting": {
@@ -843,7 +929,9 @@
             "placeholder": "Selecione a posição do indicador numérico"
           },
           "h5Vibration": "Feedback de vibração",
-          "h5WeekScreen": "Tela sempre ativa"
+          "h5WeekScreen": "Tela sempre ativa",
+          "h5HomeSettings": "Configurações da página inicial",
+          "h5GeneralSettings": "Configurações gerais"
         },
         "about": "Sobre",
         "version": "Versão",

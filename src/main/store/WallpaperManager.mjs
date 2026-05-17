@@ -4,6 +4,7 @@ import { setWallpaper } from 'wallpaper'
 import axios from 'axios'
 import { t } from '../../i18n/server.js'
 import { isMac, handleTimeByUnit, createSolidColorBMP } from '../utils/utils.mjs'
+import { resolveRemoteSecretKey, applyCodedErrorToResult } from '../../common/utils.js'
 
 export default class WallpaperManager {
   // 单例实例
@@ -706,7 +707,8 @@ export default class WallpaperManager {
       ret.message = t('messages.resourceNotFound')
       return ret
     }
-    if (resourceInfo.requireSecretKey && !remoteResourceSecretKeys[resourceName]) {
+    const secretKey = resolveRemoteSecretKey(resourceName, remoteResourceSecretKeys)
+    if (resourceInfo.requireSecretKey && !secretKey) {
       ret.message = t('messages.resourceSecretKeyUnset')
       return ret
     }
@@ -721,9 +723,7 @@ export default class WallpaperManager {
         orientation,
         startPage,
         pageSize,
-        secretKey: resourceMap.remoteResourceKeyNames.includes(resourceName)
-          ? remoteResourceSecretKeys[resourceName]
-          : ''
+        secretKey: resourceInfo.requireSecretKey ? secretKey : ''
       })
       if (res) {
         ret.list = res.list || []
@@ -819,7 +819,7 @@ export default class WallpaperManager {
       return ret
     } catch (err) {
       this.logger.error(`搜索并下载壁纸失败: error => ${err}`)
-      ret.message = err.message || t('messages.operationFail')
+      applyCodedErrorToResult(ret, err, t('messages.operationFail'))
       return ret
     }
   }

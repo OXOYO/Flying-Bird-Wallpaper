@@ -199,6 +199,7 @@
         "install": "Install",
         "installed": "Installed",
         "update": "Update",
+        "updateVersionLabel": "v{current} → v{latest}",
         "uninstall": "Uninstall",
         "details": "Details",
         "close": "Close",
@@ -220,7 +221,13 @@
           "renameSource": "Rename",
           "deleteSource": "Delete",
           "renameTitle": "Rename Source",
-          "renamePrompt": "Please enter a new source name"
+          "renamePrompt": "Please enter a new source name",
+          "openGithub": "Open GitHub repository in browser",
+          "openLocal": "Open local directory in file manager",
+          "openGithubFail": "Failed to open GitHub repository",
+          "openLocalFail": "Failed to open local directory",
+          "openLocalNotFound": "Directory not found: {path}",
+          "openLocalNeedRestart": "Please fully quit and restart the app to enable open-directory."
         },
         "sourceForm": {
           "title": "Add Plugin Source",
@@ -246,13 +253,39 @@
           "removeSourceTitle": "Delete Source",
           "removeSourceMessage": "Are you sure to delete source {sourceName}?",
           "uninstallTitle": "Uninstall Plugin",
-          "uninstallMessage": "Are you sure to uninstall plugin {pluginName}?"
+          "uninstallMessage": "Uninstall {pluginName}? Related search resources will no longer be available.",
+          "updateTitle": "Update Plugin",
+          "updateMessage": "Update {pluginName} from v{currentVersion} to v{latestVersion}? This will overwrite the installed plugin files."
+        },
+        "loadAlert": {
+          "title": "Plugin source notice"
+        },
+        "loadErrors": {
+          "errorsSeparator": "; ",
+          "sourceItem": "{sourceName} ({hint})",
+          "network": "Network connection failed. Check your network and try again.",
+          "server5xx": "Remote service is temporarily unavailable. Try again later.",
+          "notFound": "Plugin list not found",
+          "localPath": "Local plugin source path or plugins.json does not exist",
+          "jsonInvalid": "Invalid plugin list file format",
+          "generic": "Load failed",
+          "partialFailed": "Some plugin sources failed to load: {errors}",
+          "partialFailedWithCache": "Some plugin sources failed to load; using local cache: {errors}",
+          "allFailed": "Plugin sources failed to load: {errors}",
+          "noPlugins": "No available plugins found",
+          "exceptionWithCache": "Plugin source error; using cache: {error}",
+          "getAvailableFail": "Failed to load available plugins: {error}"
         },
         "secretKey": {
           "config": "Configure Key",
           "title": "Configure Secret Key",
           "prompt": "Please configure secret key for plugin {pluginName}",
-          "placeholder": "Please input secret key",
+          "placeholder": "API key only (no prefix)",
+          "hint": {
+            "unsplash": "Unsplash: Access Key only, without Client-ID prefix",
+            "pexels": "Pexels: API Key only, without Bearer prefix",
+            "pixabay": "Pixabay: API Key"
+          },
           "saveSuccess": "Secret key saved",
           "saveFail": "Failed to save secret key",
           "missing": "Missing Key",
@@ -260,7 +293,35 @@
           "configured": "Configured",
           "notRequired": "Not Required"
         },
+        "operationErrors": {
+          "invalidSourceName": "Invalid source name. Only letters, digits, hyphen and underscore are allowed.",
+          "invalidSourceType": "Invalid source type.",
+          "locationRequired": "Source location is required.",
+          "sourceNameExists": "Source name already exists. Use a unique name.",
+          "sourceNotFound": "Plugin source not found.",
+          "officialSourceCannotDelete": "Official sources cannot be deleted.",
+          "officialSourceCannotRename": "Official source name cannot be changed.",
+          "installedPluginsBlockDelete": "{count} plugin(s) from this source are still installed. Uninstall them before deleting the source.",
+          "installedPluginsBlockRename": "{count} plugin(s) from this source are still installed. Uninstall them before renaming the source.",
+          "pluginsJsonMissingArray": "plugins.json for source {sourceName} is invalid: missing plugins array.",
+          "pluginsJsonInvalidPlugins": "plugins.json for source {sourceName} is invalid: plugins must be a non-empty string array.",
+          "sourceValidateFail": "Failed to validate source {sourceName}: {error}",
+          "invalidGithubRepo": "Invalid GitHub repository address.",
+          "noSourceEnabled": "No plugin source is enabled. Add or enable a source first.",
+          "pluginsJsonMissingArrayShort": "Invalid plugins.json: missing plugins array.",
+          "pluginsJsonInvalidPluginsShort": "Invalid plugins.json: plugins must be a non-empty string array.",
+          "pluginNotFound": "Plugin not found.",
+          "pluginIncompatible": "Plugin version is incompatible.",
+          "systemPluginCannotUninstall": "System plugins cannot be uninstalled.",
+          "addSourceFailDetail": "Failed to add plugin source: {error}",
+          "installFailDetail": "Failed to install plugin: {error}",
+          "uninstallFailDetail": "Failed to uninstall plugin: {error}",
+          "updateFailDetail": "Failed to update plugin: {error}",
+          "getInstalledFailDetail": "Failed to load installed plugins: {error}",
+          "unknownError": "Unknown error"
+        },
         "feedback": {
+          "getApiListFail": "Failed to get API list",
           "getAvailableFail": "Failed to get available plugins",
           "getInstalledFail": "Failed to get installed plugins",
           "getSourcesFail": "Failed to get plugin sources",
@@ -434,7 +495,23 @@
     "shortcutUpdateFailed": "Shortcut update failed!",
     "shortcutResetSuccess": "Shortcut reset successfully!",
     "shortcutResetFailed": "Shortcut reset failed!",
-    "shortcutEmptySuccess": "Shortcut cleared successfully!"
+    "shortcutEmptySuccess": "Shortcut cleared successfully!",
+    "apiPluginNotFound": "API plugin not found: {resourceName}",
+    "apiPluginMethodMissing": "API plugin {resourceName} does not provide method: {funcName}",
+    "openDirInvalidPath": "Invalid path",
+    "openDirNotFound": "Directory not found: {path}",
+    "videoErrAborted": "Video loading was aborted",
+    "videoErrNetwork": "Video network error",
+    "videoErrDecode": "Video decode error",
+    "videoErrUnsupported": "Unsupported video format",
+    "videoErrUnknown": "Video playback error ({code})",
+    "migrationNotNeeded": "No migration needed",
+    "migrationNoScripts": "No migration scripts needed",
+    "migrationSuccess": "Successfully migrated from {from} to {to}",
+    "migrationFail": "Migration failed: {error}",
+    "h5ServerFindPortFail": "Failed to find an available port: {error}",
+    "h5ServerError": "H5 server error: {error}",
+    "h5ServerStartFailDetail": "H5 server failed to start: {error}"
   },
   "resourceTypeList": {
     "localResource": "Local Resources",
@@ -775,6 +852,11 @@
           "indicator": "{current} / {total}",
           "indicatorLoadedTotal": "{loaded} / {total}"
         },
+        "videoPreview": {
+          "close": "Close video preview",
+          "enterLandscape": "Landscape playback",
+          "exitLandscape": "Exit landscape"
+        },
         "filters": {
           "title": "Search Filters",
           "all": "All",
@@ -786,6 +868,8 @@
         "title": "Settings",
         "form": {
           "h5ApplicationSettings": "Application Settings",
+          "h5HomeSettings": "Home Settings",
+          "h5GeneralSettings": "General Settings",
           "h5Locale": {
             "label": "Language",
             "placeholder": "Select language"

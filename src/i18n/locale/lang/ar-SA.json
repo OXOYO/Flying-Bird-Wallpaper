@@ -207,7 +207,11 @@
         "supportDownload": "يدعم التنزيل",
         "yes": "نعم",
         "no": "لا",
-        "tabs": { "marketplace": "متجر الإضافات", "installed": "المثبتة", "sources": "المصادر" },
+        "tabs": {
+          "marketplace": "متجر الإضافات",
+          "installed": "المثبتة",
+          "sources": "المصادر"
+        },
         "sources": {
           "addSource": "إضافة مصدر",
           "refreshSources": "تحديث المصادر",
@@ -215,7 +219,13 @@
           "renameSource": "إعادة تسمية",
           "deleteSource": "حذف",
           "renameTitle": "إعادة تسمية المصدر",
-          "renamePrompt": "يرجى إدخال اسم مصدر جديد"
+          "renamePrompt": "يرجى إدخال اسم مصدر جديد",
+          "openGithub": "فتح مستودع GitHub في المتصفح",
+          "openLocal": "فتح المجلد المحلي في مدير الملفات",
+          "openGithubFail": "تعذر فتح مستودع GitHub",
+          "openLocalFail": "تعذر فتح المجلد المحلي",
+          "openLocalNotFound": "المجلد غير موجود: {path}",
+          "openLocalNeedRestart": "يرجى إغلاق التطبيق بالكامل ثم إعادة تشغيله لتفعيل فتح المجلد."
         },
         "sourceForm": {
           "title": "إضافة مصدر إضافات",
@@ -241,19 +251,26 @@
           "removeSourceTitle": "حذف المصدر",
           "removeSourceMessage": "هل أنت متأكد من حذف المصدر {sourceName}؟",
           "uninstallTitle": "إزالة تثبيت الإضافة",
-          "uninstallMessage": "هل أنت متأكد من إزالة تثبيت الإضافة {pluginName}؟"
+          "uninstallMessage": "إلغاء تثبيت {pluginName}؟ لن تكون موارد البحث المرتبطة متاحة بعد ذلك.",
+          "updateTitle": "تحديث الإضافة",
+          "updateMessage": "تحديث {pluginName} من v{currentVersion} إلى v{latestVersion}؟ سيتم استبدال ملفات الإضافة المثبتة."
         },
         "secretKey": {
           "config": "تهيئة المفتاح",
           "title": "تهيئة المفتاح السري",
           "prompt": "يرجى تهيئة المفتاح السري للإضافة {pluginName}",
-          "placeholder": "يرجى إدخال المفتاح السري",
+          "placeholder": "مفتاح API فقط (بدون بادئة)",
           "saveSuccess": "تم حفظ المفتاح السري",
           "saveFail": "فشل حفظ المفتاح السري",
           "missing": "المفتاح مفقود",
           "status": "حالة المفتاح السري",
           "configured": "مهيأ",
-          "notRequired": "غير مطلوب"
+          "notRequired": "غير مطلوب",
+          "hint": {
+            "unsplash": "Unsplash: Access Key فقط، بدون بادئة Client-ID",
+            "pexels": "Pexels: API Key فقط، بدون بادئة Bearer",
+            "pixabay": "Pixabay: API Key"
+          }
         },
         "feedback": {
           "getAvailableFail": "فشل جلب الإضافات المتاحة",
@@ -272,7 +289,55 @@
           "updateSourceSuccess": "تم تحديث مصدر الإضافات بنجاح",
           "updateSourceFail": "فشل تحديث مصدر الإضافات",
           "removeSourceSuccess": "تمت إزالة مصدر الإضافات بنجاح",
-          "removeSourceFail": "فشلت إزالة مصدر الإضافات"
+          "removeSourceFail": "فشلت إزالة مصدر الإضافات",
+          "getApiListFail": "فشل الحصول على قائمة API"
+        },
+        "updateVersionLabel": "v{current} → v{latest}",
+        "loadAlert": {
+          "title": "إشعار مصدر الإضافات"
+        },
+        "loadErrors": {
+          "errorsSeparator": "; ",
+          "sourceItem": "{sourceName} ({hint})",
+          "network": "فشل اتصال الشبكة. تحقق من الشبكة وحاول مرة أخرى.",
+          "server5xx": "الخدمة البعيدة غير متاحة مؤقتًا. حاول لاحقًا.",
+          "notFound": "لم يتم العثور على قائمة الإضافات",
+          "localPath": "مسار المصدر المحلي أو plugins.json غير موجود",
+          "jsonInvalid": "تنسيق ملف قائمة الإضافات غير صالح",
+          "generic": "فشل التحميل",
+          "partialFailed": "فشل تحميل بعض مصادر الإضافات: {errors}",
+          "partialFailedWithCache": "فشل تحميل بعض المصادر؛ يتم استخدام الذاكرة المؤقتة المحلية: {errors}",
+          "allFailed": "فشل تحميل مصادر الإضافات: {errors}",
+          "noPlugins": "لم يتم العثور على إضافات متاحة",
+          "exceptionWithCache": "خطأ في مصدر الإضافات؛ يتم استخدام الذاكرة المؤقتة: {error}",
+          "getAvailableFail": "فشل تحميل قائمة الإضافات المتاحة: {error}"
+        },
+        "operationErrors": {
+          "invalidSourceName": "اسم المصدر غير صالح. يُسمح فقط بالأحرف والأرقام والشرطة والشرطة السفلية.",
+          "invalidSourceType": "نوع المصدر غير صالح.",
+          "locationRequired": "موقع المصدر مطلوب.",
+          "sourceNameExists": "اسم المصدر موجود بالفعل. استخدم اسمًا فريدًا.",
+          "sourceNotFound": "مصدر الإضافة غير موجود.",
+          "officialSourceCannotDelete": "لا يمكن حذف المصادر الرسمية.",
+          "officialSourceCannotRename": "لا يمكن تغيير اسم المصدر الرسمي.",
+          "installedPluginsBlockDelete": "لا يزال {count} إضافة مثبتة من هذا المصدر. أزل تثبيتها قبل حذف المصدر.",
+          "installedPluginsBlockRename": "لا يزال {count} إضافة مثبتة من هذا المصدر. أزل تثبيتها قبل إعادة تسمية المصدر.",
+          "pluginsJsonMissingArray": "ملف plugins.json للمصدر {sourceName} غير صالح: مصفوفة plugins مفقودة.",
+          "pluginsJsonInvalidPlugins": "ملف plugins.json للمصدر {sourceName} غير صالح: يجب أن تكون plugins مصفوفة نصوص غير فارغة.",
+          "sourceValidateFail": "فشل التحقق من المصدر {sourceName}: {error}",
+          "invalidGithubRepo": "عنوان مستودع GitHub غير صالح.",
+          "noSourceEnabled": "لا يوجد مصدر إضافات مفعّل. أضف مصدرًا أو فعّله أولاً.",
+          "pluginsJsonMissingArrayShort": "plugins.json غير صالح: مصفوفة plugins مفقودة.",
+          "pluginsJsonInvalidPluginsShort": "plugins.json غير صالح: يجب أن تكون plugins مصفوفة نصوص غير فارغة.",
+          "pluginNotFound": "الإضافة غير موجودة.",
+          "pluginIncompatible": "إصدار الإضافة غير متوافق.",
+          "systemPluginCannotUninstall": "لا يمكن إلغاء تثبيت إضافات النظام.",
+          "addSourceFailDetail": "فشل إضافة مصدر الإضافة: {error}",
+          "installFailDetail": "فشل تثبيت الإضافة: {error}",
+          "uninstallFailDetail": "فشل إلغاء تثبيت الإضافة: {error}",
+          "updateFailDetail": "فشل تحديث الإضافة: {error}",
+          "getInstalledFailDetail": "فشل تحميل الإضافات المثبتة: {error}",
+          "unknownError": "خطأ غير معروف"
         }
       }
     },
@@ -429,7 +494,23 @@
     "shortcutUpdateFailed": "فشل تحديث الاختصار!",
     "shortcutResetSuccess": "تم إعادة تعيين الاختصار بنجاح!",
     "shortcutResetFailed": "فشل إعادة تعيين الاختصار!",
-    "shortcutEmptySuccess": "تم تفريغ الاختصار بنجاح!"
+    "shortcutEmptySuccess": "تم تفريغ الاختصار بنجاح!",
+    "apiPluginNotFound": "لم يتم العثور على إضافة API: {resourceName}",
+    "apiPluginMethodMissing": "إضافة API {resourceName} لا توفر الدالة: {funcName}",
+    "openDirInvalidPath": "مسار غير صالح",
+    "openDirNotFound": "المجلد غير موجود: {path}",
+    "videoErrAborted": "تم إلغاء تحميل الفيديو",
+    "videoErrNetwork": "خطأ شبكة الفيديو",
+    "videoErrDecode": "خطأ فك ترميز الفيديو",
+    "videoErrUnsupported": "تنسيق فيديو غير مدعوم",
+    "videoErrUnknown": "خطأ في تشغيل الفيديو ({code})",
+    "migrationNotNeeded": "لا حاجة للترحيل",
+    "migrationNoScripts": "لا حاجة لسكربتات الترحيل",
+    "migrationSuccess": "تم الترحيل بنجاح من {from} إلى {to}",
+    "migrationFail": "فشل الترحيل: {error}",
+    "h5ServerFindPortFail": "تعذر العثور على منفذ متاح: {error}",
+    "h5ServerError": "خطأ في خادم H5: {error}",
+    "h5ServerStartFailDetail": "فشل بدء خادم H5: {error}"
   },
   "resourceTypeList": {
     "localResource": "الموارد المحلية",
@@ -775,6 +856,11 @@
           "all": "الكل",
           "reset": "إعادة تعيين الفلاتر",
           "apply": "تطبيق الفلاتر"
+        },
+        "videoPreview": {
+          "close": "إغلاق معاينة الفيديو",
+          "enterLandscape": "تشغيل أفقي",
+          "exitLandscape": "الخروج من الوضع الأفقي"
         }
       },
       "setting": {
@@ -843,7 +929,9 @@
             "placeholder": "حدد موضع المؤشر الرقمي"
           },
           "h5Vibration": "ردود الفعل الاهتزازية",
-          "h5WeekScreen": "شاشة مفعلة دائماً"
+          "h5WeekScreen": "شاشة مفعلة دائماً",
+          "h5HomeSettings": "إعدادات الصفحة الرئيسية",
+          "h5GeneralSettings": "الإعدادات العامة"
         },
         "about": "حول",
         "version": "النسخة",

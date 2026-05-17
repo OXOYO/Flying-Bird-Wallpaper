@@ -5,6 +5,23 @@ import i18next from '@i18n/i18next.js'
 import { systemLocaleMap } from '@i18n/locale/index.js'
 
 const localStore = new LocalStore()
+const H5_SETTING_CACHE_KEY = 'h5SettingDataCache'
+
+const persistH5SettingCache = (settingData) => {
+  try {
+    localStore.set(H5_SETTING_CACHE_KEY, settingData)
+  } catch (_) {
+    /* noop */
+  }
+}
+
+const readH5SettingCache = () => {
+  try {
+    return localStore.get(H5_SETTING_CACHE_KEY)
+  } catch (_) {
+    return { success: false, data: null }
+  }
+}
 
 // 检测设备语言
 const getDeviceLocale = () => {
@@ -34,30 +51,46 @@ const UseSettingStore = defineStore('setting', {
     async getSettingData() {
       const res = await api.getSettingData()
       if (res.success) {
-        if (!this.settingData?.isH5LocaleSet) {
-          // 使用顶部定义的设备语言检测函数
+        const serverData = res.data || {}
+        if (!serverData.isH5LocaleSet) {
           const deviceLocale = getDeviceLocale()
-          res.data.h5Locale = deviceLocale
-          // 同步设备语言到服务器
-          await api.h5UpdateSettingData({ h5Locale: deviceLocale })
+          serverData.h5Locale = deviceLocale
+          if (this.localSetting.multiDeviceSync) {
+            await api.h5UpdateSettingData({ h5Locale: deviceLocale, isH5LocaleSet: false })
+          }
         }
-        this.settingData = Object.assign({}, this.settingData, res.data)
+        let merged = Object.assign({}, this.settingData, serverData)
+        if (!this.localSetting.multiDeviceSync) {
+          const cached = readH5SettingCache()
+          if (cached.success && cached.data) {
+            merged = Object.assign({}, merged, cached.data)
+          }
+        }
+        this.settingData = merged
+        if (!this.localSetting.multiDeviceSync) {
+          persistH5SettingCache(this.settingData)
+        }
       }
       return res
     },
     async h5UpdateSettingData(data) {
+      const nextData = Object.assign({}, this.settingData, data)
       if (!this.localSetting.multiDeviceSync) {
-        this.settingData = Object.assign({}, this.settingData, data)
-        // 更新语言
-        i18next.changeLanguage(this.settingData.h5Locale)
+        this.settingData = nextData
+        persistH5SettingCache(this.settingData)
+        if (this.settingData.h5Locale) {
+          i18next.changeLanguage(this.settingData.h5Locale)
+        }
         return {
-          success: false,
-          message: i18next.t('messages.multiDeviceSyncWarning')
+          success: true,
+          message: i18next.t('messages.operationSuccess'),
+          data: this.settingData
         }
       }
       const res = await api.h5UpdateSettingData(data)
       if (res.success) {
         this.settingData = Object.assign({}, this.settingData, res.data)
+        persistH5SettingCache(this.settingData)
       }
       return res
     },

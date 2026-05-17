@@ -207,7 +207,11 @@
         "supportDownload": "Supporta download",
         "yes": "Sì",
         "no": "No",
-        "tabs": { "marketplace": "Marketplace plugin", "installed": "Installati", "sources": "Sorgenti" },
+        "tabs": {
+          "marketplace": "Marketplace plugin",
+          "installed": "Installati",
+          "sources": "Sorgenti"
+        },
         "sources": {
           "addSource": "Aggiungi sorgente",
           "refreshSources": "Aggiorna sorgenti",
@@ -215,7 +219,13 @@
           "renameSource": "Rinomina",
           "deleteSource": "Elimina",
           "renameTitle": "Rinomina sorgente",
-          "renamePrompt": "Inserisci un nuovo nome sorgente"
+          "renamePrompt": "Inserisci un nuovo nome sorgente",
+          "openGithub": "Apri repository GitHub nel browser",
+          "openLocal": "Apri cartella locale nel gestore file",
+          "openGithubFail": "Impossibile aprire il repository GitHub",
+          "openLocalFail": "Impossibile aprire la cartella locale",
+          "openLocalNotFound": "Cartella non trovata: {path}",
+          "openLocalNeedRestart": "Chiudi completamente l'app e riavviala per abilitare l'apertura della cartella."
         },
         "sourceForm": {
           "title": "Aggiungi sorgente plugin",
@@ -241,19 +251,26 @@
           "removeSourceTitle": "Elimina sorgente",
           "removeSourceMessage": "Sei sicuro di eliminare la sorgente {sourceName}?",
           "uninstallTitle": "Disinstalla plugin",
-          "uninstallMessage": "Sei sicuro di disinstallare il plugin {pluginName}?"
+          "uninstallMessage": "Disinstallare {pluginName}? Le risorse di ricerca correlate non saranno più disponibili.",
+          "updateTitle": "Aggiorna plugin",
+          "updateMessage": "Aggiornare {pluginName} da v{currentVersion} a v{latestVersion}? I file installati verranno sovrascritti."
         },
         "secretKey": {
           "config": "Configura chiave",
           "title": "Configura chiave segreta",
           "prompt": "Configura la chiave segreta per il plugin {pluginName}",
-          "placeholder": "Inserisci chiave segreta",
+          "placeholder": "Solo API key (senza prefisso)",
           "saveSuccess": "Chiave segreta salvata",
           "saveFail": "Impossibile salvare la chiave segreta",
           "missing": "Chiave mancante",
           "status": "Stato chiave segreta",
           "configured": "Configurata",
-          "notRequired": "Non richiesta"
+          "notRequired": "Non richiesta",
+          "hint": {
+            "unsplash": "Unsplash: solo Access Key, senza prefisso Client-ID",
+            "pexels": "Pexels: solo API Key, senza prefisso Bearer",
+            "pixabay": "Pixabay: API Key"
+          }
         },
         "feedback": {
           "getAvailableFail": "Impossibile ottenere i plugin disponibili",
@@ -272,7 +289,55 @@
           "updateSourceSuccess": "Sorgente plugin aggiornata con successo",
           "updateSourceFail": "Impossibile aggiornare la sorgente plugin",
           "removeSourceSuccess": "Sorgente plugin rimossa con successo",
-          "removeSourceFail": "Impossibile rimuovere la sorgente plugin"
+          "removeSourceFail": "Impossibile rimuovere la sorgente plugin",
+          "getApiListFail": "Impossibile ottenere l'elenco API"
+        },
+        "updateVersionLabel": "v{current} → v{latest}",
+        "loadAlert": {
+          "title": "Avviso sorgente plugin"
+        },
+        "loadErrors": {
+          "errorsSeparator": "; ",
+          "sourceItem": "{sourceName} ({hint})",
+          "network": "Connessione di rete non riuscita. Controlla la rete e riprova.",
+          "server5xx": "Servizio remoto temporaneamente non disponibile. Riprova più tardi.",
+          "notFound": "Elenco plugin non trovato",
+          "localPath": "Percorso sorgente locale o plugins.json inesistente",
+          "jsonInvalid": "Formato file elenco plugin non valido",
+          "generic": "Caricamento non riuscito",
+          "partialFailed": "Caricamento di alcune sorgenti plugin non riuscito: {errors}",
+          "partialFailedWithCache": "Alcune sorgenti non riuscite; cache locale in uso: {errors}",
+          "allFailed": "Caricamento sorgenti plugin non riuscito: {errors}",
+          "noPlugins": "Nessun plugin disponibile trovato",
+          "exceptionWithCache": "Errore sorgente plugin; cache in uso: {error}",
+          "getAvailableFail": "Impossibile caricare l'elenco plugin disponibili: {error}"
+        },
+        "operationErrors": {
+          "invalidSourceName": "Nome sorgente non valido. Sono consentiti solo lettere, cifre, trattino e underscore.",
+          "invalidSourceType": "Tipo di sorgente non valido.",
+          "locationRequired": "Percorso sorgente obbligatorio.",
+          "sourceNameExists": "Il nome sorgente esiste già. Usa un nome univoco.",
+          "sourceNotFound": "Sorgente plugin non trovata.",
+          "officialSourceCannotDelete": "Le sorgenti ufficiali non possono essere eliminate.",
+          "officialSourceCannotRename": "Il nome della sorgente ufficiale non può essere modificato.",
+          "installedPluginsBlockDelete": "{count} plugin di questa sorgente sono ancora installati. Disinstallali prima di eliminare la sorgente.",
+          "installedPluginsBlockRename": "{count} plugin di questa sorgente sono ancora installati. Disinstallali prima di rinominare la sorgente.",
+          "pluginsJsonMissingArray": "plugins.json per la sorgente {sourceName} non valido: manca l'array plugins.",
+          "pluginsJsonInvalidPlugins": "plugins.json per la sorgente {sourceName} non valido: plugins deve essere un array di stringhe non vuoto.",
+          "sourceValidateFail": "Validazione sorgente {sourceName} non riuscita: {error}",
+          "invalidGithubRepo": "Indirizzo repository GitHub non valido.",
+          "noSourceEnabled": "Nessuna sorgente plugin abilitata. Aggiungi o abilita una sorgente.",
+          "pluginsJsonMissingArrayShort": "plugins.json non valido: manca l'array plugins.",
+          "pluginsJsonInvalidPluginsShort": "plugins.json non valido: plugins deve essere un array di stringhe non vuoto.",
+          "pluginNotFound": "Plugin non trovato.",
+          "pluginIncompatible": "Versione del plugin non compatibile.",
+          "systemPluginCannotUninstall": "I plugin di sistema non possono essere disinstallati.",
+          "addSourceFailDetail": "Impossibile aggiungere la sorgente plugin: {error}",
+          "installFailDetail": "Installazione plugin non riuscita: {error}",
+          "uninstallFailDetail": "Disinstallazione plugin non riuscita: {error}",
+          "updateFailDetail": "Aggiornamento plugin non riuscito: {error}",
+          "getInstalledFailDetail": "Impossibile caricare i plugin installati: {error}",
+          "unknownError": "Errore sconosciuto"
         }
       }
     },
@@ -429,7 +494,23 @@
     "shortcutUpdateFailed": "Impossibile aggiornare la scorciatoia!",
     "shortcutResetSuccess": "Scorciatoia reimpostata con successo!",
     "shortcutResetFailed": "Impossibile reimpostare la scorciatoia!",
-    "shortcutEmptySuccess": "Scorciatoia svuotata con successo!"
+    "shortcutEmptySuccess": "Scorciatoia svuotata con successo!",
+    "apiPluginNotFound": "Plugin API non trovato: {resourceName}",
+    "apiPluginMethodMissing": "Il plugin API {resourceName} non fornisce il metodo: {funcName}",
+    "openDirInvalidPath": "Percorso non valido",
+    "openDirNotFound": "Directory non trovata: {path}",
+    "videoErrAborted": "Caricamento video annullato",
+    "videoErrNetwork": "Errore di rete del video",
+    "videoErrDecode": "Errore di decodifica video",
+    "videoErrUnsupported": "Formato video non supportato",
+    "videoErrUnknown": "Errore di riproduzione video ({code})",
+    "migrationNotNeeded": "Nessuna migrazione necessaria",
+    "migrationNoScripts": "Nessuno script di migrazione necessario",
+    "migrationSuccess": "Migrazione da {from} a {to} completata",
+    "migrationFail": "Migrazione non riuscita: {error}",
+    "h5ServerFindPortFail": "Impossibile trovare una porta disponibile: {error}",
+    "h5ServerError": "Errore del server H5: {error}",
+    "h5ServerStartFailDetail": "Avvio del server H5 non riuscito: {error}"
   },
   "resourceTypeList": {
     "localResource": "Risorse locali",
@@ -775,6 +856,11 @@
           "all": "Tutti",
           "reset": "Reimposta filtri",
           "apply": "Applica filtri"
+        },
+        "videoPreview": {
+          "close": "Chiudi anteprima video",
+          "enterLandscape": "Riproduzione orizzontale",
+          "exitLandscape": "Esci da orizzontale"
         }
       },
       "setting": {
@@ -843,7 +929,9 @@
             "placeholder": "Seleziona posizione indicatore numerico"
           },
           "h5Vibration": "Feedback vibrazione",
-          "h5WeekScreen": "Schermo sempre attivo"
+          "h5WeekScreen": "Schermo sempre attivo",
+          "h5HomeSettings": "Impostazioni home",
+          "h5GeneralSettings": "Impostazioni generali"
         },
         "about": "Informazioni",
         "version": "Versione",

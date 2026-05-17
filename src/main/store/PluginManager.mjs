@@ -3,6 +3,7 @@ import path from 'node:path'
 import https from 'node:https'
 import { pathToFileURL } from 'node:url'
 import { app } from 'electron'
+import { t } from '../../i18n/server.js'
 
 const SOURCE_NAME_REGEXP = /^[A-Za-z0-9_-]+$/
 
@@ -44,6 +45,45 @@ export default class PluginManager {
     this.currentCdnIndex = 0
 
     PluginManager._instance = this
+  }
+
+  pmKey(suffix) {
+    return `pages.Setting.pluginMarketplace.${suffix}`
+  }
+
+  opKey(suffix) {
+    return this.pmKey(`operationErrors.${suffix}`)
+  }
+
+  loadErrorsKey(suffix) {
+    return this.pmKey(`loadErrors.${suffix}`)
+  }
+
+  joinSourceLoadErrors(errors) {
+    return errors.join(t(this.loadErrorsKey('errorsSeparator')))
+  }
+
+  /** 将插件源加载错误转为用户可读文案（不含 URL） */
+  toUserFacingLoadError(sourceName, error) {
+    const raw = String(error?.message || error || '')
+      .replace(/\s*\|\s*url:\s*https?:\/\/\S+/gi, '')
+      .replace(/\bhttps?:\/\/\S+/gi, '')
+      .trim()
+    let hint = raw
+    if (/ECONNRESET|ETIMEDOUT|ENOTFOUND|ECONNREFUSED|ENETUNREACH|EAI_AGAIN|socket hang up/i.test(raw)) {
+      hint = t(this.loadErrorsKey('network'))
+    } else if (/HTTP\s*5\d{2}/i.test(raw)) {
+      hint = t(this.loadErrorsKey('server5xx'))
+    } else if (/HTTP\s*404/i.test(raw)) {
+      hint = t(this.loadErrorsKey('notFound'))
+    } else if (/ENOENT|no such file|ENOTDIR/i.test(raw)) {
+      hint = t(this.loadErrorsKey('localPath'))
+    } else if (/JSON|Unexpected token|plugins\.json/i.test(raw)) {
+      hint = t(this.loadErrorsKey('jsonInvalid'))
+    } else if (raw.length > 60) {
+      hint = t(this.loadErrorsKey('generic'))
+    }
+    return t(this.loadErrorsKey('sourceItem'), { sourceName, hint })
   }
 
   compareVersions(version1, version2) {
@@ -231,19 +271,19 @@ export default class PluginManager {
     try {
       const name = this.normalizeSourceName(source?.name)
       if (!name || !SOURCE_NAME_REGEXP.test(name)) {
-        return { success: false, message: '源名格式非法，仅支持字母（大小写）、数字、-、_' }
+        return { success: false, message: t(this.opKey('invalidSourceName')) }
       }
       if (!source?.type || !['github', 'local'].includes(source.type)) {
-        return { success: false, message: '源类型非法' }
+        return { success: false, message: t(this.opKey('invalidSourceType')) }
       }
       if (!source?.location) {
-        return { success: false, message: '源地址不能为空' }
+        return { success: false, message: t(this.opKey('locationRequired')) }
       }
 
       const listRes = await this.getPluginSources()
       const sources = listRes.data || []
       if (sources.some((item) => item.name === name)) {
-        return { success: false, message: '源名已存在，请使用唯一源名' }
+        return { success: false, message: t(this.opKey('sourceNameExists')) }
       }
 
       const newSource = {
@@ -263,10 +303,13 @@ export default class PluginManager {
 
       sources.push(newSource)
       await this.setSysRecordData('pluginSources', sources, 'array')
-      return { success: true, data: newSource, message: '插件源添加成功' }
+      return { success: true, data: newSource, message: t(this.pmKey('feedback.addSourceSuccess')) }
     } catch (error) {
       this.logger.error('添加插件源失败:', error)
-      return { success: false, message: `添加插件源失败: ${error.message}` }
+      return {
+        success: false,
+        message: t(this.opKey('addSourceFailDetail'), { error: error.message })
+      }
     }
   }
 
@@ -275,8 +318,8 @@ export default class PluginManager {
     const listRes = await this.getPluginSources()
     const sources = listRes.data || []
     const target = sources.find((item) => item.name === name)
-    if (!target) return { success: false, message: '插件源不存在' }
-    if (target.isOfficial) return { success: false, message: '官方源不允许删除' }
+    if (!target) return { success: false, message: t(this.opKey('sourceNotFound')) }
+    if (target.isOfficial) return { success: false, message: t(this.opKey('officialSourceCannotDelete')) }
 
     const installedPlugins = await this.getSysRecordData('plugins', {})
     const relatedInstalledCount = Object.values(installedPlugins).filter(
@@ -285,13 +328,13 @@ export default class PluginManager {
     if (relatedInstalledCount > 0) {
       return {
         success: false,
-        message: `该源下仍有 ${relatedInstalledCount} 个已安装插件，请先卸载后再删除插件源`
+        message: t(this.opKey('installedPluginsBlockDelete'), { count: relatedInstalledCount })
       }
     }
 
     const next = sources.filter((item) => item.name !== name)
     await this.setSysRecordData('pluginSources', next, 'array')
-    return { success: true, message: '插件源删除成功' }
+    return { success: true, message: t(this.pmKey('feedback.removeSourceSuccess')) }
   }
 
   async updatePluginSource(sourceName, patch) {
@@ -299,9 +342,9 @@ export default class PluginManager {
     const listRes = await this.getPluginSources()
     const sources = listRes.data || []
     const idx = sources.findIndex((item) => item.name === name)
-    if (idx < 0) return { success: false, message: '插件源不存在' }
+    if (idx < 0) return { success: false, message: t(this.opKey('sourceNotFound')) }
     if (sources[idx].isOfficial && patch?.name && patch.name !== name) {
-      return { success: false, message: '官方源不允许修改源名' }
+      return { success: false, message: t(this.opKey('officialSourceCannotRename')) }
     }
     const next = {
       ...sources[idx],
@@ -310,10 +353,10 @@ export default class PluginManager {
       updatedAt: new Date().toISOString()
     }
     if (!SOURCE_NAME_REGEXP.test(next.name)) {
-      return { success: false, message: '源名格式非法，仅支持字母（大小写）、数字、-、_' }
+      return { success: false, message: t(this.opKey('invalidSourceName')) }
     }
     if (sources.some((item, i) => i !== idx && item.name === next.name)) {
-      return { success: false, message: '源名已存在，请使用唯一源名' }
+      return { success: false, message: t(this.opKey('sourceNameExists')) }
     }
     if (next.name !== sources[idx].name) {
       const installedPlugins = await this.getSysRecordData('plugins', {})
@@ -323,7 +366,7 @@ export default class PluginManager {
       if (relatedInstalledCount > 0) {
         return {
           success: false,
-          message: `该源下仍有 ${relatedInstalledCount} 个已安装插件，请先卸载后再修改源名`
+          message: t(this.opKey('installedPluginsBlockRename'), { count: relatedInstalledCount })
         }
       }
     }
@@ -332,7 +375,7 @@ export default class PluginManager {
     if (!validation.success) return validation
     sources[idx] = next
     await this.setSysRecordData('pluginSources', sources, 'array')
-    return { success: true, data: next, message: '插件源更新成功' }
+    return { success: true, data: next, message: t(this.pmKey('feedback.updateSourceSuccess')) }
   }
 
   async validateSourceStructure(source) {
@@ -340,18 +383,24 @@ export default class PluginManager {
       const pluginsList = await this.readPluginsList(source)
       const pluginList = pluginsList?.plugins
       if (!Array.isArray(pluginList)) {
-        return { success: false, message: `插件源 ${source.name} 的 plugins.json 格式非法：缺少 plugins 数组` }
+        return {
+          success: false,
+          message: t(this.opKey('pluginsJsonMissingArray'), { sourceName: source.name })
+        }
       }
       const invalidEntry = pluginList.find((entry) => typeof entry !== 'string' || !entry.trim())
       if (invalidEntry) {
         return {
           success: false,
-          message: `插件源 ${source.name} 的 plugins.json 格式非法：plugins 必须为非空字符串数组`
+          message: t(this.opKey('pluginsJsonInvalidPlugins'), { sourceName: source.name })
         }
       }
       return { success: true, message: '' }
     } catch (error) {
-      return { success: false, message: `插件源 ${source.name} 校验失败: ${error.message}` }
+      return {
+        success: false,
+        message: t(this.opKey('sourceValidateFail'), { sourceName: source.name, error: error.message })
+      }
     }
   }
 
@@ -362,7 +411,7 @@ export default class PluginManager {
       return JSON.parse(data)
     }
     const repo = this.normalizeGithubRepo(source.location)
-    if (!repo) throw new Error('GitHub 仓库地址不合法')
+    if (!repo) throw new Error(t(this.opKey('invalidGithubRepo')))
     const url = `https://raw.githubusercontent.com/${repo}/main/plugins.json`
     return await this.fetchUrl(url)
   }
@@ -374,7 +423,7 @@ export default class PluginManager {
       return JSON.parse(data)
     }
     const repo = this.normalizeGithubRepo(source.location)
-    if (!repo) throw new Error('GitHub 仓库地址不合法')
+    if (!repo) throw new Error(t(this.opKey('invalidGithubRepo')))
     const url = `https://raw.githubusercontent.com/${repo}/${version}/plugins/${pluginName}/manifest.json`
     return await this.fetchUrl(url)
   }
@@ -384,7 +433,7 @@ export default class PluginManager {
       return fs.readFileSync(path.join(source.location, 'plugins', pluginName, 'main.mjs'), 'utf8')
     }
     const repo = this.normalizeGithubRepo(source.location)
-    if (!repo) throw new Error('GitHub 仓库地址不合法')
+    if (!repo) throw new Error(t(this.opKey('invalidGithubRepo')))
     const url = `https://raw.githubusercontent.com/${repo}/${version}/plugins/${pluginName}/main.mjs`
     return await this.fetchUrl(url, false)
   }
@@ -419,7 +468,7 @@ export default class PluginManager {
         .filter((item) => item.enabled !== false)
         .sort((a, b) => (a.priority || 999) - (b.priority || 999))
       if (sources.length === 0) {
-        return { success: false, data: [], message: '未启用任何插件源，请先添加或启用插件源' }
+        return { success: false, data: [], message: t(this.opKey('noSourceEnabled')) }
       }
       const plugins = []
       const sourceErrors = []
@@ -428,12 +477,12 @@ export default class PluginManager {
           const pluginsData = await this.readPluginsList(source)
           const pluginList = pluginsData?.plugins
           if (!Array.isArray(pluginList)) {
-            throw new Error('plugins.json 格式非法：缺少 plugins 数组')
+            throw new Error(t(this.opKey('pluginsJsonMissingArrayShort')))
           }
           for (const entry of pluginList) {
             try {
               if (typeof entry !== 'string' || !entry.trim()) {
-                throw new Error('plugins.json 格式非法：plugins 必须为非空字符串数组')
+                throw new Error(t(this.opKey('pluginsJsonInvalidPluginsShort')))
               }
               const pluginName = entry.trim()
               const manifest = await this.readPluginManifest(source, pluginName)
@@ -470,14 +519,16 @@ export default class PluginManager {
         } catch (error) {
           const reason = error?.message || String(error)
           this.logger.error(`读取插件源 ${source.name} 失败: ${reason}`)
-          sourceErrors.push(`${source.name}: ${reason}`)
+          sourceErrors.push(this.toUserFacingLoadError(source.name, error))
         }
       }
       if (plugins.length > 0) {
         this.cachePluginsList(plugins)
         const message =
           sourceErrors.length > 0
-            ? `部分插件源加载失败：${sourceErrors.join(' | ')}`
+            ? t(this.loadErrorsKey('partialFailed'), {
+                errors: this.joinSourceLoadErrors(sourceErrors)
+              })
             : ''
         return { success: true, data: plugins, message }
       }
@@ -487,7 +538,9 @@ export default class PluginManager {
         return {
           success: true,
           data: cached,
-          message: `插件源加载失败，已使用缓存：${sourceErrors.join(' | ')}`
+          message: t(this.loadErrorsKey('partialFailedWithCache'), {
+            errors: this.joinSourceLoadErrors(sourceErrors)
+          })
         }
       }
 
@@ -496,16 +549,24 @@ export default class PluginManager {
         data: [],
         message:
           sourceErrors.length > 0
-            ? `插件源加载失败：${sourceErrors.join(' | ')}`
-            : '未获取到可用插件'
+            ? t(this.loadErrorsKey('allFailed'), { errors: this.joinSourceLoadErrors(sourceErrors) })
+            : t(this.loadErrorsKey('noPlugins'))
       }
     } catch (error) {
       this.logger.error('获取可用插件列表失败:', error)
       const cached = this.getCachedPluginsList()
       if (cached.length > 0) {
-        return { success: true, data: cached, message: `插件源异常，已使用缓存：${error.message}` }
+        return {
+          success: true,
+          data: cached,
+          message: t(this.loadErrorsKey('exceptionWithCache'), { error: error.message })
+        }
       }
-      return { success: false, data: [], message: `获取可用插件列表失败: ${error.message}` }
+      return {
+        success: false,
+        data: [],
+        message: t(this.loadErrorsKey('getAvailableFail'), { error: error.message })
+      }
     }
   }
 
@@ -513,7 +574,7 @@ export default class PluginManager {
     try {
       const listRes = await this.getPluginSources()
       const source = (listRes.data || []).find((item) => item.name === sourceName)
-      if (!source) return { success: false, message: '插件源不存在' }
+      if (!source) return { success: false, message: t(this.opKey('sourceNotFound')) }
       const pluginDir = path.join(this.runtimePluginsDir, sourceName, pluginName)
       if (!fs.existsSync(pluginDir)) {
         fs.mkdirSync(pluginDir, { recursive: true })
@@ -523,7 +584,7 @@ export default class PluginManager {
 
       if (!this.isVersionCompatible(manifest.appVersion || { min: '1.0.0', max: '*' })) {
         this.logger.error(`插件 ${pluginName} 与当前应用版本 ${this.appVersion} 不兼容`)
-        return { success: false, message: '插件版本不兼容' }
+        return { success: false, message: t(this.opKey('pluginIncompatible')) }
       }
 
       fs.writeFileSync(path.join(pluginDir, 'manifest.json'), JSON.stringify(manifest, null, 2))
@@ -562,10 +623,13 @@ export default class PluginManager {
         this.logger.error(`插件 ${pluginName} 安装信息写入数据库失败: ${res.message}`)
       }
 
-      return { success: true, message: '插件安装成功' }
+      return { success: true, message: t(this.pmKey('feedback.installSuccess')) }
     } catch (error) {
       this.logger.error('安装插件失败:', error)
-      return { success: false, message: '插件安装失败: ' + error.message }
+      return {
+        success: false,
+        message: t(this.opKey('installFailDetail'), { error: error.message })
+      }
     }
   }
 
@@ -573,7 +637,7 @@ export default class PluginManager {
     try {
       const pluginDir = path.join(this.runtimePluginsDir, sourceName, pluginName)
       if (!fs.existsSync(pluginDir)) {
-        return { success: false, message: '插件不存在' }
+        return { success: false, message: t(this.opKey('pluginNotFound')) }
       }
 
       const manifestPath = path.join(pluginDir, 'manifest.json')
@@ -581,7 +645,7 @@ export default class PluginManager {
 
       if (manifest.type === 'system') {
         this.logger.error(`系统插件 ${pluginName} 不允许卸载`)
-        return { success: false, message: '系统插件不允许卸载' }
+        return { success: false, message: t(this.opKey('systemPluginCannotUninstall')) }
       }
 
       fs.rmSync(pluginDir, { recursive: true, force: true })
@@ -599,10 +663,13 @@ export default class PluginManager {
         }
       }
 
-      return { success: true, message: '插件卸载成功' }
+      return { success: true, message: t(this.pmKey('feedback.uninstallSuccess')) }
     } catch (error) {
       this.logger.error('卸载插件失败:', error)
-      return { success: false, message: '插件卸载失败: ' + error.message }
+      return {
+        success: false,
+        message: t(this.opKey('uninstallFailDetail'), { error: error.message })
+      }
     }
   }
 
@@ -654,7 +721,10 @@ export default class PluginManager {
       return installRes
     } catch (error) {
       this.logger.error('更新插件失败:', error)
-      return { success: false, message: '插件更新失败: ' + error.message }
+      return {
+        success: false,
+        message: t(this.opKey('updateFailDetail'), { error: error.message })
+      }
     }
   }
 
@@ -719,9 +789,13 @@ export default class PluginManager {
       await this.setSysRecordData('plugins', nextRecords, 'object')
       return { success: true, data: list, message: '' }
     } catch (error) {
-      const errorMessage = error.message || error.toString() || '未知错误'
+      const errorMessage = error.message || error.toString() || t(this.opKey('unknownError'))
       this.logger.error('获取已安装插件列表失败:', errorMessage)
-      return { success: false, data: [], message: errorMessage }
+      return {
+        success: false,
+        data: [],
+        message: t(this.opKey('getInstalledFailDetail'), { error: errorMessage })
+      }
     }
   }
 
@@ -760,7 +834,8 @@ export default class PluginManager {
               const statusCode = Number(res.statusCode || 0)
               if (statusCode < 200 || statusCode >= 300) {
                 const message = `HTTP ${statusCode} ${res.statusMessage || ''}`.trim()
-                reject(new Error(`${message} | url: ${url}`))
+                this.logger.warn(`fetchUrl 失败: ${message}, url: ${url}`)
+                reject(new Error(message))
                 return
               }
               if (parseJson) {
@@ -769,12 +844,14 @@ export default class PluginManager {
                 resolve(data)
               }
             } catch (error) {
-              reject(new Error(`${error.message} | url: ${url}`))
+              this.logger.warn(`fetchUrl 解析失败: ${error.message}, url: ${url}`)
+              reject(error)
             }
           })
         })
         .on('error', (error) => {
-          reject(new Error(`${error.message} | url: ${url}`))
+          this.logger.warn(`fetchUrl 请求失败: ${error.message}, url: ${url}`)
+          reject(error)
         })
     })
   }

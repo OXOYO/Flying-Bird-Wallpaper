@@ -207,7 +207,11 @@
         "supportDownload": "다운로드 지원",
         "yes": "예",
         "no": "아니요",
-        "tabs": { "marketplace": "플러그인 마켓", "installed": "설치됨", "sources": "소스" },
+        "tabs": {
+          "marketplace": "플러그인 마켓",
+          "installed": "설치됨",
+          "sources": "소스"
+        },
         "sources": {
           "addSource": "소스 추가",
           "refreshSources": "소스 새로고침",
@@ -215,7 +219,13 @@
           "renameSource": "이름 변경",
           "deleteSource": "삭제",
           "renameTitle": "소스 이름 변경",
-          "renamePrompt": "새 소스 이름을 입력하세요"
+          "renamePrompt": "새 소스 이름을 입력하세요",
+          "openGithub": "브라우저에서 GitHub 저장소 열기",
+          "openLocal": "파일 관리자에서 로컬 폴더 열기",
+          "openGithubFail": "GitHub 저장소를 열 수 없습니다",
+          "openLocalFail": "로컬 폴더를 열 수 없습니다",
+          "openLocalNotFound": "폴더를 찾을 수 없습니다: {path}",
+          "openLocalNeedRestart": "폴더 열기를 사용하려면 앱을 완전히 종료한 뒤 다시 시작하세요."
         },
         "sourceForm": {
           "title": "플러그인 소스 추가",
@@ -241,19 +251,26 @@
           "removeSourceTitle": "소스 삭제",
           "removeSourceMessage": "소스 {sourceName} 를 삭제하시겠습니까?",
           "uninstallTitle": "플러그인 제거",
-          "uninstallMessage": "플러그인 {pluginName} 를 제거하시겠습니까?"
+          "uninstallMessage": "플러그인 {pluginName}을(를) 제거하시겠습니까? 관련 검색 리소스를 더 이상 사용할 수 없습니다.",
+          "updateTitle": "플러그인 업데이트",
+          "updateMessage": "{pluginName}을(를) v{currentVersion}에서 v{latestVersion}(으)로 업데이트하시겠습니까? 설치된 플러그인 파일이 덮어씌워집니다."
         },
         "secretKey": {
           "config": "키 설정",
           "title": "비밀 키 설정",
           "prompt": "플러그인 {pluginName} 의 비밀 키를 설정하세요",
-          "placeholder": "비밀 키를 입력하세요",
+          "placeholder": "API 키만 입력(접두사 없음)",
           "saveSuccess": "비밀 키 저장 성공",
           "saveFail": "비밀 키 저장 실패",
           "missing": "키 누락",
           "status": "비밀 키 상태",
           "configured": "설정됨",
-          "notRequired": "불필요"
+          "notRequired": "불필요",
+          "hint": {
+            "unsplash": "Unsplash: Access Key만 입력, Client-ID 접두사 없음",
+            "pexels": "Pexels: API Key만 입력, Bearer 접두사 없음",
+            "pixabay": "Pixabay: API Key"
+          }
         },
         "feedback": {
           "getAvailableFail": "사용 가능한 플러그인을 가져오지 못했습니다",
@@ -272,7 +289,55 @@
           "updateSourceSuccess": "플러그인 소스 업데이트 성공",
           "updateSourceFail": "플러그인 소스 업데이트 실패",
           "removeSourceSuccess": "플러그인 소스 제거 성공",
-          "removeSourceFail": "플러그인 소스 제거 실패"
+          "removeSourceFail": "플러그인 소스 제거 실패",
+          "getApiListFail": "API 목록 가져오기 실패"
+        },
+        "updateVersionLabel": "v{current} → v{latest}",
+        "loadAlert": {
+          "title": "플러그인 소스 안내"
+        },
+        "loadErrors": {
+          "errorsSeparator": "; ",
+          "sourceItem": "{sourceName} ({hint})",
+          "network": "네트워크 연결에 실패했습니다. 네트워크를 확인한 뒤 다시 시도하세요",
+          "server5xx": "원격 서비스를 일시적으로 사용할 수 없습니다. 나중에 다시 시도하세요",
+          "notFound": "플러그인 목록을 찾을 수 없습니다",
+          "localPath": "로컬 플러그인 소스 경로 또는 plugins.json이 없습니다",
+          "jsonInvalid": "플러그인 목록 파일 형식이 올바르지 않습니다",
+          "generic": "로드 실패",
+          "partialFailed": "일부 플러그인 소스 로드 실패: {errors}",
+          "partialFailedWithCache": "일부 플러그인 소스 로드 실패, 로컬 캐시 사용: {errors}",
+          "allFailed": "플러그인 소스 로드 실패: {errors}",
+          "noPlugins": "사용 가능한 플러그인이 없습니다",
+          "exceptionWithCache": "플러그인 소스 오류, 캐시 사용: {error}",
+          "getAvailableFail": "사용 가능한 플러그인 목록을 가져오지 못했습니다: {error}"
+        },
+        "operationErrors": {
+          "invalidSourceName": "소스 이름 형식이 잘못되었습니다. 영문, 숫자, 하이픈, 밑줄만 사용할 수 있습니다.",
+          "invalidSourceType": "소스 유형이 잘못되었습니다.",
+          "locationRequired": "소스 위치를 입력하세요.",
+          "sourceNameExists": "소스 이름이 이미 존재합니다. 고유한 이름을 사용하세요.",
+          "sourceNotFound": "플러그인 소스를 찾을 수 없습니다.",
+          "officialSourceCannotDelete": "공식 소스는 삭제할 수 없습니다.",
+          "officialSourceCannotRename": "공식 소스 이름은 변경할 수 없습니다.",
+          "installedPluginsBlockDelete": "이 소스에 {count}개의 설치된 플러그인이 있습니다. 소스를 삭제하기 전에 제거하세요.",
+          "installedPluginsBlockRename": "이 소스에 {count}개의 설치된 플러그인이 있습니다. 이름을 변경하기 전에 제거하세요.",
+          "pluginsJsonMissingArray": "소스 {sourceName}의 plugins.json이 잘못되었습니다: plugins 배열이 없습니다.",
+          "pluginsJsonInvalidPlugins": "소스 {sourceName}의 plugins.json이 잘못되었습니다: plugins는 비어 있지 않은 문자열 배열이어야 합니다.",
+          "sourceValidateFail": "소스 {sourceName} 검증 실패: {error}",
+          "invalidGithubRepo": "GitHub 저장소 주소가 잘못되었습니다.",
+          "noSourceEnabled": "활성화된 플러그인 소스가 없습니다. 소스를 추가하거나 활성화하세요.",
+          "pluginsJsonMissingArrayShort": "plugins.json이 잘못되었습니다: plugins 배열이 없습니다.",
+          "pluginsJsonInvalidPluginsShort": "plugins.json이 잘못되었습니다: plugins는 비어 있지 않은 문자열 배열이어야 합니다.",
+          "pluginNotFound": "플러그인을 찾을 수 없습니다.",
+          "pluginIncompatible": "플러그인 버전이 호환되지 않습니다.",
+          "systemPluginCannotUninstall": "시스템 플러그인은 제거할 수 없습니다.",
+          "addSourceFailDetail": "플러그인 소스 추가 실패: {error}",
+          "installFailDetail": "플러그인 설치 실패: {error}",
+          "uninstallFailDetail": "플러그인 제거 실패: {error}",
+          "updateFailDetail": "플러그인 업데이트 실패: {error}",
+          "getInstalledFailDetail": "설치된 플러그인 목록 가져오기 실패: {error}",
+          "unknownError": "알 수 없는 오류"
         }
       }
     },
@@ -429,7 +494,23 @@
     "shortcutUpdateFailed": "단축키 업데이트 실패!",
     "shortcutResetSuccess": "단축키 초기화 성공!",
     "shortcutResetFailed": "단축키 초기화 실패!",
-    "shortcutEmptySuccess": "단축키 비우기 성공!"
+    "shortcutEmptySuccess": "단축키 비우기 성공!",
+    "apiPluginNotFound": "API 플러그인을 찾을 수 없습니다: {resourceName}",
+    "apiPluginMethodMissing": "API 플러그인 {resourceName}에 메서드가 없습니다: {funcName}",
+    "openDirInvalidPath": "경로가 잘못되었습니다",
+    "openDirNotFound": "디렉터리가 없습니다: {path}",
+    "videoErrAborted": "동영상 로드가 취소되었습니다",
+    "videoErrNetwork": "동영상 네트워크 오류",
+    "videoErrDecode": "동영상 디코딩 오류",
+    "videoErrUnsupported": "지원하지 않는 동영상 형식입니다",
+    "videoErrUnknown": "동영상 재생 오류 ({code})",
+    "migrationNotNeeded": "마이그레이션이 필요하지 않습니다",
+    "migrationNoScripts": "마이그레이션 스크립트가 필요하지 않습니다",
+    "migrationSuccess": "{from}에서 {to}(으)로 마이그레이션했습니다",
+    "migrationFail": "마이그레이션 실패: {error}",
+    "h5ServerFindPortFail": "사용 가능한 포트를 찾지 못했습니다: {error}",
+    "h5ServerError": "H5 서버 오류: {error}",
+    "h5ServerStartFailDetail": "H5 서버 시작 실패: {error}"
   },
   "resourceTypeList": {
     "localResource": "로컬 리소스",
@@ -775,6 +856,11 @@
           "all": "전체",
           "reset": "필터 초기화",
           "apply": "필터 적용"
+        },
+        "videoPreview": {
+          "close": "동영상 미리보기 닫기",
+          "enterLandscape": "가로 재생",
+          "exitLandscape": "가로 모드 종료"
         }
       },
       "setting": {
@@ -843,7 +929,9 @@
             "placeholder": "숫자 표시기 위치를 선택해 주세요"
           },
           "h5Vibration": "진동 피드백",
-          "h5WeekScreen": "화면 항상 켜짐"
+          "h5WeekScreen": "화면 항상 켜짐",
+          "h5HomeSettings": "홈 설정",
+          "h5GeneralSettings": "일반 설정"
         },
         "about": "정보",
         "version": "버전",

@@ -1,5 +1,16 @@
 import { v4 as uuidv4 } from 'uuid'
 import { t } from '../../i18n/server.js'
+import { resolveRemoteSecretKey, applyCodedErrorToResult } from '../../common/utils.js'
+
+/** 列表去重/分页用稳定键（勿每次请求生成 uuid） */
+const buildStableResourceUniqueKey = (item) => {
+  if (item?.id != null && item.id !== '') return String(item.id)
+  if (item?.fileName) return String(item.fileName)
+  if (item?.filePath) return String(item.filePath)
+  const url = item?.imageUrl || item?.videoUrl || ''
+  if (url) return url
+  return uuidv4()
+}
 
 export default class ResourcesManager {
   // 单例实例
@@ -187,7 +198,7 @@ export default class ResourcesManager {
             return {
               ...item,
               srcType: 'file',
-              uniqueKey: uuidv4()
+              uniqueKey: buildStableResourceUniqueKey(item)
             }
           })
           // 浏览量+1（批量）
@@ -222,7 +233,8 @@ export default class ResourcesManager {
           ret.message = t('messages.resourceNotFound')
           return ret
         }
-        if (resourceInfo.requireSecretKey && !remoteResourceSecretKeys[resourceName]) {
+        const secretKey = resolveRemoteSecretKey(resourceName, remoteResourceSecretKeys)
+        if (resourceInfo.requireSecretKey && !secretKey) {
           ret.message = t('messages.resourceSecretKeyUnset')
           return ret
         }
@@ -236,9 +248,7 @@ export default class ResourcesManager {
           orientation,
           startPage: startPage,
           pageSize,
-          secretKey: resourceMap.remoteResourceKeyNames.includes(resourceName)
-            ? remoteResourceSecretKeys[resourceName]
-            : ''
+          secretKey: resourceInfo.requireSecretKey ? secretKey : ''
         })
         if (res) {
           if (typeof res.total === 'number' && res.total >= 0) {
@@ -250,7 +260,7 @@ export default class ResourcesManager {
               return {
                 ...item,
                 srcType: 'url',
-                uniqueKey: uuidv4()
+                uniqueKey: buildStableResourceUniqueKey(item)
               }
             })
           }
@@ -260,6 +270,7 @@ export default class ResourcesManager {
       }
     } catch (err) {
       this.logger.error(`搜索失败: error => ${err}`)
+      applyCodedErrorToResult(ret, err, t('messages.operationFail'))
     }
 
     return ret
@@ -292,16 +303,15 @@ export default class ResourcesManager {
       return ret
     }
 
-    if (resourceInfo.requireSecretKey && !remoteResourceSecretKeys[resourceName]) {
+    const secretKey = resolveRemoteSecretKey(resourceName, remoteResourceSecretKeys)
+    if (resourceInfo.requireSecretKey && !secretKey) {
       ret.message = t('messages.resourceSecretKeyUnset')
       return ret
     }
 
     try {
       const tags = await this.apiManager.call(resourceName, 'getHotTags', {
-        secretKey: resourceMap.remoteResourceKeyNames.includes(resourceName)
-          ? remoteResourceSecretKeys[resourceName]
-          : ''
+        secretKey: resourceInfo.requireSecretKey ? secretKey : ''
       })
       this.logger.info(`获取热门标签成功: ${JSON.stringify(tags)}`)
       ret.data.tags = Array.isArray(tags) ? tags : []
@@ -310,7 +320,7 @@ export default class ResourcesManager {
       return ret
     } catch (err) {
       this.logger.error(`获取热门标签失败: error => ${err}`)
-      ret.message = err.message || t('messages.operationFail')
+      applyCodedErrorToResult(ret, err, t('messages.operationFail'))
       return ret
     }
   }

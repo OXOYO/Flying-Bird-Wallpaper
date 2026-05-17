@@ -1649,13 +1649,14 @@ const onVideoError = (item, index) => {
 
 // 获取视频错误信息的辅助函数
 const getVideoErrorMessage = (errorCode) => {
-  const errorMessages = {
-    1: 'MEDIA_ERR_ABORTED: 取消加载',
-    2: 'MEDIA_ERR_NETWORK: 网络错误',
-    3: 'MEDIA_ERR_DECODE: 解码错误',
-    4: 'MEDIA_ERR_SRC_NOT_SUPPORTED: 不支持的媒体格式'
+  const keyByCode = {
+    1: 'messages.videoErrAborted',
+    2: 'messages.videoErrNetwork',
+    3: 'messages.videoErrDecode',
+    4: 'messages.videoErrUnsupported'
   }
-  return errorMessages[errorCode] || `未知错误 (${errorCode})`
+  const key = keyByCode[errorCode]
+  return key ? t(key) : t('messages.videoErrUnknown', { code: errorCode ?? '?' })
 }
 
 const onTriggerActionCallback = (event, action, params) => {

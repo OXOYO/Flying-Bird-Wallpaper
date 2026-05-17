@@ -162,6 +162,7 @@ const api = {
   downloadFile: (...args) => ipcRenderer.invoke('main:downloadFile', ...args),
   openDir: (...args) => ipcRenderer.invoke('main:openDir', ...args),
   openUrl: (...args) => ipcRenderer.invoke('main:openUrl', ...args),
+  openPath: (...args) => ipcRenderer.invoke('main:openPath', ...args),
   refreshDirectory: (...args) => ipcRenderer.invoke('main:refreshDirectory', ...args),
 
   // 数据操作

@@ -207,7 +207,11 @@
         "supportDownload": "Поддержка загрузки",
         "yes": "Да",
         "no": "Нет",
-        "tabs": { "marketplace": "Маркетплейс плагинов", "installed": "Установленные", "sources": "Источники" },
+        "tabs": {
+          "marketplace": "Маркетплейс плагинов",
+          "installed": "Установленные",
+          "sources": "Источники"
+        },
         "sources": {
           "addSource": "Добавить источник",
           "refreshSources": "Обновить источники",
@@ -215,7 +219,13 @@
           "renameSource": "Переименовать",
           "deleteSource": "Удалить",
           "renameTitle": "Переименовать источник",
-          "renamePrompt": "Введите новое имя источника"
+          "renamePrompt": "Введите новое имя источника",
+          "openGithub": "Открыть репозиторий GitHub в браузере",
+          "openLocal": "Открыть локальную папку в проводнике",
+          "openGithubFail": "Не удалось открыть репозиторий GitHub",
+          "openLocalFail": "Не удалось открыть локальную папку",
+          "openLocalNotFound": "Папка не найдена: {path}",
+          "openLocalNeedRestart": "Полностью закройте приложение и запустите снова, чтобы включить открытие папки."
         },
         "sourceForm": {
           "title": "Добавить источник плагинов",
@@ -241,19 +251,26 @@
           "removeSourceTitle": "Удалить источник",
           "removeSourceMessage": "Удалить источник {sourceName}?",
           "uninstallTitle": "Удалить плагин",
-          "uninstallMessage": "Удалить плагин {pluginName}?"
+          "uninstallMessage": "Удалить плагин {pluginName}? Связанные ресурсы поиска станут недоступны.",
+          "updateTitle": "Обновить плагин",
+          "updateMessage": "Обновить {pluginName} с v{currentVersion} до v{latestVersion}? Установленные файлы будут перезаписаны."
         },
         "secretKey": {
           "config": "Настроить ключ",
           "title": "Настроить секретный ключ",
           "prompt": "Настройте секретный ключ для плагина {pluginName}",
-          "placeholder": "Введите секретный ключ",
+          "placeholder": "Только API-ключ (без префикса)",
           "saveSuccess": "Секретный ключ сохранен",
           "saveFail": "Не удалось сохранить секретный ключ",
           "missing": "Ключ отсутствует",
           "status": "Статус секретного ключа",
           "configured": "Настроен",
-          "notRequired": "Не требуется"
+          "notRequired": "Не требуется",
+          "hint": {
+            "unsplash": "Unsplash: только Access Key, без префикса Client-ID",
+            "pexels": "Pexels: только API Key, без префикса Bearer",
+            "pixabay": "Pixabay: API Key"
+          }
         },
         "feedback": {
           "getAvailableFail": "Не удалось получить доступные плагины",
@@ -272,7 +289,55 @@
           "updateSourceSuccess": "Источник плагинов успешно обновлен",
           "updateSourceFail": "Не удалось обновить источник плагинов",
           "removeSourceSuccess": "Источник плагинов успешно удален",
-          "removeSourceFail": "Не удалось удалить источник плагинов"
+          "removeSourceFail": "Не удалось удалить источник плагинов",
+          "getApiListFail": "Не удалось получить список API"
+        },
+        "updateVersionLabel": "v{current} → v{latest}",
+        "loadAlert": {
+          "title": "Уведомление об источнике плагинов"
+        },
+        "loadErrors": {
+          "errorsSeparator": "; ",
+          "sourceItem": "{sourceName} ({hint})",
+          "network": "Ошибка сетевого подключения. Проверьте сеть и повторите попытку.",
+          "server5xx": "Удалённый сервис временно недоступен. Повторите попытку позже.",
+          "notFound": "Список плагинов не найден",
+          "localPath": "Локальный путь источника или plugins.json не существует",
+          "jsonInvalid": "Неверный формат файла списка плагинов",
+          "generic": "Ошибка загрузки",
+          "partialFailed": "Не удалось загрузить некоторые источники плагинов: {errors}",
+          "partialFailedWithCache": "Некоторые источники недоступны; используется локальный кэш: {errors}",
+          "allFailed": "Не удалось загрузить источники плагинов: {errors}",
+          "noPlugins": "Доступные плагины не найдены",
+          "exceptionWithCache": "Ошибка источника плагинов; используется кэш: {error}",
+          "getAvailableFail": "Не удалось получить список доступных плагинов: {error}"
+        },
+        "operationErrors": {
+          "invalidSourceName": "Недопустимое имя источника. Допускаются только буквы, цифры, дефис и подчёркивание.",
+          "invalidSourceType": "Недопустимый тип источника.",
+          "locationRequired": "Укажите расположение источника.",
+          "sourceNameExists": "Имя источника уже существует. Используйте уникальное имя.",
+          "sourceNotFound": "Источник плагинов не найден.",
+          "officialSourceCannotDelete": "Официальные источники нельзя удалить.",
+          "officialSourceCannotRename": "Имя официального источника нельзя изменить.",
+          "installedPluginsBlockDelete": "На этом источнике всё ещё установлено плагинов: {count}. Удалите их перед удалением источника.",
+          "installedPluginsBlockRename": "На этом источнике всё ещё установлено плагинов: {count}. Удалите их перед переименованием источника.",
+          "pluginsJsonMissingArray": "plugins.json источника {sourceName} недействителен: отсутствует массив plugins.",
+          "pluginsJsonInvalidPlugins": "plugins.json источника {sourceName} недействителен: plugins должен быть непустым массивом строк.",
+          "sourceValidateFail": "Не удалось проверить источник {sourceName}: {error}",
+          "invalidGithubRepo": "Недопустимый адрес репозитория GitHub.",
+          "noSourceEnabled": "Нет включённых источников плагинов. Добавьте или включите источник.",
+          "pluginsJsonMissingArrayShort": "Недействительный plugins.json: отсутствует массив plugins.",
+          "pluginsJsonInvalidPluginsShort": "Недействительный plugins.json: plugins должен быть непустым массивом строк.",
+          "pluginNotFound": "Плагин не найден.",
+          "pluginIncompatible": "Версия плагина несовместима.",
+          "systemPluginCannotUninstall": "Системные плагины нельзя удалить.",
+          "addSourceFailDetail": "Не удалось добавить источник плагинов: {error}",
+          "installFailDetail": "Не удалось установить плагин: {error}",
+          "uninstallFailDetail": "Не удалось удалить плагин: {error}",
+          "updateFailDetail": "Не удалось обновить плагин: {error}",
+          "getInstalledFailDetail": "Не удалось загрузить установленные плагины: {error}",
+          "unknownError": "Неизвестная ошибка"
         }
       }
     },
@@ -422,7 +487,6 @@
     "autoClearDownloadedTaskSuccess": "Задача автоматической очистки загрузок выполнена успешно!",
     "autoClearDownloadedTaskFailed": "Задача автоматической очистки загрузок не выполнена!",
     "conflictSystemShortcut": "Эта горячая клавиша уже используется системой или другими приложениями!",
-
     "conflictAppShortcut": "Эта горячая клавиша дублируется в приложении!",
     "notEditableShortcut": "Эта горячая клавиша не может быть изменена!",
     "invalidShortcutFormat": "Недопустимый формат горячей клавиши!",
@@ -430,7 +494,23 @@
     "shortcutUpdateFailed": "Ошибка обновления горячей клавиши!",
     "shortcutResetSuccess": "Горячая клавиша успешно сброшена!",
     "shortcutResetFailed": "Ошибка сброса горячей клавиши!",
-    "shortcutEmptySuccess": "Горячая клавиша успешно очищена!"
+    "shortcutEmptySuccess": "Горячая клавиша успешно очищена!",
+    "apiPluginNotFound": "API-плагин не найден: {resourceName}",
+    "apiPluginMethodMissing": "API-плагин {resourceName} не предоставляет метод: {funcName}",
+    "openDirInvalidPath": "Недопустимый путь",
+    "openDirNotFound": "Каталог не найден: {path}",
+    "videoErrAborted": "Загрузка видео отменена",
+    "videoErrNetwork": "Сетевая ошибка видео",
+    "videoErrDecode": "Ошибка декодирования видео",
+    "videoErrUnsupported": "Неподдерживаемый формат видео",
+    "videoErrUnknown": "Ошибка воспроизведения видео ({code})",
+    "migrationNotNeeded": "Миграция не требуется",
+    "migrationNoScripts": "Скрипты миграции не требуются",
+    "migrationSuccess": "Успешная миграция с {from} на {to}",
+    "migrationFail": "Ошибка миграции: {error}",
+    "h5ServerFindPortFail": "Не удалось найти свободный порт: {error}",
+    "h5ServerError": "Ошибка H5-сервера: {error}",
+    "h5ServerStartFailDetail": "Не удалось запустить H5-сервер: {error}"
   },
   "resourceTypeList": {
     "localResource": "Локальные ресурсы",
@@ -776,6 +856,11 @@
           "all": "Все",
           "reset": "Сбросить фильтры",
           "apply": "Применить фильтры"
+        },
+        "videoPreview": {
+          "close": "Закрыть предпросмотр видео",
+          "enterLandscape": "Горизонтальное воспроизведение",
+          "exitLandscape": "Выйти из горизонтального режима"
         }
       },
       "setting": {
@@ -844,7 +929,9 @@
             "placeholder": "Выберите позицию цифрового индикатора"
           },
           "h5Vibration": "Вибрационная обратная связь",
-          "h5WeekScreen": "Экран всегда включен"
+          "h5WeekScreen": "Экран всегда включен",
+          "h5HomeSettings": "Настройки главной",
+          "h5GeneralSettings": "Общие настройки"
         },
         "about": "О программе",
         "version": "Версия",

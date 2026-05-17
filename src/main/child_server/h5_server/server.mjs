@@ -203,20 +203,20 @@ export default async ({
           .catch((err) => {
             typeof onStartFail === 'function' &&
               onStartFail({
-                message: `查找可用端口失败: ${err}`
+                message: t('messages.h5ServerFindPortFail', { error: String(err) })
               })
           })
       } else {
         typeof onStartFail === 'function' &&
           onStartFail({
-            message: `服务器错误: ${err}`
+            message: t('messages.h5ServerError', { error: String(err) })
           })
       }
     })
   } catch (err) {
     typeof onStartFail === 'function' &&
       onStartFail({
-        message: `服务器启动失败: ${err}`
+        message: t('messages.h5ServerStartFailDetail', { error: String(err) })
       })
   }
   return {

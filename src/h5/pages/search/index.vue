@@ -2,15 +2,35 @@
 import UseCommonStore from '@h5/stores/commonStore.js'
 import UseSettingStore from '@h5/stores/settingStore.js'
 import * as api from '@h5/api/index.js'
-import { resourceTypeList, filterTypeOptions, orientationOptions, qualityList } from '@common/publicData.js'
+import {
+  resourceTypeList,
+  filterTypeOptions,
+  orientationOptions,
+  qualityList,
+  sortFieldOptions,
+  sortTypeOptions
+} from '@common/publicData.js'
 import { useTranslation } from 'i18next-vue'
 import { infoKeys } from '@common/publicData.js'
 import { handleInfoVal, resolveApiUserMessage, isTransientSearchFailure } from '@common/utils.js'
 import VirtualList from '@h5/components/VirtualList.vue'
+import {
+  applyH5ImageCompress,
+  buildH5LocalImageUrl,
+  isH5LocalImageApiUrl
+} from '@h5/utils/imageUrl.js'
+import { getH5NumberIndicatorStyle } from '@h5/utils/indicatorStyle.js'
 
 const { t } = useTranslation()
 const commonStore = UseCommonStore()
 const settingStore = UseSettingStore()
+const { settingData } = storeToRefs(settingStore)
+
+/** 搜索页本地资源排序默认值（与首页设置 h5Sort* 独立） */
+const SEARCH_LOCAL_SORT_DEFAULT = {
+  sortField: 'created_at',
+  sortType: -1
+}
 
 const form = reactive({
   keywords: '',
@@ -19,16 +39,41 @@ const form = reactive({
   filterType: 'images',
   orientation: '',
   quality: '',
-  sortField: settingStore.settingData.h5SortField || 'created_at',
-  sortType: settingStore.settingData.h5SortType || -1,
+  sortField: SEARCH_LOCAL_SORT_DEFAULT.sortField,
+  sortType: SEARCH_LOCAL_SORT_DEFAULT.sortType,
   isRandom: false
 })
+
+const resetSearchLocalSort = () => {
+  form.sortField = SEARCH_LOCAL_SORT_DEFAULT.sortField
+  form.sortType = SEARCH_LOCAL_SORT_DEFAULT.sortType
+}
 
 const page = reactive({
   startPage: 1,
   pageSize: 20,
   total: 0
 })
+
+let loadListSeq = 0
+
+const getSearchListDedupKey = (item) => {
+  if (item?.id != null && item.id !== '') return `id:${item.id}`
+  if (item?.fileName) return `fn:${item.fileName}`
+  if (item?.filePath) return `fp:${item.filePath}`
+  const url =
+    item?.imageRawSrc ||
+    item?.imageSrc ||
+    item?.imageUrl ||
+    item?.posterRawSrc ||
+    item?.posterSrc ||
+    item?.videoSrc ||
+    item?.videoUrl ||
+    ''
+  if (url) return `url:${url}`
+  if (item?.uniqueKey) return `uk:${item.uniqueKey}`
+  return ''
+}
 
 const state = reactive({
   loading: false,
@@ -45,7 +90,12 @@ const state = reactive({
 const imageInfoPanelAnchors = [0, Math.round(0.55 * window.innerHeight)]
 const imageInfoPanelHeight = ref(imageInfoPanelAnchors[0])
 const pageWrapperRef = ref(null)
+const searchToolbarRef = ref(null)
+const searchToolbarHeight = ref(52)
+let searchToolbarResizeObserver = null
 const videoPreviewRef = ref(null)
+const videoPreviewViewportRef = ref(null)
+const videoPreviewForcedLandscape = ref(false)
 const fullscreenListRef = ref(null)
 const fullscreenSliderRef = ref(null)
 const fullscreenMeasuredHeight = ref(420)
@@ -53,6 +103,8 @@ const fullscreenVisibleIndex = ref(0)
 let fullscreenResizeObserver = null
 
 const DISPLAY_MODE_STORAGE_KEY = 'fbw_h5_search_display_mode'
+/** 非通用 name，降低浏览器把历史搜索词当作自动填充的概率 */
+const H5_SEARCH_FIELD_NAME = 'fbw-h5-search-keywords'
 const readStoredDisplayMode = () => {
   try {
     return localStorage.getItem(DISPLAY_MODE_STORAGE_KEY) === 'fullscreen' ? 'fullscreen' : 'waterfall'
@@ -75,6 +127,10 @@ const list = ref([])
 const FALLBACK_ITEM_HEIGHT = 220
 const GRID_GAP = 10
 const GRID_BUFFER_PX = 900
+/** 与 .search-pull-inner 的 padding-top 保持一致 */
+const SEARCH_WATERFALL_CONTENT_GAP_PX = 10
+/** 顶部指示器与首行卡片顶边的间距 */
+const SEARCH_INDICATOR_TOP_CARD_GAP_PX = 8
 const longPress = reactive({
   timer: null,
   selectedIndex: -1,
@@ -114,6 +170,20 @@ const filterTypeDropdownOptions = computed(() => {
   }))
 })
 
+const sortFieldRadioOptions = computed(() =>
+  sortFieldOptions.map((item) => ({
+    value: item.value,
+    text: t(item.locale)
+  }))
+)
+
+const sortTypeRadioOptions = computed(() =>
+  sortTypeOptions.map((item) => ({
+    value: item.value,
+    text: t(item.locale)
+  }))
+)
+
 const normalizeItem = (item) => {
   const isVideo = item.fileType === 'video'
 
@@ -125,9 +195,7 @@ const normalizeItem = (item) => {
       videoSrc = `/api/videos/get?filePath=${encodeURIComponent(item.filePath)}`
       const iu = item.imageUrl || ''
       if (iu) {
-        posterRaw = /^https?:\/\//i.test(iu)
-          ? iu
-          : `/api/images/get?filePath=${encodeURIComponent(iu)}`
+        posterRaw = /^https?:\/\//i.test(iu) ? iu : buildH5LocalImageUrl(iu)
       }
     } else {
       videoSrc = item.videoUrl || ''
@@ -146,7 +214,7 @@ const normalizeItem = (item) => {
   }
 
   if (item.srcType === 'file') {
-    const rawUrl = `/api/images/get?filePath=${encodeURIComponent(item.filePath)}`
+    const rawUrl = buildH5LocalImageUrl(item.filePath)
     return {
       ...item,
       isVideo: false,
@@ -170,21 +238,40 @@ const normalizeItem = (item) => {
 
 const getItemKey = (item) =>
   String(item?.id || item?.uniqueKey || item?.filePath || item?.videoSrc || item?.imageSrc || '')
-const getDisplayImageSrc = (item) => {
+const resolveImageCompressWidth = (options = {}) => {
+  if (options.width) return Math.max(1, Math.round(options.width))
+  if (displayMode.value === 'fullscreen') {
+    return Math.max(240, Math.round(state.viewportWidth || 375))
+  }
+  return Math.max(80, Math.round(cardWidth.value || 160))
+}
+
+const withH5ImageCompress = (url, options = {}) => {
+  if (!url || !isH5LocalImageApiUrl(url)) return url
+  return applyH5ImageCompress(url, {
+    width: resolveImageCompressWidth(options),
+    settingData: settingData.value
+  })
+}
+
+const getDisplayImageSrc = (item, options = {}) => {
   const key = getItemKey(item)
   const seed = imageRetrySeed[key] || 0
-  if (!seed) return item.imageSrc
-  const separator = item.imageRawSrc?.includes('?') ? '&' : '?'
-  return `${item.imageRawSrc}${separator}_retry=${seed}`
+  const base = item.imageRawSrc || item.imageSrc || ''
+  if (!seed) return withH5ImageCompress(base, options)
+  const compressed = withH5ImageCompress(base, options)
+  const separator = compressed.includes('?') ? '&' : '?'
+  return `${compressed}${separator}_retry=${seed}`
 }
-const getDisplayPosterSrc = (item) => {
+const getDisplayPosterSrc = (item, options = {}) => {
   const key = getItemKey(item)
   const seed = imageRetrySeed[key] || 0
   const raw = item.posterRawSrc || ''
   if (!raw) return ''
-  if (!seed) return item.posterSrc || raw
-  const separator = raw.includes('?') ? '&' : '?'
-  return `${raw}${separator}_retry=${seed}`
+  if (!seed) return withH5ImageCompress(item.posterSrc || raw, options)
+  const compressed = withH5ImageCompress(raw, options)
+  const separator = compressed.includes('?') ? '&' : '?'
+  return `${compressed}${separator}_retry=${seed}`
 }
 const onImageLoadError = (item) => {
   const key = getItemKey(item)
@@ -226,6 +313,7 @@ const fetchSearchPageWithRetry = async (payload) => {
 
 const loadList = async (reset = false) => {
   if (state.loading) return
+  const reqSeq = ++loadListSeq
   if (reset) {
     page.startPage = 1
     page.total = 0
@@ -241,14 +329,20 @@ const loadList = async (reset = false) => {
       keywords: rawForm.keywords,
       startPage: page.startPage,
       pageSize: page.pageSize,
-      sortType: Number(rawForm.sortType) || -1,
+      sortField: rawForm.sortField || SEARCH_LOCAL_SORT_DEFAULT.sortField,
+      sortType: Number(rawForm.sortType) || SEARCH_LOCAL_SORT_DEFAULT.sortType,
       isRandom: !!rawForm.isRandom
     }
     const res = await fetchSearchPageWithRetry(payload)
+    if (reqSeq !== loadListSeq) return
     if (res?.success && Array.isArray(res?.data?.list)) {
+      const prevCount = list.value.length
       const merged = [...list.value, ...res.data.list.map(normalizeItem)]
       const map = new Map()
-      merged.forEach((item) => map.set(item.id || item.uniqueKey, item))
+      merged.forEach((item) => {
+        const key = getSearchListDedupKey(item)
+        if (key) map.set(key, item)
+      })
       list.value = [...map.values()]
       if (typeof res.data.total === 'number' && res.data.total >= 0) {
         page.total = res.data.total
@@ -256,7 +350,9 @@ const loadList = async (reset = false) => {
         page.total = list.value.length
       }
       page.startPage += 1
-      if (!res.data.list.length || list.value.length >= page.total) {
+      const pageRows = res.data.list.length
+      const noNewRows = pageRows > 0 && list.value.length === prevCount
+      if (!pageRows || pageRows < page.pageSize || noNewRows) {
         state.finished = true
       }
     } else {
@@ -323,13 +419,17 @@ const onResetFilters = () => {
   form.filterType = 'images'
   form.orientation = ''
   form.quality = ''
+  resetSearchLocalSort()
   onSearch()
 }
 
 // 仅在打开预览时生成数组；排除视频项，避免与 van-image-preview 下标错位
 const previewImages = computed(() => {
   if (!state.showPreview) return []
-  return list.value.filter((item) => item.fileType !== 'video').map((item) => item.imageSrc).filter(Boolean)
+  return list.value
+    .filter((item) => item.fileType !== 'video')
+    .map((item) => getDisplayImageSrc(item, { width: state.viewportWidth }))
+    .filter(Boolean)
 })
 const previewStartPosition = computed(() => {
   if (!state.showPreview || longPress.selectedIndex < 0) return 0
@@ -424,15 +524,26 @@ const virtualColumns = computed(() => {
   })
 })
 
-// 瀑布流指示器：仅展示「已加载条数 / 总数」数字（文案与铺满一致为 `{n} / {m}`，语义不同）
-const waterfallIndicatorText = computed(() => {
+/** 服务端返回的匹配总数（用于指示器分母） */
+const searchResultTotal = computed(() => {
+  const server = Number(page.total) || 0
   const loaded = list.value.length
-  const tot = Math.max(1, page.total || loaded)
-  return t('h5.pages.search.displayMode.indicatorLoadedTotal', { loaded, total: tot })
+  if (server > 0) return server
+  return Math.max(1, loaded)
 })
 
-const slideObjectFit = computed(() =>
-  settingStore.settingData?.h5ImageDisplaySize === 'cover' ? 'cover' : 'contain'
+// 瀑布流指示器：已加载条数 / 服务端总数
+const waterfallIndicatorText = computed(() => {
+  const loaded = list.value.length
+  const total = searchResultTotal.value
+  return t('h5.pages.search.displayMode.indicatorLoadedTotal', {
+    loaded: Math.min(loaded, total),
+    total
+  })
+})
+
+const previewObjectFit = computed(() =>
+  settingData.value?.h5ImageDisplaySize === 'cover' ? 'cover' : 'contain'
 )
 
 const measureFullscreenHeight = () => {
@@ -495,11 +606,42 @@ const onFullscreenVirtualScroll = (payload) => {
   fullscreenVisibleIndex.value = idx
 }
 
-// 铺满模式：当前所在张（从 1 计）/ 总数
+// 铺满模式：当前所在张（从 1 计）/ 服务端总数（当前索引不超过已加载条数）
 const fullscreenIndicatorText = computed(() => {
-  const cur = fullscreenVisibleIndex.value + 1
-  const tot = Math.max(1, page.total || list.value.length)
-  return t('h5.pages.search.displayMode.indicator', { current: cur, total: tot })
+  const len = list.value.length
+  const cur = len ? Math.min(fullscreenVisibleIndex.value + 1, len) : 0
+  const total = searchResultTotal.value
+  return t('h5.pages.search.displayMode.indicator', { current: cur, total })
+})
+
+const measureSearchToolbarHeight = () => {
+  const el = searchToolbarRef.value
+  if (!el) return
+  const h = Math.round(el.getBoundingClientRect().height)
+  if (h > 0) searchToolbarHeight.value = h
+}
+
+const bindSearchToolbarResizeObserver = () => {
+  searchToolbarResizeObserver?.disconnect()
+  const el = searchToolbarRef.value
+  if (!el || typeof ResizeObserver === 'undefined') return
+  searchToolbarResizeObserver = new ResizeObserver(() => measureSearchToolbarHeight())
+  searchToolbarResizeObserver.observe(el)
+}
+
+const searchPageIndicatorStyle = computed(() => {
+  const position = settingData.value.h5NumberIndicatorPosition
+  let topOffset =
+    displayMode.value === 'fullscreen'
+      ? 'calc(8px + env(safe-area-inset-top, 0px))'
+      : `calc(${searchToolbarHeight.value}px + env(safe-area-inset-top, 0px) + 4px)`
+
+  // 顶部指示器：搜索栏 + 列表上留白 + 与首行卡片间距
+  if (position === 'top' && displayMode.value !== 'fullscreen') {
+    topOffset = `calc(${searchToolbarHeight.value}px + ${SEARCH_WATERFALL_CONTENT_GAP_PX}px + ${SEARCH_INDICATOR_TOP_CARD_GAP_PX}px + env(safe-area-inset-top, 0px))`
+  }
+
+  return getH5NumberIndicatorStyle(position, { topOffset })
 })
 
 const syncWaterfallScrollMetrics = () => {
@@ -512,7 +654,10 @@ watch(displayMode, (mode) => {
   if (mode !== 'fullscreen') {
     fullscreenResizeObserver?.disconnect()
     fullscreenResizeObserver = null
-    nextTick(() => syncWaterfallScrollMetrics())
+    nextTick(() => {
+      syncWaterfallScrollMetrics()
+      measureSearchToolbarHeight()
+    })
     return
   }
   nextTick(() => {
@@ -531,11 +676,80 @@ watch(
   }
 )
 
+const videoPreviewDeviceLandscape = computed(
+  () => state.viewportWidth > state.viewportHeight
+)
+
+const videoPreviewInLandscapeView = computed(
+  () => videoPreviewForcedLandscape.value || videoPreviewDeviceLandscape.value
+)
+
+const videoPreviewRotateIcon = computed(() =>
+  videoPreviewInLandscapeView.value ? 'custom:portrait-outline' : 'custom:landscape-outline'
+)
+
+const videoPreviewRotateLabel = computed(() =>
+  videoPreviewInLandscapeView.value
+    ? t('h5.pages.search.videoPreview.exitLandscape')
+    : t('h5.pages.search.videoPreview.enterLandscape')
+)
+
+const canLockScreenOrientation = () =>
+  typeof screen !== 'undefined' && typeof screen.orientation?.lock === 'function'
+
+const releaseVideoPreviewLandscape = async () => {
+  try {
+    screen.orientation?.unlock?.()
+  } catch (_) {
+    /* noop */
+  }
+  try {
+    const fs = document.fullscreenElement
+    const viewport = videoPreviewViewportRef.value
+    if (fs && viewport && (fs === viewport || viewport.contains(fs))) {
+      await document.exitFullscreen()
+    }
+  } catch (_) {
+    /* noop */
+  }
+}
+
+const tryLockVideoPreviewLandscape = async () => {
+  if (!canLockScreenOrientation()) return false
+  try {
+    const viewport = videoPreviewViewportRef.value
+    if (!viewport) return false
+    if (!document.fullscreenElement) {
+      await viewport.requestFullscreen()
+    }
+    await screen.orientation.lock('landscape')
+    return true
+  } catch (_) {
+    return false
+  }
+}
+
+const toggleVideoPreviewLandscape = async () => {
+  if (videoPreviewInLandscapeView.value) {
+    videoPreviewForcedLandscape.value = false
+    await releaseVideoPreviewLandscape()
+    return
+  }
+  videoPreviewForcedLandscape.value = true
+  await tryLockVideoPreviewLandscape()
+}
+
+const resetVideoPreviewLandscape = () => {
+  videoPreviewForcedLandscape.value = false
+  void releaseVideoPreviewLandscape()
+}
+
 const closeVideoPreview = () => {
   state.showVideoPreview = false
 }
 
 const onVideoPreviewClosed = () => {
+  resetVideoPreviewLandscape()
   const el = videoPreviewRef.value
   if (!el) return
   try {
@@ -545,6 +759,23 @@ const onVideoPreviewClosed = () => {
   } catch (_) {
     /* noop */
   }
+}
+
+const startVideoPreviewPlayback = () => {
+  const el = videoPreviewRef.value
+  if (!el?.src) return
+  const play = () => {
+    el.play?.().catch(() => {})
+  }
+  if (el.readyState >= 2) {
+    play()
+    return
+  }
+  el.addEventListener('loadeddata', play, { once: true })
+}
+
+const onVideoPreviewOpened = () => {
+  nextTick(() => startVideoPreviewPlayback())
 }
 
 const openPreview = (index) => {
@@ -696,6 +927,7 @@ const onPageResize = () => {
   state.viewportHeight = window.innerHeight
   state.viewportWidth = window.innerWidth
   nextTick(() => {
+    measureSearchToolbarHeight()
     if (displayMode.value === 'fullscreen') {
       measureFullscreenHeight()
     }
@@ -747,6 +979,8 @@ onUnmounted(() => {
   }
   fullscreenResizeObserver?.disconnect()
   fullscreenResizeObserver = null
+  searchToolbarResizeObserver?.disconnect()
+  searchToolbarResizeObserver = null
   window.removeEventListener('resize', onPageResize)
 })
 
@@ -768,6 +1002,8 @@ defineExpose({
 onMounted(async () => {
   await init()
   nextTick(() => {
+    measureSearchToolbarHeight()
+    bindSearchToolbarResizeObserver()
     syncWaterfallScrollMetrics()
     if (displayMode.value === 'fullscreen') {
       bindFullscreenResizeObserver()
@@ -785,14 +1021,21 @@ onMounted(async () => {
     @scroll.passive="onPageScroll"
   >
     <div class="page-search-inner">
-      <div class="search-toolbar">
+      <div ref="searchToolbarRef" class="search-toolbar">
         <div class="search-row">
-          <van-search
-            v-model="form.keywords"
-            class="search-input"
-            :placeholder="t('h5.pages.search.keywordPlaceholder')"
-            @search="onSearch"
-          />
+          <form class="search-form" autocomplete="off" @submit.prevent="onSearch">
+            <van-search
+              v-model="form.keywords"
+              class="search-input"
+              :name="H5_SEARCH_FIELD_NAME"
+              autocomplete="off"
+              autocorrect="off"
+              autocapitalize="off"
+              :spellcheck="false"
+              :placeholder="t('h5.pages.search.keywordPlaceholder')"
+              @search="onSearch"
+            />
+          </form>
           <van-button
             class="layout-mode-btn"
             plain
@@ -856,6 +1099,7 @@ onMounted(async () => {
                         <img
                           v-else-if="row.item.posterSrc"
                           class="preview preview--poster"
+                          :style="{ objectFit: previewObjectFit }"
                           :src="getDisplayPosterSrc(row.item)"
                           alt=""
                           loading="lazy"
@@ -881,6 +1125,7 @@ onMounted(async () => {
                         <img
                           v-else
                           class="preview"
+                          :style="{ objectFit: previewObjectFit }"
                           :src="getDisplayImageSrc(row.item)"
                           alt="preview"
                           loading="lazy"
@@ -916,7 +1161,7 @@ onMounted(async () => {
                     class="fullscreen-slide"
                     :style="{
                       backgroundImage: slideBgUrl(item) ? `url(${slideBgUrl(item)})` : 'none',
-                      backgroundSize: slideObjectFit,
+                      backgroundSize: previewObjectFit,
                       backgroundPosition: 'center',
                       backgroundRepeat: 'no-repeat',
                       backgroundColor: 'rgba(0, 0, 0, 0.07)'
@@ -947,15 +1192,25 @@ onMounted(async () => {
       </van-pull-refresh>
     </div>
 
-    <van-popup v-model:show="state.showFilters" position="bottom" round>
+    <van-popup v-model:show="state.showFilters" position="bottom" round class="search-filters-popup">
       <div class="filter-panel">
-        <div class="filter-title">{{ t('h5.pages.search.filters.title') }}</div>
-        <van-search
-          v-model="form.keywords"
-          class="filter-keyword-input"
-          :placeholder="t('h5.pages.search.keywordPlaceholder')"
-          @search="onApplyFilters"
-        />
+        <div class="filter-panel-header">
+          <div class="filter-title">{{ t('h5.pages.search.filters.title') }}</div>
+          <form class="filter-keyword-form" autocomplete="off" @submit.prevent="onApplyFilters">
+            <van-search
+              v-model="form.keywords"
+              class="filter-keyword-input"
+              :name="H5_SEARCH_FIELD_NAME"
+              autocomplete="off"
+              autocorrect="off"
+              autocapitalize="off"
+              :spellcheck="false"
+              :placeholder="t('h5.pages.search.keywordPlaceholder')"
+              @search="onApplyFilters"
+            />
+          </form>
+        </div>
+        <div class="filter-panel-body">
         <div class="filter-group">
           <div class="group-title">{{ t('exploreCommon.searchForm.resourceType.placeholder') }}</div>
           <van-radio-group
@@ -967,6 +1222,20 @@ onMounted(async () => {
             <van-radio v-for="o in resourceTypeOptions" :key="o.value" :name="o.value">{{ o.text }}</van-radio>
           </van-radio-group>
         </div>
+        <template v-if="form.resourceType === 'localResource'">
+          <div class="filter-group">
+            <div class="group-title">{{ t('pages.Setting.settingDataForm.sortField') }}</div>
+            <van-radio-group v-model="form.sortField" class="filter-options filter-options--sort" direction="horizontal">
+              <van-radio v-for="o in sortFieldRadioOptions" :key="o.value" :name="o.value">{{ o.text }}</van-radio>
+            </van-radio-group>
+          </div>
+          <div class="filter-group">
+            <div class="group-title">{{ t('pages.Setting.settingDataForm.sortType') }}</div>
+            <van-radio-group v-model="form.sortType" class="filter-options" direction="horizontal">
+              <van-radio v-for="o in sortTypeRadioOptions" :key="o.value" :name="o.value">{{ o.text }}</van-radio>
+            </van-radio-group>
+          </div>
+        </template>
         <div class="filter-group">
           <div class="group-title">{{ t('exploreCommon.searchForm.resourceName.placeholder') }}</div>
           <van-radio-group v-model="form.resourceName" class="filter-options" direction="horizontal" @change="onChangeSource">
@@ -997,6 +1266,7 @@ onMounted(async () => {
             <van-radio v-for="q in qualityList" :key="q" :name="q">{{ q }}</van-radio>
           </van-radio-group>
         </div>
+        </div>
         <div class="filter-actions">
           <van-button class="filter-reset-btn" plain @click="onResetFilters">
             <van-icon name="replay" />
@@ -1013,12 +1283,38 @@ onMounted(async () => {
       position="center"
       teleport="body"
       class="h5-video-preview-popup"
-      :overlay-style="{ background: 'rgba(0,0,0,0.92)' }"
+      :overlay-style="{ background: 'rgba(0,0,0,0.94)' }"
+      :style="{ width: '100%', height: '100%', maxWidth: '100%', background: 'transparent' }"
+      @opened="onVideoPreviewOpened"
       @closed="onVideoPreviewClosed"
     >
-      <div class="h5-video-preview-shell">
-        <button type="button" class="h5-video-preview-close" @click="closeVideoPreview">×</button>
-        <video
+      <div
+        ref="videoPreviewViewportRef"
+        class="h5-video-preview-viewport"
+        :class="{
+          'h5-video-preview-viewport--natural-landscape': videoPreviewDeviceLandscape,
+          'h5-video-preview-viewport--forced-landscape':
+            videoPreviewForcedLandscape && !videoPreviewDeviceLandscape
+        }"
+      >
+        <button
+          type="button"
+          class="h5-video-preview-rotate"
+          :aria-label="videoPreviewRotateLabel"
+          @click.stop="toggleVideoPreviewLandscape"
+        >
+          <IconifyIcon class="h5-video-preview-rotate-icon" :icon="videoPreviewRotateIcon" />
+        </button>
+        <button
+          type="button"
+          class="h5-video-preview-close"
+          :aria-label="t('h5.pages.search.videoPreview.close')"
+          @click.stop="closeVideoPreview"
+        >
+          <van-icon name="cross" size="22" />
+        </button>
+        <div class="h5-video-preview-stage">
+          <video
           ref="videoPreviewRef"
           class="h5-video-preview-el"
           controls
@@ -1026,10 +1322,13 @@ onMounted(async () => {
           webkit-playsinline
           x5-video-player-type="h5"
           x5-playsinline
-          preload="metadata"
+          controlslist="nodownload"
+          preload="auto"
           :poster="videoPreviewItem?.posterSrc || ''"
           :src="videoPreviewItem?.videoSrc || ''"
-        />
+            @click.stop
+          />
+        </div>
       </div>
     </van-popup>
 
@@ -1098,7 +1397,11 @@ onMounted(async () => {
       </div>
     </van-floating-panel>
 
-    <div v-if="list.length" class="search-page-indicator">
+    <div
+      v-if="list.length"
+      class="search-page-indicator"
+      :style="searchPageIndicatorStyle"
+    >
       {{ displayMode === 'fullscreen' ? fullscreenIndicatorText : waterfallIndicatorText }}
     </div>
   </div>
@@ -1134,6 +1437,9 @@ onMounted(async () => {
   min-height: 0;
   display: flex;
   flex-direction: column;
+}
+.search-pull-inner:not(.search-pull-inner--fullscreen) {
+  padding-top: 10px;
 }
 .search-pull-inner--fullscreen {
   flex: 1;
@@ -1172,11 +1478,6 @@ onMounted(async () => {
   font-size: 56px;
 }
 .search-page-indicator {
-  position: fixed;
-  z-index: 200;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: calc(var(--fbw-tabbar-height, 50px) + 12px);
   padding: 4px 10px;
   border-radius: 999px;
   font-size: 13px;
@@ -1204,8 +1505,17 @@ onMounted(async () => {
   gap: 8px;
   padding: 8px 12px 10px;
 }
-.search-input {
+.search-form {
   flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+.search-input {
+  width: 100%;
+  padding: 0;
+}
+.filter-keyword-form {
+  margin: 0;
 }
 .filter-btn {
   width: 34px;
@@ -1276,7 +1586,6 @@ onMounted(async () => {
   width: 100%;
   height: 100%;
   display: block;
-  object-fit: cover;
   object-position: center;
 }
 .preview-wrap--video {
@@ -1310,46 +1619,157 @@ onMounted(async () => {
 .video-play-badge-icon {
   font-size: 44px;
 }
-.h5-video-preview-shell {
-  position: relative;
-  width: min(100vw, 960px);
-  margin: 0 auto;
-  padding: 44px 12px 20px;
+.h5-video-preview-viewport {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  padding:
+    calc(56px + env(safe-area-inset-top, 0px))
+    calc(12px + env(safe-area-inset-right, 0px))
+    calc(12px + env(safe-area-inset-bottom, 0px))
+    calc(12px + env(safe-area-inset-left, 0px));
+  background: transparent;
+  overflow: hidden;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: auto;
+}
+.h5-video-preview-viewport--natural-landscape {
+  padding:
+    calc(12px + env(safe-area-inset-top, 0px))
+    env(safe-area-inset-right, 0px)
+    env(safe-area-inset-bottom, 0px)
+    env(safe-area-inset-left, 0px);
+}
+.h5-video-preview-viewport--forced-landscape {
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
+    env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+}
+.h5-video-preview-viewport--forced-landscape .h5-video-preview-stage {
+  position: absolute;
+  inset: 0;
+  flex: none;
+  width: auto;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  transform: none;
+}
+.h5-video-preview-viewport--forced-landscape .h5-video-preview-el {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100dvh;
+  width: 100vh;
+  height: 100dvw;
+  height: 100vw;
+  max-width: none;
+  max-height: none;
+  transform: translate(-50%, -50%) rotate(90deg);
+  transform-origin: center center;
+}
+.h5-video-preview-stage {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  max-height: 100%;
+  overflow: hidden;
 }
 .h5-video-preview-el {
   display: block;
-  width: 100%;
-  max-height: min(78vh, 720px);
-  border-radius: 8px;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
   background: #000;
+  border-radius: 0;
 }
-.h5-video-preview-close {
-  position: absolute;
-  top: 4px;
-  right: 8px;
-  z-index: 2;
-  width: 40px;
-  height: 40px;
+.h5-video-preview-rotate {
+  position: fixed;
+  top: calc(10px + env(safe-area-inset-top, 0px));
+  right: calc(62px + env(safe-area-inset-right, 0px));
+  z-index: 3001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
   padding: 0;
   border: none;
   border-radius: 50%;
-  font-size: 28px;
-  line-height: 40px;
   color: #fff;
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   cursor: pointer;
+  touch-action: manipulation;
+}
+.h5-video-preview-rotate:active {
+  background: rgba(0, 0, 0, 0.62);
+}
+.h5-video-preview-rotate-icon {
+  font-size: 22px;
+}
+.h5-video-preview-close {
+  position: fixed;
+  top: calc(10px + env(safe-area-inset-top, 0px));
+  right: calc(10px + env(safe-area-inset-right, 0px));
+  z-index: 3001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  cursor: pointer;
+  touch-action: manipulation;
 }
 .h5-video-preview-close:active {
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.62);
 }
 :deep(.h5-video-preview-popup.van-popup) {
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  margin: 0;
+  transform: none !important;
+  overflow: hidden !important;
+  background: transparent !important;
+  box-shadow: none;
+}
+:deep(.h5-video-preview-popup.van-popup--center) {
+  transform: none !important;
+}
+:deep(.h5-video-preview-popup .van-popup__content) {
   width: 100%;
-  max-width: 100vw;
   height: 100%;
-  max-height: 100vh;
-  overflow: hidden;
-  background: transparent;
+  max-width: 100%;
+  max-height: 100%;
+  overflow: hidden !important;
 }
 .virtual-spacer {
   width: 100%;
@@ -1360,10 +1780,31 @@ onMounted(async () => {
   font-size: 12px;
   padding: 8px 0 12px;
 }
+.search-filters-popup :deep(.van-popup) {
+  max-height: 60dvh;
+  overflow: hidden;
+}
 .filter-panel {
-  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  max-height: 60dvh;
   max-width: 820px;
   margin: 0 auto;
+  padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
+}
+.filter-panel-header {
+  flex-shrink: 0;
+}
+.filter-panel-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  margin: 0 -4px;
+  padding: 0 4px;
 }
 .filter-title {
   margin-bottom: 12px;
@@ -1391,7 +1832,10 @@ onMounted(async () => {
   min-width: 96px;
 }
 .filter-actions {
-  margin-top: 16px;
+  flex-shrink: 0;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--van-border-color);
   display: flex;
   gap: 10px;
 }

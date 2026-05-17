@@ -199,6 +199,7 @@
         "install": "安装",
         "installed": "已安装",
         "update": "更新",
+        "updateVersionLabel": "v{current} → v{latest}",
         "uninstall": "卸载",
         "details": "详情",
         "close": "关闭",
@@ -220,7 +221,13 @@
           "renameSource": "修改源名",
           "deleteSource": "删除源",
           "renameTitle": "修改插件源名称",
-          "renamePrompt": "请输入新的插件源名称"
+          "renamePrompt": "请输入新的插件源名称",
+          "openGithub": "在浏览器中打开 GitHub 仓库",
+          "openLocal": "在文件管理器中打开本地目录",
+          "openGithubFail": "无法打开 GitHub 仓库链接",
+          "openLocalFail": "无法打开本地目录",
+          "openLocalNotFound": "目录不存在：{path}",
+          "openLocalNeedRestart": "打开目录功能尚未生效，请完全退出应用后重新启动"
         },
         "sourceForm": {
           "title": "添加插件源",
@@ -246,13 +253,39 @@
           "removeSourceTitle": "删除插件源",
           "removeSourceMessage": "确认删除插件源 {sourceName} 吗？",
           "uninstallTitle": "卸载插件",
-          "uninstallMessage": "确认卸载插件 {pluginName} 吗？"
+          "uninstallMessage": "确认卸载插件 {pluginName} 吗？卸载后相关搜索资源将不可用。",
+          "updateTitle": "更新插件",
+          "updateMessage": "确认将「{pluginName}」从 v{currentVersion} 更新到 v{latestVersion} 吗？更新将覆盖当前插件文件。"
+        },
+        "loadAlert": {
+          "title": "插件源加载提示"
+        },
+        "loadErrors": {
+          "errorsSeparator": "；",
+          "sourceItem": "{sourceName}（{hint}）",
+          "network": "网络连接失败，请检查网络后重试",
+          "server5xx": "远端服务暂时不可用，请稍后重试",
+          "notFound": "未找到插件列表",
+          "localPath": "本地插件源路径或 plugins.json 不存在",
+          "jsonInvalid": "插件列表文件格式错误",
+          "generic": "加载失败",
+          "partialFailed": "部分插件源加载失败：{errors}",
+          "partialFailedWithCache": "部分插件源加载失败，已使用本地缓存：{errors}",
+          "allFailed": "插件源加载失败：{errors}",
+          "noPlugins": "未获取到可用插件",
+          "exceptionWithCache": "插件源异常，已使用缓存：{error}",
+          "getAvailableFail": "获取可用插件列表失败：{error}"
         },
         "secretKey": {
           "config": "配置密钥",
           "title": "配置资源密钥",
           "prompt": "请配置插件 {pluginName} 的资源密钥",
-          "placeholder": "请输入密钥",
+          "placeholder": "请输入 API Key（仅密钥本身）",
+          "hint": {
+            "unsplash": "Unsplash：仅填 Access Key，不要加 Client-ID 前缀",
+            "pexels": "Pexels：仅填 API Key，不要加 Bearer 前缀",
+            "pixabay": "Pixabay：填写 API Key"
+          },
           "saveSuccess": "密钥保存成功",
           "saveFail": "密钥保存失败",
           "missing": "缺少密钥",
@@ -260,7 +293,35 @@
           "configured": "已配置",
           "notRequired": "无需密钥"
         },
+        "operationErrors": {
+          "invalidSourceName": "源名格式非法，仅支持字母（大小写）、数字、-、_",
+          "invalidSourceType": "源类型非法",
+          "locationRequired": "源地址不能为空",
+          "sourceNameExists": "源名已存在，请使用唯一源名",
+          "sourceNotFound": "插件源不存在",
+          "officialSourceCannotDelete": "官方源不允许删除",
+          "officialSourceCannotRename": "官方源不允许修改源名",
+          "installedPluginsBlockDelete": "该源下仍有 {count} 个已安装插件，请先卸载后再删除插件源",
+          "installedPluginsBlockRename": "该源下仍有 {count} 个已安装插件，请先卸载后再修改源名",
+          "pluginsJsonMissingArray": "插件源 {sourceName} 的 plugins.json 格式非法：缺少 plugins 数组",
+          "pluginsJsonInvalidPlugins": "插件源 {sourceName} 的 plugins.json 格式非法：plugins 必须为非空字符串数组",
+          "sourceValidateFail": "插件源 {sourceName} 校验失败：{error}",
+          "invalidGithubRepo": "GitHub 仓库地址不合法",
+          "noSourceEnabled": "未启用任何插件源，请先添加或启用插件源",
+          "pluginsJsonMissingArrayShort": "plugins.json 格式非法：缺少 plugins 数组",
+          "pluginsJsonInvalidPluginsShort": "plugins.json 格式非法：plugins 必须为非空字符串数组",
+          "pluginNotFound": "插件不存在",
+          "pluginIncompatible": "插件版本不兼容",
+          "systemPluginCannotUninstall": "系统插件不允许卸载",
+          "addSourceFailDetail": "添加插件源失败：{error}",
+          "installFailDetail": "插件安装失败：{error}",
+          "uninstallFailDetail": "插件卸载失败：{error}",
+          "updateFailDetail": "插件更新失败：{error}",
+          "getInstalledFailDetail": "获取已安装插件列表失败：{error}",
+          "unknownError": "未知错误"
+        },
         "feedback": {
+          "getApiListFail": "获取 API 列表失败",
           "getAvailableFail": "获取可用插件列表失败",
           "getInstalledFail": "获取已安装插件列表失败",
           "getSourcesFail": "获取插件源失败",
@@ -432,7 +493,23 @@
     "shortcutUpdateFailed": "快捷键更新失败！",
     "shortcutResetSuccess": "快捷键重置成功！",
     "shortcutResetFailed": "快捷键重置失败！",
-    "shortcutEmptySuccess": "快捷键清空成功！"
+    "shortcutEmptySuccess": "快捷键清空成功！",
+    "apiPluginNotFound": "未找到 API 插件：{resourceName}",
+    "apiPluginMethodMissing": "API 插件 {resourceName} 未提供方法：{funcName}",
+    "openDirInvalidPath": "路径无效",
+    "openDirNotFound": "目录不存在：{path}",
+    "videoErrAborted": "视频加载已取消",
+    "videoErrNetwork": "视频网络错误",
+    "videoErrDecode": "视频解码错误",
+    "videoErrUnsupported": "不支持的视频格式",
+    "videoErrUnknown": "视频播放错误（{code}）",
+    "migrationNotNeeded": "无需迁移",
+    "migrationNoScripts": "无需迁移脚本",
+    "migrationSuccess": "已成功从 {from} 迁移到 {to}",
+    "migrationFail": "迁移失败：{error}",
+    "h5ServerFindPortFail": "查找可用端口失败：{error}",
+    "h5ServerError": "H5 服务器错误：{error}",
+    "h5ServerStartFailDetail": "H5 服务器启动失败：{error}"
   },
   "resourceTypeList": {
     "localResource": "本地资源",
@@ -773,6 +850,11 @@
           "indicator": "{current} / {total}",
           "indicatorLoadedTotal": "{loaded} / {total}"
         },
+        "videoPreview": {
+          "close": "关闭视频预览",
+          "enterLandscape": "横屏播放",
+          "exitLandscape": "退出横屏"
+        },
         "filters": {
           "title": "搜索条件",
           "all": "全部",
@@ -784,6 +866,8 @@
         "title": "设置",
         "form": {
           "h5ApplicationSettings": "应用设置",
+          "h5HomeSettings": "首页设置",
+          "h5GeneralSettings": "通用设置",
           "h5Locale": {
             "label": "语言",
             "placeholder": "请选择语言"

@@ -6,6 +6,8 @@ import { useTranslation } from 'i18next-vue'
 import { infoKeys } from '@common/publicData.js'
 import { handleInfoVal, throttle, resolveApiUserMessage } from '@common/utils.js'
 import VirtualList from '@h5/components/VirtualList.vue'
+import { applyH5ImageCompress, buildH5LocalImageUrl } from '@h5/utils/imageUrl.js'
+import { getH5NumberIndicatorStyle } from '@h5/utils/indicatorStyle.js'
 
 const { t } = useTranslation()
 const commonStore = UseCommonStore()
@@ -132,17 +134,11 @@ const isCurrentFavorite = computed(() => {
   return autoSwitch.imageList[autoSwitch.currentIndex]?.isFavorite
 })
 
-// 指示器样式（底部水平居中；是否显示仍由 h5NumberIndicatorPosition 配置）
 const numberIndicatorStyle = computed(() => {
-  const position = settingData.value.h5NumberIndicatorPosition
-  return {
-    display: autoSwitch.total && position ? 'inline-block' : 'none',
-    left: '50%',
-    right: 'auto',
-    top: 'auto',
-    transform: 'translateX(-50%)',
-    bottom: 'calc(var(--fbw-tabbar-height) + 12px)'
+  if (!autoSwitch.total) {
+    return { display: 'none' }
   }
+  return getH5NumberIndicatorStyle(settingData.value.h5NumberIndicatorPosition)
 })
 
 // 防抖的显示索引，避免指示器频繁变化
@@ -364,13 +360,11 @@ const loadData = async (isRefresh) => {
     const idSet = new Set()
     for (const item of newList) {
       if (!idSet.has(item.id)) {
-        const rawUrl = `/api/images/get?filePath=${encodeURIComponent(item.filePath)}`
+        const rawUrl = buildH5LocalImageUrl(item.filePath)
         uniqueList.push({
           ...item,
           rawUrl,
-          src: settingData.value.h5ImageCompress
-            ? `${rawUrl}&w=${width}&compressStartSize=${settingData.value.h5ImageCompressStartSize}`
-            : rawUrl
+          src: applyH5ImageCompress(rawUrl, { width, settingData: settingData.value })
         })
         idSet.add(item.id)
       }

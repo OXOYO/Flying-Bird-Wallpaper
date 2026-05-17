@@ -27,6 +27,9 @@ const { settingData, localSetting } = storeToRefs(settingStore)
 const settingDataForm = reactive(settingData.value)
 const localSettingForm = reactive(localSetting.value)
 
+/** 设置分类折叠，默认全部收起 */
+const expandedSections = ref([])
+
 const showPickers = reactive({
   h5Locale: false,
   h5SwitchType: false,
@@ -183,6 +186,11 @@ const onSettingDataChange = async (field) => {
         dark: settingDataForm.h5Themes.dark
       }
     }
+  } else if (field === 'h5Locale') {
+    payload = {
+      h5Locale: settingDataForm.h5Locale,
+      isH5LocaleSet: true
+    }
   } else {
     payload[field] = settingDataForm[field]
   }
@@ -241,7 +249,9 @@ onMounted(() => {
     <van-nav-bar :title="t('h5.pages.setting.title')" fixed safe-area-inset-top />
 
     <div class="page-setting-inner">
-      <van-cell-group inset :title="t('h5.pages.setting.form.h5ApplicationSettings')">
+      <van-collapse v-model="expandedSections" class="setting-collapse" :border="false">
+        <van-collapse-item name="application" :title="t('h5.pages.setting.form.h5ApplicationSettings')">
+          <van-cell-group inset :border="false">
         <van-field
           v-model="fieldsData.h5Locale"
           is-link
@@ -288,9 +298,11 @@ onMounted(() => {
             />
           </template>
         </van-cell>
-      </van-cell-group>
+          </van-cell-group>
+        </van-collapse-item>
 
-      <van-cell-group inset :title="t('h5.pages.setting.form.h5ResourcesSettings')">
+        <van-collapse-item name="home" :title="t('h5.pages.setting.form.h5HomeSettings')">
+          <van-cell-group inset :border="false">
         <van-field
           v-model="fieldsData.h5Resource"
           is-link
@@ -380,9 +392,7 @@ onMounted(() => {
             @cancel="(...args) => onCancelPicker('h5SortType', ...args)"
           />
         </van-popup>
-      </van-cell-group>
 
-      <van-cell-group inset :title="t('h5.pages.setting.form.h5ExploreSettings')">
         <van-cell :title="t('h5.pages.setting.form.h5AutoSwitch')">
           <template #right-icon>
             <van-switch
@@ -438,56 +448,7 @@ onMounted(() => {
             </div>
           </template>
         </van-field>
-        <van-field
-          v-model="fieldsData.h5ImageDisplaySize"
-          is-link
-          readonly
-          name="h5ImageDisplaySize"
-          :label="t('h5.pages.setting.form.h5ImageDisplaySize.label')"
-          :placeholder="t('h5.pages.setting.form.h5ImageDisplaySize.placeholder')"
-          @click="onShowPicker('h5ImageDisplaySize')"
-        />
-        <van-popup v-model:show="showPickers.h5ImageDisplaySize" destroy-on-close position="bottom">
-          <van-picker
-            :columns="pickerColumns.h5ImageDisplaySize"
-            :model-value="[settingDataForm.h5ImageDisplaySize]"
-            @confirm="(...args) => onConfirmPicker('h5ImageDisplaySize', ...args)"
-            @cancel="(...args) => onCancelPicker('h5ImageDisplaySize', ...args)"
-          />
-        </van-popup>
 
-        <van-cell :title="t('h5.pages.setting.form.h5ImageCompress')">
-          <template #right-icon>
-            <van-switch
-              v-model="settingDataForm.h5ImageCompress"
-              size="20px"
-              @change="onSettingDataChange('h5ImageCompress')"
-            />
-          </template>
-        </van-cell>
-
-        <van-field
-          name="h5ImageCompressStartSize"
-          :label="t('h5.pages.setting.form.h5ImageCompressStartSize')"
-        >
-          <template #input>
-            <van-slider
-              v-model="settingDataForm.h5ImageCompressStartSize"
-              :disabled="!settingDataForm.h5ImageCompress"
-              min="1"
-              max="10"
-              @update:model-value="onH5ImageCompressStartSizeUpdate"
-              @change="onSettingDataChange('h5ImageCompressStartSize')"
-            >
-              <template #button>
-                <div class="slider-button">{{ settingDataForm.h5ImageCompressStartSize }}MB</div>
-              </template>
-            </van-slider>
-          </template>
-        </van-field>
-      </van-cell-group>
-
-      <van-cell-group inset :title="t('h5.pages.setting.form.h5FunctionSettings')">
         <van-field
           v-model="fieldsData.h5FloatingButtonPosition"
           is-link
@@ -539,58 +500,118 @@ onMounted(() => {
             </template>
           </van-picker>
         </van-popup>
+          </van-cell-group>
+        </van-collapse-item>
 
-        <van-field
-          v-model="fieldsData.h5NumberIndicatorPosition"
-          is-link
-          readonly
-          name="h5NumberIndicatorPosition"
-          :label="t('h5.pages.setting.form.h5NumberIndicatorPosition.label')"
-          :placeholder="t('h5.pages.setting.form.h5NumberIndicatorPosition.placeholder')"
-          @click="onShowPicker('h5NumberIndicatorPosition')"
-        />
-        <van-popup
-          v-model:show="showPickers.h5NumberIndicatorPosition"
-          destroy-on-close
-          position="bottom"
-        >
-          <van-picker
-            :columns="pickerColumns.h5NumberIndicatorPosition"
-            :model-value="[settingDataForm.h5NumberIndicatorPosition]"
-            @confirm="(...args) => onConfirmPicker('h5NumberIndicatorPosition', ...args)"
-            @cancel="(...args) => onCancelPicker('h5NumberIndicatorPosition', ...args)"
-          />
-        </van-popup>
-
-        <van-cell :title="t('h5.pages.setting.form.h5Vibration')">
-          <template #right-icon>
-            <van-switch
-              v-model="settingDataForm.h5Vibration"
-              size="20px"
-              @change="onSettingDataChange('h5Vibration')"
+        <van-collapse-item name="general" :title="t('h5.pages.setting.form.h5GeneralSettings')">
+          <van-cell-group inset :border="false">
+            <van-field
+              v-model="fieldsData.h5ImageDisplaySize"
+              is-link
+              readonly
+              name="h5ImageDisplaySize"
+              :label="t('h5.pages.setting.form.h5ImageDisplaySize.label')"
+              :placeholder="t('h5.pages.setting.form.h5ImageDisplaySize.placeholder')"
+              @click="onShowPicker('h5ImageDisplaySize')"
             />
-          </template>
-        </van-cell>
+            <van-popup
+              v-model:show="showPickers.h5ImageDisplaySize"
+              destroy-on-close
+              position="bottom"
+            >
+              <van-picker
+                :columns="pickerColumns.h5ImageDisplaySize"
+                :model-value="[settingDataForm.h5ImageDisplaySize]"
+                @confirm="(...args) => onConfirmPicker('h5ImageDisplaySize', ...args)"
+                @cancel="(...args) => onCancelPicker('h5ImageDisplaySize', ...args)"
+              />
+            </van-popup>
 
-        <van-cell :title="t('h5.pages.setting.form.h5WeekScreen')">
-          <template #right-icon>
-            <van-switch
-              v-model="settingDataForm.h5WeekScreen"
-              size="20px"
-              @change="onSettingDataChange('h5WeekScreen')"
+            <van-cell :title="t('h5.pages.setting.form.h5ImageCompress')">
+              <template #right-icon>
+                <van-switch
+                  v-model="settingDataForm.h5ImageCompress"
+                  size="20px"
+                  @change="onSettingDataChange('h5ImageCompress')"
+                />
+              </template>
+            </van-cell>
+
+            <van-field
+              name="h5ImageCompressStartSize"
+              :label="t('h5.pages.setting.form.h5ImageCompressStartSize')"
+            >
+              <template #input>
+                <van-slider
+                  v-model="settingDataForm.h5ImageCompressStartSize"
+                  :disabled="!settingDataForm.h5ImageCompress"
+                  min="1"
+                  max="10"
+                  @update:model-value="onH5ImageCompressStartSizeUpdate"
+                  @change="onSettingDataChange('h5ImageCompressStartSize')"
+                >
+                  <template #button>
+                    <div class="slider-button">{{ settingDataForm.h5ImageCompressStartSize }}MB</div>
+                  </template>
+                </van-slider>
+              </template>
+            </van-field>
+
+            <van-field
+              v-model="fieldsData.h5NumberIndicatorPosition"
+              is-link
+              readonly
+              name="h5NumberIndicatorPosition"
+              :label="t('h5.pages.setting.form.h5NumberIndicatorPosition.label')"
+              :placeholder="t('h5.pages.setting.form.h5NumberIndicatorPosition.placeholder')"
+              @click="onShowPicker('h5NumberIndicatorPosition')"
             />
-          </template>
-        </van-cell>
-      </van-cell-group>
+            <van-popup
+              v-model:show="showPickers.h5NumberIndicatorPosition"
+              destroy-on-close
+              position="bottom"
+            >
+              <van-picker
+                :columns="pickerColumns.h5NumberIndicatorPosition"
+                :model-value="[settingDataForm.h5NumberIndicatorPosition]"
+                @confirm="(...args) => onConfirmPicker('h5NumberIndicatorPosition', ...args)"
+                @cancel="(...args) => onCancelPicker('h5NumberIndicatorPosition', ...args)"
+              />
+            </van-popup>
 
-      <van-cell-group inset :title="t('h5.pages.setting.about')">
-        <van-cell :title="t('h5.pages.setting.version')" :value="appInfo.version" />
-        <van-cell
-          :title="t('h5.pages.setting.sponsor')"
-          is-link
-          @click="onOpenLink(appInfo.afdian)"
-        />
-      </van-cell-group>
+            <van-cell :title="t('h5.pages.setting.form.h5Vibration')">
+              <template #right-icon>
+                <van-switch
+                  v-model="settingDataForm.h5Vibration"
+                  size="20px"
+                  @change="onSettingDataChange('h5Vibration')"
+                />
+              </template>
+            </van-cell>
+
+            <van-cell :title="t('h5.pages.setting.form.h5WeekScreen')">
+              <template #right-icon>
+                <van-switch
+                  v-model="settingDataForm.h5WeekScreen"
+                  size="20px"
+                  @change="onSettingDataChange('h5WeekScreen')"
+                />
+              </template>
+            </van-cell>
+          </van-cell-group>
+        </van-collapse-item>
+
+        <van-collapse-item name="about" :title="t('h5.pages.setting.about')">
+          <van-cell-group inset :border="false">
+            <van-cell :title="t('h5.pages.setting.version')" :value="appInfo.version" />
+            <van-cell
+              :title="t('h5.pages.setting.sponsor')"
+              is-link
+              @click="onOpenLink(appInfo.afdian)"
+            />
+          </van-cell-group>
+        </van-collapse-item>
+      </van-collapse>
     </div>
   </div>
 </template>
@@ -603,8 +624,22 @@ onMounted(() => {
   }
 }
 
-.van-cell-group {
-  margin: 12px 0;
+.setting-collapse {
+  margin: 0 0 8px;
+
+  :deep(.van-collapse-item__title) {
+    font-weight: 600;
+    font-size: 15px;
+  }
+
+  :deep(.van-collapse-item__content) {
+    padding: 0;
+    background: transparent;
+  }
+
+  :deep(.van-cell-group--inset) {
+    margin: 0 0 12px;
+  }
 }
 
 .interval-setting {

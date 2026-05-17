@@ -2,6 +2,12 @@
 import { useTranslation } from 'i18next-vue'
 import UseSettingStore from '@renderer/stores/settingStore.js'
 import UseCommonStore from '@renderer/stores/commonStore.js'
+import {
+  API_ERROR_CODE,
+  hasRemoteSecretKey,
+  normalizeRemoteSecretKey,
+  resolveApiUserMessage
+} from '@common/utils.js'
 
 const { t } = useTranslation()
 const settingStore = UseSettingStore()
@@ -37,6 +43,15 @@ const actionLoading = reactive({
 
 const expandedPluginKeys = ref({})
 const settingData = ref({})
+const marketplaceLoadAlert = ref({ visible: false, message: '' })
+
+const formatPluginLoadMessage = (message) => {
+  if (!message) return ''
+  return String(message)
+    .replace(/\s*\|\s*url:\s*https?:\/\/\S+/gi, '')
+    .replace(/\bhttps?:\/\/\S+/gi, '')
+    .trim()
+}
 
 const filteredAvailablePlugins = computed(() => {
   if (!marketplaceSearchQuery.value) {
@@ -86,12 +101,15 @@ const loadAvailablePlugins = async () => {
     const result = await window.FBW.getAvailablePlugins()
     if (result.success) {
       availablePlugins.value = result.data || []
-      if (result.message) {
-        ElMessage.warning(result.message)
-      }
+      const notice = formatPluginLoadMessage(result.message)
+      marketplaceLoadAlert.value = notice
+        ? { visible: true, message: notice }
+        : { visible: false, message: '' }
     } else {
+      marketplaceLoadAlert.value = { visible: false, message: '' }
       ElMessage.error(
-        result.message || t('pages.Setting.pluginMarketplace.feedback.getAvailableFail')
+        formatPluginLoadMessage(result.message) ||
+          t('pages.Setting.pluginMarketplace.feedback.getAvailableFail')
       )
     }
   } catch (error) {
@@ -251,9 +269,77 @@ const updatePlugin = async (sourceName, pluginName) => {
   }
 }
 
+const compareVersions = (version1, version2) => {
+  const v1 = String(version1 || '0')
+    .split('.')
+    .map((n) => Number(n) || 0)
+  const v2 = String(version2 || '0')
+    .split('.')
+    .map((n) => Number(n) || 0)
+  for (let i = 0; i < Math.max(v1.length, v2.length); i++) {
+    const num1 = v1[i] || 0
+    const num2 = v2[i] || 0
+    if (num1 > num2) return 1
+    if (num1 < num2) return -1
+  }
+  return 0
+}
+
+const findInstalledPlugin = (pluginKey) =>
+  installedPlugins.value.find((item) => toPluginKey(item) === pluginKey)
+
+const findAvailablePlugin = (pluginKey) =>
+  availablePlugins.value.find((item) => toPluginKey(item) === pluginKey)
+
+/** 插件源中存在比已安装更高的版本时，才视为可更新 */
+const hasPluginUpdate = (plugin) => {
+  const pluginKey = toPluginKey(plugin)
+  const installed = findInstalledPlugin(pluginKey)
+  if (!installed?.version) return false
+  const available = findAvailablePlugin(pluginKey)
+  if (!available?.version) return false
+  return compareVersions(available.version, installed.version) > 0
+}
+
 const isPluginInstalled = (plugin) => {
   const pluginKey = toPluginKey(plugin)
-  return installedPlugins.value.some((item) => toPluginKey(item) === pluginKey)
+  return Boolean(findInstalledPlugin(pluginKey))
+}
+
+const getUpdateVersionLabel = (plugin) => {
+  const pluginKey = toPluginKey(plugin)
+  const installed = findInstalledPlugin(pluginKey)
+  const available = findAvailablePlugin(pluginKey)
+  if (!installed?.version || !available?.version) return ''
+  return t('pages.Setting.pluginMarketplace.updateVersionLabel', {
+    current: installed.version,
+    latest: available.version
+  })
+}
+
+const confirmUpdatePlugin = async (plugin) => {
+  const pluginKey = toPluginKey(plugin)
+  const installed = findInstalledPlugin(pluginKey) || plugin
+  const available = findAvailablePlugin(pluginKey)
+  if (!available?.version) return
+  try {
+    await ElMessageBox.confirm(
+      t('pages.Setting.pluginMarketplace.confirm.updateMessage', {
+        pluginName: plugin.displayName || plugin.name,
+        currentVersion: installed.version || '?',
+        latestVersion: available.version
+      }),
+      t('pages.Setting.pluginMarketplace.confirm.updateTitle'),
+      {
+        type: 'warning',
+        confirmButtonText: t('pages.Setting.pluginMarketplace.confirm.confirm'),
+        cancelButtonText: t('pages.Setting.pluginMarketplace.confirm.cancel')
+      }
+    )
+  } catch {
+    return
+  }
+  await updatePlugin(plugin.sourceName, plugin.name)
 }
 
 const getPluginAvatarText = (plugin) =>
@@ -266,11 +352,21 @@ const togglePluginDetail = (plugin) => {
   const key = toPluginKey(plugin)
   expandedPluginKeys.value[key] = !expandedPluginKeys.value[key]
 }
-const hasSecretKey = (plugin) => Boolean(remoteResourceSecretKeys.value[toPluginKey(plugin)])
+const hasSecretKey = (plugin) =>
+  hasRemoteSecretKey(toPluginKey(plugin), remoteResourceSecretKeys.value)
+
+const getSecretKeyPlaceholder = (plugin) => {
+  const hintKey = `pages.Setting.pluginMarketplace.secretKey.hint.${plugin.name}`
+  const hint = t(hintKey)
+  return hint !== hintKey ? hint : t('pages.Setting.pluginMarketplace.secretKey.placeholder')
+}
 
 const configureSecretKey = async (plugin) => {
   const key = toPluginKey(plugin)
-  const currentValue = remoteResourceSecretKeys.value[key] || ''
+  const currentValue =
+    remoteResourceSecretKeys.value[key] ||
+    remoteResourceSecretKeys.value[plugin.name] ||
+    ''
   try {
     const { value } = await ElMessageBox.prompt(
       t('pages.Setting.pluginMarketplace.secretKey.prompt', {
@@ -281,12 +377,17 @@ const configureSecretKey = async (plugin) => {
         inputValue: currentValue,
         confirmButtonText: t('pages.Setting.pluginMarketplace.confirm.confirm'),
         cancelButtonText: t('pages.Setting.pluginMarketplace.confirm.cancel'),
-        inputPlaceholder: t('pages.Setting.pluginMarketplace.secretKey.placeholder')
+        inputPlaceholder: getSecretKeyPlaceholder(plugin)
       }
     )
+    const normalized = normalizeRemoteSecretKey(key, value)
     const nextKeys = {
       ...remoteResourceSecretKeys.value,
-      [key]: String(value || '').trim()
+      [key]: normalized
+    }
+    const shortName = key.includes(':') ? key.split(':').pop() : null
+    if (shortName && shortName !== key && Object.prototype.hasOwnProperty.call(nextKeys, shortName)) {
+      delete nextKeys[shortName]
     }
     const res = await window.FBW.updateSettingData({ remoteResourceSecretKeys: nextKeys })
     if (res.success) {
@@ -375,6 +476,84 @@ const addPluginSource = async () => {
   })
 }
 
+const normalizeGithubRepo = (location) => {
+  if (!location) return null
+  const str = String(location).trim().replace(/\.git$/, '')
+  const sshMatch = str.match(/^git@github\.com:([^/]+)\/([^/]+)$/i)
+  if (sshMatch) return `${sshMatch[1]}/${sshMatch[2]}`
+  const httpsMatch = str.match(/^https?:\/\/github\.com\/([^/]+)\/([^/]+)$/i)
+  if (httpsMatch) return `${httpsMatch[1]}/${httpsMatch[2]}`
+  const shortMatch = str.match(/^([^/]+)\/([^/]+)$/)
+  if (shortMatch) return `${shortMatch[1]}/${shortMatch[2]}`
+  return null
+}
+
+const getGithubRepoUrl = (location) => {
+  const repo = normalizeGithubRepo(location)
+  return repo ? `https://github.com/${repo}` : ''
+}
+
+const canOpenPluginSourceLocation = (source) => {
+  if (!source?.location) return false
+  if (source.type === 'github') return Boolean(getGithubRepoUrl(source.location))
+  if (source.type === 'local') return Boolean(String(source.location).trim())
+  return false
+}
+
+const getPluginSourceLocationTitle = (source) => {
+  if (source.type === 'github') {
+    return t('pages.Setting.pluginMarketplace.sources.openGithub')
+  }
+  if (source.type === 'local') {
+    return t('pages.Setting.pluginMarketplace.sources.openLocal')
+  }
+  return ''
+}
+
+const openPluginSourceLocation = async (source) => {
+  if (!canOpenPluginSourceLocation(source)) return
+  try {
+    if (source.type === 'github') {
+      const url = getGithubRepoUrl(source.location)
+      await window.FBW.openUrl(url)
+      return
+    }
+    if (source.type === 'local') {
+      const location = String(source.location).trim()
+      const opener = window.FBW.openPath || window.FBW.openDir
+      if (typeof opener !== 'function') {
+        ElMessage.error(t('pages.Setting.pluginMarketplace.sources.openLocalFail'))
+        return
+      }
+      const result = await opener(location)
+      if (result?.success === false) {
+        if (result.errorCode === API_ERROR_CODE.OPEN_DIR_NOT_FOUND) {
+          ElMessage.error(
+            t('pages.Setting.pluginMarketplace.sources.openLocalNotFound', { path: location })
+          )
+        } else {
+          ElMessage.error(
+            resolveApiUserMessage(result, t) ||
+              t('pages.Setting.pluginMarketplace.sources.openLocalFail')
+          )
+        }
+      }
+    }
+  } catch (error) {
+    console.error(error)
+    const isMissingHandler = /no handler registered/i.test(String(error?.message || error))
+    if (source.type === 'local' && isMissingHandler) {
+      ElMessage.error(t('pages.Setting.pluginMarketplace.sources.openLocalNeedRestart'))
+      return
+    }
+    ElMessage.error(
+      source.type === 'github'
+        ? t('pages.Setting.pluginMarketplace.sources.openGithubFail')
+        : t('pages.Setting.pluginMarketplace.sources.openLocalFail')
+    )
+  }
+}
+
 const toggleSourceEnabled = async (source) => {
   const result = await window.FBW.updatePluginSource(source.name, { enabled: source.enabled })
   if (!result.success) {
@@ -456,9 +635,8 @@ onMounted(() => {
 watch(
   () => activeTab.value,
   (tab) => {
-    if (tab === 'marketplace') {
+    if (tab === 'marketplace' || tab === 'installed') {
       loadAvailablePlugins()
-    } else if (tab === 'installed') {
       loadInstalledPlugins()
     } else if (tab === 'sources') {
       loadPluginSources()
@@ -483,6 +661,16 @@ defineExpose({
           name="marketplace"
         >
           <div class="marketplace-content">
+            <el-alert
+              v-if="marketplaceLoadAlert.visible"
+              class="marketplace-load-alert"
+              type="warning"
+              :title="t('pages.Setting.pluginMarketplace.loadAlert.title')"
+              :description="marketplaceLoadAlert.message"
+              show-icon
+              closable
+              @close="marketplaceLoadAlert.visible = false"
+            />
             <div class="search-box">
               <el-input
                 v-model="marketplaceSearchQuery"
@@ -495,11 +683,7 @@ defineExpose({
                 </template>
               </el-input>
               <div class="toolbar-actions">
-                <el-button
-                  type="primary"
-                  :loading="loading.available"
-                  @click="loadAvailablePlugins"
-                >
+                <el-button :loading="loading.available" @click="loadAvailablePlugins">
                   <IconifyIcon icon="custom:refresh" />
                   {{ t('pages.Setting.pluginMarketplace.refresh') }}
                 </el-button>
@@ -529,7 +713,15 @@ defineExpose({
                         <div class="plugin-meta-line">
                           <div class="plugin-meta-main">
                             <el-tag size="small">{{ plugin.sourceName }}</el-tag>
-                            <span class="plugin-version">v{{ plugin.version }}</span>
+                            <el-tag
+                              v-if="hasPluginUpdate(plugin)"
+                              type="warning"
+                              size="small"
+                              class="plugin-version-update"
+                            >
+                              {{ getUpdateVersionLabel(plugin) }}
+                            </el-tag>
+                            <span v-else class="plugin-version">v{{ plugin.version }}</span>
                             <el-button
                               v-if="plugin.site"
                               link
@@ -560,6 +752,15 @@ defineExpose({
                             >
                               <IconifyIcon icon="custom:download" />
                               {{ t('pages.Setting.pluginMarketplace.install') }}
+                            </el-button>
+                            <el-button
+                              v-else-if="hasPluginUpdate(plugin)"
+                              type="success"
+                              :loading="isUpdating(plugin)"
+                              @click="confirmUpdatePlugin(plugin)"
+                            >
+                              <IconifyIcon icon="custom:refresh" />
+                              {{ t('pages.Setting.pluginMarketplace.update') }}
                             </el-button>
                           </div>
                         </div>
@@ -624,9 +825,8 @@ defineExpose({
               </el-input>
               <div class="toolbar-actions">
                 <el-button
-                  type="primary"
-                  :loading="loading.installed"
-                  @click="loadInstalledPlugins"
+                  :loading="loading.installed || loading.available"
+                  @click="loadAvailablePlugins(); loadInstalledPlugins()"
                 >
                   <IconifyIcon icon="custom:refresh" />
                   {{ t('pages.Setting.pluginMarketplace.refresh') }}
@@ -657,7 +857,15 @@ defineExpose({
                         <div class="plugin-meta-line">
                           <div class="plugin-meta-main">
                             <el-tag size="small">{{ plugin.sourceName }}</el-tag>
-                            <span class="plugin-version">v{{ plugin.version }}</span>
+                            <el-tag
+                              v-if="hasPluginUpdate(plugin)"
+                              type="warning"
+                              size="small"
+                              class="plugin-version-update"
+                            >
+                              {{ getUpdateVersionLabel(plugin) }}
+                            </el-tag>
+                            <span v-else class="plugin-version">v{{ plugin.version }}</span>
                             <el-button
                               v-if="plugin.site"
                               link
@@ -689,15 +897,17 @@ defineExpose({
                               {{ t('pages.Setting.pluginMarketplace.secretKey.config') }}
                             </el-button>
                             <el-button
-                              type="primary"
+                              v-if="hasPluginUpdate(plugin)"
+                              type="success"
                               :loading="isUpdating(plugin)"
-                              @click="updatePlugin(plugin.sourceName, plugin.name)"
+                              @click="confirmUpdatePlugin(plugin)"
                             >
                               <IconifyIcon icon="custom:refresh" />
                               {{ t('pages.Setting.pluginMarketplace.update') }}
                             </el-button>
                             <el-button
                               type="danger"
+                              plain
                               :loading="isUninstalling(plugin)"
                               @click="uninstallPlugin(plugin.sourceName, plugin.name)"
                             >
@@ -779,7 +989,7 @@ defineExpose({
                 <el-button type="primary" @click="openAddSourceDialog">
                   {{ t('pages.Setting.pluginMarketplace.sources.addSource') }}
                 </el-button>
-                <el-button type="primary" :loading="loading.sources" @click="loadPluginSources">
+                <el-button :loading="loading.sources" @click="loadPluginSources">
                   <IconifyIcon icon="custom:refresh" />
                   {{ t('pages.Setting.pluginMarketplace.sources.refreshSources') }}
                 </el-button>
@@ -800,14 +1010,27 @@ defineExpose({
                         {{ t('pages.Setting.pluginMarketplace.sources.official') }}
                       </el-tag>
                     </div>
-                    <p class="plugin-description source-location">{{ source.location }}</p>
+                    <button
+                      v-if="canOpenPluginSourceLocation(source)"
+                      type="button"
+                      class="source-location-btn"
+                      :title="getPluginSourceLocationTitle(source)"
+                      @click="openPluginSourceLocation(source)"
+                    >
+                      <IconifyIcon
+                        class="source-location-icon"
+                        :icon="source.type === 'github' ? 'custom:link' : 'custom:folder-opened'"
+                      />
+                      <span class="source-location-text">{{ source.location }}</span>
+                    </button>
+                    <p v-else class="plugin-description source-location">{{ source.location }}</p>
                   </div>
                   <div v-if="!source.isOfficial" class="plugin-actions">
                     <el-switch v-model="source.enabled" @change="toggleSourceEnabled(source)" />
-                    <el-button type="primary" @click="renamePluginSource(source)">
+                    <el-button @click="renamePluginSource(source)">
                       {{ t('pages.Setting.pluginMarketplace.sources.renameSource') }}
                     </el-button>
-                    <el-button type="danger" @click="removePluginSource(source.name)">
+                    <el-button type="danger" plain @click="removePluginSource(source.name)">
                       {{ t('pages.Setting.pluginMarketplace.sources.deleteSource') }}
                     </el-button>
                   </div>
@@ -917,6 +1140,15 @@ defineExpose({
   display: flex;
   flex-direction: column;
   min-height: 0;
+}
+
+.marketplace-load-alert {
+  flex-shrink: 0;
+  margin-bottom: 16px;
+}
+
+.plugin-version-update {
+  font-variant-numeric: tabular-nums;
 }
 
 .search-box {
@@ -1114,6 +1346,56 @@ defineExpose({
 .source-location {
   margin-bottom: 6px;
   word-break: break-all;
+}
+
+.source-location-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  margin: 0 0 6px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--el-color-primary);
+  font: inherit;
+  font-size: 14px;
+  line-height: 22px;
+  text-align: left;
+  cursor: pointer;
+  white-space: normal;
+  word-break: break-all;
+
+  &:hover {
+    color: var(--el-color-primary-light-3);
+
+    .source-location-text {
+      text-decoration: underline;
+    }
+  }
+}
+
+.source-location-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 22px;
+  font-size: 16px;
+  line-height: 0;
+
+  :deep(svg) {
+    display: block;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.source-location-text {
+  flex: 1;
+  min-width: 0;
+  line-height: 22px;
 }
 
 .source-item .plugin-actions {

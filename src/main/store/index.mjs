@@ -17,6 +17,7 @@ import ShortcutManager from './ShortcutManager.mjs'
 import NotificationManager from './NotificationManager.mjs'
 import PluginManager from './PluginManager.mjs'
 import { handleTimeByUnit } from '../utils/utils.mjs'
+import { migrateRemoteResourceSecretKeys } from '../../common/utils.js'
 
 export default class Store {
   constructor() {
@@ -93,6 +94,7 @@ export default class Store {
       this.apiManager = ApiManager.getInstance(global.logger, this.dbManager)
       // 等待API管理器初始化完成
       await this.apiManager.waitForInitialization()
+      await this.migrateLegacyPluginSecretKeys()
 
       // 文件服务子进程
       this.fileServer = createFileServer()
@@ -177,6 +179,25 @@ export default class Store {
 
   get settingData() {
     return this.settingManager.settingData
+  }
+
+  /** 旧版插件资源名为 unsplash，新版为 official:unsplash，迁移已保存的密钥键名 */
+  async migrateLegacyPluginSecretKeys() {
+    const secretKeys = this.settingData?.remoteResourceSecretKeys
+    if (!secretKeys || typeof secretKeys !== 'object') return
+
+    const resourceNames = Object.keys(this.apiManager?.apiMap || {})
+    const migrated = migrateRemoteResourceSecretKeys(secretKeys, resourceNames)
+    if (migrated === secretKeys) return
+
+    global.logger.info('已迁移旧版插件资源密钥键名（如 unsplash → official:unsplash）')
+    await this.updateSettingData({ remoteResourceSecretKeys: migrated })
+  }
+
+  /** 主进程与 H5 子进程重新加载已安装 API 插件（安装/更新/卸载后调用） */
+  async refreshApiPlugins() {
+    await this.apiManager.loadApi()
+    this.h5Server?.postMessage({ event: 'API_PLUGINS_RELOAD' })
   }
 
   // 获取设备当前语言
@@ -817,7 +838,7 @@ export default class Store {
         const ret = await this.pluginManager.installPlugin(sourceName, pluginName, version)
         if (ret.success) {
           try {
-            await this.apiManager.loadApi()
+            await this.refreshApiPlugins()
           } catch (err) {
             this.logger.error(`安装插件后刷新资源插件映射失败: ${err}`)
             return {
@@ -836,7 +857,7 @@ export default class Store {
       const ret = await this.pluginManager.uninstallPlugin(sourceName, pluginName)
       if (ret.success) {
         try {
-          await this.apiManager.loadApi()
+          await this.refreshApiPlugins()
         } catch (err) {
           this.logger.error(`卸载插件后刷新资源插件映射失败: ${err}`)
           return {
@@ -854,7 +875,7 @@ export default class Store {
       const ret = await this.pluginManager.updatePlugin(sourceName, pluginName)
       if (ret.success) {
         try {
-          await this.apiManager.loadApi()
+          await this.refreshApiPlugins()
         } catch (err) {
           this.logger.error(`更新插件后刷新资源插件映射失败: ${err}`)
           return {
