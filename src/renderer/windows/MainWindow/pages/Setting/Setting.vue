@@ -25,7 +25,7 @@ const onTabChange = (tab) => {
       shortcutSettingRef.value?.resetForm()
       break
     case 'pluginMarketplace':
-      pluginMarketplaceRef.value?.resetForm()
+      pluginMarketplaceRef.value?.refresh?.()
       break
   }
 }
@@ -33,7 +33,7 @@ const onTabChange = (tab) => {
 
 <template>
   <el-main class="page-setting">
-    <el-tabs v-model="activeTab" @tab-click="onTabChange">
+    <el-tabs v-model="activeTab" class="setting-tabs" @tab-click="onTabChange">
       <el-tab-pane :label="t('pages.Setting.tabs.baseSetting')" name="baseSetting"></el-tab-pane>
       <el-tab-pane :label="t('pages.Setting.tabs.privacySpace')" name="privacySpace"></el-tab-pane>
       <el-tab-pane
@@ -68,5 +68,21 @@ const onTabChange = (tab) => {
 .page-setting {
   padding: 0 20px;
   margin-bottom: 20px;
+
+  .setting-tabs {
+    :deep(.el-tabs__nav-wrap) {
+      overflow: visible;
+    }
+
+    :deep(.el-tabs__nav-scroll) {
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+
+    :deep(.el-tabs__item) {
+      white-space: nowrap;
+      max-width: none;
+    }
+  }
 }
 </style>

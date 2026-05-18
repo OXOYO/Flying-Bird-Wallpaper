@@ -32,7 +32,8 @@
       "tabs": {
         "baseSetting": "Configuración básica",
         "privacySpace": "Espacio privado",
-        "shortcutSetting": "Atajos de teclado"
+        "shortcutSetting": "Atajos de teclado",
+        "pluginMarketplace": "Mercado de plugins"
       },
       "divider": {
         "base": "Configuración básica",

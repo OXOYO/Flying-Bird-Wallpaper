@@ -258,7 +258,8 @@
           "updateMessage": "Update {pluginName} from v{currentVersion} to v{latestVersion}? This will overwrite the installed plugin files."
         },
         "loadAlert": {
-          "title": "Plugin source notice"
+          "title": "Plugin source notice",
+          "fallbackBody": "Some plugin sources could not be loaded. Check your network or source settings and try again."
         },
         "loadErrors": {
           "errorsSeparator": "; ",

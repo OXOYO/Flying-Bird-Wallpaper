@@ -186,6 +186,12 @@ const api = {
   closeViewImageWindow: (...args) => ipcRenderer.invoke('main:closeViewImageWindow', ...args),
   openSuspensionBall: (...args) => ipcRenderer.invoke('main:openSuspensionBall', ...args),
   closeSuspensionBall: (...args) => ipcRenderer.invoke('main:closeSuspensionBall', ...args),
+  setSuspensionBallMode: (mode) => ipcRenderer.invoke('main:setSuspensionBallMode', mode),
+  peekSuspensionBallExpandDirection: () =>
+    ipcRenderer.invoke('main:peekSuspensionBallExpandDirection'),
+  suspensionBallDragPrepare: () => ipcRenderer.invoke('main:suspensionBallDragPrepare'),
+  suspensionBallDragActivate: () => ipcRenderer.invoke('main:suspensionBallDragActivate'),
+  suspensionBallDragEnd: () => ipcRenderer.invoke('main:suspensionBallDragEnd'),
 
   // 壁纸操作
   search: (...args) => ipcRenderer.invoke('main:search', ...args),

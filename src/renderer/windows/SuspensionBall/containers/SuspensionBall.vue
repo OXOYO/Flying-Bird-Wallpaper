@@ -1,50 +1,152 @@
 <script setup>
+import { useTranslation } from 'i18next-vue'
 import UseSettingStore from '@renderer/stores/settingStore.js'
 import iconLogo from '@resources/icons/icon_64x64.png'
 
+const { t } = useTranslation()
 const settingStore = UseSettingStore()
 const { settingData } = storeToRefs(settingStore)
 
-// 添加拖拽相关的状态
-const startPos = ref(null)
+const isExpanded = ref(false)
+/** true：LOGO 在左、工具栏向右展开（悬浮球在屏幕左侧时） */
+const expandToRight = ref(false)
 const isDragging = ref(false)
+const suppressHover = ref(false)
+const pointerStart = ref(null)
 const moveThreshold = 5
-const windowStartPos = ref(null) // 添加窗口初始位置
+let collapseTimer = null
+let dragListening = false
+let dragActivated = false
+const logoHitRef = ref(null)
+const hoveredTip = ref('')
 
-const onMouseDown = async (e) => {
-  startPos.value = { x: e.screenX, y: e.screenY }
-  windowStartPos.value = await window.FBW.getWindowPosition('suspensionBall')
-  isDragging.value = false
-  window.addEventListener('mousemove', onMouseMove, { passive: true })
-  window.addEventListener('mouseup', onMouseUp)
-}
+const autoSwitchLabel = computed(() =>
+  settingData.value.autoSwitchWallpaper
+    ? t('actions.autoSwitchWallpaper.stop')
+    : t('actions.autoSwitchWallpaper.start')
+)
 
-const onMouseMove = (e) => {
-  if (!startPos.value || !windowStartPos.value) return
-
-  const deltaX = e.screenX - startPos.value.x
-  const deltaY = e.screenY - startPos.value.y
-  const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
-
-  if (distance > moveThreshold || isDragging.value) {
-    isDragging.value = true
-    // 使用窗口初始位置加上总位移
-    const newX = windowStartPos.value.x + deltaX
-    const newY = windowStartPos.value.y + deltaY
-    window.FBW.setWindowPosition('suspensionBall', { x: newX, y: newY })
+const setBallMode = async (mode) => {
+  if (typeof window.FBW?.setSuspensionBallMode !== 'function') return
+  const res = await window.FBW.setSuspensionBallMode(mode)
+  if (res?.expandDirection) {
+    expandToRight.value = res.expandDirection === 'right'
   }
 }
 
-const onMouseUp = () => {
-  if (!isDragging.value) {
-    // 如果没有拖拽，则认为是点击事件
+const canHoverExpand = () => !suppressHover.value && !isDragging.value
+
+const syncExpandDirection = async () => {
+  const res = await window.FBW.peekSuspensionBallExpandDirection()
+  if (res?.success && res.expandDirection) {
+    expandToRight.value = res.expandDirection === 'right'
+  }
+}
+
+const onMouseEnter = async () => {
+  if (!canHoverExpand()) return
+  if (collapseTimer) {
+    clearTimeout(collapseTimer)
+    collapseTimer = null
+  }
+  await syncExpandDirection()
+  isExpanded.value = true
+  await nextTick()
+  await setBallMode('expanded')
+  if (!canHoverExpand()) {
+    isExpanded.value = false
+    await setBallMode('collapsed')
+    return
+  }
+}
+
+const onMouseLeave = () => {
+  if (!canHoverExpand()) return
+  if (collapseTimer) clearTimeout(collapseTimer)
+  collapseTimer = setTimeout(async () => {
+    collapseTimer = null
+    if (!canHoverExpand()) return
+    hoveredTip.value = ''
+    isExpanded.value = false
+    await nextTick()
+    await setBallMode('collapsed')
+  }, 280)
+}
+
+const detachDragListeners = () => {
+  if (!dragListening) return
+  document.removeEventListener('pointermove', onDocumentPointerMove)
+  document.removeEventListener('pointerup', onDocumentPointerUp)
+  document.removeEventListener('pointercancel', onDocumentPointerUp)
+  dragListening = false
+}
+
+const onDocumentPointerMove = async (e) => {
+  if (!dragListening || !pointerStart.value || dragActivated) return
+
+  const distance = Math.hypot(e.screenX - pointerStart.value.x, e.screenY - pointerStart.value.y)
+  if (distance <= moveThreshold) return
+
+  dragActivated = true
+  isDragging.value = true
+  await window.FBW.suspensionBallDragActivate()
+}
+
+const onDocumentPointerUp = async (e) => {
+  if (!dragListening) return
+
+  try {
+    logoHitRef.value?.releasePointerCapture?.(e.pointerId)
+  } catch (_) {
+    /* noop */
+  }
+
+  detachDragListeners()
+
+  const wasDrag = isDragging.value
+  await window.FBW.suspensionBallDragEnd()
+
+  if (!wasDrag) {
     window.FBW.toggleMainWindow()
   }
 
-  startPos.value = null
+  pointerStart.value = null
   isDragging.value = false
-  window.removeEventListener('mousemove', onMouseMove)
-  window.removeEventListener('mouseup', onMouseUp)
+  dragActivated = false
+  setTimeout(() => {
+    suppressHover.value = false
+  }, 320)
+}
+
+const onPointerDown = async (e) => {
+  if (e.button !== 0) return
+
+  suppressHover.value = true
+  detachDragListeners()
+
+  if (collapseTimer) {
+    clearTimeout(collapseTimer)
+    collapseTimer = null
+  }
+  hoveredTip.value = ''
+  isExpanded.value = false
+  isDragging.value = false
+  dragActivated = false
+  pointerStart.value = { x: e.screenX, y: e.screenY }
+
+  try {
+    logoHitRef.value?.setPointerCapture?.(e.pointerId)
+  } catch (_) {
+    /* noop */
+  }
+
+  await setBallMode('collapsed')
+  await window.FBW.suspensionBallDragPrepare()
+
+  dragListening = true
+  document.addEventListener('pointermove', onDocumentPointerMove)
+  document.addEventListener('pointerup', onDocumentPointerUp)
+  document.addEventListener('pointercancel', onDocumentPointerUp)
 }
 
 const onToolClick = async (funcName) => {
@@ -58,12 +160,11 @@ const onSettingDataUpdateCallback = (event, data) => {
 }
 
 onBeforeMount(() => {
-  // 监听设置数据更新事件
   window.FBW.onSettingDataUpdate(onSettingDataUpdateCallback)
 })
 
 onMounted(async () => {
-  // 查询设置数据
+  await setBallMode('collapsed')
   const res = await window.FBW.getSettingData()
   if (res.success && res.data) {
     settingStore.updateSettingData(res.data)
@@ -71,69 +172,81 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
-  // 取消监听设置数据更新事件
+  if (collapseTimer) clearTimeout(collapseTimer)
+  detachDragListeners()
+  void window.FBW.suspensionBallDragEnd()
   window.FBW.offSettingDataUpdate(onSettingDataUpdateCallback)
 })
 </script>
 
 <template>
-  <div class="window-container">
+  <div
+    class="window-container"
+    :class="{
+      'window-container--expanded': isExpanded,
+      'window-container--expand-right': expandToRight && isExpanded,
+      'window-container--expand-left': !expandToRight && isExpanded
+    }"
+    @mouseenter="onMouseEnter"
+    @mouseleave="onMouseLeave"
+  >
     <div class="window-inner">
-      <el-avatar
-        class="logo-btn"
-        :size="30"
-        :src="iconLogo"
-        shape="circle"
-        draggable="false"
-        @mousedown.prevent="onMouseDown"
-      />
-      <div class="btn-wrapper">
-        <el-button
-          class="tool-btn"
-          :title="
-            settingData.autoSwitchWallpaper
-              ? $t('actions.autoSwitchWallpaper.stop')
-              : $t('actions.autoSwitchWallpaper.start')
-          "
-          link
-          @click="onToolClick('toggleAutoSwitchWallpaper')"
-        >
-          <IconifyIcon
-            :class="[
-              'tool-btn-icon',
-              settingData.autoSwitchWallpaper ? 'switch-btn-pause' : 'switch-btn-play'
-            ]"
-            :icon="
-              settingData.autoSwitchWallpaper
-                ? 'custom:pause-circle-outline-rounded'
-                : 'custom:play-circle-outline-rounded'
-            "
-          />
-        </el-button>
-        <el-button
-          class="tool-btn"
-          :title="$t('actions.nextWallpaper')"
-          link
-          @click="onToolClick('nextWallpaper')"
-        >
-          <IconifyIcon class="tool-btn-icon" icon="custom:skip-next-outline-rounded" />
-        </el-button>
-        <el-button
-          class="tool-btn"
-          :title="$t('actions.prevWallpaper')"
-          link
-          @click="onToolClick('prevWallpaper')"
-        >
-          <IconifyIcon class="tool-btn-icon" icon="custom:skip-previous-outline-rounded" />
-        </el-button>
-        <el-button
-          class="tool-btn tool-btn-close"
-          :title="$t('actions.closeSuspensionBall')"
-          link
-          @click="onToolClick('closeSuspensionBall')"
-        >
-          <IconifyIcon class="tool-btn-icon" icon="custom:close-circle" />
-        </el-button>
+      <div v-show="isExpanded" class="ball-tip-row">
+        <span class="ball-tip">{{ hoveredTip }}</span>
+      </div>
+      <div class="ball-main-row">
+        <div v-show="!isExpanded" class="drag-surface" aria-hidden="true" />
+        <div ref="logoHitRef" class="logo-hit" @pointerdown.prevent="onPointerDown">
+        <el-avatar class="logo-btn" :size="30" :src="iconLogo" shape="circle" draggable="false" />
+      </div>
+      <div v-show="isExpanded" class="toolbar">
+          <div
+            class="tool-item"
+            @mouseenter="hoveredTip = autoSwitchLabel"
+            @mouseleave="hoveredTip = ''"
+          >
+            <el-button class="tool-btn" link @click.stop="onToolClick('toggleAutoSwitchWallpaper')">
+            <IconifyIcon
+              :class="[
+                'tool-btn-icon',
+                settingData.autoSwitchWallpaper ? 'switch-btn-pause' : 'switch-btn-play'
+              ]"
+              :icon="
+                settingData.autoSwitchWallpaper
+                  ? 'custom:pause-circle-outline-rounded'
+                  : 'custom:play-circle-outline-rounded'
+              "
+            />
+          </el-button>
+          </div>
+          <div
+            class="tool-item"
+            @mouseenter="hoveredTip = $t('actions.prevWallpaper')"
+            @mouseleave="hoveredTip = ''"
+          >
+            <el-button class="tool-btn" link @click.stop="onToolClick('prevWallpaper')">
+              <IconifyIcon class="tool-btn-icon" icon="custom:skip-previous-outline-rounded" />
+            </el-button>
+          </div>
+          <div
+            class="tool-item"
+            @mouseenter="hoveredTip = $t('actions.nextWallpaper')"
+            @mouseleave="hoveredTip = ''"
+          >
+            <el-button class="tool-btn" link @click.stop="onToolClick('nextWallpaper')">
+              <IconifyIcon class="tool-btn-icon" icon="custom:skip-next-outline-rounded" />
+            </el-button>
+          </div>
+          <div
+            class="tool-item tool-item--close"
+            @mouseenter="hoveredTip = $t('actions.closeSuspensionBall')"
+            @mouseleave="hoveredTip = ''"
+          >
+            <el-button class="tool-btn tool-btn-close" link @click.stop="onToolClick('closeSuspensionBall')">
+              <IconifyIcon class="tool-btn-icon" icon="custom:close-circle" />
+            </el-button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -143,79 +256,165 @@ onBeforeUnmount(() => {
 .window-container {
   width: 100%;
   height: 100%;
-  padding: 4px;
+  box-sizing: border-box;
+  padding: 0;
   background-color: transparent;
-
-  &:hover {
-    .window-inner {
-      background-color: rgba(50, 57, 65, 0.8);
-      box-shadow: 0 0 6px rgba(0, 0, 0, 0.12);
-    }
-
-    .btn-wrapper {
-      visibility: visible;
-    }
-  }
+  overflow: hidden;
 
   .window-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    border-radius: 16px;
+    overflow: hidden;
+    -webkit-app-region: no-drag;
+    transition: background-color 0.2s ease;
+  }
+
+  .ball-tip-row {
+    position: absolute;
+    top: 3px;
+    left: 0;
+    right: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 10px;
+    box-sizing: border-box;
+    pointer-events: none;
+  }
+
+  .ball-tip {
+    width: 100%;
+    text-align: center;
+    font-size: 10px;
+    line-height: 1.2;
+    color: rgba(245, 245, 245, 0.92);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .ball-main-row {
     width: 100%;
     height: 100%;
     display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+    flex-direction: row;
     align-items: center;
-    position: relative;
-    border-radius: 4px;
-    padding: 15px 10px 10px;
-    transition: all 0.3s ease-in-out;
+    justify-content: flex-end;
+    gap: 14px;
+    padding: 0 12px 0 10px;
+    box-sizing: border-box;
   }
+
+  .drag-surface {
+    flex: 1;
+    min-width: 6px;
+    align-self: stretch;
+    -webkit-app-region: drag;
+  }
+
+  &--expanded .window-inner {
+    background-color: rgba(50, 57, 65, 0.9);
+  }
+
+  /* 屏幕左侧：LOGO 在左，工具栏向右展开 */
+  &--expand-right.window-container--expanded .ball-main-row {
+    flex-direction: row;
+    justify-content: flex-start;
+  }
+
+  /* 屏幕右侧：工具栏在左，LOGO 在右，整体向左展开 */
+  &--expand-left.window-container--expanded .ball-main-row {
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+  }
+
+  .toolbar {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex: 0 0 auto;
+    gap: 6px;
+    -webkit-app-region: no-drag;
+  }
+
+  /* 向左展开时反转工具栏顺序，关闭钮在最外侧（靠左） */
+  &--expand-left .toolbar {
+    flex-direction: row-reverse;
+  }
+
+  .tool-item {
+    display: inline-flex;
+    flex-shrink: 0;
+  }
+
+  &--expand-right .tool-item--close {
+    margin-left: 2px;
+  }
+
+  &--expand-left .tool-item--close {
+    margin-right: 2px;
+  }
+
+  .logo-hit {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: none;
+  }
+
   .logo-btn {
+    flex-shrink: 0;
     -webkit-app-region: no-drag;
     background-color: transparent;
     cursor: pointer;
     user-select: none;
-    -webkit-user-drag: none;
 
     :deep(img) {
       pointer-events: none;
       user-select: none;
-      -webkit-user-drag: none;
-      draggable: false;
     }
-  }
-
-  .btn-wrapper {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    align-items: center;
-    visibility: hidden;
   }
 
   .tool-btn {
     margin: 0;
+    padding: 5px;
+    border-radius: 8px;
+    transition: background-color 0.15s ease;
+
     &:hover {
-      opacity: 0.8;
+      background-color: rgba(255, 255, 255, 0.16);
     }
 
-    &:active {
-      opacity: 0.6;
-      .tool-btn-icon {
-        color: #67c23a;
-      }
+    &:hover:not(.tool-btn-close) .tool-btn-icon {
+      color: #ffffff;
     }
 
-    &.tool-btn-close {
-      margin-top: 10px;
-      .tool-btn-icon {
-        color: red;
-      }
+    &:active:not(.tool-btn-close) .tool-btn-icon {
+      color: #67c23a;
+    }
+
+    &.tool-btn-close:hover {
+      background-color: rgba(245, 108, 108, 0.28);
+    }
+
+    &.tool-btn-close:hover .tool-btn-icon {
+      color: #ff9e9e;
+    }
+
+    &.tool-btn-close:active .tool-btn-icon {
+      color: #f56c6c;
     }
 
     .tool-btn-icon {
-      font-size: 28px;
-      color: #dddddd;
+      font-size: 22px;
+      color: #e0e0e0;
+      display: block;
+      transition: color 0.15s ease;
 
       &.switch-btn-pause {
         color: #67c23a;
@@ -224,6 +423,10 @@ onBeforeUnmount(() => {
       &.switch-btn-play {
         color: #e6a23c;
       }
+    }
+
+    &.tool-btn-close .tool-btn-icon {
+      color: #f0a0a0;
     }
   }
 }

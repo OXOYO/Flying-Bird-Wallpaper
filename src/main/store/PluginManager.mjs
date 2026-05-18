@@ -63,27 +63,43 @@ export default class PluginManager {
     return errors.join(t(this.loadErrorsKey('errorsSeparator')))
   }
 
-  /** 将插件源加载错误转为用户可读文案（不含 URL） */
-  toUserFacingLoadError(sourceName, error) {
+  /** 解析插件源加载错误类型（供渲染进程按当前语言展示） */
+  parseSourceLoadErrorItem(sourceName, error) {
     const raw = String(error?.message || error || '')
       .replace(/\s*\|\s*url:\s*https?:\/\/\S+/gi, '')
       .replace(/\bhttps?:\/\/\S+/gi, '')
       .trim()
-    let hint = raw
+    let hintKey = 'generic'
     if (/ECONNRESET|ETIMEDOUT|ENOTFOUND|ECONNREFUSED|ENETUNREACH|EAI_AGAIN|socket hang up/i.test(raw)) {
-      hint = t(this.loadErrorsKey('network'))
+      hintKey = 'network'
     } else if (/HTTP\s*5\d{2}/i.test(raw)) {
-      hint = t(this.loadErrorsKey('server5xx'))
+      hintKey = 'server5xx'
     } else if (/HTTP\s*404/i.test(raw)) {
-      hint = t(this.loadErrorsKey('notFound'))
+      hintKey = 'notFound'
     } else if (/ENOENT|no such file|ENOTDIR/i.test(raw)) {
-      hint = t(this.loadErrorsKey('localPath'))
+      hintKey = 'localPath'
     } else if (/JSON|Unexpected token|plugins\.json/i.test(raw)) {
-      hint = t(this.loadErrorsKey('jsonInvalid'))
-    } else if (raw.length > 60) {
-      hint = t(this.loadErrorsKey('generic'))
+      hintKey = 'jsonInvalid'
     }
-    return t(this.loadErrorsKey('sourceItem'), { sourceName, hint })
+    return { sourceName, hintKey }
+  }
+
+  buildLoadNotice(kind, errors = [], extra = {}) {
+    if (kind === 'partialFailed' || kind === 'partialFailedWithCache' || kind === 'allFailed') {
+      if (!errors.length) return null
+      return { kind, errors }
+    }
+    if (kind === 'exceptionWithCache' || kind === 'getAvailableFail') {
+      return { kind, errorMessage: extra.errorMessage || '' }
+    }
+    return null
+  }
+
+  /** 将插件源加载错误转为用户可读文案（不含 URL） */
+  toUserFacingLoadError(sourceName, error) {
+    const { sourceName: name, hintKey } = this.parseSourceLoadErrorItem(sourceName, error)
+    const hint = t(this.loadErrorsKey(hintKey))
+    return t(this.loadErrorsKey('sourceItem'), { sourceName: name, hint })
   }
 
   compareVersions(version1, version2) {
@@ -471,7 +487,7 @@ export default class PluginManager {
         return { success: false, data: [], message: t(this.opKey('noSourceEnabled')) }
       }
       const plugins = []
-      const sourceErrors = []
+      const sourceErrorItems = []
       for (const source of sources) {
         try {
           const pluginsData = await this.readPluginsList(source)
@@ -519,18 +535,17 @@ export default class PluginManager {
         } catch (error) {
           const reason = error?.message || String(error)
           this.logger.error(`读取插件源 ${source.name} 失败: ${reason}`)
-          sourceErrors.push(this.toUserFacingLoadError(source.name, error))
+          sourceErrorItems.push(this.parseSourceLoadErrorItem(source.name, error))
         }
       }
       if (plugins.length > 0) {
         this.cachePluginsList(plugins)
-        const message =
-          sourceErrors.length > 0
-            ? t(this.loadErrorsKey('partialFailed'), {
-                errors: this.joinSourceLoadErrors(sourceErrors)
-              })
-            : ''
-        return { success: true, data: plugins, message }
+        return {
+          success: true,
+          data: plugins,
+          message: '',
+          loadNotice: this.buildLoadNotice('partialFailed', sourceErrorItems)
+        }
       }
 
       const cached = this.getCachedPluginsList()
@@ -538,19 +553,20 @@ export default class PluginManager {
         return {
           success: true,
           data: cached,
-          message: t(this.loadErrorsKey('partialFailedWithCache'), {
-            errors: this.joinSourceLoadErrors(sourceErrors)
-          })
+          message: '',
+          fromCache: true,
+          loadNotice: this.buildLoadNotice('partialFailedWithCache', sourceErrorItems)
         }
       }
 
       return {
         success: false,
         data: [],
-        message:
-          sourceErrors.length > 0
-            ? t(this.loadErrorsKey('allFailed'), { errors: this.joinSourceLoadErrors(sourceErrors) })
-            : t(this.loadErrorsKey('noPlugins'))
+        message: sourceErrorItems.length > 0 ? '' : t(this.loadErrorsKey('noPlugins')),
+        loadNotice:
+          sourceErrorItems.length > 0
+            ? this.buildLoadNotice('allFailed', sourceErrorItems)
+            : null
       }
     } catch (error) {
       this.logger.error('获取可用插件列表失败:', error)
@@ -559,13 +575,17 @@ export default class PluginManager {
         return {
           success: true,
           data: cached,
-          message: t(this.loadErrorsKey('exceptionWithCache'), { error: error.message })
+          message: '',
+          loadNotice: this.buildLoadNotice('exceptionWithCache', [], {
+            errorMessage: error.message
+          })
         }
       }
       return {
         success: false,
         data: [],
-        message: t(this.loadErrorsKey('getAvailableFail'), { error: error.message })
+        message: '',
+        loadNotice: this.buildLoadNotice('getAvailableFail', [], { errorMessage: error.message })
       }
     }
   }

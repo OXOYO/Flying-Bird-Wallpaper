@@ -344,13 +344,17 @@ onBeforeUnmount(() => {
   settingDataFormRef.value.resetFields()
 })
 
+const syncFormFromSettingData = () => {
+  const data = settingData.value
+  if (!data) return
+  Object.keys(data).forEach((key) => {
+    settingDataForm[key] = data[key]
+  })
+  initMinTimes()
+}
+
 defineExpose({
-  resetForm: () => {
-    const formEl = settingDataFormRef.value
-    if (formEl) {
-      formEl.resetFields()
-    }
-  }
+  resetForm: syncFormFromSettingData
 })
 </script>
 
@@ -448,10 +452,7 @@ defineExpose({
           </div>
           <el-form-item prop="locale">
             <template #label>
-              <IconifyIcon
-                icon="custom:language"
-                style="align-self: center; margin-right: 10px"
-              />
+              <IconifyIcon icon="custom:language" style="align-self: center; margin-right: 10px" />
               <span>{{ t('pages.Setting.settingDataForm.locale') }}</span>
             </template>
             <el-select
@@ -474,10 +475,7 @@ defineExpose({
               @change="onThemeColorChange"
             />
           </el-form-item>
-          <el-form-item
-            :label="t('pages.Setting.settingDataForm.defaultMenu')"
-            prop="defaultMenu"
-          >
+          <el-form-item :label="t('pages.Setting.settingDataForm.defaultMenu')" prop="defaultMenu">
             <el-select
               v-model="settingDataForm.defaultMenu"
               style="width: 290px"
@@ -489,10 +487,7 @@ defineExpose({
                 :label="t(item.locale)"
                 :value="item.name"
               >
-                <IconifyIcon
-                  :icon="item.icon"
-                  style="vertical-align: middle; margin-right: 10px"
-                />
+                <IconifyIcon :icon="item.icon" style="vertical-align: middle; margin-right: 10px" />
                 <span style="vertical-align: middle">{{ t(item.locale) }}</span>
               </el-option>
             </el-select>
@@ -678,10 +673,7 @@ defineExpose({
             />
           </el-form-item>
           <el-form-item :label="t('pages.Setting.settingDataForm.switchType')" prop="switchType">
-            <el-radio-group
-              v-model="settingDataForm.switchType"
-              @change="onSettingDataFormChange"
-            >
+            <el-radio-group v-model="settingDataForm.switchType" @change="onSettingDataFormChange">
               <el-radio
                 v-for="item in switchTypeOptions"
                 :key="item.value"
@@ -753,10 +745,7 @@ defineExpose({
               />
             </el-select>
           </el-form-item>
-          <el-form-item
-            :label="t('pages.Setting.settingDataForm.orientation')"
-            prop="orientation"
-          >
+          <el-form-item :label="t('pages.Setting.settingDataForm.orientation')" prop="orientation">
             <el-checkbox-group
               v-model="settingDataForm.orientation"
               @change="onSettingDataFormChange"
@@ -781,10 +770,7 @@ defineExpose({
             </el-checkbox-group>
           </el-form-item>
           <el-form-item :label="t('pages.Setting.settingDataForm.quality')" prop="quality">
-            <el-checkbox-group
-              v-model="settingDataForm.quality"
-              @change="onSettingDataFormChange"
-            >
+            <el-checkbox-group v-model="settingDataForm.quality" @change="onSettingDataFormChange">
               <el-checkbox
                 v-for="text in qualityList"
                 :key="text"
@@ -1027,9 +1013,7 @@ defineExpose({
           >
             <el-checkbox
               v-model="settingDataForm.autoDownload"
-              :disabled="
-                !settingDataForm.downloadSources.length || !settingDataForm.downloadFolder
-              "
+              :disabled="!settingDataForm.downloadSources.length || !settingDataForm.downloadFolder"
               @change="onSettingDataFormChange"
             />
           </el-form-item>
@@ -1097,9 +1081,7 @@ defineExpose({
               <IconifyIcon icon="custom:wallpaper" />
             </el-button>
           </el-form-item>
-          <el-form-item
-            :label="t('pages.Setting.settingDataForm.refreshWebWallpaperIntervalTime')"
-          >
+          <el-form-item :label="t('pages.Setting.settingDataForm.refreshWebWallpaperIntervalTime')">
             <el-form-item prop="refreshWebWallpaperIntervalTime">
               <el-input-number
                 v-model="settingDataForm.refreshWebWallpaperIntervalTime"

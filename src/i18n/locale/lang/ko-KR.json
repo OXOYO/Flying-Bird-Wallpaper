@@ -32,7 +32,8 @@
       "tabs": {
         "baseSetting": "기본 설정",
         "privacySpace": "프라이버시 공간",
-        "shortcutSetting": "단축키 설정"
+        "shortcutSetting": "단축키 설정",
+        "pluginMarketplace": "플러그인 마켓"
       },
       "divider": {
         "base": "기본 설정",

@@ -32,7 +32,8 @@
       "tabs": {
         "baseSetting": "الإعدادات الأساسية",
         "privacySpace": "المساحة الخاصة",
-        "shortcutSetting": "إعدادات الإختصارات"
+        "shortcutSetting": "إعدادات الإختصارات",
+        "pluginMarketplace": "متجر الإضافات"
       },
       "divider": {
         "base": "الإعدادات الأساسية",

@@ -32,7 +32,8 @@
       "tabs": {
         "baseSetting": "Grundeinstellungen",
         "privacySpace": "Privatbereich",
-        "shortcutSetting": "Tastenkürzel"
+        "shortcutSetting": "Tastenkürzel",
+        "pluginMarketplace": "Plugin-Marktplatz"
       },
       "divider": {
         "base": "Grundeinstellungen",

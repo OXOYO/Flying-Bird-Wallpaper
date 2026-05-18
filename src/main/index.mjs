@@ -191,11 +191,7 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
     const window = global.FBW[name]
     const win = window?.win
     if (win) {
-      win.setPosition(parseInt(position.x), parseInt(position.y), false)
-      // 如果是悬浮球，确保大小不变
-      if (name === 'suspensionBall') {
-        win.setSize(60, 220, false)
-      }
+      win.setPosition(Math.round(Number(position.x)), Math.round(Number(position.y)), false)
     }
   }
 

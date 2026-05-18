@@ -32,7 +32,8 @@
       "tabs": {
         "baseSetting": "Базовые настройки",
         "privacySpace": "Приватное пространство",
-        "shortcutSetting": "Горячие клавиши"
+        "shortcutSetting": "Горячие клавиши",
+        "pluginMarketplace": "Маркетплейс плагинов"
       },
       "divider": {
         "base": "Базовые настройки",

@@ -43,7 +43,8 @@ const actionLoading = reactive({
 
 const expandedPluginKeys = ref({})
 const settingData = ref({})
-const marketplaceLoadAlert = ref({ visible: false, message: '' })
+/** 由主进程返回的结构化加载提示，在渲染层按当前语言拼接 */
+const marketplaceLoadNotice = ref(null)
 
 const formatPluginLoadMessage = (message) => {
   if (!message) return ''
@@ -52,6 +53,51 @@ const formatPluginLoadMessage = (message) => {
     .replace(/\bhttps?:\/\/\S+/gi, '')
     .trim()
 }
+
+const formatSourceLoadErrorItem = (item) => {
+  const hint = t(`pages.Setting.pluginMarketplace.loadErrors.${item.hintKey}`)
+  return t('pages.Setting.pluginMarketplace.loadErrors.sourceItem', {
+    sourceName: item.sourceName,
+    hint
+  })
+}
+
+const buildMarketplaceLoadAlertMessage = (notice) => {
+  if (!notice) return ''
+  if (Array.isArray(notice.errors) && notice.errors.length > 0) {
+    const errors = notice.errors.map(formatSourceLoadErrorItem).join(
+      t('pages.Setting.pluginMarketplace.loadErrors.errorsSeparator')
+    )
+    const key = `pages.Setting.pluginMarketplace.loadErrors.${notice.kind}`
+    const message = t(key, { errors })
+    if (message && message !== key) return message
+    return errors
+  }
+
+  if (notice.errorMessage) {
+    const key = `pages.Setting.pluginMarketplace.loadErrors.${notice.kind}`
+    const message = t(key, {
+      error: formatPluginLoadMessage(notice.errorMessage)
+    })
+    if (message && message !== key) return message
+    return formatPluginLoadMessage(notice.errorMessage)
+  }
+
+  return ''
+}
+
+const marketplaceLoadAlertMessage = computed(() => {
+  const message = buildMarketplaceLoadAlertMessage(marketplaceLoadNotice.value)
+  if (message) return message
+  if (marketplaceLoadNotice.value) {
+    return t('pages.Setting.pluginMarketplace.loadAlert.fallbackBody')
+  }
+  return ''
+})
+
+const marketplaceLoadAlertVisible = computed(
+  () => marketplaceLoadNotice.value != null
+)
 
 const filteredAvailablePlugins = computed(() => {
   if (!marketplaceSearchQuery.value) {
@@ -95,22 +141,25 @@ const remoteResourceSecretKeys = computed(() => settingData.value?.remoteResourc
 
 const toPluginKey = (plugin) => plugin.pluginKey || `${plugin.sourceName}:${plugin.name}`
 
+const dismissMarketplaceLoadAlert = () => {
+  marketplaceLoadNotice.value = null
+}
+
 const loadAvailablePlugins = async () => {
   loading.available = true
   try {
     const result = await window.FBW.getAvailablePlugins()
     if (result.success) {
       availablePlugins.value = result.data || []
-      const notice = formatPluginLoadMessage(result.message)
-      marketplaceLoadAlert.value = notice
-        ? { visible: true, message: notice }
-        : { visible: false, message: '' }
+      marketplaceLoadNotice.value = result.loadNotice || null
     } else {
-      marketplaceLoadAlert.value = { visible: false, message: '' }
-      ElMessage.error(
-        formatPluginLoadMessage(result.message) ||
-          t('pages.Setting.pluginMarketplace.feedback.getAvailableFail')
-      )
+      marketplaceLoadNotice.value = result.loadNotice || null
+      if (!marketplaceLoadNotice.value) {
+        ElMessage.error(
+          formatPluginLoadMessage(result.message) ||
+            t('pages.Setting.pluginMarketplace.feedback.getAvailableFail')
+        )
+      }
     }
   } catch (error) {
     console.error(t('pages.Setting.pluginMarketplace.feedback.getAvailableFail'), error)
@@ -354,6 +403,13 @@ const togglePluginDetail = (plugin) => {
 }
 const hasSecretKey = (plugin) =>
   hasRemoteSecretKey(toPluginKey(plugin), remoteResourceSecretKeys.value)
+
+const hasPluginSummaryContent = (plugin) => {
+  if (Boolean(String(plugin.description || '').trim())) return true
+  if (plugin.compatible === false) return true
+  if (plugin.requireSecretKey && !hasSecretKey(plugin)) return true
+  return false
+}
 
 const getSecretKeyPlaceholder = (plugin) => {
   const hintKey = `pages.Setting.pluginMarketplace.secretKey.hint.${plugin.name}`
@@ -648,6 +704,11 @@ defineExpose({
   resetForm: () => {
     marketplaceSearchQuery.value = ''
     installedSearchQuery.value = ''
+  },
+  refresh: () => {
+    loadAvailablePlugins()
+    loadInstalledPlugins()
+    loadPluginSources()
   }
 })
 </script>
@@ -662,15 +723,18 @@ defineExpose({
         >
           <div class="marketplace-content">
             <el-alert
-              v-if="marketplaceLoadAlert.visible"
+              v-if="marketplaceLoadAlertVisible"
               class="marketplace-load-alert"
               type="warning"
               :title="t('pages.Setting.pluginMarketplace.loadAlert.title')"
-              :description="marketplaceLoadAlert.message"
               show-icon
               closable
-              @close="marketplaceLoadAlert.visible = false"
-            />
+              @close="dismissMarketplaceLoadAlert"
+            >
+              <p class="marketplace-load-alert__text">
+                {{ marketplaceLoadAlertMessage }}
+              </p>
+            </el-alert>
             <div class="search-box">
               <el-input
                 v-model="marketplaceSearchQuery"
@@ -690,7 +754,8 @@ defineExpose({
               </div>
             </div>
             <div class="tab-scroll-wrap" v-loading="loading.available">
-              <div class="tab-scroll-content">
+              <el-scrollbar class="tab-scrollbar">
+                <div class="tab-scroll-content">
                 <el-empty v-if="!loading.available && filteredAvailablePlugins.length === 0" />
                 <div v-else class="plugin-grid">
                   <div
@@ -766,10 +831,12 @@ defineExpose({
                         </div>
                       </div>
                     </div>
-                    <div class="plugin-body">
-                      <p class="plugin-description">{{ plugin.description }}</p>
-                      <div class="plugin-meta">
-                        <el-tag v-if="!plugin.compatible" type="danger" size="small">
+                    <div v-if="hasPluginSummaryContent(plugin)" class="plugin-body">
+                      <p v-if="plugin.description" class="plugin-description">
+                        {{ plugin.description }}
+                      </p>
+                      <div v-if="!plugin.compatible" class="plugin-meta">
+                        <el-tag type="danger" size="small">
                           {{ t('pages.Setting.pluginMarketplace.incompatible') }}
                         </el-tag>
                       </div>
@@ -806,6 +873,7 @@ defineExpose({
                   </div>
                 </div>
               </div>
+              </el-scrollbar>
             </div>
           </div>
         </el-tab-pane>
@@ -834,7 +902,8 @@ defineExpose({
               </div>
             </div>
             <div class="tab-scroll-wrap" v-loading="loading.installed">
-              <div class="tab-scroll-content">
+              <el-scrollbar class="tab-scrollbar">
+                <div class="tab-scroll-content">
                 <el-empty v-if="!loading.installed && filteredInstalledPlugins.length === 0" />
                 <div v-else class="plugin-grid">
                   <div
@@ -918,14 +987,15 @@ defineExpose({
                         </div>
                       </div>
                     </div>
-                    <div class="plugin-body">
-                      <p class="plugin-description">{{ plugin.description }}</p>
-                      <div class="plugin-meta">
-                        <el-tag
-                          v-if="plugin.requireSecretKey && !hasSecretKey(plugin)"
-                          type="warning"
-                          size="small"
-                        >
+                    <div v-if="hasPluginSummaryContent(plugin)" class="plugin-body">
+                      <p v-if="plugin.description" class="plugin-description">
+                        {{ plugin.description }}
+                      </p>
+                      <div
+                        v-if="plugin.requireSecretKey && !hasSecretKey(plugin)"
+                        class="plugin-meta"
+                      >
+                        <el-tag type="warning" size="small">
                           {{ t('pages.Setting.pluginMarketplace.secretKey.missing') }}
                         </el-tag>
                       </div>
@@ -979,6 +1049,7 @@ defineExpose({
                   </div>
                 </div>
               </div>
+              </el-scrollbar>
             </div>
           </div>
         </el-tab-pane>
@@ -996,7 +1067,8 @@ defineExpose({
               </div>
             </div>
             <div class="tab-scroll-wrap" v-loading="loading.sources">
-              <div class="tab-scroll-content">
+              <el-scrollbar class="tab-scrollbar">
+                <div class="tab-scroll-content">
                 <div
                   v-for="source in pluginSources"
                   :key="source.id"
@@ -1036,6 +1108,7 @@ defineExpose({
                   </div>
                 </div>
               </div>
+              </el-scrollbar>
             </div>
           </div>
         </el-tab-pane>
@@ -1147,6 +1220,13 @@ defineExpose({
   margin-bottom: 16px;
 }
 
+.marketplace-load-alert__text {
+  margin: 0;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 .plugin-version-update {
   font-variant-numeric: tabular-nums;
 }
@@ -1173,9 +1253,11 @@ defineExpose({
   position: relative;
 }
 
-.tab-scroll-content {
+.tab-scrollbar {
   height: 100%;
-  overflow-y: auto;
+}
+
+.tab-scroll-content {
   padding: 10px 14px 10px 0;
 }
 
@@ -1187,6 +1269,9 @@ defineExpose({
 }
 
 .plugin-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   border: 1px solid var(--el-border-color);
   border-radius: 8px;
   padding: 20px;
@@ -1201,7 +1286,6 @@ defineExpose({
 .plugin-header {
   display: flex;
   align-items: center;
-  margin-bottom: 15px;
 }
 
 .plugin-icon {
@@ -1262,11 +1346,13 @@ defineExpose({
 }
 
 .plugin-body {
-  margin-bottom: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .plugin-description {
-  margin: 0 0 10px 0;
+  margin: 0;
   font-size: 14px;
   color: var(--el-text-color-regular);
   line-height: 1.5;
@@ -1405,20 +1491,34 @@ defineExpose({
 }
 
 .plugin-detail-panel {
-  margin-top: 12px;
   padding-top: 12px;
   border-top: 1px dashed var(--el-border-color);
+  font-size: var(--el-font-size-small);
+  line-height: 20px;
+  color: var(--el-text-color-regular);
 }
 
 .detail-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: 12px;
+  margin-bottom: 6px;
+  font-size: inherit;
+  line-height: inherit;
 
   &:last-child {
     margin-bottom: 0;
+  }
+
+  > span:first-child {
+    flex-shrink: 0;
+    color: var(--el-text-color-secondary);
+  }
+
+  > span:last-child:not(:only-child) {
+    color: var(--el-text-color-regular);
+    font-variant-numeric: tabular-nums;
   }
 }
 </style>

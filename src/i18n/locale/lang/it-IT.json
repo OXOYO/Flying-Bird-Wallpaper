@@ -32,7 +32,8 @@
       "tabs": {
         "baseSetting": "Impostazioni di base",
         "privacySpace": "Spazio privato",
-        "shortcutSetting": "Scorciatoie tastiera"
+        "shortcutSetting": "Scorciatoie tastiera",
+        "pluginMarketplace": "Marketplace plugin"
       },
       "divider": {
         "base": "Impostazioni di base",

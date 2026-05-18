@@ -258,7 +258,8 @@
           "updateMessage": "确认将「{pluginName}」从 v{currentVersion} 更新到 v{latestVersion} 吗？更新将覆盖当前插件文件。"
         },
         "loadAlert": {
-          "title": "插件源加载提示"
+          "title": "插件源加载提示",
+          "fallbackBody": "部分插件源未能正常加载，请检查网络或插件源配置后重试。"
         },
         "loadErrors": {
           "errorsSeparator": "；",

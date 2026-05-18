@@ -32,7 +32,8 @@
       "tabs": {
         "baseSetting": "基礎設定",
         "privacySpace": "隱私空間",
-        "shortcutSetting": "快捷鍵設定"
+        "shortcutSetting": "快捷鍵設定",
+        "pluginMarketplace": "插件市場"
       },
       "divider": {
         "base": "基礎設定",
