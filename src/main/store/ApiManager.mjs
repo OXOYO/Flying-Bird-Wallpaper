@@ -134,7 +134,7 @@ export default class ApiManager {
         manifest.downloadRequired && typeof manifest.downloadRequired === 'object'
           ? manifest.downloadRequired
           : { keywords: false, orientation: false },
-      appVersion: manifest.appVersion || { min: '1.0.0', max: '*' }
+      appVersion: manifest.appVersion || { min: '2.0.0', max: '*' }
     }
   }
 

@@ -56,12 +56,15 @@ Flying-Bird-Wallpaper-Plugins/
   "supportDownload": true,
   "searchRequired": { "keywords": true, "orientation": false },
   "downloadRequired": { "keywords": true, "orientation": false },
-  "appVersion": { "min": "1.0.0", "max": "*" }
+  "appVersion": { "min": "2.0.0", "max": "*" }
 }
 ```
 
 说明：
 
+- `appVersion` 表示**宿主应用**版本范围（由 `app.getVersion()` 校验），与插件自身的 `version` 字段无关。
+- 资源插件体系自宿主 **2.0.0** 起提供，**不支持** 1.x；官方插件须写 `"appVersion": { "min": "2.0.0", "max": "*" }`。
+- 本地开发时请将主应用 `package.json` 版本设为 `2.0.0`（如 `npm run version 2.0.0`），否则插件无法通过版本校验加载。
 - `name` 必须与目录名一致，且在同一 source 内唯一。
 - `logo` 可选；未提供时，应用用插件名首字母占位。
 - `visible` 为 `false` 时不会在插件市场显示。

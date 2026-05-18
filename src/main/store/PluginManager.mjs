@@ -487,7 +487,7 @@ export default class PluginManager {
               const pluginName = entry.trim()
               const manifest = await this.readPluginManifest(source, pluginName)
               const compatible = this.isVersionCompatible(
-                manifest.appVersion || { min: '1.0.0', max: '*' }
+                manifest.appVersion || { min: '2.0.0', max: '*' }
               )
               const visible = manifest.visible === true
               if (compatible && visible) {
@@ -503,7 +503,7 @@ export default class PluginManager {
                   logo: manifest.logo,
                   logoUrl: this.resolveLogoUrl(source, pluginName, manifest.logo),
                   compatible,
-                  appVersion: manifest.appVersion || { min: '1.0.0', max: '*' },
+                  appVersion: manifest.appVersion || { min: '2.0.0', max: '*' },
                   requireSecretKey: manifest.requireSecretKey || false,
                   supportSearch: manifest.supportSearch === true,
                   supportDownload: manifest.supportDownload === true,
@@ -582,7 +582,7 @@ export default class PluginManager {
 
       const manifest = await this.readPluginManifest(source, pluginName, version)
 
-      if (!this.isVersionCompatible(manifest.appVersion || { min: '1.0.0', max: '*' })) {
+      if (!this.isVersionCompatible(manifest.appVersion || { min: '2.0.0', max: '*' })) {
         this.logger.error(`插件 ${pluginName} 与当前应用版本 ${this.appVersion} 不兼容`)
         return { success: false, message: t(this.opKey('pluginIncompatible')) }
       }
@@ -612,7 +612,7 @@ export default class PluginManager {
         supportSearchTypes: Array.isArray(manifest.supportSearchTypes)
           ? manifest.supportSearchTypes
           : [],
-        appVersion: manifest.appVersion || { min: '1.0.0', max: '*' },
+        appVersion: manifest.appVersion || { min: '2.0.0', max: '*' },
         installedAt: new Date().toISOString()
       }
 
@@ -712,7 +712,7 @@ export default class PluginManager {
             supportSearchTypes: Array.isArray(manifest.supportSearchTypes)
               ? manifest.supportSearchTypes
               : [],
-            appVersion: manifest.appVersion || { min: '1.0.0', max: '*' },
+            appVersion: manifest.appVersion || { min: '2.0.0', max: '*' },
             installedAt: new Date().toISOString()
           }
           await this.setSysRecordData('plugins', plugins, 'object')
@@ -779,7 +779,7 @@ export default class PluginManager {
               supportSearchTypes: Array.isArray(manifest.supportSearchTypes)
                 ? manifest.supportSearchTypes
                 : [],
-              appVersion: manifest.appVersion || { min: '1.0.0', max: '*' }
+              appVersion: manifest.appVersion || { min: '2.0.0', max: '*' }
             })
           } catch (error) {
             this.logger.error(`读取插件 ${sourceName}:${pluginName} 配置失败:`, error)
