@@ -852,6 +852,8 @@
         },
         "videoPreview": {
           "close": "关闭视频预览",
+          "play": "播放视频",
+          "pause": "暂停视频",
           "enterLandscape": "横屏播放",
           "exitLandscape": "退出横屏"
         },

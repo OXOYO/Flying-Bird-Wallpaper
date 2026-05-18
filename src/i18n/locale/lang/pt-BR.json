@@ -860,7 +860,9 @@
         "videoPreview": {
           "close": "Fechar pré-visualização de vídeo",
           "enterLandscape": "Reprodução horizontal",
-          "exitLandscape": "Sair do horizontal"
+          "exitLandscape": "Sair do horizontal",
+          "play": "Play video",
+          "pause": "Pause video"
         }
       },
       "setting": {

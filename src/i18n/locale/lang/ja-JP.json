@@ -860,7 +860,9 @@
         "videoPreview": {
           "close": "動画プレビューを閉じる",
           "enterLandscape": "横向き再生",
-          "exitLandscape": "横向きを終了"
+          "exitLandscape": "横向きを終了",
+          "play": "動画を再生",
+          "pause": "動画を一時停止"
         }
       },
       "setting": {

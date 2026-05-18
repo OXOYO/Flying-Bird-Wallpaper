@@ -82,7 +82,6 @@ const state = reactive({
   showFilters: false,
   showActionPopup: false,
   showPreview: false,
-  showVideoPreview: false,
   viewportHeight: typeof window !== 'undefined' ? window.innerHeight : 800,
   scrollTop: 0,
   viewportWidth: typeof window !== 'undefined' ? window.innerWidth : 375
@@ -93,13 +92,15 @@ const pageWrapperRef = ref(null)
 const searchToolbarRef = ref(null)
 const searchToolbarHeight = ref(52)
 let searchToolbarResizeObserver = null
-const videoPreviewRef = ref(null)
-const videoPreviewViewportRef = ref(null)
-const videoPreviewForcedLandscape = ref(false)
+const inlineVideoRefs = {}
+const inlineVideoPlayingKeys = ref(new Set())
+const inlineVideoVisibilityObservers = {}
+const INLINE_VIDEO_MIN_VISIBLE_RATIO = 0.15
 const fullscreenListRef = ref(null)
 const fullscreenSliderRef = ref(null)
 const fullscreenMeasuredHeight = ref(420)
 const fullscreenVisibleIndex = ref(0)
+const fullscreenScrollTop = ref(0)
 let fullscreenResizeObserver = null
 
 const DISPLAY_MODE_STORAGE_KEY = 'fbw_h5_search_display_mode'
@@ -287,6 +288,168 @@ const retryLoadImage = (item) => {
 }
 const retryLoadPoster = retryLoadImage
 
+const markInlineVideoPlaying = (key, playing) => {
+  if (!key) return
+  const next = new Set(inlineVideoPlayingKeys.value)
+  if (playing) next.add(key)
+  else next.delete(key)
+  inlineVideoPlayingKeys.value = next
+}
+
+const isInlineVideoPlaying = (item) => {
+  const key = getItemKey(item)
+  return key ? inlineVideoPlayingKeys.value.has(key) : false
+}
+
+const findVideoKeyByEl = (el) => {
+  for (const [key, refEl] of Object.entries(inlineVideoRefs)) {
+    if (refEl === el) return key
+  }
+  return ''
+}
+
+const getVideoScrollRoot = () => {
+  if (displayMode.value === 'fullscreen') {
+    const rootEl = fullscreenListRef.value?.$el
+    if (rootEl?.classList?.contains?.('virtual-list')) return rootEl
+    return rootEl?.querySelector?.('.virtual-list') ?? fullscreenSliderRef.value?.querySelector?.('.virtual-list') ?? null
+  }
+  return pageWrapperRef.value
+}
+
+const teardownVideoVisibilityObserver = (key) => {
+  inlineVideoVisibilityObservers[key]?.disconnect()
+  delete inlineVideoVisibilityObservers[key]
+}
+
+const setupVideoVisibilityObserver = (key, el) => {
+  teardownVideoVisibilityObserver(key)
+  if (!key || !el) return
+  const root = getVideoScrollRoot()
+  const observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting && entry.intersectionRatio >= INLINE_VIDEO_MIN_VISIBLE_RATIO) {
+          continue
+        }
+        const videoEl = entry.target
+        try {
+          videoEl.pause()
+        } catch (_) {
+          /* noop */
+        }
+        const videoKey = findVideoKeyByEl(videoEl)
+        if (videoKey) markInlineVideoPlaying(videoKey, false)
+      }
+    },
+    {
+      root: root || null,
+      rootMargin: '0px',
+      threshold: [0, 0.05, 0.15, 0.25, 0.5, 1]
+    }
+  )
+  observer.observe(el)
+  inlineVideoVisibilityObservers[key] = observer
+}
+
+const refreshAllVideoVisibilityObservers = () => {
+  for (const [key, el] of Object.entries(inlineVideoRefs)) {
+    if (el) setupVideoVisibilityObserver(key, el)
+  }
+}
+
+const disconnectAllVideoVisibilityObservers = () => {
+  for (const key of Object.keys(inlineVideoVisibilityObservers)) {
+    teardownVideoVisibilityObserver(key)
+  }
+}
+
+const setInlineVideoRef = (item, el) => {
+  const key = getItemKey(item)
+  if (!key) return
+  if (el) {
+    inlineVideoRefs[key] = el
+    setupVideoVisibilityObserver(key, el)
+  } else {
+    delete inlineVideoRefs[key]
+    teardownVideoVisibilityObserver(key)
+    markInlineVideoPlaying(key, false)
+  }
+}
+
+const pauseAllInlineVideos = () => {
+  for (const el of Object.values(inlineVideoRefs)) {
+    if (!el) continue
+    try {
+      el.pause()
+    } catch (_) {
+      /* noop */
+    }
+  }
+  inlineVideoPlayingKeys.value = new Set()
+}
+
+const pauseInlineVideo = (item) => {
+  const key = getItemKey(item)
+  if (!key) return
+  const el = inlineVideoRefs[key]
+  try {
+    el?.pause()
+  } catch (_) {
+    /* noop */
+  }
+  markInlineVideoPlaying(key, false)
+}
+
+const onInlineVideoSurfaceClick = (item) => {
+  if (!isInlineVideoPlaying(item)) return
+  pauseInlineVideo(item)
+}
+
+const toggleInlineVideo = async (item, index) => {
+  if (!item?.videoSrc) {
+    showNotify({ type: 'warning', message: t('messages.noData') })
+    return
+  }
+  const key = getItemKey(item)
+  let el = inlineVideoRefs[key]
+  if (!el) {
+    await nextTick()
+    el = inlineVideoRefs[key]
+  }
+  if (!el) return
+
+  longPress.selectedIndex = index
+
+  if (isInlineVideoPlaying(item) && !el.paused) {
+    pauseInlineVideo(item)
+    return
+  }
+
+  markInlineVideoPlaying(key, true)
+  el.loop = true
+  el.muted = false
+  try {
+    await el.play()
+  } catch (_) {
+    el.muted = true
+    try {
+      await el.play()
+    } catch (_) {
+      markInlineVideoPlaying(key, false)
+    }
+  }
+}
+
+const onInlineVideoPaused = (item) => {
+  markInlineVideoPlaying(getItemKey(item), false)
+}
+
+const onInlineVideoError = (item) => {
+  markInlineVideoPlaying(getItemKey(item), false)
+  showNotify({ type: 'danger', message: t('messages.operationFail') })
+}
+
 const syncFilterType = () => {
   const target = filterTypeAvailable.value.find((item) => item.value === form.filterType)
   if (!target && filterTypeAvailable.value.length) {
@@ -315,10 +478,20 @@ const loadList = async (reset = false) => {
   if (state.loading) return
   const reqSeq = ++loadListSeq
   if (reset) {
+    pauseAllInlineVideos()
     page.startPage = 1
     page.total = 0
     list.value = []
     state.finished = false
+    state.scrollTop = 0
+    fullscreenVisibleIndex.value = 0
+    fullscreenScrollTop.value = 0
+    nextTick(() => {
+      if (pageWrapperRef.value) {
+        pageWrapperRef.value.scrollTop = 0
+      }
+      fullscreenListRef.value?.scrollToIndex?.(0, false)
+    })
   }
   state.loading = true
   try {
@@ -379,10 +552,12 @@ const loadList = async (reset = false) => {
 }
 
 const onSearch = async () => {
+  pauseAllInlineVideos()
   await loadList(true)
 }
 
 const onRefresh = async () => {
+  pauseAllInlineVideos()
   state.refreshing = true
   await loadList(true)
 }
@@ -443,10 +618,6 @@ const previewStartPosition = computed(() => {
   return pos
 })
 
-const videoPreviewItem = computed(() => {
-  if (!state.showVideoPreview || longPress.selectedIndex < 0) return null
-  return list.value[longPress.selectedIndex] || null
-})
 const gridColumns = computed(() => {
   const width = state.viewportWidth
   if (width >= 1200) return 4
@@ -469,6 +640,18 @@ const getItemHeight = (item) => {
   return FALLBACK_ITEM_HEIGHT
 }
 
+const pickShortestColumnIndex = (columns) => {
+  let columnIndex = 0
+  let minHeight = columns[0]?.totalHeight ?? 0
+  for (let i = 1; i < columns.length; i += 1) {
+    if (columns[i].totalHeight < minHeight) {
+      minHeight = columns[i].totalHeight
+      columnIndex = i
+    }
+  }
+  return columnIndex
+}
+
 const virtualColumns = computed(() => {
   const columns = Array.from({ length: gridColumns.value }, () => ({
     items: [],
@@ -477,19 +660,22 @@ const virtualColumns = computed(() => {
     bottomSpacer: 0
   }))
   list.value.forEach((item, index) => {
-    const columnIndex = index % gridColumns.value
     const height = getItemHeight(item)
+    const columnIndex = pickShortestColumnIndex(columns)
     columns[columnIndex].items.push({
       item,
       globalIndex: index,
       height
     })
+    columns[columnIndex].totalHeight += height + GRID_GAP
   })
 
-  const viewportTop = state.scrollTop - GRID_BUFFER_PX
+  const viewportTop = Math.max(0, state.scrollTop - GRID_BUFFER_PX)
   const viewportBottom = state.scrollTop + state.viewportHeight + GRID_BUFFER_PX
+  const maxColumnHeight = columns.reduce((max, column) => Math.max(max, column.totalHeight), 0)
 
   return columns.map((column) => {
+    const totalHeight = column.totalHeight
     let accumulated = 0
     let start = 0
     while (start < column.items.length) {
@@ -508,11 +694,21 @@ const virtualColumns = computed(() => {
       end += 1
     }
 
-    const topSpacer = accumulated
-    let totalHeight = 0
-    for (let i = 0; i < column.items.length; i += 1) {
-      totalHeight += column.items[i].height + GRID_GAP
+    // 列高低于整体滚动区域时，仍保留列尾卡片，避免短列被虚拟化裁成空白
+    if (
+      end <= start &&
+      start < column.items.length &&
+      totalHeight > 0 &&
+      viewportTop < maxColumnHeight
+    ) {
+      end = Math.min(column.items.length, start + 1)
+      visibleHeight = accumulated
+      for (let i = start; i < end; i += 1) {
+        visibleHeight += column.items[i].height + GRID_GAP
+      }
     }
+
+    const topSpacer = accumulated
     const renderedHeight = Math.max(0, visibleHeight - accumulated)
     const bottomSpacer = Math.max(0, totalHeight - topSpacer - renderedHeight)
     return {
@@ -595,10 +791,12 @@ const onFullscreenVirtualScroll = (payload) => {
   const len = list.value.length
   if (!len) {
     fullscreenVisibleIndex.value = 0
+    fullscreenScrollTop.value = 0
     return
   }
   const ih = Math.max(1, fullscreenItemHeight.value)
   const scrollTop = Math.max(0, Number(payload.scrollTop) || 0)
+  fullscreenScrollTop.value = scrollTop
   const clientH = Math.max(ih, Number(payload.clientHeight) || ih)
   // 以视口垂直中心所在项为准，避免半屏滑动时与 visibleStart 不一致
   const center = scrollTop + clientH / 2
@@ -612,6 +810,14 @@ const fullscreenIndicatorText = computed(() => {
   const cur = len ? Math.min(fullscreenVisibleIndex.value + 1, len) : 0
   const total = searchResultTotal.value
   return t('h5.pages.search.displayMode.indicator', { current: cur, total })
+})
+
+/** 铺满模式滚动在 VirtualList 内，外层 pull-refresh 无法感知 scrollTop，需手动限制 */
+const isPullRefreshDisabled = computed(() => {
+  if (state.loading) return true
+  if (displayMode.value !== 'fullscreen') return false
+  if (fullscreenVisibleIndex.value > 0) return true
+  return fullscreenScrollTop.value > 2
 })
 
 const measureSearchToolbarHeight = () => {
@@ -644,10 +850,13 @@ const searchPageIndicatorStyle = computed(() => {
   return getH5NumberIndicatorStyle(position, { topOffset })
 })
 
-const syncWaterfallScrollMetrics = () => {
+const syncWaterfallViewportMetrics = () => {
   const wrap = pageWrapperRef.value
   if (!wrap || displayMode.value !== 'waterfall') return
   state.scrollTop = wrap.scrollTop || 0
+  if (wrap.clientHeight > 0) {
+    state.viewportHeight = wrap.clientHeight
+  }
 }
 
 watch(displayMode, (mode) => {
@@ -655,14 +864,16 @@ watch(displayMode, (mode) => {
     fullscreenResizeObserver?.disconnect()
     fullscreenResizeObserver = null
     nextTick(() => {
-      syncWaterfallScrollMetrics()
+      syncWaterfallViewportMetrics()
       measureSearchToolbarHeight()
+      refreshAllVideoVisibilityObservers()
     })
     return
   }
   nextTick(() => {
     bindFullscreenResizeObserver()
     measureFullscreenHeight()
+    refreshAllVideoVisibilityObservers()
   })
 })
 
@@ -676,121 +887,12 @@ watch(
   }
 )
 
-const videoPreviewDeviceLandscape = computed(
-  () => state.viewportWidth > state.viewportHeight
-)
-
-const videoPreviewInLandscapeView = computed(
-  () => videoPreviewForcedLandscape.value || videoPreviewDeviceLandscape.value
-)
-
-const videoPreviewRotateIcon = computed(() =>
-  videoPreviewInLandscapeView.value ? 'custom:portrait-outline' : 'custom:landscape-outline'
-)
-
-const videoPreviewRotateLabel = computed(() =>
-  videoPreviewInLandscapeView.value
-    ? t('h5.pages.search.videoPreview.exitLandscape')
-    : t('h5.pages.search.videoPreview.enterLandscape')
-)
-
-const canLockScreenOrientation = () =>
-  typeof screen !== 'undefined' && typeof screen.orientation?.lock === 'function'
-
-const releaseVideoPreviewLandscape = async () => {
-  try {
-    screen.orientation?.unlock?.()
-  } catch (_) {
-    /* noop */
-  }
-  try {
-    const fs = document.fullscreenElement
-    const viewport = videoPreviewViewportRef.value
-    if (fs && viewport && (fs === viewport || viewport.contains(fs))) {
-      await document.exitFullscreen()
-    }
-  } catch (_) {
-    /* noop */
-  }
-}
-
-const tryLockVideoPreviewLandscape = async () => {
-  if (!canLockScreenOrientation()) return false
-  try {
-    const viewport = videoPreviewViewportRef.value
-    if (!viewport) return false
-    if (!document.fullscreenElement) {
-      await viewport.requestFullscreen()
-    }
-    await screen.orientation.lock('landscape')
-    return true
-  } catch (_) {
-    return false
-  }
-}
-
-const toggleVideoPreviewLandscape = async () => {
-  if (videoPreviewInLandscapeView.value) {
-    videoPreviewForcedLandscape.value = false
-    await releaseVideoPreviewLandscape()
-    return
-  }
-  videoPreviewForcedLandscape.value = true
-  await tryLockVideoPreviewLandscape()
-}
-
-const resetVideoPreviewLandscape = () => {
-  videoPreviewForcedLandscape.value = false
-  void releaseVideoPreviewLandscape()
-}
-
-const closeVideoPreview = () => {
-  state.showVideoPreview = false
-}
-
-const onVideoPreviewClosed = () => {
-  resetVideoPreviewLandscape()
-  const el = videoPreviewRef.value
-  if (!el) return
-  try {
-    el.pause()
-    el.removeAttribute('src')
-    el.load()
-  } catch (_) {
-    /* noop */
-  }
-}
-
-const startVideoPreviewPlayback = () => {
-  const el = videoPreviewRef.value
-  if (!el?.src) return
-  const play = () => {
-    el.play?.().catch(() => {})
-  }
-  if (el.readyState >= 2) {
-    play()
-    return
-  }
-  el.addEventListener('loadeddata', play, { once: true })
-}
-
-const onVideoPreviewOpened = () => {
-  nextTick(() => startVideoPreviewPlayback())
-}
-
 const openPreview = (index) => {
   const row = list.value[index]
   if (!row) return
   longPress.selectedIndex = index
   if (row.fileType === 'video') {
-    if (!row.videoSrc) {
-      showNotify({
-        type: 'warning',
-        message: t('messages.noData')
-      })
-      return
-    }
-    state.showVideoPreview = true
+    if (isInlineVideoPlaying(row)) pauseInlineVideo(row)
     return
   }
   if (!row.imageSrc) return
@@ -910,6 +1012,9 @@ const onPageScroll = (event) => {
   const scrollTop = container.scrollTop || 0
   state.scrollTop = scrollTop
   const clientHeight = container.clientHeight || state.viewportHeight
+  if (clientHeight > 0) {
+    state.viewportHeight = clientHeight
+  }
   const scrollHeight = container.scrollHeight || clientHeight
   if (
     scrollHeight - (scrollTop + clientHeight) < 240 &&
@@ -924,12 +1029,14 @@ const onPageScroll = (event) => {
 }
 
 const onPageResize = () => {
-  state.viewportHeight = window.innerHeight
   state.viewportWidth = window.innerWidth
   nextTick(() => {
     measureSearchToolbarHeight()
     if (displayMode.value === 'fullscreen') {
+      state.viewportHeight = window.innerHeight
       measureFullscreenHeight()
+    } else {
+      syncWaterfallViewportMetrics()
     }
   })
 }
@@ -977,6 +1084,8 @@ onUnmounted(() => {
     clearTimeout(longPress.timer)
     longPress.timer = null
   }
+  disconnectAllVideoVisibilityObservers()
+  pauseAllInlineVideos()
   fullscreenResizeObserver?.disconnect()
   fullscreenResizeObserver = null
   searchToolbarResizeObserver?.disconnect()
@@ -1004,7 +1113,7 @@ onMounted(async () => {
   nextTick(() => {
     measureSearchToolbarHeight()
     bindSearchToolbarResizeObserver()
-    syncWaterfallScrollMetrics()
+    syncWaterfallViewportMetrics()
     if (displayMode.value === 'fullscreen') {
       bindFullscreenResizeObserver()
       measureFullscreenHeight()
@@ -1051,7 +1160,7 @@ onMounted(async () => {
         </div>
       </div>
 
-      <van-pull-refresh v-model="state.refreshing" :disabled="state.loading" @refresh="onRefresh">
+      <van-pull-refresh v-model="state.refreshing" :disabled="isPullRefreshDisabled" @refresh="onRefresh">
         <div
           class="search-pull-inner"
           :class="{ 'search-pull-inner--fullscreen': displayMode === 'fullscreen' }"
@@ -1070,7 +1179,7 @@ onMounted(async () => {
                   <div class="virtual-spacer" :style="{ height: `${column.topSpacer}px` }"></div>
                   <div
                     v-for="row in column.items"
-                    :key="row.item.id || row.item.uniqueKey"
+                    :key="`wf-${row.globalIndex}-${getItemKey(row.item)}`"
                     class="result-item"
                     @touchstart="(e) => onImageTouchStart(row.globalIndex, e)"
                     @touchmove="onImageTouchMove"
@@ -1088,30 +1197,62 @@ onMounted(async () => {
                       @keydown.enter.prevent="openPreview(row.globalIndex)"
                     >
                       <template v-if="row.item.fileType === 'video'">
-                        <div
-                          v-if="row.item.posterSrc && imageErrorState[getItemKey(row.item)]"
-                          class="preview-fallback"
-                          @click.stop="retryLoadPoster(row.item)"
-                        >
-                          <van-icon name="photo-fail" size="22" />
-                          <div class="preview-fallback-text">{{ imageLoadFailText }}</div>
-                        </div>
-                        <img
-                          v-else-if="row.item.posterSrc"
-                          class="preview preview--poster"
+                        <video
+                          v-if="row.item.videoSrc"
+                          :ref="(el) => setInlineVideoRef(row.item, el)"
+                          class="preview preview--inline-video"
                           :style="{ objectFit: previewObjectFit }"
-                          :src="getDisplayPosterSrc(row.item)"
-                          alt=""
-                          loading="lazy"
-                          decoding="async"
-                          @error="onPosterLoadError(row.item)"
+                          :src="row.item.videoSrc"
+                          :poster="getDisplayPosterSrc(row.item)"
+                          loop
+                          playsinline
+                          webkit-playsinline
+                          x5-playsinline
+                          x5-video-player-type="h5"
+                          preload="metadata"
+                          @click.stop="onInlineVideoSurfaceClick(row.item)"
+                          @pause="onInlineVideoPaused(row.item)"
+                          @error="onInlineVideoError(row.item)"
                         />
-                        <div v-else class="preview-video-placeholder" :style="{ minHeight: `${row.height}px` }">
-                          <IconifyIcon class="preview-video-ph-icon" icon="custom:video" />
-                        </div>
-                        <div class="video-play-badge" aria-hidden="true">
-                          <IconifyIcon class="video-play-badge-icon" icon="custom:play-circle" />
-                        </div>
+                        <template v-if="!isInlineVideoPlaying(row.item)">
+                          <div
+                            v-if="row.item.posterSrc && imageErrorState[getItemKey(row.item)]"
+                            class="preview-fallback preview-fallback--overlay"
+                            @click.stop="retryLoadPoster(row.item)"
+                          >
+                            <van-icon name="photo-fail" size="22" />
+                            <div class="preview-fallback-text">{{ imageLoadFailText }}</div>
+                          </div>
+                          <img
+                            v-else-if="row.item.posterSrc"
+                            class="preview preview--poster preview--poster-overlay"
+                            :style="{ objectFit: previewObjectFit }"
+                            :src="getDisplayPosterSrc(row.item)"
+                            alt=""
+                            loading="lazy"
+                            decoding="async"
+                            @error="onPosterLoadError(row.item)"
+                          />
+                          <div
+                            v-else-if="!row.item.videoSrc"
+                            class="preview-video-placeholder"
+                            :style="{ minHeight: `${row.height}px` }"
+                          >
+                            <IconifyIcon class="preview-video-ph-icon" icon="custom:video" />
+                          </div>
+                        </template>
+                        <button
+                          v-if="row.item.videoSrc && !isInlineVideoPlaying(row.item)"
+                          type="button"
+                          class="video-play-badge"
+                          :aria-label="t('h5.pages.search.videoPreview.play')"
+                          @click.stop="toggleInlineVideo(row.item, row.globalIndex)"
+                        >
+                          <IconifyIcon
+                            class="video-play-badge-icon"
+                            icon="custom:play-circle"
+                          />
+                        </button>
                       </template>
                       <template v-else>
                         <div
@@ -1159,13 +1300,18 @@ onMounted(async () => {
                 <template #default="{ item, index }">
                   <div
                     class="fullscreen-slide"
-                    :style="{
-                      backgroundImage: slideBgUrl(item) ? `url(${slideBgUrl(item)})` : 'none',
-                      backgroundSize: previewObjectFit,
-                      backgroundPosition: 'center',
-                      backgroundRepeat: 'no-repeat',
-                      backgroundColor: 'rgba(0, 0, 0, 0.07)'
-                    }"
+                    :class="{ 'fullscreen-slide--video': item.fileType === 'video' }"
+                    :style="
+                      item.fileType === 'video'
+                        ? { backgroundColor: '#000' }
+                        : {
+                            backgroundImage: slideBgUrl(item) ? `url(${slideBgUrl(item)})` : 'none',
+                            backgroundSize: previewObjectFit,
+                            backgroundPosition: 'center',
+                            backgroundRepeat: 'no-repeat',
+                            backgroundColor: 'rgba(0, 0, 0, 0.07)'
+                          }
+                    "
                     @touchstart="(e) => onImageTouchStart(index, e)"
                     @touchmove="onImageTouchMove"
                     @touchend="onImageTouchEnd"
@@ -1173,7 +1319,40 @@ onMounted(async () => {
                     @contextmenu.prevent="openActionByIndex(index)"
                     @click="openPreview(index)"
                   >
-                    <div v-if="item.fileType === 'video'" class="fullscreen-slide-video-hint" aria-hidden="true">
+                    <template v-if="item.fileType === 'video' && item.videoSrc">
+                      <video
+                        :ref="(el) => setInlineVideoRef(item, el)"
+                        class="fullscreen-slide-video"
+                        :style="{ objectFit: previewObjectFit }"
+                        :src="item.videoSrc"
+                        :poster="slideBgUrl(item)"
+                        loop
+                        playsinline
+                        webkit-playsinline
+                        x5-playsinline
+                        preload="metadata"
+                        @click.stop="onInlineVideoSurfaceClick(item)"
+                        @pause="onInlineVideoPaused(item)"
+                        @error="onInlineVideoError(item)"
+                      />
+                      <button
+                        v-if="!isInlineVideoPlaying(item)"
+                        type="button"
+                        class="fullscreen-slide-video-btn"
+                        :aria-label="t('h5.pages.search.videoPreview.play')"
+                        @click.stop="toggleInlineVideo(item, index)"
+                      >
+                        <IconifyIcon
+                          class="fullscreen-slide-play-icon"
+                          icon="custom:play-circle"
+                        />
+                      </button>
+                    </template>
+                    <div
+                      v-else-if="item.fileType === 'video'"
+                      class="fullscreen-slide-video-hint"
+                      aria-hidden="true"
+                    >
                       <IconifyIcon class="fullscreen-slide-play-icon" icon="custom:play-circle" />
                     </div>
                   </div>
@@ -1274,60 +1453,6 @@ onMounted(async () => {
           <van-button class="filter-search-btn" type="primary" @click="onApplyFilters">
             <van-icon name="search" />
           </van-button>
-        </div>
-      </div>
-    </van-popup>
-
-    <van-popup
-      v-model:show="state.showVideoPreview"
-      position="center"
-      teleport="body"
-      class="h5-video-preview-popup"
-      :overlay-style="{ background: 'rgba(0,0,0,0.94)' }"
-      :style="{ width: '100%', height: '100%', maxWidth: '100%', background: 'transparent' }"
-      @opened="onVideoPreviewOpened"
-      @closed="onVideoPreviewClosed"
-    >
-      <div
-        ref="videoPreviewViewportRef"
-        class="h5-video-preview-viewport"
-        :class="{
-          'h5-video-preview-viewport--natural-landscape': videoPreviewDeviceLandscape,
-          'h5-video-preview-viewport--forced-landscape':
-            videoPreviewForcedLandscape && !videoPreviewDeviceLandscape
-        }"
-      >
-        <button
-          type="button"
-          class="h5-video-preview-rotate"
-          :aria-label="videoPreviewRotateLabel"
-          @click.stop="toggleVideoPreviewLandscape"
-        >
-          <IconifyIcon class="h5-video-preview-rotate-icon" :icon="videoPreviewRotateIcon" />
-        </button>
-        <button
-          type="button"
-          class="h5-video-preview-close"
-          :aria-label="t('h5.pages.search.videoPreview.close')"
-          @click.stop="closeVideoPreview"
-        >
-          <van-icon name="cross" size="22" />
-        </button>
-        <div class="h5-video-preview-stage">
-          <video
-          ref="videoPreviewRef"
-          class="h5-video-preview-el"
-          controls
-          playsinline
-          webkit-playsinline
-          x5-video-player-type="h5"
-          x5-playsinline
-          controlslist="nodownload"
-          preload="auto"
-          :poster="videoPreviewItem?.posterSrc || ''"
-          :src="videoPreviewItem?.videoSrc || ''"
-            @click.stop
-          />
         </div>
       </div>
     </van-popup>
@@ -1456,6 +1581,12 @@ onMounted(async () => {
 .page-search--fullscreen :deep(.virtual-list) {
   flex: 1;
   min-height: 0;
+  scroll-snap-type: y mandatory;
+  overscroll-behavior-y: contain;
+}
+.page-search--fullscreen :deep(.virtual-list-item) {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
 }
 .fullscreen-slide {
   width: 100%;
@@ -1476,6 +1607,7 @@ onMounted(async () => {
 }
 .fullscreen-slide-play-icon {
   font-size: 56px;
+  opacity: 0.82;
 }
 .search-page-indicator {
   padding: 4px 10px;
@@ -1602,15 +1734,35 @@ onMounted(async () => {
   color: var(--van-text-color-3);
   background: rgba(0, 0, 0, 0.06);
 }
+.preview--inline-video {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-position: center;
+  background: #000;
+}
+.preview--poster-overlay,
+.preview-fallback--overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
 .video-play-badge {
   position: absolute;
   inset: 0;
+  z-index: 3;
   display: flex;
   align-items: center;
   justify-content: center;
-  pointer-events: none;
-  color: rgba(255, 255, 255, 0.95);
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.45));
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.58);
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.35));
 }
 .preview-video-ph-icon {
   font-size: 40px;
@@ -1618,158 +1770,32 @@ onMounted(async () => {
 }
 .video-play-badge-icon {
   font-size: 44px;
+  opacity: 0.82;
 }
-.h5-video-preview-viewport {
-  position: fixed;
-  inset: 0;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  width: 100%;
-  height: 100%;
-  max-width: 100%;
-  max-height: 100%;
-  padding:
-    calc(56px + env(safe-area-inset-top, 0px))
-    calc(12px + env(safe-area-inset-right, 0px))
-    calc(12px + env(safe-area-inset-bottom, 0px))
-    calc(12px + env(safe-area-inset-left, 0px));
-  background: transparent;
-  overflow: hidden;
-  overscroll-behavior: none;
-  -webkit-overflow-scrolling: auto;
-}
-.h5-video-preview-viewport--natural-landscape {
-  padding:
-    calc(12px + env(safe-area-inset-top, 0px))
-    env(safe-area-inset-right, 0px)
-    env(safe-area-inset-bottom, 0px)
-    env(safe-area-inset-left, 0px);
-}
-.h5-video-preview-viewport--forced-landscape {
-  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
-    env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
-}
-.h5-video-preview-viewport--forced-landscape .h5-video-preview-stage {
-  position: absolute;
-  inset: 0;
-  flex: none;
-  width: auto;
-  height: auto;
-  max-width: none;
-  max-height: none;
-  transform: none;
-}
-.h5-video-preview-viewport--forced-landscape .h5-video-preview-el {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 100dvh;
-  width: 100vh;
-  height: 100dvw;
-  height: 100vw;
-  max-width: none;
-  max-height: none;
-  transform: translate(-50%, -50%) rotate(90deg);
-  transform-origin: center center;
-}
-.h5-video-preview-stage {
+.fullscreen-slide--video {
   position: relative;
-  display: flex;
-  flex: 1 1 auto;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-width: 0;
-  min-height: 0;
-  max-width: 100%;
-  max-height: 100%;
-  overflow: hidden;
 }
-.h5-video-preview-el {
-  display: block;
-  width: auto;
-  height: auto;
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-  background: #000;
-  border-radius: 0;
-}
-.h5-video-preview-rotate {
-  position: fixed;
-  top: calc(10px + env(safe-area-inset-top, 0px));
-  right: calc(62px + env(safe-area-inset-right, 0px));
-  z-index: 3001;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  cursor: pointer;
-  touch-action: manipulation;
-}
-.h5-video-preview-rotate:active {
-  background: rgba(0, 0, 0, 0.62);
-}
-.h5-video-preview-rotate-icon {
-  font-size: 22px;
-}
-.h5-video-preview-close {
-  position: fixed;
-  top: calc(10px + env(safe-area-inset-top, 0px));
-  right: calc(10px + env(safe-area-inset-right, 0px));
-  z-index: 3001;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  cursor: pointer;
-  touch-action: manipulation;
-}
-.h5-video-preview-close:active {
-  background: rgba(0, 0, 0, 0.62);
-}
-:deep(.h5-video-preview-popup.van-popup) {
-  top: 0 !important;
-  left: 0 !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  height: 100% !important;
-  max-height: 100% !important;
-  margin: 0;
-  transform: none !important;
-  overflow: hidden !important;
-  background: transparent !important;
-  box-shadow: none;
-}
-:deep(.h5-video-preview-popup.van-popup--center) {
-  transform: none !important;
-}
-:deep(.h5-video-preview-popup .van-popup__content) {
+.fullscreen-slide-video {
   width: 100%;
   height: 100%;
-  max-width: 100%;
-  max-height: 100%;
-  overflow: hidden !important;
+  display: block;
+  object-position: center;
+  background: #000;
+}
+.fullscreen-slide-video-btn {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.58);
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.35));
 }
 .virtual-spacer {
   width: 100%;

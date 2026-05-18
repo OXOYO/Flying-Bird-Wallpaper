@@ -860,7 +860,9 @@
         "videoPreview": {
           "close": "關閉影片預覽",
           "enterLandscape": "橫向播放",
-          "exitLandscape": "退出橫向"
+          "exitLandscape": "退出橫向",
+          "play": "播放影片",
+          "pause": "暫停影片"
         }
       },
       "setting": {

@@ -860,7 +860,9 @@
         "videoPreview": {
           "close": "إغلاق معاينة الفيديو",
           "enterLandscape": "تشغيل أفقي",
-          "exitLandscape": "الخروج من الوضع الأفقي"
+          "exitLandscape": "الخروج من الوضع الأفقي",
+          "play": "Play video",
+          "pause": "Pause video"
         }
       },
       "setting": {

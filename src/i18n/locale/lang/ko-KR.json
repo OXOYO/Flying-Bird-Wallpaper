@@ -860,7 +860,9 @@
         "videoPreview": {
           "close": "동영상 미리보기 닫기",
           "enterLandscape": "가로 재생",
-          "exitLandscape": "가로 모드 종료"
+          "exitLandscape": "가로 모드 종료",
+          "play": "동영상 재생",
+          "pause": "동영상 일시정지"
         }
       },
       "setting": {

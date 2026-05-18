@@ -860,7 +860,9 @@
         "videoPreview": {
           "close": "Закрыть предпросмотр видео",
           "enterLandscape": "Горизонтальное воспроизведение",
-          "exitLandscape": "Выйти из горизонтального режима"
+          "exitLandscape": "Выйти из горизонтального режима",
+          "play": "Play video",
+          "pause": "Pause video"
         }
       },
       "setting": {

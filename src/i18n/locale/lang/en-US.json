@@ -854,6 +854,8 @@
         },
         "videoPreview": {
           "close": "Close video preview",
+          "play": "Play video",
+          "pause": "Pause video",
           "enterLandscape": "Landscape playback",
           "exitLandscape": "Exit landscape"
         },

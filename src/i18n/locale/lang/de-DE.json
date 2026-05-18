@@ -860,7 +860,9 @@
         "videoPreview": {
           "close": "Videovorschau schließen",
           "enterLandscape": "Querformat-Wiedergabe",
-          "exitLandscape": "Querformat beenden"
+          "exitLandscape": "Querformat beenden",
+          "play": "Play video",
+          "pause": "Pause video"
         }
       },
       "setting": {

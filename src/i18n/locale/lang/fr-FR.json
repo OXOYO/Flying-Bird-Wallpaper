@@ -860,7 +860,9 @@
         "videoPreview": {
           "close": "Fermer l'aperçu vidéo",
           "enterLandscape": "Lecture en paysage",
-          "exitLandscape": "Quitter le paysage"
+          "exitLandscape": "Quitter le paysage",
+          "play": "Play video",
+          "pause": "Pause video"
         }
       },
       "setting": {
