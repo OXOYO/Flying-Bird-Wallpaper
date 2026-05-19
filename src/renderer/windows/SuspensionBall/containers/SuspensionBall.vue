@@ -201,7 +201,7 @@ onBeforeUnmount(() => {
       </div>
       <div v-show="isExpanded" class="toolbar">
           <div
-            class="tool-item"
+            class="tool-item tool-item--play"
             @mouseenter="hoveredTip = autoSwitchLabel"
             @mouseleave="hoveredTip = ''"
           >
@@ -220,7 +220,7 @@ onBeforeUnmount(() => {
           </el-button>
           </div>
           <div
-            class="tool-item"
+            class="tool-item tool-item--prev"
             @mouseenter="hoveredTip = $t('actions.prevWallpaper')"
             @mouseleave="hoveredTip = ''"
           >
@@ -229,7 +229,7 @@ onBeforeUnmount(() => {
             </el-button>
           </div>
           <div
-            class="tool-item"
+            class="tool-item tool-item--next"
             @mouseenter="hoveredTip = $t('actions.nextWallpaper')"
             @mouseleave="hoveredTip = ''"
           >
@@ -341,9 +341,25 @@ onBeforeUnmount(() => {
     -webkit-app-region: no-drag;
   }
 
-  /* 向左展开时反转工具栏顺序，关闭钮在最外侧（靠左） */
+  /* 向左展开：关闭钮靠最外侧，上一张/下一张顺序与向右展开一致 */
   &--expand-left .toolbar {
-    flex-direction: row-reverse;
+    flex-direction: row;
+  }
+
+  &--expand-left .tool-item--close {
+    order: 1;
+  }
+
+  &--expand-left .tool-item--prev {
+    order: 2;
+  }
+
+  &--expand-left .tool-item--next {
+    order: 3;
+  }
+
+  &--expand-left .tool-item--play {
+    order: 4;
   }
 
   .tool-item {

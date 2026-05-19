@@ -279,23 +279,12 @@ export const defaultSettingData = {
     dark: false,
     primary: '#71956C'
   },
-  h5AutoSwitch: true,
-  h5SwitchType: 1,
-  h5SwitchIntervalTime: 3,
-  h5SwitchIntervalUnit: 's',
-  h5Resource: 'resources',
-  h5Orientation: '',
-  h5Quality: '',
-  h5SortField: 'created_at',
-  h5SortType: -1,
-  h5ImageDisplaySize: 1,
   h5ImageCompress: true,
   h5ImageCompressStartSize: 2,
   h5FloatingButtonPosition: 'left',
   h5EnabledFloatingButtons: [
     'autoSwitch',
     'intervalTime',
-    'switchType',
     'favorites',
     'displaySize',
     'toggleTabbar',
@@ -385,8 +374,7 @@ export const intervalUnits = {
     { label: '时', value: 'h', min: 1, locale: 'intervalUnits.h' },
     { label: '天', value: 'd', min: 1, locale: 'intervalUnits.d' }
   ],
-  viewImageIntervalUnit: [{ label: '秒', value: 's', min: 2, locale: 'intervalUnits.s' }],
-  h5SwitchIntervalUnit: [{ label: '秒', value: 's', min: 2, locale: 'intervalUnits.s' }]
+  viewImageIntervalUnit: [{ label: '秒', value: 's', min: 2, locale: 'intervalUnits.s' }]
 }
 
 // 时间单位与值对应
@@ -396,8 +384,7 @@ export const unitToValField = {
   downloadIntervalUnit: 'downloadIntervalTime',
   clearDownloadedExpiredUnit: 'clearDownloadedExpiredTime',
   refreshWebWallpaperIntervalUnit: 'refreshWebWallpaperIntervalTime',
-  viewImageIntervalUnit: 'viewImageIntervalTime',
-  h5SwitchIntervalUnit: 'h5SwitchIntervalTime'
+  viewImageIntervalUnit: 'viewImageIntervalTime'
 }
 
 export const qualityList = ['2K', '4K', '5K', '8K']
@@ -478,10 +465,9 @@ export const h5FloatingButtonPositionOptions = [
 export const h5FloatingButtonsOptions = [
   { label: '自动切换', value: 'autoSwitch', locale: 'h5FloatingButtonsOptions.autoSwitch' },
   { label: '切换间隔', value: 'intervalTime', locale: 'h5FloatingButtonsOptions.intervalTime' },
-  { label: '切换方式', value: 'switchType', locale: 'h5FloatingButtonsOptions.switchType' },
   { label: '收藏', value: 'favorites', locale: 'h5FloatingButtonsOptions.favorites' },
   { label: '显示尺寸', value: 'displaySize', locale: 'h5FloatingButtonsOptions.displaySize' },
-  { label: '切换标签栏', value: 'toggleTabbar', locale: 'h5FloatingButtonsOptions.toggleTabbar' },
+  { label: '沉浸模式', value: 'toggleTabbar', locale: 'h5FloatingButtonsOptions.toggleTabbar' },
   { label: '返回顶部', value: 'backtop', locale: 'h5FloatingButtonsOptions.backtop' }
 ]
 

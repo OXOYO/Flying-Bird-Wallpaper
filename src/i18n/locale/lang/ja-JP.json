@@ -591,7 +591,7 @@
     "switchType": "切り替え方式",
     "favorites": "お気に入り",
     "displaySize": "表示サイズ",
-    "toggleTabbar": "タブバー切り替え",
+    "toggleTabbar": "没入モード",
     "backtop": "トップに戻る"
   },
   "h5NumberIndicatorPositionOptions": {
@@ -847,8 +847,8 @@
         "title": "検索",
         "keywordPlaceholder": "キーワードを入力",
         "displayMode": {
-          "toggleToFullscreen": "Full screen view",
-          "toggleToWaterfall": "Waterfall grid",
+          "toggleToFullscreen": "全画面表示に切替",
+          "toggleToWaterfall": "瀑布流に切替",
           "indicator": "{current} / {total}",
           "indicatorLoadedTotal": "{loaded} / {total}"
         },
@@ -856,7 +856,11 @@
           "title": "検索条件",
           "all": "すべて",
           "reset": "条件をリセット",
-          "apply": "条件を適用"
+          "apply": "条件を適用",
+          "listMode": "リストモード",
+          "listModeOrder": "順番",
+          "listModeRandom": "ランダム",
+          "displaySize": "表示サイズ"
         },
         "videoPreview": {
           "close": "動画プレビューを閉じる",
@@ -864,6 +868,17 @@
           "exitLandscape": "横向きを終了",
           "play": "動画を再生",
           "pause": "動画を一時停止"
+        },
+        "actions": {
+          "info": "情報",
+          "favoriteAdd": "お気に入りに追加",
+          "favoriteRemove": "お気に入りから削除",
+          "save": "保存",
+          "delete": "削除",
+          "confirmDelete": "削除の確認",
+          "confirmDeleteMessage": "このリソースを削除しますか？",
+          "confirmDeleteBtn": "確認",
+          "cancelDeleteBtn": "キャンセル"
         }
       },
       "setting": {
@@ -934,7 +949,8 @@
           "h5Vibration": "振動フィードバック",
           "h5WeekScreen": "画面常時点灯",
           "h5HomeSettings": "ホーム設定",
-          "h5GeneralSettings": "一般設定"
+          "h5GeneralSettings": "一般設定",
+          "h5VibrationUnsupported": "このブラウザまたは端末は振動に対応していません。スマートフォンのブラウザでご利用ください。"
         },
         "about": "について",
         "version": "バージョン",

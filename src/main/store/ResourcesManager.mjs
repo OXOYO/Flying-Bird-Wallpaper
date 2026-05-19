@@ -1,6 +1,10 @@
 import { v4 as uuidv4 } from 'uuid'
 import { t } from '../../i18n/server.js'
-import { resolveRemoteSecretKey, applyCodedErrorToResult } from '../../common/utils.js'
+import {
+  API_ERROR_CODE,
+  resolveRemoteSecretKey,
+  applyCodedErrorToResult
+} from '../../common/utils.js'
 
 /** 列表去重/分页用稳定键（勿每次请求生成 uuid） */
 const buildStableResourceUniqueKey = (item) => {
@@ -239,7 +243,9 @@ export default class ResourcesManager {
           return ret
         }
         if (resourceInfo.searchRequired?.keywords && !filterKeywords) {
-          ret.message = t('messages.enterKeywords')
+          ret.success = false
+          ret.errorCode = API_ERROR_CODE.ENTER_KEYWORDS
+          ret.message = ''
           return ret
         }
         const res = await this.apiManager.call(resourceName, 'search', {

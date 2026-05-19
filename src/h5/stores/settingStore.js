@@ -30,6 +30,11 @@ const getDeviceLocale = () => {
   return systemLocaleMap[deviceLocale] || systemLocaleMap[deviceLocale.split('-')[0]] || 'enUS'
 }
 
+const isVibrationApiAvailable = () =>
+  typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function'
+
+const isVibrationSettingOn = (value) => value === true || value === 1 || value === '1'
+
 const UseSettingStore = defineStore('setting', {
   state: () => {
     let localSetting = {
@@ -45,6 +50,12 @@ const UseSettingStore = defineStore('setting', {
         ...JSON.parse(JSON.stringify(defaultSettingData))
       },
       localSetting
+    }
+  },
+  getters: {
+    /** 当前环境是否提供 Vibration API（桌面浏览器多为 false） */
+    isVibrationSupported() {
+      return isVibrationApiAvailable()
     }
   },
   actions: {
@@ -114,17 +125,28 @@ const UseSettingStore = defineStore('setting', {
         }
       })
     },
-    vibrate(duration = 10, callback = null) {
+    /** 触发系统震动（需设置开启且浏览器支持；须在用户手势回调中调用） */
+    vibrate(duration = 15, callback = null) {
       if (typeof duration === 'function') {
         callback = duration
-        duration = 10
+        duration = 15
       }
-      if (this.settingData.h5Vibration && navigator.vibrate) {
-        navigator.vibrate(duration)
+      const ms = Math.max(10, Math.min(200, Number(duration) || 15))
+      const enabled = isVibrationSettingOn(this.settingData.h5Vibration)
+      let vibrated = false
+      if (enabled && isVibrationApiAvailable()) {
+        try {
+          vibrated = navigator.vibrate(ms)
+          // 部分实现无返回值，调用未抛错即视为成功
+          if (vibrated === undefined) vibrated = true
+        } catch (_) {
+          vibrated = false
+        }
       }
       if (callback) {
-        setTimeout(callback, duration)
+        setTimeout(callback, ms)
       }
+      return vibrated
     }
   }
 })

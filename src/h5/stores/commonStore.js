@@ -4,8 +4,10 @@ import * as api from '@h5/api/index.js'
 const UseCommonStore = defineStore('common', {
   state: () => {
     return {
-      activeTabbar: 'home',
+      activeTabbar: 'search',
       tabbarVisible: true,
+      /** 沉浸模式：隐藏顶栏搜索行与底部 TabBar，仅保留右上迷你按钮 */
+      immersiveMode: false,
       resourceMap: JSON.parse(JSON.stringify(defaultResourceMap))
     }
   },
@@ -13,11 +15,21 @@ const UseCommonStore = defineStore('common', {
     setActiveTabbar(name) {
       this.activeTabbar = name
     },
-    toggleTabbarVisible() {
-      this.tabbarVisible = !this.tabbarVisible
-      // 设置根元素的css变量
+    syncTabbarHeightCss() {
       const tabbarHeight = this.tabbarVisible ? 'var(--van-tabbar-height)' : '0px'
       document.documentElement.style.setProperty('--fbw-tabbar-height', tabbarHeight)
+    },
+    setImmersiveMode(enabled) {
+      this.immersiveMode = Boolean(enabled)
+      this.tabbarVisible = !this.immersiveMode
+      this.syncTabbarHeightCss()
+    },
+    toggleImmersiveMode() {
+      this.setImmersiveMode(!this.immersiveMode)
+    },
+    /** @deprecated 使用 toggleImmersiveMode */
+    toggleTabbarVisible() {
+      this.toggleImmersiveMode()
     },
     setResourceMap(resourceMap) {
       this.resourceMap = resourceMap

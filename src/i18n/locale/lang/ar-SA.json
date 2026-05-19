@@ -591,7 +591,7 @@
     "switchType": "وضع التبديل",
     "favorites": "المفضلة",
     "displaySize": "حجم العرض",
-    "toggleTabbar": "تبديل شريط التبويب",
+    "toggleTabbar": "وضع الغمر",
     "backtop": "العودة إلى الأعلى"
   },
   "h5NumberIndicatorPositionOptions": {
@@ -847,8 +847,8 @@
         "title": "بحث",
         "keywordPlaceholder": "أدخل كلمات البحث",
         "displayMode": {
-          "toggleToFullscreen": "Full screen view",
-          "toggleToWaterfall": "Waterfall grid",
+          "toggleToFullscreen": "عرض ملء الشاشة",
+          "toggleToWaterfall": "شبكة متتالية",
           "indicator": "{current} / {total}",
           "indicatorLoadedTotal": "{loaded} / {total}"
         },
@@ -856,7 +856,11 @@
           "title": "شروط البحث",
           "all": "الكل",
           "reset": "إعادة تعيين الفلاتر",
-          "apply": "تطبيق الفلاتر"
+          "apply": "تطبيق الفلاتر",
+          "listMode": "وضع القائمة",
+          "listModeOrder": "تسلسلي",
+          "listModeRandom": "عشوائي",
+          "displaySize": "حجم العرض"
         },
         "videoPreview": {
           "close": "إغلاق معاينة الفيديو",
@@ -864,6 +868,17 @@
           "exitLandscape": "الخروج من الوضع الأفقي",
           "play": "Play video",
           "pause": "Pause video"
+        },
+        "actions": {
+          "info": "معلومات",
+          "favoriteAdd": "إضافة إلى المفضلة",
+          "favoriteRemove": "إزالة من المفضلة",
+          "save": "حفظ",
+          "delete": "حذف",
+          "confirmDelete": "تأكيد الحذف",
+          "confirmDeleteMessage": "حذف هذا المورد؟",
+          "confirmDeleteBtn": "تأكيد",
+          "cancelDeleteBtn": "إلغاء"
         }
       },
       "setting": {
@@ -934,7 +949,8 @@
           "h5Vibration": "ردود الفعل الاهتزازية",
           "h5WeekScreen": "شاشة مفعلة دائماً",
           "h5HomeSettings": "إعدادات الصفحة الرئيسية",
-          "h5GeneralSettings": "الإعدادات العامة"
+          "h5GeneralSettings": "الإعدادات العامة",
+          "h5VibrationUnsupported": "الاهتزاز غير مدعوم في هذا المتصفح أو الجهاز. استخدم متصفح الهاتف المحمول."
         },
         "about": "حول",
         "version": "النسخة",

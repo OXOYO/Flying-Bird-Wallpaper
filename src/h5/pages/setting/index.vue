@@ -1,28 +1,19 @@
 <script setup>
 import {
-  intervalUnits,
-  qualityList,
-  orientationOptions,
-  switchTypeOptions,
-  sortFieldOptions,
-  sortTypeOptions,
-  imageDisplaySizeOptions,
   h5FloatingButtonPositionOptions,
   h5FloatingButtonsOptions,
   h5NumberIndicatorPositionOptions
 } from '@common/publicData.js'
 import { localeOptions } from '@i18n/locale/index.js'
 import { appInfo } from '@common/config.js'
-import UseCommonStore from '@h5/stores/commonStore.js'
 import UseSettingStore from '@h5/stores/settingStore.js'
 import { resolveApiUserMessage } from '@common/utils.js'
 import { useTranslation } from 'i18next-vue'
 
 const { t } = useTranslation()
 
-const commonStore = UseCommonStore()
 const settingStore = UseSettingStore()
-const { settingData, localSetting } = storeToRefs(settingStore)
+const { settingData, localSetting, isVibrationSupported } = storeToRefs(settingStore)
 
 const settingDataForm = reactive(settingData.value)
 const localSettingForm = reactive(localSetting.value)
@@ -32,13 +23,6 @@ const expandedSections = ref([])
 
 const showPickers = reactive({
   h5Locale: false,
-  h5SwitchType: false,
-  h5Resource: false,
-  h5Orientation: false,
-  h5Quality: false,
-  h5SortField: false,
-  h5SortType: false,
-  h5ImageDisplaySize: false,
   h5FloatingButtonPosition: false,
   h5EnabledFloatingButtons: false,
   h5NumberIndicatorPosition: false
@@ -54,13 +38,6 @@ const optionsToColumns = (options) => {
   }))
 }
 
-const listToColumns = (list) => {
-  return list.map((value) => ({
-    value,
-    text: value
-  }))
-}
-
 const addEmptyOption = (options) => {
   return [
     {
@@ -71,21 +48,9 @@ const addEmptyOption = (options) => {
   ]
 }
 
-const resourceMap = computed(() => {
-  return commonStore.resourceMap
-})
-
 const pickerColumns = computed(() => {
   return {
     h5Locale: optionsToColumns(localeOptions),
-    h5SwitchType: optionsToColumns(switchTypeOptions),
-    h5SwitchIntervalUnit: optionsToColumns(intervalUnits.h5SwitchIntervalUnit),
-    h5Resource: optionsToColumns(toRaw(resourceMap.value.wallpaperResourceList)),
-    h5Orientation: addEmptyOption(optionsToColumns(orientationOptions)),
-    h5Quality: addEmptyOption(listToColumns(qualityList)),
-    h5SortField: optionsToColumns(sortFieldOptions),
-    h5SortType: optionsToColumns(sortTypeOptions),
-    h5ImageDisplaySize: optionsToColumns(imageDisplaySizeOptions),
     h5FloatingButtonPosition: optionsToColumns(h5FloatingButtonPositionOptions),
     h5EnabledFloatingButtons: optionsToColumns(h5FloatingButtonsOptions),
     h5NumberIndicatorPosition: addEmptyOption(optionsToColumns(h5NumberIndicatorPositionOptions))
@@ -95,13 +60,6 @@ const pickerColumns = computed(() => {
 const fieldsData = computed(() => {
   let ret = {
     h5Locale: '',
-    h5SwitchType: '',
-    h5Resource: '',
-    h5Orientation: '',
-    h5Quality: '',
-    h5SortField: '',
-    h5SortType: '',
-    h5ImageDisplaySize: '',
     h5FloatingButtonPosition: '',
     h5NumberIndicatorPosition: ''
   }
@@ -150,14 +108,6 @@ const onConfirmPicker = (field, { selectedValues }) => {
       settingDataForm.h5Locale = selectedValues[0]
       settingDataForm.isH5LocaleSet = true
       break
-    case 'h5SwitchType':
-    case 'h5SwitchIntervalUnit':
-    case 'h5Resource':
-    case 'h5Orientation':
-    case 'h5Quality':
-    case 'h5SortField':
-    case 'h5SortType':
-    case 'h5ImageDisplaySize':
     case 'h5FloatingButtonPosition':
     case 'h5NumberIndicatorPosition':
       settingDataForm[field] = selectedValues[0]
@@ -175,6 +125,20 @@ const onConfirmPicker = (field, { selectedValues }) => {
 }
 const onCancelPicker = (field) => {
   showPickers[field] = false
+}
+
+const onVibrationSwitchChange = async () => {
+  if (settingDataForm.h5Vibration) {
+    const ok = settingStore.vibrate(30)
+    if (!ok) {
+      showToast({
+        message: t('h5.pages.setting.form.h5VibrationUnsupported'),
+        position: 'bottom',
+        duration: 2800
+      })
+    }
+  }
+  await onSettingDataChange('h5Vibration')
 }
 
 const onSettingDataChange = async (field) => {
@@ -201,18 +165,6 @@ const onSettingDataChange = async (field) => {
     message: res.success
       ? String(res.message ?? '').trim() || t('messages.operationSuccess')
       : resolveApiUserMessage(res, t)
-  })
-}
-
-const onH5SwitchIntervalTimeUpdate = (value) => {
-  const unitItem = intervalUnits.h5SwitchIntervalUnit.find(
-    (item) => item.value === settingDataForm.h5SwitchIntervalUnit
-  )
-  const unitLabel = unitItem ? t(unitItem.locale) || unitItem.label : ''
-  const message = value + unitLabel
-  showToast({
-    message,
-    position: 'top'
   })
 }
 
@@ -301,230 +253,58 @@ onMounted(() => {
           </van-cell-group>
         </van-collapse-item>
 
-        <van-collapse-item name="home" :title="t('h5.pages.setting.form.h5HomeSettings')">
-          <van-cell-group inset :border="false">
-        <van-field
-          v-model="fieldsData.h5Resource"
-          is-link
-          readonly
-          name="h5Resource"
-          :label="t('h5.pages.setting.form.h5Resource.label')"
-          :placeholder="t('h5.pages.setting.form.h5Resource.placeholder')"
-          @click="onShowPicker('h5Resource')"
-        />
-        <van-popup v-model:show="showPickers.h5Resource" destroy-on-close position="bottom">
-          <van-picker
-            :columns="pickerColumns.h5Resource"
-            :model-value="[settingDataForm.h5Resource]"
-            @confirm="(...args) => onConfirmPicker('h5Resource', ...args)"
-            @cancel="(...args) => onCancelPicker('h5Resource', ...args)"
-          />
-        </van-popup>
-
-        <van-field
-          v-model="fieldsData.h5Orientation"
-          is-link
-          readonly
-          name="h5Orientation"
-          :label="t('h5.pages.setting.form.h5Orientation.label')"
-          :placeholder="t('h5.pages.setting.form.h5Orientation.placeholder')"
-          @click="onShowPicker('h5Orientation')"
-        />
-        <van-popup v-model:show="showPickers.h5Orientation" destroy-on-close position="bottom">
-          <van-picker
-            :columns="pickerColumns.h5Orientation"
-            :model-value="[settingDataForm.h5Orientation]"
-            @confirm="(...args) => onConfirmPicker('h5Orientation', ...args)"
-            @cancel="(...args) => onCancelPicker('h5Orientation', ...args)"
-          />
-        </van-popup>
-
-        <van-field
-          v-model="fieldsData.h5Quality"
-          is-link
-          readonly
-          name="h5Quality"
-          :label="t('h5.pages.setting.form.h5Quality.label')"
-          :placeholder="t('h5.pages.setting.form.h5Quality.placeholder')"
-          @click="onShowPicker('h5Quality')"
-        />
-        <van-popup v-model:show="showPickers.h5Quality" destroy-on-close position="bottom">
-          <van-picker
-            :columns="pickerColumns.h5Quality"
-            :model-value="[settingDataForm.h5Quality]"
-            @confirm="(...args) => onConfirmPicker('h5Quality', ...args)"
-            @cancel="(...args) => onCancelPicker('h5Quality', ...args)"
-          />
-        </van-popup>
-
-        <van-field
-          v-model="fieldsData.h5SortField"
-          is-link
-          readonly
-          name="h5SortField"
-          :label="t('h5.pages.setting.form.h5SortField.label')"
-          :placeholder="t('h5.pages.setting.form.h5SortField.placeholder')"
-          @click="onShowPicker('h5SortField')"
-        />
-        <van-popup v-model:show="showPickers.h5SortField" destroy-on-close position="bottom">
-          <van-picker
-            :columns="pickerColumns.h5SortField"
-            :model-value="[settingDataForm.h5SortField]"
-            @confirm="(...args) => onConfirmPicker('h5SortField', ...args)"
-            @cancel="(...args) => onCancelPicker('h5SortField', ...args)"
-          />
-        </van-popup>
-
-        <van-field
-          v-model="fieldsData.h5SortType"
-          is-link
-          readonly
-          name="h5SortType"
-          :label="t('h5.pages.setting.form.h5SortType.label')"
-          :placeholder="t('h5.pages.setting.form.h5SortType.placeholder')"
-          @click="onShowPicker('h5SortType')"
-        />
-        <van-popup v-model:show="showPickers.h5SortType" destroy-on-close position="bottom">
-          <van-picker
-            :columns="pickerColumns.h5SortType"
-            :model-value="[settingDataForm.h5SortType]"
-            @confirm="(...args) => onConfirmPicker('h5SortType', ...args)"
-            @cancel="(...args) => onCancelPicker('h5SortType', ...args)"
-          />
-        </van-popup>
-
-        <van-cell :title="t('h5.pages.setting.form.h5AutoSwitch')">
-          <template #right-icon>
-            <van-switch
-              v-model="settingDataForm.h5AutoSwitch"
-              size="20px"
-              @change="onSettingDataChange('h5AutoSwitch')"
-            />
-          </template>
-        </van-cell>
-
-        <van-field
-          v-model="fieldsData.h5SwitchType"
-          is-link
-          readonly
-          name="h5SwitchType"
-          :label="t('h5.pages.setting.form.h5SwitchType.label')"
-          :placeholder="t('h5.pages.setting.form.h5SwitchType.placeholder')"
-          @click="onShowPicker('h5SwitchType')"
-        />
-        <van-popup v-model:show="showPickers.h5SwitchType" destroy-on-close position="bottom">
-          <van-picker
-            :columns="pickerColumns.h5SwitchType"
-            :model-value="[settingDataForm.h5SwitchType]"
-            @confirm="(...args) => onConfirmPicker('h5SwitchType', ...args)"
-            @cancel="(...args) => onCancelPicker('h5SwitchType', ...args)"
-          />
-        </van-popup>
-
-        <van-field
-          name="h5SwitchIntervalTime"
-          :label="t('h5.pages.setting.form.h5SwitchIntervalTime')"
-        >
-          <template #input>
-            <div class="interval-setting">
-              <van-slider
-                v-model="settingDataForm.h5SwitchIntervalTime"
-                min="2"
-                max="60"
-                @update:model-value="onH5SwitchIntervalTimeUpdate"
-                @change="onSettingDataChange('h5SwitchIntervalTime')"
-              >
-                <template #button>
-                  <div class="slider-button">{{ settingDataForm.h5SwitchIntervalTime }}</div>
-                </template>
-              </van-slider>
-              <van-dropdown-menu style="width: 100px">
-                <van-dropdown-item
-                  v-model="settingDataForm.h5SwitchIntervalUnit"
-                  :options="pickerColumns.h5SwitchIntervalUnit"
-                  @change="onSettingDataChange('h5SwitchIntervalUnit')"
-                />
-              </van-dropdown-menu>
-            </div>
-          </template>
-        </van-field>
-
-        <van-field
-          v-model="fieldsData.h5FloatingButtonPosition"
-          is-link
-          readonly
-          name="h5FloatingButtonPosition"
-          :label="t('h5.pages.setting.form.h5FloatingButtonPosition.label')"
-          :placeholder="t('h5.pages.setting.form.h5FloatingButtonPosition.placeholder')"
-          @click="onShowPicker('h5FloatingButtonPosition')"
-        />
-        <van-popup
-          v-model:show="showPickers.h5FloatingButtonPosition"
-          destroy-on-close
-          position="bottom"
-        >
-          <van-picker
-            :columns="pickerColumns.h5FloatingButtonPosition"
-            :model-value="[settingDataForm.h5FloatingButtonPosition]"
-            @confirm="(...args) => onConfirmPicker('h5FloatingButtonPosition', ...args)"
-            @cancel="(...args) => onCancelPicker('h5FloatingButtonPosition', ...args)"
-          />
-        </van-popup>
-
-        <van-field
-          is-link
-          readonly
-          name="h5EnabledFloatingButtons"
-          :label="t('h5.pages.setting.form.h5EnabledFloatingButtons.label')"
-          :placeholder="t('h5.pages.setting.form.h5EnabledFloatingButtons.placeholder')"
-          @click="onShowPicker('h5EnabledFloatingButtons')"
-        />
-        <van-popup
-          v-model:show="showPickers.h5EnabledFloatingButtons"
-          destroy-on-close
-          position="bottom"
-        >
-          <van-picker
-            :columns="pickerColumns.h5EnabledFloatingButtons"
-            @confirm="(...args) => onConfirmPicker('h5EnabledFloatingButtons', ...args)"
-            @cancel="(...args) => onCancelPicker('h5EnabledFloatingButtons', ...args)"
-          >
-            <template #option="option">
-              <van-checkbox
-                v-model="floatingButtonsChecked[option.value]"
-                :name="option.value"
-                shape="square"
-              >
-                <div style="display: inline-block; min-width: 100px">{{ option.text }}</div>
-              </van-checkbox>
-            </template>
-          </van-picker>
-        </van-popup>
-          </van-cell-group>
-        </van-collapse-item>
-
         <van-collapse-item name="general" :title="t('h5.pages.setting.form.h5GeneralSettings')">
           <van-cell-group inset :border="false">
             <van-field
-              v-model="fieldsData.h5ImageDisplaySize"
+              v-model="fieldsData.h5FloatingButtonPosition"
               is-link
               readonly
-              name="h5ImageDisplaySize"
-              :label="t('h5.pages.setting.form.h5ImageDisplaySize.label')"
-              :placeholder="t('h5.pages.setting.form.h5ImageDisplaySize.placeholder')"
-              @click="onShowPicker('h5ImageDisplaySize')"
+              name="h5FloatingButtonPosition"
+              :label="t('h5.pages.setting.form.h5FloatingButtonPosition.label')"
+              :placeholder="t('h5.pages.setting.form.h5FloatingButtonPosition.placeholder')"
+              @click="onShowPicker('h5FloatingButtonPosition')"
             />
             <van-popup
-              v-model:show="showPickers.h5ImageDisplaySize"
+              v-model:show="showPickers.h5FloatingButtonPosition"
               destroy-on-close
               position="bottom"
             >
               <van-picker
-                :columns="pickerColumns.h5ImageDisplaySize"
-                :model-value="[settingDataForm.h5ImageDisplaySize]"
-                @confirm="(...args) => onConfirmPicker('h5ImageDisplaySize', ...args)"
-                @cancel="(...args) => onCancelPicker('h5ImageDisplaySize', ...args)"
+                :columns="pickerColumns.h5FloatingButtonPosition"
+                :model-value="[settingDataForm.h5FloatingButtonPosition]"
+                @confirm="(...args) => onConfirmPicker('h5FloatingButtonPosition', ...args)"
+                @cancel="(...args) => onCancelPicker('h5FloatingButtonPosition', ...args)"
               />
+            </van-popup>
+
+            <van-field
+              is-link
+              readonly
+              name="h5EnabledFloatingButtons"
+              :label="t('h5.pages.setting.form.h5EnabledFloatingButtons.label')"
+              :placeholder="t('h5.pages.setting.form.h5EnabledFloatingButtons.placeholder')"
+              @click="onShowPicker('h5EnabledFloatingButtons')"
+            />
+            <van-popup
+              v-model:show="showPickers.h5EnabledFloatingButtons"
+              destroy-on-close
+              position="bottom"
+            >
+              <van-picker
+                :columns="pickerColumns.h5EnabledFloatingButtons"
+                @confirm="(...args) => onConfirmPicker('h5EnabledFloatingButtons', ...args)"
+                @cancel="(...args) => onCancelPicker('h5EnabledFloatingButtons', ...args)"
+              >
+                <template #option="option">
+                  <van-checkbox
+                    v-model="floatingButtonsChecked[option.value]"
+                    :name="option.value"
+                    shape="square"
+                  >
+                    <div style="display: inline-block; min-width: 100px">{{ option.text }}</div>
+                  </van-checkbox>
+                </template>
+              </van-picker>
             </van-popup>
 
             <van-cell :title="t('h5.pages.setting.form.h5ImageCompress')">
@@ -584,8 +364,13 @@ onMounted(() => {
                 <van-switch
                   v-model="settingDataForm.h5Vibration"
                   size="20px"
-                  @change="onSettingDataChange('h5Vibration')"
+                  @change="onVibrationSwitchChange"
                 />
+              </template>
+              <template v-if="!isVibrationSupported" #label>
+                <span class="setting-vibration-hint">
+                  {{ t('h5.pages.setting.form.h5VibrationUnsupported') }}
+                </span>
               </template>
             </van-cell>
 
@@ -676,5 +461,13 @@ onMounted(() => {
 
 :deep(.van-radio) {
   margin-right: 12px;
+}
+
+.setting-vibration-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--van-text-color-3);
 }
 </style>

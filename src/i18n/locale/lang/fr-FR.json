@@ -591,7 +591,7 @@
     "switchType": "mode de changement",
     "favorites": "favoris",
     "displaySize": "taille d'affichage",
-    "toggleTabbar": "basculer la barre d'onglets",
+    "toggleTabbar": "Mode immersif",
     "backtop": "retour en haut"
   },
   "h5NumberIndicatorPositionOptions": {
@@ -847,8 +847,8 @@
         "title": "Recherche",
         "keywordPlaceholder": "Saisissez des mots-clés",
         "displayMode": {
-          "toggleToFullscreen": "Full screen view",
-          "toggleToWaterfall": "Waterfall grid",
+          "toggleToFullscreen": "Passer en plein écran",
+          "toggleToWaterfall": "Passer en grille",
           "indicator": "{current} / {total}",
           "indicatorLoadedTotal": "{loaded} / {total}"
         },
@@ -856,7 +856,11 @@
           "title": "Filtres de recherche",
           "all": "Tous",
           "reset": "Réinitialiser les filtres",
-          "apply": "Appliquer les filtres"
+          "apply": "Appliquer les filtres",
+          "listMode": "Mode liste",
+          "listModeOrder": "Ordre",
+          "listModeRandom": "Aléatoire",
+          "displaySize": "Taille d'affichage"
         },
         "videoPreview": {
           "close": "Fermer l'aperçu vidéo",
@@ -864,6 +868,17 @@
           "exitLandscape": "Quitter le paysage",
           "play": "Play video",
           "pause": "Pause video"
+        },
+        "actions": {
+          "info": "Infos",
+          "favoriteAdd": "Ajouter aux favoris",
+          "favoriteRemove": "Retirer des favoris",
+          "save": "Enregistrer",
+          "delete": "Supprimer",
+          "confirmDelete": "Confirmer la suppression",
+          "confirmDeleteMessage": "Supprimer cet élément ?",
+          "confirmDeleteBtn": "Confirmer",
+          "cancelDeleteBtn": "Annuler"
         }
       },
       "setting": {
@@ -934,7 +949,8 @@
           "h5Vibration": "Retour haptique",
           "h5WeekScreen": "Écran toujours allumé",
           "h5HomeSettings": "Paramètres d'accueil",
-          "h5GeneralSettings": "Paramètres généraux"
+          "h5GeneralSettings": "Paramètres généraux",
+          "h5VibrationUnsupported": "Les vibrations ne sont pas prises en charge sur ce navigateur ou appareil. Utilisez un navigateur mobile."
         },
         "about": "À propos",
         "version": "Version",

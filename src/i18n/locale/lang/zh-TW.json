@@ -591,7 +591,7 @@
     "switchType": "切換方式",
     "favorites": "收藏",
     "displaySize": "顯示尺寸",
-    "toggleTabbar": "切換標籤欄",
+    "toggleTabbar": "沉浸模式",
     "backtop": "返回頂部"
   },
   "h5NumberIndicatorPositionOptions": {
@@ -856,7 +856,11 @@
           "title": "搜尋條件",
           "all": "全部",
           "reset": "重置篩選",
-          "apply": "套用篩選"
+          "apply": "套用篩選",
+          "listMode": "列表模式",
+          "listModeOrder": "順序",
+          "listModeRandom": "隨機",
+          "displaySize": "顯示方式"
         },
         "videoPreview": {
           "close": "關閉影片預覽",
@@ -864,6 +868,17 @@
           "exitLandscape": "退出橫向",
           "play": "播放影片",
           "pause": "暫停影片"
+        },
+        "actions": {
+          "info": "資訊",
+          "favoriteAdd": "加入收藏",
+          "favoriteRemove": "移除收藏",
+          "save": "儲存",
+          "delete": "刪除",
+          "confirmDelete": "確認刪除",
+          "confirmDeleteMessage": "確認要刪除該資源嗎？",
+          "confirmDeleteBtn": "確認",
+          "cancelDeleteBtn": "取消"
         }
       },
       "setting": {
@@ -934,7 +949,8 @@
           "h5Vibration": "震動回饋",
           "h5WeekScreen": "螢幕常亮",
           "h5HomeSettings": "首頁設定",
-          "h5GeneralSettings": "通用設定"
+          "h5GeneralSettings": "通用設定",
+          "h5VibrationUnsupported": "目前瀏覽器或裝置不支援系統震動，請在手機瀏覽器中開啟使用"
         },
         "about": "關於",
         "version": "版本",

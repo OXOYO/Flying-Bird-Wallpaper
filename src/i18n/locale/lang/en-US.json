@@ -592,7 +592,7 @@
     "switchType": "Switch Type",
     "favorites": "Favorites",
     "displaySize": "Display Size",
-    "toggleTabbar": "Toggle Tabbar",
+    "toggleTabbar": "Immersive mode",
     "backtop": "Back to Top"
   },
   "h5NumberIndicatorPositionOptions": {
@@ -864,7 +864,22 @@
           "title": "Search Filters",
           "all": "All",
           "reset": "Reset Filters",
-          "apply": "Apply Filters"
+          "apply": "Apply Filters",
+          "listMode": "List mode",
+          "listModeOrder": "Sequential",
+          "listModeRandom": "Random",
+          "displaySize": "Display size"
+        },
+        "actions": {
+          "info": "Info",
+          "favoriteAdd": "Add to favorites",
+          "favoriteRemove": "Remove from favorites",
+          "save": "Save",
+          "delete": "Delete",
+          "confirmDelete": "Confirm delete",
+          "confirmDeleteMessage": "Delete this item?",
+          "confirmDeleteBtn": "Delete",
+          "cancelDeleteBtn": "Cancel"
         }
       },
       "setting": {
@@ -935,6 +950,7 @@
             "placeholder": "Select number indicator position"
           },
           "h5Vibration": "Vibration feedback",
+          "h5VibrationUnsupported": "Vibration is not supported in this browser or device. Use a mobile browser.",
           "h5WeekScreen": "Screen always on"
         },
         "about": "About",

@@ -4,7 +4,11 @@ import { setWallpaper } from 'wallpaper'
 import axios from 'axios'
 import { t } from '../../i18n/server.js'
 import { isMac, handleTimeByUnit, createSolidColorBMP } from '../utils/utils.mjs'
-import { resolveRemoteSecretKey, applyCodedErrorToResult } from '../../common/utils.js'
+import {
+  API_ERROR_CODE,
+  resolveRemoteSecretKey,
+  applyCodedErrorToResult
+} from '../../common/utils.js'
 
 export default class WallpaperManager {
   // 单例实例
@@ -713,7 +717,9 @@ export default class WallpaperManager {
       return ret
     }
     if (resourceInfo.downloadRequired?.keywords && !keywords) {
-      ret.message = t('messages.enterKeywords')
+      ret.success = false
+      ret.errorCode = API_ERROR_CODE.ENTER_KEYWORDS
+      ret.message = ''
       return ret
     }
 

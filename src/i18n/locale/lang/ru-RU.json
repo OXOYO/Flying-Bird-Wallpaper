@@ -591,7 +591,7 @@
     "switchType": "тип переключения",
     "favorites": "избранное",
     "displaySize": "размер отображения",
-    "toggleTabbar": "переключить панель вкладок",
+    "toggleTabbar": "Режим погружения",
     "backtop": "наверх"
   },
   "h5NumberIndicatorPositionOptions": {
@@ -847,8 +847,8 @@
         "title": "Поиск",
         "keywordPlaceholder": "Введите ключевые слова",
         "displayMode": {
-          "toggleToFullscreen": "Full screen view",
-          "toggleToWaterfall": "Waterfall grid",
+          "toggleToFullscreen": "Полноэкранный режим",
+          "toggleToWaterfall": "Режим ленты",
           "indicator": "{current} / {total}",
           "indicatorLoadedTotal": "{loaded} / {total}"
         },
@@ -856,7 +856,11 @@
           "title": "Фильтры поиска",
           "all": "Все",
           "reset": "Сбросить фильтры",
-          "apply": "Применить фильтры"
+          "apply": "Применить фильтры",
+          "listMode": "Режим списка",
+          "listModeOrder": "По порядку",
+          "listModeRandom": "Случайно",
+          "displaySize": "Размер отображения"
         },
         "videoPreview": {
           "close": "Закрыть предпросмотр видео",
@@ -864,6 +868,17 @@
           "exitLandscape": "Выйти из горизонтального режима",
           "play": "Play video",
           "pause": "Pause video"
+        },
+        "actions": {
+          "info": "Информация",
+          "favoriteAdd": "В избранное",
+          "favoriteRemove": "Убрать из избранного",
+          "save": "Сохранить",
+          "delete": "Удалить",
+          "confirmDelete": "Подтвердить удаление",
+          "confirmDeleteMessage": "Удалить этот ресурс?",
+          "confirmDeleteBtn": "Подтвердить",
+          "cancelDeleteBtn": "Отмена"
         }
       },
       "setting": {
@@ -934,7 +949,8 @@
           "h5Vibration": "Вибрационная обратная связь",
           "h5WeekScreen": "Экран всегда включен",
           "h5HomeSettings": "Настройки главной",
-          "h5GeneralSettings": "Общие настройки"
+          "h5GeneralSettings": "Общие настройки",
+          "h5VibrationUnsupported": "Вибрация не поддерживается в этом браузере или на устройстве. Используйте мобильный браузер."
         },
         "about": "О программе",
         "version": "Версия",

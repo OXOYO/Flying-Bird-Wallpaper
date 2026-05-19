@@ -591,7 +591,7 @@
     "switchType": "modalità cambio",
     "favorites": "preferiti",
     "displaySize": "dimensione visualizzazione",
-    "toggleTabbar": "attiva/disattiva barra schede",
+    "toggleTabbar": "Modalità immersiva",
     "backtop": "torna in alto"
   },
   "h5NumberIndicatorPositionOptions": {
@@ -847,8 +847,8 @@
         "title": "Cerca",
         "keywordPlaceholder": "Inserisci parole chiave",
         "displayMode": {
-          "toggleToFullscreen": "Full screen view",
-          "toggleToWaterfall": "Waterfall grid",
+          "toggleToFullscreen": "Schermo intero",
+          "toggleToWaterfall": "Griglia a cascata",
           "indicator": "{current} / {total}",
           "indicatorLoadedTotal": "{loaded} / {total}"
         },
@@ -856,7 +856,11 @@
           "title": "Filtri di ricerca",
           "all": "Tutti",
           "reset": "Reimposta filtri",
-          "apply": "Applica filtri"
+          "apply": "Applica filtri",
+          "listMode": "Modalità elenco",
+          "listModeOrder": "Sequenziale",
+          "listModeRandom": "Casuale",
+          "displaySize": "Dimensione visualizzazione"
         },
         "videoPreview": {
           "close": "Chiudi anteprima video",
@@ -864,6 +868,17 @@
           "exitLandscape": "Esci da orizzontale",
           "play": "Play video",
           "pause": "Pause video"
+        },
+        "actions": {
+          "info": "Info",
+          "favoriteAdd": "Aggiungi ai preferiti",
+          "favoriteRemove": "Rimuovi dai preferiti",
+          "save": "Salva",
+          "delete": "Elimina",
+          "confirmDelete": "Conferma eliminazione",
+          "confirmDeleteMessage": "Eliminare questa risorsa?",
+          "confirmDeleteBtn": "Conferma",
+          "cancelDeleteBtn": "Annulla"
         }
       },
       "setting": {
@@ -934,7 +949,8 @@
           "h5Vibration": "Feedback vibrazione",
           "h5WeekScreen": "Schermo sempre attivo",
           "h5HomeSettings": "Impostazioni home",
-          "h5GeneralSettings": "Impostazioni generali"
+          "h5GeneralSettings": "Impostazioni generali",
+          "h5VibrationUnsupported": "La vibrazione non è supportata su questo browser o dispositivo. Usa un browser mobile."
         },
         "about": "Informazioni",
         "version": "Versione",

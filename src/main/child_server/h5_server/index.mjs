@@ -9,7 +9,15 @@ import ApiManager from '../../store/ApiManager.mjs'
 import ApiBase from '../../ApiBase.js'
 import axios from 'axios'
 import { calculateImageOrientation, calculateImageQuality } from '../../utils/utils.mjs'
+import { changeLanguage } from '../../../i18n/server.js'
 import server from './server.mjs'
+
+const syncH5ServerLocale = async (settingManager) => {
+  const locale = settingManager?.settingData?.h5Locale || settingManager?.settingData?.locale
+  if (locale) {
+    await changeLanguage(locale)
+  }
+}
 
 const bindPluginApiHelpers = (logger) => {
   global.FBW = global.FBW || {}
@@ -75,6 +83,7 @@ process.parentPort.on('message', (e) => {
         // 初始化各种管理器并等待它们初始化完成
         settingManager = SettingManager.getInstance(logger, dbManager)
         await settingManager.waitForInitialization()
+        await syncH5ServerLocale(settingManager)
 
         fileManager = FileManager.getInstance(logger, dbManager, settingManager)
         apiManager = ApiManager.getInstance(logger, dbManager)
@@ -108,6 +117,7 @@ process.parentPort.on('message', (e) => {
         broadcastSettingUpdated = serverRes.broadcastSettingUpdated
       } else if (data.event === 'APP_SETTING_UPDATED') {
         await settingManager.getSettingData()
+        await syncH5ServerLocale(settingManager)
         // 通过 SSE 广播设置更新给所有客户端
         broadcastSettingUpdated?.({
           success: true,

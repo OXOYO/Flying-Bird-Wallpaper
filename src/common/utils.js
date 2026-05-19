@@ -54,7 +54,8 @@ export const API_ERROR_CODE = {
   API_PLUGIN_NOT_FOUND: 'API_PLUGIN_NOT_FOUND',
   API_PLUGIN_METHOD_MISSING: 'API_PLUGIN_METHOD_MISSING',
   OPEN_DIR_INVALID_PATH: 'OPEN_DIR_INVALID_PATH',
-  OPEN_DIR_NOT_FOUND: 'OPEN_DIR_NOT_FOUND'
+  OPEN_DIR_NOT_FOUND: 'OPEN_DIR_NOT_FOUND',
+  ENTER_KEYWORDS: 'ENTER_KEYWORDS'
 }
 
 /** 构造带 errorCode 的 Error，供主进程抛出、Store 捕获后写入响应 */
@@ -129,8 +130,14 @@ export const resolveApiUserMessage = (input, t) => {
   if (code === API_ERROR_CODE.OPEN_DIR_NOT_FOUND) {
     return t('messages.openDirNotFound', { path: params.path ?? '' })
   }
+  if (code === API_ERROR_CODE.ENTER_KEYWORDS) {
+    return t('messages.enterKeywords')
+  }
 
   if (!raw) return t('messages.getDataFail')
+  if (/^please enter keywords!?$/i.test(raw)) {
+    return t('messages.enterKeywords')
+  }
   if (/^未找到API插件:\s*/.test(raw)) {
     return t('messages.apiPluginNotFound', {
       resourceName: raw.replace(/^未找到API插件:\s*/, '').trim()

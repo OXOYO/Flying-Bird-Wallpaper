@@ -591,7 +591,7 @@
     "switchType": "전환 방식",
     "favorites": "즐겨찾기",
     "displaySize": "표시 크기",
-    "toggleTabbar": "탭바 전환",
+    "toggleTabbar": "몰입 모드",
     "backtop": "맨 위로"
   },
   "h5NumberIndicatorPositionOptions": {
@@ -847,8 +847,8 @@
         "title": "검색",
         "keywordPlaceholder": "키워드를 입력하세요",
         "displayMode": {
-          "toggleToFullscreen": "Full screen view",
-          "toggleToWaterfall": "Waterfall grid",
+          "toggleToFullscreen": "전체 화면으로 전환",
+          "toggleToWaterfall": "워터폴로 전환",
           "indicator": "{current} / {total}",
           "indicatorLoadedTotal": "{loaded} / {total}"
         },
@@ -856,7 +856,11 @@
           "title": "검색 조건",
           "all": "전체",
           "reset": "필터 초기화",
-          "apply": "필터 적용"
+          "apply": "필터 적용",
+          "listMode": "목록 모드",
+          "listModeOrder": "순서",
+          "listModeRandom": "무작위",
+          "displaySize": "표시 크기"
         },
         "videoPreview": {
           "close": "동영상 미리보기 닫기",
@@ -864,6 +868,17 @@
           "exitLandscape": "가로 모드 종료",
           "play": "동영상 재생",
           "pause": "동영상 일시정지"
+        },
+        "actions": {
+          "info": "정보",
+          "favoriteAdd": "즐겨찾기에 추가",
+          "favoriteRemove": "즐겨찾기에서 제거",
+          "save": "저장",
+          "delete": "삭제",
+          "confirmDelete": "삭제 확인",
+          "confirmDeleteMessage": "이 리소스를 삭제하시겠습니까?",
+          "confirmDeleteBtn": "확인",
+          "cancelDeleteBtn": "취소"
         }
       },
       "setting": {
@@ -934,7 +949,8 @@
           "h5Vibration": "진동 피드백",
           "h5WeekScreen": "화면 항상 켜짐",
           "h5HomeSettings": "홈 설정",
-          "h5GeneralSettings": "일반 설정"
+          "h5GeneralSettings": "일반 설정",
+          "h5VibrationUnsupported": "이 브라우저 또는 기기는 진동을 지원하지 않습니다. 모바일 브라우저에서 이용해 주세요."
         },
         "about": "정보",
         "version": "버전",

@@ -1,7 +1,6 @@
 <script setup>
 import UseCommonStore from './stores/commonStore.js'
 import UseSettingStore from './stores/settingStore.js'
-import home from './pages/home/index.vue'
 import search from './pages/search/index.vue'
 import setting from './pages/setting/index.vue'
 import pageEmpty from './components/pageEmpty.vue'
@@ -32,7 +31,6 @@ const { activeTabbar, tabbarVisible } = storeToRefs(commonStore)
 const { settingData } = storeToRefs(settingStore)
 
 const pages = {
-  home,
   search,
   setting
 }
@@ -40,13 +38,11 @@ const pages = {
 const pageRef = ref(null)
 
 const tabbarList = [
-  { name: 'home', title: '首页', locale: 'h5.tabbar.home', icon: 'custom:home-3-line' },
   { name: 'search', title: '搜索', locale: 'h5.tabbar.search', icon: 'custom:search' },
   { name: 'setting', title: '设置', locale: 'h5.tabbar.setting', icon: 'custom:settings' }
 ]
 
-// 默认tab: 首页
-const DEFAULT_TAB = 'home'
+const DEFAULT_TAB = 'search'
 
 // 添加loading状态
 const loadingTab = ref('')
@@ -212,10 +208,10 @@ onBeforeMount(async () => {
   await settingStore.getSettingData()
   // 获取资源数据
   await commonStore.getResourceMap()
-  // 初始化首页
-  if (pageRef.value.init) {
+  if (pageRef.value?.init) {
     pageRef.value.init()
   }
+  commonStore.syncTabbarHeightCss()
   // 初始化previousActiveTabbar
   prevActiveTabbar = activeTabbar.value
 })

@@ -8,12 +8,16 @@ import {
   orientationOptions,
   qualityList,
   sortFieldOptions,
-  sortTypeOptions
+  sortTypeOptions,
+  imageDisplaySizeOptions
 } from '@common/publicData.js'
 import { useTranslation } from 'i18next-vue'
 import { infoKeys } from '@common/publicData.js'
 import { handleInfoVal, resolveApiUserMessage, isTransientSearchFailure } from '@common/utils.js'
-import VirtualList from '@h5/components/VirtualList.vue'
+import H5FullscreenPager from '@h5/components/H5FullscreenPager.vue'
+import H5FloatingButtons from '@h5/components/H5FloatingButtons.vue'
+import H5ListEmpty from '@h5/components/H5ListEmpty.vue'
+import { useH5FullscreenAutoPlay } from '@h5/composables/useH5FullscreenAutoPlay.js'
 import {
   applyH5ImageCompress,
   buildH5LocalImageUrl,
@@ -25,6 +29,7 @@ const { t } = useTranslation()
 const commonStore = UseCommonStore()
 const settingStore = UseSettingStore()
 const { settingData } = storeToRefs(settingStore)
+const { immersiveMode } = storeToRefs(commonStore)
 
 /** 搜索页本地资源排序默认值（与首页设置 h5Sort* 独立） */
 const SEARCH_LOCAL_SORT_DEFAULT = {
@@ -32,16 +37,28 @@ const SEARCH_LOCAL_SORT_DEFAULT = {
   sortType: -1
 }
 
+/** 进入搜索页默认本地资源库（与旧 h5Resource 一致） */
+const DEFAULT_LOCAL_RESOURCE_NAME = 'resources'
+
+/** H5 叠层：高于 van-image-preview 默认层级（约 2000） */
+const H5_OVERLAY_Z = {
+  actionPopup: 3001,
+  imageInfoBackdrop: 3010,
+  imageInfoPanel: 3020,
+  confirmDialog: 3030
+}
+
 const form = reactive({
   keywords: '',
   resourceType: 'localResource',
-  resourceName: '',
+  resourceName: DEFAULT_LOCAL_RESOURCE_NAME,
   filterType: 'images',
   orientation: '',
   quality: '',
   sortField: SEARCH_LOCAL_SORT_DEFAULT.sortField,
   sortType: SEARCH_LOCAL_SORT_DEFAULT.sortType,
-  isRandom: false
+  isRandom: false,
+  displaySize: 'cover'
 })
 
 const resetSearchLocalSort = () => {
@@ -82,6 +99,10 @@ const state = reactive({
   showFilters: false,
   showActionPopup: false,
   showPreview: false,
+  showJumpPopup: false,
+  jumpScrollLock: false,
+  isFavoriteHolding: false,
+  showFavoriteToast: false,
   viewportHeight: typeof window !== 'undefined' ? window.innerHeight : 800,
   scrollTop: 0,
   viewportWidth: typeof window !== 'undefined' ? window.innerWidth : 375
@@ -96,21 +117,20 @@ const inlineVideoRefs = {}
 const inlineVideoPlayingKeys = ref(new Set())
 const inlineVideoVisibilityObservers = {}
 const INLINE_VIDEO_MIN_VISIBLE_RATIO = 0.15
-const fullscreenListRef = ref(null)
-const fullscreenSliderRef = ref(null)
-const fullscreenMeasuredHeight = ref(420)
+const fullscreenPagerRef = ref(null)
 const fullscreenVisibleIndex = ref(0)
 const fullscreenScrollTop = ref(0)
-let fullscreenResizeObserver = null
 
 const DISPLAY_MODE_STORAGE_KEY = 'fbw_h5_search_display_mode'
 /** 非通用 name，降低浏览器把历史搜索词当作自动填充的概率 */
 const H5_SEARCH_FIELD_NAME = 'fbw-h5-search-keywords'
 const readStoredDisplayMode = () => {
   try {
-    return localStorage.getItem(DISPLAY_MODE_STORAGE_KEY) === 'fullscreen' ? 'fullscreen' : 'waterfall'
+    const stored = localStorage.getItem(DISPLAY_MODE_STORAGE_KEY)
+    if (stored === 'waterfall') return 'waterfall'
+    return 'fullscreen'
   } catch {
-    return 'waterfall'
+    return 'fullscreen'
   }
 }
 const displayMode = ref(readStoredDisplayMode())
@@ -136,7 +156,34 @@ const longPress = reactive({
   timer: null,
   selectedIndex: -1,
   startX: 0,
+  startY: 0,
+  /** 长按已触发时抑制紧随其后的 click 打开预览 */
+  suppressClick: false
+})
+
+const previewCurrentIndex = ref(0)
+
+const previewLongPress = {
+  timer: null,
+  startX: 0,
   startY: 0
+}
+
+/** 瀑布流卡片按下态（点击/长按过程） */
+const cardPressIndex = ref(-1)
+
+const favoriteClick = reactive({
+  lastClickTime: 0,
+  timer: null,
+  startTime: 0,
+  startX: 0,
+  startY: 0
+})
+
+const favoriteHold = reactive({
+  timer: null,
+  count: 0,
+  interval: null
 })
 const imageErrorState = reactive({})
 const imageRetrySeed = reactive({})
@@ -157,6 +204,22 @@ const sourceOptions = computed(() => {
     supportSearchTypes: item.supportSearchTypes || ['images']
   }))
 })
+
+const applyDefaultSearchResource = () => {
+  form.resourceType = 'localResource'
+  const sources = sourceOptions.value
+  const preferred = sources.find((item) => item.value === DEFAULT_LOCAL_RESOURCE_NAME)
+  const first = sources[0]
+  form.resourceName = preferred?.value || first?.value || DEFAULT_LOCAL_RESOURCE_NAME
+  syncFilterType()
+}
+
+const ensureResourceMapReady = async () => {
+  const sources =
+    commonStore.resourceMap?.resourceListByResourceType?.localResource || []
+  if (sources.length) return
+  await commonStore.getResourceMap()
+}
 
 const filterTypeAvailable = computed(() => {
   const selected = sourceOptions.value.find((item) => item.value === form.resourceName)
@@ -180,6 +243,18 @@ const sortFieldRadioOptions = computed(() =>
 
 const sortTypeRadioOptions = computed(() =>
   sortTypeOptions.map((item) => ({
+    value: item.value,
+    text: t(item.locale)
+  }))
+)
+
+const listModeRadioOptions = computed(() => [
+  { value: false, text: t('h5.pages.search.filters.listModeOrder') },
+  { value: true, text: t('h5.pages.search.filters.listModeRandom') }
+])
+
+const displaySizeRadioOptions = computed(() =>
+  imageDisplaySizeOptions.map((item) => ({
     value: item.value,
     text: t(item.locale)
   }))
@@ -310,9 +385,9 @@ const findVideoKeyByEl = (el) => {
 
 const getVideoScrollRoot = () => {
   if (displayMode.value === 'fullscreen') {
-    const rootEl = fullscreenListRef.value?.$el
+    const rootEl = fullscreenPagerRef.value?.getScrollElement?.()
     if (rootEl?.classList?.contains?.('virtual-list')) return rootEl
-    return rootEl?.querySelector?.('.virtual-list') ?? fullscreenSliderRef.value?.querySelector?.('.virtual-list') ?? null
+    return rootEl?.querySelector?.('.virtual-list') ?? rootEl ?? null
   }
   return pageWrapperRef.value
 }
@@ -406,6 +481,56 @@ const onInlineVideoSurfaceClick = (item) => {
   pauseInlineVideo(item)
 }
 
+const playInlineVideo = async (item, { preferMuted = false } = {}) => {
+  if (!item?.videoSrc) return false
+  const key = getItemKey(item)
+  let el = inlineVideoRefs[key]
+  if (!el) {
+    await nextTick()
+    el = inlineVideoRefs[key]
+  }
+  if (!el) return false
+
+  markInlineVideoPlaying(key, true)
+  el.loop = true
+
+  const tryPlay = async (muted) => {
+    el.muted = muted
+    try {
+      await el.play()
+      return true
+    } catch (_) {
+      return false
+    }
+  }
+
+  if (preferMuted && (await tryPlay(true))) return true
+  if (await tryPlay(false)) return true
+  if (!preferMuted && (await tryPlay(true))) return true
+  markInlineVideoPlaying(key, false)
+  return false
+}
+
+const syncFullscreenActiveMedia = async () => {
+  if (displayMode.value !== 'fullscreen' || state.showPreview) return
+  const current = fullscreenCurrentItem.value
+  const currentKey = current ? getItemKey(current) : ''
+
+  for (const [key, el] of Object.entries(inlineVideoRefs)) {
+    if (!el || key === currentKey) continue
+    try {
+      el.pause()
+    } catch (_) {
+      /* noop */
+    }
+    markInlineVideoPlaying(key, false)
+  }
+
+  if (current?.fileType === 'video' && current.videoSrc) {
+    await playInlineVideo(current, { preferMuted: true })
+  }
+}
+
 const toggleInlineVideo = async (item, index) => {
   if (!item?.videoSrc) {
     showNotify({ type: 'warning', message: t('messages.noData') })
@@ -426,18 +551,9 @@ const toggleInlineVideo = async (item, index) => {
     return
   }
 
-  markInlineVideoPlaying(key, true)
-  el.loop = true
-  el.muted = false
-  try {
-    await el.play()
-  } catch (_) {
-    el.muted = true
-    try {
-      await el.play()
-    } catch (_) {
-      markInlineVideoPlaying(key, false)
-    }
+  const ok = await playInlineVideo(item, { preferMuted: false })
+  if (!ok) {
+    showNotify({ type: 'danger', message: t('messages.operationFail') })
   }
 }
 
@@ -490,7 +606,7 @@ const loadList = async (reset = false) => {
       if (pageWrapperRef.value) {
         pageWrapperRef.value.scrollTop = 0
       }
-      fullscreenListRef.value?.scrollToIndex?.(0, false)
+      fullscreenPagerRef.value?.scrollToIndex?.(0, false)
     })
   }
   state.loading = true
@@ -527,6 +643,9 @@ const loadList = async (reset = false) => {
       const noNewRows = pageRows > 0 && list.value.length === prevCount
       if (!pageRows || pageRows < page.pageSize || noNewRows) {
         state.finished = true
+        if (list.value.length > 0) {
+          showToast({ message: t('messages.noMoreData') })
+        }
       }
     } else {
       if (!isTransientSearchFailure(res)) {
@@ -548,6 +667,11 @@ const loadList = async (reset = false) => {
   } finally {
     state.loading = false
     state.refreshing = false
+    if (reqSeq === loadListSeq) {
+      nextTick(() => {
+        void syncFullscreenActiveMedia()
+      })
+    }
   }
 }
 
@@ -573,6 +697,9 @@ const onChangeResourceType = () => {
   syncFilterType()
 }
 
+/** 默认不自动播放，仅用户手动开启悬浮钮后才会 start */
+const fullscreenAutoPlayUserStopped = ref(true)
+
 const onChangeSource = () => {
   syncFilterType()
 }
@@ -588,12 +715,11 @@ const onToggleFavorite = async (item) => {
 }
 
 const onResetFilters = () => {
-  form.resourceType = 'localResource'
-  const first = sourceOptions.value[0]
-  form.resourceName = first ? first.value : ''
+  applyDefaultSearchResource()
   form.filterType = 'images'
   form.orientation = ''
   form.quality = ''
+  form.isRandom = false
   resetSearchLocalSort()
   onSearch()
 }
@@ -617,6 +743,26 @@ const previewStartPosition = computed(() => {
   }
   return pos
 })
+
+const resolveListIndexFromPreviewIndex = (previewIndex) => {
+  let pos = 0
+  for (let i = 0; i < list.value.length; i++) {
+    const row = list.value[i]
+    if (row?.fileType === 'video' || !row?.imageSrc) continue
+    if (pos === previewIndex) return i
+    pos++
+  }
+  return -1
+}
+
+const getPreviewIndexForListIndex = (listIndex) => {
+  let pos = 0
+  for (let i = 0; i < listIndex; i++) {
+    const row = list.value[i]
+    if (row?.fileType !== 'video' && row?.imageSrc) pos++
+  }
+  return pos
+}
 
 const gridColumns = computed(() => {
   const width = state.viewportWidth
@@ -738,33 +884,50 @@ const waterfallIndicatorText = computed(() => {
   })
 })
 
-const previewObjectFit = computed(() =>
-  settingData.value?.h5ImageDisplaySize === 'cover' ? 'cover' : 'contain'
+const mediaObjectFit = computed(() => (form.displaySize === 'cover' ? 'cover' : 'contain'))
+
+const fullscreenCurrentItem = computed(() => list.value[fullscreenVisibleIndex.value] || null)
+
+const isCurrentFullscreenItemVideo = computed(
+  () => fullscreenCurrentItem.value?.fileType === 'video'
 )
 
-const measureFullscreenHeight = () => {
-  const el = fullscreenSliderRef.value
-  if (el?.clientHeight) {
-    fullscreenMeasuredHeight.value = Math.round(el.clientHeight)
+const isCurrentFullscreenFavorite = computed(() => !!fullscreenCurrentItem.value?.isFavorite)
+
+const showImagePlaybackFloats = computed(
+  () =>
+    displayMode.value === 'fullscreen' &&
+    !isCurrentFullscreenItemVideo.value &&
+    !state.showPreview
+)
+
+const fullscreenAutoPlay = useH5FullscreenAutoPlay({
+  getPagerRef: () => fullscreenPagerRef.value,
+  getCurrentIndex: () => fullscreenVisibleIndex.value,
+  setCurrentIndex: (idx) => {
+    fullscreenVisibleIndex.value = idx
+  },
+  getListLength: () => list.value.length,
+  getFinished: () => state.finished,
+  getLoading: () => state.loading,
+  onLoadMore: () => loadList(false),
+  isCurrentVideo: () => isCurrentFullscreenItemVideo.value,
+  isPlaybackAllowed: () => displayMode.value === 'fullscreen' && !state.showPreview
+})
+
+const {
+  autoPlayOn: fullscreenAutoPlayOn,
+  countdown: fullscreenAutoPlayCountdown,
+  intervalSec: fullscreenAutoPlayIntervalSec
+} = fullscreenAutoPlay
+
+const toggleDisplaySize = () => {
+  settingStore.vibrate()
+  if (displayMode.value === 'fullscreen') {
+    fullscreenAutoPlay.stop()
   }
+  form.displaySize = form.displaySize === 'cover' ? 'contain' : 'cover'
 }
-
-const bindFullscreenResizeObserver = () => {
-  fullscreenResizeObserver?.disconnect()
-  const el = fullscreenSliderRef.value
-  if (!el || typeof ResizeObserver === 'undefined') return
-  fullscreenResizeObserver = new ResizeObserver((entries) => {
-    const h = entries[0]?.contentRect?.height
-    if (h) {
-      fullscreenMeasuredHeight.value = Math.round(h)
-    }
-  })
-  fullscreenResizeObserver.observe(el)
-}
-
-const fullscreenItemHeight = computed(() =>
-  Math.max(240, fullscreenMeasuredHeight.value || Math.floor(state.viewportHeight * 0.72))
-)
 
 const slideBgUrl = (item) => {
   if (!item) return ''
@@ -787,21 +950,23 @@ const toggleDisplayMode = () => {
   }
 }
 
-const onFullscreenVirtualScroll = (payload) => {
-  const len = list.value.length
-  if (!len) {
-    fullscreenVisibleIndex.value = 0
-    fullscreenScrollTop.value = 0
+const onFullscreenPagerScroll = (payload) => {
+  fullscreenScrollTop.value = Math.max(0, Number(payload.scrollTop) || 0)
+}
+
+const onFullscreenPagerIndexChange = (idx) => {
+  if (state.jumpScrollLock) return
+  if (fullscreenAutoPlay.isAdvancing?.()) {
     return
   }
-  const ih = Math.max(1, fullscreenItemHeight.value)
-  const scrollTop = Math.max(0, Number(payload.scrollTop) || 0)
-  fullscreenScrollTop.value = scrollTop
-  const clientH = Math.max(ih, Number(payload.clientHeight) || ih)
-  // 以视口垂直中心所在项为准，避免半屏滑动时与 visibleStart 不一致
-  const center = scrollTop + clientH / 2
-  const idx = Math.min(Math.max(0, Math.floor(center / ih)), len - 1)
+  if (idx !== fullscreenVisibleIndex.value && fullscreenAutoPlayOn.value) {
+    fullscreenAutoPlay.stop()
+    fullscreenAutoPlayUserStopped.value = true
+  }
   fullscreenVisibleIndex.value = idx
+  nextTick(() => {
+    void syncFullscreenActiveMedia()
+  })
 }
 
 // 铺满模式：当前所在张（从 1 计）/ 服务端总数（当前索引不超过已加载条数）
@@ -820,6 +985,16 @@ const isPullRefreshDisabled = computed(() => {
   return fullscreenScrollTop.value > 2
 })
 
+const isFullscreenPullAtTop = computed(
+  () => displayMode.value === 'fullscreen' && !isPullRefreshDisabled.value
+)
+
+const isImageInfoPanelOpen = computed(() => imageInfoPanelHeight.value > imageInfoPanelAnchors[0])
+
+const closeImageInfoPanel = () => {
+  imageInfoPanelHeight.value = imageInfoPanelAnchors[0]
+}
+
 const measureSearchToolbarHeight = () => {
   const el = searchToolbarRef.value
   if (!el) return
@@ -837,18 +1012,277 @@ const bindSearchToolbarResizeObserver = () => {
 
 const searchPageIndicatorStyle = computed(() => {
   const position = settingData.value.h5NumberIndicatorPosition
-  let topOffset =
-    displayMode.value === 'fullscreen'
-      ? 'calc(8px + env(safe-area-inset-top, 0px))'
-      : `calc(${searchToolbarHeight.value}px + env(safe-area-inset-top, 0px) + 4px)`
+  const compactTopChrome = immersiveMode.value || displayMode.value === 'fullscreen'
+  let topOffset = compactTopChrome
+    ? 'calc(8px + env(safe-area-inset-top, 0px))'
+    : `calc(${searchToolbarHeight.value}px + env(safe-area-inset-top, 0px) + 4px)`
 
-  // 顶部指示器：搜索栏 + 列表上留白 + 与首行卡片间距
-  if (position === 'top' && displayMode.value !== 'fullscreen') {
+  // 顶部指示器：搜索栏 + 列表上留白 + 与首行卡片间距（非沉浸瀑布流）
+  if (position === 'top' && displayMode.value === 'waterfall' && !immersiveMode.value) {
     topOffset = `calc(${searchToolbarHeight.value}px + ${SEARCH_WATERFALL_CONTENT_GAP_PX}px + ${SEARCH_INDICATOR_TOP_CARD_GAP_PX}px + env(safe-area-inset-top, 0px))`
   }
 
   return getH5NumberIndicatorStyle(position, { topOffset })
 })
+
+const openJumpPopup = () => {
+  if (displayMode.value !== 'fullscreen') return
+  state.showJumpPopup = true
+}
+
+const jumpIndex = ref('')
+
+const JUMP_DIALOG_TOP_VAR = '--fbw-jump-dialog-top'
+let jumpDialogViewportBound = false
+
+const onJumpDialogViewportChange = (forceTightTop = false) => {
+  if (!state.showJumpPopup) return
+  const vv = window.visualViewport
+  const layoutH = window.innerHeight || document.documentElement.clientHeight || 0
+  let topPx
+  if (vv && typeof vv.height === 'number' && layoutH > 0) {
+    const offTop = Math.max(0, vv.offsetTop)
+    const keyboardLikely = forceTightTop || vv.height < layoutH * 0.72
+    const pad = keyboardLikely
+      ? Math.max(8, Math.min(40, vv.height * 0.03))
+      : Math.max(16, Math.min(72, vv.height * 0.08))
+    topPx = Math.round(offTop + pad)
+  } else {
+    topPx = Math.round(Math.max(48, layoutH * 0.08))
+  }
+  document.documentElement.style.setProperty(JUMP_DIALOG_TOP_VAR, `${topPx}px`)
+}
+
+const bindJumpDialogViewport = () => {
+  if (jumpDialogViewportBound) return
+  jumpDialogViewportBound = true
+  const vv = window.visualViewport
+  if (vv) {
+    vv.addEventListener('resize', onJumpDialogViewportChange)
+    vv.addEventListener('scroll', onJumpDialogViewportChange)
+  }
+  window.addEventListener('resize', onJumpDialogViewportChange)
+}
+
+const unbindJumpDialogViewport = () => {
+  if (!jumpDialogViewportBound) return
+  jumpDialogViewportBound = false
+  const vv = window.visualViewport
+  if (vv) {
+    vv.removeEventListener('resize', onJumpDialogViewportChange)
+    vv.removeEventListener('scroll', onJumpDialogViewportChange)
+  }
+  window.removeEventListener('resize', onJumpDialogViewportChange)
+}
+
+const jumpToIndex = async () => {
+  const index = parseInt(jumpIndex.value, 10) - 1
+  if (Number.isNaN(index) || index < 0) {
+    jumpIndex.value = ''
+    showNotify({ type: 'warning', message: t('messages.invalidIndex') })
+    return
+  }
+
+  state.jumpScrollLock = true
+  fullscreenAutoPlay.stop()
+  try {
+    if (index >= list.value.length) {
+      const neededPage = Math.ceil((index + 1) / page.pageSize)
+      const currentPage = page.startPage
+      if (neededPage > currentPage) {
+        const pagesToLoad = neededPage - currentPage
+        if (pagesToLoad > 10) {
+          showNotify({ type: 'warning', message: t('messages.indexTooLarge') })
+          jumpIndex.value = ''
+          return
+        }
+        for (let i = 0; i < pagesToLoad; i++) {
+          if (!state.finished) {
+            await loadList(false)
+            if (i < pagesToLoad - 1) {
+              await sleep(48)
+            }
+          } else {
+            break
+          }
+        }
+      }
+    }
+
+    if (index >= list.value.length) {
+      jumpIndex.value = ''
+      showNotify({ type: 'warning', message: t('messages.indexOutOfRange') })
+      return
+    }
+
+    fullscreenVisibleIndex.value = index
+    state.showJumpPopup = false
+    jumpIndex.value = ''
+    await nextTick()
+    await fullscreenPagerRef.value?.scrollToIndex?.(index, false)
+    await sleep(120)
+  } finally {
+    setTimeout(() => {
+      state.jumpScrollLock = false
+    }, 280)
+  }
+}
+
+const handleFavoriteTouchStart = (event) => {
+  favoriteClick.startTime = Date.now()
+  favoriteClick.startX = event.touches[0].clientX
+  favoriteClick.startY = event.touches[0].clientY
+  favoriteHold.timer = setTimeout(() => {
+    state.isFavoriteHolding = true
+    favoriteHold.count = 0
+    favoriteHold.interval = setInterval(() => {
+      if (favoriteHold.count < 100) {
+        favoriteHold.count += 1
+        state.showFavoriteToast = true
+        settingStore.vibrate(Math.min(Math.max(10, favoriteHold.count), 50))
+      } else {
+        clearInterval(favoriteHold.interval)
+        favoriteHold.interval = null
+        state.showFavoriteToast = false
+        showNotify({ type: 'warning', message: t('messages.maxFavoriteCountReached') })
+      }
+    }, 200)
+  }, 800)
+}
+
+const handleFavoriteTouchMove = (event) => {
+  const moveX = event.touches[0].clientX - favoriteClick.startX
+  const moveY = event.touches[0].clientY - favoriteClick.startY
+  if (Math.sqrt(moveX * moveX + moveY * moveY) > 10) {
+    if (favoriteHold.timer) {
+      clearTimeout(favoriteHold.timer)
+      favoriteHold.timer = null
+    }
+    if (favoriteHold.interval) {
+      clearInterval(favoriteHold.interval)
+      favoriteHold.interval = null
+    }
+    state.isFavoriteHolding = false
+    state.showFavoriteToast = false
+    favoriteHold.count = 0
+  }
+}
+
+const handleFavoriteTouchEnd = async () => {
+  const touchDuration = Date.now() - favoriteClick.startTime
+  if (favoriteHold.timer) {
+    clearTimeout(favoriteHold.timer)
+    favoriteHold.timer = null
+  }
+  if (favoriteHold.interval) {
+    clearInterval(favoriteHold.interval)
+    favoriteHold.interval = null
+  }
+
+  const currentImage = fullscreenCurrentItem.value
+  if (!currentImage) return
+
+  if (state.isFavoriteHolding && favoriteHold.count > 0) {
+    if (!currentImage.isFavorite) {
+      await api.addToFavorites(currentImage.id)
+    }
+    const res = await api.updateFavoriteCount(currentImage.id, favoriteHold.count)
+    if (res?.success) {
+      currentImage.favoriteCount = (currentImage.favoriteCount || 0) + favoriteHold.count
+      currentImage.isFavorite = true
+    }
+    state.isFavoriteHolding = false
+    state.showFavoriteToast = false
+    favoriteHold.count = 0
+    return
+  }
+
+  if (touchDuration < 300) {
+    const currentTime = Date.now()
+    const timeDiff = currentTime - favoriteClick.lastClickTime
+    if (favoriteClick.timer) {
+      clearTimeout(favoriteClick.timer)
+      favoriteClick.timer = null
+    }
+    if (timeDiff < 300) {
+      const res = await api.removeFavorites(currentImage.id)
+      if (res?.success) {
+        currentImage.isFavorite = false
+        settingStore.vibrate(20)
+      }
+      favoriteClick.lastClickTime = 0
+    } else {
+      favoriteClick.lastClickTime = currentTime
+      favoriteClick.timer = setTimeout(async () => {
+        const res = await api.addToFavorites(currentImage.id)
+        if (res?.success) {
+          currentImage.isFavorite = true
+          state.showFavoriteToast = true
+          settingStore.vibrate(() => {
+            state.showFavoriteToast = false
+          })
+        }
+        favoriteClick.timer = null
+      }, 300)
+    }
+  }
+}
+
+const onFullscreenBackTop = async () => {
+  if (!list.value.length) return
+  settingStore.vibrate()
+  fullscreenAutoPlay.stop()
+  state.jumpScrollLock = true
+  try {
+    fullscreenVisibleIndex.value = 0
+    await nextTick()
+    // 与旧首页一致：回到第一张使用滚动动画（scrollToPosition 默认 animated=true）
+    await fullscreenPagerRef.value?.scrollToIndex?.(0, true)
+    await nextTick()
+    const scrollTop = fullscreenPagerRef.value?.getScrollTop?.() ?? 0
+    if (scrollTop > 2) {
+      await fullscreenPagerRef.value?.scrollToIndex?.(0, true)
+    }
+    fullscreenVisibleIndex.value = 0
+    fullscreenScrollTop.value = 0
+  } finally {
+    setTimeout(() => {
+      state.jumpScrollLock = false
+    }, 320)
+  }
+}
+
+const onWaterfallBackTop = () => {
+  settingStore.vibrate()
+  const wrap = pageWrapperRef.value
+  if (!wrap) return
+  wrap.scrollTo({ top: 0, behavior: 'smooth' })
+  state.scrollTop = 0
+}
+
+const onFloatingBackTop = () => {
+  if (displayMode.value === 'fullscreen') {
+    void onFullscreenBackTop()
+  } else {
+    onWaterfallBackTop()
+  }
+}
+
+const onToggleFullscreenAutoPlay = () => {
+  settingStore.vibrate()
+  fullscreenAutoPlay.toggle()
+  fullscreenAutoPlayUserStopped.value = !fullscreenAutoPlayOn.value
+}
+
+const onCycleFullscreenInterval = () => {
+  settingStore.vibrate()
+  fullscreenAutoPlay.cycleInterval()
+}
+
+const onToggleImmersiveMode = () => {
+  settingStore.vibrate()
+  commonStore.toggleImmersiveMode()
+}
 
 const syncWaterfallViewportMetrics = () => {
   const wrap = pageWrapperRef.value
@@ -861,8 +1295,8 @@ const syncWaterfallViewportMetrics = () => {
 
 watch(displayMode, (mode) => {
   if (mode !== 'fullscreen') {
-    fullscreenResizeObserver?.disconnect()
-    fullscreenResizeObserver = null
+    fullscreenAutoPlay.stop()
+    pauseAllInlineVideos()
     nextTick(() => {
       syncWaterfallViewportMetrics()
       measureSearchToolbarHeight()
@@ -871,11 +1305,45 @@ watch(displayMode, (mode) => {
     return
   }
   nextTick(() => {
-    bindFullscreenResizeObserver()
-    measureFullscreenHeight()
+    fullscreenPagerRef.value?.measureHeight?.()
     refreshAllVideoVisibilityObservers()
+    void syncFullscreenActiveMedia()
   })
 })
+
+watch(
+  () => commonStore.resourceMap?.resourceListByResourceType?.localResource,
+  (sources) => {
+    if (!sources?.length) return
+    if (form.resourceType !== 'localResource') return
+    const valid = sourceOptions.value.some((item) => item.value === form.resourceName)
+    if (!valid) applyDefaultSearchResource()
+  }
+)
+
+watch(immersiveMode, () => {
+  nextTick(() => measureSearchToolbarHeight())
+})
+
+watch(
+  () => state.showJumpPopup,
+  (show) => {
+    if (show) {
+      nextTick(() => {
+        onJumpDialogViewportChange()
+        bindJumpDialogViewport()
+        requestAnimationFrame(() => {
+          onJumpDialogViewportChange()
+          setTimeout(onJumpDialogViewportChange, 120)
+          setTimeout(onJumpDialogViewportChange, 320)
+        })
+      })
+    } else {
+      unbindJumpDialogViewport()
+      document.documentElement.style.removeProperty(JUMP_DIALOG_TOP_VAR)
+    }
+  }
+)
 
 watch(
   () => list.value.length,
@@ -888,6 +1356,10 @@ watch(
 )
 
 const openPreview = (index) => {
+  if (longPress.suppressClick) {
+    longPress.suppressClick = false
+    return
+  }
   const row = list.value[index]
   if (!row) return
   longPress.selectedIndex = index
@@ -896,39 +1368,153 @@ const openPreview = (index) => {
     return
   }
   if (!row.imageSrc) return
+  previewCurrentIndex.value = getPreviewIndexForListIndex(index)
   state.showPreview = true
+}
+
+const onPreviewIndexChange = (payload) => {
+  const raw = typeof payload === 'number' ? payload : payload?.index
+  previewCurrentIndex.value = Math.max(0, Number(raw) || 0)
+}
+
+const clearPreviewLongPressTimer = () => {
+  if (previewLongPress.timer) {
+    clearTimeout(previewLongPress.timer)
+    previewLongPress.timer = null
+  }
+}
+
+const onPreviewLayerTouchStart = (event) => {
+  if (!state.showPreview) return
+  const el = event.target
+  if (!(el instanceof Element) || !el.closest('.van-image-preview')) return
+  const touch = event.touches?.[0]
+  if (!touch) return
+  clearPreviewLongPressTimer()
+  previewLongPress.startX = touch.clientX
+  previewLongPress.startY = touch.clientY
+  previewLongPress.timer = setTimeout(() => {
+    previewLongPress.timer = null
+    const listIdx = resolveListIndexFromPreviewIndex(previewCurrentIndex.value)
+    if (listIdx < 0) return
+    longPress.selectedIndex = listIdx
+    longPress.suppressClick = true
+    settingStore.vibrate()
+    state.showActionPopup = true
+  }, 500)
+}
+
+const onPreviewLayerTouchMove = (event) => {
+  if (!previewLongPress.timer || !event.touches?.length) return
+  const moveX = event.touches[0].clientX - previewLongPress.startX
+  const moveY = event.touches[0].clientY - previewLongPress.startY
+  if (Math.sqrt(moveX * moveX + moveY * moveY) > 10) {
+    clearPreviewLongPressTimer()
+  }
+}
+
+const onPreviewLayerTouchEnd = () => {
+  clearPreviewLongPressTimer()
+}
+
+const clearCardPress = () => {
+  cardPressIndex.value = -1
 }
 
 const onImageTouchStart = (index, event) => {
   if (!event.touches?.length) return
+  cardPressIndex.value = index
   longPress.startX = event.touches[0].clientX
   longPress.startY = event.touches[0].clientY
   longPress.timer = setTimeout(() => {
+    longPress.timer = null
     longPress.selectedIndex = index
+    longPress.suppressClick = true
+    settingStore.vibrate()
     state.showActionPopup = true
   }, 500)
 }
 
 const onImageTouchMove = (event) => {
-  if (!longPress.timer || !event.touches?.length) return
+  if (!event.touches?.length) return
   const moveX = event.touches[0].clientX - longPress.startX
   const moveY = event.touches[0].clientY - longPress.startY
   if (Math.sqrt(moveX * moveX + moveY * moveY) > 10) {
-    clearTimeout(longPress.timer)
-    longPress.timer = null
+    clearCardPress()
+    if (longPress.timer) {
+      clearTimeout(longPress.timer)
+      longPress.timer = null
+    }
   }
 }
 
 const onImageTouchEnd = () => {
+  clearCardPress()
   if (longPress.timer) {
     clearTimeout(longPress.timer)
     longPress.timer = null
   }
 }
 
-const selectedItem = computed(() =>
-  longPress.selectedIndex >= 0 ? list.value[longPress.selectedIndex] || null : null
-)
+const onCardMouseDown = (index) => {
+  cardPressIndex.value = index
+}
+
+const onCardMouseUp = () => {
+  clearCardPress()
+}
+
+/** 操作菜单目标：预览打开时以当前预览张为准，否则为长按项 */
+const actionTargetListIndex = computed(() => {
+  if (state.showPreview) {
+    const idx = resolveListIndexFromPreviewIndex(previewCurrentIndex.value)
+    if (idx >= 0) return idx
+  }
+  return longPress.selectedIndex
+})
+
+const selectedItem = computed(() => {
+  const idx = actionTargetListIndex.value
+  return idx >= 0 ? list.value[idx] ?? null : null
+})
+
+const selectedFavoriteActionLabel = computed(() => {
+  if (!selectedItem.value?.isFavorite) {
+    return t('h5.pages.search.actions.favoriteAdd')
+  }
+  return t('h5.pages.search.actions.favoriteRemove')
+})
+
+const getSelectedItemKey = (item = selectedItem.value) => {
+  if (!item) return ''
+  return item.id != null && item.id !== '' ? `id:${item.id}` : getItemKey(item)
+}
+
+const getMediaDownloadUrl = (item) => {
+  if (!item) return ''
+  if (item.fileType === 'video') {
+    return item.videoSrc || item.videoUrl || ''
+  }
+  return getDisplayImageSrc(item) || item.imageSrc || item.imageUrl || ''
+}
+
+const getMediaDownloadFilename = (item) => {
+  const isVideo = item?.fileType === 'video'
+  const defaultExt = isVideo ? 'mp4' : 'jpg'
+  const base = item?.fileName || item?.id || Date.now()
+  if (String(base).includes('.')) return String(base)
+  return `${base}.${item?.fileExt || defaultExt}`
+}
+
+const triggerBrowserDownload = (url, filename) => {
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  link.rel = 'noopener'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
 
 const showImageInfo = () => {
   if (!selectedItem.value) return
@@ -936,44 +1522,94 @@ const showImageInfo = () => {
   imageInfoPanelHeight.value = imageInfoPanelAnchors[1]
 }
 
-const saveImage = async () => {
+const saveSelectedMedia = async () => {
   const item = selectedItem.value
   if (!item) return
+  const url = getMediaDownloadUrl(item)
+  if (!url) {
+    showNotify({ type: 'warning', message: t('messages.noData') })
+    return
+  }
+  const filename = getMediaDownloadFilename(item)
   try {
-    const link = document.createElement('a')
-    const isVideo = item.fileType === 'video'
-    link.href = isVideo ? item.videoSrc : item.imageSrc
-    const defaultExt = isVideo ? 'mp4' : 'jpg'
-    link.download = `${item.fileName || item.id || Date.now()}.${item.fileExt || defaultExt}`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+    settingStore.vibrate()
+    let blobUrl = ''
+    try {
+      const res = await fetch(url)
+      if (!res.ok) throw new Error('fetch failed')
+      const blob = await res.blob()
+      blobUrl = URL.createObjectURL(blob)
+      triggerBrowserDownload(blobUrl, filename)
+    } catch (_) {
+      triggerBrowserDownload(url, filename)
+    } finally {
+      if (blobUrl) URL.revokeObjectURL(blobUrl)
+    }
     if (item.id) {
       await api.updateDownloadCount(item.id, 1)
     }
     showNotify({ type: 'success', message: t('messages.saveSuccess') })
-  } catch (error) {
+  } catch (_) {
     showNotify({ type: 'danger', message: t('messages.saveFail') })
   } finally {
     state.showActionPopup = false
   }
 }
 
-const deleteImage = async () => {
+const removeSelectedItemFromList = (item) => {
+  const key = getSelectedItemKey(item)
+  if (!key) return -1
+  const deletedIndex = list.value.findIndex((row) => getSelectedItemKey(row) === key)
+  if (deletedIndex < 0) return -1
+
+  const wasPreviewTarget = state.showPreview && longPress.selectedIndex === deletedIndex
+
+  list.value = list.value.filter((row) => getSelectedItemKey(row) !== key)
+
+  if (wasPreviewTarget) {
+    state.showPreview = false
+  }
+
+  if (displayMode.value === 'fullscreen') {
+    const maxIdx = Math.max(0, list.value.length - 1)
+    if (fullscreenVisibleIndex.value > maxIdx) {
+      fullscreenVisibleIndex.value = maxIdx
+    }
+    if (deletedIndex < fullscreenVisibleIndex.value) {
+      fullscreenVisibleIndex.value = Math.max(0, fullscreenVisibleIndex.value - 1)
+    }
+    nextTick(() => {
+      fullscreenPagerRef.value?.scrollToIndex?.(fullscreenVisibleIndex.value, false)
+      void syncFullscreenActiveMedia()
+    })
+  }
+
+  if (longPress.selectedIndex === deletedIndex) {
+    longPress.selectedIndex = -1
+  } else if (longPress.selectedIndex > deletedIndex) {
+    longPress.selectedIndex -= 1
+  }
+
+  return deletedIndex
+}
+
+const deleteSelectedMedia = async () => {
   const item = selectedItem.value
   if (!item) return
   try {
     await showConfirmDialog({
-      title: t('h5.pages.home.actions.confirmDelete'),
-      message: t('h5.pages.home.actions.confirmDeleteMessage'),
-      confirmButtonText: t('h5.pages.home.actions.confirmDeleteBtn'),
-      cancelButtonText: t('h5.pages.home.actions.cancelDeleteBtn'),
+      title: t('h5.pages.search.actions.confirmDelete'),
+      message: t('h5.pages.search.actions.confirmDeleteMessage'),
+      confirmButtonText: t('h5.pages.search.actions.confirmDeleteBtn'),
+      cancelButtonText: t('h5.pages.search.actions.cancelDeleteBtn'),
       confirmButtonColor: '#ee0a24',
-      closeOnClickOverlay: true
+      closeOnClickOverlay: true,
+      zIndex: H5_OVERLAY_Z.confirmDialog
     })
+    settingStore.vibrate()
     const res = await api.deleteImage(toRaw(item))
     if (res?.success) {
-      list.value = list.value.filter((row) => (row.id || row.uniqueKey) !== (item.id || item.uniqueKey))
+      removeSelectedItemFromList(item)
       showNotify({ type: 'success', message: t('messages.deleteSuccess') })
     } else {
       showNotify({
@@ -995,7 +1631,10 @@ const deleteImage = async () => {
 
 const toggleSelectedFavorite = async () => {
   const item = selectedItem.value
-  if (!item) return
+  if (!item?.id) {
+    showNotify({ type: 'warning', message: t('messages.noData') })
+    return
+  }
   await onToggleFavorite(item)
   state.showActionPopup = false
 }
@@ -1034,7 +1673,7 @@ const onPageResize = () => {
     measureSearchToolbarHeight()
     if (displayMode.value === 'fullscreen') {
       state.viewportHeight = window.innerHeight
-      measureFullscreenHeight()
+      fullscreenPagerRef.value?.measureHeight?.()
     } else {
       syncWaterfallViewportMetrics()
     }
@@ -1071,23 +1710,72 @@ watch(
   () => state.showPreview,
   (show) => {
     if (show) {
+      pauseAllInlineVideos()
       document.addEventListener('contextmenu', onImagePreviewContextMenu, true)
+      document.addEventListener('touchstart', onPreviewLayerTouchStart, true)
+      document.addEventListener('touchmove', onPreviewLayerTouchMove, true)
+      document.addEventListener('touchend', onPreviewLayerTouchEnd, true)
+      document.addEventListener('touchcancel', onPreviewLayerTouchEnd, true)
     } else {
       document.removeEventListener('contextmenu', onImagePreviewContextMenu, true)
+      document.removeEventListener('touchstart', onPreviewLayerTouchStart, true)
+      document.removeEventListener('touchmove', onPreviewLayerTouchMove, true)
+      document.removeEventListener('touchend', onPreviewLayerTouchEnd, true)
+      document.removeEventListener('touchcancel', onPreviewLayerTouchEnd, true)
+      clearPreviewLongPressTimer()
+      if (displayMode.value === 'fullscreen') {
+        nextTick(() => void syncFullscreenActiveMedia())
+      }
     }
   }
 )
 
+onDeactivated(() => {
+  clearCardPress()
+  fullscreenAutoPlay.stop()
+  commonStore.setImmersiveMode(false)
+  if (favoriteHold.timer) {
+    clearTimeout(favoriteHold.timer)
+    favoriteHold.timer = null
+  }
+  if (favoriteHold.interval) {
+    clearInterval(favoriteHold.interval)
+    favoriteHold.interval = null
+  }
+  if (favoriteClick.timer) {
+    clearTimeout(favoriteClick.timer)
+    favoriteClick.timer = null
+  }
+})
+
 onUnmounted(() => {
   document.removeEventListener('contextmenu', onImagePreviewContextMenu, true)
+  document.removeEventListener('touchstart', onPreviewLayerTouchStart, true)
+  document.removeEventListener('touchmove', onPreviewLayerTouchMove, true)
+  document.removeEventListener('touchend', onPreviewLayerTouchEnd, true)
+  document.removeEventListener('touchcancel', onPreviewLayerTouchEnd, true)
+  clearPreviewLongPressTimer()
   if (longPress.timer) {
     clearTimeout(longPress.timer)
     longPress.timer = null
   }
+  if (favoriteHold.timer) {
+    clearTimeout(favoriteHold.timer)
+    favoriteHold.timer = null
+  }
+  if (favoriteHold.interval) {
+    clearInterval(favoriteHold.interval)
+    favoriteHold.interval = null
+  }
+  if (favoriteClick.timer) {
+    clearTimeout(favoriteClick.timer)
+    favoriteClick.timer = null
+  }
+  unbindJumpDialogViewport()
+  document.documentElement.style.removeProperty(JUMP_DIALOG_TOP_VAR)
   disconnectAllVideoVisibilityObservers()
   pauseAllInlineVideos()
-  fullscreenResizeObserver?.disconnect()
-  fullscreenResizeObserver = null
+  fullscreenAutoPlay.stop()
   searchToolbarResizeObserver?.disconnect()
   searchToolbarResizeObserver = null
   window.removeEventListener('resize', onPageResize)
@@ -1098,9 +1786,8 @@ const init = async () => {
   state.viewportWidth = window.innerWidth
   state.scrollTop = pageWrapperRef.value?.scrollTop || 0
   window.addEventListener('resize', onPageResize, { passive: true })
-  const first = sourceOptions.value[0]
-  form.resourceName = first ? first.value : ''
-  syncFilterType()
+  await ensureResourceMapReady()
+  applyDefaultSearchResource()
   await onSearch()
 }
 
@@ -1115,8 +1802,7 @@ onMounted(async () => {
     bindSearchToolbarResizeObserver()
     syncWaterfallViewportMetrics()
     if (displayMode.value === 'fullscreen') {
-      bindFullscreenResizeObserver()
-      measureFullscreenHeight()
+      fullscreenPagerRef.value?.measureHeight?.()
     }
   })
 })
@@ -1126,11 +1812,14 @@ onMounted(async () => {
   <div
     ref="pageWrapperRef"
     class="page-wrapper page-search"
-    :class="{ 'page-search--fullscreen': displayMode === 'fullscreen' }"
+    :class="{
+      'page-search--fullscreen': displayMode === 'fullscreen',
+      'page-search--immersive': immersiveMode
+    }"
     @scroll.passive="onPageScroll"
   >
     <div class="page-search-inner">
-      <div ref="searchToolbarRef" class="search-toolbar">
+      <div v-if="!immersiveMode" ref="searchToolbarRef" class="search-toolbar">
         <div class="search-row">
           <form class="search-form" autocomplete="off" @submit.prevent="onSearch">
             <van-search
@@ -1145,6 +1834,9 @@ onMounted(async () => {
               @search="onSearch"
             />
           </form>
+          <van-button class="filter-btn" plain @click="state.showFilters = true">
+            <van-icon name="arrow-down" />
+          </van-button>
           <van-button
             class="layout-mode-btn"
             plain
@@ -1154,10 +1846,22 @@ onMounted(async () => {
           >
             <van-icon :name="displayMode === 'waterfall' ? 'expand-o' : 'apps-o'" />
           </van-button>
-          <van-button class="filter-btn" plain @click="state.showFilters = true">
-            <van-icon name="arrow-down" />
-          </van-button>
         </div>
+      </div>
+
+      <div v-else ref="searchToolbarRef" class="search-chrome-mini">
+        <van-button class="chrome-mini-btn filter-btn" plain @click="state.showFilters = true">
+          <van-icon name="arrow-down" />
+        </van-button>
+        <van-button
+          class="chrome-mini-btn layout-mode-btn"
+          plain
+          :title="layoutToggleTitle"
+          :aria-label="layoutToggleTitle"
+          @click="toggleDisplayMode"
+        >
+          <van-icon :name="displayMode === 'waterfall' ? 'expand-o' : 'apps-o'" />
+        </van-button>
       </div>
 
       <van-pull-refresh v-model="state.refreshing" :disabled="isPullRefreshDisabled" @refresh="onRefresh">
@@ -1165,8 +1869,28 @@ onMounted(async () => {
           class="search-pull-inner"
           :class="{ 'search-pull-inner--fullscreen': displayMode === 'fullscreen' }"
         >
-          <div v-if="state.loading && !list.length" class="result-list result-list-skeleton">
-            <van-skeleton v-for="i in 4" :key="i" avatar :row="2" />
+          <div
+            v-if="state.loading && !list.length"
+            class="search-skeleton"
+            :class="{ 'search-skeleton--fullscreen': displayMode === 'fullscreen' }"
+          >
+            <template v-if="displayMode === 'fullscreen'">
+              <div class="fullscreen-skeleton-slide">
+                <van-skeleton title :row="3" />
+              </div>
+            </template>
+            <div
+              v-else
+              class="result-list result-list-skeleton"
+              :style="{ gridTemplateColumns: `repeat(${gridColumns}, minmax(0, 1fr))` }"
+            >
+              <van-skeleton
+                v-for="i in gridColumns * 2"
+                :key="`sk-${i}`"
+                avatar
+                :row="2"
+              />
+            </div>
           </div>
           <template v-else-if="displayMode === 'waterfall'">
             <div v-if="list.length" class="result-list-wrap">
@@ -1181,10 +1905,14 @@ onMounted(async () => {
                     v-for="row in column.items"
                     :key="`wf-${row.globalIndex}-${getItemKey(row.item)}`"
                     class="result-item"
+                    :class="{ 'result-item--pressing': cardPressIndex === row.globalIndex }"
                     @touchstart="(e) => onImageTouchStart(row.globalIndex, e)"
                     @touchmove="onImageTouchMove"
                     @touchend="onImageTouchEnd"
                     @touchcancel="onImageTouchEnd"
+                    @mousedown="onCardMouseDown(row.globalIndex)"
+                    @mouseup="onCardMouseUp"
+                    @mouseleave="onCardMouseUp"
                     @contextmenu.prevent="openActionByIndex(row.globalIndex)"
                   >
                     <div
@@ -1201,7 +1929,7 @@ onMounted(async () => {
                           v-if="row.item.videoSrc"
                           :ref="(el) => setInlineVideoRef(row.item, el)"
                           class="preview preview--inline-video"
-                          :style="{ objectFit: previewObjectFit }"
+                          :style="{ objectFit: mediaObjectFit }"
                           :src="row.item.videoSrc"
                           :poster="getDisplayPosterSrc(row.item)"
                           loop
@@ -1226,7 +1954,7 @@ onMounted(async () => {
                           <img
                             v-else-if="row.item.posterSrc"
                             class="preview preview--poster preview--poster-overlay"
-                            :style="{ objectFit: previewObjectFit }"
+                            :style="{ objectFit: mediaObjectFit }"
                             :src="getDisplayPosterSrc(row.item)"
                             alt=""
                             loading="lazy"
@@ -1266,7 +1994,7 @@ onMounted(async () => {
                         <img
                           v-else
                           class="preview"
-                          :style="{ objectFit: previewObjectFit }"
+                          :style="{ objectFit: mediaObjectFit }"
                           :src="getDisplayImageSrc(row.item)"
                           alt="preview"
                           loading="lazy"
@@ -1280,21 +2008,21 @@ onMounted(async () => {
                 </div>
               </div>
             </div>
-            <van-empty v-else-if="state.finished && !state.loading" image="default" :description="t('messages.noData')" />
+            <H5ListEmpty v-else-if="state.finished && !state.loading" :description="t('messages.noData')" />
             <div v-if="state.loading && list.length" class="load-more-text">{{ t('messages.loading') }}</div>
-            <div v-else-if="state.finished && list.length" class="load-more-text">{{ t('messages.noMoreData') }}</div>
           </template>
           <template v-else>
-            <div ref="fullscreenSliderRef" class="fullscreen-slider">
-              <VirtualList
+            <div class="fullscreen-slider">
+              <H5FullscreenPager
                 v-if="list.length"
-                ref="fullscreenListRef"
+                ref="fullscreenPagerRef"
                 :items="list"
-                :item-height="fullscreenItemHeight"
-                :container-height="fullscreenItemHeight"
                 :loading="state.loading"
                 :finished="state.finished"
-                @scroll="onFullscreenVirtualScroll"
+                :suppress-load-more="state.jumpScrollLock"
+                :allow-top-pull="isFullscreenPullAtTop"
+                @scroll="onFullscreenPagerScroll"
+                @index-change="onFullscreenPagerIndexChange"
                 @load-more="onLoadMore"
               >
                 <template #default="{ item, index }">
@@ -1306,7 +2034,7 @@ onMounted(async () => {
                         ? { backgroundColor: '#000' }
                         : {
                             backgroundImage: slideBgUrl(item) ? `url(${slideBgUrl(item)})` : 'none',
-                            backgroundSize: previewObjectFit,
+                            backgroundSize: mediaObjectFit,
                             backgroundPosition: 'center',
                             backgroundRepeat: 'no-repeat',
                             backgroundColor: 'rgba(0, 0, 0, 0.07)'
@@ -1323,7 +2051,7 @@ onMounted(async () => {
                       <video
                         :ref="(el) => setInlineVideoRef(item, el)"
                         class="fullscreen-slide-video"
-                        :style="{ objectFit: previewObjectFit }"
+                        :style="{ objectFit: mediaObjectFit }"
                         :src="item.videoSrc"
                         :poster="slideBgUrl(item)"
                         loop
@@ -1357,14 +2085,12 @@ onMounted(async () => {
                     </div>
                   </div>
                 </template>
-              </VirtualList>
-              <van-empty
+              </H5FullscreenPager>
+              <H5ListEmpty
                 v-else-if="state.finished && !state.loading"
-                image="default"
                 :description="t('messages.noData')"
               />
               <div v-if="state.loading && list.length" class="load-more-text">{{ t('messages.loading') }}</div>
-              <div v-else-if="state.finished && list.length" class="load-more-text">{{ t('messages.noMoreData') }}</div>
             </div>
           </template>
         </div>
@@ -1403,12 +2129,20 @@ onMounted(async () => {
         </div>
         <template v-if="form.resourceType === 'localResource'">
           <div class="filter-group">
+            <div class="group-title">{{ t('h5.pages.search.filters.listMode') }}</div>
+            <van-radio-group v-model="form.isRandom" class="filter-options" direction="horizontal">
+              <van-radio v-for="o in listModeRadioOptions" :key="String(o.value)" :name="o.value">
+                {{ o.text }}
+              </van-radio>
+            </van-radio-group>
+          </div>
+          <div v-if="!form.isRandom" class="filter-group">
             <div class="group-title">{{ t('pages.Setting.settingDataForm.sortField') }}</div>
             <van-radio-group v-model="form.sortField" class="filter-options filter-options--sort" direction="horizontal">
               <van-radio v-for="o in sortFieldRadioOptions" :key="o.value" :name="o.value">{{ o.text }}</van-radio>
             </van-radio-group>
           </div>
-          <div class="filter-group">
+          <div v-if="!form.isRandom" class="filter-group">
             <div class="group-title">{{ t('pages.Setting.settingDataForm.sortType') }}</div>
             <van-radio-group v-model="form.sortType" class="filter-options" direction="horizontal">
               <van-radio v-for="o in sortTypeRadioOptions" :key="o.value" :name="o.value">{{ o.text }}</van-radio>
@@ -1462,12 +2196,14 @@ onMounted(async () => {
       :images="previewImages"
       :start-position="previewStartPosition"
       closeable
+      @change="onPreviewIndexChange"
     />
 
     <van-popup
       v-model:show="state.showActionPopup"
       destroy-on-close
       position="bottom"
+      :z-index="H5_OVERLAY_Z.actionPopup"
       :style="{ padding: '16px' }"
     >
       <div class="action-popup-content">
@@ -1475,7 +2211,7 @@ onMounted(async () => {
           <div class="action-icon-wrapper">
             <IconifyIcon class="action-icon-inner" icon="custom:info-line" />
           </div>
-          <span class="action-label">{{ t('h5.pages.home.actions.imageInfo') }}</span>
+          <span class="action-label">{{ t('h5.pages.search.actions.info') }}</span>
         </div>
         <div class="action-item" @click="toggleSelectedFavorite">
           <div class="action-icon-wrapper">
@@ -1485,28 +2221,33 @@ onMounted(async () => {
               :style="{ color: selectedItem?.isFavorite ? 'gold' : '' }"
             />
           </div>
-          <span class="action-label">{{
-            selectedItem?.isFavorite ? t('exploreCommon.removeFavorites') : t('exploreCommon.addToFavorites')
-          }}</span>
+          <span class="action-label">{{ selectedFavoriteActionLabel }}</span>
         </div>
-        <div class="action-item" @click="saveImage">
+        <div class="action-item" @click="saveSelectedMedia">
           <div class="action-icon-wrapper">
             <IconifyIcon class="action-icon-inner" icon="custom:download-line" />
           </div>
-          <span class="action-label">{{ t('h5.pages.home.actions.saveImage') }}</span>
+          <span class="action-label">{{ t('h5.pages.search.actions.save') }}</span>
         </div>
-        <div class="action-item delete-action" @click="deleteImage">
+        <div class="action-item delete-action" @click="deleteSelectedMedia">
           <div class="action-icon-wrapper">
             <IconifyIcon class="action-icon-inner" icon="custom:delete-line" />
           </div>
-          <span class="action-label">{{ t('h5.pages.home.actions.deleteImage') }}</span>
+          <span class="action-label">{{ t('h5.pages.search.actions.delete') }}</span>
         </div>
       </div>
     </van-popup>
 
+    <div
+      v-show="isImageInfoPanelOpen"
+      class="image-info-backdrop"
+      aria-hidden="true"
+      @click="closeImageInfoPanel"
+    />
     <van-floating-panel
       v-model:height="imageInfoPanelHeight"
       :anchors="imageInfoPanelAnchors"
+      class="image-info-panel"
       @height-change="onImageInfoHeightChange"
     >
       <div class="image-info-content">
@@ -1525,10 +2266,66 @@ onMounted(async () => {
     <div
       v-if="list.length"
       class="search-page-indicator"
+      :class="{ 'search-page-indicator--clickable': displayMode === 'fullscreen' }"
       :style="searchPageIndicatorStyle"
+      @click="openJumpPopup"
     >
       {{ displayMode === 'fullscreen' ? fullscreenIndicatorText : waterfallIndicatorText }}
     </div>
+
+    <H5FloatingButtons
+      v-if="list.length"
+      :enabled-keys="settingData.h5EnabledFloatingButtons || []"
+      :position="settingData.h5FloatingButtonPosition || 'left'"
+      :auto-play-on="fullscreenAutoPlayOn"
+      :countdown="fullscreenAutoPlayCountdown"
+      :interval-sec="fullscreenAutoPlayIntervalSec"
+      :display-size="form.displaySize"
+      :immersive-mode="immersiveMode"
+      :is-current-favorite="isCurrentFullscreenFavorite"
+      :show-image-playback-controls="showImagePlaybackFloats"
+      :show-favorites="displayMode === 'fullscreen'"
+      :hidden="state.showPreview"
+      @toggle-auto-play="onToggleFullscreenAutoPlay"
+      @cycle-interval="onCycleFullscreenInterval"
+      @favorite-touch-start="handleFavoriteTouchStart"
+      @favorite-touch-move="handleFavoriteTouchMove"
+      @favorite-touch-end="handleFavoriteTouchEnd"
+      @toggle-display-size="toggleDisplaySize"
+      @toggle-immersive="onToggleImmersiveMode"
+      @back-top="onFloatingBackTop"
+    />
+
+    <van-toast
+      v-model:show="state.showFavoriteToast"
+      :overlay="false"
+      style="background-color: transparent"
+    >
+      <template #message>
+        <img class="favorite-toast-icon" src="@h5/assets/images/star.gif" alt="" />
+        <div v-if="state.isFavoriteHolding && favoriteHold.count" class="favorite-toast-count">
+          +{{ favoriteHold.count }}
+        </div>
+      </template>
+    </van-toast>
+
+    <van-dialog
+      v-model:show="state.showJumpPopup"
+      class-name="search-jump-dialog"
+      :title="t('h5.pages.home.actions.jumpToIndex')"
+      show-cancel-button
+      @opened="() => onJumpDialogViewportChange()"
+      @confirm="jumpToIndex"
+      @cancel="jumpIndex = ''"
+    >
+      <van-field
+        v-model="jumpIndex"
+        :placeholder="t('h5.pages.home.actions.enterIndex')"
+        type="digit"
+        :maxlength="String(searchResultTotal).length"
+        @focus="onJumpDialogViewportChange(true)"
+      />
+    </van-dialog>
   </div>
 </template>
 
@@ -1581,12 +2378,6 @@ onMounted(async () => {
 .page-search--fullscreen :deep(.virtual-list) {
   flex: 1;
   min-height: 0;
-  scroll-snap-type: y mandatory;
-  overscroll-behavior-y: contain;
-}
-.page-search--fullscreen :deep(.virtual-list-item) {
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
 }
 .fullscreen-slide {
   width: 100%;
@@ -1609,6 +2400,48 @@ onMounted(async () => {
   font-size: 56px;
   opacity: 0.82;
 }
+
+.page-search--immersive .search-toolbar {
+  display: none;
+}
+.search-chrome-mini {
+  position: fixed;
+  top: calc(8px + env(safe-area-inset-top, 0px));
+  right: 12px;
+  z-index: 120;
+  display: flex;
+  gap: 8px;
+}
+.chrome-mini-btn {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 50%;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
+  border: none;
+  color: #fff;
+}
+.chrome-mini-btn :deep(.van-icon) {
+  color: #fff;
+}
+.search-page-indicator--clickable {
+  pointer-events: auto;
+  cursor: pointer;
+}
+.favorite-toast-icon {
+  width: 72px;
+  height: 72px;
+}
+.favorite-toast-count {
+  margin-top: 4px;
+  font-size: 18px;
+  font-weight: 600;
+  color: gold;
+  text-align: center;
+}
+
 .search-page-indicator {
   padding: 4px 10px;
   border-radius: 999px;
@@ -1669,10 +2502,29 @@ onMounted(async () => {
 .result-list-wrap {
   padding-bottom: 12px;
 }
+.search-skeleton--fullscreen {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.fullscreen-skeleton-slide {
+  flex: 1;
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 24px 16px;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.04);
+}
+
 .result-list-skeleton {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+  width: 100%;
 }
 .result-item {
   width: 100%;
@@ -1686,12 +2538,40 @@ onMounted(async () => {
   break-inside: avoid;
   content-visibility: auto;
   contain-intrinsic-size: 280px;
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+  transform: translateZ(0);
+
+  &--pressing {
+    transform: scale(0.97) translateZ(0);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    border-color: rgba(0, 0, 0, 0.1);
+
+    .preview-wrap::after {
+      opacity: 1;
+    }
+  }
 }
 .preview-wrap {
   border-radius: 0;
   overflow: hidden;
   background: rgba(0, 0, 0, 0.05);
   position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    background: rgba(0, 0, 0, 0.1);
+    opacity: 0;
+    transition: opacity 0.18s ease;
+    pointer-events: none;
+  }
 }
 .preview-fallback {
   width: 100%;
@@ -1910,6 +2790,17 @@ onMounted(async () => {
 
 .delete-action {
   color: #ff4d4f;
+}
+
+.image-info-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: v-bind('H5_OVERLAY_Z.imageInfoBackdrop');
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.image-info-panel {
+  z-index: v-bind('H5_OVERLAY_Z.imageInfoPanel');
 }
 
 .image-info-content {

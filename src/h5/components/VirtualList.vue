@@ -30,6 +30,16 @@ const props = defineProps({
   suppressLoadMore: {
     type: Boolean,
     default: false
+  },
+  /** 全屏逐张翻页：与搜索铺满模式一致的 scroll-snap + 跟手滚动 */
+  pageSnap: {
+    type: Boolean,
+    default: false
+  },
+  /** 首张顶栏下拉刷新：允许 overscroll 传递到外层 PullRefresh */
+  allowTopPull: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -268,24 +278,26 @@ const onTouchStart = (event) => {
   touchState.isScrolling = false
 }
 
-// 触摸移动
+// 触摸移动（勿 preventDefault，否则会阻断全屏逐张滑动的原生滚动与 scroll-snap）
 const onTouchMove = (event) => {
   const deltaY = event.touches[0].clientY - touchState.startY
-
-  // 如果滚动距离足够大，标记为滚动状态
   if (Math.abs(deltaY) > 10) {
     touchState.isScrolling = true
-  }
-
-  // 只在必要时阻止默认行为，避免影响正常滚动
-  if (touchState.isScrolling && Math.abs(deltaY) > 20) {
-    event.preventDefault()
   }
 }
 
 // 触摸结束
 const onTouchEnd = (event) => {
   touchState.isScrolling = false
+}
+
+/** 铺满翻页：接近抖音单页滑动的缓动曲线 */
+const easeOutCubic = (t) => 1 - (1 - t) ** 3
+
+const getPageSnapScrollDuration = (distance) => {
+  const page = Math.max(1, props.itemHeight)
+  if (distance <= page * 1.05) return 260
+  return Math.min(420, Math.max(120, Math.round(distance * 0.35)))
 }
 
 // 统一的滚动方法，支持索引和位置
@@ -313,11 +325,51 @@ const scrollTo = (options) => {
       targetScrollTop = 0
     }
 
-    // 如果目标位置与当前位置相同，直接返回
-    if (Math.abs(scrollTop - targetScrollTop) < 1) {
+    const emitScrollSync = (top) => {
+      virtualListScrollTop.value = top
+      const element = virtualListRef.value
+      if (!element) return
+      emit('scroll', {
+        scrollTop: top,
+        scrollHeight: element.scrollHeight,
+        clientHeight: element.clientHeight,
+        visibleStart: visibleRange.value.visibleStart,
+        visibleEnd: visibleRange.value.visibleEnd,
+        velocity: scrollPerformance.velocity
+      })
+    }
+
+    const finishAtTarget = (top) => {
+      emitScrollSync(top)
       isSyncing.value = false
       resolve()
+    }
+
+    // 位置已对齐时仍同步虚拟滚动状态（避免 scrollTop 与 offsetY 脱节）
+    if (Math.abs(scrollTop - targetScrollTop) < 1) {
+      finishAtTarget(targetScrollTop)
       return
+    }
+
+    /** 长距离跳转：先更新可见区再写 scrollTop，否则 translateY 与视口错位 */
+    const applyInstantScroll = () => {
+      const element = virtualListRef.value
+      if (!element) {
+        isSyncing.value = false
+        resolve()
+        return
+      }
+      virtualListScrollTop.value = targetScrollTop
+      element.style.scrollBehavior = ''
+      nextTick(() => {
+        element.scrollTop = targetScrollTop
+        requestAnimationFrame(() => {
+          if (Math.abs(element.scrollTop - targetScrollTop) > 1) {
+            element.scrollTop = targetScrollTop
+          }
+          finishAtTarget(element.scrollTop)
+        })
+      })
     }
 
     // 确定是否使用动画
@@ -325,77 +377,51 @@ const scrollTo = (options) => {
 
     // 计算动画时间（基于滚动距离，50-300ms）
     const distance = Math.abs(scrollTop - targetScrollTop)
-    const duration = useAnimation ? Math.min(300, Math.max(50, distance / 3)) : 0
-
-    // 更新滚动位置状态
-    virtualListScrollTop.value = targetScrollTop
+    const duration = useAnimation
+      ? props.pageSnap
+        ? getPageSnapScrollDuration(distance)
+        : Math.min(300, Math.max(50, distance / 3))
+      : 0
 
     if (useAnimation && duration > 0) {
-      // 使用 requestAnimationFrame 确保在下一帧执行，提高性能
-      requestAnimationFrame(() => {
-        // 临时设置滚动动画
-        const element = virtualListRef.value
-        if (element) {
-          element.style.scrollBehavior = 'smooth'
-          element.scrollTop = targetScrollTop
-
-          // 动画完成后恢复默认设置
-          setSafeTimer(
-            'animation',
-            () => {
-              if (virtualListRef.value) {
-                virtualListRef.value.style.scrollBehavior = ''
-
-                // 清除同步标志
-                isSyncing.value = false
-
-                // 触发滚动事件，确保父组件能收到正确的滚动数据
-                const scrollEvent = {
-                  scrollTop: targetScrollTop,
-                  scrollHeight: virtualListRef.value.scrollHeight,
-                  clientHeight: virtualListRef.value.clientHeight,
-                  visibleStart: visibleRange.value.visibleStart,
-                  visibleEnd: visibleRange.value.visibleEnd
-                }
-                emit('scroll', scrollEvent)
-              }
-
-              resolve()
-            },
-            duration
-          )
-        } else {
-          isSyncing.value = false
-          resolve()
-        }
-      })
-    } else {
-      // 不使用动画，直接设置位置
       const element = virtualListRef.value
-      if (element) {
-        element.style.scrollBehavior = ''
-        element.scrollTop = targetScrollTop
-
-        // 使用nextTick确保DOM更新后再解除同步标志
-        nextTick(() => {
-          isSyncing.value = false
-
-          // 触发滚动事件
-          const scrollEvent = {
-            scrollTop: targetScrollTop,
-            scrollHeight: element.scrollHeight,
-            clientHeight: element.clientHeight,
-            visibleStart: visibleRange.value.visibleStart,
-            visibleEnd: visibleRange.value.visibleEnd
-          }
-          emit('scroll', scrollEvent)
-
-          resolve()
-        })
-      } else {
+      if (!element) {
         isSyncing.value = false
         resolve()
+        return
       }
+
+      element.style.scrollBehavior = 'auto'
+      const startTop = scrollTop
+      const startTime = performance.now()
+
+      const tick = () => {
+        if (!virtualListRef.value) {
+          isSyncing.value = false
+          resolve()
+          return
+        }
+        const elapsed = performance.now() - startTime
+        const progress = Math.min(1, elapsed / duration)
+        const eased = props.pageSnap ? easeOutCubic(progress) : progress
+        const currentTop = startTop + (targetScrollTop - startTop) * eased
+        virtualListRef.value.scrollTop = currentTop
+        emitScrollSync(currentTop)
+
+        if (progress < 1) {
+          requestAnimationFrame(tick)
+        } else {
+          virtualListRef.value.style.scrollBehavior = ''
+          if (Math.abs(virtualListRef.value.scrollTop - targetScrollTop) > 1) {
+            virtualListRef.value.scrollTop = targetScrollTop
+          }
+          finishAtTarget(virtualListRef.value.scrollTop)
+        }
+      }
+
+      requestAnimationFrame(tick)
+    } else {
+      applyInstantScroll()
     }
   })
 }
@@ -522,6 +548,10 @@ defineExpose({
   <div
     ref="virtualListRef"
     class="virtual-list"
+    :class="{
+      'virtual-list--page-snap': pageSnap,
+      'virtual-list--top-pull': allowTopPull
+    }"
     @scroll="throttledScroll"
     @touchstart="onTouchStart"
     @touchmove="onTouchMove"
@@ -533,6 +563,7 @@ defineExpose({
           v-for="(item, index) in visibleItems"
           :key="`${startIndex + index}-${item.id || index}`"
           class="virtual-list-item"
+          :class="{ 'virtual-list-item--page-snap': pageSnap }"
           :style="{ height: `${itemHeight}px` }"
         >
           <slot
@@ -558,7 +589,7 @@ defineExpose({
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
   position: relative;
   /* 性能优化 */
   will-change: scroll-position;
@@ -603,6 +634,21 @@ defineExpose({
   -webkit-transform: translateZ(0);
   -webkit-backface-visibility: hidden;
   -webkit-perspective: 1000px;
+}
+
+.virtual-list--page-snap {
+  scroll-snap-type: y mandatory;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y;
+}
+
+.virtual-list-item--page-snap {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+.virtual-list--top-pull {
+  overscroll-behavior-y: auto;
 }
 
 .finished-indicator {
