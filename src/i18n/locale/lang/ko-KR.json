@@ -934,8 +934,10 @@
             "label": "표시 크기",
             "placeholder": "표시 크기를 선택해 주세요"
           },
-          "h5ImageCompress": "이미지 압축",
-          "h5ImageCompressStartSize": "압축 시작 크기",
+          "h5FullscreenImageCompress": "Fullscreen optimized loading",
+          "h5FullscreenImageCompressHint": "Card mode always uses compressed thumbnails; fullscreen uses compressed images when on, originals when off",
+          "h5ImageCompressStartSize": "Compress threshold (MB)",
+          "h5ImageCompressStartSizeHint": "Skip resize below this size; always applies in card mode",
           "h5FunctionSettings": "기능 설정",
           "h5FloatingButtonPosition": {
             "label": "플로팅 버튼 위치",

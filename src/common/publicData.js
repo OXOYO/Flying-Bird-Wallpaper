@@ -279,7 +279,9 @@ export const defaultSettingData = {
     dark: false,
     primary: '#71956C'
   },
-  h5ImageCompress: true,
+  /** 铺满模式列表是否使用压缩图（卡片模式始终压缩） */
+  h5FullscreenImageCompress: false,
+  /** 原图大于该值（MB）且请求带 w 时才 sharp 缩放 */
   h5ImageCompressStartSize: 2,
   h5FloatingButtonPosition: 'left',
   h5EnabledFloatingButtons: [
@@ -293,6 +295,18 @@ export const defaultSettingData = {
   h5NumberIndicatorPosition: 'top',
   h5Vibration: true,
   h5WeekScreen: true
+}
+
+/** 合并默认项并迁移旧版 H5 图片压缩设置 */
+export function migrateSettingData(storeData = {}) {
+  const next = { ...defaultSettingData, ...storeData }
+  if (typeof next.h5FullscreenImageCompress !== 'boolean') {
+    if (typeof next.h5ImageCompress === 'boolean') {
+      next.h5FullscreenImageCompress = next.h5ImageCompress
+    }
+  }
+  delete next.h5ImageCompress
+  return next
 }
 
 export const colorList = [

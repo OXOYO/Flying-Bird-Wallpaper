@@ -934,8 +934,10 @@
             "label": "Размер отображения",
             "placeholder": "Выберите размер отображения"
           },
-          "h5ImageCompress": "Сжатие изображения",
-          "h5ImageCompressStartSize": "Начальный размер сжатия",
+          "h5FullscreenImageCompress": "Fullscreen optimized loading",
+          "h5FullscreenImageCompressHint": "Card mode always uses compressed thumbnails; fullscreen uses compressed images when on, originals when off",
+          "h5ImageCompressStartSize": "Compress threshold (MB)",
+          "h5ImageCompressStartSizeHint": "Skip resize below this size; always applies in card mode",
           "h5FunctionSettings": "Функциональные настройки",
           "h5FloatingButtonPosition": {
             "label": "Позиция плавающей кнопки",

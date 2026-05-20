@@ -850,7 +850,7 @@
         "title": "搜尋",
         "keywordPlaceholder": "請輸入關鍵字",
         "displayMode": {
-          "toggleToFullscreen": "切換為鋪滿",
+          "toggleToFullscreen": "切換為全屏",
           "toggleToWaterfall": "切換為瀑布流",
           "indicator": "{current} / {total}",
           "indicatorLoadedTotal": "{loaded} / {total}"
@@ -934,8 +934,10 @@
             "label": "顯示尺寸",
             "placeholder": "請選擇顯示尺寸"
           },
-          "h5ImageCompress": "圖片壓縮",
+          "h5FullscreenImageCompress": "全屏模式優化載入",
+          "h5FullscreenImageCompressHint": "卡片始終壓縮；開啟後全屏列表使用壓縮圖，關閉使用原圖；預覽始終為原圖",
           "h5ImageCompressStartSize": "壓縮起始大小",
+          "h5ImageCompressStartSizeHint": "原圖小於該值時不縮放；卡片模式始終生效",
           "h5FunctionSettings": "功能設定",
           "h5FloatingButtonPosition": {
             "label": "懸浮按鈕位置",

@@ -847,7 +847,7 @@
         "title": "搜索",
         "keywordPlaceholder": "请输入关键词",
         "displayMode": {
-          "toggleToFullscreen": "切换为铺满",
+          "toggleToFullscreen": "切换为全屏",
           "toggleToWaterfall": "切换为瀑布流",
           "indicator": "{current} / {total}",
           "indicatorLoadedTotal": "{loaded} / {total}"
@@ -933,8 +933,10 @@
             "label": "显示尺寸",
             "placeholder": "请选择显示尺寸"
           },
-          "h5ImageCompress": "图片压缩",
+          "h5FullscreenImageCompress": "全屏模式优化加载",
+          "h5FullscreenImageCompressHint": "卡片始终压缩；开启后全屏列表使用压缩图，关闭使用原图；预览始终为原图",
           "h5ImageCompressStartSize": "压缩起始大小",
+          "h5ImageCompressStartSizeHint": "原图小于该值时不缩放；卡片模式始终生效",
           "h5FunctionSettings": "功能设置",
           "h5FloatingButtonPosition": {
             "label": "悬浮按钮位置",

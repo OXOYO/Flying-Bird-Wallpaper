@@ -936,8 +936,10 @@
             "label": "Display Size",
             "placeholder": "Select display size"
           },
-          "h5ImageCompress": "Image Compress",
-          "h5ImageCompressStartSize": "Start compress size",
+          "h5FullscreenImageCompress": "Fullscreen optimized loading",
+          "h5FullscreenImageCompressHint": "Card mode always compressed; when on, fullscreen list uses compressed images; preview always uses originals",
+          "h5ImageCompressStartSize": "Compress threshold (MB)",
+          "h5ImageCompressStartSizeHint": "Skip resize below this size; always applies in card mode",
           "h5FunctionSettings": "Function Settings",
           "h5FloatingButtonPosition": {
             "label": "Floating Button Position",

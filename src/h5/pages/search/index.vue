@@ -19,9 +19,9 @@ import H5FloatingButtons from '@h5/components/H5FloatingButtons.vue'
 import H5ListEmpty from '@h5/components/H5ListEmpty.vue'
 import { useH5FullscreenAutoPlay } from '@h5/composables/useH5FullscreenAutoPlay.js'
 import {
+  applyH5CardImageCompress,
   applyH5ImageCompress,
-  buildH5LocalImageUrl,
-  isH5LocalImageApiUrl
+  buildH5LocalImageUrl
 } from '@h5/utils/imageUrl.js'
 import { getH5NumberIndicatorStyle } from '@h5/utils/indicatorStyle.js'
 
@@ -148,6 +148,8 @@ const list = ref([])
 const FALLBACK_ITEM_HEIGHT = 220
 const GRID_GAP = 10
 const GRID_BUFFER_PX = 900
+/** 铺满模式：仅为当前张及相邻张设置图片 src，避免虚拟列表缓冲项拉原图 */
+const FULLSCREEN_IMAGE_PRELOAD_RANGE = 1
 /** 与 .search-pull-inner 的 padding-top 保持一致 */
 const SEARCH_WATERFALL_CONTENT_GAP_PX = 10
 /** 顶部指示器与首行卡片顶边的间距 */
@@ -187,6 +189,9 @@ const favoriteHold = reactive({
 })
 const imageErrorState = reactive({})
 const imageRetrySeed = reactive({})
+const imageLoadedKeys = ref(new Set())
+/** 预览层当前张是否加载失败（用于 Teleport 提示） */
+const previewImageErrorAt = ref(-1)
 const imageLoadFailText = computed(() => t('messages.imageLoadRetryHint'))
 
 const resourceTypeOptions = computed(() => {
@@ -322,43 +327,115 @@ const resolveImageCompressWidth = (options = {}) => {
   return Math.max(80, Math.round(cardWidth.value || 160))
 }
 
-const withH5ImageCompress = (url, options = {}) => {
-  if (!url || !isH5LocalImageApiUrl(url)) return url
+const getItemRawImageUrl = (item) => item?.imageRawSrc || item?.imageSrc || ''
+
+const appendImageRetryQuery = (url, item) => {
+  if (!url) return ''
+  const key = getItemKey(item)
+  const seed = imageRetrySeed[key] || 0
+  if (!seed) return url
+  const separator = url.includes('?') ? '&' : '?'
+  return `${url}${separator}_retry=${seed}`
+}
+
+/** 铺满列表是否附加压缩参数（卡片模式始终压缩） */
+const isFullscreenListCompressEnabled = () => !!settingData.value.h5FullscreenImageCompress
+
+const buildFullscreenListImageUrl = (url, options = {}) => {
+  if (!url) return ''
   return applyH5ImageCompress(url, {
     width: resolveImageCompressWidth(options),
-    settingData: settingData.value
+    settingData: settingData.value,
+    enabled: isFullscreenListCompressEnabled()
   })
 }
 
-const getDisplayImageSrc = (item, options = {}) => {
-  const key = getItemKey(item)
-  const seed = imageRetrySeed[key] || 0
-  const base = item.imageRawSrc || item.imageSrc || ''
-  if (!seed) return withH5ImageCompress(base, options)
-  const compressed = withH5ImageCompress(base, options)
-  const separator = compressed.includes('?') ? '&' : '?'
-  return `${compressed}${separator}_retry=${seed}`
+const getWaterfallImageSrc = (item, options = {}) => {
+  const base = getItemRawImageUrl(item)
+  const url = applyH5CardImageCompress(base, {
+    width: resolveImageCompressWidth(options),
+    settingData: settingData.value
+  })
+  return appendImageRetryQuery(url, item)
 }
+
+const getFullscreenListImageSrc = (item, options = {}) => {
+  const url = buildFullscreenListImageUrl(getItemRawImageUrl(item), options)
+  return appendImageRetryQuery(url, item)
+}
+
+/** 预览始终原图（与铺满列表压缩策略无关） */
+const getPreviewImageSrc = (item) => appendImageRetryQuery(getItemRawImageUrl(item), item)
+
+const getDisplayImageSrc = (item, options = {}) => {
+  if (displayMode.value === 'waterfall') {
+    return getWaterfallImageSrc(item, options)
+  }
+  return getFullscreenListImageSrc(item, options)
+}
+
 const getDisplayPosterSrc = (item, options = {}) => {
-  const key = getItemKey(item)
-  const seed = imageRetrySeed[key] || 0
   const raw = item.posterRawSrc || ''
   if (!raw) return ''
-  if (!seed) return withH5ImageCompress(item.posterSrc || raw, options)
-  const compressed = withH5ImageCompress(raw, options)
-  const separator = compressed.includes('?') ? '&' : '?'
-  return `${compressed}${separator}_retry=${seed}`
+  const url =
+    displayMode.value === 'waterfall'
+      ? applyH5CardImageCompress(raw, {
+          width: resolveImageCompressWidth(options),
+          settingData: settingData.value
+        })
+      : buildFullscreenListImageUrl(raw, options)
+  return appendImageRetryQuery(url, item)
 }
-const onImageLoadError = (item) => {
+
+const shouldLoadFullscreenImage = (index) => {
+  if (displayMode.value !== 'fullscreen') return false
+  const cur = fullscreenVisibleIndex.value
+  if (typeof index !== 'number' || index < 0) return false
+  return Math.abs(index - cur) <= FULLSCREEN_IMAGE_PRELOAD_RANGE
+}
+const clearImageLoadedKey = (key) => {
+  if (!key) return
+  const next = new Set(imageLoadedKeys.value)
+  next.delete(key)
+  imageLoadedKeys.value = next
+}
+
+const markImageLoaded = (item) => {
+  const key = getItemKey(item)
+  if (!key) return
+  const next = new Set(imageLoadedKeys.value)
+  next.add(key)
+  imageLoadedKeys.value = next
+}
+
+const isSlideImageLoaded = (item) => {
+  const key = getItemKey(item)
+  return key ? imageLoadedKeys.value.has(key) : false
+}
+
+const onImageLoadError = (item, event) => {
+  const img = event?.target
+  if (img instanceof HTMLImageElement) {
+    if (!img.isConnected) return
+    if (!(img.currentSrc || img.src)) return
+  }
   const key = getItemKey(item)
   if (!key) return
   imageErrorState[key] = true
+  clearImageLoadedKey(key)
 }
 const onPosterLoadError = onImageLoadError
+const onSlideImageLoad = (item) => {
+  const key = getItemKey(item)
+  if (!key) return
+  imageErrorState[key] = false
+  markImageLoaded(item)
+}
 const retryLoadImage = (item) => {
   const key = getItemKey(item)
   if (!key) return
   imageErrorState[key] = false
+  clearImageLoadedKey(key)
   imageRetrySeed[key] = Date.now()
 }
 const retryLoadPoster = retryLoadImage
@@ -729,7 +806,7 @@ const previewImages = computed(() => {
   if (!state.showPreview) return []
   return list.value
     .filter((item) => item.fileType !== 'video')
-    .map((item) => getDisplayImageSrc(item, { width: state.viewportWidth }))
+    .map((item) => getPreviewImageSrc(item))
     .filter(Boolean)
 })
 const previewStartPosition = computed(() => {
@@ -798,23 +875,65 @@ const pickShortestColumnIndex = (columns) => {
   return columnIndex
 }
 
-const virtualColumns = computed(() => {
+/** 瀑布流分列布局（含每张卡片的列内 top，供虚拟列表与模式切换对齐） */
+const buildWaterfallColumnLayouts = () => {
   const columns = Array.from({ length: gridColumns.value }, () => ({
     items: [],
-    totalHeight: 0,
-    topSpacer: 0,
-    bottomSpacer: 0
+    totalHeight: 0
   }))
   list.value.forEach((item, index) => {
     const height = getItemHeight(item)
     const columnIndex = pickShortestColumnIndex(columns)
+    const top = columns[columnIndex].totalHeight
     columns[columnIndex].items.push({
       item,
       globalIndex: index,
-      height
+      height,
+      top
     })
     columns[columnIndex].totalHeight += height + GRID_GAP
   })
+  return columns
+}
+
+/** 视口内最靠上的一张（含未完全露出的卡片；并列取 globalIndex 更小） */
+const getFirstVisibleWaterfallListIndex = () => {
+  if (!list.value.length) return 0
+  const viewportTop = Math.max(0, state.scrollTop)
+  const viewportBottom = state.scrollTop + (state.viewportHeight || window.innerHeight)
+  const columns = buildWaterfallColumnLayouts()
+  let bestIndex = 0
+  let bestTop = Infinity
+  for (const column of columns) {
+    for (const row of column.items) {
+      const itemTop = row.top
+      const itemBottom = row.top + row.height
+      if (itemBottom <= viewportTop) continue
+      if (itemTop >= viewportBottom) continue
+      if (itemTop < bestTop || (itemTop === bestTop && row.globalIndex < bestIndex)) {
+        bestTop = itemTop
+        bestIndex = row.globalIndex
+      }
+    }
+  }
+  if (bestTop !== Infinity) return bestIndex
+  return 0
+}
+
+const getWaterfallScrollTopForListIndex = (listIndex) => {
+  const idx = Math.max(0, Math.min(Number(listIndex) || 0, list.value.length - 1))
+  const columns = buildWaterfallColumnLayouts()
+  for (const column of columns) {
+    const row = column.items.find((entry) => entry.globalIndex === idx)
+    if (row) {
+      return Math.max(0, row.top - SEARCH_WATERFALL_CONTENT_GAP_PX)
+    }
+  }
+  return 0
+}
+
+const virtualColumns = computed(() => {
+  const columns = buildWaterfallColumnLayouts()
 
   const viewportTop = Math.max(0, state.scrollTop - GRID_BUFFER_PX)
   const viewportBottom = state.scrollTop + state.viewportHeight + GRID_BUFFER_PX
@@ -822,25 +941,20 @@ const virtualColumns = computed(() => {
 
   return columns.map((column) => {
     const totalHeight = column.totalHeight
-    let accumulated = 0
     let start = 0
-    while (start < column.items.length) {
-      const rowHeight = column.items[start].height + GRID_GAP
-      if (accumulated + rowHeight >= viewportTop) break
-      accumulated += rowHeight
+    while (start < column.items.length && column.items[start].top + column.items[start].height < viewportTop) {
       start += 1
     }
 
     let end = start
-    let visibleHeight = accumulated
+    let visibleBottom = start < column.items.length ? column.items[start].top : viewportBottom
     while (end < column.items.length) {
-      const rowHeight = column.items[end].height + GRID_GAP
-      if (visibleHeight >= viewportBottom) break
-      visibleHeight += rowHeight
+      const row = column.items[end]
+      if (row.top >= viewportBottom) break
+      visibleBottom = row.top + row.height + GRID_GAP
       end += 1
     }
 
-    // 列高低于整体滚动区域时，仍保留列尾卡片，避免短列被虚拟化裁成空白
     if (
       end <= start &&
       start < column.items.length &&
@@ -848,14 +962,12 @@ const virtualColumns = computed(() => {
       viewportTop < maxColumnHeight
     ) {
       end = Math.min(column.items.length, start + 1)
-      visibleHeight = accumulated
-      for (let i = start; i < end; i += 1) {
-        visibleHeight += column.items[i].height + GRID_GAP
-      }
+      visibleBottom =
+        column.items[start].top + column.items[start].height + GRID_GAP
     }
 
-    const topSpacer = accumulated
-    const renderedHeight = Math.max(0, visibleHeight - accumulated)
+    const topSpacer = start < column.items.length ? column.items[start].top : totalHeight
+    const renderedHeight = Math.max(0, visibleBottom - topSpacer)
     const bottomSpacer = Math.max(0, totalHeight - topSpacer - renderedHeight)
     return {
       items: column.items.slice(start, end),
@@ -929,12 +1041,6 @@ const toggleDisplaySize = () => {
   form.displaySize = form.displaySize === 'cover' ? 'contain' : 'cover'
 }
 
-const slideBgUrl = (item) => {
-  if (!item) return ''
-  if (item.fileType === 'video') return getDisplayPosterSrc(item) || ''
-  return getDisplayImageSrc(item) || ''
-}
-
 const layoutToggleTitle = computed(() =>
   displayMode.value === 'waterfall'
     ? t('h5.pages.search.displayMode.toggleToFullscreen')
@@ -942,6 +1048,10 @@ const layoutToggleTitle = computed(() =>
 )
 
 const toggleDisplayMode = () => {
+  if (displayMode.value === 'waterfall') {
+    persistWaterfallScrollPosition()
+    fullscreenVisibleIndex.value = getFirstVisibleWaterfallListIndex()
+  }
   displayMode.value = displayMode.value === 'waterfall' ? 'fullscreen' : 'waterfall'
   try {
     localStorage.setItem(DISPLAY_MODE_STORAGE_KEY, displayMode.value)
@@ -1287,10 +1397,65 @@ const onToggleImmersiveMode = () => {
 const syncWaterfallViewportMetrics = () => {
   const wrap = pageWrapperRef.value
   if (!wrap || displayMode.value !== 'waterfall') return
-  state.scrollTop = wrap.scrollTop || 0
   if (wrap.clientHeight > 0) {
     state.viewportHeight = wrap.clientHeight
   }
+}
+
+/** 离开页面前保存瀑布流滚动位置（keep-alive 下 DOM scrollTop 会丢失） */
+const persistWaterfallScrollPosition = () => {
+  const wrap = pageWrapperRef.value
+  if (!wrap || displayMode.value !== 'waterfall') return
+  state.scrollTop = Math.max(0, wrap.scrollTop || state.scrollTop || 0)
+}
+
+/** 将瀑布流滚动到指定 list 索引（与全屏当前张对齐） */
+const restoreWaterfallScrollToListIndex = async (listIndex) => {
+  if (displayMode.value !== 'waterfall' || !list.value.length) return
+  const top = getWaterfallScrollTopForListIndex(listIndex)
+  state.scrollTop = top
+  await nextTick()
+  syncWaterfallViewportMetrics()
+  const wrap = pageWrapperRef.value
+  if (!wrap) return
+  wrap.scrollTop = top
+  await nextTick()
+  if (Math.abs(wrap.scrollTop - top) > 2) {
+    wrap.scrollTop = top
+  }
+  state.scrollTop = wrap.scrollTop
+}
+
+/** Tab 切回后恢复瀑布流滚动位置（沿用 state.scrollTop） */
+const restoreWaterfallScrollPosition = async () => {
+  if (displayMode.value !== 'waterfall') return
+  await nextTick()
+  syncWaterfallViewportMetrics()
+  const wrap = pageWrapperRef.value
+  if (!wrap) return
+  const top = Math.max(0, Number(state.scrollTop) || 0)
+  wrap.scrollTop = top
+  await nextTick()
+  if (Math.abs(wrap.scrollTop - top) > 2) {
+    wrap.scrollTop = top
+  }
+  state.scrollTop = wrap.scrollTop
+}
+
+/** Tab 切回或全屏模式显示时：按 fullscreenVisibleIndex 恢复 VirtualList 滚动，避免指示器与画面错位 */
+const restoreFullscreenPagerPosition = async () => {
+  if (displayMode.value !== 'fullscreen' || !list.value.length) return
+  const maxIdx = Math.max(0, list.value.length - 1)
+  const idx = Math.max(0, Math.min(fullscreenVisibleIndex.value, maxIdx))
+  fullscreenVisibleIndex.value = idx
+  await nextTick()
+  fullscreenPagerRef.value?.measureHeight?.()
+  await nextTick()
+  const pager = fullscreenPagerRef.value
+  if (!pager) return
+  await pager.scrollToIndex?.(idx, false)
+  fullscreenScrollTop.value = Math.max(0, Number(pager.getScrollTop?.()) || 0)
+  await syncFullscreenActiveMedia()
 }
 
 watch(displayMode, (mode) => {
@@ -1298,16 +1463,19 @@ watch(displayMode, (mode) => {
     fullscreenAutoPlay.stop()
     pauseAllInlineVideos()
     nextTick(() => {
-      syncWaterfallViewportMetrics()
+      const idx = Math.max(
+        0,
+        Math.min(fullscreenVisibleIndex.value, Math.max(0, list.value.length - 1))
+      )
+      void restoreWaterfallScrollToListIndex(idx)
       measureSearchToolbarHeight()
       refreshAllVideoVisibilityObservers()
     })
     return
   }
   nextTick(() => {
-    fullscreenPagerRef.value?.measureHeight?.()
+    void restoreFullscreenPagerPosition()
     refreshAllVideoVisibilityObservers()
-    void syncFullscreenActiveMedia()
   })
 })
 
@@ -1375,6 +1543,42 @@ const openPreview = (index) => {
 const onPreviewIndexChange = (payload) => {
   const raw = typeof payload === 'number' ? payload : payload?.index
   previewCurrentIndex.value = Math.max(0, Number(raw) || 0)
+  previewImageErrorAt.value = -1
+}
+
+let previewImageErrorCaptureEl = null
+const onPreviewImageCaptureError = (event) => {
+  if (!state.showPreview) return
+  const target = event?.target
+  if (!(target instanceof HTMLImageElement)) return
+  if (!target.closest('.van-image-preview')) return
+  const listIdx = resolveListIndexFromPreviewIndex(previewCurrentIndex.value)
+  const item = list.value[listIdx]
+  if (!item) return
+  previewImageErrorAt.value = previewCurrentIndex.value
+  onImageLoadError(item, event)
+  showNotify({ type: 'warning', message: imageLoadFailText.value })
+}
+
+const bindPreviewImageErrorCapture = () => {
+  unbindPreviewImageErrorCapture()
+  nextTick(() => {
+    previewImageErrorCaptureEl = document.querySelector('.van-image-preview')
+    previewImageErrorCaptureEl?.addEventListener('error', onPreviewImageCaptureError, true)
+  })
+}
+
+const unbindPreviewImageErrorCapture = () => {
+  previewImageErrorCaptureEl?.removeEventListener('error', onPreviewImageCaptureError, true)
+  previewImageErrorCaptureEl = null
+}
+
+const retryPreviewImage = () => {
+  const listIdx = resolveListIndexFromPreviewIndex(previewCurrentIndex.value)
+  const item = list.value[listIdx]
+  if (!item) return
+  previewImageErrorAt.value = -1
+  retryLoadImage(item)
 }
 
 const clearPreviewLongPressTimer = () => {
@@ -1495,7 +1699,7 @@ const getMediaDownloadUrl = (item) => {
   if (item.fileType === 'video') {
     return item.videoSrc || item.videoUrl || ''
   }
-  return getDisplayImageSrc(item) || item.imageSrc || item.imageUrl || ''
+  return getItemRawImageUrl(item) || item.imageUrl || ''
 }
 
 const getMediaDownloadFilename = (item) => {
@@ -1644,6 +1848,54 @@ const openActionByIndex = (index) => {
   state.showActionPopup = true
 }
 
+/** 列表/全屏/预览内媒体区域，用于捕获阶段拦截系统 contextmenu */
+const SEARCH_MEDIA_CONTEXT_SELECTOR =
+  '.result-item, .fullscreen-slide, .van-image-preview, .preview-wrap'
+
+const SEARCH_MEDIA_CAPTURE_EVENTS = ['contextmenu', 'selectstart', 'dragstart']
+
+const isTouchLikeContextMenu = (event) => {
+  if (event.pointerType === 'touch') return true
+  if (event.sourceCapabilities?.firesTouchEvents) return true
+  if (longPress.suppressClick) return true
+  return false
+}
+
+const isSearchPageMediaTarget = (el) =>
+  !!(
+    el.closest(SEARCH_MEDIA_CONTEXT_SELECTOR) ||
+    el.closest('.media-touch-shield') ||
+    el.tagName === 'IMG' ||
+    el.tagName === 'VIDEO'
+  )
+
+/** 捕获阶段：阻止图片/视频上的浏览器默认长按菜单 */
+const onSearchMediaContextMenuCapture = (event) => {
+  const el = event.target
+  if (!(el instanceof Element)) return
+  if (!el.closest('.page-search') && !el.closest('.van-image-preview')) return
+  if (!isSearchPageMediaTarget(el)) return
+  event.preventDefault()
+  event.stopPropagation()
+}
+
+/** 小米等国产浏览器：长按还会走 selectstart / 拖拽出图，需一并拦截 */
+const onSearchMediaAuxEventCapture = (event) => {
+  const el = event.target
+  if (!(el instanceof Element)) return
+  if (!el.closest('.page-search') && !el.closest('.van-image-preview')) return
+  if (!isSearchPageMediaTarget(el)) return
+  event.preventDefault()
+}
+
+/** 列表/全屏：桌面右键打开操作菜单；触摸长按仅拦截系统菜单（菜单由 touch 定时器打开） */
+const onMediaContextMenu = (index, event) => {
+  event.preventDefault()
+  event.stopPropagation()
+  if (isTouchLikeContextMenu(event)) return
+  openActionByIndex(index)
+}
+
 const onPageScroll = (event) => {
   if (displayMode.value === 'fullscreen') return
   const container = event?.target || pageWrapperRef.value
@@ -1698,26 +1950,20 @@ const onImageInfoHeightChange = (height) => {
 }
 
 // 预览弹层挂载在 body，长按 img 会触发浏览器默认菜单；捕获阶段阻止
-const onImagePreviewContextMenu = (e) => {
-  const el = e.target
-  if (!(el instanceof Element)) return
-  if (el.closest('.van-image-preview')) {
-    e.preventDefault()
-  }
-}
-
 watch(
   () => state.showPreview,
   (show) => {
     if (show) {
+      previewImageErrorAt.value = -1
       pauseAllInlineVideos()
-      document.addEventListener('contextmenu', onImagePreviewContextMenu, true)
+      bindPreviewImageErrorCapture()
       document.addEventListener('touchstart', onPreviewLayerTouchStart, true)
       document.addEventListener('touchmove', onPreviewLayerTouchMove, true)
       document.addEventListener('touchend', onPreviewLayerTouchEnd, true)
       document.addEventListener('touchcancel', onPreviewLayerTouchEnd, true)
     } else {
-      document.removeEventListener('contextmenu', onImagePreviewContextMenu, true)
+      previewImageErrorAt.value = -1
+      unbindPreviewImageErrorCapture()
       document.removeEventListener('touchstart', onPreviewLayerTouchStart, true)
       document.removeEventListener('touchmove', onPreviewLayerTouchMove, true)
       document.removeEventListener('touchend', onPreviewLayerTouchEnd, true)
@@ -1730,7 +1976,19 @@ watch(
   }
 )
 
+onActivated(() => {
+  nextTick(() => {
+    measureSearchToolbarHeight()
+    if (displayMode.value === 'fullscreen') {
+      void restoreFullscreenPagerPosition()
+    } else {
+      void restoreWaterfallScrollPosition()
+    }
+  })
+})
+
 onDeactivated(() => {
+  persistWaterfallScrollPosition()
   clearCardPress()
   fullscreenAutoPlay.stop()
   commonStore.setImmersiveMode(false)
@@ -1749,7 +2007,12 @@ onDeactivated(() => {
 })
 
 onUnmounted(() => {
-  document.removeEventListener('contextmenu', onImagePreviewContextMenu, true)
+  unbindPreviewImageErrorCapture()
+  for (const type of SEARCH_MEDIA_CAPTURE_EVENTS) {
+    const handler =
+      type === 'contextmenu' ? onSearchMediaContextMenuCapture : onSearchMediaAuxEventCapture
+    document.removeEventListener(type, handler, true)
+  }
   document.removeEventListener('touchstart', onPreviewLayerTouchStart, true)
   document.removeEventListener('touchmove', onPreviewLayerTouchMove, true)
   document.removeEventListener('touchend', onPreviewLayerTouchEnd, true)
@@ -1796,13 +2059,18 @@ defineExpose({
 })
 
 onMounted(async () => {
+  for (const type of SEARCH_MEDIA_CAPTURE_EVENTS) {
+    const handler =
+      type === 'contextmenu' ? onSearchMediaContextMenuCapture : onSearchMediaAuxEventCapture
+    document.addEventListener(type, handler, true)
+  }
   await init()
   nextTick(() => {
     measureSearchToolbarHeight()
     bindSearchToolbarResizeObserver()
     syncWaterfallViewportMetrics()
     if (displayMode.value === 'fullscreen') {
-      fullscreenPagerRef.value?.measureHeight?.()
+      void restoreFullscreenPagerPosition()
     }
   })
 })
@@ -1913,7 +2181,7 @@ onMounted(async () => {
                     @mousedown="onCardMouseDown(row.globalIndex)"
                     @mouseup="onCardMouseUp"
                     @mouseleave="onCardMouseUp"
-                    @contextmenu.prevent="openActionByIndex(row.globalIndex)"
+                    @contextmenu="onMediaContextMenu(row.globalIndex, $event)"
                   >
                     <div
                       class="preview-wrap"
@@ -1957,9 +2225,15 @@ onMounted(async () => {
                             :style="{ objectFit: mediaObjectFit }"
                             :src="getDisplayPosterSrc(row.item)"
                             alt=""
+                            draggable="false"
                             loading="lazy"
                             decoding="async"
                             @error="onPosterLoadError(row.item)"
+                          />
+                          <div
+                            v-if="row.item.posterSrc && !imageErrorState[getItemKey(row.item)]"
+                            class="media-touch-shield"
+                            aria-hidden="true"
                           />
                           <div
                             v-else-if="!row.item.videoSrc"
@@ -1997,10 +2271,12 @@ onMounted(async () => {
                           :style="{ objectFit: mediaObjectFit }"
                           :src="getDisplayImageSrc(row.item)"
                           alt="preview"
+                          draggable="false"
                           loading="lazy"
                           decoding="async"
-                          @error="onImageLoadError(row.item)"
+                          @error="onImageLoadError(row.item, $event)"
                         />
+                        <div class="media-touch-shield" aria-hidden="true" />
                       </template>
                     </div>
                   </div>
@@ -2029,31 +2305,60 @@ onMounted(async () => {
                   <div
                     class="fullscreen-slide"
                     :class="{ 'fullscreen-slide--video': item.fileType === 'video' }"
-                    :style="
-                      item.fileType === 'video'
-                        ? { backgroundColor: '#000' }
-                        : {
-                            backgroundImage: slideBgUrl(item) ? `url(${slideBgUrl(item)})` : 'none',
-                            backgroundSize: mediaObjectFit,
-                            backgroundPosition: 'center',
-                            backgroundRepeat: 'no-repeat',
-                            backgroundColor: 'rgba(0, 0, 0, 0.07)'
-                          }
-                    "
+                    :style="item.fileType === 'video' ? { backgroundColor: '#000' } : undefined"
                     @touchstart="(e) => onImageTouchStart(index, e)"
                     @touchmove="onImageTouchMove"
                     @touchend="onImageTouchEnd"
                     @touchcancel="onImageTouchEnd"
-                    @contextmenu.prevent="openActionByIndex(index)"
+                    @contextmenu="onMediaContextMenu(index, $event)"
                     @click="openPreview(index)"
                   >
+                    <div
+                      v-if="item.fileType !== 'video' && shouldLoadFullscreenImage(index)"
+                      class="fullscreen-slide-media"
+                    >
+                      <div
+                        v-if="imageErrorState[getItemKey(item)]"
+                        class="preview-fallback fullscreen-slide-fallback"
+                        @click.stop="retryLoadImage(item)"
+                      >
+                        <van-icon name="photo-fail" size="28" />
+                        <div class="preview-fallback-text">{{ imageLoadFailText }}</div>
+                      </div>
+                      <template v-else>
+                        <van-loading
+                          v-if="!isSlideImageLoaded(item)"
+                          class="fullscreen-slide-loading"
+                          type="spinner"
+                          color="var(--van-gray-5)"
+                        />
+                        <img
+                          class="fullscreen-slide-img"
+                          :class="{ 'fullscreen-slide-img--ready': isSlideImageLoaded(item) }"
+                          :style="{ objectFit: mediaObjectFit }"
+                          :src="getFullscreenListImageSrc(item)"
+                          alt=""
+                          draggable="false"
+                          decoding="async"
+                          :loading="index === fullscreenVisibleIndex ? 'eager' : 'lazy'"
+                          @load="onSlideImageLoad(item)"
+                          @error="onImageLoadError(item, $event)"
+                        />
+                        <div class="media-touch-shield" aria-hidden="true" />
+                      </template>
+                    </div>
+                    <div
+                      v-else-if="item.fileType !== 'video'"
+                      class="fullscreen-slide-placeholder"
+                      aria-hidden="true"
+                    />
                     <template v-if="item.fileType === 'video' && item.videoSrc">
                       <video
                         :ref="(el) => setInlineVideoRef(item, el)"
                         class="fullscreen-slide-video"
                         :style="{ objectFit: mediaObjectFit }"
                         :src="item.videoSrc"
-                        :poster="slideBgUrl(item)"
+                        :poster="getDisplayPosterSrc(item)"
                         loop
                         playsinline
                         webkit-playsinline
@@ -2198,6 +2503,21 @@ onMounted(async () => {
       closeable
       @change="onPreviewIndexChange"
     />
+
+    <Teleport to="body">
+      <div
+        v-if="
+          state.showPreview &&
+          previewImageErrorAt >= 0 &&
+          previewImageErrorAt === previewCurrentIndex
+        "
+        class="h5-preview-error-hint"
+        @click.stop="retryPreviewImage"
+      >
+        <van-icon name="photo-fail" size="32" />
+        <div class="preview-fallback-text">{{ imageLoadFailText }}</div>
+      </div>
+    </Teleport>
 
     <van-popup
       v-model:show="state.showActionPopup"
@@ -2385,6 +2705,50 @@ onMounted(async () => {
   cursor: pointer;
   position: relative;
   box-sizing: border-box;
+  background-color: rgba(0, 0, 0, 0.07);
+}
+.fullscreen-slide-media {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+
+  .fullscreen-slide-img {
+    pointer-events: none;
+    -webkit-user-drag: none;
+    user-drag: none;
+    touch-action: manipulation;
+  }
+
+  .media-touch-shield {
+    z-index: 6;
+  }
+}
+.fullscreen-slide-fallback {
+  z-index: 2;
+  color: var(--van-text-color-2);
+  background: rgba(0, 0, 0, 0.06);
+}
+.fullscreen-slide-loading {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+}
+.fullscreen-slide-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-position: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.fullscreen-slide-img--ready {
+  opacity: 1;
+}
+.fullscreen-slide-placeholder {
+  width: 100%;
+  height: 100%;
 }
 .fullscreen-slide-video-hint {
   position: absolute;
@@ -2594,11 +2958,39 @@ onMounted(async () => {
   text-overflow: ellipsis;
   text-align: center;
 }
+.preview:not(.preview--inline-video),
+.preview--poster-overlay {
+  pointer-events: none;
+  -webkit-user-drag: none;
+  user-drag: none;
+}
 .preview {
   width: 100%;
   height: 100%;
   display: block;
   object-position: center;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+.media-touch-shield {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background: transparent;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+}
+.preview-wrap video,
+.fullscreen-slide-media img,
+.fullscreen-slide-video {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.preview-wrap--video .media-touch-shield {
+  z-index: 2;
 }
 .preview-wrap--video {
   position: relative;
@@ -2828,13 +3220,51 @@ onMounted(async () => {
 
 <!-- 预览 teleport 到 body，需非 scoped：禁用长按系统菜单/保存图片等 -->
 <style lang="scss">
+.h5-preview-error-hint {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  z-index: 2500;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px;
+  max-width: 80vw;
+  border-radius: 12px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.72);
+  pointer-events: auto;
+}
 .van-image-preview {
   -webkit-touch-callout: none;
 }
+.van-image-preview :deep(.van-image__error),
+.van-image-preview :deep(.van-image__loading) {
+  display: none;
+}
+.van-image-preview :deep(.van-swipe-item),
+.van-image-preview__image {
+  position: relative;
+}
 .van-image-preview img,
 .van-image-preview__image img {
+  pointer-events: none !important;
   -webkit-touch-callout: none !important;
   -webkit-user-select: none !important;
+  -webkit-user-drag: none !important;
   user-select: none !important;
+  touch-action: manipulation !important;
+}
+/* 国产浏览器（含小米）长按识别 img 节点；透明层承接触摸 */
+.van-image-preview :deep(.van-swipe-item)::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background: transparent;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
 }
 </style>

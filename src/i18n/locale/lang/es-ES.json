@@ -934,8 +934,10 @@
             "label": "Tamaño de visualización",
             "placeholder": "Seleccione tamaño de visualización"
           },
-          "h5ImageCompress": "Compresión de imágenes",
-          "h5ImageCompressStartSize": "Tamaño inicial de compresión",
+          "h5FullscreenImageCompress": "Fullscreen optimized loading",
+          "h5FullscreenImageCompressHint": "Card mode always uses compressed thumbnails; fullscreen uses compressed images when on, originals when off",
+          "h5ImageCompressStartSize": "Compress threshold (MB)",
+          "h5ImageCompressStartSizeHint": "Skip resize below this size; always applies in card mode",
           "h5FunctionSettings": "Configuración de funciones",
           "h5FloatingButtonPosition": {
             "label": "Posición del botón flotante",

@@ -18,8 +18,8 @@ const { settingData, localSetting, isVibrationSupported } = storeToRefs(settingS
 const settingDataForm = reactive(settingData.value)
 const localSettingForm = reactive(localSetting.value)
 
-/** 设置分类折叠，默认全部收起 */
-const expandedSections = ref([])
+/** 设置分类折叠，默认展开「应用设置」 */
+const expandedSections = ref(['application'])
 
 const showPickers = reactive({
   h5Locale: false,
@@ -307,12 +307,15 @@ onMounted(() => {
               </van-picker>
             </van-popup>
 
-            <van-cell :title="t('h5.pages.setting.form.h5ImageCompress')">
+            <van-cell
+              :title="t('h5.pages.setting.form.h5FullscreenImageCompress')"
+              :label="t('h5.pages.setting.form.h5FullscreenImageCompressHint')"
+            >
               <template #right-icon>
                 <van-switch
-                  v-model="settingDataForm.h5ImageCompress"
+                  v-model="settingDataForm.h5FullscreenImageCompress"
                   size="20px"
-                  @change="onSettingDataChange('h5ImageCompress')"
+                  @change="onSettingDataChange('h5FullscreenImageCompress')"
                 />
               </template>
             </van-cell>
@@ -324,7 +327,6 @@ onMounted(() => {
               <template #input>
                 <van-slider
                   v-model="settingDataForm.h5ImageCompressStartSize"
-                  :disabled="!settingDataForm.h5ImageCompress"
                   min="1"
                   max="10"
                   @update:model-value="onH5ImageCompressStartSizeUpdate"

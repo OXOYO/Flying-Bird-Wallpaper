@@ -1,4 +1,4 @@
-import { defaultSettingData } from '@common/publicData.js'
+import { defaultSettingData, migrateSettingData } from '@common/publicData.js'
 import * as api from '@h5/api/index.js'
 import LocalStore from '../utils/localStore'
 import i18next from '@i18n/i18next.js'
@@ -46,9 +46,7 @@ const UseSettingStore = defineStore('setting', {
       localSetting = Object.assign({}, localSetting, localSettingRes.data)
     }
     return {
-      settingData: {
-        ...JSON.parse(JSON.stringify(defaultSettingData))
-      },
+      settingData: migrateSettingData(JSON.parse(JSON.stringify(defaultSettingData))),
       localSetting
     }
   },
@@ -70,11 +68,11 @@ const UseSettingStore = defineStore('setting', {
             await api.h5UpdateSettingData({ h5Locale: deviceLocale, isH5LocaleSet: false })
           }
         }
-        let merged = Object.assign({}, this.settingData, serverData)
+        let merged = migrateSettingData(Object.assign({}, this.settingData, serverData))
         if (!this.localSetting.multiDeviceSync) {
           const cached = readH5SettingCache()
           if (cached.success && cached.data) {
-            merged = Object.assign({}, merged, cached.data)
+            merged = migrateSettingData(Object.assign({}, merged, cached.data))
           }
         }
         this.settingData = merged
@@ -85,7 +83,7 @@ const UseSettingStore = defineStore('setting', {
       return res
     },
     async h5UpdateSettingData(data) {
-      const nextData = Object.assign({}, this.settingData, data)
+      const nextData = migrateSettingData(Object.assign({}, this.settingData, data))
       if (!this.localSetting.multiDeviceSync) {
         this.settingData = nextData
         persistH5SettingCache(this.settingData)
@@ -100,7 +98,7 @@ const UseSettingStore = defineStore('setting', {
       }
       const res = await api.h5UpdateSettingData(data)
       if (res.success) {
-        this.settingData = Object.assign({}, this.settingData, res.data)
+        this.settingData = migrateSettingData(Object.assign({}, this.settingData, res.data))
         persistH5SettingCache(this.settingData)
       }
       return res
@@ -121,7 +119,7 @@ const UseSettingStore = defineStore('setting', {
       api.on('settingUpdated', (res) => {
         // 本地可控制多设备数据是否同步
         if (res.success && this.localSetting.multiDeviceSync) {
-          this.settingData = Object.assign({}, this.settingData, res.data)
+          this.settingData = migrateSettingData(Object.assign({}, this.settingData, res.data))
         }
       })
     },

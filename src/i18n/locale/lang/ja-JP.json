@@ -934,8 +934,10 @@
             "label": "表示サイズ",
             "placeholder": "表示サイズを選択してください"
           },
-          "h5ImageCompress": "画像圧縮",
-          "h5ImageCompressStartSize": "圧縮開始サイズ",
+          "h5FullscreenImageCompress": "Fullscreen optimized loading",
+          "h5FullscreenImageCompressHint": "Card mode always uses compressed thumbnails; fullscreen uses compressed images when on, originals when off",
+          "h5ImageCompressStartSize": "Compress threshold (MB)",
+          "h5ImageCompressStartSizeHint": "Skip resize below this size; always applies in card mode",
           "h5FunctionSettings": "機能設定",
           "h5FloatingButtonPosition": {
             "label": "フローティングボタンの位置",

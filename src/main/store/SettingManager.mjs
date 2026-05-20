@@ -1,6 +1,6 @@
 import EventEmitter from 'node:events'
 import { t, changeLanguage } from '../../i18n/server.js'
-import { defaultSettingData } from '../../common/publicData.js'
+import { defaultSettingData, migrateSettingData } from '../../common/publicData.js'
 import { generateSalt, hashPassword, verifyPassword } from '../utils/utils.mjs'
 
 export default class SettingManager extends EventEmitter {
@@ -25,7 +25,7 @@ export default class SettingManager extends EventEmitter {
 
     this.logger = logger
     this.dbManager = dbManager
-    this._settingData = { ...defaultSettingData }
+    this._settingData = migrateSettingData()
     this._initialized = false
     this._initPromise = this._init()
 
@@ -70,20 +70,20 @@ export default class SettingManager extends EventEmitter {
       if (res.success && res.data?.storeData) {
         ret.success = true
         ret.message = t('messages.operationSuccess')
-        ret.data = this._settingData = res.data.storeData
+        ret.data = this._settingData = migrateSettingData(res.data.storeData)
       } else {
         // 如果获取失败，使用默认设置
         this.logger.warn('从数据库获取设置失败，使用默认设置')
         ret.success = true
         ret.message = t('messages.useDefaultSettings')
-        ret.data = this._settingData = { ...defaultSettingData }
+        ret.data = this._settingData = migrateSettingData()
       }
     } catch (err) {
       this.logger.error(`获取设置数据失败: ${err.message}`)
       // 发生错误时也使用默认设置
       ret.success = true
       ret.message = t('messages.useDefaultSettings')
-      ret.data = this._settingData = { ...defaultSettingData }
+      ret.data = this._settingData = migrateSettingData()
     }
     return ret
   }
@@ -104,16 +104,16 @@ export default class SettingManager extends EventEmitter {
 
     try {
       const query_res = await this.dbManager.getSysRecord(storeKey)
-      let storeData = { ...defaultSettingData }
+      let storeData = migrateSettingData()
 
       if (query_res.success && query_res.data?.storeData) {
-        storeData = query_res.data.storeData
+        storeData = migrateSettingData(query_res.data.storeData)
       } else {
         this.logger.warn(`未找到设置数据，将创建新的设置记录`)
       }
 
       // 合并数据
-      const newStoreData = Object.assign({}, storeData, data)
+      const newStoreData = migrateSettingData(Object.assign({}, storeData, data))
       // 更新或插入数据到sys表
       const update_res = await this.dbManager.setSysRecord(storeKey, newStoreData, 'object')
       if (update_res.success) {
