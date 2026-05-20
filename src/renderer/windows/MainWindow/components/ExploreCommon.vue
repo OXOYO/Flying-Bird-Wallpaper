@@ -863,7 +863,6 @@ const fetchHotTags = async () => {
     const result = await window.FBW.getHotTags({
       resourceName: searchForm.resourceName
     })
-    console.log('getHotTags', result)
     if (result.success && result.data?.tags && result.data.tags.length > 0) {
       hotTags.value = result.data.tags.map((value) => {
         return { label: value, value }

@@ -58,6 +58,31 @@ export const API_ERROR_CODE = {
   ENTER_KEYWORDS: 'ENTER_KEYWORDS'
 }
 
+/** 插件源加载错误码（主进程分类用，与用户可见文案解耦） */
+export const PLUGIN_LOAD_ERROR_CODE = {
+  FETCH_TIMEOUT: 'PLUGIN_FETCH_TIMEOUT'
+}
+
+/** 资源插件体系要求的宿主最低版本（与官方 manifest appVersion.min 一致） */
+export const PLUGIN_APP_VERSION_MIN = '2.0.0'
+export const PLUGIN_APP_VERSION_MAX = '*'
+
+export const DEFAULT_PLUGIN_APP_VERSION = Object.freeze({
+  min: PLUGIN_APP_VERSION_MIN,
+  max: PLUGIN_APP_VERSION_MAX
+})
+
+/** manifest.appVersion 缺省或与契约对齐时的版本范围 */
+export function resolvePluginAppVersion(appVersion) {
+  if (appVersion && typeof appVersion === 'object') {
+    return {
+      min: appVersion.min || PLUGIN_APP_VERSION_MIN,
+      max: appVersion.max ?? PLUGIN_APP_VERSION_MAX
+    }
+  }
+  return { min: PLUGIN_APP_VERSION_MIN, max: PLUGIN_APP_VERSION_MAX }
+}
+
 /** 构造带 errorCode 的 Error，供主进程抛出、Store 捕获后写入响应 */
 export function createCodedError(code, params = {}) {
   const err = new Error(code)

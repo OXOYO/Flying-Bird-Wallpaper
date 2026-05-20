@@ -295,7 +295,8 @@
         },
         "updateVersionLabel": "v{current} → v{latest}",
         "loadAlert": {
-          "title": "Hinweis zur Plugin-Quelle"
+          "title": "Hinweis zur Plugin-Quelle",
+          "fallbackBody": "Einige Plugin-Quellen konnten nicht geladen werden. Netzwerk oder Quelleneinstellungen prüfen und erneut versuchen."
         },
         "loadErrors": {
           "errorsSeparator": "; ",
@@ -309,6 +310,8 @@
           "partialFailed": "Einige Plugin-Quellen konnten nicht geladen werden: {errors}",
           "partialFailedWithCache": "Einige Plugin-Quellen fehlgeschlagen, lokaler Cache wird verwendet: {errors}",
           "allFailed": "Plugin-Quellen konnten nicht geladen werden: {errors}",
+          "versionMismatch": "App v{appVersion} liegt unter der Plugin-Anforderung (v{minVersion}+). Dieser Scan lieferte keine Plugins. Quellen ohne Einträge: {summaries}",
+          "sourceAllIncompatible": "{sourceName}: {total} gesamt, {incompatible} wegen inkompatibler Version übersprungen",
           "noPlugins": "Keine verfügbaren Plugins gefunden",
           "exceptionWithCache": "Plugin-Quellenfehler, Cache wird verwendet: {error}",
           "getAvailableFail": "Verfügbare Plugins konnten nicht geladen werden: {error}"

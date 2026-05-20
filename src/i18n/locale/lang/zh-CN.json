@@ -273,6 +273,8 @@
           "partialFailed": "部分插件源加载失败：{errors}",
           "partialFailedWithCache": "部分插件源加载失败，已使用本地缓存：{errors}",
           "allFailed": "插件源加载失败：{errors}",
+          "versionMismatch": "当前应用版本 v{appVersion} 低于插件要求（需 v{minVersion} 及以上），本次扫描无可用插件。以下插件源未展示任何条目：{summaries}",
+          "sourceAllIncompatible": "{sourceName} 共 {total} 个，{incompatible} 个因版本不兼容被跳过",
           "noPlugins": "未获取到可用插件",
           "exceptionWithCache": "插件源异常，已使用缓存：{error}",
           "getAvailableFail": "获取可用插件列表失败：{error}"

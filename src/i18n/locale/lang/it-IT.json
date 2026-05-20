@@ -295,7 +295,8 @@
         },
         "updateVersionLabel": "v{current} → v{latest}",
         "loadAlert": {
-          "title": "Avviso sorgente plugin"
+          "title": "Avviso sorgente plugin",
+          "fallbackBody": "Impossibile caricare alcune fonti plugin. Controllare rete o impostazioni delle fonti e riprovare."
         },
         "loadErrors": {
           "errorsSeparator": "; ",
@@ -309,6 +310,8 @@
           "partialFailed": "Caricamento di alcune sorgenti plugin non riuscito: {errors}",
           "partialFailedWithCache": "Alcune sorgenti non riuscite; cache locale in uso: {errors}",
           "allFailed": "Caricamento sorgenti plugin non riuscito: {errors}",
+          "versionMismatch": "L'app v{appVersion} è inferiore al requisito dei plugin (v{minVersion}+). Questa scansione non ha restituito plugin. Fonti senza voci: {summaries}",
+          "sourceAllIncompatible": "{sourceName}: {total} totali, {incompatible} saltati (versione incompatibile)",
           "noPlugins": "Nessun plugin disponibile trovato",
           "exceptionWithCache": "Errore sorgente plugin; cache in uso: {error}",
           "getAvailableFail": "Impossibile caricare l'elenco plugin disponibili: {error}"

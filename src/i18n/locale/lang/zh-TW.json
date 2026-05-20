@@ -295,7 +295,8 @@
         },
         "updateVersionLabel": "v{current} → v{latest}",
         "loadAlert": {
-          "title": "插件源載入提示"
+          "title": "插件源載入提示",
+          "fallbackBody": "部分插件源未能正常載入，請檢查網路或插件源設定後重試。"
         },
         "loadErrors": {
           "errorsSeparator": "；",
@@ -309,6 +310,8 @@
           "partialFailed": "部分插件源載入失敗：{errors}",
           "partialFailedWithCache": "部分插件源載入失敗，已使用本機快取：{errors}",
           "allFailed": "插件源載入失敗：{errors}",
+          "versionMismatch": "目前應用版本 v{appVersion} 低於插件要求（需 v{minVersion} 及以上），本次掃描無可用插件。以下插件源未展示任何項目：{summaries}",
+          "sourceAllIncompatible": "{sourceName} 共 {total} 個，{incompatible} 個因版本不相容被略過",
           "noPlugins": "未取得可用插件",
           "exceptionWithCache": "插件源異常，已使用快取：{error}",
           "getAvailableFail": "取得可用插件列表失敗：{error}"

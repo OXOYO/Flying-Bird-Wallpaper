@@ -295,7 +295,8 @@
         },
         "updateVersionLabel": "v{current} → v{latest}",
         "loadAlert": {
-          "title": "Уведомление об источнике плагинов"
+          "title": "Уведомление об источнике плагинов",
+          "fallbackBody": "Не удалось загрузить некоторые источники плагинов. Проверьте сеть или настройки источников и повторите попытку."
         },
         "loadErrors": {
           "errorsSeparator": "; ",
@@ -309,6 +310,8 @@
           "partialFailed": "Не удалось загрузить некоторые источники плагинов: {errors}",
           "partialFailedWithCache": "Некоторые источники недоступны; используется локальный кэш: {errors}",
           "allFailed": "Не удалось загрузить источники плагинов: {errors}",
+          "versionMismatch": "Версия приложения v{appVersion} ниже требования плагинов (v{minVersion}+). При этом сканировании плагинов нет. Источники без записей: {summaries}",
+          "sourceAllIncompatible": "{sourceName}: всего {total}, пропущено {incompatible} из-за несовместимости версии",
           "noPlugins": "Доступные плагины не найдены",
           "exceptionWithCache": "Ошибка источника плагинов; используется кэш: {error}",
           "getAvailableFail": "Не удалось получить список доступных плагинов: {error}"

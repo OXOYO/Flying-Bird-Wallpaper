@@ -6,6 +6,7 @@ import {
   API_ERROR_CODE,
   hasRemoteSecretKey,
   normalizeRemoteSecretKey,
+  PLUGIN_APP_VERSION_MIN,
   resolveApiUserMessage
 } from '@common/utils.js'
 
@@ -62,16 +63,46 @@ const formatSourceLoadErrorItem = (item) => {
   })
 }
 
+const formatSourceLoadSummaries = (notice) => {
+  if (!Array.isArray(notice?.summaries) || notice.summaries.length === 0) {
+    return ''
+  }
+  const sep = t('pages.Setting.pluginMarketplace.loadErrors.errorsSeparator')
+  return notice.summaries
+    .map((item) =>
+      t('pages.Setting.pluginMarketplace.loadErrors.sourceAllIncompatible', {
+        sourceName: item.sourceName,
+        total: item.scanned,
+        incompatible: item.incompatible
+      })
+    )
+    .join(sep)
+}
+
 const buildMarketplaceLoadAlertMessage = (notice) => {
   if (!notice) return ''
-  if (Array.isArray(notice.errors) && notice.errors.length > 0) {
-    const errors = notice.errors.map(formatSourceLoadErrorItem).join(
+  const summaries = formatSourceLoadSummaries(notice)
+  const errors =
+    Array.isArray(notice.errors) && notice.errors.length > 0
+      ? notice.errors.map(formatSourceLoadErrorItem).join(
+          t('pages.Setting.pluginMarketplace.loadErrors.errorsSeparator')
+        )
+      : ''
+
+  if (errors || summaries) {
+    const key = `pages.Setting.pluginMarketplace.loadErrors.${notice.kind}`
+    const message = t(key, {
+      errors: [errors, summaries].filter(Boolean).join(
+        t('pages.Setting.pluginMarketplace.loadErrors.errorsSeparator')
+      ),
+      summaries,
+      appVersion: notice.appVersion || '',
+      minVersion: PLUGIN_APP_VERSION_MIN
+    })
+    if (message && message !== key) return message
+    return [errors, summaries].filter(Boolean).join(
       t('pages.Setting.pluginMarketplace.loadErrors.errorsSeparator')
     )
-    const key = `pages.Setting.pluginMarketplace.loadErrors.${notice.kind}`
-    const message = t(key, { errors })
-    if (message && message !== key) return message
-    return errors
   }
 
   if (notice.errorMessage) {
@@ -145,10 +176,16 @@ const dismissMarketplaceLoadAlert = () => {
   marketplaceLoadNotice.value = null
 }
 
+let availablePluginsLoadSeq = 0
+
 const loadAvailablePlugins = async () => {
+  const loadSeq = ++availablePluginsLoadSeq
   loading.available = true
   try {
     const result = await window.FBW.getAvailablePlugins()
+    if (loadSeq !== availablePluginsLoadSeq) {
+      return
+    }
     if (result.success) {
       availablePlugins.value = result.data || []
       marketplaceLoadNotice.value = result.loadNotice || null
@@ -162,10 +199,15 @@ const loadAvailablePlugins = async () => {
       }
     }
   } catch (error) {
+    if (loadSeq !== availablePluginsLoadSeq) {
+      return
+    }
     console.error(t('pages.Setting.pluginMarketplace.feedback.getAvailableFail'), error)
     ElMessage.error(t('pages.Setting.pluginMarketplace.feedback.getAvailableFail'))
   } finally {
-    loading.available = false
+    if (loadSeq === availablePluginsLoadSeq) {
+      loading.available = false
+    }
   }
 }
 
@@ -757,7 +799,7 @@ defineExpose({
               <el-scrollbar class="tab-scrollbar">
                 <div class="tab-scroll-content">
                 <el-empty v-if="!loading.available && filteredAvailablePlugins.length === 0" />
-                <div v-else class="plugin-grid">
+                <div v-else-if="filteredAvailablePlugins.length > 0" class="plugin-grid">
                   <div
                     v-for="plugin in filteredAvailablePlugins"
                     :key="toPluginKey(plugin)"

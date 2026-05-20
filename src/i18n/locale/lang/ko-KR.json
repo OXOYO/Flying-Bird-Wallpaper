@@ -295,7 +295,8 @@
         },
         "updateVersionLabel": "v{current} → v{latest}",
         "loadAlert": {
-          "title": "플러그인 소스 안내"
+          "title": "플러그인 소스 안내",
+          "fallbackBody": "일부 플러그인 소스를 불러오지 못했습니다. 네트워크 또는 소스 설정을 확인한 뒤 다시 시도하세요."
         },
         "loadErrors": {
           "errorsSeparator": "; ",
@@ -309,6 +310,8 @@
           "partialFailed": "일부 플러그인 소스 로드 실패: {errors}",
           "partialFailedWithCache": "일부 플러그인 소스 로드 실패, 로컬 캐시 사용: {errors}",
           "allFailed": "플러그인 소스 로드 실패: {errors}",
+          "versionMismatch": "앱 v{appVersion}이 플러그인 요구 사항(v{minVersion}+)보다 낮습니다. 이번 검사에서 사용 가능한 플러그인이 없습니다. 항목이 없는 소스: {summaries}",
+          "sourceAllIncompatible": "{sourceName}: 총 {total}개, {incompatible}개가 버전 비호환으로 건너뜀",
           "noPlugins": "사용 가능한 플러그인이 없습니다",
           "exceptionWithCache": "플러그인 소스 오류, 캐시 사용: {error}",
           "getAvailableFail": "사용 가능한 플러그인 목록을 가져오지 못했습니다: {error}"

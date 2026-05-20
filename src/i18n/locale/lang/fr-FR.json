@@ -295,7 +295,8 @@
         },
         "updateVersionLabel": "v{current} → v{latest}",
         "loadAlert": {
-          "title": "Avis sur la source de plugins"
+          "title": "Avis sur la source de plugins",
+          "fallbackBody": "Certaines sources de plugins n'ont pas pu être chargées. Vérifiez le réseau ou les paramètres des sources et réessayez."
         },
         "loadErrors": {
           "errorsSeparator": "; ",
@@ -309,6 +310,8 @@
           "partialFailed": "Échec du chargement de certaines sources : {errors}",
           "partialFailedWithCache": "Certaines sources ont échoué, cache local utilisé : {errors}",
           "allFailed": "Échec du chargement des sources de plugins : {errors}",
+          "versionMismatch": "L'app v{appVersion} est inférieure à l'exigence des plugins (v{minVersion}+). Cette analyse n'a renvoyé aucun plugin. Sources sans entrées : {summaries}",
+          "sourceAllIncompatible": "{sourceName} : {total} au total, {incompatible} ignorés (version incompatible)",
           "noPlugins": "Aucun plugin disponible trouvé",
           "exceptionWithCache": "Erreur de source de plugins, cache utilisé : {error}",
           "getAvailableFail": "Impossible de charger les plugins disponibles : {error}"

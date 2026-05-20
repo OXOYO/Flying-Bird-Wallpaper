@@ -4,6 +4,12 @@ import https from 'node:https'
 import { pathToFileURL } from 'node:url'
 import { app } from 'electron'
 import { t } from '../../i18n/server.js'
+import {
+  createCodedError,
+  PLUGIN_APP_VERSION_MIN,
+  PLUGIN_LOAD_ERROR_CODE,
+  resolvePluginAppVersion
+} from '../../common/utils.js'
 
 const SOURCE_NAME_REGEXP = /^[A-Za-z0-9_-]+$/
 
@@ -65,12 +71,22 @@ export default class PluginManager {
 
   /** 解析插件源加载错误类型（供渲染进程按当前语言展示） */
   parseSourceLoadErrorItem(sourceName, error) {
+    if (error?.errorCode === PLUGIN_LOAD_ERROR_CODE.FETCH_TIMEOUT) {
+      return { sourceName, hintKey: 'network' }
+    }
     const raw = String(error?.message || error || '')
       .replace(/\s*\|\s*url:\s*https?:\/\/\S+/gi, '')
       .replace(/\bhttps?:\/\/\S+/gi, '')
       .trim()
     let hintKey = 'generic'
-    if (/ECONNRESET|ETIMEDOUT|ENOTFOUND|ECONNREFUSED|ENETUNREACH|EAI_AGAIN|socket hang up/i.test(raw)) {
+    if (
+      raw === PLUGIN_LOAD_ERROR_CODE.FETCH_TIMEOUT ||
+      /ECONNRESET|ETIMEDOUT|ENOTFOUND|ECONNREFUSED|ENETUNREACH|EAI_AGAIN|socket hang up/i.test(
+        raw
+      ) ||
+      error?.code === 'ETIMEDOUT' ||
+      error?.code === 'ECONNRESET'
+    ) {
       hintKey = 'network'
     } else if (/HTTP\s*5\d{2}/i.test(raw)) {
       hintKey = 'server5xx'
@@ -85,14 +101,73 @@ export default class PluginManager {
   }
 
   buildLoadNotice(kind, errors = [], extra = {}) {
-    if (kind === 'partialFailed' || kind === 'partialFailedWithCache' || kind === 'allFailed') {
-      if (!errors.length) return null
-      return { kind, errors }
+    const summaries = Array.isArray(extra.summaries) ? extra.summaries : []
+    if (
+      kind === 'partialFailed' ||
+      kind === 'partialFailedWithCache' ||
+      kind === 'allFailed' ||
+      kind === 'versionMismatch'
+    ) {
+      if (!errors.length && !summaries.length) return null
+      return {
+        kind,
+        errors,
+        summaries,
+        appVersion: extra.appVersion || this.appVersion
+      }
     }
     if (kind === 'exceptionWithCache' || kind === 'getAvailableFail') {
       return { kind, errorMessage: extra.errorMessage || '' }
     }
     return null
+  }
+
+  collectSourceLoadSummaries(sourceStats) {
+    const summaries = []
+    if (!Array.isArray(sourceStats)) return summaries
+    for (const stat of sourceStats) {
+      if (stat.error) continue
+      const scanned = stat.scanned || 0
+      if (scanned > 0 && (stat.listed || 0) === 0) {
+        summaries.push({
+          sourceName: stat.sourceName,
+          scanned,
+          incompatible: stat.incompatible || 0,
+          invisible: stat.invisible || 0
+        })
+      }
+    }
+    return summaries
+  }
+
+  isVersionOnlyMismatch(sourceStats, sourceErrorItems, plugins) {
+    if (plugins.length > 0 || sourceErrorItems.length > 0) {
+      return false
+    }
+    const stats = Array.isArray(sourceStats) ? sourceStats : []
+    if (stats.length === 0) return false
+    return stats.every(
+      (item) => !item.error && (item.scanned || 0) > 0 && (item.listed || 0) === 0
+    )
+  }
+
+  resolveAvailablePluginsLoadNotice({ plugins, sourceErrorItems, sourceStats, fromCache }) {
+    const summaries = this.collectSourceLoadSummaries(sourceStats)
+    const hasErrors = sourceErrorItems.length > 0
+    const hasSummaries = summaries.length > 0
+    if (!hasErrors && !hasSummaries) return null
+
+    let kind = 'partialFailed'
+    if (plugins.length === 0) {
+      kind = hasErrors ? 'allFailed' : 'versionMismatch'
+    } else if (fromCache) {
+      kind = 'partialFailedWithCache'
+    }
+
+    return this.buildLoadNotice(kind, sourceErrorItems, {
+      summaries,
+      appVersion: this.appVersion
+    })
   }
 
   /** 将插件源加载错误转为用户可读文案（不含 URL） */
@@ -115,6 +190,10 @@ export default class PluginManager {
     }
 
     return 0
+  }
+
+  isAppBelowPluginMinVersion(minVersion = PLUGIN_APP_VERSION_MIN) {
+    return this.compareVersions(this.appVersion, minVersion) < 0
   }
 
   isVersionCompatible(pluginVersionRange) {
@@ -488,7 +567,18 @@ export default class PluginManager {
       }
       const plugins = []
       const sourceErrorItems = []
+      const sourceStats = []
+      const appBelowPluginMin = this.isAppBelowPluginMinVersion()
       for (const source of sources) {
+        const stat = {
+          sourceName: source.name,
+          scanned: 0,
+          listed: 0,
+          incompatible: 0,
+          invisible: 0,
+          failed: 0,
+          error: null
+        }
         try {
           const pluginsData = await this.readPluginsList(source)
           const pluginList = pluginsData?.plugins
@@ -501,61 +591,90 @@ export default class PluginManager {
                 throw new Error(t(this.opKey('pluginsJsonInvalidPluginsShort')))
               }
               const pluginName = entry.trim()
-              const manifest = await this.readPluginManifest(source, pluginName)
-              const compatible = this.isVersionCompatible(
-                manifest.appVersion || { min: '2.0.0', max: '*' }
-              )
-              const visible = manifest.visible === true
-              if (compatible && visible) {
-                plugins.push({
-                  name: manifest.name,
-                  sourceName: source.name,
-                  pluginKey: this.createPluginKey(source.name, manifest.name),
-                  version: manifest.version,
-                  displayName: manifest.displayName,
-                  description: manifest.description,
-                  author: manifest.author,
-                  site: manifest.site,
-                  logo: manifest.logo,
-                  logoUrl: this.resolveLogoUrl(source, pluginName, manifest.logo),
-                  compatible,
-                  appVersion: manifest.appVersion || { min: '2.0.0', max: '*' },
-                  requireSecretKey: manifest.requireSecretKey || false,
-                  supportSearch: manifest.supportSearch === true,
-                  supportDownload: manifest.supportDownload === true,
-                  supportSearchTypes: Array.isArray(manifest.supportSearchTypes)
-                    ? manifest.supportSearchTypes
-                    : []
-                })
+              stat.scanned += 1
+              if (appBelowPluginMin) {
+                stat.incompatible += 1
+                continue
               }
+              const manifest = await this.readPluginManifest(source, pluginName)
+              const compatible = this.isVersionCompatible(resolvePluginAppVersion(manifest.appVersion))
+              const visible = manifest.visible === true
+              if (!compatible) {
+                stat.incompatible += 1
+                continue
+              }
+              if (!visible) {
+                stat.invisible += 1
+                continue
+              }
+              stat.listed += 1
+              plugins.push({
+                name: manifest.name,
+                sourceName: source.name,
+                pluginKey: this.createPluginKey(source.name, manifest.name),
+                version: manifest.version,
+                displayName: manifest.displayName,
+                description: manifest.description,
+                author: manifest.author,
+                site: manifest.site,
+                logo: manifest.logo,
+                logoUrl: this.resolveLogoUrl(source, pluginName, manifest.logo),
+                compatible,
+                appVersion: resolvePluginAppVersion(manifest.appVersion),
+                requireSecretKey: manifest.requireSecretKey || false,
+                supportSearch: manifest.supportSearch === true,
+                supportDownload: manifest.supportDownload === true,
+                supportSearchTypes: Array.isArray(manifest.supportSearchTypes)
+                  ? manifest.supportSearchTypes
+                  : []
+              })
             } catch (error) {
+              stat.failed += 1
               this.logger.error(`获取插件 ${source.name}:${String(entry || 'unknown')} 信息失败:`, error)
             }
           }
         } catch (error) {
           const reason = error?.message || String(error)
+          stat.error = error
           this.logger.error(`读取插件源 ${source.name} 失败: ${reason}`)
           sourceErrorItems.push(this.parseSourceLoadErrorItem(source.name, error))
         }
+        sourceStats.push(stat)
       }
+
+      const loadNoticeExtra = { sourceErrorItems, sourceStats }
+
       if (plugins.length > 0) {
         this.cachePluginsList(plugins)
         return {
           success: true,
           data: plugins,
           message: '',
-          loadNotice: this.buildLoadNotice('partialFailed', sourceErrorItems)
+          loadNotice: this.resolveAvailablePluginsLoadNotice({
+            plugins,
+            ...loadNoticeExtra,
+            fromCache: false
+          })
         }
       }
 
       const cached = this.getCachedPluginsList()
-      if (cached.length > 0) {
+      const versionOnlyMismatch = this.isVersionOnlyMismatch(
+        sourceStats,
+        sourceErrorItems,
+        plugins
+      )
+      if (cached.length > 0 && !versionOnlyMismatch) {
         return {
           success: true,
           data: cached,
           message: '',
           fromCache: true,
-          loadNotice: this.buildLoadNotice('partialFailedWithCache', sourceErrorItems)
+          loadNotice: this.resolveAvailablePluginsLoadNotice({
+            plugins,
+            ...loadNoticeExtra,
+            fromCache: true
+          })
         }
       }
 
@@ -563,10 +682,11 @@ export default class PluginManager {
         success: false,
         data: [],
         message: sourceErrorItems.length > 0 ? '' : t(this.loadErrorsKey('noPlugins')),
-        loadNotice:
-          sourceErrorItems.length > 0
-            ? this.buildLoadNotice('allFailed', sourceErrorItems)
-            : null
+        loadNotice: this.resolveAvailablePluginsLoadNotice({
+          plugins,
+          ...loadNoticeExtra,
+          fromCache: false
+        })
       }
     } catch (error) {
       this.logger.error('获取可用插件列表失败:', error)
@@ -602,7 +722,7 @@ export default class PluginManager {
 
       const manifest = await this.readPluginManifest(source, pluginName, version)
 
-      if (!this.isVersionCompatible(manifest.appVersion || { min: '2.0.0', max: '*' })) {
+      if (!this.isVersionCompatible(resolvePluginAppVersion(manifest.appVersion))) {
         this.logger.error(`插件 ${pluginName} 与当前应用版本 ${this.appVersion} 不兼容`)
         return { success: false, message: t(this.opKey('pluginIncompatible')) }
       }
@@ -632,7 +752,7 @@ export default class PluginManager {
         supportSearchTypes: Array.isArray(manifest.supportSearchTypes)
           ? manifest.supportSearchTypes
           : [],
-        appVersion: manifest.appVersion || { min: '2.0.0', max: '*' },
+        appVersion: resolvePluginAppVersion(manifest.appVersion),
         installedAt: new Date().toISOString()
       }
 
@@ -732,7 +852,7 @@ export default class PluginManager {
             supportSearchTypes: Array.isArray(manifest.supportSearchTypes)
               ? manifest.supportSearchTypes
               : [],
-            appVersion: manifest.appVersion || { min: '2.0.0', max: '*' },
+            appVersion: resolvePluginAppVersion(manifest.appVersion),
             installedAt: new Date().toISOString()
           }
           await this.setSysRecordData('plugins', plugins, 'object')
@@ -799,7 +919,7 @@ export default class PluginManager {
               supportSearchTypes: Array.isArray(manifest.supportSearchTypes)
                 ? manifest.supportSearchTypes
                 : [],
-              appVersion: manifest.appVersion || { min: '2.0.0', max: '*' }
+              appVersion: resolvePluginAppVersion(manifest.appVersion)
             })
           } catch (error) {
             this.logger.error(`读取插件 ${sourceName}:${pluginName} 配置失败:`, error)
@@ -841,38 +961,55 @@ export default class PluginManager {
     }
   }
 
-  async fetchUrl(url, parseJson = true) {
+  async fetchUrl(url, parseJson = true, timeoutMs = 20000) {
     return new Promise((resolve, reject) => {
-      https
-        .get(url, (res) => {
-          let data = ''
-          res.on('data', (chunk) => {
-            data += chunk
-          })
-          res.on('end', () => {
-            try {
-              const statusCode = Number(res.statusCode || 0)
-              if (statusCode < 200 || statusCode >= 300) {
-                const message = `HTTP ${statusCode} ${res.statusMessage || ''}`.trim()
-                this.logger.warn(`fetchUrl 失败: ${message}, url: ${url}`)
-                reject(new Error(message))
-                return
-              }
-              if (parseJson) {
-                resolve(JSON.parse(data))
-              } else {
-                resolve(data)
-              }
-            } catch (error) {
-              this.logger.warn(`fetchUrl 解析失败: ${error.message}, url: ${url}`)
-              reject(error)
+      let settled = false
+      const finish = (handler, value) => {
+        if (settled) return
+        settled = true
+        clearTimeout(timer)
+        handler(value)
+      }
+
+      const timer = setTimeout(() => {
+        finish(
+          reject,
+          createCodedError(PLUGIN_LOAD_ERROR_CODE.FETCH_TIMEOUT, { timeoutMs })
+        )
+      }, timeoutMs)
+
+      const req = https.get(url, (res) => {
+        let data = ''
+        res.on('data', (chunk) => {
+          data += chunk
+        })
+        res.on('end', () => {
+          try {
+            const statusCode = Number(res.statusCode || 0)
+            if (statusCode < 200 || statusCode >= 300) {
+              const message = `HTTP ${statusCode} ${res.statusMessage || ''}`.trim()
+              this.logger.warn(`fetchUrl 失败: ${message}, url: ${url}`)
+              finish(reject, new Error(message))
+              return
             }
-          })
+            if (parseJson) {
+              finish(resolve, JSON.parse(data))
+            } else {
+              finish(resolve, data)
+            }
+          } catch (error) {
+            this.logger.warn(`fetchUrl 解析失败: ${error.message}, url: ${url}`)
+            finish(reject, error)
+          }
         })
-        .on('error', (error) => {
-          this.logger.warn(`fetchUrl 请求失败: ${error.message}, url: ${url}`)
-          reject(error)
-        })
+      })
+      req.on('error', (error) => {
+        this.logger.warn(`fetchUrl 请求失败: ${error.message}, url: ${url}`)
+        finish(reject, error)
+      })
+      req.setTimeout(timeoutMs, () => {
+        req.destroy(createCodedError(PLUGIN_LOAD_ERROR_CODE.FETCH_TIMEOUT, { timeoutMs }))
+      })
     })
   }
 }

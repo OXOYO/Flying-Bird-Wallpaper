@@ -273,6 +273,8 @@
           "partialFailed": "Some plugin sources failed to load: {errors}",
           "partialFailedWithCache": "Some plugin sources failed to load; using local cache: {errors}",
           "allFailed": "Plugin sources failed to load: {errors}",
+          "versionMismatch": "App v{appVersion} is below plugin requirement (v{minVersion}+). This scan returned no plugins. Sources with no entries: {summaries}",
+          "sourceAllIncompatible": "{sourceName}: {total} total, {incompatible} skipped (version incompatible)",
           "noPlugins": "No available plugins found",
           "exceptionWithCache": "Plugin source error; using cache: {error}",
           "getAvailableFail": "Failed to load available plugins: {error}"

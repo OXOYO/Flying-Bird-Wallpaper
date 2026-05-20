@@ -295,7 +295,8 @@
         },
         "updateVersionLabel": "v{current} → v{latest}",
         "loadAlert": {
-          "title": "プラグインソースのお知らせ"
+          "title": "プラグインソースのお知らせ",
+          "fallbackBody": "一部のプラグインソースを読み込めませんでした。ネットワークまたはソース設定を確認して再試行してください。"
         },
         "loadErrors": {
           "errorsSeparator": "; ",
@@ -309,6 +310,8 @@
           "partialFailed": "一部のプラグインソースの読み込みに失敗しました: {errors}",
           "partialFailedWithCache": "一部のプラグインソースの読み込みに失敗し、ローカルキャッシュを使用しています: {errors}",
           "allFailed": "プラグインソースの読み込みに失敗しました: {errors}",
+          "versionMismatch": "アプリ v{appVersion} はプラグイン要件（v{minVersion} 以上）を満たしていません。今回のスキャンでは利用可能なプラグインはありません。表示項目がないソース：{summaries}",
+          "sourceAllIncompatible": "{sourceName}：合計 {total} 件、{incompatible} 件をバージョン非互換でスキップ",
           "noPlugins": "利用可能なプラグインがありません",
           "exceptionWithCache": "プラグインソースでエラーが発生し、キャッシュを使用しています: {error}",
           "getAvailableFail": "利用可能なプラグイン一覧の取得に失敗しました: {error}"

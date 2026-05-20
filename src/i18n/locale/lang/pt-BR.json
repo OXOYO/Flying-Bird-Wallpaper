@@ -295,7 +295,8 @@
         },
         "updateVersionLabel": "v{current} → v{latest}",
         "loadAlert": {
-          "title": "Aviso da fonte de plugins"
+          "title": "Aviso da fonte de plugins",
+          "fallbackBody": "Algumas fontes de plugins não puderam ser carregadas. Verifique a rede ou as configurações das fontes e tente novamente."
         },
         "loadErrors": {
           "errorsSeparator": "; ",
@@ -309,6 +310,8 @@
           "partialFailed": "Falha ao carregar algumas fontes de plugins: {errors}",
           "partialFailedWithCache": "Algumas fontes falharam; usando cache local: {errors}",
           "allFailed": "Falha ao carregar fontes de plugins: {errors}",
+          "versionMismatch": "O app v{appVersion} está abaixo do requisito dos plugins (v{minVersion}+). Esta varredura não retornou plugins. Fontes sem itens: {summaries}",
+          "sourceAllIncompatible": "{sourceName}: {total} no total, {incompatible} ignorados (versão incompatível)",
           "noPlugins": "Nenhum plugin disponível encontrado",
           "exceptionWithCache": "Erro na fonte de plugins; usando cache: {error}",
           "getAvailableFail": "Falha ao carregar lista de plugins disponíveis: {error}"

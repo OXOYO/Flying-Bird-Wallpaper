@@ -3,7 +3,7 @@ import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import ApiBase from '../ApiBase.js'
 import { t } from '../../i18n/server.js'
-import { API_ERROR_CODE, createCodedError } from '../../common/utils.js'
+import { API_ERROR_CODE, createCodedError, resolvePluginAppVersion } from '../../common/utils.js'
 
 /** 绕过 ESM 模块缓存，安装/更新插件后需重新加载 main.mjs */
 const importFresh = async (modulePath) => {
@@ -134,7 +134,7 @@ export default class ApiManager {
         manifest.downloadRequired && typeof manifest.downloadRequired === 'object'
           ? manifest.downloadRequired
           : { keywords: false, orientation: false },
-      appVersion: manifest.appVersion || { min: '2.0.0', max: '*' }
+      appVersion: resolvePluginAppVersion(manifest.appVersion)
     }
   }
 

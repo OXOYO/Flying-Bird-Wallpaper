@@ -295,7 +295,8 @@
         },
         "updateVersionLabel": "v{current} → v{latest}",
         "loadAlert": {
-          "title": "إشعار مصدر الإضافات"
+          "title": "إشعار مصدر الإضافات",
+          "fallbackBody": "تعذر تحميل بعض مصادر الإضافات. تحقق من الشبكة أو إعدادات المصدر وحاول مرة أخرى."
         },
         "loadErrors": {
           "errorsSeparator": "; ",
@@ -309,6 +310,8 @@
           "partialFailed": "فشل تحميل بعض مصادر الإضافات: {errors}",
           "partialFailedWithCache": "فشل تحميل بعض المصادر؛ يتم استخدام الذاكرة المؤقتة المحلية: {errors}",
           "allFailed": "فشل تحميل مصادر الإضافات: {errors}",
+          "versionMismatch": "إصدار التطبيق v{appVersion} أقل من متطلبات الإضافات (v{minVersion}+). لم يُرجع هذا الفحص أي إضافات. مصادر بدون عناصر: {summaries}",
+          "sourceAllIncompatible": "{sourceName}: الإجمالي {total}، تم تخطي {incompatible} بسبب عدم توافق الإصدار",
           "noPlugins": "لم يتم العثور على إضافات متاحة",
           "exceptionWithCache": "خطأ في مصدر الإضافات؛ يتم استخدام الذاكرة المؤقتة: {error}",
           "getAvailableFail": "فشل تحميل قائمة الإضافات المتاحة: {error}"
