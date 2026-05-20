@@ -364,7 +364,7 @@
       "openDatabaseDir": "Datenbankverzeichnis öffnen",
       "openLogsDir": "Logverzeichnis öffnen",
       "openDownloadDir": "Downloadverzeichnis öffnen",
-      "openPluginsDir": "Benutzerdefiniertes Plugin-Verzeichnis öffnen",
+      "openPluginsDir": "Plugin-Verzeichnis öffnen",
       "startH5Server": "H5-Server starten",
       "stopH5Server": "H5-Server stoppen",
       "setWebWallpaper": "Web-Hintergrund festlegen",

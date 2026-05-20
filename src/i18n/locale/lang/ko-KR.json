@@ -364,7 +364,7 @@
       "openDatabaseDir": "데이터베이스 디렉토리 열기",
       "openLogsDir": "로그 디렉토리 열기",
       "openDownloadDir": "다운로드 디렉토리 열기",
-      "openPluginsDir": "사용자 정의 플러그인 디렉토리 열기",
+      "openPluginsDir": "플러그인 디렉토리 열기",
       "startH5Server": "H5 서버 시작",
       "stopH5Server": "H5 서버 중지",
       "setWebWallpaper": "웹 배경화면 설정",

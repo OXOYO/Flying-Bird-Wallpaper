@@ -364,7 +364,7 @@
       "openDatabaseDir": "打开操作数据库目录",
       "openLogsDir": "打开操作日志目录",
       "openDownloadDir": "打开下载目录",
-      "openPluginsDir": "打开自定义插件目录",
+      "openPluginsDir": "打开插件目录",
       "startH5Server": "启动H5服务",
       "stopH5Server": "停止H5服务",
       "setWebWallpaper": "设置网页壁纸",

@@ -1,4 +1,5 @@
 <script setup>
+import { resolveApiUserMessage } from '@common/utils.js'
 import UseSettingStore from '@renderer/stores/settingStore.js'
 import { useTranslation } from 'i18next-vue'
 import { computed } from 'vue'
@@ -163,7 +164,7 @@ const utilGroups = ref([
       {
         name: 'openPluginsDir',
         value: 'plugins',
-        text: '打开自定义插件目录',
+        text: '打开插件目录',
         locale: 'pages.Utils.openPluginsDir',
         confirm: false
       }
@@ -224,9 +225,15 @@ const onExec = (name) => {
       })
       const res = await window.FBW[funcName](...args)
       if (res) {
+        const rawMessage = String(res.message ?? '').trim()
+        const message = rawMessage
+          ? rawMessage
+          : res.success
+            ? t('messages.operationSuccess')
+            : resolveApiUserMessage(res, t)
         ElMessage({
           type: res.success ? 'success' : 'error',
-          message: res.message
+          message
         })
       }
     }

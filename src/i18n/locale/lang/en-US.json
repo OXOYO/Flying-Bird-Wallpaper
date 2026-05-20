@@ -364,7 +364,7 @@
       "openDatabaseDir": "Open the database directory",
       "openLogsDir": "Open the log directory",
       "openDownloadDir": "Open the download directory",
-      "openPluginsDir": "Open custom plugin directory",
+      "openPluginsDir": "Open the plugin directory",
       "startH5Server": "Start H5 server",
       "stopH5Server": "Stop H5 server",
       "setWebWallpaper": "Set web wallpaper",

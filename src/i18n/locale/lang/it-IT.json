@@ -364,7 +364,7 @@
       "openDatabaseDir": "Apri directory database",
       "openLogsDir": "Apri directory log",
       "openDownloadDir": "Apri directory download",
-      "openPluginsDir": "Apri directory plugin personalizzati",
+      "openPluginsDir": "Apri directory plugin",
       "startH5Server": "Avvia server H5",
       "stopH5Server": "Ferma server H5",
       "setWebWallpaper": "Imposta sfondo web",

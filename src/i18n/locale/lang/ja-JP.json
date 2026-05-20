@@ -364,7 +364,7 @@
       "openDatabaseDir": "データベースディレクトリを開く",
       "openLogsDir": "ログディレクトリを開く",
       "openDownloadDir": "ダウンロードディレクトリを開く",
-      "openPluginsDir": "カスタムプラグインディレクトリを開く",
+      "openPluginsDir": "プラグインディレクトリを開く",
       "startH5Server": "H5サーバーを起動",
       "stopH5Server": "H5サーバーを停止",
       "setWebWallpaper": "ウェブ壁紙を設定",
