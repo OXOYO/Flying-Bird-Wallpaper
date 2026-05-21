@@ -3193,11 +3193,19 @@ onMounted(async () => {
 
 .image-info-panel {
   z-index: v-bind('H5_OVERLAY_Z.imageInfoPanel');
+
+  /* 滚动必须在 Vant 的 __content 上，否则 scrollTop 恒为 0 会跟手收起面板 */
+  :deep(.van-floating-panel__content) {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
 }
 
 .image-info-content {
-  max-height: 60vh;
-  overflow: auto;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 @media (min-width: 768px) {
