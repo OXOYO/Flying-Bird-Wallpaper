@@ -296,92 +296,35 @@ const init = async () => {
 
 ### 2. 律动效果
 
-支持 20 种不同的律动效果：
+当前为 **4 种 Three.js 舞台效果**（`effects/three/stages/`）：
 
-- **基础效果**：BarEffect、WaveEffect、BallEffect
-- **频谱效果**：SpectrumRingEffect、SpectrumFlowerEffect、Bars3DEffect
-- **粒子效果**：ParticleFountainEffect、FireworkEffect、MusicNoteRainEffect
-- **动画效果**：DiscoEffect、RainbowEffect、WindmillEffect、TaijiEffect
-- **流体效果**：LiquidRippleEffect、FlowingLinesEffect
-- **特殊效果**：BreathingHaloEffect、DynamicGridEffect、RotatingStarburstEffect、MuyuEffect
+- `ThreeStageBars` — 演唱会柱（默认）
+- `ThreeStageWall` — 霓虹墙矩阵
+- `ThreeStageGrid` — 地柱网格
+- `ThreeStageTexturedSphere` — 纹理球
 
-**关键代码片段：**
-
-```js
-function runEffect() {
-  if (!leafer) return
-
-  if (effectInstance) {
-    effectInstance.destroy()
-  }
-
-  const effectName =
-    config.value.effect.charAt(0).toUpperCase() + config.value.effect.slice(1) + 'Effect'
-  const EffectClass = Effects[effectName]
-
-  if (EffectClass) {
-    effectInstance = new EffectClass(leafer, toRaw(config.value))
-    draw()
-  }
-}
-```
-
-### 3. 渲染引擎
-
-- 使用 Leafer UI 作为渲染引擎
-- 支持实时音频数据渲染
-- 可配置的效果参数：尺寸比例、颜色、动画、密度、位置、采样范围
+旧配置名（含已移除的 Leafer、`ThreeStageMeshGrid` 等）由 `resolveRhythmEffect.js` 映射到上述效果。
 
 **关键代码片段：**
 
 ```js
-function draw() {
-  if (!analyser || !effectInstance) return
-
-  analyser.getByteFrequencyData(dataArray)
-  const [start, end] = config.value.sampleRange
-  const startIndex = Math.floor((start * dataArray.length) / 100)
-  const endIndex = Math.floor((end * dataArray.length) / 100)
-
-  effectInstance.render(dataArray.slice(startIndex, endIndex))
-  animationId = requestAnimationFrame(draw)
-}
+const effectName = resolveRhythmEffect(settingData.value.rhythmEffect)
+const EffectClass = Effects[effectName]
+effectInstance = new EffectClass(containerRef.value, toRaw(config.value))
 ```
+
+### 3. 渲染与音频
+
+- **渲染**：Three.js（`ThreeStageBase` / `StageEffectBase`）
+- **音频**：`createRhythmAudio` + `getFrame()` 驱动每帧更新
+- **可配置**：尺寸比例、配色、动画曲线、密度、位置、采样范围
 
 ### 4. 效果基类
 
-所有律动效果都继承自 `BaseEffect` 基类，提供：
+- `ThreeStageBase`：画布、相机、渲染循环
+- `StageEffectBase`：舞台布局、图层、房间尺寸
 
-- **位置计算**：支持 9 个位置（top-left、top、top-right、right、bottom-right、bottom、bottom-left、left、center）
-- **尺寸管理**：基于窗口尺寸和比例计算效果区域
-- **数据降维**：支持 max、min、average 三种数据聚合方式
-- **颜色映射**：支持线性渐变和径向渐变填充
-- **调试功能**：可选的调试边框显示
-
-**关键代码片段：**
-
-```js
-export class BaseEffect {
-  constructor(leafer, config) {
-    this.leafer = leafer
-    this.config = config
-    this.debugRect = null
-    this.bodySize = this.getBodySize()
-    this.renderDebug()
-  }
-
-  getPosition(width, height, bodyWidth, bodyHeight, margin = 0) {
-    switch (this.config.position) {
-      case 'top-left':
-        return { x: margin + bodyWidth / 2, y: margin + bodyHeight / 2 }
-      case 'center':
-      default:
-        return { x: width / 2, y: height / 2 }
-      // ... 其他位置
-    }
-  }
-}
-```
+详见 `docs/rhythm_wallpaper.md`。
 
 ---
 

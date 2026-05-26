@@ -6,6 +6,7 @@ import {
   Tray,
   Menu,
   shell,
+  screen,
   ipcMain,
   dialog,
   protocol,
@@ -236,6 +237,8 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
     if (!win) {
       return
     }
+    const display = screen.getPrimaryDisplay()
+    const { bounds, workArea } = display
     const data = {
       osType,
       isLinux: isLinux(),
@@ -243,7 +246,14 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
       isWin: isWin(),
       isDev: isDev(),
       isProd: isProd(),
-      h5ServerUrl: global.FBW.store?.h5ServerUrl
+      h5ServerUrl: global.FBW.store?.h5ServerUrl,
+      desktopInset: {
+        top: Math.max(0, workArea.y - bounds.y),
+        bottom: Math.max(0, bounds.y + bounds.height - workArea.y - workArea.height),
+        left: Math.max(0, workArea.x - bounds.x),
+        right: Math.max(0, bounds.x + bounds.width - workArea.x - workArea.width)
+      },
+      workAreaSize: { width: workArea.width, height: workArea.height }
     }
     win.webContents.send('main:commonData', data)
   }

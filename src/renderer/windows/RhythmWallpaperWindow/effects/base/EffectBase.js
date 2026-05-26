@@ -76,24 +76,32 @@ export default class EffectBase {
    *   - 支持 top-left、top、top-right、right、bottom-right、bottom、bottom-left、left、center（默认）等位置
    */
   getPosition(boundWidth, boundHeight, bodyWidth, bodyHeight, margin = 0) {
-    // bodyWidth/bodyHeight为效果自身宽高
+    const inset = this.config.desktopInset || {}
+    const top = (inset.top || 0) + margin
+    const bottom = (inset.bottom || 0) + margin
+    const left = (inset.left || 0) + margin
+    const right = (inset.right || 0) + margin
+
     switch (this.config.position) {
       case 'top-left':
-        return { x: margin + bodyWidth / 2, y: margin + bodyHeight / 2 }
+        return { x: left + bodyWidth / 2, y: top + bodyHeight / 2 }
       case 'top':
-        return { x: boundWidth / 2, y: margin + bodyHeight / 2 }
+        return { x: boundWidth / 2, y: top + bodyHeight / 2 }
       case 'top-right':
-        return { x: boundWidth - margin - bodyWidth / 2, y: margin + bodyHeight / 2 }
+        return { x: boundWidth - right - bodyWidth / 2, y: top + bodyHeight / 2 }
       case 'right':
-        return { x: boundWidth - margin - bodyWidth / 2, y: boundHeight / 2 }
+        return { x: boundWidth - right - bodyWidth / 2, y: boundHeight / 2 }
       case 'bottom-right':
-        return { x: boundWidth - margin - bodyWidth / 2, y: boundHeight - margin - bodyHeight / 2 }
+        return {
+          x: boundWidth - right - bodyWidth / 2,
+          y: boundHeight - bottom - bodyHeight / 2
+        }
       case 'bottom':
-        return { x: boundWidth / 2, y: boundHeight - margin - bodyHeight / 2 }
+        return { x: boundWidth / 2, y: boundHeight - bottom - bodyHeight / 2 }
       case 'bottom-left':
-        return { x: margin + bodyWidth / 2, y: boundHeight - margin - bodyHeight / 2 }
+        return { x: left + bodyWidth / 2, y: boundHeight - bottom - bodyHeight / 2 }
       case 'left':
-        return { x: margin + bodyWidth / 2, y: boundHeight / 2 }
+        return { x: left + bodyWidth / 2, y: boundHeight / 2 }
       case 'center':
       default:
         return { x: boundWidth / 2, y: boundHeight / 2 }

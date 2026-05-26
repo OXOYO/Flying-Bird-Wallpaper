@@ -12,6 +12,13 @@ const props = defineProps({
   windowName: String
 })
 
+const isWinPlatform = computed(() => {
+  if (commonData.value?.isWin !== undefined) {
+    return !!commonData.value.isWin
+  }
+  return /Windows/i.test(navigator.userAgent)
+})
+
 const btns = computed(() => {
   return [
     {
@@ -36,7 +43,7 @@ const onResizeWindow = (action) => {
 
 <template>
   <div class="custom-title-bar">
-    <template v-if="commonData?.isWin && props.resizeWindow">
+    <template v-if="isWinPlatform && props.resizeWindow">
       <div
         v-for="item in btns"
         :key="item.icon"

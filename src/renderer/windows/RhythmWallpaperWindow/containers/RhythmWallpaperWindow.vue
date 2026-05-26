@@ -1,5 +1,8 @@
 <script setup>
 import * as Effects from '../effects'
+import { createRhythmAudio } from '../utils/rhythmAudio.js'
+import { resolveRhythmEffect } from '../utils/resolveRhythmEffect.js'
+import { isLightColor } from '../utils/stageUtils.js'
 import UseCommonStore from '@renderer/stores/commonStore'
 import UseSettingStore from '@renderer/stores/settingStore'
 import { useTranslation } from 'i18next-vue'
@@ -13,11 +16,13 @@ const settingStore = UseSettingStore()
 const { settingData } = storeToRefs(settingStore)
 
 const containerRef = ref(null)
-let effectInstance, analyser, dataArray, source, audioContext, animationId
+let effectInstance, rhythmAudio, source, audioContext, animationId
 
 const config = computed(() => {
+  const wallpaperColor =
+    settingData.value.colorWallpaperVal || settingData.value.dynamicBackgroundColor || '#999999'
   return {
-    effect: settingData.value.rhythmEffect,
+    effect: resolveRhythmEffect(settingData.value.rhythmEffect),
     widthRatio: settingData.value.rhythmWidthRatio / 100,
     heightRatio: settingData.value.rhythmHeightRatio / 100,
     colors: toRaw(settingData.value.rhythmColors),
@@ -25,6 +30,13 @@ const config = computed(() => {
     density: settingData.value.rhythmDensity,
     position: settingData.value.rhythmPosition,
     sampleRange: settingData.value.rhythmSampleRange,
+    desktopInset: commonData.value?.desktopInset || {
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0
+    },
+    lightBackground: isLightColor(wallpaperColor),
     shadow: true,
     debug: !!commonData.value?.isDev
   }
@@ -95,11 +107,7 @@ const init = async () => {
         audio: { deviceId: device.deviceId }
       })
       source = audioContext.createMediaStreamSource(stream)
-      analyser = audioContext.createAnalyser()
-      analyser.fftSize = 1024
-      dataArray = new Uint8Array(analyser.frequencyBinCount)
-      source.connect(analyser)
-      // 执行效果
+      rhythmAudio = createRhythmAudio(audioContext, source)
       runEffect()
     } catch (error) {
       console.error(`虚拟声卡设备 ${device.label} 不可用:`, error)
@@ -151,7 +159,9 @@ const runEffect = async () => {
   if (EffectClass) {
     try {
       effectInstance = new EffectClass(containerRef.value, toRaw(config.value))
-      draw()
+      if (!animationId) {
+        draw()
+      }
     } catch (error) {
       console.error('RhythmWallpaperWindow: Error creating effect instance:', error)
     }
@@ -161,27 +171,21 @@ const runEffect = async () => {
 }
 
 const draw = () => {
-  if (!analyser || !effectInstance) {
+  if (!effectInstance) {
     return
   }
 
   try {
-    analyser.getByteFrequencyData(dataArray)
-    // 采样范围
-    const [start, end] = config.value.sampleRange
-    const startIndex = Math.floor((start * dataArray.length) / 100)
-    const endIndex = Math.floor((end * dataArray.length) / 100)
-
-    // 确保数据有效
-    if (dataArray && dataArray.length > 0) {
-      const audioData = dataArray.slice(startIndex, endIndex)
-      effectInstance.render(audioData)
+    const frame = rhythmAudio?.getFrame(config.value.sampleRange)
+    if (isThreeEffect.value) {
+      effectInstance.render(frame || {})
+    } else if (frame?.spectrum?.length > 0) {
+      effectInstance.render(frame.spectrum)
     }
 
     animationId = requestAnimationFrame(draw)
   } catch (error) {
     console.error('RhythmWallpaperWindow: Error in draw loop:', error)
-    // 继续动画循环，避免完全停止
     animationId = requestAnimationFrame(draw)
   }
 }
@@ -195,11 +199,15 @@ watch(
     settingData.value.rhythmEffect,
     settingData.value.rhythmWidthRatio,
     settingData.value.rhythmHeightRatio,
+    settingData.value.rhythmPosition,
     settingData.value.rhythmColors,
     settingData.value.rhythmAnimation,
     settingData.value.rhythmDensity,
     settingData.value.rhythmPosition,
-    settingData.value.rhythmSampleRange
+    settingData.value.rhythmSampleRange,
+    settingData.value.colorWallpaperVal,
+    settingData.value.dynamicBackgroundColor,
+    commonData.value?.desktopInset
   ],
   async () => {
     destroyEffect()
@@ -213,15 +221,42 @@ watch(
 
 onBeforeUnmount(() => {
   if (animationId) cancelAnimationFrame(animationId)
+  if (rhythmAudio) {
+    rhythmAudio.destroy()
+    rhythmAudio = null
+  }
   if (audioContext) audioContext.close()
   destroyEffect()
 })
 </script>
 
 <template>
-  <!-- 统一容器 - 用于所有效果 -->
+  <!-- 统一容器 - 用于所有效果；Three 舞台用黑底避免全屏截图里露出桌面灰边 -->
   <div
     ref="containerRef"
-    style="width: 100vw; height: 100vh; background: transparent; position: relative"
+    class="rhythm-root"
+    :class="{ 'rhythm-root--three': isThreeEffect }"
+    :style="{
+      width: '100vw',
+      height: '100vh',
+      position: 'relative',
+      background: isThreeEffect ? '#000' : 'transparent'
+    }"
   ></div>
 </template>
+
+<style>
+html,
+body,
+#app,
+.common-app {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.rhythm-root--three {
+  background: #000 !important;
+}
+</style>

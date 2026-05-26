@@ -45,7 +45,7 @@
 |------|------|
 | 采集与绘制循环 | `src/renderer/windows/RhythmWallpaperWindow/containers/RhythmWallpaperWindow.vue` |
 | 降维、响度映射 | `src/renderer/windows/RhythmWallpaperWindow/effects/base/EffectBase.js` |
-| Leafer / Three 效果 | `src/renderer/windows/RhythmWallpaperWindow/effects/leafer/*`、`effects/three/*` |
+| Three 舞台效果 | `src/renderer/windows/RhythmWallpaperWindow/effects/three/*` |
 | 默认配置 | `src/common/publicData.js`（`rhythmAnimation`、`rhythmSampleRange` 等） |
 
 ### 2.2 采集层细节
@@ -64,8 +64,7 @@
 | `getReducedValues` | 将长频谱压成 N 段，段内 max/avg/min | 否，描述分段能量形状 |
 | `getMappedValue`（rhythmAnimation） | 0–255 → 0–1 的非线性曲线 | 否，仅改变响度显示曲线 |
 | 效果内 `energy` 门限（如 `< 0.02`） | 静音时隐藏或减弱 | 部分相关，仍是平均响度 |
-| `ThreeBar` 柱高插值（α≈0.1） | 帧间平滑，减少闪烁 | 会削弱拍点顿挫 |
-| `LeaferRainbow` 的 `lastScale` EMA | 缩放平滑 | 同上 |
+| 舞台效果帧间平滑（如 `smoothToward`） | 顶点/柱高插值 | 会削弱拍点顿挫 |
 
 设置项 `rhythmAnimation`（线型、对数、抛物线、平方根、指数、正弦、弹跳、阶梯）在代码注释与 UI 上偏「动效曲线」，本质是**显示增益**，不是节拍检测算法。
 
@@ -132,9 +131,7 @@
 - `average`：段内算术平均，相对平滑；
 - `min`：段内最小值。
 
-多数 Leafer 效果：`getMappedValues(getReducedValues(dataArray, barCount))`。
-
-部分 Three 效果：先 `getMappedValues` 再 `getReducedValues(..., 'max')`。
+部分舞台效果仍经 `EffectBase`：`getMappedValues(getReducedValues(dataArray, barCount))`；Mesh Grid 等使用 `rhythmAudio.getFrame()` 径向频谱。
 
 ### 5.2 映射 `getMappedValue(value)`（`rhythmAnimation`）
 
@@ -159,7 +156,7 @@ if (energy < 0.02) → 不绘制或减弱
 ```
 
 这是**映射后频谱的平均响度**，不是 onset/beat 检测。  
-柱高类效果（如 `LeaferBar`）多为**每帧直接赋值**，无统一节拍包络。
+部分柱高类舞台效果多为**每帧直接赋值**，无统一节拍包络。
 
 ---
 

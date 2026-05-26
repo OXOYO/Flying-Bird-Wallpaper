@@ -25,7 +25,8 @@ export default class RhythmWallpaperWindow {
     this.options = {
       frame: false,
       show: false,
-      transparent: true,
+      transparent: false,
+      backgroundColor: '#000000',
       skipTaskbar: true,
       type: isMac() ? 'desktop' : '',
       autoHideMenuBar: true,
@@ -54,12 +55,43 @@ export default class RhythmWallpaperWindow {
     RhythmWallpaperWindow._instance = this
   }
 
+  _syncWindowBounds() {
+    if (!this.win) return
+    const { x, y, width, height } = screen.getPrimaryDisplay().bounds
+    this.win.setBounds({ x, y, width, height })
+  }
+
+  _attachToDesktopLayer() {
+    if (!isWin() || !this.win) return false
+    try {
+      this._syncWindowBounds()
+      const hwnd = this.win.getNativeWindowHandle().readInt32LE(0)
+      const ok = setWindowsDynamicWallpaper(hwnd, {
+        alpha: 255,
+        clickThrough: true
+      })
+      if (!ok) {
+        global.logger?.warn?.('律动壁纸: 挂到桌面层失败')
+      } else {
+        this._syncWindowBounds()
+        if (!this.win.isVisible()) this.win.show()
+      }
+      return ok
+    } catch (err) {
+      global.logger?.error?.(`律动壁纸: 挂到桌面层异常 ${err}`)
+      return false
+    }
+  }
+
   async create() {
     return await new Promise((resolve) => {
       // 关闭动态壁纸
       global.FBW.dynamicWallpaperWindow.close()
       if (this.win) {
         this.win.show()
+        this._attachToDesktopLayer()
+        setTimeout(() => this._attachToDesktopLayer(), 120)
+        this._openDevToolsIfDev()
         resolve()
       } else {
         const { x, y, width, height } = screen.getPrimaryDisplay().bounds
@@ -94,15 +126,19 @@ export default class RhythmWallpaperWindow {
         })
 
         this.win.once('ready-to-show', async () => {
-          // 设置为桌面级别
-          if (isWin()) {
-            setWindowsDynamicWallpaper(this.win.getNativeWindowHandle().readInt32LE(0))
-          }
+          this._attachToDesktopLayer()
           this.win.show()
-          // 发送公共信息
+          setTimeout(() => this._attachToDesktopLayer(), 120)
+          setTimeout(() => this._attachToDesktopLayer(), 600)
           global.FBW.sendCommonData(this.win)
           resolve()
         })
+
+        if (isWin()) {
+          this.win.on('show', () => {
+            this._attachToDesktopLayer()
+          })
+        }
 
         this.win.on('closed', () => {
           this.win = null
@@ -112,13 +148,19 @@ export default class RhythmWallpaperWindow {
           }
         })
         if (isDev()) {
-          this.win.webContents.openDevTools()
           this.win.loadURL(this.url)
+          this.win.webContents.once('did-finish-load', () => this._openDevToolsIfDev())
         } else {
           this.win.loadFile(this.url)
         }
       }
     })
+  }
+
+  _openDevToolsIfDev() {
+    if (!isDev() || !this.win?.webContents) return
+    if (this.win.webContents.isDevToolsOpened()) return
+    this.win.webContents.openDevTools({ mode: 'detach' })
   }
 
   close() {

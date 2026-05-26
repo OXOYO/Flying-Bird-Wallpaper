@@ -221,7 +221,7 @@ export const defaultSettingData = {
   dynamicPerformanceMode: 'balanced',
   dynamicScaleMode: 'contain',
   /*** 律动壁纸配置 ***/
-  rhythmEffect: 'LeaferBar',
+  rhythmEffect: 'ThreeStageBars',
   rhythmWidthRatio: 100,
   rhythmHeightRatio: 30,
   rhythmColors: [
@@ -541,71 +541,16 @@ export const mimeTypes = {
   '.flv': 'video/x-flv'
 }
 
-// 律动壁纸效果类型
+// 律动壁纸效果类型（Three.js 舞台）
 export const rhythmEffectOptions = [
-  // Leafer效果
-  { label: '柱状', locale: 'rhythmEffectOptions.LeaferBar', value: 'LeaferBar' },
-  { label: '波形', locale: 'rhythmEffectOptions.LeaferWave', value: 'LeaferWave' },
-  { label: '小球', locale: 'rhythmEffectOptions.LeaferBall', value: 'LeaferBall' },
-  { label: '迪斯科', locale: 'rhythmEffectOptions.LeaferDisco', value: 'LeaferDisco' },
+  { label: '演唱会柱', locale: 'rhythmEffectOptions.ThreeStageBars', value: 'ThreeStageBars' },
+  { label: '霓虹墙', locale: 'rhythmEffectOptions.ThreeStageWall', value: 'ThreeStageWall' },
+  { label: '地柱网格', locale: 'rhythmEffectOptions.ThreeStageGrid', value: 'ThreeStageGrid' },
   {
-    label: '频谱环',
-    locale: 'rhythmEffectOptions.LeaferSpectrumRing',
-    value: 'LeaferSpectrumRing'
-  },
-  {
-    label: '粒子喷泉',
-    locale: 'rhythmEffectOptions.LeaferParticleFountain',
-    value: 'LeaferParticleFountain'
-  },
-  {
-    label: '呼吸光圈',
-    locale: 'rhythmEffectOptions.LeaferBreathingHalo',
-    value: 'LeaferBreathingHalo'
-  },
-  // { label: '动态网格', locale: 'rhythmEffectOptions.LeaferDynamicGrid', value: 'LeaferDynamicGrid' },
-  {
-    label: '流动线条',
-    locale: 'rhythmEffectOptions.LeaferFlowingLines',
-    value: 'LeaferFlowingLines'
-  },
-  {
-    label: '音符雨',
-    locale: 'rhythmEffectOptions.LeaferMusicNoteRain',
-    value: 'LeaferMusicNoteRain'
-  },
-  {
-    label: '旋转星芒',
-    locale: 'rhythmEffectOptions.LeaferRotatingStarburst',
-    value: 'LeaferRotatingStarburst'
-  },
-  { label: '3D柱状', locale: 'rhythmEffectOptions.LeaferBars3D', value: 'LeaferBars3D' },
-  {
-    label: '液体波纹',
-    locale: 'rhythmEffectOptions.LeaferLiquidRipple',
-    value: 'LeaferLiquidRipple'
-  },
-  {
-    label: '频谱花朵',
-    locale: 'rhythmEffectOptions.LeaferSpectrumFlower',
-    value: 'LeaferSpectrumFlower'
-  },
-  { label: '彩虹', locale: 'rhythmEffectOptions.LeaferRainbow', value: 'LeaferRainbow' },
-  { label: '风车', locale: 'rhythmEffectOptions.LeaferWindmill', value: 'LeaferWindmill' },
-  { label: '太极', locale: 'rhythmEffectOptions.LeaferTaiji', value: 'LeaferTaiji' },
-  { label: '木鱼', locale: 'rhythmEffectOptions.LeaferMuyu', value: 'LeaferMuyu' },
-  { label: '烟花', locale: 'rhythmEffectOptions.LeaferFirework', value: 'LeaferFirework' },
-  { label: '雪花', locale: 'rhythmEffectOptions.LeaferSnowflake', value: 'LeaferSnowflake' }
-  // Three.js 效果
-  // { label: '3D柱状', locale: 'rhythmEffectOptions.ThreeBar', value: 'ThreeBar' },
-  // { label: '3D波形', locale: 'rhythmEffectOptions.ThreeWave', value: 'ThreeWave' },
-  // { label: '3D粒子', locale: 'rhythmEffectOptions.ThreeParticle', value: 'ThreeParticle' },
-  // { label: '3D球体', locale: 'rhythmEffectOptions.ThreeSphere', value: 'ThreeSphere' },
-  // {
-  //   label: '3D音频可视化',
-  //   locale: 'rhythmEffectOptions.ThreeAudioVisualizer',
-  //   value: 'ThreeAudioVisualizer'
-  // }
+    label: '纹理球',
+    locale: 'rhythmEffectOptions.ThreeStageTexturedSphere',
+    value: 'ThreeStageTexturedSphere'
+  }
 ]
 
 // 律动动效
