@@ -93,6 +93,11 @@
       "width": 24,
       "height": 24
     },
+    "collections": {
+      "body": "<path fill=\"currentColor\" d=\"M4 6q0-.825.588-1.412T6 4h10l2 2h2q.825 0 1.413.588T22 8v10q0 .825-.587 1.413T20 20H6q-.825 0-1.412-.587T4 18V6m2 0v12h14V8h-5.175l-2-2H6m7 10.5a3.5 3.5 0 1 0 0-7a3.5 3.5 0 0 0 0 7m-2.5-3.5a2.5 2.5 0 1 1 5 0a2.5 2.5 0 0 1-5 0\"/>",
+      "width": 24,
+      "height": 24
+    },
     "plus": {
       "body": "<path fill=\"currentColor\" d=\"M19 12.998h-6v6h-2v-6H5v-2h6v-6h2v6h6z\"/>",
       "width": 24,

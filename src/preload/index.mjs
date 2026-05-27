@@ -271,7 +271,27 @@ const api = {
   removePluginSource: (...args) => ipcRenderer.invoke('main:removePluginSource', ...args),
   installPlugin: (...args) => ipcRenderer.invoke('main:installPlugin', ...args),
   uninstallPlugin: (...args) => ipcRenderer.invoke('main:uninstallPlugin', ...args),
-  updatePlugin: (...args) => ipcRenderer.invoke('main:updatePlugin', ...args)
+  updatePlugin: (...args) => ipcRenderer.invoke('main:updatePlugin', ...args),
+
+  analyzeResource: (...args) => ipcRenderer.invoke('main:analyzeResource', ...args),
+  testAiConnection: (...args) => ipcRenderer.invoke('main:testAiConnection', ...args),
+  listAiModels: (...args) => ipcRenderer.invoke('main:listAiModels', ...args),
+  getAiAnalysisStats: (...args) => ipcRenderer.invoke('main:getAiAnalysisStats', ...args),
+  parseSearchQuery: (...args) => ipcRenderer.invoke('main:parseSearchQuery', ...args),
+  findSimilar: (...args) => ipcRenderer.invoke('main:findSimilar', ...args),
+  semanticSearch: (...args) => ipcRenderer.invoke('main:semanticSearch', ...args),
+  recommend: (...args) => ipcRenderer.invoke('main:recommend', ...args),
+  collectionsList: (...args) => ipcRenderer.invoke('main:collections:list', ...args),
+  collectionsGet: (...args) => ipcRenderer.invoke('main:collections:get', ...args),
+  collectionsCreate: (...args) => ipcRenderer.invoke('main:collections:create', ...args),
+  collectionsUpdate: (...args) => ipcRenderer.invoke('main:collections:update', ...args),
+  collectionsDelete: (...args) => ipcRenderer.invoke('main:collections:delete', ...args),
+  collectionsGenerate: (...args) => ipcRenderer.invoke('main:collections:generate', ...args),
+  collectionsAddAllToFavorites: (...args) =>
+    ipcRenderer.invoke('main:collections:addAllToFavorites', ...args),
+  collectionsCurate: (...args) => ipcRenderer.invoke('main:collections:curate', ...args),
+  collectionsCuratorStats: (...args) =>
+    ipcRenderer.invoke('main:collections:curatorStats', ...args)
 }
 
 if (process.contextIsolated) {

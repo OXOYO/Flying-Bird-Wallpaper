@@ -19,10 +19,12 @@ import {
   rhythmDensityOptions,
   positionOptions,
   defaultMenuList,
+  menuList,
   notificationsOptions
 } from '@common/publicData.js'
 import { localeOptions } from '@i18n/locale/index.js'
 import { useTranslation } from 'i18next-vue'
+import { useSettingAnchorScroll } from '../utils/useSettingAnchorScroll.js'
 
 const { t } = useTranslation()
 const commonStore = UseCommonStore()
@@ -32,6 +34,10 @@ const { settingData } = storeToRefs(settingStore)
 
 const baseSettingsScrollbarRef = ref(null)
 const settingDataFormRef = ref(null)
+const { anchorContainer, onAnchorChange, restoreAnchorScroll } = useSettingAnchorScroll(
+  baseSettingsScrollbarRef,
+  { defaultHref: '#divider-base' }
+)
 const settingDataForm = reactive({
   ...toRaw(settingStore.settingData)
 })
@@ -60,13 +66,7 @@ const flags = reactive({
   settingRhythmWallpaper: false
 })
 
-const anchorContainer = computed(() => {
-  if (baseSettingsScrollbarRef.value) {
-    return baseSettingsScrollbarRef.value.$el.querySelector('.el-scrollbar__wrap')
-  } else {
-    return null
-  }
-})
+const canBeEnabledMenus = computed(() => menuList.filter((item) => item.canBeEnabled))
 
 watch(
   () => settingData.value,
@@ -354,7 +354,8 @@ const syncFormFromSettingData = () => {
 }
 
 defineExpose({
-  resetForm: syncFormFromSettingData
+  resetForm: syncFormFromSettingData,
+  restoreAnchorScroll
 })
 </script>
 
@@ -366,6 +367,7 @@ defineExpose({
       direction="vertical"
       :offset="20"
       type="default"
+      @change="onAnchorChange"
     >
       <el-anchor-link
         class="anchor-link"
@@ -491,6 +493,34 @@ defineExpose({
                 <span style="vertical-align: middle">{{ t(item.locale) }}</span>
               </el-option>
             </el-select>
+          </el-form-item>
+          <el-form-item
+            :label="t('pages.Setting.settingDataForm.enabledMenus')"
+            prop="enabledMenus"
+          >
+            <el-checkbox-group
+              v-model="settingDataForm.enabledMenus"
+              style="max-width: 450px"
+              @change="onSettingDataFormChange"
+            >
+              <el-checkbox
+                v-for="item in canBeEnabledMenus"
+                :key="item.name"
+                :label="t(item.locale)"
+                :value="item.name"
+                style="width: 100px"
+              >
+                <IconifyIcon
+                  :icon="item.icon"
+                  style="
+                    vertical-align: middle;
+                    margin-right: 10px;
+                    color: var(--el-text-color-regular);
+                  "
+                />
+                <span class="checkbox-label">{{ t(item.locale) }}</span>
+              </el-checkbox>
+            </el-checkbox-group>
           </el-form-item>
           <el-form-item
             :label="t('pages.Setting.settingDataForm.enableExpandSideMenu')"

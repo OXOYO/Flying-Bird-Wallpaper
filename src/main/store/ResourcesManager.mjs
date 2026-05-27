@@ -66,7 +66,13 @@ export default class ResourcesManager {
       pageSize,
       isRandom = false,
       sortField = 'created_at',
-      sortType = -1
+      sortType = -1,
+      scoreMin,
+      scoreMax,
+      tags,
+      tagsMode = 'any',
+      hideUnsafe = false,
+      resourceIds
     } = params
 
     let ret = {
@@ -116,9 +122,54 @@ export default class ResourcesManager {
           query_params.push(resourceName)
         }
 
+        if (quality.length) {
+          const placeholders = quality.map(() => '?').join(',')
+          query_where.push(`r.quality IN (${placeholders})`)
+          query_params.push(...quality)
+        }
+
+        if (scoreMin != null && scoreMin !== '') {
+          query_where.push(`r.score >= ?`)
+          query_params.push(Number(scoreMin))
+        }
+        if (scoreMax != null && scoreMax !== '') {
+          query_where.push(`r.score <= ?`)
+          query_params.push(Number(scoreMax))
+        }
+        if (hideUnsafe) {
+          query_where.push(`(r.nsfwLevel IS NULL OR r.nsfwLevel <= 1)`)
+        }
+        if (Array.isArray(resourceIds) && resourceIds.length) {
+          const ph = resourceIds.map(() => '?').join(',')
+          query_where.push(`r.id IN (${ph})`)
+          query_params.push(...resourceIds)
+        }
+        if (Array.isArray(tags) && tags.length) {
+          const ph = tags.map(() => '?').join(',')
+          if (tagsMode === 'all') {
+            tags.forEach((tag) => {
+              query_where.push(`EXISTS (
+                SELECT 1 FROM fbw_resource_words rw
+                JOIN fbw_words w ON w.id = rw.wordId
+                WHERE rw.resourceId = r.id AND w.word = ?
+              )`)
+              query_params.push(tag)
+            })
+          } else {
+            query_where.push(`EXISTS (
+              SELECT 1 FROM fbw_resource_words rw
+              JOIN fbw_words w ON w.id = rw.wordId
+              WHERE rw.resourceId = r.id AND w.word IN (${ph})
+            )`)
+            query_params.push(...tags)
+          }
+        }
+
         if (filterKeywords) {
-          query_where.push(`(r.filePath LIKE ? OR r.title LIKE ? OR r.desc LIKE ?)`)
-          query_params.push(keywords, keywords, keywords)
+          query_where.push(
+            `(r.filePath LIKE ? OR r.title LIKE ? OR r.desc LIKE ? OR r.summary LIKE ?)`
+          )
+          query_params.push(keywords, keywords, keywords, keywords)
         }
 
         if (orientation.length === 1) {
@@ -129,12 +180,6 @@ export default class ResourcesManager {
         if (fileType) {
           query_where.push(`r.fileType = ?`)
           query_params.push(fileType)
-        }
-
-        if (quality.length) {
-          const placeholders = quality.map(() => '?').join(',')
-          query_where.push(`r.quality IN (${placeholders})`)
-          query_params.push(...quality)
         }
 
         if (query_where.length) {
@@ -553,5 +598,30 @@ export default class ResourcesManager {
       this.logger.error(`批量更新统计数据失败: ${err}`)
     }
     return ret
+  }
+
+  async searchWithFilters(params = {}) {
+    return this.search(params)
+  }
+
+  getResourcesByIds(ids = []) {
+    if (!ids.length) return []
+    const ph = ids.map(() => '?').join(',')
+    return this.db.prepare(`SELECT r.* FROM fbw_resources r WHERE r.id IN (${ph})`).all(...ids)
+  }
+
+  async semanticSearch(params = {}) {
+    const { query, limit = 30, embeddingManager, ...rest } = params
+    if (!embeddingManager || !query) {
+      return this.search({ ...rest, filterKeywords: query })
+    }
+    try {
+      const ids = await embeddingManager.semanticSearch(query, limit)
+      if (!ids.length) return this.search({ ...rest, filterKeywords: query })
+      return this.search({ ...rest, resourceIds: ids, startPage: 1, pageSize: limit })
+    } catch (err) {
+      this.logger.error(`semanticSearch: ${err}`)
+      return this.search({ ...rest, filterKeywords: query })
+    }
   }
 }

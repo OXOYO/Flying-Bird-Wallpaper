@@ -65,6 +65,10 @@ export const createTables = [
     height INTEGER NOT NULL DEFAULT 0, -- 图片高度
     isLandscape INTEGER NOT NULL DEFAULT -1, -- 是否为横屏
     score INTEGER NOT NULL DEFAULT 0, -- 图片美学评分
+    summary TEXT NOT NULL DEFAULT '', -- AI 摘要
+    nsfwLevel INTEGER NOT NULL DEFAULT 0, -- 内容安全等级 0=未知/安全
+    aiAnalysisStatus TEXT NOT NULL DEFAULT 'pending', -- pending|done|failed|skipped
+    aiAnalyzedAt DATETIME, -- AI 分析完成时间
     dominantColor TEXT NOT NULL DEFAULT '', -- 主色调
     atimeMs INTEGER NOT NULL DEFAULT 0, -- 本地文件最后访问时间
     mtimeMs INTEGER NOT NULL DEFAULT 0, -- 本地文件最后修改时间
@@ -91,6 +95,39 @@ export const createTables = [
     created_at DATETIME DEFAULT (datetime('now', 'localtime')), -- 记录创建时间
     updated_at DATETIME DEFAULT (datetime('now', 'localtime')), -- 记录修改时间
     UNIQUE (word) -- 唯一键
+  )`,
+  // 数据表：智能合集
+  `CREATE TABLE IF NOT EXISTS fbw_collections (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL DEFAULT '',
+    prompt TEXT NOT NULL DEFAULT '',
+    queryJson TEXT NOT NULL DEFAULT '{}',
+    resourceScope TEXT NOT NULL DEFAULT 'resources',
+    limitCount INTEGER NOT NULL DEFAULT 20,
+    sortField TEXT NOT NULL DEFAULT 'score',
+    sortType INTEGER NOT NULL DEFAULT -1,
+    isPinned INTEGER NOT NULL DEFAULT 0,
+    refreshMode TEXT NOT NULL DEFAULT 'manual',
+    source TEXT NOT NULL DEFAULT 'user',
+    lastGeneratedAt DATETIME,
+    created_at DATETIME DEFAULT (datetime('now', 'localtime')),
+    updated_at DATETIME DEFAULT (datetime('now', 'localtime'))
+  )`,
+  // 数据表：智能合集成员快照
+  `CREATE TABLE IF NOT EXISTS fbw_collection_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    collectionId INTEGER NOT NULL,
+    resourceId INTEGER NOT NULL,
+    rank INTEGER NOT NULL DEFAULT 0,
+    generated_at DATETIME DEFAULT (datetime('now', 'localtime')),
+    UNIQUE (collectionId, resourceId)
+  )`,
+  // 数据表：资源向量元数据
+  `CREATE TABLE IF NOT EXISTS fbw_resource_embeddings (
+    resourceId INTEGER PRIMARY KEY,
+    model TEXT NOT NULL DEFAULT '',
+    dim INTEGER NOT NULL DEFAULT 0,
+    updated_at DATETIME DEFAULT (datetime('now', 'localtime'))
   )`,
   // 系统表：版本管理
   `CREATE TABLE IF NOT EXISTS fbw_version (
@@ -130,5 +167,9 @@ export const createIndexes = [
   'CREATE INDEX IF NOT EXISTS idx_resources_name_created ON fbw_resources(resourceName, created_at)',
   // 分词相关索引
   'CREATE INDEX IF NOT EXISTS idx_resource_words_resourceid ON fbw_resource_words(resourceId)',
-  'CREATE INDEX IF NOT EXISTS idx_resource_words_wordid ON fbw_resource_words(wordId)'
+  'CREATE INDEX IF NOT EXISTS idx_resource_words_wordid ON fbw_resource_words(wordId)',
+  'CREATE INDEX IF NOT EXISTS idx_resources_score ON fbw_resources(score)',
+  'CREATE INDEX IF NOT EXISTS idx_resources_ai_status ON fbw_resources(aiAnalysisStatus)',
+  'CREATE INDEX IF NOT EXISTS idx_collections_pinned ON fbw_collections(isPinned, updated_at)',
+  'CREATE INDEX IF NOT EXISTS idx_collection_items_collection ON fbw_collection_items(collectionId, rank)'
 ]

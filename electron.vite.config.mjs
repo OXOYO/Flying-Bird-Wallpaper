@@ -15,6 +15,9 @@ import Icons from 'unplugin-icons/vite'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
+// Electron 渲染进程开发服务端口（默认 5173 易与其他 Vite 项目冲突）
+const RENDERER_DEV_PORT = 15173
+
 // 动态获取多页入口
 const getEntry = () => {
   const pageEntry = {}
@@ -44,6 +47,9 @@ export default defineConfig({
     plugins: [externalizeDepsPlugin()]
   },
   renderer: {
+    server: {
+      port: RENDERER_DEV_PORT
+    },
     resolve: {
       alias: {
         '@src': resolve('src'),

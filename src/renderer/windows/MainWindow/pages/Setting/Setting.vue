@@ -1,9 +1,11 @@
 <script setup>
+import { nextTick, watch } from 'vue'
 import { useTranslation } from 'i18next-vue'
 import BaseSetting from './components/BaseSetting.vue'
 import PrivacySpace from './components/PrivacySpace.vue'
 import ShortcutSetting from './components/ShortcutSetting.vue'
 import PluginMarketplace from './components/PluginMarketplace.vue'
+import AiSetting from './components/AiSetting.vue'
 
 const { t } = useTranslation()
 
@@ -12,11 +14,34 @@ const baseSettingRef = ref(null)
 const privacySpaceRef = ref(null)
 const shortcutSettingRef = ref(null)
 const pluginMarketplaceRef = ref(null)
+const aiSettingRef = ref(null)
+
+const anchorTabRefs = {
+  baseSetting: baseSettingRef,
+  aiSetting: aiSettingRef
+}
+
+const restoreAnchorForTab = async (tabName) => {
+  const tabRef = anchorTabRefs[tabName]
+  if (!tabRef?.value?.restoreAnchorScroll) return
+  await nextTick()
+  await tabRef.value.restoreAnchorScroll()
+}
+
+watch(
+  activeTab,
+  (tab) => {
+    if (tab === 'baseSetting' || tab === 'aiSetting') {
+      restoreAnchorForTab(tab)
+    }
+  },
+  { flush: 'post' }
+)
 
 const onTabChange = (tab) => {
   switch (tab.paneName) {
     case 'baseSetting':
-      baseSettingRef.value?.resetForm()
+      baseSettingRef.value?.resetForm?.()
       break
     case 'privacySpace':
       privacySpaceRef.value?.resetForm()
@@ -26,6 +51,9 @@ const onTabChange = (tab) => {
       break
     case 'pluginMarketplace':
       pluginMarketplaceRef.value?.refresh?.()
+      break
+    case 'aiSetting':
+      aiSettingRef.value?.resetForm?.()
       break
   }
 }
@@ -44,6 +72,7 @@ const onTabChange = (tab) => {
         :label="t('pages.Setting.tabs.pluginMarketplace')"
         name="pluginMarketplace"
       ></el-tab-pane>
+      <el-tab-pane :label="t('pages.Setting.tabs.aiSetting')" name="aiSetting"></el-tab-pane>
     </el-tabs>
 
     <div v-show="activeTab === 'baseSetting'">
@@ -60,6 +89,10 @@ const onTabChange = (tab) => {
 
     <div v-show="activeTab === 'pluginMarketplace'">
       <PluginMarketplace ref="pluginMarketplaceRef" />
+    </div>
+
+    <div v-show="activeTab === 'aiSetting'">
+      <AiSetting ref="aiSettingRef" />
     </div>
   </el-main>
 </template>

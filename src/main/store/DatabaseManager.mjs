@@ -6,6 +6,7 @@ import {
   commonResourceMap
 } from '../../common/publicData.js'
 import { createTables, createIndexes } from './sql.mjs'
+import { upgradeResourcesSchema, upgradeCollectionsSchema } from './schemaUpgrade.mjs'
 
 // 删除指定表
 const dropTables = []
@@ -64,6 +65,14 @@ export default class DatabaseManager {
             this.logger.error(`创建表失败: ${err}`)
           }
         })
+      }
+
+      // 旧库补列（须在 createIndexes 之前，否则新列索引会失败）
+      try {
+        upgradeResourcesSchema(this.db, this.logger)
+        upgradeCollectionsSchema(this.db, this.logger)
+      } catch (err) {
+        this.logger.error(`数据库 schema 升级失败: ${err}`)
       }
 
       if (Array.isArray(createIndexes) && createIndexes.length) {

@@ -2,8 +2,8 @@
 
 > 文档版本：v1.0  
 > 整理日期：2026-05-26  
-> 状态：规划稿  
-> 关联文档：[ai-feature-roadmap.md](./ai-feature-roadmap.md)
+> 状态：**规划稿 — 未编码**（Sprint 5 明确跳过，见 [ai-dev-plan.md](./ai-dev-plan.md)）  
+> 关联文档：[ai-feature-roadmap.md](./ai-feature-roadmap.md) · [README.md](./README.md)
 
 ---
 

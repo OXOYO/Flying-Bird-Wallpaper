@@ -842,7 +842,18 @@ export default class WallpaperManager {
 
     // 更新downloadParams中的设置相关字段
     this.downloadParams.downloadSources = settingData.downloadSources
-    this.downloadParams.downloadKeywords = downloadKeywords
+    let keywords = downloadKeywords
+    if (settingData.ai?.enabled && settingData.ai?.expandDownloadKeywords && this.textQueryParser) {
+      try {
+        const expanded = await this.textQueryParser.expandDownloadKeywords(keywords)
+        if (expanded.success && expanded.data?.length) {
+          keywords = expanded.data
+        }
+      } catch (err) {
+        this.logger.warn(`扩展下载关键词失败: ${err.message}`)
+      }
+    }
+    this.downloadParams.downloadKeywords = keywords
     this.downloadParams.downloadOrientation = settingData.downloadOrientation
 
     const { downloadFolder, autoDownload } = settingData

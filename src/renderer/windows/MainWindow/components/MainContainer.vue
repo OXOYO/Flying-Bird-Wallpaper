@@ -4,6 +4,7 @@ import Search from '../pages/Search.vue'
 import Favorites from '../pages/Favorites.vue'
 import History from '../pages/History.vue'
 import Words from '../pages/Words.vue'
+import Collections from '../pages/Collections.vue'
 import Setting from '../pages/Setting/Setting.vue'
 import Utils from '../pages/Utils.vue'
 import About from '../pages/About.vue'
@@ -13,6 +14,7 @@ const { selectedMenu } = storeToRefs(menuStore)
 
 const componentDict = {
   Search,
+  Collections,
   Favorites,
   History,
   Words,

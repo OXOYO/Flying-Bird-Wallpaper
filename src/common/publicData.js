@@ -3,6 +3,8 @@
  *
  * */
 
+import { inferPresetFromAi } from './aiProviders.js'
+
 export const commonResourceMap = {
   resources: {
     label: '资源库',
@@ -76,6 +78,15 @@ export const menuList = [
     icon: 'custom:search',
     canBeEnabled: false,
     // 放置位置
+    placement: ['trayMenuChildren', 'sideMenu']
+  },
+  {
+    name: 'Collections',
+    shortcutName: '',
+    title: '智能合集',
+    locale: 'menuList.Collections',
+    icon: 'custom:collections',
+    canBeEnabled: true,
     placement: ['trayMenuChildren', 'sideMenu']
   },
   {
@@ -163,7 +174,7 @@ export const defaultSettingData = {
   // 上次打开菜单
   selectedMenu: 'Search',
   // 启用菜单
-  enabledMenus: ['Search', 'Favorites', 'History', 'Setting', 'Utils', 'About'],
+  enabledMenus: ['Search', 'Collections', 'Favorites', 'History', 'Setting', 'Utils', 'About'],
   suspensionBallVisible: false,
   // 启用展开侧边菜单
   enableExpandSideMenu: true,
@@ -171,6 +182,38 @@ export const defaultSettingData = {
   expandSideMenu: true,
   // 显示侧边栏文本
   showSideMenuLabel: true,
+  /*** AI 配置（2.0.0） ***/
+  ai: {
+    enabled: false,
+    visionProvider: 'ollama',
+    textProvider: 'ollama',
+    visionPreset: 'ollama',
+    textPreset: 'ollama',
+    visionBaseUrl: 'http://127.0.0.1:11434',
+    textBaseUrl: 'http://127.0.0.1:11434',
+    visionModel: 'qwen2.5vl:7b',
+    textModel: 'qwen2.5:7b',
+    embeddingModel: 'nomic-embed-text',
+    apiKey: '',
+    visionApiKey: '',
+    textApiKey: '',
+    remoteReferer: '',
+    remoteAppTitle: 'Flying Bird Wallpaper',
+    timeout: 120000,
+    concurrency: 1,
+    analysisMode: 'on_demand',
+    legacyOnnxScore: false,
+    legacyJiebaTags: false,
+    enableEmbedding: true,
+    enableNsfwCheck: false,
+    allowRemoteImageUpload: false,
+    runOnBattery: false,
+    runOnWifiOnly: false,
+    smartSearch: false,
+    expandDownloadKeywords: false,
+    scoreMinFilter: null,
+    autoCollectionsEnabled: true
+  },
   /*** 功能配置 ***/
   startup: true,
   openMainWindowOnStartup: false,
@@ -300,6 +343,20 @@ export const defaultSettingData = {
 /** 合并默认项并迁移旧版 H5 图片压缩设置 */
 export function migrateSettingData(storeData = {}) {
   const next = { ...defaultSettingData, ...storeData }
+  next.ai = { ...defaultSettingData.ai, ...(storeData.ai || {}) }
+  if (next.ai.apiKey) {
+    if (!next.ai.visionApiKey) next.ai.visionApiKey = next.ai.apiKey
+    if (!next.ai.textApiKey) next.ai.textApiKey = next.ai.apiKey
+  }
+  if (!next.ai.visionPreset) {
+    next.ai.visionPreset = inferPresetFromAi(next.ai.visionProvider, next.ai.visionBaseUrl)
+  }
+  if (!next.ai.textPreset) {
+    next.ai.textPreset = inferPresetFromAi(next.ai.textProvider, next.ai.textBaseUrl)
+  }
+  if (!next.ai.remoteAppTitle) {
+    next.ai.remoteAppTitle = defaultSettingData.ai.remoteAppTitle
+  }
   if (typeof next.h5FullscreenImageCompress !== 'boolean') {
     if (typeof next.h5ImageCompress === 'boolean') {
       next.h5FullscreenImageCompress = next.h5ImageCompress
@@ -455,6 +512,7 @@ export const sortFieldOptions = [
   { label: '资源修改时间', value: 'mtimeMs', locale: 'sortFieldOptions.mtimeMs' },
   { label: '资源文件名', value: 'fileName', locale: 'sortFieldOptions.fileName' },
   { label: '资源文件大小', value: 'fileSize', locale: 'sortFieldOptions.fileSize' },
+  { label: '美学评分', value: 'score', locale: 'sortFieldOptions.score' },
   { label: '浏览量', value: 'views', locale: 'sortFieldOptions.views' },
   { label: '下载量', value: 'downloads', locale: 'sortFieldOptions.downloads' },
   { label: '收藏量', value: 'favorites', locale: 'sortFieldOptions.favorites' },

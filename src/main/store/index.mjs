@@ -16,6 +16,12 @@ import VersionManager from './VersionManager.mjs'
 import ShortcutManager from './ShortcutManager.mjs'
 import NotificationManager from './NotificationManager.mjs'
 import PluginManager from './PluginManager.mjs'
+import AiAnalysisManager from '../ai/AiAnalysisManager.mjs'
+import EmbeddingManager from '../ai/EmbeddingManager.mjs'
+import TextQueryParser from '../ai/TextQueryParser.mjs'
+import CollectionsManager from './CollectionsManager.mjs'
+import CollectionCurator from './CollectionCurator.mjs'
+import RecommendManager from './RecommendManager.mjs'
 import { handleTimeByUnit } from '../utils/utils.mjs'
 import { migrateRemoteResourceSecretKeys } from '../../common/utils.js'
 
@@ -28,8 +34,13 @@ export default class Store {
     this.locks = {
       refreshDirectory: false,
       handleQuality: false,
-      handleWords: false
+      handleWords: false,
+      aiAnalysis: false,
+      collectionsRefresh: false,
+      collectionCurator: false
     }
+
+    this.collectionCuratorTimer = null
 
     // 添加电源状态标志
     this.powerState = {
@@ -132,6 +143,37 @@ export default class Store {
         this.apiManager
       )
 
+      this.embeddingManager = EmbeddingManager.getInstance(
+        global.logger,
+        this.db,
+        this.settingManager
+      )
+      this.aiAnalysisManager = AiAnalysisManager.getInstance(
+        global.logger,
+        this.dbManager,
+        this.settingManager,
+        this.wordsManager,
+        this.embeddingManager
+      )
+      this.textQueryParser = TextQueryParser.getInstance(global.logger, this.settingManager)
+      this.collectionsManager = CollectionsManager.getInstance(
+        global.logger,
+        this.dbManager,
+        this.settingManager,
+        this.resourcesManager,
+        this.textQueryParser
+      )
+      this.collectionCurator = CollectionCurator.getInstance(
+        global.logger,
+        this.dbManager,
+        this.settingManager
+      )
+      this.aiAnalysisManager.onAnalysisDone = () => this.scheduleCollectionCurator()
+      this.embeddingManager.onEmbeddingDone = () => this.scheduleCollectionCurator(60 * 1000)
+      this.recommendManager = RecommendManager.getInstance(global.logger, this.dbManager)
+      this.wallpaperManager.textQueryParser = this.textQueryParser
+      this.wallpaperManager.aiAnalysisManager = this.aiAnalysisManager
+
       // 处理IPC通信
       this.handleIpc()
 
@@ -227,6 +269,9 @@ export default class Store {
     this.initRefreshDirectoryTask()
     this.initHandleQualityTask()
     this.initHandleWordsTask()
+    this.initAiAnalysisTask()
+    this.initCollectionsRefreshTask()
+    this.initCollectionCuratorTask()
     this.initSwitchWallpaperTask()
     this.initRefreshWebWallpaperTask()
     this.initDownloadTask()
@@ -281,6 +326,93 @@ export default class Store {
       } else {
         this.stopHandleWordsTask()
       }
+    }
+  }
+
+  initAiAnalysisTask() {
+    this.stopAiAnalysisTask()
+    this.startAiAnalysisTask()
+  }
+
+  startAiAnalysisTask() {
+    const ai = this.settingData?.ai
+    if (!ai?.enabled || ai.analysisMode === 'off' || ai.analysisMode === 'on_demand') {
+      return
+    }
+    if (ai.runOnBattery && this.powerState.isOnBattery) {
+      return
+    }
+    this.taskScheduler.scheduleTask(
+      'aiAnalysis',
+      5 * 60 * 1000,
+      () => {
+        if (ai.runOnBattery && this.powerState.isOnBattery) return
+        this.aiAnalysisManager.intervalAnalyze(this.locks)
+      },
+      4 * 60 * 1000
+    )
+  }
+
+  stopAiAnalysisTask() {
+    this.taskScheduler.clearTask('aiAnalysis')
+  }
+
+  initCollectionsRefreshTask() {
+    this.taskScheduler.clearTask('collectionsRefresh')
+    this.taskScheduler.scheduleTask(
+      'collectionsRefresh',
+      15 * 60 * 1000,
+      () => {
+        this.collectionsManager.intervalRefresh(this.locks)
+      },
+      3 * 60 * 1000
+    )
+  }
+
+  initCollectionCuratorTask() {
+    this.taskScheduler.clearTask('collectionCurator')
+    if (!this.settingData?.ai?.enabled || this.settingData?.ai?.autoCollectionsEnabled === false) {
+      return
+    }
+    this.taskScheduler.scheduleTask(
+      'collectionCurator',
+      30 * 60 * 1000,
+      () => {
+        this.collectionCurator.run(this.locks)
+      },
+      5 * 60 * 1000
+    )
+  }
+
+  scheduleCollectionCurator(delayMs = 90 * 1000) {
+    if (!this.settingData?.ai?.enabled || this.settingData?.ai?.autoCollectionsEnabled === false) {
+      return
+    }
+    if (this.collectionCuratorTimer) {
+      clearTimeout(this.collectionCuratorTimer)
+    }
+    this.collectionCuratorTimer = setTimeout(() => {
+      this.collectionCuratorTimer = null
+      this.collectionCurator.run(this.locks)
+    }, delayMs)
+  }
+
+  restartCollectionCuratorTask(oldData, newData) {
+    const o = oldData?.ai || {}
+    const n = newData?.ai || {}
+    if (o.enabled !== n.enabled || o.autoCollectionsEnabled !== n.autoCollectionsEnabled) {
+      this.initCollectionCuratorTask()
+      if (n.enabled && n.autoCollectionsEnabled !== false) {
+        this.scheduleCollectionCurator(15 * 1000)
+      }
+    }
+  }
+
+  restartAiAnalysisTask(oldData, newData) {
+    const o = oldData?.ai || {}
+    const n = newData?.ai || {}
+    if (JSON.stringify(o) !== JSON.stringify(n)) {
+      this.initAiAnalysisTask()
     }
   }
 
@@ -759,6 +891,103 @@ export default class Store {
       return this.wordsManager.getWords(params)
     })
 
+    ipcMain.handle('main:analyzeResource', async (event, params) => {
+      return await this.aiAnalysisManager.analyzeResourceById(params?.id ?? params?.resourceId)
+    })
+
+    ipcMain.handle('main:testAiConnection', async (event, params) => {
+      const type = params?.type || 'vision'
+      const AiAnalysisProvider = (await import('../ai/AiAnalysisProvider.mjs')).default
+      const provider = AiAnalysisProvider.getInstance(global.logger, this.settingManager)
+      const result = await provider.testConnection(type, params?.ai)
+      return {
+        success: !!result.success,
+        data: result,
+        errorCode: result.errorCode,
+        errorParams: result.errorParams,
+        message: result.message || ''
+      }
+    })
+
+    ipcMain.handle('main:listAiModels', async (event, params) => {
+      const AiAnalysisProvider = (await import('../ai/AiAnalysisProvider.mjs')).default
+      const provider = AiAnalysisProvider.getInstance(global.logger, this.settingManager)
+      const result = await provider.listModels(
+        params?.kind || 'vision',
+        params?.purpose || 'text',
+        params?.ai
+      )
+      return result
+    })
+
+    ipcMain.handle('main:getAiAnalysisStats', () => {
+      return this.aiAnalysisManager.getStats()
+    })
+
+    ipcMain.handle('main:parseSearchQuery', async (event, params) => {
+      return await this.textQueryParser.parseSearchQuery(params?.query || '')
+    })
+
+    ipcMain.handle('main:findSimilar', async (event, params) => {
+      const resourceId = params?.resourceId ?? params?.id
+      const limit = params?.limit || 20
+      try {
+        const ids = await this.embeddingManager.findSimilar(resourceId, limit)
+        const list = this.resourcesManager.getResourcesByIds(ids)
+        return { success: true, data: { list } }
+      } catch (err) {
+        return { success: false, message: String(err.message || err) }
+      }
+    })
+
+    ipcMain.handle('main:semanticSearch', async (event, params) => {
+      return await this.resourcesManager.semanticSearch({
+        ...params,
+        embeddingManager: this.embeddingManager
+      })
+    })
+
+    ipcMain.handle('main:recommend', async (event, params) => {
+      return this.recommendManager.recommend(params)
+    })
+
+    ipcMain.handle('main:collections:list', () => this.collectionsManager.list())
+
+    ipcMain.handle('main:collections:get', (event, params) =>
+      this.collectionsManager.get(params?.id)
+    )
+
+    ipcMain.handle('main:collections:create', async (event, params) => {
+      if (params?.prompt && !params?.queryJson) {
+        return await this.collectionsManager.createFromPrompt(params.prompt)
+      }
+      return this.collectionsManager.create(params)
+    })
+
+    ipcMain.handle('main:collections:update', (event, params) =>
+      this.collectionsManager.update(params?.id, params)
+    )
+
+    ipcMain.handle('main:collections:delete', (event, params) =>
+      this.collectionsManager.delete(params?.id)
+    )
+
+    ipcMain.handle('main:collections:generate', async (event, params) =>
+      this.collectionsManager.generate(params?.id, params?.queryJson)
+    )
+
+    ipcMain.handle('main:collections:addAllToFavorites', (event, params) =>
+      this.collectionsManager.addAllToFavorites(params?.id)
+    )
+
+    ipcMain.handle('main:collections:curate', async () => {
+      return await this.collectionCurator.run(this.locks)
+    })
+
+    ipcMain.handle('main:collections:curatorStats', () => {
+      return { success: true, data: this.collectionCurator.getStats() }
+    })
+
     // H5服务相关
     ipcMain.handle('main:startH5Server', () => {
       this.handleH5ServerStart(3, 2000)
@@ -908,6 +1137,8 @@ export default class Store {
       // 重启相关定时任务，仅当设置项发生变化时触发
       this.restartRefreshDirectoryTask(oldData, newData)
       this.restartHandleWordsTask(oldData, newData)
+      this.restartAiAnalysisTask(oldData, newData)
+      this.restartCollectionCuratorTask(oldData, newData)
       this.restartSwitchWallpaperTask(oldData, newData)
       this.restartRefreshWebWallpaperTask(oldData, newData)
       this.restartDownloadTask(oldData, newData)

@@ -278,8 +278,8 @@ export const calculateImageByPath = async (filePath) => {
     ret.height = height
     ret.quality = calculateImageQuality(width, height)
     ret.isLandscape = calculateImageOrientation(width, height)
-    // 计算图片美学评分
-    ret.score = await calculateImageScore(filePath)
+    // 美学评分改由主进程 AiAnalysisManager 处理；扫描阶段保持 score=0
+    ret.score = 0
     // 提取主色调
     ret.dominantColor = await calculateDominantColor(filePath)
     return ret

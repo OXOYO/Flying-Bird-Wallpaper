@@ -1,7 +1,7 @@
 # 律动壁纸：音频处理逻辑与「节奏感」差异分析
 
-> 临时文档，供后续改造参考。描述当前实现逻辑、与「音乐节奏」目标的差距，以及建议的信号架构。  
-> 正式实现文档见 [rhythm_wallpaper.md](../rhythm_wallpaper.md)。
+> 临时文档，供后续改造参考。与 **AI 2.0 无直接依赖**。  
+> 索引：[README.md](./README.md) · 正式实现文档：[rhythm_wallpaper.md](../rhythm_wallpaper.md)
 
 ---
 

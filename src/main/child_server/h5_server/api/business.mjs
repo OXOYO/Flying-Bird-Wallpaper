@@ -99,8 +99,83 @@ export const registerBusinessApi = (router, deps) => {
 
   router.post('/api/search/images', async (ctx) => {
     const payload = await readJsonBody(ctx)
-    const ret = await resourcesManager.search(normalizeSearchPayload(payload))
+    const normalized = normalizeSearchPayload(payload)
+    const ai = settingManager.settingData?.ai || {}
+    if (ai.smartSearch && normalized.filterKeywords) {
+      const EmbeddingManager = (await import('../../../ai/EmbeddingManager.mjs')).default
+      const embeddingManager = EmbeddingManager.getInstance(logger, dbManager.db, settingManager)
+      const ret = await resourcesManager.semanticSearch({
+        ...normalized,
+        embeddingManager,
+        hideUnsafe: ai.enableNsfwCheck,
+        scoreMin: ai.scoreMinFilter
+      })
+      sendJson(ctx, ret)
+      return
+    }
+    const ret = await resourcesManager.search({
+      ...normalized,
+      hideUnsafe: ai.enableNsfwCheck,
+      scoreMin: ai.scoreMinFilter
+    })
     sendJson(ctx, ret)
+  })
+
+  router.post('/api/ai/parse-search', async (ctx) => {
+    const { query } = await readJsonBody(ctx)
+    const TextQueryParser = (await import('../../../ai/TextQueryParser.mjs')).default
+    const parser = TextQueryParser.getInstance(logger, settingManager)
+    sendJson(ctx, await parser.parseSearchQuery(query))
+  })
+
+  router.post('/api/ai/analyze', async (ctx) => {
+    const { id } = await readJsonBody(ctx)
+    const AiAnalysisManager = (await import('../../../ai/AiAnalysisManager.mjs')).default
+    const WordsManager = (await import('../../../store/WordsManager.mjs')).default
+    const EmbeddingManager = (await import('../../../ai/EmbeddingManager.mjs')).default
+    const wordsManager = WordsManager.getInstance(logger, dbManager, settingManager)
+    const embeddingManager = EmbeddingManager.getInstance(logger, dbManager.db, settingManager)
+    const aiMgr = AiAnalysisManager.getInstance(
+      logger,
+      dbManager,
+      settingManager,
+      wordsManager,
+      embeddingManager
+    )
+    sendJson(ctx, await aiMgr.analyzeResourceById(id))
+  })
+
+  router.get('/api/collections/list', async (ctx) => {
+    const CollectionsManager = (await import('../../../store/CollectionsManager.mjs')).default
+    const TextQueryParser = (await import('../../../ai/TextQueryParser.mjs')).default
+    const parser = TextQueryParser.getInstance(logger, settingManager)
+    const cm = CollectionsManager.getInstance(
+      logger,
+      dbManager,
+      settingManager,
+      resourcesManager,
+      parser
+    )
+    sendJson(ctx, cm.list())
+  })
+
+  router.post('/api/collections/create', async (ctx) => {
+    const body = await readJsonBody(ctx)
+    const CollectionsManager = (await import('../../../store/CollectionsManager.mjs')).default
+    const TextQueryParser = (await import('../../../ai/TextQueryParser.mjs')).default
+    const parser = TextQueryParser.getInstance(logger, settingManager)
+    const cm = CollectionsManager.getInstance(
+      logger,
+      dbManager,
+      settingManager,
+      resourcesManager,
+      parser
+    )
+    if (body.prompt) {
+      sendJson(ctx, await cm.createFromPrompt(body.prompt))
+    } else {
+      sendJson(ctx, cm.create(body))
+    }
   })
 
   router.post('/api/favorites/toggle', async (ctx) => {

@@ -452,6 +452,16 @@ const cardItemBtns = computed(() => {
       action: 'doViewImage',
       icon: 'custom:preview'
     })
+    ret.push({
+      title: t('exploreCommon.aiAnalyze'),
+      action: 'aiAnalyze',
+      icon: 'custom:cloud'
+    })
+    ret.push({
+      title: t('exploreCommon.findSimilar'),
+      action: 'findSimilar',
+      icon: 'custom:search'
+    })
   }
   if (item.isFavorite) {
     ret.push({
@@ -620,6 +630,12 @@ const onCardItemBtnClick = (action, item, index) => {
       break
     case 'onViewInfo':
       onViewInfo(item)
+      break
+    case 'aiAnalyze':
+      onAiAnalyze(item, index)
+      break
+    case 'findSimilar':
+      onFindSimilar(item, index)
       break
   }
 }
@@ -1003,11 +1019,17 @@ const getNextList = async () => {
     filterKeywords: filterKeywords.replace(/^#/, ''),
     filterType,
     quality: quality.toString(),
-    orientation: orientation.toString()
+    orientation: orientation.toString(),
+    hideUnsafe: !!settingData.value?.ai?.enableNsfwCheck,
+    scoreMin: settingData.value?.ai?.scoreMinFilter ?? null
   }
   let res
   try {
-    res = await window.FBW.search(payload)
+    if (settingData.value?.ai?.smartSearch && payload.filterKeywords) {
+      res = await window.FBW.semanticSearch(payload)
+    } else {
+      res = await window.FBW.search(payload)
+    }
     if (res && res.success && Array.isArray(res.data.list)) {
       if (res.data.list.length) {
         // 去重
@@ -1193,6 +1215,45 @@ const doViewImage = async (item, index, inner = false) => {
       activeIndex,
       list
     })
+  }
+}
+
+const onAiAnalyze = async (item, index) => {
+  if (!item?.id) return
+  const res = await window.FBW.analyzeResource({ id: item.id })
+  ElMessage({
+    type: res.success ? 'success' : 'error',
+    message: res.message || (res.success ? t('messages.operationSuccess') : t('messages.operationFail'))
+  })
+  if (res.success && res.data) {
+    cardList.value[index] = {
+      ...item,
+      ...res.data,
+      score: res.data.score ?? item.score,
+      aiAnalysisStatus: 'done'
+    }
+  }
+}
+
+const onFindSimilar = async (item) => {
+  if (!item?.id) return
+  flags.loading = true
+  try {
+    const res = await window.FBW.findSimilar({ resourceId: item.id, limit: 40 })
+    if (res?.success && res.data?.list?.length) {
+      cardList.value = res.data.list.map((row) => ({
+        ...row,
+        srcType: 'file',
+        uniqueKey: String(row.id),
+        rawImageUrl: `fbwtp://fbw/api/images/get?filePath=${encodeURIComponent(row.filePath)}`,
+        imageSrc: `fbwtp://fbw/api/images/get?filePath=${encodeURIComponent(row.filePath)}`
+      }))
+      flags.hasMore = false
+    } else {
+      ElMessage({ type: 'info', message: t('exploreCommon.findSimilarEmpty') })
+    }
+  } finally {
+    flags.loading = false
   }
 }
 
@@ -1988,6 +2049,13 @@ onBeforeUnmount(() => {
                   :title="t('exploreCommon.tagItem.score')"
                 >
                   {{ item.score }}
+                </div>
+                <div
+                  v-if="item.aiAnalysisStatus === 'done'"
+                  class="tag-item tag-item__disabled"
+                  :title="t('exploreCommon.tagItem.aiAnalyzed')"
+                >
+                  AI
                 </div>
                 <div
                   v-if="item.isLandscape === 1"

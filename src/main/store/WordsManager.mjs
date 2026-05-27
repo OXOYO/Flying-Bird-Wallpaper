@@ -229,6 +229,43 @@ export default class WordsManager {
   }
 
   /**
+   * 应用 AI 标签到词库
+   */
+  applyTagsFromAnalysis(item, tags = []) {
+    if (!item?.id || !Array.isArray(tags) || !tags.length) return
+    try {
+      const insert_stmt = this.db.prepare(
+        `INSERT OR IGNORE INTO fbw_words (word, count, type) VALUES (?, ?, ?)`
+      )
+      const update_word_stmt = this.db.prepare(
+        `UPDATE fbw_words SET count = count + 1, updated_at = datetime('now', 'localtime') WHERE word = ?`
+      )
+      const get_word_id_stmt = this.db.prepare(`SELECT id FROM fbw_words WHERE word = ?`)
+      const insert_resource_word_stmt = this.db.prepare(
+        `INSERT OR IGNORE INTO fbw_resource_words (resourceId, wordId) VALUES (?, ?)`
+      )
+      const delete_old = this.db.prepare(`DELETE FROM fbw_resource_words WHERE resourceId = ?`)
+      delete_old.run(item.id)
+
+      const transaction = this.db.transaction(() => {
+        for (const word of tags) {
+          if (!word?.trim()) continue
+          let type = 0
+          if (/[\u4e00-\u9fa5]/.test(word)) type = 1
+          else if (/[a-zA-Z]/.test(word)) type = 2
+          const insert_result = insert_stmt.run(word, 1, type)
+          if (!insert_result.changes) update_word_stmt.run(word)
+          const wordRecord = get_word_id_stmt.get(word)
+          if (wordRecord?.id) insert_resource_word_stmt.run(item.id, wordRecord.id)
+        }
+      })
+      transaction()
+    } catch (err) {
+      this.logger.error(`应用 AI 标签失败: ${err}`)
+    }
+  }
+
+  /**
    * 分词处理
    * @param {string} content - 内容
    * @returns {Array} 分词结果

@@ -22,8 +22,6 @@
     "build:h5": "vite build --config h5.vite.config.mjs",
     "preview:app": "npm run clean && npm run build:h5 && electron-vite preview",
     "preview:app_win": "chcp 65001 && npm run clean && npm run build:h5 && electron-vite preview",
-    "predev": "node scripts/check-node-version.mjs",
-    "predev:win": "node scripts/check-node-version.mjs",
     "dev": "concurrently -k \"npm run build:h5_watch\" \"electron-vite dev\"",
     "dev:win": "chcp 65001 && concurrently -k \"npm run build:h5_watch\" \"electron-vite dev\"",
     "build:app": "electron-vite build",
@@ -51,6 +49,7 @@
     "pino-roll": "^3.1.0",
     "sharp": "^0.34.3",
     "socket.io": "^4.8.1",
+    "sqlite-vec": "^0.1.9",
     "uuid": "^11.1.0",
     "wallpaper": "^7.2.1"
   },
