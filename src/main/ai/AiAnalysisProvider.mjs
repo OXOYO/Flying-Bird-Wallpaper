@@ -2,7 +2,9 @@ import { OllamaProvider, OpenAiCompatibleProvider } from './providers/HttpAiProv
 import { buildImageAnalysisPrompt } from './AiPrompts.mjs'
 import { extractJsonObject, normalizeAnalysisResult } from './AiResponseParser.mjs'
 import { calculateImageScore } from '../utils/utils.mjs'
-import { AI_PROVIDER_TYPES, DEFAULT_AI_TIMEOUT_MS } from './aiConstants.mjs'
+import { AI_PROVIDER_TYPES, DEFAULT_AI_TIMEOUT_MS, resolveEffectiveVisionTimeout } from './aiConstants.mjs'
+import { prepareVisionImageForAnalysis, formatVisionPrepLog } from './AiVisionImagePrep.mjs'
+import fs from 'node:fs'
 import {
   filterModelsByPurpose,
   parseAiError,
@@ -66,7 +68,9 @@ export default class AiAnalysisProvider {
       model: isVision ? ai.visionModel : ai.textModel,
       timeout: ai.timeout || DEFAULT_AI_TIMEOUT_MS,
       apiKey: this.getApiKey(isVision ? 'vision' : 'text', ai),
-      extraHeaders: buildRemoteExtraHeaders(ai, baseUrl)
+      extraHeaders: buildRemoteExtraHeaders(ai, baseUrl),
+      logger: this.logger,
+      logTag: isVision ? 'vision' : 'text'
     }
     if (provider === AI_PROVIDER_TYPES.OPENAI_COMPATIBLE) {
       return new OpenAiCompatibleProvider(config)
@@ -87,11 +91,38 @@ export default class AiAnalysisProvider {
       // 远程需用户显式允许上传图片
     }
 
-    const provider = this.createProvider('vision')
-    const rawText = await provider.analyzeImage(filePath, buildImageAnalysisPrompt(), ai.visionModel)
+    let fileSizeBytes = 0
+    try {
+      fileSizeBytes = fs.statSync(filePath).size
+    } catch {
+      // ignore
+    }
+
+    const prepared = await prepareVisionImageForAnalysis(filePath, ai, this.logger)
+    const effectiveTimeoutMs = resolveEffectiveVisionTimeout(ai, prepared.meta?.originalBytes || fileSizeBytes)
+    const provider = this.createProvider('vision', { timeout: effectiveTimeoutMs })
+
+    const visionInput = prepared.buffer
+      ? { buffer: prepared.buffer, mime: 'image/jpeg' }
+      : { filePath }
+
+    const visionStartedAt = Date.now()
+    const rawText = await provider.analyzeImage(
+      visionInput,
+      buildImageAnalysisPrompt(),
+      ai.visionModel
+    )
+    const visionMs = Date.now() - visionStartedAt
+    const parseStartedAt = Date.now()
     let parsed = extractJsonObject(rawText)
+    const parseMs = Date.now() - parseStartedAt
     if (!parsed) {
       throw new Error('AI 返回无法解析为 JSON')
+    }
+    if (this.logger) {
+      this.logger.info(
+        `[AiAnalysisProvider] vision pipeline visionMs=${visionMs}ms parseMs=${parseMs}ms timeoutMs=${effectiveTimeoutMs} ${formatVisionPrepLog(prepared.meta)} model=${ai.visionModel} file=${filePath}`
+      )
     }
     return normalizeAnalysisResult(parsed)
   }

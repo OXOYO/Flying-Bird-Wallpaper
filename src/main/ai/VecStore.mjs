@@ -72,11 +72,22 @@ export default class VecStore {
     }
   }
 
+  /** sqlite-vec + better-sqlite3：主进程加载 onnxruntime-node 后 vec0 主键须为 BigInt */
+  _toVecPk(resourceId) {
+    if (typeof resourceId === 'bigint') return resourceId
+    const n = Number(resourceId)
+    if (!Number.isInteger(n) || n < 0) {
+      throw new Error(`invalid resourceId for vec index: ${resourceId}`)
+    }
+    return BigInt(n)
+  }
+
   _insertVecRow(resourceId, vector) {
-    this.db.prepare('DELETE FROM fbw_vec_index WHERE resourceId = ?').run(resourceId)
+    const pk = this._toVecPk(resourceId)
+    this.db.prepare('DELETE FROM fbw_vec_index WHERE resourceId = ?').run(pk)
     this.db
       .prepare('INSERT INTO fbw_vec_index(resourceId, embedding) VALUES (?, ?)')
-      .run(resourceId, JSON.stringify(vector))
+      .run(pk, JSON.stringify(vector))
   }
 
   _rebuildVecIndexFromBlobs(dim) {

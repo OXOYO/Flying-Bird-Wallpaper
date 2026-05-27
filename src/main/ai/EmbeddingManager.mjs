@@ -38,16 +38,25 @@ export default class EmbeddingManager {
     )
     if (!row) return { success: false, message: 'resource not found' }
     const text = this.buildResourceText(row)
+    const embedModel = this.ai.embeddingModel || this.ai.textModel || ''
+    const modelStartedAt = Date.now()
     try {
       const vector = await this.provider.embedText(text)
+      const modelMs = Date.now() - modelStartedAt
       if (!vector?.length) return { success: false, message: 'empty embedding' }
       this.vecStore.upsert(resourceId, vector, vector.length)
+      this.logger.info(
+        `[EmbeddingManager] embed done id=${resourceId} modelMs=${modelMs}ms dim=${vector.length} model=${embedModel}`
+      )
       if (typeof this.onEmbeddingDone === 'function') {
         setImmediate(() => this.onEmbeddingDone())
       }
       return { success: true, dim: vector.length }
     } catch (err) {
-      this.logger.error(`[EmbeddingManager] upsert ${resourceId}: ${err}`)
+      const modelMs = Date.now() - modelStartedAt
+      this.logger.error(
+        `[EmbeddingManager] embed failed id=${resourceId} modelMs=${modelMs}ms model=${embedModel}: ${err}`
+      )
       return { success: false, message: String(err.message || err) }
     }
   }

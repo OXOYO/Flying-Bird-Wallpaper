@@ -167,9 +167,13 @@ export default class ResourcesManager {
 
         if (filterKeywords) {
           query_where.push(
-            `(r.filePath LIKE ? OR r.title LIKE ? OR r.desc LIKE ? OR r.summary LIKE ?)`
+            `(r.filePath LIKE ? OR r.title LIKE ? OR r.desc LIKE ? OR r.summary LIKE ? OR EXISTS (
+              SELECT 1 FROM fbw_resource_words rw
+              JOIN fbw_words w ON w.id = rw.wordId
+              WHERE rw.resourceId = r.id AND w.word LIKE ?
+            ))`
           )
-          query_params.push(keywords, keywords, keywords, keywords)
+          query_params.push(keywords, keywords, keywords, keywords, keywords)
         }
 
         if (orientation.length === 1) {
@@ -611,14 +615,27 @@ export default class ResourcesManager {
   }
 
   async semanticSearch(params = {}) {
-    const { query, limit = 30, embeddingManager, ...rest } = params
+    const { embeddingManager, ...rest } = params
+    const query = String(params.query ?? params.filterKeywords ?? '').trim()
+    const pageSize = Number(params.pageSize) > 0 ? Number(params.pageSize) : 30
+    const knnLimit = Math.min(Math.max(pageSize, 30), 200)
+
     if (!embeddingManager || !query) {
       return this.search({ ...rest, filterKeywords: query })
     }
     try {
-      const ids = await embeddingManager.semanticSearch(query, limit)
-      if (!ids.length) return this.search({ ...rest, filterKeywords: query })
-      return this.search({ ...rest, resourceIds: ids, startPage: 1, pageSize: limit })
+      const ids = await embeddingManager.semanticSearch(query, knnLimit)
+      if (!ids.length) {
+        return this.search({ ...rest, filterKeywords: query })
+      }
+      // 向量命中后按 id 拉取，并保留方向/类型等筛选；不再重复 LIKE 关键词
+      return this.search({
+        ...rest,
+        resourceIds: ids,
+        filterKeywords: '',
+        startPage: 1,
+        pageSize
+      })
     } catch (err) {
       this.logger.error(`semanticSearch: ${err}`)
       return this.search({ ...rest, filterKeywords: query })

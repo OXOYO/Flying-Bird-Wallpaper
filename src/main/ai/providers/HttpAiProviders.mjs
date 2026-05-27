@@ -1,4 +1,5 @@
 import fs from 'node:fs'
+import path from 'node:path'
 import { DEFAULT_AI_TIMEOUT_MS } from '../aiConstants.mjs'
 import {
   mapOllamaCapabilities,
@@ -14,6 +15,74 @@ const withTimeout = async (promise, ms) => {
   } finally {
     clearTimeout(timer)
   }
+}
+
+/** 记录 HTTP 模型请求耗时（fn 内应仅为网络请求，不含读图、JSON 解析） */
+const runWithModelLog = async (provider, op, model, fn) => {
+  const startedAt = Date.now()
+  const usedModel = model || provider.model || ''
+  const tag = provider.logTag || 'ai'
+  if (provider.logger) {
+    provider.logger.info(`[HttpAi/${tag}] ${op} start model=${usedModel}`)
+  }
+  try {
+    const result = await fn()
+    if (provider.logger) {
+      provider.logger.info(
+        `[HttpAi/${tag}] ${op} done modelMs=${Date.now() - startedAt}ms model=${usedModel}`
+      )
+    }
+    return result
+  } catch (err) {
+    if (provider.logger) {
+      provider.logger.warn(
+        `[HttpAi/${tag}] ${op} failed modelMs=${Date.now() - startedAt}ms model=${usedModel} error=${err?.message || err}`
+      )
+    }
+    throw err
+  }
+}
+
+const mimeFromPath = (filePath) => {
+  const ext = path.extname(filePath || '').toLowerCase()
+  if (ext === '.png') return 'image/png'
+  if (ext === '.webp') return 'image/webp'
+  if (ext === '.gif') return 'image/gif'
+  return 'image/jpeg'
+}
+
+/** @param {string|{ filePath?: string, buffer?: Buffer, mime?: string }} input */
+const readImageSource = (provider, input) => {
+  const readStartedAt = Date.now()
+  let buf
+  let mime = 'image/jpeg'
+  let label = ''
+
+  if (typeof input === 'string') {
+    input = { filePath: input }
+  }
+
+  if (input?.buffer) {
+    buf = input.buffer
+    mime = input.mime || 'image/jpeg'
+    label = 'buffer'
+  } else if (input?.filePath) {
+    buf = fs.readFileSync(input.filePath)
+    mime = mimeFromPath(input.filePath)
+    label = input.filePath
+  } else {
+    throw new Error('vision input requires filePath or buffer')
+  }
+
+  const readMs = Date.now() - readStartedAt
+  const tag = provider.logTag || 'ai'
+  if (provider.logger) {
+    const sizeMB = (buf.length / (1024 * 1024)).toFixed(2)
+    provider.logger.info(
+      `[HttpAi/${tag}] vision-read done readMs=${readMs}ms b64Size=${sizeMB}MB source=${label}`
+    )
+  }
+  return { buf, b64: buf.toString('base64'), mime }
 }
 
 const mapWithConcurrency = async (items, limit, worker) => {
@@ -38,6 +107,8 @@ export class OllamaProvider {
     this.timeout = config.timeout || DEFAULT_AI_TIMEOUT_MS
     this.apiKey = config.apiKey || ''
     this.extraHeaders = config.extraHeaders || {}
+    this.logger = config.logger || null
+    this.logTag = config.logTag || 'ollama'
   }
 
   headers() {
@@ -46,14 +117,15 @@ export class OllamaProvider {
     return h
   }
 
-  async chat({ messages, model }) {
+  async chatRaw({ messages, model }) {
+    const usedModel = model || this.model
     const url = `${this.baseUrl}/api/chat`
     const res = await withTimeout(
       (signal) =>
         fetch(url, {
           method: 'POST',
           headers: this.headers(),
-          body: JSON.stringify({ model: model || this.model, messages, stream: false }),
+          body: JSON.stringify({ model: usedModel, messages, stream: false }),
           signal
         }),
       this.timeout
@@ -66,34 +138,43 @@ export class OllamaProvider {
     return data.message?.content || ''
   }
 
-  async embed(text, model) {
-    const url = `${this.baseUrl}/api/embeddings`
-    const res = await withTimeout(
-      (signal) =>
-        fetch(url, {
-          method: 'POST',
-          headers: this.headers(),
-          body: JSON.stringify({ model: model || this.model, prompt: text }),
-          signal
-        }),
-      this.timeout
-    )
-    if (!res.ok) {
-      const body = await res.text().catch(() => '')
-      throw new Error(`Ollama embed ${res.status}: ${body.slice(0, 200)}`)
-    }
-    const data = await res.json()
-    return data.embedding || []
+  async chat({ messages, model }) {
+    const usedModel = model || this.model
+    return runWithModelLog(this, 'chat', usedModel, () => this.chatRaw({ messages, model: usedModel }))
   }
 
-  async analyzeImage(filePath, prompt, visionModel) {
-    const buf = fs.readFileSync(filePath)
-    const b64 = buf.toString('base64')
-    const content = await this.chat({
-      model: visionModel || this.model,
-      messages: [{ role: 'user', content: prompt, images: [b64] }]
+  async embed(text, model) {
+    const usedModel = model || this.model
+    return runWithModelLog(this, 'embed', usedModel, async () => {
+      const url = `${this.baseUrl}/api/embeddings`
+      const res = await withTimeout(
+        (signal) =>
+          fetch(url, {
+            method: 'POST',
+            headers: this.headers(),
+            body: JSON.stringify({ model: usedModel, prompt: text }),
+            signal
+          }),
+        this.timeout
+      )
+      if (!res.ok) {
+        const body = await res.text().catch(() => '')
+        throw new Error(`Ollama embed ${res.status}: ${body.slice(0, 200)}`)
+      }
+      const data = await res.json()
+      return data.embedding || []
     })
-    return content
+  }
+
+  async analyzeImage(input, prompt, visionModel) {
+    const usedModel = visionModel || this.model
+    const { b64 } = readImageSource(this, input)
+    return runWithModelLog(this, 'vision-http', usedModel, () =>
+      this.chatRaw({
+        model: usedModel,
+        messages: [{ role: 'user', content: prompt, images: [b64] }]
+      })
+    )
   }
 
   async testConnection(type, model) {
@@ -175,6 +256,8 @@ export class OpenAiCompatibleProvider {
     this.timeout = config.timeout || DEFAULT_AI_TIMEOUT_MS
     this.apiKey = config.apiKey || ''
     this.extraHeaders = config.extraHeaders || {}
+    this.logger = config.logger || null
+    this.logTag = config.logTag || 'openai'
   }
 
   headers() {
@@ -188,13 +271,14 @@ export class OpenAiCompatibleProvider {
     return `${base}${path}`
   }
 
-  async chat({ messages, model }) {
+  async chatRaw({ messages, model }) {
+    const usedModel = model || this.model
     const res = await withTimeout(
       (signal) =>
         fetch(this.api('/chat/completions'), {
           method: 'POST',
           headers: this.headers(),
-          body: JSON.stringify({ model: model || this.model, messages, stream: false }),
+          body: JSON.stringify({ model: usedModel, messages, stream: false }),
           signal
         }),
       this.timeout
@@ -207,43 +291,50 @@ export class OpenAiCompatibleProvider {
     return data.choices?.[0]?.message?.content || ''
   }
 
-  async embed(text, model) {
-    const res = await withTimeout(
-      (signal) =>
-        fetch(this.api('/embeddings'), {
-          method: 'POST',
-          headers: this.headers(),
-          body: JSON.stringify({ model: model || this.model, input: text }),
-          signal
-        }),
-      this.timeout
-    )
-    if (!res.ok) {
-      const body = await res.text().catch(() => '')
-      throw new Error(`OpenAI-compatible embed ${res.status}: ${body.slice(0, 200)}`)
-    }
-    const data = await res.json()
-    return data.data?.[0]?.embedding || []
+  async chat({ messages, model }) {
+    const usedModel = model || this.model
+    return runWithModelLog(this, 'chat', usedModel, () => this.chatRaw({ messages, model: usedModel }))
   }
 
-  async analyzeImage(filePath, prompt, visionModel) {
-    const buf = fs.readFileSync(filePath)
-    const b64 = buf.toString('base64')
-    const ext = filePath.split('.').pop()?.toLowerCase() || 'jpeg'
-    const mime = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg'
-    const content = await this.chat({
-      model: visionModel || this.model,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: prompt },
-            { type: 'image_url', image_url: { url: `data:${mime};base64,${b64}` } }
-          ]
-        }
-      ]
+  async embed(text, model) {
+    const usedModel = model || this.model
+    return runWithModelLog(this, 'embed', usedModel, async () => {
+      const res = await withTimeout(
+        (signal) =>
+          fetch(this.api('/embeddings'), {
+            method: 'POST',
+            headers: this.headers(),
+            body: JSON.stringify({ model: usedModel, input: text }),
+            signal
+          }),
+        this.timeout
+      )
+      if (!res.ok) {
+        const body = await res.text().catch(() => '')
+        throw new Error(`OpenAI-compatible embed ${res.status}: ${body.slice(0, 200)}`)
+      }
+      const data = await res.json()
+      return data.data?.[0]?.embedding || []
     })
-    return content
+  }
+
+  async analyzeImage(input, prompt, visionModel) {
+    const usedModel = visionModel || this.model
+    const { b64, mime } = readImageSource(this, input)
+    return runWithModelLog(this, 'vision-http', usedModel, () =>
+      this.chatRaw({
+        model: usedModel,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: prompt },
+              { type: 'image_url', image_url: { url: `data:${mime};base64,${b64}` } }
+            ]
+          }
+        ]
+      })
+    )
   }
 
   async testConnection(type, model) {

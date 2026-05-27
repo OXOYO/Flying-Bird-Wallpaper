@@ -1,0 +1,198 @@
+# AI 分析性能与设置体验（2.0.0+ 增量）
+
+> 文档版本：**v1.0**  
+> 整理日期：2026-05-27  
+> 状态：**已实现**  
+> 关联：[ai-dev-plan.md](./ai-dev-plan.md) · [ai-feature-roadmap.md](./ai-feature-roadmap.md) · [README.md](./README.md)
+
+---
+
+## 1. 背景
+
+本地视觉模型（如 `qwen2.5vl:3b`）对**大图原图**分析耗时长（实测单张 `vision-http modelMs` 可达 3 分钟级），易触发 HTTP 超时；探索/设置页长说明挤占表单空间。本增量在**不取消超时**的前提下，通过**分析前缩图**、**动态超时**与**设置 UX** 提升稳定性与可读性。
+
+---
+
+## 2. 分析前缩图
+
+### 2.1 模块
+
+| 项 | 说明 |
+|----|------|
+| 实现 | `src/main/ai/AiVisionImagePrep.mjs` |
+| 接入 | `AiAnalysisProvider.analyzeImage` → `HttpAiProviders` 支持 `buffer` / `filePath` |
+| 范围 | **仅视觉 analyze**；embed、测连接、文本 chat 不缩图 |
+
+### 2.2 触发条件
+
+同时满足才跳过缩图（用原图）：
+
+1. `ai.visionPreprocess !== false`（默认开启）
+2. 扩展名为可处理图片（jpg/png/webp/bmp/gif）
+3. 文件体积 ≤ `visionPreprocessMinSizeMB`（默认 **1.5MB**）
+4. 长边 ≤ `visionMaxLongEdge`（默认 **2048px**）
+
+否则：`sharp` 等比缩放 + 输出 **JPEG**（内存 buffer，不写用户目录）。
+
+### 2.3 默认与边界
+
+| 配置 | 默认 | 范围 |
+|------|------|------|
+| `visionMaxLongEdge` | 2048 | 1024～4096 |
+| `visionPreprocessMinSizeMB` | 1.5 | 0～20 |
+| `visionJpegQuality` | 88 | 75～95 |
+
+- `sharp` 失败 → 回退原图，日志 `[AiVisionPrep] resize failed`
+- 动图 GIF → 取首帧参与缩放
+
+### 2.4 日志
+
+```
+[AiVisionPrep] skipped|resized file=... ...
+[AiAnalysisProvider] vision pipeline ... preprocess=resized orig=4000x3000/8.2MB out=2048x1536/0.9MB ...
+[HttpAi/vision] vision-read done ... b64Size=...
+[HttpAi/vision-http] vision-http done modelMs=...
+```
+
+---
+
+## 3. 请求超时与动态加成
+
+### 3.1 基础超时
+
+| 项 | 值 |
+|----|-----|
+| 默认 | **300s**（`300000` ms） |
+| 设置范围 | **60～1800s** |
+| 迁移 | 仍为旧默认 `120000` 的配置在 `migrateSettingData` 升为 `300000` |
+
+测试连接、embed 等仍使用**基础** `ai.timeout`（取 `min(timeout, 10s/15s)` 的子路径不变）。
+
+### 3.2 视觉分析动态超时
+
+实现：`resolveEffectiveVisionTimeout`（`src/main/ai/aiConstants.mjs`）
+
+```
+有效超时(ms) = min( 基础超时 + min(文件MB × 30_000, 600_000), 1800_000 )
+```
+
+| 示例 | 基础 | 文件 | 有效超时 |
+|------|------|------|----------|
+| 小图 | 300s | 0.15MB | 300s |
+| 8MB 图 | 300s | 8MB | 300 + 240 = **540s** |
+| 极大 | 300s | 30MB | min(300+600, 1800) = **900s** |
+
+`AiAnalysisManager` 日志：`timeout=540s (base=300s)`。
+
+**不建议**取消超时：批量队列串行、Ollama 假死时无法自愈。
+
+---
+
+## 4. 分析范围与队列
+
+| 项 | 说明 |
+|----|------|
+| 文件类型 | **仅 `fileType=image`**；视频等标 `skipped` |
+| 分析模式 | `off` / `on_demand` / `background_slow` / `new_only`（设置页 ⓘ 说明） |
+| 后台批次 | 每轮最多 5 张，串行；`pending` + `failed` 可重试 |
+| 状态「等待中」 | `pending>0` 且当前未 `running`；侧边栏 Tooltip 多行展示原因 |
+
+---
+
+## 5. 智能语义搜索配置迁移
+
+| 旧 | 新 |
+|----|-----|
+| `settingData.ai.smartSearch` | **`settingData.search.useSemanticSearch`** |
+
+- **启用位置**：探索页顶栏筛选（仅资源库搜索）、H5 搜索筛选；**已从 AI 设置页移除**
+- **仍走语义**：桌面搜索页（非收藏/回忆/隐私）、H5 `/api/search/images`；无结果回退关键词 SQL
+- **不走语义**：收藏/回忆/隐私、找相似、合集生成（`useSemantic` 已解析未接入 `semanticSearch`）
+
+---
+
+## 6. 探索页顶栏（方案 A）
+
+| 组件 | 路径 |
+|------|------|
+| 统一顶栏 | `ExploreSearchHeader.vue` |
+| 集成 | `ExploreCommon.vue` |
+
+- 资源库 / 关键词 / 筛选 Popover / 扩展按钮
+- 筛选面板含资源、关键词；收藏/回忆无「资源」项
+- 布局：`width: calc(100% - 20px)` + Grid，避免右侧按钮被 `overflow-x` 裁切
+
+---
+
+## 7. AI 设置页 UX
+
+| 项 | 说明 |
+|----|------|
+| 长说明 | 标签旁 **ⓘ + Tooltip**（`popper-class=ai-setting-feature-tip`，max-width 换行） |
+| 分析模式 / 超时 / 视觉输入 / 功能开关 | 均用 Tooltip，无大块 `field-hint` |
+| 标签列宽 | `label-width="auto"`（按最宽标签对齐），**不固定宽度**，避免长标签换行 |
+| 进度卡 Tooltip | `AiAnalysisDashboardPanel.vue` 同步换行样式 |
+
+---
+
+## 8. 设置字段速查（新增/变更）
+
+### `settingData.ai`
+
+| 字段 | 默认 | 说明 |
+|------|------|------|
+| `timeout` | 300000 | 基础 HTTP 超时（ms） |
+| `visionPreprocess` | true | 分析前缩图 |
+| `visionMaxLongEdge` | 2048 | 最长边 px |
+| `visionPreprocessMinSizeMB` | 1.5 | 低于此体积且长边已够则不缩 |
+| `visionJpegQuality` | 88 | 缩图 JPEG 质量 |
+
+### `settingData.search`
+
+| 字段 | 默认 | 说明 |
+|------|------|------|
+| `useSemanticSearch` | false | 智能语义搜索 |
+
+---
+
+## 9. 调参建议
+
+| 场景 | 建议 |
+|------|------|
+| 本地 Ollama + VL 3b/7b | 超时 ≥300s，开启缩图，长边 2048 |
+| 4K / 10MB 图库 | 超时 600～900s；确认日志 `preprocess=resized` |
+| 在意小字/NSFW 边界 | 长边 2560～3072 或略提高 JPEG 质量 |
+| 云端 OpenAI 兼容 | 长边 1536～2048；超时 120～300s |
+
+---
+
+## 10. 验收要点
+
+1. 设置 → AI：视觉输入四项、超时默认 300s；ⓘ 悬停可读多行说明  
+2. 大图分析：日志 `preprocess=resized`，`b64Size` 明显小于原图  
+3. 小图：日志 `preprocess=original reason=below_threshold`  
+4. 探索搜索：筛选内可开关语义搜索；AI 设置无该开关  
+5. 功能选项长标签（如「允许远程模型上传图片」）单行不换行  
+
+---
+
+## 11. 代码锚点
+
+| 模块 | 路径 |
+|------|------|
+| 缩图 | `src/main/ai/AiVisionImagePrep.mjs` |
+| 超时常量/公式 | `src/main/ai/aiConstants.mjs` |
+| 分析调度 | `src/main/ai/AiAnalysisManager.mjs` |
+| Provider | `src/main/ai/AiAnalysisProvider.mjs`、`providers/HttpAiProviders.mjs` |
+| 默认/迁移 | `src/common/publicData.js` → `migrateSettingData` |
+| 设置 UI | `src/renderer/.../Setting/components/AiSetting.vue` |
+| 进度卡 | `AiAnalysisDashboardPanel.vue` |
+| 探索顶栏 | `ExploreSearchHeader.vue`、`ExploreCommon.vue` |
+
+---
+
+## 12. 修订记录
+
+| 版本 | 日期 | 说明 |
+|------|------|------|
+| v1.0 | 2026-05-27 | 缩图、动态超时、语义搜索迁移、探索顶栏、设置 Tooltip/对齐 |

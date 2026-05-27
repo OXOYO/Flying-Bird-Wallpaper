@@ -1,9 +1,9 @@
 # 飞鸟壁纸 AI 能力完整功能清单
 
-> 文档版本：**v1.2**  
+> 文档版本：**v1.3**  
 > 整理日期：2026-05-27  
 > 状态：**2.0.0 核心已落地**；部分 P3/P4 仍为规划  
-> 关联：[ai-dev-plan.md](./ai-dev-plan.md) · [README.md](./README.md)
+> 关联：[ai-dev-plan.md](./ai-dev-plan.md) · [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) · [README.md](./README.md)
 
 **图例：** ✅ 已实现 · 🟡 部分实现 · ⬜ 未开始
 
@@ -50,7 +50,9 @@
 
 ### 设置项 `settingData.ai`（已实现字段）
 
-`enabled`、`visionPreset`/`textPreset`、`visionModel`/`textModel`/`embeddingModel`、`timeout`（默认 120s）、`analysisMode`、`enableEmbedding`、`autoCollectionsEnabled`、`enableNsfwCheck`、`smartSearch`、`expandDownloadKeywords`、`runOnBattery`、`legacyOnnxScore`、`legacyJiebaTags`、`scoreMinFilter` 等。
+`enabled`、`visionPreset`/`textPreset`、`visionModel`/`textModel`/`embeddingModel`、`timeout`（默认 **300s**，视觉分析动态加成）、`visionPreprocess`/`visionMaxLongEdge`/`visionPreprocessMinSizeMB`/`visionJpegQuality`、`analysisMode`、`enableEmbedding`、`autoCollectionsEnabled`、`enableNsfwCheck`、`expandDownloadKeywords`、`runOnBattery`、`legacyOnnxScore`、`legacyJiebaTags`、`scoreMinFilter` 等。
+
+**`settingData.search`：** `useSemanticSearch`（智能语义搜索，探索/H5 筛选；原 `ai.smartSearch` 已迁移）。
 
 ---
 
@@ -65,16 +67,20 @@
 | AI-003 | 自动标题/描述 | ✅ | 分析 pipeline |
 | AI-004 | summary | ✅ | 预览/搜索 |
 | AI-005 | AiAnalysisProvider | ✅ | Ollama + OpenAI 兼容 |
-| AI-006 | AI 设置页 | ✅ | `AiSetting.vue`：进度、模型刷新 toast |
-| AI-007 | 分析任务队列 | ✅ | `background_slow` / `new_only` |
+| AI-006 | AI 设置页 | ✅ | `AiSetting.vue`：进度卡、模型测试、ⓘ Tooltip |
+| AI-007 | 分析任务队列 | ✅ | `background_slow` / `new_only`；仅 **image** |
 | AI-008 | embedding 入库 | ✅ | `EmbeddingManager` + `VecStore` |
+| AI-009 | 分析前缩图 | ✅ | `AiVisionImagePrep.mjs` |
+| AI-010 | 视觉动态超时 | ✅ | `resolveEffectiveVisionTimeout` |
+| AI-011 | 分析耗时日志 | ✅ | `[AiVisionPrep]`、`vision-http modelMs` |
 
 ### 4.2 发现与搜索（P1）
 
 | ID | 功能 | 状态 | 说明 |
 |----|------|------|------|
 | AI-101 | 自然语言搜索 | ✅ | `TextQueryParser.parseSearchQuery` |
-| AI-102 | 语义搜索 | ✅ | `semanticSearch` |
+| AI-102 | 语义搜索 | ✅ | `semanticSearch`；开关 `search.useSemanticSearch`（探索/H5 筛选） |
+| AI-102a | 探索顶栏方案 A | ✅ | `ExploreSearchHeader.vue` + `ExploreCommon` |
 | AI-103 | 相似壁纸 | ✅ | `findSimilar` |
 | AI-104 | 探索页 AI 元数据 | ✅ | score 标签 + **AI 已分析** 标识（`done` + 开启「显示标签」）；见 [ai-dev-plan.md](./ai-dev-plan.md) 验收 |
 | AI-104+ | 探索页展示 AI tags/summary | ⬜ | v1.0 扩展项，**非 2.0 验收** |
@@ -218,7 +224,7 @@ AI 助手、AIGC 工具
 | 项 | 要求 | 现状 |
 |----|------|------|
 | 隐私 | 远程上传须明示 | 设置中有 `allowRemoteImageUpload` |
-| 性能 | 扫描不阻塞；VLM 并发 1 | ✅ |
+| 性能 | 扫描不阻塞；VLM 并发 1；大图缩图 | ✅ |
 | 容错 | AI 失败不阻断入库 | ✅；LLM 合并失败降级 |
 | 可观测 | pino 日志 | ✅ |
 | i18n | 错误友好化 | ✅ `aiErrorUtils` |
@@ -231,7 +237,8 @@ AI 助手、AIGC 工具
 |------|------------|
 | OpenRouter 429 | 换模型/充值；分析未完成则无法策展 |
 | sqlite-vec 绑定 | BLOB 降级已验证路径 |
-| VLM 慢 | 后台 5min×5 张 |
+| VLM 慢 | 后台每轮 5 张串行；缩图 + 动态超时缓解 |
+| 缩图质量 | 极小字/边界 NSFW 可调高 `visionMaxLongEdge` |
 | JSON 不稳定 | Prompt + 解析 + 降级 |
 | vec0 UPSERT | 已改为 DELETE+INSERT |
 
@@ -241,8 +248,8 @@ AI 助手、AIGC 工具
 
 | 优先级 | 规划数 | 已实现/部分 |
 |--------|--------|-------------|
-| P0 | 8 | 8 ✅ |
-| P1 | 15+2 子项 | 14 ✅ / 2 ⬜（AI-104+、AI-208b） |
+| P0 | 11 | 11 ✅ |
+| P1 | 16+2 子项 | 15 ✅ / 2 ⬜（AI-104+、AI-208b） |
 | P2 | 10 | 4 ✅ / 4 🟡 / 2 ⬜ |
 | P3+ | 15 | 少量 🟡 |
 
@@ -251,6 +258,7 @@ AI 助手、AIGC 工具
 ## 10. 相关文档
 
 - [ai-dev-plan.md](./ai-dev-plan.md) — 开发与验收
+- [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) — 缩图、超时、语义搜索、设置 UX
 - [openclaw-agent-integration.md](./openclaw-agent-integration.md) — Agent 规划（未编码）
 - [README.md](./README.md) — 本目录索引
 
@@ -263,3 +271,4 @@ AI 助手、AIGC 工具
 | v1.0 | 2026-05-26 | 初稿 48 项功能规划 |
 | v1.1 | 2026-05-27 | 标注实现状态；补充自动策展、VecStore、IPC；更新分期进度 |
 | **v1.2** | 2026-05-27 | AI-104 按 dev-plan 标 ✅；AI-208 拆为 208a/208b；AI-104+ 标为后续增强 |
+| **v1.3** | 2026-05-27 | AI-009～011、AI-102a；`search.useSemanticSearch`；超时/缩图默认值；链至 performance 文档 |

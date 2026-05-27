@@ -31,6 +31,21 @@ const settingStore = UseSettingStore()
 const { settingData } = storeToRefs(settingStore)
 const { immersiveMode } = storeToRefs(commonStore)
 
+const useSemanticSearch = computed(() => !!settingData.value?.search?.useSemanticSearch)
+
+const semanticSearchAvailable = computed(
+  () => !!settingData.value?.ai?.enabled && !!settingData.value?.ai?.enableEmbedding
+)
+
+const onSemanticSearchChange = async (val) => {
+  await settingStore.h5UpdateSettingData({
+    search: {
+      ...(settingData.value?.search || {}),
+      useSemanticSearch: !!val
+    }
+  })
+}
+
 /** 搜索页本地资源排序默认值（与首页设置 h5Sort* 独立） */
 const SEARCH_LOCAL_SORT_DEFAULT = {
   sortField: 'created_at',
@@ -2421,6 +2436,20 @@ onMounted(async () => {
           </form>
         </div>
         <div class="filter-panel-body">
+        <div class="filter-group filter-group--switch">
+          <div class="filter-switch-row">
+            <div class="group-title">{{ t('exploreCommon.header.useSemanticSearch') }}</div>
+            <van-switch
+              :model-value="useSemanticSearch"
+              :disabled="!semanticSearchAvailable"
+              size="20px"
+              @update:model-value="onSemanticSearchChange"
+            />
+          </div>
+          <p v-if="!semanticSearchAvailable" class="filter-semantic-hint">
+            {{ t('exploreCommon.header.useSemanticSearchHint') }}
+          </p>
+        </div>
         <div class="filter-group">
           <div class="group-title">{{ t('exploreCommon.searchForm.resourceType.placeholder') }}</div>
           <van-radio-group
@@ -3109,6 +3138,26 @@ onMounted(async () => {
   font-weight: 600;
   font-size: 15px;
 }
+.filter-group--switch {
+  .filter-switch-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+
+    .group-title {
+      margin-bottom: 0;
+    }
+  }
+
+  .filter-semantic-hint {
+    margin: 8px 0 0;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--van-text-color-2);
+  }
+}
+
 .filter-group {
   padding: 10px 0;
   border-bottom: 1px solid var(--van-border-color);

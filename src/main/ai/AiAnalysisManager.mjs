@@ -2,7 +2,11 @@ import fs from 'node:fs'
 import path from 'node:path'
 import AiAnalysisProvider from './AiAnalysisProvider.mjs'
 import EmbeddingManager from './EmbeddingManager.mjs'
-import { AI_ANALYSIS_STATUS } from './aiConstants.mjs'
+import {
+  AI_ANALYSIS_STATUS,
+  DEFAULT_AI_TIMEOUT_MS,
+  resolveEffectiveVisionTimeout
+} from './aiConstants.mjs'
 import { t } from '../../i18n/server.js'
 
 export default class AiAnalysisManager {
@@ -39,6 +43,33 @@ export default class AiAnalysisManager {
     return this.settingManager.settingData?.ai || {}
   }
 
+  getAnalysisRequestContext(filePath) {
+    const ai = this.ai
+    let fileSizeBytes = 0
+    try {
+      if (filePath && fs.existsSync(filePath)) {
+        fileSizeBytes = fs.statSync(filePath).size
+      }
+    } catch {
+      // ignore
+    }
+    const baseTimeoutMs = Number(ai.timeout) || DEFAULT_AI_TIMEOUT_MS
+    const timeoutMs = filePath
+      ? resolveEffectiveVisionTimeout(ai, fileSizeBytes)
+      : baseTimeoutMs
+    return {
+      baseTimeoutMs,
+      timeoutMs,
+      timeoutSec: Math.round(timeoutMs / 1000),
+      baseTimeoutSec: Math.round(baseTimeoutMs / 1000),
+      visionProvider: ai.visionProvider || '',
+      visionModel: ai.visionModel || '',
+      visionBaseUrl: ai.visionBaseUrl || '',
+      filePath: filePath || '',
+      fileSizeMB: fileSizeBytes ? (fileSizeBytes / (1024 * 1024)).toFixed(2) : 'unknown'
+    }
+  }
+
   shouldRunBackground() {
     const ai = this.ai
     if (!this.provider.isEnabled()) return false
@@ -70,8 +101,16 @@ export default class AiAnalysisManager {
   }
 
   async analyzeResourceRow(row) {
+    const startedAt = Date.now()
+    const ctx = this.getAnalysisRequestContext(row.filePath)
+    this.logger.info(
+      `[AiAnalysisManager] analyze start id=${row.id} timeout=${ctx.timeoutSec}s (base=${ctx.baseTimeoutSec}s) provider=${ctx.visionProvider} model=${ctx.visionModel} size=${ctx.fileSizeMB}MB file=${ctx.filePath}`
+    )
+    const modelStartedAt = Date.now()
+    let modelMs = 0
     try {
       const result = await this.provider.analyzeImage(row.filePath)
+      modelMs = Date.now() - modelStartedAt
       const update = this.db.prepare(`
         UPDATE fbw_resources SET
           score = @score,
@@ -113,9 +152,20 @@ export default class AiAnalysisManager {
         setImmediate(() => this.onAnalysisDone())
       }
 
+      const totalMs = Date.now() - startedAt
+      this.logger.info(
+        `[AiAnalysisManager] analyze done id=${row.id} pipelineMs=${modelMs}ms totalMs=${totalMs}ms (vision-http modelMs见 HttpAi/vision 日志)`
+      )
       return { success: true, message: t('messages.operationSuccess'), data: result }
     } catch (err) {
-      this.logger.error(`[AiAnalysisManager] analyze ${row.id}: ${err}`)
+      if (!modelMs) modelMs = Date.now() - modelStartedAt
+      const totalMs = Date.now() - startedAt
+      const errName = err?.name || ''
+      const errMsg = String(err?.message || err)
+      const isTimeout = /aborterror|timeout|超时/i.test(`${errName} ${errMsg}`)
+      this.logger.error(
+        `[AiAnalysisManager] analyze failed id=${row.id} pipelineMs=${modelMs}ms totalMs=${totalMs}ms configuredTimeout=${ctx.timeoutSec}s (${ctx.timeoutMs}ms) provider=${ctx.visionProvider} model=${ctx.visionModel} baseUrl=${ctx.visionBaseUrl} size=${ctx.fileSizeMB}MB likelyTimeout=${isTimeout} error=${errName}: ${errMsg} file=${ctx.filePath} (vision-http modelMs见 HttpAi/vision 日志)`
+      )
       this.db
         .prepare(
           `UPDATE fbw_resources SET aiAnalysisStatus = ?, updated_at = datetime('now', 'localtime') WHERE id = ?`
@@ -156,14 +206,26 @@ export default class AiAnalysisManager {
       this.params.startPage += 1
     }
 
+    const batchCtx = this.getAnalysisRequestContext('')
+    this.logger.info(
+      `[AiAnalysisManager] batch start count=${list.length} mode=${mode} timeout=${batchCtx.timeoutSec}s provider=${batchCtx.visionProvider} model=${batchCtx.visionModel}`
+    )
     this.isRunning = true
     const run = async () => {
+      const batchStartedAt = Date.now()
+      let doneCount = 0
+      let failCount = 0
       try {
         for (const row of list) {
           if (!this.shouldRunBackground()) break
-          await this.analyzeResourceRow(row)
+          const ret = await this.analyzeResourceRow(row)
+          if (ret?.success) doneCount += 1
+          else failCount += 1
         }
       } finally {
+        this.logger.info(
+          `[AiAnalysisManager] batch done count=${list.length} ok=${doneCount} fail=${failCount} totalMs=${Date.now() - batchStartedAt}ms`
+        )
         this.isRunning = false
         locks.aiAnalysis = false
       }

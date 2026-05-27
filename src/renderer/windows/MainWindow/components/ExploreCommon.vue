@@ -8,16 +8,11 @@ import UseWordsStore from '@renderer/stores/wordsStore.js'
 import { useTranslation } from 'i18next-vue'
 import {
   resourceTypeList,
-  resourceTypeIcons,
-  qualityList,
-  filterTypeIcons,
-  filterTypeOptions,
-  orientationIcons,
-  orientationOptions,
-  autoRefreshListOptions
+  orientationOptions
 } from '@common/publicData.js'
 import { hex2RGB } from '@renderer/utils/gen-color.js'
 import { debounce } from '@common/utils.js'
+import ExploreSearchHeader from './ExploreSearchHeader.vue'
 
 const { t } = useTranslation()
 const commonStore = UseCommonStore()
@@ -94,6 +89,27 @@ const isFavoritesMenu = computed(() => {
 const isHistoryMenu = computed(() => {
   return props.menu === 'History'
 })
+
+const useSemanticSearch = computed(() => !!settingData.value?.search?.useSemanticSearch)
+
+const semanticSearchAvailable = computed(
+  () => !!settingData.value?.ai?.enabled && !!settingData.value?.ai?.enableEmbedding
+)
+
+const onSemanticSearchChange = async (enabled) => {
+  const res = await window.FBW.updateSettingData({
+    search: {
+      ...(settingData.value?.search || {}),
+      useSemanticSearch: !!enabled
+    }
+  })
+  if (res?.success) {
+    settingStore.updateSettingData(res.data)
+    if (isSearchMenu.value && String(searchForm.filterKeywords ?? '').trim()) {
+      onSearch()
+    }
+  }
+}
 
 const isLocalResource = computed(() => {
   return searchForm.resourceType === 'localResource'
@@ -360,35 +376,6 @@ const fixedBtns = computed(() => {
       }
     })
   }
-  if (isFavoritesMenu.value) {
-    ret.push({
-      action: 'onTogglePrivacySpace',
-      actionParams: [],
-      title: flags.inPrivacySpace
-        ? t('exploreCommon.onTogglePrivacySpace.quit')
-        : t('exploreCommon.onTogglePrivacySpace.enter'),
-      icon: flags.inPrivacySpace ? 'custom:door-open-outline' : 'custom:door-front-outline',
-      iconStyle: {},
-      style: {
-        bottom: getBottom(),
-        backgroundColor: flags.inPrivacySpace ? '#FF0000' : 'rgba(50, 57, 65, 0.2)'
-      }
-    })
-  }
-  // 回忆数据自动刷新
-  if (isHistoryMenu.value) {
-    const btnItem = autoRefreshListOptions.find((item) => item.value === autoRefreshForm.enabled)
-    ret.unshift({
-      action: 'onToggleAutoRefresh',
-      actionParams: [],
-      title: t(btnItem.locale),
-      icon: btnItem.icon,
-      iconStyle: {},
-      style: {
-        bottom: getBottom()
-      }
-    })
-  }
   // 切换格子宽高比
   const gridHWRatio = gridRatioList.find((item) => item.value === gridForm.gridHWRatio)
   ret.unshift({
@@ -416,19 +403,6 @@ const fixedBtns = computed(() => {
     },
     children: gridSizeList
   })
-  // 刷新目录
-  if (isSearchMenu.value && isLocalResource.value) {
-    ret.unshift({
-      action: 'onRefreshDirectory',
-      actionParams: [],
-      title: t('exploreCommon.onRefreshDirectory'),
-      icon: 'custom:folder-refresh',
-      iconStyle: {},
-      style: {
-        bottom: getBottom()
-      }
-    })
-  }
   return ret
 })
 
@@ -455,7 +429,7 @@ const cardItemBtns = computed(() => {
     ret.push({
       title: t('exploreCommon.aiAnalyze'),
       action: 'aiAnalyze',
-      icon: 'custom:cloud'
+      icon: 'custom:ai-sparkles'
     })
     ret.push({
       title: t('exploreCommon.findSimilar'),
@@ -913,9 +887,48 @@ const onResourceChange = (value) => {
   onSearch()
 }
 
-const onCloseOrientationTag = (index) => {
-  searchForm.orientation.splice(index, 1)
+const onApplyFilters = ({ filterType, orientation, quality, filterKeywords, resource }) => {
+  let resourceChanged = false
+  if (resource && isSearchMenu.value) {
+    const prevKey = `${searchForm.resourceType}_${searchForm.resourceName}`
+    searchForm.resourceType = resource.resourceType
+    searchForm.resourceName = resource.resourceName
+    resourceChanged = prevKey !== `${searchForm.resourceType}_${searchForm.resourceName}`
+  }
+  if (filterKeywords !== undefined) {
+    searchForm.filterKeywords = filterKeywords
+  }
+  searchForm.filterType = filterType
+  searchForm.orientation = orientation
+  searchForm.quality = quality
+  if (resourceChanged) {
+    const types = supportSearchTypes.value
+    const isArray = Array.isArray(types)
+    const includes = isArray && types.includes(searchForm.filterType)
+    if (!isArray) {
+      searchForm.filterType = 'images'
+    } else if (!includes) {
+      searchForm.filterType = types[0] || 'images'
+    }
+    fetchHotTags()
+  }
   onSearch()
+}
+
+const onExploreHeaderMenuCommand = (command) => {
+  switch (command) {
+    case 'privacy':
+      onTogglePrivacySpace()
+      break
+    case 'autoRefresh':
+      onToggleAutoRefresh()
+      break
+    case 'refreshDirectory':
+      onRefreshDirectory()
+      break
+    default:
+      break
+  }
 }
 
 const onRefresh = async (flag = true) => {
@@ -1008,6 +1021,18 @@ const getNextList = async () => {
     sortField,
     sortType
   } = searchForm
+  const keywordText = String(filterKeywords ?? '')
+    .trim()
+    .replace(/^#+/, '')
+  // 收藏/回忆/隐私空间用语义向量易漏结果，统一走关键词 SQL
+  const useSemanticSearch =
+    !!settingData.value?.search?.useSemanticSearch &&
+    !!keywordText &&
+    !isFavoritesMenu.value &&
+    !isHistoryMenu.value &&
+    resourceName !== 'favorites' &&
+    resourceName !== 'history' &&
+    resourceName !== 'privacy_space'
   let payload = {
     resourceType,
     resourceName,
@@ -1016,7 +1041,7 @@ const getNextList = async () => {
     isRandom,
     sortField,
     sortType,
-    filterKeywords: filterKeywords.replace(/^#/, ''),
+    filterKeywords: keywordText,
     filterType,
     quality: quality.toString(),
     orientation: orientation.toString(),
@@ -1025,8 +1050,12 @@ const getNextList = async () => {
   }
   let res
   try {
-    if (settingData.value?.ai?.smartSearch && payload.filterKeywords) {
+    if (useSemanticSearch) {
       res = await window.FBW.semanticSearch(payload)
+      // 向量无命中时回退关键词搜索（如尚未生成 embedding）
+      if (res?.success && keywordText && !res.data?.list?.length) {
+        res = await window.FBW.search(payload)
+      }
     } else {
       res = await window.FBW.search(payload)
     }
@@ -1784,138 +1813,25 @@ onBeforeUnmount(() => {
     :class="{ 'privacy-space': flags.inPrivacySpace }"
     element-loading-background="rgba(0, 0, 0, 0.2)"
   >
-    <div class="header-block">
-      <el-select
-        v-if="isSearchMenu"
-        :model-value="selectedResource"
-        value-key="key"
-        class="condition-item"
-        filterable
-        :disabled="flags.loading"
-        :placeholder="t('exploreCommon.searchForm.resourceName.placeholder')"
-        size="large"
-        style="width: 180px"
-        @change="onResourceChange"
-      >
-        <template #label="{ label, value }">
-          <IconifyIcon
-            :icon="resourceTypeIcons[value.resourceType]"
-            style="vertical-align: middle; margin-right: 10px"
-          />
-          <span style="vertical-align: middle">{{ label }}</span>
-        </template>
-        <el-option-group
-          v-for="group in resourceGroupList"
-          :key="group.value"
-          :label="t(group.locale)"
-        >
-          <el-option
-            v-for="item in group.children"
-            :key="item.optionValue.key"
-            :label="t(item.locale) || item.value"
-            :value="item.optionValue"
-          >
-            <IconifyIcon :icon="group.icon" style="vertical-align: middle; margin-right: 10px" />
-            <span style="vertical-align: middle">{{ t(item.locale) || item.value }}</span>
-          </el-option>
-        </el-option-group>
-      </el-select>
-
-      <el-select
-        v-if="supportSearchTypes.length > 1"
-        v-model="searchForm.filterType"
-        class="condition-item"
-        :disabled="flags.loading"
-        :placeholder="t('exploreCommon.searchForm.filterType.placeholder')"
-        size="large"
-        style="width: 100px"
-        @change="onSearch"
-      >
-        <el-option
-          v-for="item in filterTypeOptions"
-          :key="item.value"
-          :label="t(item.locale)"
-          :value="item.value"
-        >
-          <IconifyIcon :icon="item.icon" style="vertical-align: middle; margin-right: 10px" />
-          <span style="vertical-align: middle">{{ t(item.locale) }}</span>
-        </el-option>
-        <template #label>
-          <el-tag type="info">
-            <IconifyIcon
-              :icon="filterTypeIcons[searchForm.filterType]"
-              style="vertical-align: middle"
-            />
-          </el-tag>
-        </template>
-      </el-select>
-
-      <el-select
-        v-model="searchForm.orientation"
-        class="condition-item"
-        :disabled="flags.loading"
-        :placeholder="t('exploreCommon.searchForm.orientation.placeholder')"
-        size="large"
-        multiple
-        style="width: 160px"
-        @change="onSearch"
-      >
-        <el-option
-          v-for="item in orientationOptions"
-          :key="item.value"
-          :label="t(item.locale)"
-          :value="item.value"
-        >
-          <IconifyIcon :icon="item.icon" style="vertical-align: middle; margin-right: 10px" />
-          <span style="vertical-align: middle">{{ t(item.locale) }}</span>
-        </el-option>
-        <template #tag>
-          <el-tag
-            v-for="(value, index) in searchForm.orientation"
-            :key="value"
-            type="info"
-            closable
-            @close="() => onCloseOrientationTag(index)"
-          >
-            <IconifyIcon :icon="orientationIcons[value]" style="vertical-align: middle" />
-          </el-tag>
-        </template>
-      </el-select>
-
-      <el-select
-        v-if="isLocalResource"
-        v-model="searchForm.quality"
-        class="condition-item"
-        :disabled="flags.loading"
-        :placeholder="t('exploreCommon.searchForm.quality.placeholder')"
-        size="large"
-        multiple
-        collapse-tags
-        style="width: 160px"
-        @change="onSearch"
-      >
-        <el-option v-for="text in qualityList" :key="text" :label="text" :value="text" />
-      </el-select>
-
-      <el-mention
-        v-model="searchForm.filterKeywords"
-        class="condition-item condition-keywords"
-        :disabled="flags.loading"
-        :options="hotTags"
-        :prefix="['#']"
-        :placeholder="t('exploreCommon.searchForm.filterKeywords.placeholder')"
-        clearable
-        size="large"
-        @keyup.enter="onSearch"
-      >
-      </el-mention>
-
-      <!-- <template v-if="isSearchMenu && isLocalResource" #append>
-          <el-button type="primary" size="large" @click="onSyncToWallpaperSetting">{{
-            t('exploreCommon.onSyncToWallpaperSetting')
-          }}</el-button>
-        </template> -->
-    </div>
+    <ExploreSearchHeader
+      :menu="props.menu"
+      :loading="flags.loading"
+      :search-form="searchForm"
+      :selected-resource="selectedResource"
+      :resource-group-list="resourceGroupList"
+      :support-search-types="supportSearchTypes"
+      :is-local-resource="isLocalResource"
+      :in-privacy-space="flags.inPrivacySpace"
+      :auto-refresh-enabled="autoRefreshForm.enabled"
+      :hot-tags="hotTags"
+      :use-semantic-search="useSemanticSearch"
+      :semantic-search-available="semanticSearchAvailable"
+      @resource-change="onResourceChange"
+      @search="onSearch"
+      @apply-filters="onApplyFilters"
+      @menu-command="onExploreHeaderMenuCommand"
+      @update-use-semantic-search="onSemanticSearchChange"
+    />
     <div class="body-block">
       <div
         v-if="enabledWordDraw"
@@ -2052,10 +1968,10 @@ onBeforeUnmount(() => {
                 </div>
                 <div
                   v-if="item.aiAnalysisStatus === 'done'"
-                  class="tag-item tag-item__disabled"
+                  class="tag-item tag-item__disabled tag-item--icon"
                   :title="t('exploreCommon.tagItem.aiAnalyzed')"
                 >
-                  AI
+                  <IconifyIcon class="tag-item-icon" icon="custom:ai-sparkles" />
                 </div>
                 <div
                   v-if="item.isLandscape === 1"
@@ -2149,9 +2065,7 @@ onBeforeUnmount(() => {
         <EmptyHelp v-if="flags.empty" />
       </div>
     </div>
-    <div class="total-text">
-      {{ t('exploreCommon.totalText', { current: cardList.length, total: searchForm.total }) }}
-    </div>
+    <ListCountIndicator :current="cardList.length" :total="searchForm.total" />
     <view-image
       ref="viewImageRef"
       :options="viewImageOptions"
@@ -2166,32 +2080,17 @@ onBeforeUnmount(() => {
 .explore-common-wrapper {
   padding: 0;
   position: relative;
+  max-width: 100%;
   background-color: rgba(50, 57, 65, 1);
 
   &.privacy-space {
     background-color: rgba(0, 0, 0, 0.8);
   }
 }
-.header-block {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0;
-  margin: 10px;
-  border-bottom: 1px solid #ffffff;
-
-  .condition-item {
-    flex: none;
-  }
-  :deep(.condition-keywords) {
-    .el-input__inner {
-      color: #ffffff !important;
-    }
-  }
-}
-
 .body-block {
   position: relative;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .word-drawer {
@@ -2579,46 +2478,16 @@ onBeforeUnmount(() => {
   }
 }
 
-.total-text {
-  position: fixed;
-  bottom: 4px;
-  right: 40px;
-  font-size: 12px;
+.tag-item--icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 5px;
 }
-</style>
 
-<style lang="scss">
-.header-block {
-  .el-select__wrapper {
-    width: 100% !important;
-    border: none !important;
-    border-radius: 0 !important;
-    background-color: transparent !important;
-    box-shadow: none !important;
-
-    .el-select__placeholder {
-      color: #ffffff;
-    }
-
-    .el-select__caret {
-      color: #ffffff;
-    }
-  }
-
-  .el-mention {
-    width: 100% !important;
-    border: none !important;
-    border-radius: 0 !important;
-    background-color: transparent !important;
-    box-shadow: none !important;
-  }
-
-  .el-input__wrapper {
-    width: 100% !important;
-    border: none !important;
-    border-radius: 0 !important;
-    background-color: transparent !important;
-    box-shadow: none !important;
-  }
+.tag-item-icon {
+  font-size: 14px;
+  line-height: 1;
 }
+
 </style>

@@ -11,13 +11,15 @@
 |------|------|------|
 | [ai-dev-plan.md](./ai-dev-plan.md) | **开发方案 + 实施清单 + 验收**（Sprint 0–4 及后续增量） | 持续更新 |
 | [ai-feature-roadmap.md](./ai-feature-roadmap.md) | **完整功能清单**（48 项 AI 能力，含优先级与实现状态） | 持续更新 |
+| [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) | **分析缩图、动态超时、语义搜索迁移、探索顶栏、设置 UX** | 2026-05-27 |
 | [openclaw-agent-integration.md](./openclaw-agent-integration.md) | 外部 Agent / OpenClaw / MCP 集成规划 | **未编码**（Sprint 5 跳过） |
 
 **阅读顺序建议：**
 
 1. 想了解「做了什么、怎么验收」→ `ai-dev-plan.md`
 2. 想查「某功能 ID 是否规划/已实现」→ `ai-feature-roadmap.md`
-3. 想接 OpenClaw / Telegram 控制壁纸 → `openclaw-agent-integration.md`
+3. 想查 **大图分析慢/超时、缩图、语义搜索开关位置** → `ai-analysis-ux-and-performance.md`
+4. 想接 OpenClaw / Telegram 控制壁纸 → `openclaw-agent-integration.md`
 
 ---
 
@@ -35,7 +37,10 @@
 | 模块 | 路径 |
 |------|------|
 | AI 分析 | `src/main/ai/AiAnalysisManager.mjs` |
+| 分析前缩图 | `src/main/ai/AiVisionImagePrep.mjs` |
+| 超时/常量 | `src/main/ai/aiConstants.mjs`（含 `resolveEffectiveVisionTimeout`） |
 | Provider / 模型 | `src/main/ai/AiAnalysisProvider.mjs`、`providers/HttpAiProviders.mjs` |
+| 探索顶栏 | `src/renderer/.../ExploreSearchHeader.vue` |
 | 向量 | `src/main/ai/EmbeddingManager.mjs`、`VecStore.mjs`、`VectorCluster.mjs` |
 | 自定义合集 | `src/main/store/CollectionsManager.mjs` |
 | **自动策展** | `src/main/store/CollectionCurator.mjs`、`collectionConstants.mjs` |
@@ -50,5 +55,6 @@
 
 | 日期 | 说明 |
 |------|------|
-| 2026-05-27 | 新增索引；同步自动策展、向量聚类、LLM 合并等实现 |
+| 2026-05-27 | 新增 `ai-analysis-ux-and-performance.md`；索引补充缩图/顶栏/动态超时 |
+| 2026-05-27 | 同步自动策展、向量聚类、LLM 合并等实现 |
 | 2026-05-26 | 初版 Sprint 0–4 方案与 roadmap |

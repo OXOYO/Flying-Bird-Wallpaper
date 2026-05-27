@@ -1,6 +1,6 @@
 # 飞鸟壁纸 AI 能力开发方案
 
-> 文档版本：**v2.0**  
+> 文档版本：**v2.1**  
 > 整理日期：2026-05-27  
 > 状态：Sprint 0–4 **已落地**；2.0.0 **后续增量已落地**（自动策展等）；Sprint 5 **未开发**  
 > 应用版本：**1.3.8 → 2.0.0**  
@@ -15,7 +15,7 @@
 | 版本跨度 | DB/功能迁移 `1.3.8_to_2.0.0.mjs`，发版 **2.0.0** |
 | Sprint 5（OpenClaw / Agent） | **暂不开发** |
 | Sprint 0～4 | **全部开发** |
-| 2.0.0 后续增量 | **自动策展、VecStore 修复、设置/探索体验增强**（见下文 §8） |
+| 2.0.0 后续增量 | **自动策展、VecStore 修复、设置/探索体验、分析缩图与动态超时**（见 §8、§9 及 [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md)） |
 | Git | 由用户自行提交 |
 
 ---
@@ -35,7 +35,8 @@
 - **语义搜索 / 找相似**（`EmbeddingManager`）
 - **智能合集**：用户 NL 创建 + **系统自动策展**（标签 + 向量 + LLM）
 - **legacy** 开关：`legacyOnnxScore`、`legacyJiebaTags`
-- 探索页：score 筛选、AI 标签、分析进度（设置页）
+- 探索页：统一顶栏（方案 A）、score 筛选、语义搜索开关（`search.useSemanticSearch`）、AI 标签、分析进度（设置页）
+- 视觉分析：**分析前缩图** + **动态超时**（仅 analyze 路径）
 
 ---
 
@@ -91,6 +92,7 @@ flowchart TB
 | 模块 | 路径 |
 |------|------|
 | Provider | `src/main/ai/AiAnalysisProvider.mjs`、`providers/HttpAiProviders.mjs` |
+| 分析前缩图 | `AiVisionImagePrep.mjs` |
 | 分析调度 | `AiAnalysisManager.mjs` |
 | Prompt/解析 | `AiPrompts.mjs`、`AiResponseParser.mjs` |
 | 设置 UI | `AiSetting.vue` |
@@ -191,7 +193,33 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | `autoCollectionsEnabled` | 系统自动策展 |
 | `enableNsfwCheck` | 探索安全筛选 |
 | `legacyOnnxScore` / `legacyJiebaTags` | 遗留能力 |
-| `timeout` | 默认 120s |
+| `timeout` | 默认 **300s**（60～1800s）；视觉分析另加动态加成（见下） |
+| `visionPreprocess` | 默认 true；`visionMaxLongEdge` 2048 等 |
+
+**`settingData.search`：** `useSemanticSearch` — 探索/H5 筛选；原 `ai.smartSearch` 已迁移删除。
+
+**视觉动态超时：** `min(timeout + min(fileMB×30s, 10min), 1800s)`，实现于 `aiConstants.resolveEffectiveVisionTimeout`。
+
+---
+
+## §8 后续增量（自动策展等）— 已落地
+
+见上文 Sprint 3.2、`CollectionCurator`、VecStore 修复、分析进度侧边栏等（v2.0 文档已述）。
+
+---
+
+## §9 后续增量（分析性能与设置 UX）— 已落地
+
+> 详述：[ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md)
+
+| 项 | 说明 |
+|----|------|
+| `AiVisionImagePrep` | 大图等比缩 JPEG 再送 VLM；条件跳过小图 |
+| 动态超时 | 按文件体积加成，上限 1800s |
+| 语义搜索配置 | `settingData.search.useSemanticSearch`；探索筛选开关 |
+| `ExploreSearchHeader` | 搜索/收藏/回忆顶栏方案 A |
+| `AiSetting` | Tooltip 说明；功能项/分析模式/视觉输入；标签 `auto` 宽度防换行 |
+| 可观测 | `[AiVisionPrep]`、`vision-http modelMs`、`preprocess=` 日志 |
 
 ---
 
@@ -213,7 +241,7 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | 2.0.0-dev | Sprint 0+1 |
 | 2.0.0-beta | + Sprint 2+3 |
 | 2.0.0 | + Sprint 4 |
-| 2.0.0+ | 自动策展、VecStore 修复、AI 设置/探索体验 |
+| 2.0.0+ | 自动策展、VecStore 修复、探索顶栏、分析缩图、动态超时、设置 Tooltip |
 
 ---
 
@@ -227,6 +255,7 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | Sprint 3 | ✅ | CollectionsManager、Collections.vue、IPC |
 | Sprint 4 | ✅ | Recommend、H5 API、NSFW/score、扩词 |
 | **增量** | ✅ | CollectionCurator、VectorCluster、LLM 合并、定时刷新、分析进度、VecStore 修复 |
+| **增量²** | ✅ | 视觉缩图、动态超时、语义搜索迁移、ExploreSearchHeader、AiSetting UX |
 | Sprint 5 | ⏸ | OpenClaw/Agent — 仅文档 |
 
 ---
@@ -254,6 +283,13 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 8. H5 API（子进程 DB 单例）
 9. VecStore：分析后日志无 `vec upsert 失败`（UPSERT 问题已修）
 
+### 分析性能与设置（增量²）
+
+10. 10MB 级大图：日志 `preprocess=resized`，`modelMs` 相对原图直传应下降或更易在有效超时内完成  
+11. 设置 → 视觉输入：关闭缩图后行为与旧版一致（整文件 base64）  
+12. 探索 → 筛选：语义搜索开关生效；AI 设置页无 `smartSearch`  
+13. 功能选项长标签不换行；ⓘ Tooltip 多行可读  
+
 ---
 
 ## 已知限制
@@ -266,6 +302,8 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | LLM 合并 | 失败时降级为规则命名，不阻断策展 |
 | build | 渲染端 Vite/Node 版本偶发不兼容（与 AI 无关） |
 | legacy | ONNX/jieba 仍可通过开关启用 |
+| VLM 耗时 | 后台每轮 5 张串行；大图建议缩图 + 超时 ≥300s |
+| 分析前缩图 | 极小字/边界 NSFW 可略逊于原图；可调 `visionMaxLongEdge` |
 
 ---
 
@@ -276,3 +314,4 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | v1.0 | 2026-05-26 | Sprint 0–4 方案；Sprint 5 跳过 |
 | v1.1 | 2026-05-26 | 实施清单与验收 |
 | **v2.0** | 2026-05-27 | 自动策展（标签+向量+LLM）；合集定时刷新；VecStore 修复；IPC/设置/探索增量；README 索引 |
+| **v2.1** | 2026-05-27 | §9 分析缩图/动态超时；语义搜索迁移；探索顶栏；设置 Tooltip；链至 ai-analysis-ux-and-performance |

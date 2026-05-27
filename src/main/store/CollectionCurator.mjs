@@ -362,6 +362,8 @@ export default class CollectionCurator {
     const autoCount = this.listAutoCollections().length
     return {
       enabled: this.isEnabled(),
+      aiEnabled: !!this.ai.enabled,
+      autoCollectionsEnabled: this.ai.autoCollectionsEnabled !== false,
       analyzed,
       embeddings,
       targetCollections: target,

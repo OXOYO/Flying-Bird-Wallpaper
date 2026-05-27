@@ -28,14 +28,36 @@ export default class CollectionsManager {
     CollectionsManager._instance = this
   }
 
+  /** @returns {Record<number, number>} */
+  _itemCountMap() {
+    const countRows = this.db
+      .prepare(
+        `SELECT collectionId, COUNT(*) AS itemCount
+         FROM fbw_collection_items
+         GROUP BY collectionId`
+      )
+      .all()
+    const map = {}
+    for (const row of countRows) {
+      map[row.collectionId] = Number(row.itemCount) || 0
+    }
+    return map
+  }
+
   list() {
     const rows = this.db
       .prepare(
-        `SELECT * FROM fbw_collections
-         ORDER BY CASE source WHEN 'auto' THEN 0 ELSE 1 END, isPinned DESC, updated_at DESC`
+        `SELECT c.*
+         FROM fbw_collections c
+         ORDER BY CASE c.source WHEN 'auto' THEN 0 ELSE 1 END, c.isPinned DESC, c.updated_at DESC`
       )
       .all()
-    return { success: true, data: rows, message: t('messages.querySuccess') }
+    const countMap = this._itemCountMap()
+    const data = rows.map((row) => ({
+      ...row,
+      itemCount: countMap[row.id] ?? 0
+    }))
+    return { success: true, data, message: t('messages.querySuccess') }
   }
 
   get(id) {

@@ -199,7 +199,11 @@ export const defaultSettingData = {
     textApiKey: '',
     remoteReferer: '',
     remoteAppTitle: 'Flying Bird Wallpaper',
-    timeout: 120000,
+    timeout: 300000,
+    visionPreprocess: true,
+    visionMaxLongEdge: 2048,
+    visionPreprocessMinSizeMB: 1.5,
+    visionJpegQuality: 88,
     concurrency: 1,
     analysisMode: 'on_demand',
     legacyOnnxScore: false,
@@ -209,10 +213,13 @@ export const defaultSettingData = {
     allowRemoteImageUpload: false,
     runOnBattery: false,
     runOnWifiOnly: false,
-    smartSearch: false,
     expandDownloadKeywords: false,
     scoreMinFilter: null,
     autoCollectionsEnabled: true
+  },
+  /*** 搜索（仅搜索页 / H5 搜索） ***/
+  search: {
+    useSemanticSearch: false
   },
   /*** 功能配置 ***/
   startup: true,
@@ -344,6 +351,11 @@ export const defaultSettingData = {
 export function migrateSettingData(storeData = {}) {
   const next = { ...defaultSettingData, ...storeData }
   next.ai = { ...defaultSettingData.ai, ...(storeData.ai || {}) }
+  next.search = { ...defaultSettingData.search, ...(storeData.search || {}) }
+  if (next.search.useSemanticSearch === undefined && storeData.ai?.smartSearch != null) {
+    next.search.useSemanticSearch = !!storeData.ai.smartSearch
+  }
+  delete next.ai.smartSearch
   if (next.ai.apiKey) {
     if (!next.ai.visionApiKey) next.ai.visionApiKey = next.ai.apiKey
     if (!next.ai.textApiKey) next.ai.textApiKey = next.ai.apiKey
@@ -356,6 +368,21 @@ export function migrateSettingData(storeData = {}) {
   }
   if (!next.ai.remoteAppTitle) {
     next.ai.remoteAppTitle = defaultSettingData.ai.remoteAppTitle
+  }
+  if (next.ai.timeout === 120000) {
+    next.ai.timeout = defaultSettingData.ai.timeout
+  }
+  if (next.ai.visionPreprocess === undefined) {
+    next.ai.visionPreprocess = defaultSettingData.ai.visionPreprocess
+  }
+  if (next.ai.visionMaxLongEdge == null) {
+    next.ai.visionMaxLongEdge = defaultSettingData.ai.visionMaxLongEdge
+  }
+  if (next.ai.visionPreprocessMinSizeMB == null) {
+    next.ai.visionPreprocessMinSizeMB = defaultSettingData.ai.visionPreprocessMinSizeMB
+  }
+  if (next.ai.visionJpegQuality == null) {
+    next.ai.visionJpegQuality = defaultSettingData.ai.visionJpegQuality
   }
   if (typeof next.h5FullscreenImageCompress !== 'boolean') {
     if (typeof next.h5ImageCompress === 'boolean') {

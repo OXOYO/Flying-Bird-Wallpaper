@@ -258,6 +258,16 @@
       "width": 24,
       "height": 24
     },
+    "ai-sparkles": {
+      "body": "<g fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\"><path d=\"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .962 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z\"/><path d=\"M20 3v4\"/><path d=\"M22 5h-4\"/><path d=\"M4 17v2\"/><path d=\"M5 18H3\"/></g>",
+      "width": 24,
+      "height": 24
+    },
+    "more-vertical": {
+      "body": "<g fill=\"currentColor\"><circle cx=\"12\" cy=\"5\" r=\"1.75\"/><circle cx=\"12\" cy=\"12\" r=\"1.75\"/><circle cx=\"12\" cy=\"19\" r=\"1.75\"/></g>",
+      "width": 24,
+      "height": 24
+    },
     "collapse-all-rounded": {
       "body": "<path fill=\"currentColor\" d=\"m12 17.4l-3.9 3.9q-.275.275-.7.275t-.7-.275t-.275-.7t.275-.7l3.875-3.875q.575-.575 1.425-.575t1.425.575L17.3 19.9q.275.275.275.7t-.275.7t-.7.275t-.7-.275zm0-10.8l3.9-3.9q.275-.275.7-.275t.7.275t.275.7t-.275.7l-3.875 3.875Q12.85 8.55 12 8.55t-1.425-.575L6.7 4.1q-.275-.275-.275-.7t.275-.7t.7-.275t.7.275z\"/>",
       "width": 24,
@@ -375,6 +385,11 @@
     },
     "language": {
       "body": "<path fill=\"currentColor\" d=\"m12.87 15.07l-2.54-2.51l.03-.03A17.5 17.5 0 0 0 14.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35C8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5l3.11 3.11zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2zm-2.62 7l1.62-4.33L19.12 17z\" />",
+      "width": 24,
+      "height": 24
+    },
+    "filter-list": {
+      "body": "<path fill=\"currentColor\" d=\"M10 18h4v-2h-4v2ZM3 6v2h18V6zm3 7h12v-2H6z\"/>",
       "width": 24,
       "height": 24
     }

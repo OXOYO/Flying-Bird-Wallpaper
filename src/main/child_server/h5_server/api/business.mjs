@@ -101,7 +101,8 @@ export const registerBusinessApi = (router, deps) => {
     const payload = await readJsonBody(ctx)
     const normalized = normalizeSearchPayload(payload)
     const ai = settingManager.settingData?.ai || {}
-    if (ai.smartSearch && normalized.filterKeywords) {
+    const useSemanticSearch = !!settingManager.settingData?.search?.useSemanticSearch
+    if (useSemanticSearch && normalized.filterKeywords) {
       const EmbeddingManager = (await import('../../../ai/EmbeddingManager.mjs')).default
       const embeddingManager = EmbeddingManager.getInstance(logger, dbManager.db, settingManager)
       const ret = await resourcesManager.semanticSearch({

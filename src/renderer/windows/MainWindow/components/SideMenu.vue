@@ -80,6 +80,8 @@ const onSelect = (key) => {
     return
   }
   menuStore.setSelected(key)
+  // 避免 link 按钮点击后残留 focus 描边（侧栏选中项出现方框）
+  document.activeElement?.blur?.()
 }
 
 const onOverMenu = (key) => {
@@ -319,6 +321,13 @@ const onCopyH5ServerUrl = () => {
   width: 100%;
   margin: 0;
   padding: 5px 0;
+  outline: none;
+
+  &:focus,
+  &:focus-visible {
+    outline: none;
+    box-shadow: none;
+  }
 
   + .side-menu-btn {
     margin-left: 0;
@@ -363,6 +372,13 @@ const onCopyH5ServerUrl = () => {
 
   .side-footer-btn {
     margin: 0;
+    outline: none;
+
+    &:focus,
+    &:focus-visible {
+      outline: none;
+      box-shadow: none;
+    }
 
     &:hover {
       opacity: 0.8;

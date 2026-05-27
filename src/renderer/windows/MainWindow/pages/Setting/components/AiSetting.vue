@@ -11,6 +11,7 @@ import {
 } from '@common/aiProviders.js'
 import { resolveAiUserMessage } from '@common/aiErrorUtils.js'
 import { useSettingAnchorScroll } from '../utils/useSettingAnchorScroll.js'
+import AiAnalysisDashboardPanel from './AiAnalysisDashboardPanel.vue'
 
 const { t } = useTranslation()
 const settingStore = UseSettingStore()
@@ -51,6 +52,50 @@ const analysisModeOptions = computed(() => [
   { label: t('pages.Setting.aiSetting.analysisModeNewOnly'), value: 'new_only' }
 ])
 
+/** AI 功能开关：说明放 tooltip，避免表单项纵向堆叠过乱 */
+const featureSwitches = [
+  {
+    key: 'enableEmbedding',
+    labelKey: 'pages.Setting.aiSetting.enableEmbedding',
+    hintKey: 'pages.Setting.aiSetting.enableEmbeddingHint'
+  },
+  {
+    key: 'autoCollectionsEnabled',
+    labelKey: 'pages.Setting.aiSetting.autoCollectionsEnabled',
+    hintKey: 'pages.Setting.aiSetting.autoCollectionsEnabledHint'
+  },
+  {
+    key: 'enableNsfwCheck',
+    labelKey: 'pages.Setting.aiSetting.enableNsfwCheck',
+    hintKey: 'pages.Setting.aiSetting.enableNsfwCheckHint'
+  },
+  {
+    key: 'expandDownloadKeywords',
+    labelKey: 'pages.Setting.aiSetting.expandDownloadKeywords',
+    hintKey: 'pages.Setting.aiSetting.expandDownloadKeywordsHint'
+  },
+  {
+    key: 'runOnBattery',
+    labelKey: 'pages.Setting.aiSetting.runOnBattery',
+    hintKey: 'pages.Setting.aiSetting.runOnBatteryHint'
+  },
+  {
+    key: 'allowRemoteImageUpload',
+    labelKey: 'pages.Setting.aiSetting.allowRemoteImageUpload',
+    hintKey: 'pages.Setting.aiSetting.allowRemoteImageUploadHint'
+  },
+  {
+    key: 'legacyOnnxScore',
+    labelKey: 'pages.Setting.aiSetting.legacyOnnxScore',
+    hintKey: 'pages.Setting.aiSetting.legacyOnnxScoreHint'
+  },
+  {
+    key: 'legacyJiebaTags',
+    labelKey: 'pages.Setting.aiSetting.legacyJiebaTags',
+    hintKey: 'pages.Setting.aiSetting.legacyJiebaTagsHint'
+  }
+]
+
 const isRemoteVision = computed(() => isRemotePreset(aiForm.visionPreset))
 const isRemoteText = computed(() => isRemotePreset(aiForm.textPreset))
 const isVisionCustom = computed(() => getPresetById(aiForm.visionPreset)?.custom)
@@ -73,6 +118,67 @@ const analysisProgressPercent = computed(() => {
   const total = s.total || 0
   if (!total) return s.done > 0 ? 100 : 0
   return Math.min(100, Math.round((s.done / total) * 100))
+})
+
+const analysisRunStatus = computed(() => {
+  const s = analysisStats.value
+  if (!s) return 'loading'
+  if (s.running) return 'running'
+  if (aiForm.analysisMode === 'on_demand') return 'onDemand'
+  if (analysisProgressPercent.value >= 100 && (s.total ?? 0) > 0) return 'complete'
+  if ((s.pending ?? 0) > 0) return 'queued'
+  return 'idle'
+})
+
+const analysisStatusLabel = computed(() => {
+  const map = {
+    loading: 'runStatusLoading',
+    running: 'runStatusRunning',
+    queued: 'runStatusQueued',
+    complete: 'runStatusComplete',
+    idle: 'runStatusIdle',
+    onDemand: 'runStatusOnDemand'
+  }
+  return t(`pages.Setting.aiSetting.${map[analysisRunStatus.value]}`)
+})
+
+const analysisStatusTooltip = computed(() => {
+  const map = {
+    queued: 'runStatusQueuedHint',
+    running: 'statsRunning',
+    onDemand: 'statsOnDemandHint',
+    complete: 'statsComplete'
+  }
+  const key = map[analysisRunStatus.value]
+  return key ? t(`pages.Setting.aiSetting.${key}`) : ''
+})
+
+const analysisStatusTagType = computed(() => {
+  const map = {
+    loading: 'info',
+    running: 'primary',
+    queued: 'warning',
+    complete: 'success',
+    idle: 'info',
+    onDemand: 'info'
+  }
+  return map[analysisRunStatus.value]
+})
+
+const analysisProgressSummary = computed(() => {
+  const s = analysisStats.value
+  return t('pages.Setting.aiSetting.analysisProgressCount', {
+    done: s?.done ?? 0,
+    total: s?.total ?? 0
+  })
+})
+
+/** 仅补充状态标签未说明的内容，避免与标签重复 */
+const analysisFooterHint = computed(() => {
+  if (analysisRunStatus.value === 'onDemand') {
+    return t('pages.Setting.aiSetting.statsOnDemandHint')
+  }
+  return ''
 })
 
 const fetchAnalysisStats = async () => {
@@ -105,9 +211,15 @@ const stopStatsPolling = () => {
   }
 }
 
-const AI_TIMEOUT_MIN_SEC = 30
-const AI_TIMEOUT_MAX_SEC = 600
-const AI_TIMEOUT_DEFAULT_SEC = 120
+const AI_TIMEOUT_MIN_SEC = 60
+const AI_TIMEOUT_MAX_SEC = 1800
+const AI_TIMEOUT_DEFAULT_SEC = 300
+
+const AI_VISION_LONG_EDGE_MIN = 1024
+const AI_VISION_LONG_EDGE_MAX = 4096
+const AI_VISION_PREPROCESS_MIN_MB_MAX = 20
+const AI_VISION_JPEG_QUALITY_MIN = 75
+const AI_VISION_JPEG_QUALITY_MAX = 95
 
 const timeoutSeconds = computed({
   get() {
@@ -131,6 +243,10 @@ const ensureAiFields = () => {
   if (!aiForm.timeout || aiForm.timeout < AI_TIMEOUT_MIN_SEC * 1000) {
     aiForm.timeout = AI_TIMEOUT_DEFAULT_SEC * 1000
   }
+  if (aiForm.visionPreprocess === undefined) aiForm.visionPreprocess = true
+  if (aiForm.visionMaxLongEdge == null) aiForm.visionMaxLongEdge = 2048
+  if (aiForm.visionPreprocessMinSizeMB == null) aiForm.visionPreprocessMinSizeMB = 1.5
+  if (aiForm.visionJpegQuality == null) aiForm.visionJpegQuality = 88
 }
 
 const syncAiFormFromStore = () => {
@@ -321,38 +437,53 @@ defineExpose({ resetForm, restoreAnchorScroll })
 
 <template>
   <div class="base-settings-wrapper">
-    <el-anchor
-      class="anchor-block"
-      :container="anchorContainer"
-      direction="vertical"
-      :offset="20"
-      type="default"
-      @change="onAnchorChange"
-    >
-      <el-anchor-link
-        class="anchor-link"
-        href="#divider-ai-base"
-        :title="t('pages.Setting.aiSetting.sectionBase')"
+    <aside class="ai-anchor-sidebar">
+      <el-anchor
+        class="anchor-block ai-sidebar-card ai-anchor-sidebar__nav"
+        :container="anchorContainer"
+        direction="vertical"
+        :offset="20"
+        type="default"
+        @change="onAnchorChange"
+      >
+        <el-anchor-link
+          class="anchor-link"
+          href="#divider-ai-base"
+          :title="t('pages.Setting.aiSetting.sectionBase')"
+        />
+        <el-anchor-link
+          class="anchor-link"
+          href="#divider-ai-vision"
+          :title="t('pages.Setting.aiSetting.visionSection')"
+        />
+        <el-anchor-link
+          class="anchor-link"
+          href="#divider-ai-text"
+          :title="t('pages.Setting.aiSetting.textSection')"
+        />
+        <el-anchor-link
+          class="anchor-link"
+          href="#divider-ai-features"
+          :title="t('pages.Setting.aiSetting.sectionFeatures')"
+        />
+      </el-anchor>
+      <AiAnalysisDashboardPanel
+        v-if="showAnalysisProgress"
+        :loading="loadingAnalysisStats && !analysisStats"
+        :stats="analysisStats"
+        :enable-embedding="aiForm.enableEmbedding"
+        :percent="analysisProgressPercent"
+        :status-label="analysisStatusLabel"
+        :status-tooltip="analysisStatusTooltip"
+        :status-tag-type="analysisStatusTagType"
+        :summary="analysisProgressSummary"
+        :footer-hint="analysisFooterHint"
+        :running="!!analysisStats?.running"
       />
-      <el-anchor-link
-        class="anchor-link"
-        href="#divider-ai-vision"
-        :title="t('pages.Setting.aiSetting.visionSection')"
-      />
-      <el-anchor-link
-        class="anchor-link"
-        href="#divider-ai-text"
-        :title="t('pages.Setting.aiSetting.textSection')"
-      />
-      <el-anchor-link
-        class="anchor-link"
-        href="#divider-ai-features"
-        :title="t('pages.Setting.aiSetting.sectionFeatures')"
-      />
-    </el-anchor>
+    </aside>
 
     <el-scrollbar ref="aiSettingsScrollbarRef" style="height: 100%; flex: 1">
-      <el-form :model="aiForm" label-width="auto" class="ai-setting-form">
+      <el-form :model="aiForm" label-width="auto" label-position="right" class="ai-setting-form">
         <div class="form-card">
           <div id="divider-ai-base" class="divider">
             {{ t('pages.Setting.aiSetting.sectionBase') }}
@@ -360,81 +491,222 @@ defineExpose({ resetForm, restoreAnchorScroll })
           <el-form-item :label="t('pages.Setting.aiSetting.enabled')">
             <el-switch v-model="aiForm.enabled" @change="onAiFormChange" />
           </el-form-item>
-          <el-form-item :label="t('pages.Setting.aiSetting.analysisMode')">
-            <el-select
-              v-model="aiForm.analysisMode"
-              style="width: 290px"
-              @change="onAiFormChange"
-            >
-              <el-option
-                v-for="item in analysisModeOptions"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item
-            v-if="showAnalysisProgress"
-            :label="t('pages.Setting.aiSetting.analysisProgress')"
-          >
-            <div v-loading="loadingAnalysisStats && !analysisStats" class="analysis-progress">
-              <el-progress
-                :percentage="analysisProgressPercent"
-                :status="
-                  analysisStats?.running
-                    ? undefined
-                    : analysisProgressPercent >= 100 && analysisStats?.total
-                      ? 'success'
-                      : undefined
-                "
-              />
-              <div class="analysis-stats-row">
-                <el-tag type="success" size="small">
-                  {{ t('pages.Setting.aiSetting.statsDone') }}: {{ analysisStats?.done ?? 0 }}
-                </el-tag>
-                <el-tag type="warning" size="small">
-                  {{ t('pages.Setting.aiSetting.statsPending') }}: {{ analysisStats?.pending ?? 0 }}
-                </el-tag>
-                <el-tag type="danger" size="small">
-                  {{ t('pages.Setting.aiSetting.statsFailed') }}: {{ analysisStats?.failed ?? 0 }}
-                </el-tag>
-                <el-tag v-if="(analysisStats?.skipped ?? 0) > 0" type="info" size="small">
-                  {{ t('pages.Setting.aiSetting.statsSkipped') }}: {{ analysisStats?.skipped ?? 0 }}
-                </el-tag>
-                <el-tag v-if="aiForm.enableEmbedding" size="small">
-                  {{ t('pages.Setting.aiSetting.statsEmbedding') }}:
-                  {{ analysisStats?.embedding ?? 0 }}
-                </el-tag>
-              </div>
-              <div v-if="analysisStats?.running" class="field-hint">
-                {{ t('pages.Setting.aiSetting.statsRunning') }}
-              </div>
-              <div v-else-if="aiForm.analysisMode === 'on_demand'" class="field-hint">
-                {{ t('pages.Setting.aiSetting.statsOnDemandHint') }}
-              </div>
-              <div
-                v-else-if="analysisProgressPercent >= 100 && (analysisStats?.total ?? 0) > 0"
-                class="field-hint"
+          <el-form-item class="ai-form-item-labeled">
+            <template #label>
+              <span class="form-item-label-with-tip">
+                <span class="form-item-label-with-tip__text">{{
+                  t('pages.Setting.aiSetting.analysisMode')
+                }}</span>
+                <el-tooltip
+                  :content="t('pages.Setting.aiSetting.analysisModeHint')"
+                  placement="top"
+                  :show-after="300"
+                  popper-class="ai-setting-feature-tip"
+                >
+                  <span
+                    class="form-item-tip-trigger"
+                    tabindex="0"
+                    role="button"
+                    :aria-label="t('pages.Setting.aiSetting.analysisModeHint')"
+                    @click.stop
+                  >
+                    <IconifyIcon icon="custom:info-outline-rounded" />
+                  </span>
+                </el-tooltip>
+              </span>
+            </template>
+            <div class="ai-form-control-row">
+              <el-select
+                v-model="aiForm.analysisMode"
+                style="width: 290px"
+                @change="onAiFormChange"
               >
-                {{ t('pages.Setting.aiSetting.statsComplete') }}
-              </div>
+                <el-option
+                  v-for="item in analysisModeOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
             </div>
           </el-form-item>
-          <el-form-item :label="t('pages.Setting.aiSetting.requestTimeout')">
-            <el-input-number
-              v-model="timeoutSeconds"
-              :min="AI_TIMEOUT_MIN_SEC"
-              :max="AI_TIMEOUT_MAX_SEC"
-              :step="30"
-              style="width: 290px"
-              @change="onAiFormChange"
-            />
-            <span class="timeout-unit">{{ t('pages.Setting.aiSetting.requestTimeoutUnit') }}</span>
-            <div class="field-hint">{{ t('pages.Setting.aiSetting.requestTimeoutHint') }}</div>
+          <el-form-item class="ai-form-item-labeled">
+            <template #label>
+              <span class="form-item-label-with-tip">
+                <span class="form-item-label-with-tip__text">{{
+                  t('pages.Setting.aiSetting.requestTimeout')
+                }}</span>
+                <el-tooltip
+                  :content="t('pages.Setting.aiSetting.requestTimeoutHint')"
+                  placement="top"
+                  :show-after="300"
+                  popper-class="ai-setting-feature-tip"
+                >
+                  <span
+                    class="form-item-tip-trigger"
+                    tabindex="0"
+                    role="button"
+                    :aria-label="t('pages.Setting.aiSetting.requestTimeoutHint')"
+                    @click.stop
+                  >
+                    <IconifyIcon icon="custom:info-outline-rounded" />
+                  </span>
+                </el-tooltip>
+              </span>
+            </template>
+            <div class="ai-form-control-row">
+              <el-input-number
+                v-model="timeoutSeconds"
+                :min="AI_TIMEOUT_MIN_SEC"
+                :max="AI_TIMEOUT_MAX_SEC"
+                :step="30"
+                style="width: 290px"
+                @change="onAiFormChange"
+              />
+              <span class="timeout-unit">{{ t('pages.Setting.aiSetting.requestTimeoutUnit') }}</span>
+            </div>
           </el-form-item>
+          <div id="divider-ai-vision-input" class="ai-form-section-divider">
+            {{ t('pages.Setting.aiSetting.visionInputSection') }}
+          </div>
+          <el-form-item class="ai-form-item-labeled">
+            <template #label>
+              <span class="form-item-label-with-tip">
+                <span class="form-item-label-with-tip__text">{{
+                  t('pages.Setting.aiSetting.visionPreprocess')
+                }}</span>
+                <el-tooltip
+                  :content="t('pages.Setting.aiSetting.visionPreprocessHint')"
+                  placement="top"
+                  :show-after="300"
+                  popper-class="ai-setting-feature-tip"
+                >
+                  <span
+                    class="form-item-tip-trigger"
+                    tabindex="0"
+                    role="button"
+                    :aria-label="t('pages.Setting.aiSetting.visionPreprocessHint')"
+                    @click.stop
+                  >
+                    <IconifyIcon icon="custom:info-outline-rounded" />
+                  </span>
+                </el-tooltip>
+              </span>
+            </template>
+            <el-switch v-model="aiForm.visionPreprocess" @change="onAiFormChange" />
+          </el-form-item>
+          <el-form-item v-if="aiForm.visionPreprocess" class="ai-form-item-labeled">
+            <template #label>
+              <span class="form-item-label-with-tip">
+                <span class="form-item-label-with-tip__text">{{
+                  t('pages.Setting.aiSetting.visionMaxLongEdge')
+                }}</span>
+                <el-tooltip
+                  :content="t('pages.Setting.aiSetting.visionMaxLongEdgeHint')"
+                  placement="top"
+                  :show-after="300"
+                  popper-class="ai-setting-feature-tip"
+                >
+                  <span
+                    class="form-item-tip-trigger"
+                    tabindex="0"
+                    role="button"
+                    :aria-label="t('pages.Setting.aiSetting.visionMaxLongEdgeHint')"
+                    @click.stop
+                  >
+                    <IconifyIcon icon="custom:info-outline-rounded" />
+                  </span>
+                </el-tooltip>
+              </span>
+            </template>
+            <div class="ai-form-control-row">
+              <el-input-number
+                v-model="aiForm.visionMaxLongEdge"
+                :min="AI_VISION_LONG_EDGE_MIN"
+                :max="AI_VISION_LONG_EDGE_MAX"
+                :step="256"
+                style="width: 290px"
+                @change="onAiFormChange"
+              />
+              <span class="timeout-unit">px</span>
+            </div>
+          </el-form-item>
+          <el-form-item v-if="aiForm.visionPreprocess" class="ai-form-item-labeled">
+            <template #label>
+              <span class="form-item-label-with-tip">
+                <span class="form-item-label-with-tip__text">{{
+                  t('pages.Setting.aiSetting.visionPreprocessMinSizeMB')
+                }}</span>
+                <el-tooltip
+                  :content="t('pages.Setting.aiSetting.visionPreprocessMinSizeMBHint')"
+                  placement="top"
+                  :show-after="300"
+                  popper-class="ai-setting-feature-tip"
+                >
+                  <span
+                    class="form-item-tip-trigger"
+                    tabindex="0"
+                    role="button"
+                    :aria-label="t('pages.Setting.aiSetting.visionPreprocessMinSizeMBHint')"
+                    @click.stop
+                  >
+                    <IconifyIcon icon="custom:info-outline-rounded" />
+                  </span>
+                </el-tooltip>
+              </span>
+            </template>
+            <div class="ai-form-control-row">
+              <el-input-number
+                v-model="aiForm.visionPreprocessMinSizeMB"
+                :min="0"
+                :max="AI_VISION_PREPROCESS_MIN_MB_MAX"
+                :step="0.5"
+                :precision="1"
+                style="width: 290px"
+                @change="onAiFormChange"
+              />
+              <span class="timeout-unit">MB</span>
+            </div>
+          </el-form-item>
+          <el-form-item v-if="aiForm.visionPreprocess" class="ai-form-item-labeled">
+            <template #label>
+              <span class="form-item-label-with-tip">
+                <span class="form-item-label-with-tip__text">{{
+                  t('pages.Setting.aiSetting.visionJpegQuality')
+                }}</span>
+                <el-tooltip
+                  :content="t('pages.Setting.aiSetting.visionJpegQualityHint')"
+                  placement="top"
+                  :show-after="300"
+                  popper-class="ai-setting-feature-tip"
+                >
+                  <span
+                    class="form-item-tip-trigger"
+                    tabindex="0"
+                    role="button"
+                    :aria-label="t('pages.Setting.aiSetting.visionJpegQualityHint')"
+                    @click.stop
+                  >
+                    <IconifyIcon icon="custom:info-outline-rounded" />
+                  </span>
+                </el-tooltip>
+              </span>
+            </template>
+            <div class="ai-form-control-row">
+              <el-input-number
+                v-model="aiForm.visionJpegQuality"
+                :min="AI_VISION_JPEG_QUALITY_MIN"
+                :max="AI_VISION_JPEG_QUALITY_MAX"
+                :step="1"
+                style="width: 290px"
+                @change="onAiFormChange"
+              />
+            </div>
+          </el-form-item>
+        </div>
 
-          <div id="divider-ai-vision" class="divider-sub">
+        <div class="form-card">
+          <div id="divider-ai-vision" class="divider">
             {{ t('pages.Setting.aiSetting.visionSection') }}
           </div>
           <el-form-item :label="t('pages.Setting.aiSetting.serviceProvider')">
@@ -515,8 +787,10 @@ defineExpose({ resetForm, restoreAnchorScroll })
               {{ testVisionResult.message }}
             </el-text>
           </el-form-item>
+        </div>
 
-          <div id="divider-ai-text" class="divider-sub">
+        <div class="form-card">
+          <div id="divider-ai-text" class="divider">
             {{ t('pages.Setting.aiSetting.textSection') }}
           </div>
           <el-form-item :label="t('pages.Setting.aiSetting.serviceProvider')">
@@ -627,37 +901,39 @@ defineExpose({ resetForm, restoreAnchorScroll })
               />
             </el-form-item>
           </template>
+        </div>
 
-          <div id="divider-ai-features" class="divider-sub">
+        <div class="form-card">
+          <div id="divider-ai-features" class="divider">
             {{ t('pages.Setting.aiSetting.sectionFeatures') }}
           </div>
-          <el-form-item :label="t('pages.Setting.aiSetting.enableEmbedding')">
-            <el-switch v-model="aiForm.enableEmbedding" @change="onAiFormChange" />
-          </el-form-item>
-          <el-form-item :label="t('pages.Setting.aiSetting.autoCollectionsEnabled')">
-            <el-switch v-model="aiForm.autoCollectionsEnabled" @change="onAiFormChange" />
-            <div class="field-hint">{{ t('pages.Setting.aiSetting.autoCollectionsEnabledHint') }}</div>
-          </el-form-item>
-          <el-form-item :label="t('pages.Setting.aiSetting.enableNsfwCheck')">
-            <el-switch v-model="aiForm.enableNsfwCheck" @change="onAiFormChange" />
-          </el-form-item>
-          <el-form-item :label="t('pages.Setting.aiSetting.smartSearch')">
-            <el-switch v-model="aiForm.smartSearch" @change="onAiFormChange" />
-          </el-form-item>
-          <el-form-item :label="t('pages.Setting.aiSetting.expandDownloadKeywords')">
-            <el-switch v-model="aiForm.expandDownloadKeywords" @change="onAiFormChange" />
-          </el-form-item>
-          <el-form-item :label="t('pages.Setting.aiSetting.runOnBattery')">
-            <el-switch v-model="aiForm.runOnBattery" @change="onAiFormChange" />
-          </el-form-item>
-          <el-form-item :label="t('pages.Setting.aiSetting.allowRemoteImageUpload')">
-            <el-switch v-model="aiForm.allowRemoteImageUpload" @change="onAiFormChange" />
-          </el-form-item>
-          <el-form-item :label="t('pages.Setting.aiSetting.legacyOnnxScore')">
-            <el-switch v-model="aiForm.legacyOnnxScore" @change="onAiFormChange" />
-          </el-form-item>
-          <el-form-item :label="t('pages.Setting.aiSetting.legacyJiebaTags')">
-            <el-switch v-model="aiForm.legacyJiebaTags" @change="onAiFormChange" />
+          <el-form-item
+            v-for="item in featureSwitches"
+            :key="item.key"
+            class="ai-form-item-labeled"
+          >
+            <template #label>
+              <span class="form-item-label-with-tip">
+                <span class="form-item-label-with-tip__text">{{ t(item.labelKey) }}</span>
+                <el-tooltip
+                  :content="t(item.hintKey)"
+                  placement="top"
+                  :show-after="300"
+                  popper-class="ai-setting-feature-tip"
+                >
+                  <span
+                    class="form-item-tip-trigger"
+                    tabindex="0"
+                    role="button"
+                    :aria-label="t(item.hintKey)"
+                    @click.stop
+                  >
+                    <IconifyIcon icon="custom:info-outline-rounded" />
+                  </span>
+                </el-tooltip>
+              </span>
+            </template>
+            <el-switch v-model="aiForm[item.key]" @change="onAiFormChange" />
           </el-form-item>
         </div>
       </el-form>
@@ -670,10 +946,40 @@ defineExpose({ resetForm, restoreAnchorScroll })
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 20px;
   height: calc(100vh - 110px);
   overflow: hidden;
+}
+
+.ai-anchor-sidebar {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  width: 200px;
+  min-width: 200px;
+  height: 100%;
+  min-height: 0;
+  gap: 10px;
+
+  &__nav {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto !important;
+    width: 100% !important;
+    overflow: auto;
+    padding: 14px 16px;
+  }
+}
+
+.ai-sidebar-card {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--el-border-color-lighter);
+  background-color: #ffffff;
+  box-shadow: none;
 }
 
 .model-row {
@@ -681,6 +987,80 @@ defineExpose({ resetForm, restoreAnchorScroll })
   gap: 8px;
   align-items: center;
   flex-wrap: wrap;
+}
+
+.ai-setting-form {
+  :deep(.el-form-item) {
+    align-items: center;
+    margin-bottom: 18px;
+  }
+
+  :deep(.el-form-item__label) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    height: 32px;
+    line-height: 32px;
+    padding-right: 12px;
+    white-space: nowrap;
+  }
+
+  :deep(.el-form-item__content) {
+    display: flex;
+    align-items: center;
+    min-height: 32px;
+    line-height: 32px;
+  }
+}
+
+.ai-form-control-row {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0;
+  min-height: 32px;
+}
+
+.ai-form-section-divider {
+  margin: 12px 0 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--el-border-color-lighter);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--el-text-color-primary);
+}
+
+.form-item-label-with-tip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+  gap: 6px;
+  white-space: nowrap;
+
+  &__text {
+    line-height: 1.4;
+    white-space: nowrap;
+  }
+}
+
+.form-item-tip-trigger {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  font-size: 16px;
+  color: var(--el-text-color-secondary);
+  cursor: help;
+  outline: none;
+
+  &:hover,
+  &:focus-visible {
+    color: var(--el-color-primary);
+  }
 }
 
 .field-hint {
@@ -691,9 +1071,13 @@ defineExpose({ resetForm, restoreAnchorScroll })
 }
 
 .timeout-unit {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
   margin-left: 8px;
   color: var(--el-text-color-secondary);
   font-size: 13px;
+  line-height: 1;
 }
 
 .test-result {
@@ -706,14 +1090,18 @@ defineExpose({ resetForm, restoreAnchorScroll })
   word-break: break-word;
 }
 
-.analysis-progress {
-  width: min(520px, 100%);
-}
+</style>
 
-.analysis-stats-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 10px;
+<style lang="scss">
+.ai-setting-feature-tip {
+  max-width: min(320px, 90vw) !important;
+  width: max-content;
+
+  &,
+  .el-tooltip__content {
+    line-height: 1.5;
+    white-space: normal !important;
+    word-break: break-word;
+  }
 }
 </style>

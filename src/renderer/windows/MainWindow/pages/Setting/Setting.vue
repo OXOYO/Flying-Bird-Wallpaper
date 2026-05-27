@@ -63,6 +63,7 @@ const onTabChange = (tab) => {
   <el-main class="page-setting">
     <el-tabs v-model="activeTab" class="setting-tabs" @tab-click="onTabChange">
       <el-tab-pane :label="t('pages.Setting.tabs.baseSetting')" name="baseSetting"></el-tab-pane>
+      <el-tab-pane :label="t('pages.Setting.tabs.aiSetting')" name="aiSetting"></el-tab-pane>
       <el-tab-pane :label="t('pages.Setting.tabs.privacySpace')" name="privacySpace"></el-tab-pane>
       <el-tab-pane
         :label="t('pages.Setting.tabs.shortcutSetting')"
@@ -72,11 +73,14 @@ const onTabChange = (tab) => {
         :label="t('pages.Setting.tabs.pluginMarketplace')"
         name="pluginMarketplace"
       ></el-tab-pane>
-      <el-tab-pane :label="t('pages.Setting.tabs.aiSetting')" name="aiSetting"></el-tab-pane>
     </el-tabs>
 
     <div v-show="activeTab === 'baseSetting'">
       <BaseSetting ref="baseSettingRef" />
+    </div>
+
+    <div v-show="activeTab === 'aiSetting'">
+      <AiSetting ref="aiSettingRef" />
     </div>
 
     <div v-show="activeTab === 'privacySpace'">
@@ -89,10 +93,6 @@ const onTabChange = (tab) => {
 
     <div v-show="activeTab === 'pluginMarketplace'">
       <PluginMarketplace ref="pluginMarketplaceRef" />
-    </div>
-
-    <div v-show="activeTab === 'aiSetting'">
-      <AiSetting ref="aiSettingRef" />
     </div>
   </el-main>
 </template>
