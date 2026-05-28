@@ -44,13 +44,13 @@ export const COLLECTION_ITEMS_DEFAULT_PAGE_SIZE = 50
 export const SCORE_MIN_FILTER_DEFAULT = 70
 
 /**
- * 系统自动合集最低分：使用 AI 设置中的 scoreMinFilter；未设置则不按分数过滤
+ * 系统自动合集最低分：使用 AI 设置中的 scoreMinFilter，无效时回退默认值
  */
 export function resolveAutoCollectionScoreMin(ai = {}) {
   const v = ai.scoreMinFilter
-  if (v == null || v === '') return null
+  if (v == null || v === '') return SCORE_MIN_FILTER_DEFAULT
   const n = Number(v)
-  if (!Number.isFinite(n)) return null
+  if (!Number.isFinite(n)) return SCORE_MIN_FILTER_DEFAULT
   return Math.min(100, Math.max(0, Math.round(n)))
 }
 

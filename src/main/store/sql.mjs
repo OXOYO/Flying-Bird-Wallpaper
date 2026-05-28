@@ -69,6 +69,7 @@ export const createTables = [
     nsfwLevel INTEGER NOT NULL DEFAULT 0, -- 内容安全等级 0=未知/安全
     aiAnalysisStatus TEXT NOT NULL DEFAULT 'pending', -- pending|done|failed|skipped
     aiAnalyzedAt DATETIME, -- AI 分析完成时间
+    aiAnalysisFailCount INTEGER NOT NULL DEFAULT 0, -- 连续分析失败次数（成功归零）
     dominantColor TEXT NOT NULL DEFAULT '', -- 主色调
     atimeMs INTEGER NOT NULL DEFAULT 0, -- 本地文件最后访问时间
     mtimeMs INTEGER NOT NULL DEFAULT 0, -- 本地文件最后修改时间

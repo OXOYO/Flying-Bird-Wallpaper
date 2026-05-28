@@ -120,6 +120,12 @@ const showAnalysisProgress = computed(
   () => aiForm.enabled && aiForm.analysisMode && aiForm.analysisMode !== 'off'
 )
 
+const showBackgroundRetrySetting = computed(
+  () =>
+    aiForm.enabled &&
+    (aiForm.analysisMode === 'background_slow' || aiForm.analysisMode === 'new_only')
+)
+
 const analysisProgressPercent = computed(() => {
   const s = analysisStats.value
   if (!s) return 0
@@ -226,6 +232,10 @@ const AI_TIMEOUT_DEFAULT_SEC = 300
 const AUTO_COLLECTION_COUNT_MIN = 3
 const AUTO_COLLECTION_COUNT_ABSOLUTE_MAX = 50
 
+const AI_ANALYSIS_MAX_RETRIES_MIN = 1
+const AI_ANALYSIS_MAX_RETRIES_MAX = 20
+const AI_ANALYSIS_MAX_RETRIES_DEFAULT = 5
+
 const AI_VISION_LONG_EDGE_MIN = 1024
 const AI_VISION_LONG_EDGE_MAX = 4096
 const AI_VISION_PREPROCESS_MIN_MB_MAX = 20
@@ -246,24 +256,11 @@ const timeoutSeconds = computed({
 
 const aiSnapshot = () => ({ ...toRaw(aiForm) })
 
-/** scoreMinFilter：空表示不限制（搜索与系统合集均生效） */
-const scoreMinFilterModel = computed({
-  get() {
-    const v = aiForm.scoreMinFilter
-    if (v == null || v === '') return undefined
-    const n = Number(v)
-    return Number.isFinite(n) ? n : undefined
-  },
-  set(val) {
-    if (val == null || val === '' || Number.isNaN(Number(val))) {
-      aiForm.scoreMinFilter = null
-    } else {
-      aiForm.scoreMinFilter = Math.min(100, Math.max(0, Math.round(Number(val))))
-    }
-  }
-})
-
 const onScoreMinFilterChange = () => {
+  onAiFormChange()
+}
+
+const onAnalysisMaxRetriesChange = () => {
   onAiFormChange()
 }
 
@@ -277,6 +274,9 @@ const ensureAiFields = () => {
   }
   if (aiForm.scoreMinFilter == null || aiForm.scoreMinFilter === '') {
     aiForm.scoreMinFilter = 70
+  }
+  if (aiForm.analysisMaxRetries == null || aiForm.analysisMaxRetries === '') {
+    aiForm.analysisMaxRetries = AI_ANALYSIS_MAX_RETRIES_DEFAULT
   }
   if (!aiForm.timeout || aiForm.timeout < AI_TIMEOUT_MIN_SEC * 1000) {
     aiForm.timeout = AI_TIMEOUT_DEFAULT_SEC * 1000
@@ -581,6 +581,41 @@ defineExpose({ resetForm, restoreAnchorScroll })
                   :value="item.value"
                 />
               </el-select>
+            </div>
+          </el-form-item>
+          <el-form-item v-if="showBackgroundRetrySetting" class="ai-form-item-labeled">
+            <template #label>
+              <span class="form-item-label-with-tip">
+                <span class="form-item-label-with-tip__text">{{
+                  t('pages.Setting.aiSetting.analysisMaxRetries')
+                }}</span>
+                <el-tooltip
+                  :content="t('pages.Setting.aiSetting.analysisMaxRetriesHint')"
+                  placement="top"
+                  :show-after="300"
+                  popper-class="ai-setting-feature-tip"
+                >
+                  <span
+                    class="form-item-tip-trigger"
+                    tabindex="0"
+                    role="button"
+                    :aria-label="t('pages.Setting.aiSetting.analysisMaxRetriesHint')"
+                    @click.stop
+                  >
+                    <IconifyIcon icon="custom:info-outline-rounded" />
+                  </span>
+                </el-tooltip>
+              </span>
+            </template>
+            <div class="ai-form-control-row">
+              <el-input-number
+                v-model="aiForm.analysisMaxRetries"
+                :min="AI_ANALYSIS_MAX_RETRIES_MIN"
+                :max="AI_ANALYSIS_MAX_RETRIES_MAX"
+                :step="1"
+                style="width: 290px"
+                @change="onAnalysisMaxRetriesChange"
+              />
             </div>
           </el-form-item>
           <el-form-item class="ai-form-item-labeled">
@@ -1054,7 +1089,7 @@ defineExpose({ resetForm, restoreAnchorScroll })
               </template>
               <div class="ai-form-control-row ai-form-control-row--score-min">
                 <el-input-number
-                  v-model="scoreMinFilterModel"
+                  v-model="aiForm.scoreMinFilter"
                   :min="0"
                   :max="100"
                   :step="1"
@@ -1062,20 +1097,6 @@ defineExpose({ resetForm, restoreAnchorScroll })
                   controls-position="right"
                   @change="onScoreMinFilterChange"
                 />
-                <el-button
-                  v-if="scoreMinFilterModel != null"
-                  type="primary"
-                  link
-                  :disabled="!aiForm.enabled"
-                  @click="
-                    () => {
-                      scoreMinFilterModel = null
-                      onScoreMinFilterChange()
-                    }
-                  "
-                >
-                  {{ t('pages.Setting.aiSetting.scoreMinFilterClear') }}
-                </el-button>
               </div>
             </el-form-item>
           </div>

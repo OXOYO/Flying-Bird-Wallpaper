@@ -5,6 +5,7 @@ import EmbeddingManager from './EmbeddingManager.mjs'
 import {
   AI_ANALYSIS_STATUS,
   DEFAULT_AI_TIMEOUT_MS,
+  resolveAnalysisMaxRetries,
   resolveEffectiveVisionTimeout
 } from './aiConstants.mjs'
 import { t } from '../../i18n/server.js'
@@ -109,17 +110,57 @@ export default class AiAnalysisManager {
     }
   }
 
-  async analyzeResourceById(resourceId) {
+  async analyzeResourceById(resourceId, options = {}) {
     const row = this.db
-      .prepare(`SELECT id, filePath, fileType, resourceName, title, desc, fileName FROM fbw_resources WHERE id = ?`)
+      .prepare(
+        `SELECT id, filePath, fileType, resourceName, title, desc, fileName, aiAnalysisFailCount FROM fbw_resources WHERE id = ?`
+      )
       .get(resourceId)
     if (!row) {
       return { success: false, message: t('messages.operationFail') }
     }
-    return await this.analyzeResourceRow(row)
+    return await this.analyzeResourceRow(row, { respectRetryLimit: false, ...options })
   }
 
-  async analyzeResourceRow(row) {
+  handleAnalysisFailure(row, err, ctx, startedAt, modelMs, { respectRetryLimit = true } = {}) {
+    const totalMs = Date.now() - startedAt
+    const errName = err?.name || ''
+    const errMsg = String(err?.message || err)
+    const isTimeout = /aborterror|timeout|超时/i.test(`${errName} ${errMsg}`)
+    this.logger.error(
+      `[AiAnalysisManager] analyze failed id=${row.id} pipelineMs=${modelMs}ms totalMs=${totalMs}ms configuredTimeout=${ctx.timeoutSec}s (${ctx.timeoutMs}ms) provider=${ctx.visionProvider} model=${ctx.visionModel} baseUrl=${ctx.visionBaseUrl} size=${ctx.fileSizeMB}MB likelyTimeout=${isTimeout} error=${errName}: ${errMsg} file=${ctx.filePath} (vision-http modelMs见 HttpAi/vision 日志)`
+    )
+
+    const prevCount = Number(row.aiAnalysisFailCount) || 0
+    const failCount = prevCount + 1
+    const maxRetries = resolveAnalysisMaxRetries(this.ai)
+    if (respectRetryLimit && failCount >= maxRetries) {
+      this.db
+        .prepare(
+          `UPDATE fbw_resources SET aiAnalysisStatus = ?, aiAnalysisFailCount = ?, updated_at = datetime('now', 'localtime') WHERE id = ?`
+        )
+        .run(AI_ANALYSIS_STATUS.SKIPPED, failCount, row.id)
+      this.logger.warn(
+        `[AiAnalysisManager] skip analyze id=${row.id} reason=max_retries failCount=${failCount} max=${maxRetries} file=${row.filePath || ''}`
+      )
+      return {
+        success: false,
+        skipped: true,
+        reason: 'max_retries',
+        message: t('messages.operationFail')
+      }
+    }
+
+    this.db
+      .prepare(
+        `UPDATE fbw_resources SET aiAnalysisStatus = ?, aiAnalysisFailCount = ?, updated_at = datetime('now', 'localtime') WHERE id = ?`
+      )
+      .run(AI_ANALYSIS_STATUS.FAILED, failCount, row.id)
+    row.aiAnalysisFailCount = failCount
+    return { success: false, message: String(err.message || err) }
+  }
+
+  async analyzeResourceRow(row, { respectRetryLimit = true } = {}) {
     const skipReason = this.getSkipReason(row)
     if (skipReason) {
       return this.markAnalysisSkipped(row, skipReason)
@@ -144,6 +185,7 @@ export default class AiAnalysisManager {
           nsfwLevel = @nsfwLevel,
           aiAnalysisStatus = @status,
           aiAnalyzedAt = datetime('now', 'localtime'),
+          aiAnalysisFailCount = 0,
           updated_at = datetime('now', 'localtime')
         WHERE id = @id
       `)
@@ -186,18 +228,7 @@ export default class AiAnalysisManager {
       if (errCode === 'ENOENT' || /ENOENT|no such file/i.test(errMsg)) {
         return this.markAnalysisSkipped(row, 'missing_file')
       }
-      const totalMs = Date.now() - startedAt
-      const errName = err?.name || ''
-      const isTimeout = /aborterror|timeout|超时/i.test(`${errName} ${errMsg}`)
-      this.logger.error(
-        `[AiAnalysisManager] analyze failed id=${row.id} pipelineMs=${modelMs}ms totalMs=${totalMs}ms configuredTimeout=${ctx.timeoutSec}s (${ctx.timeoutMs}ms) provider=${ctx.visionProvider} model=${ctx.visionModel} baseUrl=${ctx.visionBaseUrl} size=${ctx.fileSizeMB}MB likelyTimeout=${isTimeout} error=${errName}: ${errMsg} file=${ctx.filePath} (vision-http modelMs见 HttpAi/vision 日志)`
-      )
-      this.db
-        .prepare(
-          `UPDATE fbw_resources SET aiAnalysisStatus = ?, updated_at = datetime('now', 'localtime') WHERE id = ?`
-        )
-        .run(AI_ANALYSIS_STATUS.FAILED, row.id)
-      return { success: false, message: String(err.message || err) }
+      return this.handleAnalysisFailure(row, err, ctx, startedAt, modelMs, { respectRetryLimit })
     }
   }
 
@@ -209,7 +240,7 @@ export default class AiAnalysisManager {
     const { startPage, pageSize } = this.params
     const mode = this.ai.analysisMode
     let query_sql = `
-      SELECT id, filePath, fileType, resourceName, title, desc, fileName
+      SELECT id, filePath, fileType, resourceName, title, desc, fileName, aiAnalysisFailCount
       FROM fbw_resources
       WHERE fileType = 'image'
         AND aiAnalysisStatus IN ('pending', 'failed')
@@ -244,7 +275,7 @@ export default class AiAnalysisManager {
       try {
         for (const row of list) {
           if (!this.shouldRunBackground()) break
-          const ret = await this.analyzeResourceRow(row)
+          const ret = await this.analyzeResourceRow(row, { respectRetryLimit: true })
           if (ret?.success) doneCount += 1
           else if (!ret?.skipped) failCount += 1
         }
@@ -301,7 +332,7 @@ export default class AiAnalysisManager {
   markPendingForResources(ids = []) {
     if (!ids.length) return
     const stmt = this.db.prepare(
-      `UPDATE fbw_resources SET aiAnalysisStatus='pending' WHERE id = ? AND fileType='image'`
+      `UPDATE fbw_resources SET aiAnalysisStatus='pending', aiAnalysisFailCount=0 WHERE id = ? AND fileType='image'`
     )
     const tx = this.db.transaction(() => ids.forEach((id) => stmt.run(id)))
     tx()

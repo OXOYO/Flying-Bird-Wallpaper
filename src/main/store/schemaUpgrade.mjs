@@ -20,6 +20,7 @@ export function upgradeResourcesSchema(db, logger) {
     logger
   )
   addColumnIfMissing(db, 'fbw_resources', 'aiAnalyzedAt', 'DATETIME', logger)
+  addColumnIfMissing(db, 'fbw_resources', 'aiAnalysisFailCount', 'INTEGER NOT NULL DEFAULT 0', logger)
 
   if (addedStatus) {
     db.prepare(

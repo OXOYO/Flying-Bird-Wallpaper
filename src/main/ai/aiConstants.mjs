@@ -80,7 +80,24 @@ export const defaultAiSettings = {
   embeddingDim: 768,
   autoCollectionsEnabled: true,
   autoCollectionsMaxCount: 20,
-  scoreMinFilter: 70
+  scoreMinFilter: 70,
+  /** 后台分析单张最大失败次数 */
+  analysisMaxRetries: 5
+}
+
+export const AI_ANALYSIS_MAX_RETRIES_MIN = 1
+export const AI_ANALYSIS_MAX_RETRIES_MAX = 20
+export const AI_ANALYSIS_MAX_RETRIES_DEFAULT = 5
+
+export function resolveAnalysisMaxRetries(ai = {}) {
+  const v = ai.analysisMaxRetries
+  if (v == null || v === '') return AI_ANALYSIS_MAX_RETRIES_DEFAULT
+  const n = Math.round(Number(v))
+  if (!Number.isFinite(n)) return AI_ANALYSIS_MAX_RETRIES_DEFAULT
+  return Math.min(
+    AI_ANALYSIS_MAX_RETRIES_MAX,
+    Math.max(AI_ANALYSIS_MAX_RETRIES_MIN, n)
+  )
 }
 
 export const AI_ANALYSIS_STATUS = {

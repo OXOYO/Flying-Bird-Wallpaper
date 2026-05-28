@@ -213,7 +213,8 @@ export const defaultSettingData = {
     expandDownloadKeywords: false,
     scoreMinFilter: 70,
     autoCollectionsEnabled: true,
-    autoCollectionsMaxCount: 20
+    autoCollectionsMaxCount: 20,
+    analysisMaxRetries: 5
   },
   /*** 搜索（仅搜索页 / H5 搜索） ***/
   search: {
@@ -387,6 +388,9 @@ export function migrateSettingData(storeData = {}) {
   }
   if (next.ai.autoCollectionsMaxCount == null || next.ai.autoCollectionsMaxCount === '') {
     next.ai.autoCollectionsMaxCount = defaultSettingData.ai.autoCollectionsMaxCount
+  }
+  if (next.ai.analysisMaxRetries == null || next.ai.analysisMaxRetries === '') {
+    next.ai.analysisMaxRetries = defaultSettingData.ai.analysisMaxRetries
   }
   if (typeof next.h5FullscreenImageCompress !== 'boolean') {
     if (typeof next.h5ImageCompress === 'boolean') {

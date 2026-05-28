@@ -1027,7 +1027,7 @@ const getNextList = async () => {
     quality: quality.toString(),
     orientation: orientation.toString(),
     hideUnsafe: !!settingData.value?.ai?.enableNsfwCheck,
-    scoreMin: settingData.value?.ai?.scoreMinFilter ?? null
+    scoreMin: settingData.value?.ai?.scoreMinFilter ?? 70
   }
   let res
   try {
