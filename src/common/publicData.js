@@ -208,14 +208,12 @@ export const defaultSettingData = {
     analysisMode: 'on_demand',
     legacyOnnxScore: false,
     legacyJiebaTags: false,
-    enableEmbedding: true,
     enableNsfwCheck: false,
-    allowRemoteImageUpload: false,
-    runOnBattery: false,
     runOnWifiOnly: false,
     expandDownloadKeywords: false,
-    scoreMinFilter: null,
-    autoCollectionsEnabled: true
+    scoreMinFilter: 70,
+    autoCollectionsEnabled: true,
+    autoCollectionsMaxCount: 20
   },
   /*** 搜索（仅搜索页 / H5 搜索） ***/
   search: {
@@ -383,6 +381,12 @@ export function migrateSettingData(storeData = {}) {
   }
   if (next.ai.visionJpegQuality == null) {
     next.ai.visionJpegQuality = defaultSettingData.ai.visionJpegQuality
+  }
+  if (next.ai.scoreMinFilter == null || next.ai.scoreMinFilter === '') {
+    next.ai.scoreMinFilter = defaultSettingData.ai.scoreMinFilter
+  }
+  if (next.ai.autoCollectionsMaxCount == null || next.ai.autoCollectionsMaxCount === '') {
+    next.ai.autoCollectionsMaxCount = defaultSettingData.ai.autoCollectionsMaxCount
   }
   if (typeof next.h5FullscreenImageCompress !== 'boolean') {
     if (typeof next.h5ImageCompress === 'boolean') {

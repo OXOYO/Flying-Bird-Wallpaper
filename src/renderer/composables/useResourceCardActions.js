@@ -4,26 +4,30 @@ import { useTranslation } from 'i18next-vue'
 import { storeToRefs } from 'pinia'
 import { ElCheckbox } from 'element-plus'
 import UseSettingStore from '@renderer/stores/settingStore.js'
+import { applyExploreImageSrc } from '@renderer/utils/resourceImageUrl.js'
+import { hex2RGB } from '@renderer/utils/gen-color.js'
 
-export function normalizeResourceItem(item) {
+export function normalizeResourceItem(item, options = {}) {
   if (!item) return item
   const row = { ...item }
   const id = row.id ?? row.resourceId
   if (!row.uniqueKey && id != null) row.uniqueKey = String(id)
-  if (!row.imageSrc) {
-    if (row.filePath) {
-      row.rawImageUrl = `fbwtp://fbw/api/images/get?filePath=${encodeURIComponent(row.filePath)}`
-      row.imageSrc = row.rawImageUrl
-    } else if (row.imageUrl) {
-      row.rawImageUrl = row.imageUrl
-      row.imageSrc = row.imageUrl
-    }
+  if (!row.srcType) {
+    row.srcType = row.filePath ? 'file' : row.link ? 'url' : 'file'
+  }
+  const { rawImageUrl, imageSrc } = applyExploreImageSrc(row, {
+    resourceType: options.resourceType ?? 'localResource',
+    gridHWRatio: options.gridHWRatio ?? 0.618
+  })
+  if (rawImageUrl) {
+    row.rawImageUrl = rawImageUrl
+    row.imageSrc = imageSrc
   }
   if (!row.videoSrc && row.fileType === 'video' && row.filePath) {
     row.videoSrc = `fbwtp://fbw/api/videos/get?filePath=${encodeURIComponent(row.filePath)}`
   }
-  if (!row.srcType) {
-    row.srcType = row.filePath ? 'file' : row.link ? 'url' : 'file'
+  if (row.dominantColor && !row.dominantColorRgb) {
+    row.dominantColorRgb = hex2RGB(row.dominantColor)
   }
   return row
 }

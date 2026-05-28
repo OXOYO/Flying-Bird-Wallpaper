@@ -4,7 +4,6 @@ import { useTranslation } from 'i18next-vue'
 defineProps({
   loading: { type: Boolean, default: false },
   stats: { type: Object, default: null },
-  enableEmbedding: { type: Boolean, default: false },
   percent: { type: Number, default: 0 },
   statusLabel: { type: String, default: '' },
   statusTagType: { type: String, default: 'info' },
@@ -74,7 +73,7 @@ const { t } = useTranslation()
       <span class="stat-chip stat-chip--failed">
         {{ t('pages.Setting.aiSetting.statFailedLabel') }} {{ stats?.failed ?? 0 }}
       </span>
-      <span v-if="enableEmbedding" class="stat-chip stat-chip--embedding">
+      <span class="stat-chip stat-chip--embedding">
         {{ t('pages.Setting.aiSetting.statEmbeddingLabel') }} {{ stats?.embedding ?? 0 }}
       </span>
       <span v-if="(stats?.skipped ?? 0) > 0" class="stat-chip stat-chip--skipped">

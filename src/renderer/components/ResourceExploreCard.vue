@@ -30,6 +30,17 @@ const isPlaying = ref(false)
 
 const buttons = computed(() => buildResourceCardButtons(props.item, props.cardContext, t))
 
+/** 与 ExploreCommon 卡片一致的主色占位 / 操作条背景 */
+const cardStyle = computed(() => {
+  const rgb = props.item.dominantColorRgb
+  return {
+    '--dominant-color': props.item.dominantColor || 'transparent',
+    '--dominant-color-rgba': rgb
+      ? `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5)`
+      : 'rgba(255, 255, 255, 0.5)'
+  }
+})
+
 const onBtnClick = (action) => {
   emit('action', action, props.item, props.index)
 }
@@ -66,6 +77,7 @@ const onVideoEnded = () => {
       fill ? 'resource-explore-card--fill' : '',
       statusClass ? `resource-explore-card__${statusClass}` : ''
     ]"
+    :style="cardStyle"
     @dblclick="onDblClick"
   >
     <div v-if="showTags" class="card-item-tags">
@@ -232,7 +244,9 @@ const onVideoEnded = () => {
   position: relative;
   aspect-ratio: 16 / 10;
   overflow: hidden;
-  background: rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease-in-out;
+  will-change: transform;
+  transform: translateZ(0);
 
   &--placeholder .image-error-inner {
     min-height: 120px;
@@ -241,7 +255,20 @@ const onVideoEnded = () => {
   .card-item-image-inner {
     width: 100%;
     height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
     display: block;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 12px;
+    background-color: var(--dominant-color, transparent);
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+
+    :deep(.el-image__placeholder) {
+      background-color: transparent !important;
+    }
   }
 
   :deep(.el-image) {
@@ -256,12 +283,14 @@ const onVideoEnded = () => {
     width: 100%;
     height: 100%;
     min-height: 100px;
-    font-size: 36px;
-    color: var(--el-text-color-placeholder);
+    font-size: 50px;
+    color: #ffffff;
   }
 }
 
 .resource-explore-card:hover .card-item-image-wrapper:not(.card-item-image-wrapper--placeholder) {
+  transform: scale(1.05);
+
   :deep(.el-image__inner) {
     transform: scale(1.03);
     transition: transform 0.25s ease;
@@ -271,12 +300,16 @@ const onVideoEnded = () => {
 .card-item-video-wrapper {
   position: relative;
   aspect-ratio: 16 / 10;
-  background: #000;
+  overflow: hidden;
 
   .card-item-video-player {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    background-color: var(--dominant-color, #000);
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
   }
 
   .card-item-video-btn {
@@ -353,7 +386,7 @@ const onVideoEnded = () => {
   gap: 2px;
   padding: 4px;
   backdrop-filter: blur(8px);
-  background: rgba(0, 0, 0, 0.55);
+  background-color: var(--dominant-color-rgba, rgba(0, 0, 0, 0.55));
   transform: translate3d(0, 100%, 0);
   opacity: 0;
   visibility: hidden;

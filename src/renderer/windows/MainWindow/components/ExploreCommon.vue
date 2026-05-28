@@ -10,9 +10,9 @@ import {
   resourceTypeList,
   orientationOptions
 } from '@common/publicData.js'
-import { hex2RGB } from '@renderer/utils/gen-color.js'
 import { debounce } from '@common/utils.js'
 import ExploreSearchHeader from './ExploreSearchHeader.vue'
+import { normalizeResourceItem } from '@renderer/composables/useResourceCardActions.js'
 
 const { t } = useTranslation()
 const commonStore = UseCommonStore()
@@ -92,9 +92,7 @@ const isHistoryMenu = computed(() => {
 
 const useSemanticSearch = computed(() => !!settingData.value?.search?.useSemanticSearch)
 
-const semanticSearchAvailable = computed(
-  () => !!settingData.value?.ai?.enabled && !!settingData.value?.ai?.enableEmbedding
-)
+const semanticSearchAvailable = computed(() => !!settingData.value?.ai?.enabled)
 
 const onSemanticSearchChange = async (enabled) => {
   const res = await window.FBW.updateSettingData({
@@ -141,23 +139,6 @@ const resourceGroupList = computed(() => {
     })
     return group
   })
-})
-
-const imgSize = computed(() => {
-  const w = 1080
-  const h = Math.floor(w * gridForm.gridHWRatio)
-  return { w, h }
-})
-
-const imgUrlQuery = computed(() => {
-  let query = {}
-  const { w, h } = imgSize.value
-  if (searchForm.resourceType === 'localResource') {
-    query = { w }
-  } else {
-    query = { w, h }
-  }
-  return query
 })
 
 const words = ref({
@@ -1066,45 +1047,21 @@ const getNextList = async () => {
         const list = res.data.list
           .filter((item) => !ids.includes(item.uniqueKey))
           .map((item) => {
-            const isVideo = item.fileType === 'video'
-            // 处理图片路径
-            let rawImageUrl
-            if (item.srcType === 'file') {
-              if (isVideo) {
-                rawImageUrl = item.rawImageUrl = item.imageUrl
-              } else {
-                rawImageUrl =
-                  item.rawImageUrl = `fbwtp://fbw/api/images/get?filePath=${encodeURIComponent(item.filePath)}`
-              }
-            } else if (item.srcType === 'url') {
-              rawImageUrl = item.rawImageUrl = item.imageUrl
-            }
-            if (rawImageUrl) {
-              const urlObj = new URL(rawImageUrl)
-              Object.keys(imgUrlQuery.value).forEach((key) => {
-                urlObj.searchParams.set(key, imgUrlQuery.value[key])
-              })
-              item.imageSrc = urlObj.toString()
-            } else {
-              item.imageSrc = ''
-            }
-            // 处理视频URL
-            if (isVideo) {
-              // 初始化播放状态
-              if (typeof item.isPlaying === 'undefined') {
-                item.isPlaying = false
-              }
-              if (item.srcType === 'file') {
-                // 确保文件路径被正确编码，避免URL格式问题
-                item.videoSrc = `fbwtp://fbw/api/videos/get?filePath=${encodeURIComponent(item.filePath)}`
-              } else {
-                item.videoSrc = item.videoUrl
+            const row = normalizeResourceItem(item, {
+              resourceType: searchForm.resourceType,
+              gridHWRatio: gridForm.gridHWRatio
+            })
+            if (row.fileType === 'video') {
+              if (typeof row.isPlaying === 'undefined') row.isPlaying = false
+              if (!row.videoSrc) {
+                if (row.srcType === 'file' && row.filePath) {
+                  row.videoSrc = `fbwtp://fbw/api/videos/get?filePath=${encodeURIComponent(row.filePath)}`
+                } else {
+                  row.videoSrc = row.videoUrl
+                }
               }
             }
-
-            // 处理颜色
-            item.dominantColorRgb = hex2RGB(item.dominantColor)
-            return item
+            return row
           })
 
         cardList.value.push(...list)

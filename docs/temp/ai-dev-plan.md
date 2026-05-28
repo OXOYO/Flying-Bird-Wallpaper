@@ -1,10 +1,10 @@
 # 飞鸟壁纸 AI 能力开发方案
 
-> 文档版本：**v2.1**  
-> 整理日期：2026-05-27  
-> 状态：Sprint 0–4 **已落地**；2.0.0 **后续增量已落地**（自动策展等）；Sprint 5 **未开发**  
+> 文档版本：**v2.2**  
+> 整理日期：2026-05-28  
+> 状态：Sprint 0–4 **已落地**；2.0.0 **后续增量已落地**；Sprint 5 **未开发**  
 > 应用版本：**1.3.8 → 2.0.0**  
-> 关联：[ai-feature-roadmap.md](./ai-feature-roadmap.md) · [openclaw-agent-integration.md](./openclaw-agent-integration.md) · [README.md](./README.md)
+> 关联：[ai-feature-roadmap.md](./ai-feature-roadmap.md) · [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) · [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) · [README.md](./README.md)
 
 ---
 
@@ -15,7 +15,7 @@
 | 版本跨度 | DB/功能迁移 `1.3.8_to_2.0.0.mjs`，发版 **2.0.0** |
 | Sprint 5（OpenClaw / Agent） | **暂不开发** |
 | Sprint 0～4 | **全部开发** |
-| 2.0.0 后续增量 | **自动策展、VecStore 修复、设置/探索体验、分析缩图与动态超时**（见 §8、§9 及 [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md)） |
+| 2.0.0 后续增量 | **自动策展、合集页分页/缩略图、评分门槛与可配上限、分析缩图与动态超时**（见 §8～§10 及专题文档） |
 | Git | 由用户自行提交 |
 
 ---
@@ -135,14 +135,18 @@ flowchart LR
   A --> C[向量候选 vec:* K-Means]
   B --> D[LLM 合并命名]
   C --> D
-  D --> E[3–12 个系统合集<br/>允许重叠、可删除]
+  D --> E[系统推荐合集<br/>允许重叠、可删除]
 ```
 
-**合集数量公式：** `clamp(3, round(√已分析数 × 1.2), 12)`，至少 8 张 `done` 才开始。
+**合集数量公式：** `clamp(3, round(√已分析数 × 1.2), cap)`，`cap = ai.autoCollectionsMaxCount`（默认 **20**，可调 **3～50**）；至少 8 张 `done` 才开始。
 
-**触发：** 分析完成 ~90s 防抖；向量化完成 ~60s 防抖；每 30min 定时；合集页「立即整理」；IPC `main:collections:curate`、`main:collections:curatorStats`。
+**入选壁纸：** 按 **`ai.scoreMinFilter`** 过滤（未设置则不按分过滤）；**已取消**每合集固定 40 条上限（`AUTO_COLLECTION_ITEM_LIMIT` 已移除）。
 
-**设置：** `ai.autoCollectionsEnabled`（默认 true），需同时 `ai.enabled` + `enableEmbedding`（向量簇依赖 embedding）。
+**触发：** 分析完成 ~90s 防抖；向量化完成 ~60s 防抖；每 30min 定时；合集页「立即整理」；`scoreMinFilter` / `autoCollectionsMaxCount` 变更 ~15s 后重整理；IPC `main:collections:curate`、`main:collections:curatorStats`。
+
+**设置：** `ai.autoCollectionsEnabled`（默认 true）；子项 **`scoreMinFilter`**、**`autoCollectionsMaxCount`**（见 `AiSetting.vue`）；需 `ai.enabled`；分析完成后自动向量化。
+
+**合集页：** `collectionsGet` **分页**；列表缩略 `w=1080`；详述 [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md)。
 
 **自定义合集刷新：** `refreshMode` = `manual` | `1h` | `6h` | `12h` | `24h`；系统合集为 `on_analysis`。
 
@@ -175,7 +179,7 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | `main:getAiAnalysisStats` | 分析进度统计 |
 | `main:parseSearchQuery` | NL → 搜索参数 |
 | `main:findSimilar` / `main:semanticSearch` | 相似 / 语义 |
-| `main:collections:*` | 合集 CRUD、generate、收藏 |
+| `main:collections:*` | 合集 CRUD、generate、收藏；`get` 支持 `{ id, startPage, pageSize }` → `{ items, total, ... }` |
 | `main:collections:curate` | 手动触发自动策展 |
 | `main:collections:curatorStats` | 策展统计（已分析/向量/系统合集数） |
 | `main:recommend` | 轻量推荐 |
@@ -189,8 +193,9 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | `enabled` | 总开关 |
 | `analysisMode` | `off` / `on_demand` / `background_slow` / `new_only` |
 | `visionPreset` / `textPreset` | Ollama、OpenRouter、OpenAI 等 |
-| `enableEmbedding` | 向量索引 |
 | `autoCollectionsEnabled` | 系统自动策展 |
+| `scoreMinFilter` | 最低评分（搜索 + 系统合集选图）；`null` = 不限制 |
+| `autoCollectionsMaxCount` | 系统推荐合集数量上限（默认 20，3～50） |
 | `enableNsfwCheck` | 探索安全筛选 |
 | `legacyOnnxScore` / `legacyJiebaTags` | 遗留能力 |
 | `timeout` | 默认 **300s**（60～1800s）；视觉分析另加动态加成（见下） |
@@ -208,7 +213,22 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 
 ---
 
-## §9 后续增量（分析性能与设置 UX）— 已落地
+## §9 后续增量（合集策展与合集页）— 已落地
+
+> 详述：[ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md)
+
+| 项 | 说明 |
+|----|------|
+| 评分门槛 | 系统合集入选仅 `score >= scoreMinFilter`（可配置；空=不限制） |
+| 数量上限 | `autoCollectionsMaxCount` 替代写死 12/20 |
+| 合集 items 分页 | `CollectionsManager.get` + `Collections.vue` 滚到底加载 |
+| 缩略图 | `resourceImageUrl.js` + `normalizeResourceItem`，与探索一致 |
+| 卡片主色 | `ResourceExploreCard` 使用 `dominantColor` |
+| 列表 `itemCount` | `collectionsList` 一次统计；移除错误 `syncCollectionCounts` |
+
+---
+
+## §10 后续增量（分析性能与设置 UX）— 已落地
 
 > 详述：[ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md)
 
@@ -241,7 +261,7 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | 2.0.0-dev | Sprint 0+1 |
 | 2.0.0-beta | + Sprint 2+3 |
 | 2.0.0 | + Sprint 4 |
-| 2.0.0+ | 自动策展、VecStore 修复、探索顶栏、分析缩图、动态超时、设置 Tooltip |
+| 2.0.0+ | 自动策展、合集分页/缩略图、评分与上限可配、VecStore 修复、探索顶栏、分析缩图、动态超时 |
 
 ---
 
@@ -256,6 +276,7 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | Sprint 4 | ✅ | Recommend、H5 API、NSFW/score、扩词 |
 | **增量** | ✅ | CollectionCurator、VectorCluster、LLM 合并、定时刷新、分析进度、VecStore 修复 |
 | **增量²** | ✅ | 视觉缩图、动态超时、语义搜索迁移、ExploreSearchHeader、AiSetting UX |
+| **增量³** | ✅ | 合集评分门槛、可配上限、items 分页、缩略图/主色、AiSetting 合集子项 |
 | Sprint 5 | ⏸ | OpenClaw/Agent — 仅文档 |
 
 ---
@@ -270,13 +291,15 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 
 ### 向量与搜索
 
-4. 开启「向量索引」→ 分析若干张 →「找相似 / 智能搜索」
+4. AI 开启并分析若干张（自动向量化）→「找相似 / 智能搜索」（探索筛选可开语义搜索）
 
 ### 智能合集
 
-5. **系统策展**：≥8 张 `done` + ≥8 条 embedding → 合集页「立即整理」→ 出现「AI 推荐」分区
+5. **系统策展**：≥8 张 `done` + ≥8 条 embedding → 设 `scoreMinFilter`（可选）与 `autoCollectionsMaxCount` →「立即整理」→「AI 推荐」分区
 6. **自定义合集**：输入描述 → 生成 → 可选定时刷新策略
-7. 删除系统合集、关闭 `autoCollectionsEnabled` 验证行为
+7. **分页**：大合集滚到底加载；指示器 `current/total` 正确
+8. **缩略图**：网络/日志中 `imageSrc` 含 `w=1080`（本地 `fbwtp://`）
+9. 删除系统合集、关闭 `autoCollectionsEnabled` 验证行为
 
 ### 其他
 
@@ -314,4 +337,5 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | v1.0 | 2026-05-26 | Sprint 0–4 方案；Sprint 5 跳过 |
 | v1.1 | 2026-05-26 | 实施清单与验收 |
 | **v2.0** | 2026-05-27 | 自动策展（标签+向量+LLM）；合集定时刷新；VecStore 修复；IPC/设置/探索增量；README 索引 |
-| **v2.1** | 2026-05-27 | §9 分析缩图/动态超时；语义搜索迁移；探索顶栏；设置 Tooltip；链至 ai-analysis-ux-and-performance |
+| v2.1 | 2026-05-27 | §10 分析缩图/动态超时；语义搜索迁移；探索顶栏；设置 Tooltip |
+| **v2.2** | 2026-05-28 | §9 合集评分门槛、分页、可配上限；`collectionsGet` 分页契约；链至 ai-collections-ux-and-curate |

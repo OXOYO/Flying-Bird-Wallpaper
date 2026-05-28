@@ -4,7 +4,29 @@ export const AI_SERVICE_PRESETS = [
     id: 'ollama',
     provider: 'ollama',
     baseUrl: 'http://127.0.0.1:11434',
+    local: true,
     locale: 'pages.Setting.aiSetting.presets.ollama'
+  },
+  {
+    id: 'lmstudio',
+    provider: 'openai-compatible',
+    baseUrl: 'http://127.0.0.1:1234',
+    local: true,
+    locale: 'pages.Setting.aiSetting.presets.lmstudio'
+  },
+  {
+    id: 'localai',
+    provider: 'openai-compatible',
+    baseUrl: 'http://127.0.0.1:8080',
+    local: true,
+    locale: 'pages.Setting.aiSetting.presets.localai'
+  },
+  {
+    id: 'llamacpp',
+    provider: 'openai-compatible',
+    baseUrl: 'http://127.0.0.1:8081',
+    local: true,
+    locale: 'pages.Setting.aiSetting.presets.llamacpp'
   },
   {
     id: 'openrouter',
@@ -62,26 +84,57 @@ export const getPresetById = (id) =>
   AI_SERVICE_PRESETS.find((item) => item.id === id) ||
   AI_SERVICE_PRESETS.find((item) => item.id === 'custom')
 
-export const isLocalPreset = (presetId) => getPresetById(presetId)?.provider === 'ollama'
+/** 是否为本地推理预设（Ollama 或本机 OpenAI 兼容服务） */
+export const isLocalPreset = (presetId) => !!getPresetById(presetId)?.local
 
 export const isRemotePreset = (presetId) => !isLocalPreset(presetId)
+
+export const isLocalhostBaseUrl = (baseUrl = '') => {
+  try {
+    const raw = String(baseUrl).trim()
+    if (!raw) return false
+    const u = new URL(raw.includes('://') ? raw : `http://${raw}`)
+    return ['localhost', '127.0.0.1', '::1'].includes(u.hostname)
+  } catch {
+    return false
+  }
+}
+
+/** OpenAI 兼容远程服务是否需要 API Key（本地预设与本机自定义地址不需要） */
+export const presetRequiresApiKey = (presetId, baseUrl = '') => {
+  const preset = getPresetById(presetId)
+  if (!preset) return true
+  if (preset.local) return false
+  if (preset.custom && isLocalhostBaseUrl(baseUrl)) return false
+  return preset.provider === 'openai-compatible'
+}
 
 export const inferPresetFromAi = (provider, baseUrl = '') => {
   if (provider === 'ollama') return 'ollama'
   const url = String(baseUrl).replace(/\/$/, '')
-  const matched = AI_SERVICE_PRESETS.find(
-    (item) => !item.custom && item.baseUrl && url.startsWith(item.baseUrl.replace(/\/$/, ''))
-  )
+  const matched = AI_SERVICE_PRESETS.filter((item) => !item.custom && item.baseUrl)
+    .sort((a, b) => b.baseUrl.length - a.baseUrl.length)
+    .find((item) => url.startsWith(item.baseUrl.replace(/\/$/, '')))
   return matched?.id || 'custom'
 }
 
-export const applyServicePreset = (ai, kind) => {
+/**
+ * @param {object} ai
+ * @param {'vision'|'text'} kind
+ * @param {{ previousPresetId?: string }} [options] 切换前预设 id，用于从 Ollama 等切到 custom 时清空旧地址
+ */
+export const applyServicePreset = (ai, kind, options = {}) => {
+  const { previousPresetId } = options
   const presetField = kind === 'vision' ? 'visionPreset' : 'textPreset'
   const providerField = kind === 'vision' ? 'visionProvider' : 'textProvider'
   const urlField = kind === 'vision' ? 'visionBaseUrl' : 'textBaseUrl'
   const preset = getPresetById(ai[presetField])
   ai[providerField] = preset.provider
-  if (!preset.custom && preset.baseUrl) {
+  if (preset.custom) {
+    if (previousPresetId && previousPresetId !== 'custom') {
+      ai[urlField] = ''
+    }
+  } else if (preset.baseUrl) {
     ai[urlField] = preset.baseUrl
   }
 }

@@ -82,6 +82,33 @@ export default class AiAnalysisManager {
     return ['.jpg', '.jpeg', '.png', '.webp', '.bmp', '.gif'].includes(ext)
   }
 
+  /** @returns {string|null} 跳过原因；null 表示可继续分析 */
+  getSkipReason(row) {
+    if (!row) return 'no_row'
+    if (row.fileType !== 'image') return 'not_image'
+    if (!row.filePath) return 'no_path'
+    if (!this.isImageFile(row.filePath)) return 'unsupported_ext'
+    if (!fs.existsSync(row.filePath)) return 'missing_file'
+    return null
+  }
+
+  markAnalysisSkipped(row, reason) {
+    this.db
+      .prepare(
+        `UPDATE fbw_resources SET aiAnalysisStatus = ?, updated_at = datetime('now', 'localtime') WHERE id = ?`
+      )
+      .run(AI_ANALYSIS_STATUS.SKIPPED, row.id)
+    this.logger.warn(
+      `[AiAnalysisManager] skip analyze id=${row.id} reason=${reason} file=${row.filePath || ''}`
+    )
+    return {
+      success: false,
+      skipped: true,
+      message:
+        reason === 'missing_file' ? t('messages.fileNotExist') : t('messages.operationFail')
+    }
+  }
+
   async analyzeResourceById(resourceId) {
     const row = this.db
       .prepare(`SELECT id, filePath, fileType, resourceName, title, desc, fileName FROM fbw_resources WHERE id = ?`)
@@ -89,18 +116,15 @@ export default class AiAnalysisManager {
     if (!row) {
       return { success: false, message: t('messages.operationFail') }
     }
-    if (row.fileType !== 'image' || !row.filePath || !fs.existsSync(row.filePath)) {
-      this.db
-        .prepare(
-          `UPDATE fbw_resources SET aiAnalysisStatus = ?, updated_at = datetime('now', 'localtime') WHERE id = ?`
-        )
-        .run(AI_ANALYSIS_STATUS.SKIPPED, resourceId)
-      return { success: false, message: t('messages.operationFail') }
-    }
     return await this.analyzeResourceRow(row)
   }
 
   async analyzeResourceRow(row) {
+    const skipReason = this.getSkipReason(row)
+    if (skipReason) {
+      return this.markAnalysisSkipped(row, skipReason)
+    }
+
     const startedAt = Date.now()
     const ctx = this.getAnalysisRequestContext(row.filePath)
     this.logger.info(
@@ -140,13 +164,11 @@ export default class AiAnalysisManager {
         this.wordsManager.handleWords([row])
       }
 
-      if (this.ai.enableEmbedding) {
-        setImmediate(() => {
-          this.embeddingManager.upsertForResource(row.id).catch((err) => {
-            this.logger.warn(`[AiAnalysisManager] embedding ${row.id}: ${err}`)
-          })
+      setImmediate(() => {
+        this.embeddingManager.upsertForResource(row.id).catch((err) => {
+          this.logger.warn(`[AiAnalysisManager] embedding ${row.id}: ${err}`)
         })
-      }
+      })
 
       if (typeof this.onAnalysisDone === 'function') {
         setImmediate(() => this.onAnalysisDone())
@@ -159,9 +181,13 @@ export default class AiAnalysisManager {
       return { success: true, message: t('messages.operationSuccess'), data: result }
     } catch (err) {
       if (!modelMs) modelMs = Date.now() - modelStartedAt
+      const errCode = err?.code || ''
+      const errMsg = String(err?.message || err)
+      if (errCode === 'ENOENT' || /ENOENT|no such file/i.test(errMsg)) {
+        return this.markAnalysisSkipped(row, 'missing_file')
+      }
       const totalMs = Date.now() - startedAt
       const errName = err?.name || ''
-      const errMsg = String(err?.message || err)
       const isTimeout = /aborterror|timeout|超时/i.test(`${errName} ${errMsg}`)
       this.logger.error(
         `[AiAnalysisManager] analyze failed id=${row.id} pipelineMs=${modelMs}ms totalMs=${totalMs}ms configuredTimeout=${ctx.timeoutSec}s (${ctx.timeoutMs}ms) provider=${ctx.visionProvider} model=${ctx.visionModel} baseUrl=${ctx.visionBaseUrl} size=${ctx.fileSizeMB}MB likelyTimeout=${isTimeout} error=${errName}: ${errMsg} file=${ctx.filePath} (vision-http modelMs见 HttpAi/vision 日志)`
@@ -220,7 +246,7 @@ export default class AiAnalysisManager {
           if (!this.shouldRunBackground()) break
           const ret = await this.analyzeResourceRow(row)
           if (ret?.success) doneCount += 1
-          else failCount += 1
+          else if (!ret?.skipped) failCount += 1
         }
       } finally {
         this.logger.info(

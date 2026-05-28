@@ -75,13 +75,12 @@ export const defaultAiSettings = {
   analysisMode: 'on_demand',
   legacyOnnxScore: false,
   legacyJiebaTags: false,
-  enableEmbedding: true,
   enableNsfwCheck: false,
-  allowRemoteImageUpload: false,
-  runOnBattery: false,
   runOnWifiOnly: false,
   embeddingDim: 768,
-  autoCollectionsEnabled: true
+  autoCollectionsEnabled: true,
+  autoCollectionsMaxCount: 20,
+  scoreMinFilter: 70
 }
 
 export const AI_ANALYSIS_STATUS = {

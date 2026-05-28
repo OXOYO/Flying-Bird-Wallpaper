@@ -1,9 +1,9 @@
 # 飞鸟壁纸 AI 能力完整功能清单
 
-> 文档版本：**v1.3**  
-> 整理日期：2026-05-27  
+> 文档版本：**v1.4**  
+> 整理日期：2026-05-28  
 > 状态：**2.0.0 核心已落地**；部分 P3/P4 仍为规划  
-> 关联：[ai-dev-plan.md](./ai-dev-plan.md) · [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) · [README.md](./README.md)
+> 关联：[ai-dev-plan.md](./ai-dev-plan.md) · [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) · [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) · [README.md](./README.md)
 
 **图例：** ✅ 已实现 · 🟡 部分实现 · ⬜ 未开始
 
@@ -50,7 +50,7 @@
 
 ### 设置项 `settingData.ai`（已实现字段）
 
-`enabled`、`visionPreset`/`textPreset`、`visionModel`/`textModel`/`embeddingModel`、`timeout`（默认 **300s**，视觉分析动态加成）、`visionPreprocess`/`visionMaxLongEdge`/`visionPreprocessMinSizeMB`/`visionJpegQuality`、`analysisMode`、`enableEmbedding`、`autoCollectionsEnabled`、`enableNsfwCheck`、`expandDownloadKeywords`、`runOnBattery`、`legacyOnnxScore`、`legacyJiebaTags`、`scoreMinFilter` 等。
+`enabled`、`visionPreset`/`textPreset`、`visionModel`/`textModel`/`embeddingModel`、`timeout`（默认 **300s**，视觉分析动态加成）、`visionPreprocess`/`visionMaxLongEdge`/`visionPreprocessMinSizeMB`/`visionJpegQuality`、`analysisMode`、`autoCollectionsEnabled`、`scoreMinFilter`、`autoCollectionsMaxCount`（默认 20，3～50）、`enableNsfwCheck`、`expandDownloadKeywords`、`legacyOnnxScore`、`legacyJiebaTags` 等（分析完成后自动向量化；电池下后台分析受全局「省电模式」约束）。`scoreMinFilter` / `autoCollectionsMaxCount` 在 **AiSetting → 功能选项 → AI 自动整理合集** 下方配置。
 
 **`settingData.search`：** `useSemanticSearch`（智能语义搜索，探索/H5 筛选；原 `ai.smartSearch` 已迁移）。
 
@@ -92,12 +92,14 @@
 
 | ID | 功能 | 状态 | 说明 |
 |----|------|------|------|
-| AI-201 | 合集独立菜单 | ✅ | `Collections.vue` |
-| AI-202 | 合集 CRUD | ✅ | 含 `source` 字段 |
+| AI-201 | 合集独立菜单 | ✅ | `Collections.vue` + `ResourceExploreCard` |
+| AI-202 | 合集 CRUD | ✅ | 含 `source`；`list` 带 `itemCount` |
 | AI-203 | 描述生成合集 | ✅ | 用户 NL → `queryJson` |
-| AI-204 | 合集资源生成 | ✅ | 搜索快照 |
+| AI-204 | 合集资源生成 | ✅ | 用户合集：搜索快照（`limitCount` 5～50） |
 | AI-205 | 合集刷新 | ✅ | 手动；自定义定时 1h/6h/12h/24h；系统 `on_analysis` + 策展任务 |
 | AI-206 | 合集转收藏 | ✅ | `addAllToFavorites` |
+| AI-206a | 合集壁纸分页加载 | ✅ | `collectionsGet` + `VirtualList` close-bottom |
+| AI-206b | 合集缩略图/主色 | ✅ | `resourceImageUrl.js`、`dominantColor` 与探索一致 |
 | AI-207 | 合集作自动切换源 | ⬜ | |
 | AI-208a | 氛围型合集（系统策展） | ✅ | 向量 K-Means + LLM 合并命名，`CollectionCurator` |
 | AI-208b | 氛围型合集（用户 NL 语义扩召回） | ⬜ | `queryJson.useSemantic` 已解析，`CollectionsManager.generate()` 未接入 `semanticSearch` |
@@ -111,7 +113,8 @@
 | LLM 合并 | 相近组合并命名；失败降级 |
 | 重叠 | 多合集可含同一张图 |
 | 可删 | 系统合集 `source=auto` 允许删除 |
-| 数量 | 动态 3–12，见 `computeAutoCollectionCount` |
+| 数量 | `computeAutoCollectionCount(已分析, ai)`，封顶 `ai.autoCollectionsMaxCount`（默认 20，3～50） |
+| 入选 | `ai.scoreMinFilter`（空=不限制）；**无**每合集固定条数顶 |
 
 **数据表：**
 
@@ -133,7 +136,8 @@ fbw_collections (
   "mergeIds": ["tag:夜景", "vec:0"],
   "tags": ["夜景", "城市"],
   "semanticQuery": "赛博雨夜都市",
-  "useSemantic": true
+  "useSemantic": true,
+  "scoreMin": 70
 }
 ```
 
@@ -188,7 +192,7 @@ fbw_collections (
 | `main:getAiAnalysisStats` | ✅ |
 | `main:listAiModels` | ✅ |
 | `main:findSimilar` / `main:semanticSearch` | ✅ |
-| `main:collections:*` | ✅ |
+| `main:collections:*` | ✅（`get` 分页：`startPage`/`pageSize`/`total`） |
 | `main:collections:curate` | ✅ |
 | `main:collections:curatorStats` | ✅ |
 | `main:assistant:*` | ⬜ |
@@ -223,7 +227,7 @@ AI 助手、AIGC 工具
 
 | 项 | 要求 | 现状 |
 |----|------|------|
-| 隐私 | 远程上传须明示 | 设置中有 `allowRemoteImageUpload` |
+| 隐私 | 远程上传须明示 | 视觉区选用云端服务商时显示静态说明（`remoteVisionPrivacyNote`） |
 | 性能 | 扫描不阻塞；VLM 并发 1；大图缩图 | ✅ |
 | 容错 | AI 失败不阻断入库 | ✅；LLM 合并失败降级 |
 | 可观测 | pino 日志 | ✅ |
@@ -258,6 +262,7 @@ AI 助手、AIGC 工具
 ## 10. 相关文档
 
 - [ai-dev-plan.md](./ai-dev-plan.md) — 开发与验收
+- [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) — 策展规则、合集分页、评分/上限设置
 - [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) — 缩图、超时、语义搜索、设置 UX
 - [openclaw-agent-integration.md](./openclaw-agent-integration.md) — Agent 规划（未编码）
 - [README.md](./README.md) — 本目录索引
@@ -271,4 +276,5 @@ AI 助手、AIGC 工具
 | v1.0 | 2026-05-26 | 初稿 48 项功能规划 |
 | v1.1 | 2026-05-27 | 标注实现状态；补充自动策展、VecStore、IPC；更新分期进度 |
 | **v1.2** | 2026-05-27 | AI-104 按 dev-plan 标 ✅；AI-208 拆为 208a/208b；AI-104+ 标为后续增强 |
-| **v1.3** | 2026-05-27 | AI-009～011、AI-102a；`search.useSemanticSearch`；超时/缩图默认值；链至 performance 文档 |
+| v1.3 | 2026-05-27 | AI-009～011、AI-102a；`search.useSemanticSearch`；超时/缩图默认值 |
+| **v1.4** | 2026-05-28 | AI-206a/b；评分门槛取代条数顶；`autoCollectionsMaxCount`；合集分页；AiSetting 子项 |

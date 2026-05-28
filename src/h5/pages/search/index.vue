@@ -33,9 +33,7 @@ const { immersiveMode } = storeToRefs(commonStore)
 
 const useSemanticSearch = computed(() => !!settingData.value?.search?.useSemanticSearch)
 
-const semanticSearchAvailable = computed(
-  () => !!settingData.value?.ai?.enabled && !!settingData.value?.ai?.enableEmbedding
-)
+const semanticSearchAvailable = computed(() => !!settingData.value?.ai?.enabled)
 
 const onSemanticSearchChange = async (val) => {
   await settingStore.h5UpdateSettingData({

@@ -334,19 +334,23 @@ export default class Store {
     this.startAiAnalysisTask()
   }
 
+  isPowerSaveOnBattery() {
+    return !!(this.settingData?.powerSaveMode && this.powerState?.isOnBattery)
+  }
+
   startAiAnalysisTask() {
     const ai = this.settingData?.ai
     if (!ai?.enabled || ai.analysisMode === 'off' || ai.analysisMode === 'on_demand') {
       return
     }
-    if (ai.runOnBattery && this.powerState.isOnBattery) {
+    if (this.isPowerSaveOnBattery()) {
       return
     }
     this.taskScheduler.scheduleTask(
       'aiAnalysis',
       5 * 60 * 1000,
       () => {
-        if (ai.runOnBattery && this.powerState.isOnBattery) return
+        if (this.isPowerSaveOnBattery()) return
         this.aiAnalysisManager.intervalAnalyze(this.locks)
       },
       4 * 60 * 1000
@@ -400,7 +404,12 @@ export default class Store {
   restartCollectionCuratorTask(oldData, newData) {
     const o = oldData?.ai || {}
     const n = newData?.ai || {}
-    if (o.enabled !== n.enabled || o.autoCollectionsEnabled !== n.autoCollectionsEnabled) {
+    if (
+      o.enabled !== n.enabled ||
+      o.autoCollectionsEnabled !== n.autoCollectionsEnabled ||
+      o.autoCollectionsMaxCount !== n.autoCollectionsMaxCount ||
+      o.scoreMinFilter !== n.scoreMinFilter
+    ) {
       this.initCollectionCuratorTask()
       if (n.enabled && n.autoCollectionsEnabled !== false) {
         this.scheduleCollectionCurator(15 * 1000)
@@ -954,7 +963,10 @@ export default class Store {
     ipcMain.handle('main:collections:list', () => this.collectionsManager.list())
 
     ipcMain.handle('main:collections:get', (event, params) =>
-      this.collectionsManager.get(params?.id)
+      this.collectionsManager.get(params?.id, {
+        startPage: params?.startPage,
+        pageSize: params?.pageSize
+      })
     )
 
     ipcMain.handle('main:collections:create', async (event, params) => {

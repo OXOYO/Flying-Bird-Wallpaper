@@ -12,13 +12,16 @@ import {
   MODEL_PURPOSE,
   validateModelForPurpose
 } from './AiModelUtils.mjs'
-import { buildRemoteExtraHeaders } from '../../common/aiProviders.js'
+import { buildRemoteExtraHeaders, presetRequiresApiKey } from '../../common/aiProviders.js'
 
 const PURPOSE_LABEL = {
   vision: 'vision',
   text: 'text',
   embed: 'embed'
 }
+
+/** 解析失败时写入日志的模型原文最大长度 */
+const AI_RAW_RESPONSE_LOG_MAX = 2000
 
 export default class AiAnalysisProvider {
   static _instance = null
@@ -87,9 +90,6 @@ export default class AiAnalysisProvider {
     if (!ai.enabled) {
       return normalizeAnalysisResult({ score: 0, tags: [], safeForWork: true, nsfwLevel: 0 })
     }
-    if (ai.allowRemoteImageUpload === false && ai.visionProvider === AI_PROVIDER_TYPES.OPENAI_COMPATIBLE) {
-      // 远程需用户显式允许上传图片
-    }
 
     let fileSizeBytes = 0
     try {
@@ -117,6 +117,12 @@ export default class AiAnalysisProvider {
     let parsed = extractJsonObject(rawText)
     const parseMs = Date.now() - parseStartedAt
     if (!parsed) {
+      const raw = typeof rawText === 'string' ? rawText : String(rawText ?? '')
+      const truncated = raw.length > AI_RAW_RESPONSE_LOG_MAX
+      const preview = truncated ? `${raw.slice(0, AI_RAW_RESPONSE_LOG_MAX)}…` : raw
+      this.logger?.warn(
+        `[AiAnalysisProvider] JSON parse failed rawLen=${raw.length} truncated=${truncated} visionMs=${visionMs}ms model=${ai.visionModel} file=${filePath} raw=${preview}`
+      )
       throw new Error('AI 返回无法解析为 JSON')
     }
     if (this.logger) {
@@ -142,7 +148,7 @@ export default class AiAnalysisProvider {
 
   async embedText(text) {
     const ai = this.ai
-    if (!ai.enableEmbedding) return []
+    if (!ai.enabled) return []
     const provider = this.createProvider('text')
     const model = ai.embeddingModel || ai.textModel
     if (typeof provider.embed === 'function') {
@@ -173,7 +179,12 @@ export default class AiAnalysisProvider {
     const catalogPurpose =
       purpose === 'embed' ? MODEL_PURPOSE.EMBED : purpose === 'vision' ? MODEL_PURPOSE.VISION : MODEL_PURPOSE.TEXT
 
-    if (providerType === AI_PROVIDER_TYPES.OPENAI_COMPATIBLE && !this.getApiKey(kind, ai)) {
+    const presetId = isVision ? ai.visionPreset : ai.textPreset
+    if (
+      providerType === AI_PROVIDER_TYPES.OPENAI_COMPATIBLE &&
+      presetRequiresApiKey(presetId, baseUrl) &&
+      !this.getApiKey(kind, ai)
+    ) {
       return { success: false, errorCode: AI_ERROR_CODE.API_KEY_MISSING, message: '' }
     }
 
@@ -205,7 +216,12 @@ export default class AiAnalysisProvider {
     const providerType = kind === 'vision' ? ai.visionProvider : ai.textProvider
     const baseUrl = kind === 'vision' ? ai.visionBaseUrl : ai.textBaseUrl
 
-    if (providerType === AI_PROVIDER_TYPES.OPENAI_COMPATIBLE && !this.getApiKey(kind, ai)) {
+    const presetId = kind === 'vision' ? ai.visionPreset : ai.textPreset
+    if (
+      providerType === AI_PROVIDER_TYPES.OPENAI_COMPATIBLE &&
+      presetRequiresApiKey(presetId, baseUrl) &&
+      !this.getApiKey(kind, ai)
+    ) {
       return { success: false, errorCode: AI_ERROR_CODE.API_KEY_MISSING, message: '' }
     }
 

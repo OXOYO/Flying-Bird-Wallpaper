@@ -30,7 +30,8 @@ export function useExploreCardGrid(settingDataRef, options = {}) {
     cardHeight: Math.floor(225 * 0.618),
     gridSize: 4,
     gridGap: 4,
-    buffer: 100
+    buffer: 100,
+    pageSize: 50
   })
 
   const applyGridSize = (blockWidth, blockHeight) => {
@@ -69,6 +70,11 @@ export function useExploreCardGrid(settingDataRef, options = {}) {
     }
 
     updates.buffer = calculateOptimalBuffer(blockHeight, updates.cardHeight)
+    const allCardSize = Math.floor(
+      (blockWidth * blockHeight) / (updates.cardWidth * updates.cardHeight)
+    )
+    const rows = Math.floor(allCardSize / updates.gridSize)
+    updates.pageSize = Math.max(1, Math.floor((rows + 2) * updates.gridSize))
     Object.assign(cardForm, updates)
     onLayout?.(blockWidth, blockHeight)
   }

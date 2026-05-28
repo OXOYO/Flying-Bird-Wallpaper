@@ -1,5 +1,7 @@
 <script setup>
-defineProps({
+import { nextTick, onMounted, ref, watch } from 'vue'
+
+const props = defineProps({
   buttons: { type: Array, default: () => [] },
   show: { type: Boolean, default: true },
   loading: { type: Boolean, default: false },
@@ -13,6 +15,30 @@ defineProps({
 
 const emit = defineEmits(['action'])
 
+const backtopReady = ref(false)
+
+const resolveBacktopTarget = () => {
+  if (!props.backtopTarget) return null
+  try {
+    return document.querySelector(props.backtopTarget)
+  } catch {
+    return null
+  }
+}
+
+const syncBacktopReady = async () => {
+  await nextTick()
+  backtopReady.value = !!(props.show && props.showBacktop && resolveBacktopTarget())
+}
+
+onMounted(syncBacktopReady)
+
+watch(
+  () => [props.show, props.showBacktop, props.backtopTarget],
+  () => syncBacktopReady(),
+  { flush: 'post' }
+)
+
 const onClick = (action, actionParams, childVal) => {
   emit('action', action, actionParams, childVal)
 }
@@ -20,7 +46,7 @@ const onClick = (action, actionParams, childVal) => {
 
 <template>
   <el-backtop
-    v-if="show && showBacktop"
+    v-if="backtopReady"
     class="explore-fixed-btn explore-fixed-btn--backtop"
     :right="40"
     :bottom="backtopBottom"

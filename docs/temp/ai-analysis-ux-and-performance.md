@@ -132,6 +132,7 @@
 | 分析模式 / 超时 / 视觉输入 / 功能开关 | 均用 Tooltip，无大块 `field-hint` |
 | 标签列宽 | `label-width="auto"`（按最宽标签对齐），**不固定宽度**，避免长标签换行 |
 | 进度卡 Tooltip | `AiAnalysisDashboardPanel.vue` 同步换行样式 |
+| 合集相关子项 | `scoreMinFilter`、`autoCollectionsMaxCount` 在「AI 自动整理合集」下 — 见 [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) |
 
 ---
 
@@ -146,6 +147,8 @@
 | `visionMaxLongEdge` | 2048 | 最长边 px |
 | `visionPreprocessMinSizeMB` | 1.5 | 低于此体积且长边已够则不缩 |
 | `visionJpegQuality` | 88 | 缩图 JPEG 质量 |
+| `scoreMinFilter` | null | 最低评分；搜索 + 系统合集 |
+| `autoCollectionsMaxCount` | 20 | 系统推荐合集数量上限（3～50） |
 
 ### `settingData.search`
 
@@ -196,3 +199,4 @@
 | 版本 | 日期 | 说明 |
 |------|------|------|
 | v1.0 | 2026-05-27 | 缩图、动态超时、语义搜索迁移、探索顶栏、设置 Tooltip/对齐 |
+| v1.1 | 2026-05-28 | 设置速查补充 `scoreMinFilter` / `autoCollectionsMaxCount`；链至合集专题文档 |

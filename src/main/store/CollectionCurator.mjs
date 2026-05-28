@@ -6,13 +6,13 @@ import { buildCollectionMergePrompt } from '../ai/AiPrompts.mjs'
 import { extractJsonObject, normalizeCollectionMergePlan } from '../ai/AiResponseParser.mjs'
 import { t } from '../../i18n/server.js'
 import {
-  AUTO_COLLECTION_ITEM_LIMIT,
   AUTO_COLLECTION_MIN_EMBEDDINGS,
   AUTO_COLLECTION_MIN_ITEMS,
   AUTO_COLLECTION_MIN_TAG_RESOURCES,
   COLLECTION_SOURCE,
   computeAutoCollectionCount,
-  isValidAutoCollectionTag
+  isValidAutoCollectionTag,
+  resolveAutoCollectionScoreMin
 } from './collectionConstants.mjs'
 
 /**
@@ -44,6 +44,10 @@ export default class CollectionCurator {
 
   isEnabled() {
     return !!this.ai.enabled && this.ai.autoCollectionsEnabled !== false
+  }
+
+  getScoreMin() {
+    return resolveAutoCollectionScoreMin(this.ai)
   }
 
   countAnalyzedImages() {
@@ -87,7 +91,14 @@ export default class CollectionCurator {
     return rows.filter((row) => isValidAutoCollectionTag(row.tag)).slice(0, limit)
   }
 
-  getResourceIdsForTag(tag, limit = AUTO_COLLECTION_ITEM_LIMIT) {
+  getResourceIdsForTag(tag) {
+    const scoreMin = this.getScoreMin()
+    const params = [AI_ANALYSIS_STATUS.DONE, tag]
+    let scoreClause = ''
+    if (scoreMin != null) {
+      scoreClause = ' AND r.score >= ?'
+      params.push(scoreMin)
+    }
     return this.db
       .prepare(
         `SELECT r.id
@@ -96,11 +107,10 @@ export default class CollectionCurator {
          JOIN fbw_words w ON w.id = rw.wordId
          WHERE r.fileType = 'image'
            AND r.aiAnalysisStatus = ?
-           AND w.word = ?
-         ORDER BY r.score DESC, r.id DESC
-         LIMIT ?`
+           AND w.word = ?${scoreClause}
+         ORDER BY r.score DESC, r.id DESC`
       )
-      .all(AI_ANALYSIS_STATUS.DONE, tag, limit)
+      .all(...params)
       .map((row) => row.id)
   }
 
@@ -137,14 +147,21 @@ export default class CollectionCurator {
       .slice(0, limit)
   }
 
-  sortResourceIdsByScore(resourceIds = [], limit = AUTO_COLLECTION_ITEM_LIMIT) {
+  sortResourceIdsByScore(resourceIds = []) {
     if (!resourceIds.length) return []
+    const scoreMin = this.getScoreMin()
     const ph = resourceIds.map(() => '?').join(',')
+    const params = [...resourceIds]
+    let scoreClause = ''
+    if (scoreMin != null) {
+      scoreClause = ' AND score >= ?'
+      params.push(scoreMin)
+    }
     return this.db
       .prepare(
-        `SELECT id FROM fbw_resources WHERE id IN (${ph}) ORDER BY score DESC, id DESC LIMIT ?`
+        `SELECT id FROM fbw_resources WHERE id IN (${ph})${scoreClause} ORDER BY score DESC, id DESC`
       )
-      .all(...resourceIds, limit)
+      .all(...params)
       .map((row) => row.id)
   }
 
@@ -172,14 +189,21 @@ export default class CollectionCurator {
     const embedCount = this.countEmbeddings()
     if (embedCount < AUTO_COLLECTION_MIN_EMBEDDINGS) return []
 
+    const scoreMin = this.getScoreMin()
+    const vecParams = [AI_ANALYSIS_STATUS.DONE]
+    let vecScoreClause = ''
+    if (scoreMin != null) {
+      vecScoreClause = ' AND r.score >= ?'
+      vecParams.push(scoreMin)
+    }
     const rows = this.db
       .prepare(
         `SELECT r.id, v.embedding, v.dim
          FROM fbw_resources r
          JOIN fbw_resource_vec_blob v ON v.resourceId = r.id
-         WHERE r.fileType = 'image' AND r.aiAnalysisStatus = ?`
+         WHERE r.fileType = 'image' AND r.aiAnalysisStatus = ?${vecScoreClause}`
       )
-      .all(AI_ANALYSIS_STATUS.DONE)
+      .all(...vecParams)
 
     const dimMap = new Map()
     for (const row of rows) {
@@ -290,6 +314,7 @@ export default class CollectionCurator {
     const { autoKey, name, prompt, resourceIds, tags = [], semanticQuery = '', mergeIds = [] } =
       plan
     const existing = this.listAutoCollections().find((c) => this.parseAutoKey(c) === autoKey)
+    const scoreMin = this.getScoreMin()
     const queryJson = {
       autoKey,
       autoType: mergeIds.length > 1 || autoKey.startsWith('merged:') ? 'merged' : autoKey.split(':')[0],
@@ -298,7 +323,7 @@ export default class CollectionCurator {
       tagsMode: 'any',
       semanticQuery,
       useSemantic: !!semanticQuery,
-      limitCount: AUTO_COLLECTION_ITEM_LIMIT,
+      scoreMin,
       sortField: 'score',
       sortType: -1,
       source: COLLECTION_SOURCE.AUTO
@@ -358,7 +383,7 @@ export default class CollectionCurator {
   getStats() {
     const analyzed = this.countAnalyzedImages()
     const embeddings = this.countEmbeddings()
-    const target = computeAutoCollectionCount(analyzed)
+    const target = computeAutoCollectionCount(analyzed, this.ai)
     const autoCount = this.listAutoCollections().length
     return {
       enabled: this.isEnabled(),
@@ -383,7 +408,7 @@ export default class CollectionCurator {
     try {
       const analyzed = this.countAnalyzedImages()
       const embeddings = this.countEmbeddings()
-      const targetCount = computeAutoCollectionCount(analyzed)
+      const targetCount = computeAutoCollectionCount(analyzed, this.ai)
       if (!targetCount) {
         return {
           success: true,

@@ -1,6 +1,9 @@
 import { t } from '../../i18n/server.js'
 import TextQueryParser from '../ai/TextQueryParser.mjs'
-import { isCollectionRefreshDue } from './collectionConstants.mjs'
+import {
+  COLLECTION_ITEMS_DEFAULT_PAGE_SIZE,
+  isCollectionRefreshDue
+} from './collectionConstants.mjs'
 
 export default class CollectionsManager {
   static _instance = null
@@ -60,18 +63,40 @@ export default class CollectionsManager {
     return { success: true, data, message: t('messages.querySuccess') }
   }
 
-  get(id) {
+  get(id, options = {}) {
     const collection = this.db.prepare(`SELECT * FROM fbw_collections WHERE id = ?`).get(id)
     if (!collection) return { success: false, message: t('messages.operationFail') }
+
+    const startPage = Math.max(1, Number(options.startPage) || 1)
+    const pageSize = Math.min(
+      200,
+      Math.max(1, Number(options.pageSize) || COLLECTION_ITEMS_DEFAULT_PAGE_SIZE)
+    )
+    const total =
+      this.db
+        .prepare(`SELECT COUNT(*) AS c FROM fbw_collection_items WHERE collectionId = ?`)
+        .get(id)?.c || 0
+    const offset = (startPage - 1) * pageSize
     const items = this.db
       .prepare(
         `SELECT ci.*, r.* FROM fbw_collection_items ci
          JOIN fbw_resources r ON r.id = ci.resourceId
          WHERE ci.collectionId = ?
-         ORDER BY ci.rank ASC`
+         ORDER BY ci.rank ASC
+         LIMIT ? OFFSET ?`
       )
-      .all(id)
-    return { success: true, data: { collection, items } }
+      .all(id, pageSize, offset)
+
+    return {
+      success: true,
+      data: {
+        collection,
+        items,
+        total,
+        startPage,
+        pageSize
+      }
+    }
   }
 
   create(params = {}) {

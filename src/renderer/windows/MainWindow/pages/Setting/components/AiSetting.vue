@@ -7,10 +7,11 @@ import {
   applyServicePreset,
   getPresetById,
   isLocalPreset,
-  isRemotePreset
+  presetRequiresApiKey
 } from '@common/aiProviders.js'
 import { resolveAiUserMessage } from '@common/aiErrorUtils.js'
 import { useSettingAnchorScroll } from '../utils/useSettingAnchorScroll.js'
+import clipboard from 'clipboardy'
 import AiAnalysisDashboardPanel from './AiAnalysisDashboardPanel.vue'
 
 const { t } = useTranslation()
@@ -55,16 +56,6 @@ const analysisModeOptions = computed(() => [
 /** AI 功能开关：说明放 tooltip，避免表单项纵向堆叠过乱 */
 const featureSwitches = [
   {
-    key: 'enableEmbedding',
-    labelKey: 'pages.Setting.aiSetting.enableEmbedding',
-    hintKey: 'pages.Setting.aiSetting.enableEmbeddingHint'
-  },
-  {
-    key: 'autoCollectionsEnabled',
-    labelKey: 'pages.Setting.aiSetting.autoCollectionsEnabled',
-    hintKey: 'pages.Setting.aiSetting.autoCollectionsEnabledHint'
-  },
-  {
     key: 'enableNsfwCheck',
     labelKey: 'pages.Setting.aiSetting.enableNsfwCheck',
     hintKey: 'pages.Setting.aiSetting.enableNsfwCheckHint'
@@ -73,16 +64,6 @@ const featureSwitches = [
     key: 'expandDownloadKeywords',
     labelKey: 'pages.Setting.aiSetting.expandDownloadKeywords',
     hintKey: 'pages.Setting.aiSetting.expandDownloadKeywordsHint'
-  },
-  {
-    key: 'runOnBattery',
-    labelKey: 'pages.Setting.aiSetting.runOnBattery',
-    hintKey: 'pages.Setting.aiSetting.runOnBatteryHint'
-  },
-  {
-    key: 'allowRemoteImageUpload',
-    labelKey: 'pages.Setting.aiSetting.allowRemoteImageUpload',
-    hintKey: 'pages.Setting.aiSetting.allowRemoteImageUploadHint'
   },
   {
     key: 'legacyOnnxScore',
@@ -96,10 +77,37 @@ const featureSwitches = [
   }
 ]
 
-const isRemoteVision = computed(() => isRemotePreset(aiForm.visionPreset))
-const isRemoteText = computed(() => isRemotePreset(aiForm.textPreset))
-const isVisionCustom = computed(() => getPresetById(aiForm.visionPreset)?.custom)
-const isTextCustom = computed(() => getPresetById(aiForm.textPreset)?.custom)
+const visionRequiresApiKey = computed(() =>
+  presetRequiresApiKey(aiForm.visionPreset, aiForm.visionBaseUrl)
+)
+/** 云端视觉（非本机 OpenAI 兼容）时展示隐私说明 */
+const showRemoteVisionPrivacyNote = computed(() => visionRequiresApiKey.value)
+const textRequiresApiKey = computed(() =>
+  presetRequiresApiKey(aiForm.textPreset, aiForm.textBaseUrl)
+)
+
+const localModelHintKey = (presetId) => {
+  if (!isLocalPreset(presetId)) return ''
+  if (presetId === 'ollama') return 'pages.Setting.aiSetting.ollamaModelHint'
+  return `pages.Setting.aiSetting.presetHints.${presetId}`
+}
+const visionModelHintKey = computed(() => localModelHintKey(aiForm.visionPreset))
+const textModelHintKey = computed(() => localModelHintKey(aiForm.textPreset))
+
+const visionBaseUrlPlaceholder = computed(() => {
+  const preset = getPresetById(aiForm.visionPreset)
+  if (preset?.custom) return t('pages.Setting.aiSetting.customBaseUrlPlaceholder')
+  return preset?.baseUrl || t('pages.Setting.aiSetting.customBaseUrlPlaceholder')
+})
+const textBaseUrlPlaceholder = computed(() => {
+  const preset = getPresetById(aiForm.textPreset)
+  if (preset?.custom) return t('pages.Setting.aiSetting.customBaseUrlPlaceholder')
+  return preset?.baseUrl || t('pages.Setting.aiSetting.customBaseUrlPlaceholder')
+})
+
+const visionPresetPrev = ref(aiForm.visionPreset || 'ollama')
+const textPresetPrev = ref(aiForm.textPreset || 'ollama')
+
 const showOpenRouterFields = computed(
   () => aiForm.visionPreset === 'openrouter' || aiForm.textPreset === 'openrouter'
 )
@@ -215,6 +223,9 @@ const AI_TIMEOUT_MIN_SEC = 60
 const AI_TIMEOUT_MAX_SEC = 1800
 const AI_TIMEOUT_DEFAULT_SEC = 300
 
+const AUTO_COLLECTION_COUNT_MIN = 3
+const AUTO_COLLECTION_COUNT_ABSOLUTE_MAX = 50
+
 const AI_VISION_LONG_EDGE_MIN = 1024
 const AI_VISION_LONG_EDGE_MAX = 4096
 const AI_VISION_PREPROCESS_MIN_MB_MAX = 20
@@ -235,11 +246,38 @@ const timeoutSeconds = computed({
 
 const aiSnapshot = () => ({ ...toRaw(aiForm) })
 
+/** scoreMinFilter：空表示不限制（搜索与系统合集均生效） */
+const scoreMinFilterModel = computed({
+  get() {
+    const v = aiForm.scoreMinFilter
+    if (v == null || v === '') return undefined
+    const n = Number(v)
+    return Number.isFinite(n) ? n : undefined
+  },
+  set(val) {
+    if (val == null || val === '' || Number.isNaN(Number(val))) {
+      aiForm.scoreMinFilter = null
+    } else {
+      aiForm.scoreMinFilter = Math.min(100, Math.max(0, Math.round(Number(val))))
+    }
+  }
+})
+
+const onScoreMinFilterChange = () => {
+  onAiFormChange()
+}
+
 const ensureAiFields = () => {
   if (!aiForm.visionApiKey) aiForm.visionApiKey = aiForm.apiKey || ''
   if (!aiForm.textApiKey) aiForm.textApiKey = aiForm.apiKey || ''
   if (!aiForm.remoteAppTitle) aiForm.remoteAppTitle = 'Flying Bird Wallpaper'
   if (aiForm.autoCollectionsEnabled === undefined) aiForm.autoCollectionsEnabled = true
+  if (aiForm.autoCollectionsMaxCount == null || aiForm.autoCollectionsMaxCount === '') {
+    aiForm.autoCollectionsMaxCount = 20
+  }
+  if (aiForm.scoreMinFilter == null || aiForm.scoreMinFilter === '') {
+    aiForm.scoreMinFilter = 70
+  }
   if (!aiForm.timeout || aiForm.timeout < AI_TIMEOUT_MIN_SEC * 1000) {
     aiForm.timeout = AI_TIMEOUT_DEFAULT_SEC * 1000
   }
@@ -256,6 +294,8 @@ const syncAiFormFromStore = () => {
     aiForm[key] = ai[key]
   })
   ensureAiFields()
+  visionPresetPrev.value = aiForm.visionPreset || 'ollama'
+  textPresetPrev.value = aiForm.textPreset || 'ollama'
 }
 
 const onAiFormChange = async () => {
@@ -346,14 +386,32 @@ const refreshTextModels = async (silent = false, scope = 'all') => {
   await fetchModels('text', 'embed', embedModels, loadingEmbedModels, silent)
 }
 
+const copyApiKey = (value) => {
+  const text = String(value || '').trim()
+  if (!text) {
+    ElMessage.warning(t('pages.Setting.aiSetting.errors.apiKeyMissing'))
+    return
+  }
+  clipboard
+    .write(text)
+    .then(() => {
+      ElMessage.success(t('messages.copySuccess'))
+    })
+    .catch(() => {
+      ElMessage.error(t('messages.copyFail'))
+    })
+}
+
 const onVisionPresetChange = async () => {
-  applyServicePreset(aiForm, 'vision')
+  applyServicePreset(aiForm, 'vision', { previousPresetId: visionPresetPrev.value })
+  visionPresetPrev.value = aiForm.visionPreset
   await onAiFormChange()
   await refreshVisionModels(true)
 }
 
 const onTextPresetChange = async () => {
-  applyServicePreset(aiForm, 'text')
+  applyServicePreset(aiForm, 'text', { previousPresetId: textPresetPrev.value })
+  textPresetPrev.value = aiForm.textPreset
   await onAiFormChange()
   await refreshTextModels(true)
 }
@@ -386,10 +444,6 @@ const onTestText = async () => {
         success: false,
         message: resolveAiUserMessage(textRes, t)
       }
-      return
-    }
-    if (!aiForm.enableEmbedding) {
-      testTextResult.value = { success: true, message: t('pages.Setting.aiSetting.testOk') }
       return
     }
     const embedRes = await window.FBW.testAiConnection({ type: 'embed', ai: aiSnapshot() })
@@ -471,7 +525,6 @@ defineExpose({ resetForm, restoreAnchorScroll })
         v-if="showAnalysisProgress"
         :loading="loadingAnalysisStats && !analysisStats"
         :stats="analysisStats"
-        :enable-embedding="aiForm.enableEmbedding"
         :percent="analysisProgressPercent"
         :status-label="analysisStatusLabel"
         :status-tooltip="analysisStatusTooltip"
@@ -710,49 +763,46 @@ defineExpose({ resetForm, restoreAnchorScroll })
             {{ t('pages.Setting.aiSetting.visionSection') }}
           </div>
           <el-form-item :label="t('pages.Setting.aiSetting.serviceProvider')">
-            <el-select
-              v-model="aiForm.visionPreset"
+            <div class="vision-provider-block">
+              <el-select
+                v-model="aiForm.visionPreset"
+                style="width: 290px"
+                @change="onVisionPresetChange"
+              >
+                <el-option
+                  v-for="item in presetOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+              <div v-if="showRemoteVisionPrivacyNote" class="field-hint">
+                {{ t('pages.Setting.aiSetting.remoteVisionPrivacyNote') }}
+              </div>
+            </div>
+          </el-form-item>
+          <el-form-item :label="t('pages.Setting.aiSetting.visionBaseUrl')">
+            <el-input
+              v-model="aiForm.visionBaseUrl"
               style="width: 290px"
-              @change="onVisionPresetChange"
-            >
-              <el-option
-                v-for="item in presetOptions"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
+              :placeholder="visionBaseUrlPlaceholder"
+              @change="onAiFormChange"
+            />
+          </el-form-item>
+          <el-form-item v-if="visionRequiresApiKey" :label="t('pages.Setting.aiSetting.apiKey')">
+            <div class="api-key-row">
+              <el-input
+                v-model="aiForm.visionApiKey"
+                type="password"
+                show-password
+                class="api-key-row__input"
+                :placeholder="t('pages.Setting.aiSetting.apiKeyPlaceholder')"
+                @change="onAiFormChange"
               />
-            </el-select>
-          </el-form-item>
-          <el-form-item
-            v-if="isVisionCustom"
-            :label="t('pages.Setting.aiSetting.visionBaseUrl')"
-          >
-            <el-input
-              v-model="aiForm.visionBaseUrl"
-              style="width: 290px"
-              :placeholder="t('pages.Setting.aiSetting.customBaseUrlPlaceholder')"
-              @change="onAiFormChange"
-            />
-          </el-form-item>
-          <el-form-item v-else-if="!isLocalPreset(aiForm.visionPreset)" label=" ">
-            <el-text type="info">{{ aiForm.visionBaseUrl }}</el-text>
-          </el-form-item>
-          <el-form-item v-else :label="t('pages.Setting.aiSetting.visionBaseUrl')">
-            <el-input
-              v-model="aiForm.visionBaseUrl"
-              style="width: 290px"
-              @change="onAiFormChange"
-            />
-          </el-form-item>
-          <el-form-item v-if="isRemoteVision" :label="t('pages.Setting.aiSetting.apiKey')">
-            <el-input
-              v-model="aiForm.visionApiKey"
-              type="password"
-              show-password
-              style="width: 290px"
-              :placeholder="t('pages.Setting.aiSetting.apiKeyPlaceholder')"
-              @change="onAiFormChange"
-            />
+              <el-button @click="copyApiKey(aiForm.visionApiKey)">
+                {{ t('pages.Setting.aiSetting.copyApiKey') }}
+              </el-button>
+            </div>
           </el-form-item>
           <el-form-item :label="t('pages.Setting.aiSetting.visionModel')">
             <div class="model-row">
@@ -771,8 +821,8 @@ defineExpose({ resetForm, restoreAnchorScroll })
                 {{ t('pages.Setting.aiSetting.refreshModels') }}
               </el-button>
             </div>
-            <div v-if="isLocalPreset(aiForm.visionPreset)" class="field-hint">
-              {{ t('pages.Setting.aiSetting.ollamaModelHint') }}
+            <div v-if="visionModelHintKey" class="field-hint">
+              {{ t(visionModelHintKey) }}
             </div>
           </el-form-item>
           <el-form-item label=" ">
@@ -807,33 +857,28 @@ defineExpose({ resetForm, restoreAnchorScroll })
               />
             </el-select>
           </el-form-item>
-          <el-form-item v-if="isTextCustom" :label="t('pages.Setting.aiSetting.textBaseUrl')">
+          <el-form-item :label="t('pages.Setting.aiSetting.textBaseUrl')">
             <el-input
               v-model="aiForm.textBaseUrl"
               style="width: 290px"
-              :placeholder="t('pages.Setting.aiSetting.customBaseUrlPlaceholder')"
+              :placeholder="textBaseUrlPlaceholder"
               @change="onAiFormChange"
             />
           </el-form-item>
-          <el-form-item v-else-if="!isLocalPreset(aiForm.textPreset)" label=" ">
-            <el-text type="info">{{ aiForm.textBaseUrl }}</el-text>
-          </el-form-item>
-          <el-form-item v-else :label="t('pages.Setting.aiSetting.textBaseUrl')">
-            <el-input
-              v-model="aiForm.textBaseUrl"
-              style="width: 290px"
-              @change="onAiFormChange"
-            />
-          </el-form-item>
-          <el-form-item v-if="isRemoteText" :label="t('pages.Setting.aiSetting.apiKey')">
-            <el-input
-              v-model="aiForm.textApiKey"
-              type="password"
-              show-password
-              style="width: 290px"
-              :placeholder="t('pages.Setting.aiSetting.apiKeyPlaceholder')"
-              @change="onAiFormChange"
-            />
+          <el-form-item v-if="textRequiresApiKey" :label="t('pages.Setting.aiSetting.apiKey')">
+            <div class="api-key-row">
+              <el-input
+                v-model="aiForm.textApiKey"
+                type="password"
+                show-password
+                class="api-key-row__input"
+                :placeholder="t('pages.Setting.aiSetting.apiKeyPlaceholder')"
+                @change="onAiFormChange"
+              />
+              <el-button @click="copyApiKey(aiForm.textApiKey)">
+                {{ t('pages.Setting.aiSetting.copyApiKey') }}
+              </el-button>
+            </div>
           </el-form-item>
           <el-form-item :label="t('pages.Setting.aiSetting.textModel')">
             <div class="model-row">
@@ -851,6 +896,9 @@ defineExpose({ resetForm, restoreAnchorScroll })
               <el-button :loading="loadingTextModels" @click="refreshTextModels(false, 'text')">
                 {{ t('pages.Setting.aiSetting.refreshModels') }}
               </el-button>
+            </div>
+            <div v-if="textModelHintKey" class="field-hint">
+              {{ t(textModelHintKey) }}
             </div>
           </el-form-item>
           <el-form-item :label="t('pages.Setting.aiSetting.embeddingModel')">
@@ -907,6 +955,131 @@ defineExpose({ resetForm, restoreAnchorScroll })
           <div id="divider-ai-features" class="divider">
             {{ t('pages.Setting.aiSetting.sectionFeatures') }}
           </div>
+
+          <el-form-item class="ai-form-item-labeled">
+            <template #label>
+              <span class="form-item-label-with-tip">
+                <span class="form-item-label-with-tip__text">{{
+                  t('pages.Setting.aiSetting.autoCollectionsEnabled')
+                }}</span>
+                <el-tooltip
+                  :content="t('pages.Setting.aiSetting.autoCollectionsEnabledHint')"
+                  placement="top"
+                  :show-after="300"
+                  popper-class="ai-setting-feature-tip"
+                >
+                  <span
+                    class="form-item-tip-trigger"
+                    tabindex="0"
+                    role="button"
+                    :aria-label="t('pages.Setting.aiSetting.autoCollectionsEnabledHint')"
+                    @click.stop
+                  >
+                    <IconifyIcon icon="custom:info-outline-rounded" />
+                  </span>
+                </el-tooltip>
+              </span>
+            </template>
+            <el-switch
+              v-model="aiForm.autoCollectionsEnabled"
+              :disabled="!aiForm.enabled"
+              @change="onAiFormChange"
+            />
+          </el-form-item>
+
+          <div v-if="aiForm.enabled" class="ai-curate-sub-options">
+            <el-form-item
+              v-if="aiForm.autoCollectionsEnabled !== false"
+              class="ai-form-item-labeled"
+            >
+              <template #label>
+                <span class="form-item-label-with-tip">
+                  <span class="form-item-label-with-tip__text">{{
+                    t('pages.Setting.aiSetting.autoCollectionsMaxCount')
+                  }}</span>
+                  <el-tooltip
+                    :content="t('pages.Setting.aiSetting.autoCollectionsMaxCountHint')"
+                    placement="top"
+                    :show-after="300"
+                    popper-class="ai-setting-feature-tip"
+                  >
+                    <span
+                      class="form-item-tip-trigger"
+                      tabindex="0"
+                      role="button"
+                      :aria-label="t('pages.Setting.aiSetting.autoCollectionsMaxCountHint')"
+                      @click.stop
+                    >
+                      <IconifyIcon icon="custom:info-outline-rounded" />
+                    </span>
+                  </el-tooltip>
+                </span>
+              </template>
+              <div class="ai-form-control-row">
+                <el-input-number
+                  v-model="aiForm.autoCollectionsMaxCount"
+                  :min="AUTO_COLLECTION_COUNT_MIN"
+                  :max="AUTO_COLLECTION_COUNT_ABSOLUTE_MAX"
+                  :step="1"
+                  :disabled="!aiForm.enabled"
+                  controls-position="right"
+                  @change="onAiFormChange"
+                />
+              </div>
+            </el-form-item>
+
+            <el-form-item class="ai-form-item-labeled">
+              <template #label>
+                <span class="form-item-label-with-tip">
+                  <span class="form-item-label-with-tip__text">{{
+                    t('pages.Setting.aiSetting.scoreMinFilter')
+                  }}</span>
+                  <el-tooltip
+                    :content="t('pages.Setting.aiSetting.scoreMinFilterHint')"
+                    placement="top"
+                    :show-after="300"
+                    popper-class="ai-setting-feature-tip"
+                  >
+                    <span
+                      class="form-item-tip-trigger"
+                      tabindex="0"
+                      role="button"
+                      :aria-label="t('pages.Setting.aiSetting.scoreMinFilterHint')"
+                      @click.stop
+                    >
+                      <IconifyIcon icon="custom:info-outline-rounded" />
+                    </span>
+                  </el-tooltip>
+                </span>
+              </template>
+              <div class="ai-form-control-row ai-form-control-row--score-min">
+                <el-input-number
+                  v-model="scoreMinFilterModel"
+                  :min="0"
+                  :max="100"
+                  :step="1"
+                  :disabled="!aiForm.enabled"
+                  controls-position="right"
+                  @change="onScoreMinFilterChange"
+                />
+                <el-button
+                  v-if="scoreMinFilterModel != null"
+                  type="primary"
+                  link
+                  :disabled="!aiForm.enabled"
+                  @click="
+                    () => {
+                      scoreMinFilterModel = null
+                      onScoreMinFilterChange()
+                    }
+                  "
+                >
+                  {{ t('pages.Setting.aiSetting.scoreMinFilterClear') }}
+                </el-button>
+              </div>
+            </el-form-item>
+          </div>
+
           <el-form-item
             v-for="item in featureSwitches"
             :key="item.key"
@@ -933,7 +1106,11 @@ defineExpose({ resetForm, restoreAnchorScroll })
                 </el-tooltip>
               </span>
             </template>
-            <el-switch v-model="aiForm[item.key]" @change="onAiFormChange" />
+            <el-switch
+              v-model="aiForm[item.key]"
+              :disabled="!aiForm.enabled"
+              @change="onAiFormChange"
+            />
           </el-form-item>
         </div>
       </el-form>
@@ -989,6 +1166,21 @@ defineExpose({ resetForm, restoreAnchorScroll })
   flex-wrap: wrap;
 }
 
+.api-key-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 360px;
+
+  &__input {
+    flex: 1;
+    min-width: 200px;
+    max-width: 290px;
+  }
+}
+
 .ai-setting-form {
   :deep(.el-form-item) {
     align-items: center;
@@ -1019,6 +1211,15 @@ defineExpose({ resetForm, restoreAnchorScroll })
   flex-wrap: wrap;
   gap: 0;
   min-height: 32px;
+
+  &--score-min {
+    gap: 8px;
+  }
+}
+
+.ai-curate-sub-options {
+  margin: 4px 0 12px;
+  padding: 0;
 }
 
 .ai-form-section-divider {
@@ -1061,6 +1262,13 @@ defineExpose({ resetForm, restoreAnchorScroll })
   &:focus-visible {
     color: var(--el-color-primary);
   }
+}
+
+.vision-provider-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: 360px;
 }
 
 .field-hint {

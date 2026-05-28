@@ -25,6 +25,10 @@ const detail = ref(null)
 
 const selectedCollection = computed(() => detail.value?.collection || null)
 const gridItems = ref([])
+const itemsTotal = ref(0)
+const itemsStartPage = ref(1)
+const itemsHasMore = ref(false)
+const itemsLoading = ref(false)
 const similarMode = ref(false)
 const viewImageRef = ref(null)
 const viewInfoRef = ref(null)
@@ -41,7 +45,11 @@ const {
   measureAndApply,
   bindResizeObserver,
   unbindResizeObserver
-} = useExploreCardGrid(settingData)
+} = useExploreCardGrid(settingData, {
+  onLayout: () => {
+    nextTick(() => ensureItemsFillViewport())
+  }
+})
 
 const measureBlock = async () => {
   measureAndApply()
@@ -66,8 +74,60 @@ const { fixedBtns, backtopBtnBottom, toggleFixedBtns, showFixedBtns } = useColle
   isAutoCollection
 })
 
-const syncGridItems = (items) => {
-  gridItems.value = (items || []).map((row) => normalizeResourceItem(row))
+const syncGridItems = (items, append = false) => {
+  const gridHWRatio = settingData.value?.gridHWRatio ?? 0.618
+  const list = (items || []).map((row) =>
+    normalizeResourceItem(row, { resourceType: 'localResource', gridHWRatio })
+  )
+  if (append) {
+    const ids = new Set(gridItems.value.map((row) => row.uniqueKey))
+    gridItems.value.push(...list.filter((row) => !ids.has(row.uniqueKey)))
+  } else {
+    gridItems.value = list
+  }
+}
+
+const getItemsPageSize = () => Math.max(1, cardForm.pageSize || 50)
+
+const fetchCollectionItems = async (id, startPage, append = false) => {
+  if (!id) return
+  itemsLoading.value = true
+  try {
+    const pageSize = getItemsPageSize()
+    const res = await window.FBW.collectionsGet({ id, startPage, pageSize })
+    if (!res?.success) return
+    detail.value = { collection: res.data.collection }
+    syncGridItems(res.data.items, append)
+    const total = Number(res.data.total) || 0
+    itemsTotal.value = total
+    itemsStartPage.value = res.data.startPage ?? startPage
+    itemsHasMore.value = gridItems.value.length < total
+    collections.value = collections.value.map((row) =>
+      row.id === id ? { ...row, ...(res.data.collection || {}), itemCount: total } : row
+    )
+  } finally {
+    itemsLoading.value = false
+  }
+}
+
+const ensureItemsFillViewport = async () => {
+  if (similarMode.value || itemsLoading.value || !itemsHasMore.value || !selectedId.value) return
+  if (gridItems.value.length && getItemsPageSize() > gridItems.value.length) {
+    await fetchCollectionItems(selectedId.value, itemsStartPage.value + 1, true)
+    await nextTick()
+    scrollRef.value?.updateVisibleItems?.(false)
+  }
+}
+
+const loadMoreItems = async () => {
+  if (similarMode.value || itemsLoading.value || !itemsHasMore.value || !selectedId.value) return
+  await fetchCollectionItems(selectedId.value, itemsStartPage.value + 1, true)
+  await nextTick()
+  scrollRef.value?.updateVisibleItems?.(false)
+}
+
+const onCloseBottom = () => {
+  loadMoreItems()
 }
 
 const resourceActions = useResourceCardActions({
@@ -206,34 +266,6 @@ const onCollectionChange = async (id) => {
   await loadDetail(id)
 }
 
-const applyCollectionCounts = (countById) => {
-  collections.value = collections.value.map((row) => ({
-    ...row,
-    itemCount: Number(countById[row.id] ?? row.itemCount ?? row.itemcount ?? 0)
-  }))
-}
-
-/** 列表未带 itemCount 时，按详情补齐（与点击后一致） */
-const syncCollectionCounts = async () => {
-  const targets = collections.value.filter((row) => collectionItemCount(row) === 0)
-  if (!targets.length) return
-  const pairs = await Promise.all(
-    targets.map((row) =>
-      window.FBW.collectionsGet({ id: row.id }).then((res) => ({
-        id: row.id,
-        count: res?.success ? (res.data?.items?.length ?? 0) : 0
-      }))
-    )
-  )
-  const countById = Object.fromEntries(
-    collections.value.map((row) => [row.id, collectionItemCount(row)])
-  )
-  for (const { id, count } of pairs) {
-    if (count > 0) countById[id] = count
-  }
-  applyCollectionCounts(countById)
-}
-
 const loadList = async () => {
   loading.value = true
   try {
@@ -246,7 +278,6 @@ const loadList = async () => {
         ...row,
         itemCount: Number(row.itemCount ?? row.itemcount ?? 0)
       }))
-      await syncCollectionCounts()
     }
     if (statsRes?.success) {
       curatorStats.value = statsRes.data
@@ -265,19 +296,14 @@ const loadList = async () => {
 const loadDetail = async (id) => {
   selectedId.value = id
   similarMode.value = false
-  const res = await window.FBW.collectionsGet({ id })
-  if (res?.success) {
-    detail.value = res.data
-    syncGridItems(res.data.items)
-    const count = res.data.items?.length ?? 0
-    collections.value = collections.value.map((row) =>
-      row.id === id
-        ? { ...row, ...(res.data.collection || {}), itemCount: count }
-        : row
-    )
-    resetGridScroll()
-    await measureBlock()
-  }
+  gridItems.value = []
+  itemsTotal.value = 0
+  itemsHasMore.value = false
+  itemsStartPage.value = 1
+  await fetchCollectionItems(id, 1, false)
+  resetGridScroll()
+  await measureBlock()
+  await ensureItemsFillViewport()
 }
 
 const onCreate = async () => {
@@ -607,7 +633,7 @@ onBeforeUnmount(() => {
 
       <div ref="cardBlockRef" class="collection-card-block">
         <VirtualList
-          v-if="selectedCollection && gridItems.length"
+          v-if="selectedCollection && (gridItems.length || itemsLoading)"
           ref="scrollRef"
           :items="gridItems"
           :item-height="cardForm.cardHeight"
@@ -617,6 +643,7 @@ onBeforeUnmount(() => {
           :buffer="cardForm.buffer"
           key-field="uniqueKey"
           style="height: 100%; margin: 0 10px"
+          @close-bottom="onCloseBottom"
         >
           <template #default="{ item, index }">
             <div
@@ -641,7 +668,10 @@ onBeforeUnmount(() => {
         <div v-else-if="!collections.length && !loading" class="body-empty">
           <EmptyHelp :text="t('pages.Collections.empty')" :enable-jump="false" />
         </div>
-        <div v-else-if="selectedCollection && !gridItems.length && !loading" class="body-empty">
+        <div
+          v-else-if="selectedCollection && !gridItems.length && !loading && !itemsLoading"
+          class="body-empty"
+        >
           <EmptyHelp :text="t('pages.Collections.noItems')" :enable-jump="false" />
         </div>
         <div v-else-if="!selectedCollection && !loading" class="body-empty">
@@ -653,6 +683,7 @@ onBeforeUnmount(() => {
           :buttons="fixedBtns"
           :show="showFixedBtns"
           :loading="loading"
+          :show-backtop="gridItems.length > 0"
           :backtop-bottom="backtopBtnBottom"
           @action="onFixedBtnAction"
         />
@@ -670,9 +701,9 @@ onBeforeUnmount(() => {
       {{ curatorStatsShort }}
     </span>
     <ListCountIndicator
-      v-if="selectedCollection"
+      v-if="selectedCollection && !similarMode"
       :current="gridItems.length"
-      :total="gridItems.length"
+      :total="itemsTotal"
     />
 
     <el-dialog

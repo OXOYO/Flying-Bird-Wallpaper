@@ -32,7 +32,7 @@ export default class EmbeddingManager {
   }
 
   async upsertForResource(resourceId) {
-    if (!this.ai.enableEmbedding || !this.ai.enabled) return { success: false }
+    if (!this.ai.enabled) return { success: false }
     const row = this.db.prepare(`SELECT id, title, desc, summary, fileName FROM fbw_resources WHERE id = ?`).get(
       resourceId
     )
