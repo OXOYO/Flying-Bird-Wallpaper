@@ -187,14 +187,78 @@ export default class VecStore {
       }
     }
 
+    const queryDim = queryVec?.length || 0
     const rows = this.db.prepare(`SELECT resourceId, embedding, dim FROM fbw_resource_vec_blob`).all()
     const scored = []
     for (const row of rows) {
-      if (excludeId != null && row.resourceId === excludeId) continue
+      if (excludeId != null && Number(row.resourceId) === Number(excludeId)) continue
+      if (queryDim > 0 && Number(row.dim) !== queryDim) continue
       const vec = this.blobToFloat32(row.embedding, row.dim)
+      if (vec.length !== queryDim) continue
       scored.push({ resourceId: row.resourceId, distance: 1 - this.cosine(queryVec, vec) })
     }
     scored.sort((a, b) => a.distance - b.distance)
     return scored.slice(0, k)
+  }
+
+  /**
+   * 仅在指定 resourceId 集合内做 KNN（找相似范围限定，避免全库 Top-K 再过滤漏结果）
+   */
+  knnAmongIds(queryVec, resourceIds = [], limit = 20, excludeId = null) {
+    const ranked = this.rankSimilarAmongIds(queryVec, resourceIds, excludeId, 0)
+    const k = Math.min(Math.max(limit, 1), ranked.length || 1)
+    return ranked.slice(0, k).map(({ resourceId, distance }) => ({ resourceId, distance }))
+  }
+
+  _scoreEmbeddingRow(queryVec, row, queryDim, excludeId) {
+    if (excludeId != null && Number(row.resourceId) === Number(excludeId)) return null
+    if (queryDim > 0 && Number(row.dim) !== queryDim) return null
+    const vec = this.blobToFloat32(row.embedding, row.dim)
+    if (vec.length !== queryDim) return null
+    const similarity = this.cosine(queryVec, vec)
+    return { resourceId: row.resourceId, similarity, distance: 1 - similarity }
+  }
+
+  /**
+   * 在候选 id 内按相似度排序；仅保留 similarity >= minSimilarity
+   * @returns {{ resourceId: number, similarity: number, distance: number }[]}
+   */
+  rankSimilarAmongIds(queryVec, resourceIds = [], excludeId = null, minSimilarity = 0) {
+    const ids = [...new Set(resourceIds.map((id) => Number(id)).filter((id) => id > 0))]
+    if (!ids.length) return []
+
+    const queryDim = queryVec?.length || 0
+    const minSim = Math.min(1, Math.max(0, Number(minSimilarity) || 0))
+    const scored = []
+    const chunkSize = 400
+    for (let i = 0; i < ids.length; i += chunkSize) {
+      const chunk = ids.slice(i, i + chunkSize)
+      const ph = chunk.map(() => '?').join(',')
+      const rows = this.db
+        .prepare(
+          `SELECT resourceId, embedding, dim FROM fbw_resource_vec_blob WHERE resourceId IN (${ph})`
+        )
+        .all(...chunk)
+      for (const row of rows) {
+        const hit = this._scoreEmbeddingRow(queryVec, row, queryDim, excludeId)
+        if (hit && hit.similarity >= minSim) scored.push(hit)
+      }
+    }
+    scored.sort((a, b) => b.similarity - a.similarity)
+    return scored
+  }
+
+  /** 全库有向量记录内找相似（无 scope 时） */
+  rankSimilarGlobal(queryVec, excludeId = null, minSimilarity = 0) {
+    const queryDim = queryVec?.length || 0
+    const minSim = Math.min(1, Math.max(0, Number(minSimilarity) || 0))
+    const rows = this.db.prepare(`SELECT resourceId, embedding, dim FROM fbw_resource_vec_blob`).all()
+    const scored = []
+    for (const row of rows) {
+      const hit = this._scoreEmbeddingRow(queryVec, row, queryDim, excludeId)
+      if (hit && hit.similarity >= minSim) scored.push(hit)
+    }
+    scored.sort((a, b) => b.similarity - a.similarity)
+    return scored
   }
 }

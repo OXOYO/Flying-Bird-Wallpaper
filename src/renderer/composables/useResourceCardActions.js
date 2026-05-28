@@ -122,6 +122,7 @@ export function buildResourceCardButtons(item, context, t) {
  * @param {import('vue').Ref} [options.viewInfoRef]
  * @param {() => object} [options.cardContext]
  * @param {(items: Array) => void} [options.onFindSimilarResult]
+ * @param {() => object|null|undefined} [options.getSimilarScope]
  */
 export function useResourceCardActions(options = {}) {
   const { t } = useTranslation()
@@ -289,10 +290,21 @@ export function useResourceCardActions(options = {}) {
 
   const onFindSimilar = async (item) => {
     if (!item?.id) return
-    const res = await window.FBW.findSimilar({ resourceId: item.id, limit: 40 })
+    const scope = options.getSimilarScope?.() ?? null
+    const pageSize = Math.max(1, Number(options.getSimilarPageSize?.()) || 50)
+    const plainScope =
+      scope && typeof scope === 'object' ? JSON.parse(JSON.stringify(scope)) : null
+    const res = await window.FBW.findSimilar({
+      resourceId: Number(item.id),
+      limit: pageSize,
+      excludeIds: [],
+      ...(plainScope ? { scope: plainScope } : {})
+    })
     if (res?.success && res.data?.list?.length) {
       const list = res.data.list.map((row) => normalizeResourceItem(row))
-      options.onFindSimilarResult?.(list, item)
+      options.onFindSimilarResult?.(list, item, {
+        total: res.data?.total
+      })
     } else {
       ElMessage({ type: 'info', message: t('exploreCommon.findSimilarEmpty') })
     }

@@ -11,6 +11,7 @@ import { useExploreCardGrid } from '@renderer/composables/useExploreCardGrid.mjs
 import { useExploreGridSettings } from '@renderer/composables/useExploreGridSettings.mjs'
 import { useCollectionFloatingButtons } from '@renderer/composables/useCollectionFloatingButtons.mjs'
 import ExploreFixedButtons from '@renderer/components/ExploreFixedButtons.vue'
+import { useSimilarResultsLoadMore } from '@renderer/composables/useSimilarResultsLoadMore.mjs'
 
 const { t } = useTranslation()
 const settingStore = UseSettingStore()
@@ -29,7 +30,6 @@ const itemsTotal = ref(0)
 const itemsStartPage = ref(1)
 const itemsHasMore = ref(false)
 const itemsLoading = ref(false)
-const similarMode = ref(false)
 const viewImageRef = ref(null)
 const viewInfoRef = ref(null)
 const viewImageOptions = { button: true, backdrop: true }
@@ -56,23 +56,51 @@ const measureBlock = async () => {
   await nextTick()
 }
 
-const { gridSizeList, gridRatioList, onSwitchGridSize, onSwitchGridRatio } = useExploreGridSettings({
-  t,
-  settingStore,
-  settingData,
-  cardBlockRef,
-  measureAndApply: measureBlock
+const { gridSizeList, gridRatioList, onSwitchGridSize, onSwitchGridRatio } = useExploreGridSettings(
+  {
+    t,
+    settingStore,
+    settingData,
+    cardBlockRef,
+    measureAndApply: measureBlock
+  }
+)
+
+const mapSimilarGridRows = (rows = []) => {
+  const gridHWRatio = settingData.value?.gridHWRatio ?? 0.618
+  return (rows || []).map((row) =>
+    normalizeResourceItem(row, { resourceType: 'localResource', gridHWRatio })
+  )
+}
+
+const getItemsPageSize = () => Math.max(1, cardForm.pageSize || 50)
+
+const {
+  similarMode,
+  similarSourceItem,
+  similarHasMore,
+  similarTotal,
+  resetSimilar,
+  startSimilar,
+  appendSimilarPage
+} = useSimilarResultsLoadMore({
+  normalizeRows: mapSimilarGridRows,
+  getPageSize: getItemsPageSize
 })
 
-const { fixedBtns, backtopBtnBottom, toggleFixedBtns, showFixedBtns } = useCollectionFloatingButtons({
-  t,
-  settingData,
-  gridSizeList,
-  gridRatioList,
-  selectedCollection,
-  similarMode,
-  isAutoCollection
-})
+/** @type {import('vue').Ref<{ cardList: unknown[], hasMore: boolean } | null>} */
+const similarListSnapshot = ref(null)
+
+const { fixedBtns, backtopBtnBottom, toggleFixedBtns, showFixedBtns } =
+  useCollectionFloatingButtons({
+    t,
+    settingData,
+    gridSizeList,
+    gridRatioList,
+    selectedCollection,
+    similarMode,
+    isAutoCollection
+  })
 
 const syncGridItems = (items, append = false) => {
   const gridHWRatio = settingData.value?.gridHWRatio ?? 0.618
@@ -86,8 +114,6 @@ const syncGridItems = (items, append = false) => {
     gridItems.value = list
   }
 }
-
-const getItemsPageSize = () => Math.max(1, cardForm.pageSize || 50)
 
 const fetchCollectionItems = async (id, startPage, append = false) => {
   if (!id) return
@@ -110,8 +136,52 @@ const fetchCollectionItems = async (id, startPage, append = false) => {
   }
 }
 
+/** @param {{ anchorPrevious?: boolean }} [opts] anchorPrevious：触底加载时保持视口锚点；找相似首屏补齐时不锚定 */
+const loadMoreSimilarItems = async (opts = {}) => {
+  const { anchorPrevious = true } = opts
+  if (!similarMode.value || itemsLoading.value || !itemsHasMore.value) return
+  itemsLoading.value = true
+  try {
+    const lastLen = gridItems.value.length
+    await appendSimilarPage(
+      () => gridItems.value,
+      (list) => {
+        gridItems.value = list
+      }
+    )
+    itemsHasMore.value = similarHasMore.value
+    itemsTotal.value = similarTotal.value
+    if (anchorPrevious && lastLen > 0) {
+      await nextTick()
+      scrollRef.value?.updateVisibleItems?.(false)
+      setTimeout(() => scrollRef.value?.scrollToIndex?.(lastLen - 1))
+    } else {
+      await nextTick()
+      scrollRef.value?.scrollToTop?.(0)
+    }
+  } finally {
+    itemsLoading.value = false
+  }
+}
+
 const ensureItemsFillViewport = async () => {
-  if (similarMode.value || itemsLoading.value || !itemsHasMore.value || !selectedId.value) return
+  if (similarMode.value) {
+    if (itemsLoading.value || !itemsHasMore.value || !selectedId.value) return
+    const pageSize = getItemsPageSize()
+    let guard = 0
+    while (
+      guard < 8 &&
+      !itemsLoading.value &&
+      itemsHasMore.value &&
+      gridItems.value.length < pageSize &&
+      gridItems.value.length < similarTotal.value
+    ) {
+      guard += 1
+      await loadMoreSimilarItems({ anchorPrevious: false })
+    }
+    return
+  }
+  if (itemsLoading.value || !itemsHasMore.value || !selectedId.value) return
   if (gridItems.value.length && getItemsPageSize() > gridItems.value.length) {
     await fetchCollectionItems(selectedId.value, itemsStartPage.value + 1, true)
     await nextTick()
@@ -120,7 +190,11 @@ const ensureItemsFillViewport = async () => {
 }
 
 const loadMoreItems = async () => {
-  if (similarMode.value || itemsLoading.value || !itemsHasMore.value || !selectedId.value) return
+  if (similarMode.value) {
+    await loadMoreSimilarItems()
+    return
+  }
+  if (itemsLoading.value || !itemsHasMore.value || !selectedId.value) return
   await fetchCollectionItems(selectedId.value, itemsStartPage.value + 1, true)
   await nextTick()
   scrollRef.value?.updateVisibleItems?.(false)
@@ -137,6 +211,11 @@ const resourceActions = useResourceCardActions({
   },
   viewImageRef,
   viewInfoRef,
+  getSimilarScope: () =>
+    selectedId.value
+      ? { type: 'collection', collectionId: selectedId.value }
+      : { type: 'collection', collectionId: null },
+  getSimilarPageSize: getItemsPageSize,
   cardContext: () => ({
     inPrivacySpace: false,
     isFavoritesMenu: false,
@@ -146,9 +225,39 @@ const resourceActions = useResourceCardActions({
   onItemRemoved: async () => {
     if (selectedId.value) await loadDetail(selectedId.value)
   },
-  onFindSimilarResult: (list) => {
-    gridItems.value = list
-    similarMode.value = true
+  onFindSimilarResult: (list, item, meta) => {
+    if (!item?.id || !selectedId.value) return
+    const gridHWRatio = settingData.value?.gridHWRatio ?? 0.618
+    const scope = { type: 'collection', collectionId: selectedId.value }
+    const sourceItem = normalizeResourceItem(item, {
+      resourceType: 'localResource',
+      gridHWRatio
+    })
+    if (!similarMode.value) {
+      similarListSnapshot.value = {
+        collectionId: selectedId.value,
+        items: gridItems.value.slice(),
+        itemsHasMore: itemsHasMore.value,
+        itemsTotal: itemsTotal.value
+      }
+    }
+    const firstRows = Array.isArray(list) ? list : []
+    gridItems.value = startSimilar({
+      resourceId: item.id,
+      scope,
+      sourceItem,
+      firstRows,
+      pageSize: getItemsPageSize(),
+      total: meta?.total
+    })
+    itemsHasMore.value = similarHasMore.value
+    itemsTotal.value = similarTotal.value
+    void (async () => {
+      await nextTick()
+      scrollRef.value?.resetScroll?.()
+      await ensureItemsFillViewport()
+      scrollRef.value?.resetScroll?.()
+    })()
   }
 })
 
@@ -157,9 +266,24 @@ const cardStatusClass = (index) => {
   return resourceActions.cardItemStatus.status || ''
 }
 
+const similarSourceImageSrc = computed(() => similarSourceItem.value?.imageSrc || '')
+
 const exitSimilarMode = () => {
-  similarMode.value = false
-  syncGridItems(detail.value?.items)
+  const snap = similarListSnapshot.value
+  resetSimilar()
+  if (snap?.collectionId && snap.collectionId === selectedId.value) {
+    gridItems.value = snap.items || []
+    itemsHasMore.value = !!snap.itemsHasMore
+    itemsTotal.value = snap.itemsTotal ?? gridItems.value.length
+  } else if (selectedId.value) {
+    void loadDetail(selectedId.value)
+  } else {
+    gridItems.value = []
+    itemsHasMore.value = false
+    itemsTotal.value = 0
+  }
+  similarListSnapshot.value = null
+  nextTick(() => scrollRef.value?.resetScroll?.())
 }
 
 const onCardAction = (action, item, index) => {
@@ -194,8 +318,7 @@ const collectionOptionGroups = computed(() => {
   return groups
 })
 
-const collectionItemCount = (item) =>
-  Number(item?.itemCount ?? item?.itemcount ?? 0)
+const collectionItemCount = (item) => Number(item?.itemCount ?? item?.itemcount ?? 0)
 
 const collectionItemCountText = (item) =>
   t('pages.Collections.itemCount', { count: collectionItemCount(item) })
@@ -228,19 +351,8 @@ const curatorStatsShort = computed(() => {
   })
 })
 
-/** 与 MainWindow 侧栏宽度一致，避免 fixed 文案贴到侧栏下 */
-const SIDE_MENU_WIDTH_PX = 70
-const footerStatsFixedStyle = computed(() => {
-  const sideW = settingData.value.expandSideMenu ? SIDE_MENU_WIDTH_PX : 0
-  const inset = 10
-  return {
-    left: `${sideW + inset}px`,
-    maxWidth: `min(520px, calc(100vw - ${sideW + 220}px))`
-  }
-})
-
 const resetGridScroll = () => {
-  nextTick(() => scrollRef.value?.scrollToTop?.(0))
+  nextTick(() => scrollRef.value?.resetScroll?.())
 }
 
 const selectFirstDisplayed = async () => {
@@ -266,22 +378,38 @@ const onCollectionChange = async (id) => {
   await loadDetail(id)
 }
 
+const applyCollectionListResponse = (listRes, statsRes) => {
+  if (listRes?.success && Array.isArray(listRes.data)) {
+    collections.value = listRes.data.map((row) => ({
+      ...row,
+      itemCount: Number(row.itemCount ?? row.itemcount ?? 0)
+    }))
+  }
+  if (statsRes?.success) {
+    curatorStats.value = statsRes.data
+  }
+}
+
+const fetchCollectionList = () =>
+  Promise.all([window.FBW.collectionsList(), window.FBW.collectionsCuratorStats()])
+
+/** 展开下拉时静默刷新列表（不触发整页 loading） */
+const refreshCollectionList = async () => {
+  const [listRes, statsRes] = await fetchCollectionList()
+  applyCollectionListResponse(listRes, statsRes)
+  await nextTick()
+  await selectFirstDisplayed()
+}
+
+const onCollectionSelectVisibleChange = (visible) => {
+  if (visible) void refreshCollectionList()
+}
+
 const loadList = async () => {
   loading.value = true
   try {
-    const [listRes, statsRes] = await Promise.all([
-      window.FBW.collectionsList(),
-      window.FBW.collectionsCuratorStats()
-    ])
-    if (listRes?.success && Array.isArray(listRes.data)) {
-      collections.value = listRes.data.map((row) => ({
-        ...row,
-        itemCount: Number(row.itemCount ?? row.itemcount ?? 0)
-      }))
-    }
-    if (statsRes?.success) {
-      curatorStats.value = statsRes.data
-    }
+    const [listRes, statsRes] = await fetchCollectionList()
+    applyCollectionListResponse(listRes, statsRes)
     await nextTick()
     if (!selectedId.value && collections.value.length) {
       await loadDetail(collections.value[0].id)
@@ -295,7 +423,8 @@ const loadList = async () => {
 
 const loadDetail = async (id) => {
   selectedId.value = id
-  similarMode.value = false
+  resetSimilar()
+  similarListSnapshot.value = null
   gridItems.value = []
   itemsTotal.value = 0
   itemsHasMore.value = false
@@ -395,9 +524,7 @@ const onRefreshModeChange = async (mode) => {
   })
   ElMessage({
     type: res.success ? 'success' : 'error',
-    message: res.success
-      ? t('pages.Collections.refreshModeUpdated')
-      : resolveApiUserMessage(res, t)
+    message: res.success ? t('pages.Collections.refreshModeUpdated') : resolveApiUserMessage(res, t)
   })
   if (res.success) {
     await loadDetail(selectedCollection.value.id)
@@ -405,9 +532,7 @@ const onRefreshModeChange = async (mode) => {
   }
 }
 
-const autoCollectionsEnabled = computed(
-  () => curatorStats.value?.autoCollectionsEnabled !== false
-)
+const autoCollectionsEnabled = computed(() => curatorStats.value?.autoCollectionsEnabled !== false)
 const aiEnabled = computed(() => curatorStats.value?.aiEnabled === true)
 
 const onAutoCollectionsChange = async (value) => {
@@ -473,8 +598,7 @@ const onHeaderMenuCommand = async (command) => {
   }
 }
 
-const isRefreshModeActive = (mode) =>
-  (selectedCollection.value?.refreshMode || 'manual') === mode
+const isRefreshModeActive = (mode) => (selectedCollection.value?.refreshMode || 'manual') === mode
 
 watch(selectedId, async (id) => {
   unbindResizeObserver()
@@ -505,206 +629,195 @@ onBeforeUnmount(() => {
     aria-label="collections"
     element-loading-background="rgba(0, 0, 0, 0.2)"
   >
-    <div class="header-block">
-      <el-select
-        v-model="selectedId"
-        class="condition-item collection-select"
-        filterable
-        size="large"
-        :disabled="loading || !collections.length"
-        :placeholder="t('pages.Collections.selectPlaceholder')"
-        @change="onCollectionChange"
+    <div class="header-block header-block--overlay-host">
+      <div
+        class="header-block__controls"
+        :class="{ 'header-block__controls--under-banner': similarMode }"
       >
-        <template #label="{ label }">
-          <span class="collection-select__label">{{ label }}</span>
-        </template>
-        <el-option-group
-          v-for="group in collectionOptionGroups"
-          :key="group.key"
-          :label="group.label"
+        <el-select
+          v-model="selectedId"
+          class="condition-item collection-select"
+          filterable
+          size="large"
+          :disabled="loading || !collections.length"
+          :placeholder="t('pages.Collections.selectPlaceholder')"
+          @change="onCollectionChange"
+          @visible-change="onCollectionSelectVisibleChange"
         >
-          <el-option
-            v-for="item in group.children"
-            :key="item.id"
-            :label="collectionOptionLabel(item)"
-            :value="item.id"
+          <template #label="{ label }">
+            <span class="collection-select__label">{{ label }}</span>
+          </template>
+          <el-option-group
+            v-for="group in collectionOptionGroups"
+            :key="group.key"
+            :label="group.label"
           >
-            <div class="collection-option">
-              <span class="collection-option__name">{{ item.name }}</span>
-              <span class="collection-option__count">{{ collectionItemCountText(item) }}</span>
-            </div>
-          </el-option>
-        </el-option-group>
-      </el-select>
-
-      <el-dropdown trigger="click" placement="bottom-end" @command="onHeaderMenuCommand">
-        <el-button
-          class="condition-item header-actions-btn"
-          circle
-          :disabled="loading"
-          :title="t('pages.Collections.actionsMenu')"
-          :aria-label="t('pages.Collections.actionsMenu')"
-        >
-          <IconifyIcon icon="custom:more-vertical" />
-        </el-button>
-        <template #dropdown>
-          <el-dropdown-menu>
-            <el-dropdown-item command="create">
-              {{ t('pages.Collections.createNew') }}
-            </el-dropdown-item>
-            <el-dropdown-item command="curate" :disabled="loading">
-              {{ t('pages.Collections.curateNow') }}
-            </el-dropdown-item>
-            <el-dropdown-item divided @click.stop>
-              <div class="dropdown-switch-row">
-                <span>{{ t('pages.Collections.autoCurateShort') }}</span>
-                <el-tooltip
-                  v-if="!aiEnabled"
-                  :content="t('pages.Collections.autoCollectionsDisabledHint')"
-                  placement="left"
-                >
-                  <el-switch :model-value="autoCollectionsEnabled" disabled size="small" />
-                </el-tooltip>
-                <el-switch
-                  v-else
-                  :model-value="autoCollectionsEnabled"
-                  :disabled="loading"
-                  size="small"
-                  @click.stop
-                  @change="onAutoCollectionsChange"
-                />
+            <el-option
+              v-for="item in group.children"
+              :key="item.id"
+              :label="collectionOptionLabel(item)"
+              :value="item.id"
+            >
+              <div class="collection-option">
+                <span class="collection-option__name">{{ item.name }}</span>
+                <span class="collection-option__count">{{ collectionItemCountText(item) }}</span>
               </div>
-            </el-dropdown-item>
+            </el-option>
+          </el-option-group>
+        </el-select>
 
-            <template v-if="selectedCollection">
-              <template v-if="!isAutoCollection(selectedCollection)">
-                <el-dropdown-item divided disabled class="dropdown-section-title">
-                  {{ t('pages.Collections.refreshMode') }}
+        <el-dropdown trigger="click" placement="bottom-end" @command="onHeaderMenuCommand">
+          <el-button
+            class="condition-item header-actions-btn"
+            circle
+            :disabled="loading"
+            :title="t('pages.Collections.actionsMenu')"
+            :aria-label="t('pages.Collections.actionsMenu')"
+          >
+            <IconifyIcon icon="custom:more-vertical" />
+          </el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="create">
+                {{ t('pages.Collections.createNew') }}
+              </el-dropdown-item>
+              <el-dropdown-item command="curate" :disabled="loading">
+                {{ t('pages.Collections.curateNow') }}
+              </el-dropdown-item>
+              <el-dropdown-item divided @click.stop>
+                <div class="dropdown-switch-row">
+                  <span>{{ t('pages.Collections.autoCurateShort') }}</span>
+                  <el-tooltip
+                    v-if="!aiEnabled"
+                    :content="t('pages.Collections.autoCollectionsDisabledHint')"
+                    placement="left"
+                  >
+                    <el-switch :model-value="autoCollectionsEnabled" disabled size="small" />
+                  </el-tooltip>
+                  <el-switch
+                    v-else
+                    :model-value="autoCollectionsEnabled"
+                    :disabled="loading"
+                    size="small"
+                    @click.stop
+                    @change="onAutoCollectionsChange"
+                  />
+                </div>
+              </el-dropdown-item>
+
+              <template v-if="selectedCollection">
+                <template v-if="!isAutoCollection(selectedCollection)">
+                  <el-dropdown-item divided disabled class="dropdown-section-title">
+                    {{ t('pages.Collections.refreshMode') }}
+                  </el-dropdown-item>
+                  <el-dropdown-item
+                    v-for="item in refreshModeOptions"
+                    :key="item.value"
+                    :command="`refreshMode:${item.value}`"
+                    :class="{ 'is-active': isRefreshModeActive(item.value) }"
+                  >
+                    <span v-if="isRefreshModeActive(item.value)" class="dropdown-check-mark"
+                      >✓</span
+                    >
+                    {{ item.label }}
+                  </el-dropdown-item>
+                  <el-dropdown-item command="refresh" :disabled="loading" divided>
+                    {{ t('pages.Collections.refresh') }}
+                  </el-dropdown-item>
+                </template>
+                <el-dropdown-item v-else divided disabled class="dropdown-hint-item">
+                  {{ t('pages.Collections.autoCollectionRefreshHint') }}
                 </el-dropdown-item>
                 <el-dropdown-item
-                  v-for="item in refreshModeOptions"
-                  :key="item.value"
-                  :command="`refreshMode:${item.value}`"
-                  :class="{ 'is-active': isRefreshModeActive(item.value) }"
+                  command="favorites"
+                  :divided="isAutoCollection(selectedCollection)"
                 >
-                  <span v-if="isRefreshModeActive(item.value)" class="dropdown-check-mark">✓</span>
-                  {{ item.label }}
+                  {{ t('pages.Collections.addFavorites') }}
                 </el-dropdown-item>
-                <el-dropdown-item command="refresh" :disabled="loading" divided>
-                  {{ t('pages.Collections.refresh') }}
+                <el-dropdown-item command="delete" divided>
+                  <span class="dropdown-danger">{{ t('pages.Collections.delete') }}</span>
                 </el-dropdown-item>
               </template>
-              <el-dropdown-item
-                v-else
-                divided
-                disabled
-                class="dropdown-hint-item"
-              >
-                {{ t('pages.Collections.autoCollectionRefreshHint') }}
-              </el-dropdown-item>
-              <el-dropdown-item command="favorites" :divided="isAutoCollection(selectedCollection)">
-                {{ t('pages.Collections.addFavorites') }}
-              </el-dropdown-item>
-              <el-dropdown-item command="delete" divided>
-                <span class="dropdown-danger">{{ t('pages.Collections.delete') }}</span>
-              </el-dropdown-item>
-            </template>
-          </el-dropdown-menu>
-        </template>
-      </el-dropdown>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+      </div>
+      <ExploreSimilarModeBanner
+        v-if="similarMode"
+        :message="t('pages.Collections.similarModeBanner')"
+        :source-image-src="similarSourceImageSrc"
+        :back-aria-label="t('pages.Collections.similarBack')"
+        bar-background="rgba(50, 57, 65, 1)"
+        @back="exitSimilarMode"
+      />
     </div>
 
     <div class="body-block">
-    <section class="collections-body">
-      <el-alert
-        v-if="similarMode"
-        class="similar-mode-alert"
-        type="info"
-        :closable="false"
-        show-icon
-      >
-        <template #default>
-          <span>{{ t('pages.Collections.similarModeBanner') }}</span>
-          <el-button type="primary" link size="small" @click="exitSimilarMode">
-            {{ t('pages.Collections.similarBack') }}
-          </el-button>
-        </template>
-      </el-alert>
+      <section class="collections-body">
+        <div ref="cardBlockRef" class="collection-card-block">
+          <VirtualList
+            v-if="selectedCollection && (gridItems.length || itemsLoading)"
+            ref="scrollRef"
+            :items="gridItems"
+            :item-height="cardForm.cardHeight"
+            :item-width="cardForm.cardWidth"
+            :grid-size="cardForm.gridSize"
+            :grid-gap="cardForm.gridGap"
+            :buffer="cardForm.buffer"
+            key-field="uniqueKey"
+            style="height: 100%; margin: 0 10px"
+            @close-bottom="onCloseBottom"
+          >
+            <template #default="{ item, index }">
+              <div
+                :class="[
+                  'card-item',
+                  cardStatusClass(index) ? `card-item__${cardStatusClass(index)}` : ''
+                ]"
+              >
+                <ResourceExploreCard
+                  :item="item"
+                  :index="index"
+                  fill
+                  :show-tags="showResourceTags"
+                  :show-ai-badge="false"
+                  :show-caption="false"
+                  @action="onCardAction"
+                  @dblclick-card="onCardDblClick"
+                />
+              </div>
+            </template>
+          </VirtualList>
+          <div v-else-if="!collections.length && !loading" class="body-empty">
+            <EmptyHelp :text="t('pages.Collections.empty')" :enable-jump="false" />
+          </div>
+          <div
+            v-else-if="selectedCollection && !gridItems.length && !loading && !itemsLoading"
+            class="body-empty"
+          >
+            <EmptyHelp :text="t('pages.Collections.noItems')" :enable-jump="false" />
+          </div>
+          <div v-else-if="!selectedCollection && !loading" class="body-empty">
+            <EmptyHelp :text="t('pages.Collections.selectHint')" :enable-jump="false" />
+          </div>
+        </div>
+      </section>
 
-      <div ref="cardBlockRef" class="collection-card-block">
-        <VirtualList
-          v-if="selectedCollection && (gridItems.length || itemsLoading)"
-          ref="scrollRef"
-          :items="gridItems"
-          :item-height="cardForm.cardHeight"
-          :item-width="cardForm.cardWidth"
-          :grid-size="cardForm.gridSize"
-          :grid-gap="cardForm.gridGap"
-          :buffer="cardForm.buffer"
-          key-field="uniqueKey"
-          style="height: 100%; margin: 0 10px"
-          @close-bottom="onCloseBottom"
-        >
-          <template #default="{ item, index }">
-            <div
-              :class="[
-                'card-item',
-                cardStatusClass(index) ? `card-item__${cardStatusClass(index)}` : ''
-              ]"
-            >
-              <ResourceExploreCard
-                :item="item"
-                :index="index"
-                fill
-                    :show-tags="showResourceTags"
-                    :show-ai-badge="false"
-                    :show-caption="false"
-                @action="onCardAction"
-                @dblclick-card="onCardDblClick"
-              />
-            </div>
-          </template>
-        </VirtualList>
-        <div v-else-if="!collections.length && !loading" class="body-empty">
-          <EmptyHelp :text="t('pages.Collections.empty')" :enable-jump="false" />
-        </div>
-        <div
-          v-else-if="selectedCollection && !gridItems.length && !loading && !itemsLoading"
-          class="body-empty"
-        >
-          <EmptyHelp :text="t('pages.Collections.noItems')" :enable-jump="false" />
-        </div>
-        <div v-else-if="!selectedCollection && !loading" class="body-empty">
-          <EmptyHelp :text="t('pages.Collections.selectHint')" :enable-jump="false" />
-        </div>
-
-        <ExploreFixedButtons
-          v-if="selectedCollection"
-          :buttons="fixedBtns"
-          :show="showFixedBtns"
-          :loading="loading"
-          :show-backtop="gridItems.length > 0"
-          :backtop-bottom="backtopBtnBottom"
-          @action="onFixedBtnAction"
-        />
-      </div>
-    </section>
+      <ExploreFixedButtons
+        v-if="selectedCollection"
+        :buttons="fixedBtns"
+        :show="showFixedBtns"
+        :loading="loading"
+        :show-backtop="gridItems.length > 0"
+        :backtop-bottom="backtopBtnBottom"
+        @action="onFixedBtnAction"
+      />
     </div>
 
-    <!-- 与搜索页一致：固定于主区域浅灰底栏，无独立 footer 色块 -->
-    <span
-      v-if="curatorStats"
-      class="collections-footer-stats collections-footer-stats--fixed"
-      :style="footerStatsFixedStyle"
-      role="status"
-    >
+    <span v-if="curatorStats" class="collections-curator-stats" role="status">
       {{ curatorStatsShort }}
     </span>
-    <ListCountIndicator
-      v-if="selectedCollection && !similarMode"
-      :current="gridItems.length"
-      :total="itemsTotal"
-    />
+    <ListCountIndicator v-if="selectedCollection" :current="gridItems.length" :total="itemsTotal" />
 
     <el-dialog
       v-model="createDialogVisible"
@@ -721,7 +834,9 @@ onBeforeUnmount(() => {
         @keyup.enter.ctrl="onCreate"
       />
       <template #footer>
-        <el-button @click="createDialogVisible = false">{{ t('pages.Collections.dialogCancel') }}</el-button>
+        <el-button @click="createDialogVisible = false">{{
+          t('pages.Collections.dialogCancel')
+        }}</el-button>
         <el-button type="primary" :loading="loading" @click="onCreate">
           {{ t('pages.Collections.create') }}
         </el-button>
@@ -739,26 +854,44 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped lang="scss">
+/* 布局与 ExploreCommon 一致：header + .card-block 同高，条数用 ListCountIndicator--fixed-br */
 .page-collections {
   --el-main-padding: 0;
   padding: 0;
   position: relative;
-  box-sizing: border-box;
+  max-width: 100%;
   background-color: rgba(50, 57, 65, 1);
 }
 
 .header-block {
   flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0;
   margin: 10px;
   border-bottom: 1px solid #ffffff;
   min-width: 0;
+  align-self: stretch;
+  width: calc(100% - 20px);
+  box-sizing: border-box;
 
-  .condition-item {
-    flex: none;
+  &--overlay-host {
+    position: relative;
+  }
+
+  &__controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    width: 100%;
+    min-width: 0;
+
+    &--under-banner {
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .condition-item {
+      flex: none;
+    }
   }
 }
 
@@ -787,6 +920,8 @@ onBeforeUnmount(() => {
 
 .body-block {
   position: relative;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .collection-option {
@@ -849,26 +984,9 @@ onBeforeUnmount(() => {
 .collections-body {
   position: relative;
   box-sizing: border-box;
-  padding: 0 10px;
+  padding: 0;
   max-width: 100%;
   min-width: 0;
-}
-
-.similar-mode-alert {
-  margin: 0 0 8px;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  flex-shrink: 0;
-
-  :deep(.el-alert__content) {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 4px 8px;
-    min-width: 0;
-    line-height: 1.4;
-  }
 }
 
 .collection-card-block {
@@ -879,6 +997,26 @@ onBeforeUnmount(() => {
   :deep(.virtual-list-scrollbar) {
     height: 100%;
   }
+}
+
+.body-block :deep(.explore-fixed-btn) {
+  z-index: 30;
+}
+
+.collections-curator-stats {
+  position: fixed;
+  bottom: 8px;
+  left: 80px;
+  z-index: 20;
+  max-width: min(520px, calc(100% - 120px));
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  user-select: none;
+  color: var(--el-text-color-secondary);
 }
 
 .card-item {
@@ -928,24 +1066,6 @@ onBeforeUnmount(() => {
   min-height: 240px;
   height: 100%;
 }
-
-.collections-footer-stats {
-  font-size: 12px;
-  line-height: 1.4;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  pointer-events: none;
-  user-select: none;
-  color: var(--el-text-color-secondary);
-
-  &--fixed {
-    position: fixed;
-    bottom: 4px;
-    z-index: 20;
-  }
-}
-
 </style>
 
 <style lang="scss">

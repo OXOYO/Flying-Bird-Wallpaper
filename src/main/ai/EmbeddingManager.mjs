@@ -61,7 +61,16 @@ export default class EmbeddingManager {
     }
   }
 
-  async findSimilar(resourceId, limit = 20) {
+  getSimilarMinCosine() {
+    const v = Number(this.ai.similarMinCosine)
+    if (!Number.isFinite(v)) return 0.62
+    return Math.min(1, Math.max(0, v))
+  }
+
+  /**
+   * @returns {{ resourceIds: number[], total: number }}
+   */
+  async findSimilar(resourceId, limit = 20, candidateIds = null, excludeIds = []) {
     const blob = this.db
       .prepare(`SELECT embedding, dim FROM fbw_resource_vec_blob WHERE resourceId = ?`)
       .get(resourceId)
@@ -71,10 +80,36 @@ export default class EmbeddingManager {
     const row = this.db
       .prepare(`SELECT embedding, dim FROM fbw_resource_vec_blob WHERE resourceId = ?`)
       .get(resourceId)
-    if (!row) return []
+    if (!row) return { resourceIds: [], total: 0 }
+
+    if (Array.isArray(candidateIds) && candidateIds.length === 0) {
+      return { resourceIds: [], total: 0 }
+    }
+
     const queryVec = this.vecStore.blobToFloat32(row.embedding, row.dim)
-    const knn = this.vecStore.knn(queryVec, limit, resourceId)
-    return knn.map((x) => x.resourceId)
+    const excludeSet = new Set((excludeIds || []).map((id) => Number(id)))
+    const minSimilarity = this.getSimilarMinCosine()
+    const pageSize = Math.max(1, Number(limit) || 20)
+
+    let ranked
+    if (Array.isArray(candidateIds) && candidateIds.length) {
+      ranked = this.vecStore.rankSimilarAmongIds(
+        queryVec,
+        candidateIds,
+        resourceId,
+        minSimilarity
+      )
+    } else {
+      ranked = this.vecStore.rankSimilarGlobal(queryVec, resourceId, minSimilarity)
+    }
+
+    const total = ranked.length
+    const resourceIds = ranked
+      .filter((hit) => !excludeSet.has(Number(hit.resourceId)))
+      .slice(0, pageSize)
+      .map((hit) => hit.resourceId)
+
+    return { resourceIds, total }
   }
 
   async semanticSearch(query, limit = 30) {

@@ -1062,9 +1062,20 @@ export default class Store {
       const resourceId = params?.resourceId ?? params?.id
       const limit = params?.limit || 20
       try {
-        const ids = await this.embeddingManager.findSimilar(resourceId, limit)
-        const list = this.resourcesManager.getResourcesByIds(ids)
-        return { success: true, data: { list } }
+        const candidateIds = Array.isArray(params?.candidateIds)
+          ? params.candidateIds
+          : params?.scope
+            ? this.resourcesManager.getSimilarScopeCandidateIds(params.scope)
+            : null
+        const excludeIds = Array.isArray(params?.excludeIds) ? params.excludeIds : []
+        const similar = await this.embeddingManager.findSimilar(
+          resourceId,
+          limit,
+          candidateIds,
+          excludeIds
+        )
+        const list = this.resourcesManager.getResourcesByIds(similar.resourceIds)
+        return { success: true, data: { list, total: similar.total } }
       } catch (err) {
         return { success: false, message: String(err.message || err) }
       }

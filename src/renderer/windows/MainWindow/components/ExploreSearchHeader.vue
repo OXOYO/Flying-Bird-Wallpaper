@@ -626,6 +626,11 @@ const onExtraCommand = (command) => {
   &__resource-label {
     vertical-align: middle;
   }
+
+  &--under-similar-banner {
+    visibility: hidden;
+    pointer-events: none;
+  }
 }
 
 .header-icon-btn {

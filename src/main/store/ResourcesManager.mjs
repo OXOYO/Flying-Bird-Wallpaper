@@ -191,11 +191,11 @@ export default class ResourcesManager {
         }
 
         if (isFavorites || isHistory || isPrivacySpace) {
-          // 处理排序字段，统计字段需要从stats表中获取
+          // 统计字段走 stats；资源字段（score、title 等）走 r；s 仅为关联表，无 score 等列
           const statsFields = ['views', 'downloads', 'favorites', 'wallpapers']
           const sortFieldForOrder = statsFields.includes(sortField)
             ? `stats.${sortField}`
-            : `s.${sortField}`
+            : `r.${sortField}`
           const order_by_str = isRandom
             ? `ORDER BY RANDOM(), ${sortFieldForOrder} ${sortOrder}`
             : `ORDER BY ${sortFieldForOrder} ${sortOrder}`
@@ -243,8 +243,13 @@ export default class ResourcesManager {
           count_sql = `SELECT COUNT(*) AS total FROM fbw_resources r ${query_where_str}`
         }
 
+        const page = Math.max(1, Number.parseInt(startPage, 10) || Number(startPage) || 1)
+        const size = Math.max(1, Number.parseInt(pageSize, 10) || Number(pageSize) || 50)
+        ret.data.startPage = page
+        ret.data.pageSize = size
+
         const query_stmt = this.db.prepare(query_sql)
-        const query_result = query_stmt.all(...query_params, pageSize, (startPage - 1) * pageSize)
+        const query_result = query_stmt.all(...query_params, size, (page - 1) * size)
         ret.data.list = []
         if (Array.isArray(query_result) && query_result.length) {
           ret.data.list = query_result.map((item) => {
@@ -608,10 +613,144 @@ export default class ResourcesManager {
     return this.search(params)
   }
 
+  /**
+   * 找相似候选范围（与当前页上下文一致）
+   * @param {{ type: 'search'|'collection'|'privacy'|'favorites'|'history', resourceType?: string, resourceName?: string, collectionId?: number }} scope
+   * @returns {number[]|null} null 表示不限制（全库）
+   */
+  getSimilarScopeCandidateIds(scope = {}) {
+    const type = scope?.type
+    if (!type) return null
+
+    if (type === 'collection') {
+      if (!scope.collectionId) return []
+      return this.db
+        .prepare(`SELECT resourceId AS id FROM fbw_collection_items WHERE collectionId = ?`)
+        .all(scope.collectionId)
+        .map((r) => r.id)
+    }
+
+    if (type === 'privacy') {
+      return this.db
+        .prepare(`SELECT resourceId AS id FROM fbw_privacy_space`)
+        .all()
+        .map((r) => r.id)
+    }
+
+    if (type === 'favorites') {
+      return this.db
+        .prepare(`SELECT resourceId AS id FROM fbw_favorites`)
+        .all()
+        .map((r) => r.id)
+    }
+
+    if (type === 'history') {
+      return this.db
+        .prepare(`SELECT resourceId AS id FROM fbw_history`)
+        .all()
+        .map((r) => r.id)
+    }
+
+    if (type === 'search') {
+      const resourceType = scope.resourceType || 'localResource'
+      const resourceName = scope.resourceName || 'resources'
+
+      if (resourceType === 'remoteResource') {
+        return this.db
+          .prepare(
+            `SELECT id FROM fbw_resources WHERE fileType = 'image' AND resourceName = ?`
+          )
+          .all(resourceName)
+          .map((r) => r.id)
+      }
+
+      if (resourceName === 'favorites') {
+        return this.db
+          .prepare(`SELECT resourceId AS id FROM fbw_favorites`)
+          .all()
+          .map((r) => r.id)
+      }
+      if (resourceName === 'history') {
+        return this.db
+          .prepare(`SELECT resourceId AS id FROM fbw_history`)
+          .all()
+          .map((r) => r.id)
+      }
+      if (resourceName === 'privacy_space') {
+        return this.db
+          .prepare(`SELECT resourceId AS id FROM fbw_privacy_space`)
+          .all()
+          .map((r) => r.id)
+      }
+      if (resourceName === 'resources') {
+        return this.db
+          .prepare(
+            `SELECT r.id FROM fbw_resources r
+             WHERE r.fileType = 'image'
+               AND NOT EXISTS (SELECT 1 FROM fbw_privacy_space p WHERE p.resourceId = r.id)`
+          )
+          .all()
+          .map((r) => r.id)
+      }
+
+      return this.db
+        .prepare(
+          `SELECT r.id FROM fbw_resources r
+           WHERE r.fileType = 'image' AND r.resourceName = ?
+             AND NOT EXISTS (SELECT 1 FROM fbw_privacy_space p WHERE p.resourceId = r.id)`
+        )
+        .all(resourceName)
+        .map((r) => r.id)
+    }
+
+    return null
+  }
+
+  /**
+   * 找相似：范围内已有向量的候选数量（不含源图）
+   * @param {number[]} candidateIds
+   * @param {number|null} excludeResourceId
+   */
+  countSimilarEmbeddableCandidates(candidateIds = [], excludeResourceId = null) {
+    if (!Array.isArray(candidateIds) || !candidateIds.length) return 0
+    const ids = [...new Set(candidateIds.map((id) => Number(id)).filter((id) => id > 0))]
+    if (!ids.length) return 0
+    const excludeId =
+      excludeResourceId != null && excludeResourceId !== ''
+        ? Number(excludeResourceId)
+        : null
+
+    let total = 0
+    const chunkSize = 400
+    for (let i = 0; i < ids.length; i += chunkSize) {
+      const chunk = ids.slice(i, i + chunkSize)
+      const ph = chunk.map(() => '?').join(',')
+      const params = [...chunk]
+      let sql = `SELECT COUNT(*) AS c FROM fbw_resource_vec_blob WHERE resourceId IN (${ph})`
+      if (excludeId != null) {
+        sql += ' AND resourceId != ?'
+        params.push(excludeId)
+      }
+      total += this.db.prepare(sql).get(...params)?.c || 0
+    }
+    return total
+  }
+
+  /**
+   * 按 ids 顺序返回资源（保持 KNN / 语义检索的相似度排序；SQL IN 本身无序）
+   */
   getResourcesByIds(ids = []) {
     if (!ids.length) return []
-    const ph = ids.map(() => '?').join(',')
-    return this.db.prepare(`SELECT r.* FROM fbw_resources r WHERE r.id IN (${ph})`).all(...ids)
+    const orderedIds = ids
+      .map((id) => Number(id))
+      .filter((id) => Number.isFinite(id) && id > 0)
+    if (!orderedIds.length) return []
+    const ph = orderedIds.map(() => '?').join(',')
+    const rows = this.db
+      .prepare(`SELECT r.* FROM fbw_resources r WHERE r.id IN (${ph})`)
+      .all(...orderedIds)
+    const byId = new Map(rows.map((row) => [Number(row.id), row]))
+    return orderedIds.map((id) => byId.get(id)).filter(Boolean)
   }
 
   async semanticSearch(params = {}) {

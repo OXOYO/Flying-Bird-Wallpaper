@@ -7,26 +7,21 @@ const props = defineProps({
   /** 总数量 */
   total: { type: Number, default: 0 },
   /**
-   * fixed-br：搜索/收藏/回忆页右下角固定
-   * page-footer：合集页底栏右侧（与列表分区，不遮挡）
+   * fixed-br：搜索/合集/收藏/回忆页右下角固定
    * anchor-bottom：设置页 AI 左侧锚点栏底部
    */
   placement: {
     type: String,
     default: 'fixed-br',
-    validator: (v) => ['fixed-br', 'anchor-bottom', 'page-footer'].includes(v)
-  },
+    validator: (v) => ['fixed-br', 'anchor-bottom'].includes(v)
+  }
 })
 
 const { t } = useTranslation()
 </script>
 
 <template>
-  <div
-    class="list-count-indicator"
-    :class="`list-count-indicator--${placement}`"
-    role="status"
-  >
+  <div class="list-count-indicator" :class="`list-count-indicator--${placement}`" role="status">
     {{ t('exploreCommon.totalText', { current: props.current, total: props.total }) }}
   </div>
 </template>
@@ -42,8 +37,8 @@ const { t } = useTranslation()
 
   &--fixed-br {
     position: fixed;
-    bottom: 4px;
-    right: 40px;
+    bottom: 8px;
+    right: 10px;
     z-index: 20;
   }
 
@@ -53,12 +48,6 @@ const { t } = useTranslation()
     padding: 10px 0 4px;
     border-top: 1px solid var(--el-border-color-lighter);
     text-align: left;
-  }
-
-  &--page-footer {
-    flex-shrink: 0;
-    position: static;
-    pointer-events: none;
   }
 }
 </style>

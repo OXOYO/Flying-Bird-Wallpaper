@@ -4,6 +4,8 @@ import AiAnalysisProvider from './AiAnalysisProvider.mjs'
 import EmbeddingManager from './EmbeddingManager.mjs'
 import {
   AI_ANALYSIS_STATUS,
+  AI_ANALYSIS_SPEED_MIN_SAMPLES,
+  AI_ANALYSIS_SPEED_SAMPLE_MAX,
   DEFAULT_AI_TIMEOUT_MS,
   resolveAnalysisMaxRetries,
   resolveEffectiveVisionTimeout
@@ -38,7 +40,40 @@ export default class AiAnalysisManager {
     this.isRunning = false
     this.onAnalysisDone = null
     this.onAnalysisBatchDone = null
+    this._recentAnalysisMs = []
+    this._lastAnalysisMs = 0
+    this._currentAnalysisStartedAt = 0
     AiAnalysisManager._instance = this
+  }
+
+  recordAnalysisDuration(modelMs) {
+    const ms = Math.round(Number(modelMs) || 0)
+    if (ms <= 0) return
+    this._lastAnalysisMs = ms
+    this._recentAnalysisMs.push(ms)
+    if (this._recentAnalysisMs.length > AI_ANALYSIS_SPEED_SAMPLE_MAX) {
+      this._recentAnalysisMs.shift()
+    }
+  }
+
+  getAnalysisSpeedStats(pending = 0) {
+    const samples = this._recentAnalysisMs
+    const sampleCount = samples.length
+    let avgAnalysisMs = 0
+    if (sampleCount > 0) {
+      avgAnalysisMs = Math.round(samples.reduce((sum, n) => sum + n, 0) / sampleCount)
+    }
+    const etaAnalysisMs =
+      sampleCount >= AI_ANALYSIS_SPEED_MIN_SAMPLES && avgAnalysisMs > 0 && pending > 0
+        ? pending * avgAnalysisMs
+        : 0
+    return {
+      lastAnalysisMs: this._lastAnalysisMs || 0,
+      avgAnalysisMs,
+      sampleCount,
+      etaAnalysisMs,
+      currentAnalysisStartedAt: this._currentAnalysisStartedAt || 0
+    }
   }
 
   get ai() {
@@ -173,6 +208,7 @@ export default class AiAnalysisManager {
       `[AiAnalysisManager] analyze start id=${row.id} timeout=${ctx.timeoutSec}s (base=${ctx.baseTimeoutSec}s) provider=${ctx.visionProvider} model=${ctx.visionModel} size=${ctx.fileSizeMB}MB file=${ctx.filePath}`
     )
     const modelStartedAt = Date.now()
+    this._currentAnalysisStartedAt = modelStartedAt
     let modelMs = 0
     try {
       const result = await this.provider.analyzeImage(row.filePath)
@@ -217,6 +253,7 @@ export default class AiAnalysisManager {
         setImmediate(() => this.onAnalysisDone())
       }
 
+      this.recordAnalysisDuration(modelMs)
       const totalMs = Date.now() - startedAt
       this.logger.info(
         `[AiAnalysisManager] analyze done id=${row.id} pipelineMs=${modelMs}ms totalMs=${totalMs}ms (vision-http modelMs见 HttpAi/vision 日志)`
@@ -230,6 +267,8 @@ export default class AiAnalysisManager {
         return this.markAnalysisSkipped(row, 'missing_file')
       }
       return this.handleAnalysisFailure(row, err, ctx, startedAt, modelMs, { respectRetryLimit })
+    } finally {
+      this._currentAnalysisStartedAt = 0
     }
   }
 
@@ -331,7 +370,8 @@ export default class AiAnalysisManager {
         skipped,
         total,
         embedding,
-        running: this.isRunning
+        running: this.isRunning,
+        ...this.getAnalysisSpeedStats(pending)
       }
     }
   }

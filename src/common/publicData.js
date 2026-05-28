@@ -212,6 +212,7 @@ export const defaultSettingData = {
     runOnWifiOnly: false,
     expandDownloadKeywords: false,
     scoreMinFilter: 70,
+    similarMinCosine: 0.62,
     autoCollectionsEnabled: true,
     autoCollectionsMaxCount: 20,
     analysisMaxRetries: 5,
@@ -387,6 +388,11 @@ export function migrateSettingData(storeData = {}) {
   }
   if (next.ai.scoreMinFilter == null || next.ai.scoreMinFilter === '') {
     next.ai.scoreMinFilter = defaultSettingData.ai.scoreMinFilter
+  }
+  if (next.ai.similarMinCosine == null || next.ai.similarMinCosine === '') {
+    next.ai.similarMinCosine = defaultSettingData.ai.similarMinCosine
+  } else if (Number(next.ai.similarMinCosine) === 0.42) {
+    next.ai.similarMinCosine = defaultSettingData.ai.similarMinCosine
   }
   if (next.ai.autoCollectionsMaxCount == null || next.ai.autoCollectionsMaxCount === '') {
     next.ai.autoCollectionsMaxCount = defaultSettingData.ai.autoCollectionsMaxCount

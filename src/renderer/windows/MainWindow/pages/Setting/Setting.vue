@@ -76,11 +76,11 @@ const onTabChange = (tab) => {
     </el-tabs>
 
     <div v-show="activeTab === 'baseSetting'">
-      <BaseSetting ref="baseSettingRef" />
+      <BaseSetting ref="baseSettingRef" :tab-active="activeTab === 'baseSetting'" />
     </div>
 
     <div v-show="activeTab === 'aiSetting'">
-      <AiSetting ref="aiSettingRef" />
+      <AiSetting ref="aiSettingRef" :tab-active="activeTab === 'aiSetting'" />
     </div>
 
     <div v-show="activeTab === 'privacySpace'">

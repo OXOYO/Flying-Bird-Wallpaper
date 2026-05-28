@@ -36,8 +36,8 @@ export function useCollectionFloatingButtons({
         action: 'exitSimilar',
         actionParams: [],
         title: t('pages.Collections.similarBack'),
-        icon: 'custom:arrow-back',
-        iconStyle: {},
+        icon: 'custom:arrow-right',
+        iconStyle: { transform: 'rotate(180deg)' },
         style: { bottom: getBottom() }
       })
     }
@@ -67,6 +67,7 @@ export function useCollectionFloatingButtons({
     const gridHWRatio = gridRatioList.find(
       (item) => item.value === (settingData.value?.gridHWRatio ?? 0.618)
     )
+    const currentGridHWRatio = settingData.value?.gridHWRatio ?? 0.618
     ret.unshift({
       action: 'onSwitchGridRatio',
       actionParams: [],
@@ -74,10 +75,12 @@ export function useCollectionFloatingButtons({
       icon: gridHWRatio?.icon ?? 'custom:rectangle',
       iconStyle: {},
       style: { bottom: getBottom() },
-      children: gridRatioList
+      children: gridRatioList,
+      activeValue: currentGridHWRatio
     })
 
-    const gridSize = gridSizeList.find((item) => item.value === (settingData.value?.gridSize ?? 'auto'))
+    const currentGridSize = settingData.value?.gridSize ?? 'auto'
+    const gridSize = gridSizeList.find((item) => item.value === currentGridSize)
     ret.unshift({
       action: 'onSwitchGridSize',
       actionParams: [],
@@ -86,7 +89,8 @@ export function useCollectionFloatingButtons({
       icon: gridSize?.icon ?? '',
       iconStyle: {},
       style: { bottom: getBottom() },
-      children: gridSizeList
+      children: gridSizeList,
+      activeValue: currentGridSize
     })
 
     return ret

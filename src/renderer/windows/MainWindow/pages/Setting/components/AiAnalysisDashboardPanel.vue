@@ -10,10 +10,26 @@ defineProps({
   summary: { type: String, default: '' },
   footerHint: { type: String, default: '' },
   running: { type: Boolean, default: false },
-  statusTooltip: { type: String, default: '' }
+  statusTooltip: { type: String, default: '' },
+  speedLine: { type: String, default: '' },
+  speedTooltip: { type: String, default: '' }
 })
 
 const { t } = useTranslation()
+
+/** 侧栏窄：从标题左缘向上展开，向右延伸，避免左侧溢出 */
+const titleTooltipPopperOptions = {
+  modifiers: [
+    {
+      name: 'preventOverflow',
+      options: { padding: 8, altAxis: true }
+    },
+    {
+      name: 'flip',
+      options: { fallbackPlacements: ['top', 'bottom-start', 'bottom'] }
+    }
+  ]
+}
 </script>
 
 <template>
@@ -21,9 +37,11 @@ const { t } = useTranslation()
     <div class="analysis-dashboard__head">
       <el-tooltip
         :content="t('pages.Setting.aiSetting.analysisProgressCardDesc')"
-        placement="right"
+        placement="top-start"
+        :offset="6"
         :show-after="300"
-        popper-class="ai-setting-feature-tip"
+        popper-class="ai-setting-feature-tip ai-analysis-dashboard-title-tip"
+        :popper-options="titleTooltipPopperOptions"
       >
         <h4 class="analysis-dashboard__title">
           {{ t('pages.Setting.aiSetting.analysisProgressCardTitle') }}
@@ -63,6 +81,18 @@ const { t } = useTranslation()
       :status="running ? undefined : percent >= 100 && stats?.total ? 'success' : undefined"
     />
 
+    <el-tooltip
+      v-if="speedLine"
+      :content="speedTooltip"
+      placement="top-start"
+      :show-after="300"
+      :disabled="!speedTooltip"
+      popper-class="ai-setting-feature-tip ai-analysis-dashboard-title-tip"
+      :popper-options="titleTooltipPopperOptions"
+    >
+      <p class="analysis-dashboard__speed">{{ speedLine }}</p>
+    </el-tooltip>
+
     <div class="analysis-dashboard__chips">
       <span class="stat-chip stat-chip--done">
         {{ t('pages.Setting.aiSetting.statDoneLabel') }} {{ stats?.done ?? 0 }}
@@ -88,7 +118,6 @@ const { t } = useTranslation()
 <style scoped lang="scss">
 .analysis-dashboard {
   flex-shrink: 0;
-  margin-top: auto;
   box-sizing: border-box;
 }
 
@@ -183,7 +212,19 @@ const { t } = useTranslation()
 }
 
 .analysis-dashboard__bar {
-  margin-bottom: 8px;
+  margin-bottom: 6px;
+}
+
+.analysis-dashboard__speed {
+  margin: 0 0 8px;
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--el-text-color-secondary);
+  cursor: help;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
 }
 
 .analysis-dashboard__chips {
@@ -226,5 +267,11 @@ const { t } = useTranslation()
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+</style>
+
+<style lang="scss">
+.ai-analysis-dashboard-title-tip {
+  max-width: 172px !important;
 }
 </style>

@@ -1,5 +1,3 @@
-import { resolveAutoCollectionScoreMin } from '../../../store/collectionConstants.mjs'
-
 const readJsonBody = async (ctx) => {
   const req = ctx.req
   return await new Promise((resolve) => {
@@ -103,7 +101,6 @@ export const registerBusinessApi = (router, deps) => {
     const payload = await readJsonBody(ctx)
     const normalized = normalizeSearchPayload(payload)
     const ai = settingManager.settingData?.ai || {}
-    const scoreMin = resolveAutoCollectionScoreMin(ai)
     const useSemanticSearch = !!settingManager.settingData?.search?.useSemanticSearch
     if (useSemanticSearch && normalized.filterKeywords) {
       const EmbeddingManager = (await import('../../../ai/EmbeddingManager.mjs')).default
@@ -111,16 +108,14 @@ export const registerBusinessApi = (router, deps) => {
       const ret = await resourcesManager.semanticSearch({
         ...normalized,
         embeddingManager,
-        hideUnsafe: ai.enableNsfwCheck,
-        scoreMin
+        hideUnsafe: ai.enableNsfwCheck
       })
       sendJson(ctx, ret)
       return
     }
     const ret = await resourcesManager.search({
       ...normalized,
-      hideUnsafe: ai.enableNsfwCheck,
-      scoreMin
+      hideUnsafe: ai.enableNsfwCheck
     })
     sendJson(ctx, ret)
   })

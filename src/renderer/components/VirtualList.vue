@@ -39,6 +39,9 @@ const wrapperRef = ref(null)
 
 const scrollTop = ref(0)
 const wrapperHeight = ref(0)
+/** resetScroll 期间禁止从 DOM 回读滚动位置，并抑制误触发 close-bottom */
+let scrollResetLock = false
+let scrollResetLockUntil = 0
 
 // 计算可见区域的起始和结束索引
 const visibleRange = computed(() => {
@@ -143,8 +146,10 @@ const handleScroll = throttle((event) => {
       scrollHeight,
       clientHeight
     })
-    const isCloseBottom = scrollHeight - scrollTopValue - clientHeight < props.buffer
-    if (isCloseBottom) {
+    const distanceFromBottom = scrollHeight - scrollTopValue - clientHeight
+    const isScrollable = scrollHeight > clientHeight + 1
+    const isCloseBottom = isScrollable && distanceFromBottom < props.buffer
+    if (isCloseBottom && !scrollResetLock && Date.now() >= scrollResetLockUntil) {
       emit('close-bottom')
     }
   }
@@ -155,8 +160,11 @@ const updateVisibleItems = (resetScrollTop = false) => {
   nextTick(() => {
     const scrollElement = scrollbarRef.value?.wrapRef
     if (scrollElement) {
-      if (resetScrollTop) {
+      if (resetScrollTop || scrollResetLock) {
         scrollTop.value = 0
+        if (scrollResetLock && scrollElement.scrollTop !== 0) {
+          scrollElement.scrollTop = 0
+        }
       } else {
         scrollTop.value = scrollElement.scrollTop
       }
@@ -169,7 +177,7 @@ const updateVisibleItems = (resetScrollTop = false) => {
 watch(
   () => props.items,
   () => {
-    updateVisibleItems()
+    updateVisibleItems(scrollResetLock)
   },
   { deep: true }
 )
@@ -189,12 +197,32 @@ onUnmounted(() => {
   styleCache.clear()
 })
 
-// 滚动到指定位置
-const scrollToTop = (top) => {
+// 滚动到指定位置（同步内部 scrollTop，供虚拟列表计算可见区）
+const scrollToTop = (top = 0) => {
   const scrollElement = scrollbarRef.value?.wrapRef
-  if (scrollElement) {
-    scrollElement.scrollTop = top
-  }
+  if (!scrollElement) return
+  scrollElement.scrollTop = top
+  scrollTop.value = top
+  wrapperHeight.value = scrollElement.clientHeight
+}
+
+/** 列表数据整体替换后滚回顶部（等 DOM / 高度更新后再执行） */
+const resetScroll = () => {
+  scrollResetLock = true
+  scrollResetLockUntil = Date.now() + 600
+  const apply = () => scrollToTop(0)
+  apply()
+  nextTick(() => {
+    apply()
+    requestAnimationFrame(() => {
+      apply()
+      updateVisibleItems(true)
+      requestAnimationFrame(() => {
+        apply()
+        scrollResetLock = false
+      })
+    })
+  })
 }
 
 // 滚动到指定索引
@@ -212,7 +240,8 @@ const scrollToIndex = (index) => {
 defineExpose({
   updateVisibleItems,
   scrollToTop,
-  scrollToIndex
+  scrollToIndex,
+  resetScroll
 })
 </script>
 

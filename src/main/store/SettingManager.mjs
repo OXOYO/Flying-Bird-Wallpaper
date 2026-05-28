@@ -68,9 +68,21 @@ export default class SettingManager extends EventEmitter {
     try {
       const res = await this.dbManager.getSysRecord('settingData')
       if (res.success && res.data?.storeData) {
+        const raw = res.data.storeData
+        const migrated = migrateSettingData(raw)
+        this._settingData = migrated
+        if (
+          Number(raw?.ai?.similarMinCosine) === 0.42 &&
+          Number(migrated.ai?.similarMinCosine) === 0.62
+        ) {
+          const saveRes = await this.dbManager.setSysRecord('settingData', migrated, 'object')
+          if (saveRes.success) {
+            this.logger.info('[SettingManager] 已迁移 ai.similarMinCosine: 0.42 -> 0.62')
+          }
+        }
         ret.success = true
         ret.message = t('messages.operationSuccess')
-        ret.data = this._settingData = migrateSettingData(res.data.storeData)
+        ret.data = migrated
       } else {
         // 如果获取失败，使用默认设置
         this.logger.warn('从数据库获取设置失败，使用默认设置')

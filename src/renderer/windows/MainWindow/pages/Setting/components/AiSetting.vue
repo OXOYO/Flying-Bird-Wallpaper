@@ -11,8 +11,13 @@ import {
 } from '@common/aiProviders.js'
 import { resolveAiUserMessage } from '@common/aiErrorUtils.js'
 import { useSettingAnchorScroll } from '../utils/useSettingAnchorScroll.js'
+import { useAiAnalysisDashboard } from '../utils/useAiAnalysisDashboard.js'
 import clipboard from 'clipboardy'
 import AiAnalysisDashboardPanel from './AiAnalysisDashboardPanel.vue'
+
+const props = defineProps({
+  tabActive: { type: Boolean, default: true }
+})
 
 const { t } = useTranslation()
 const settingStore = UseSettingStore()
@@ -112,118 +117,25 @@ const showOpenRouterFields = computed(
   () => aiForm.visionPreset === 'openrouter' || aiForm.textPreset === 'openrouter'
 )
 
-const analysisStats = ref(null)
-const loadingAnalysisStats = ref(false)
-let statsTimer = null
-
-const showAnalysisProgress = computed(
-  () => aiForm.enabled && aiForm.analysisMode && aiForm.analysisMode !== 'off'
-)
+const {
+  analysisStats,
+  loadingAnalysisStats,
+  showAnalysisProgress,
+  analysisProgressPercent,
+  analysisStatusLabel,
+  analysisStatusTooltip,
+  analysisStatusTagType,
+  analysisProgressSummary,
+  analysisFooterHint,
+  analysisSpeedLine,
+  analysisSpeedTooltip
+} = useAiAnalysisDashboard(computed(() => aiForm), { tabActive: toRef(props, 'tabActive') })
 
 const showBackgroundRetrySetting = computed(
   () =>
     aiForm.enabled &&
     (aiForm.analysisMode === 'background_slow' || aiForm.analysisMode === 'new_only')
 )
-
-const analysisProgressPercent = computed(() => {
-  const s = analysisStats.value
-  if (!s) return 0
-  const total = s.total || 0
-  if (!total) return s.done > 0 ? 100 : 0
-  return Math.min(100, Math.round((s.done / total) * 100))
-})
-
-const analysisRunStatus = computed(() => {
-  const s = analysisStats.value
-  if (!s) return 'loading'
-  if (s.running) return 'running'
-  if (aiForm.analysisMode === 'on_demand') return 'onDemand'
-  if (analysisProgressPercent.value >= 100 && (s.total ?? 0) > 0) return 'complete'
-  if ((s.pending ?? 0) > 0) return 'queued'
-  return 'idle'
-})
-
-const analysisStatusLabel = computed(() => {
-  const map = {
-    loading: 'runStatusLoading',
-    running: 'runStatusRunning',
-    queued: 'runStatusQueued',
-    complete: 'runStatusComplete',
-    idle: 'runStatusIdle',
-    onDemand: 'runStatusOnDemand'
-  }
-  return t(`pages.Setting.aiSetting.${map[analysisRunStatus.value]}`)
-})
-
-const analysisStatusTooltip = computed(() => {
-  const map = {
-    queued: 'runStatusQueuedHint',
-    running: 'statsRunning',
-    onDemand: 'statsOnDemandHint',
-    complete: 'statsComplete'
-  }
-  const key = map[analysisRunStatus.value]
-  return key ? t(`pages.Setting.aiSetting.${key}`) : ''
-})
-
-const analysisStatusTagType = computed(() => {
-  const map = {
-    loading: 'info',
-    running: 'primary',
-    queued: 'warning',
-    complete: 'success',
-    idle: 'info',
-    onDemand: 'info'
-  }
-  return map[analysisRunStatus.value]
-})
-
-const analysisProgressSummary = computed(() => {
-  const s = analysisStats.value
-  return t('pages.Setting.aiSetting.analysisProgressCount', {
-    done: s?.done ?? 0,
-    total: s?.total ?? 0
-  })
-})
-
-/** 仅补充状态标签未说明的内容，避免与标签重复 */
-const analysisFooterHint = computed(() => {
-  if (analysisRunStatus.value === 'onDemand') {
-    return t('pages.Setting.aiSetting.statsOnDemandHint')
-  }
-  return ''
-})
-
-const fetchAnalysisStats = async () => {
-  if (!aiForm.enabled) return
-  loadingAnalysisStats.value = true
-  try {
-    const res = await window.FBW.getAiAnalysisStats()
-    if (res?.success) analysisStats.value = res.data
-  } finally {
-    loadingAnalysisStats.value = false
-  }
-}
-
-const startStatsPolling = () => {
-  stopStatsPolling()
-  if (!showAnalysisProgress.value) {
-    analysisStats.value = null
-    return
-  }
-  fetchAnalysisStats()
-  const fast =
-    aiForm.analysisMode === 'background_slow' || aiForm.analysisMode === 'new_only'
-  statsTimer = setInterval(fetchAnalysisStats, fast ? 10000 : 30000)
-}
-
-const stopStatsPolling = () => {
-  if (statsTimer) {
-    clearInterval(statsTimer)
-    statsTimer = null
-  }
-}
 
 const AI_TIMEOUT_MIN_SEC = 60
 const AI_TIMEOUT_MAX_SEC = 1800
@@ -274,6 +186,9 @@ const ensureAiFields = () => {
   }
   if (aiForm.scoreMinFilter == null || aiForm.scoreMinFilter === '') {
     aiForm.scoreMinFilter = 70
+  }
+  if (aiForm.similarMinCosine == null || aiForm.similarMinCosine === '') {
+    aiForm.similarMinCosine = 0.62
   }
   if (aiForm.analysisMaxRetries == null || aiForm.analysisMaxRetries === '') {
     aiForm.analysisMaxRetries = AI_ANALYSIS_MAX_RETRIES_DEFAULT
@@ -473,18 +388,10 @@ watch(
   { deep: true }
 )
 
-watch(
-  () => [aiForm.enabled, aiForm.analysisMode],
-  () => startStatsPolling()
-)
-
 onMounted(async () => {
   syncAiFormFromStore()
   await Promise.all([refreshVisionModels(true), refreshTextModels(true)])
-  startStatsPolling()
 })
-
-onUnmounted(() => stopStatsPolling())
 
 defineExpose({ resetForm, restoreAnchorScroll })
 </script>
@@ -492,14 +399,15 @@ defineExpose({ resetForm, restoreAnchorScroll })
 <template>
   <div class="base-settings-wrapper">
     <aside class="ai-anchor-sidebar">
-      <el-anchor
-        class="anchor-block ai-sidebar-card ai-anchor-sidebar__nav"
-        :container="anchorContainer"
-        direction="vertical"
-        :offset="20"
-        type="default"
-        @change="onAnchorChange"
-      >
+      <el-scrollbar class="ai-anchor-sidebar__scroll">
+        <el-anchor
+          class="anchor-block ai-sidebar-card"
+          :container="anchorContainer"
+          direction="vertical"
+          :offset="20"
+          type="default"
+          @change="onAnchorChange"
+        >
         <el-anchor-link
           class="anchor-link"
           href="#divider-ai-base"
@@ -520,7 +428,8 @@ defineExpose({ resetForm, restoreAnchorScroll })
           href="#divider-ai-features"
           :title="t('pages.Setting.aiSetting.sectionFeatures')"
         />
-      </el-anchor>
+        </el-anchor>
+      </el-scrollbar>
       <AiAnalysisDashboardPanel
         v-if="showAnalysisProgress"
         :loading="loadingAnalysisStats && !analysisStats"
@@ -531,6 +440,8 @@ defineExpose({ resetForm, restoreAnchorScroll })
         :status-tag-type="analysisStatusTagType"
         :summary="analysisProgressSummary"
         :footer-hint="analysisFooterHint"
+        :speed-line="analysisSpeedLine"
+        :speed-tooltip="analysisSpeedTooltip"
         :running="!!analysisStats?.running"
       />
     </aside>
@@ -1067,6 +978,44 @@ defineExpose({ resetForm, restoreAnchorScroll })
               <template #label>
                 <span class="form-item-label-with-tip">
                   <span class="form-item-label-with-tip__text">{{
+                    t('pages.Setting.aiSetting.similarMinCosine')
+                  }}</span>
+                  <el-tooltip
+                    :content="t('pages.Setting.aiSetting.similarMinCosineHint')"
+                    placement="top"
+                    :show-after="300"
+                    popper-class="ai-setting-feature-tip"
+                  >
+                    <span
+                      class="form-item-tip-trigger"
+                      tabindex="0"
+                      role="button"
+                      :aria-label="t('pages.Setting.aiSetting.similarMinCosineHint')"
+                      @click.stop
+                    >
+                      <IconifyIcon icon="custom:info-outline-rounded" />
+                    </span>
+                  </el-tooltip>
+                </span>
+              </template>
+              <div class="ai-form-control-row ai-form-control-row--score-min">
+                <el-input-number
+                  v-model="aiForm.similarMinCosine"
+                  :min="0.35"
+                  :max="0.95"
+                  :step="0.01"
+                  :precision="2"
+                  :disabled="!aiForm.enabled"
+                  controls-position="right"
+                  @change="onAiFormChange"
+                />
+              </div>
+            </el-form-item>
+
+            <el-form-item class="ai-form-item-labeled">
+              <template #label>
+                <span class="form-item-label-with-tip">
+                  <span class="form-item-label-with-tip__text">{{
                     t('pages.Setting.aiSetting.scoreMinFilter')
                   }}</span>
                   <el-tooltip
@@ -1160,13 +1109,22 @@ defineExpose({ resetForm, restoreAnchorScroll })
   min-height: 0;
   gap: 10px;
 
-  &__nav {
-    flex: 1 1 auto;
+  &__scroll {
+    flex: 1 1 0;
     min-height: 0;
-    height: auto !important;
-    width: 100% !important;
-    overflow: auto;
-    padding: 14px 16px;
+    align-self: stretch;
+    overflow: hidden;
+
+    :deep(.el-scrollbar__wrap) {
+      height: 100%;
+      overflow-x: hidden;
+    }
+
+    :deep(.el-scrollbar__view) {
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
   }
 }
 
@@ -1322,6 +1280,15 @@ defineExpose({ resetForm, restoreAnchorScroll })
 </style>
 
 <style lang="scss">
+.ai-anchor-sidebar__scroll .anchor-block {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 100%;
+  height: auto;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
 .ai-setting-feature-tip {
   max-width: min(320px, 90vw) !important;
   width: max-content;

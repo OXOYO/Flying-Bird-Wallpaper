@@ -40,7 +40,7 @@ export const AUTO_COLLECTION_COUNT_ABSOLUTE_MAX = 50
 /** 合集 items 分页默认每页条数（前端未传 pageSize 时） */
 export const COLLECTION_ITEMS_DEFAULT_PAGE_SIZE = 50
 
-/** 最低评分过滤默认值（AI 设置、搜索、系统合集） */
+/** 最低评分过滤默认值（AI 设置、系统自动合集） */
 export const SCORE_MIN_FILTER_DEFAULT = 70
 
 /**

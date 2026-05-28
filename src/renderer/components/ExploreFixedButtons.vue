@@ -42,6 +42,11 @@ watch(
 const onClick = (action, actionParams, childVal) => {
   emit('action', action, actionParams, childVal)
 }
+
+const isChildActive = (item, child) => {
+  if (item.activeValue === undefined || child?.value === undefined) return false
+  return child.value === item.activeValue
+}
 </script>
 
 <template>
@@ -64,6 +69,7 @@ const onClick = (action, actionParams, childVal) => {
         v-for="child in item.children"
         :key="child.value"
         class="explore-fixed-btn__child"
+        :class="{ 'is-active': isChildActive(item, child) }"
         :title="child.alt || child.title || child.label"
         @click="onClick(item.action, item.actionParams, child.value)"
       >
@@ -133,8 +139,14 @@ const onClick = (action, actionParams, childVal) => {
     cursor: pointer;
     color: #ffffff;
 
-    &:hover {
+    &:hover,
+    &.is-active {
       color: #95d475;
+    }
+
+    &.is-active {
+      background: rgba(149, 212, 117, 0.22);
+      border-radius: 6px;
     }
 
     &:active {

@@ -81,6 +81,8 @@ export const defaultAiSettings = {
   autoCollectionsEnabled: true,
   autoCollectionsMaxCount: 20,
   scoreMinFilter: 70,
+  /** 找相似最低余弦相似度 0~1（文本向量；0.42 过松易凑数，默认 0.62） */
+  similarMinCosine: 0.62,
   /** 后台分析单张最大失败次数 */
   analysisMaxRetries: 5,
   autoCurateSettled: false,
@@ -110,3 +112,7 @@ export const AI_ANALYSIS_STATUS = {
 }
 
 export const AI_ANALYSIS_MODES = ['off', 'on_demand', 'background_slow', 'new_only']
+
+/** 分析速度统计：内存滑动窗口（仅成功样本的 vision pipelineMs） */
+export const AI_ANALYSIS_SPEED_SAMPLE_MAX = 30
+export const AI_ANALYSIS_SPEED_MIN_SAMPLES = 3

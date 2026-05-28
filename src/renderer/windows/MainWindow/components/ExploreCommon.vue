@@ -12,7 +12,9 @@ import {
 } from '@common/publicData.js'
 import { debounce } from '@common/utils.js'
 import ExploreSearchHeader from './ExploreSearchHeader.vue'
+import ExploreSimilarModeBanner from '@renderer/components/ExploreSimilarModeBanner.vue'
 import { normalizeResourceItem } from '@renderer/composables/useResourceCardActions.js'
+import { useSimilarResultsLoadMore } from '@renderer/composables/useSimilarResultsLoadMore.mjs'
 
 const { t } = useTranslation()
 const commonStore = UseCommonStore()
@@ -162,6 +164,16 @@ const activeWordsList = computed(() => {
 
 // 卡片列表
 const cardList = ref([])
+/** @type {import('vue').Ref<{ cardList: unknown[], hasMore: boolean, empty: boolean } | null>} */
+const similarListSnapshot = ref(null)
+
+const mapSimilarListRows = (rows = []) =>
+  rows.map((row) =>
+    normalizeResourceItem(row, {
+      resourceType: isLocalResource.value ? 'localResource' : 'remoteResource',
+      gridHWRatio: settingData.value?.gridHWRatio ?? 0.618
+    })
+  )
 
 const flags = reactive({
   loading: false,
@@ -258,6 +270,23 @@ const searchForm = reactive({
   total: 0
 })
 
+const {
+  similarMode,
+  similarSourceItem,
+  similarHasMore,
+  similarTotal,
+  resetSimilar,
+  startSimilar,
+  appendSimilarPage
+} = useSimilarResultsLoadMore({
+  normalizeRows: mapSimilarListRows,
+  getPageSize: () => searchForm.pageSize
+})
+
+let listFetchGeneration = 0
+/** 连续「整页重复」时自动跳页重试，避免 total 被误压成已加载条数 */
+let duplicatePageRetries = 0
+
 // 热门标签相关状态
 const hotTags = ref([])
 const isLoadingTags = ref(false)
@@ -310,6 +339,19 @@ const fixedBtns = computed(() => {
 
   if (!flags.showFixedBtns) {
     return ret
+  }
+
+  if (similarMode.value) {
+    ret.push({
+      action: 'exitSimilar',
+      actionParams: [],
+      title: t('exploreCommon.similarBack'),
+      icon: 'custom:arrow-right',
+      iconStyle: { transform: 'rotate(180deg)' },
+      style: {
+        bottom: getBottom()
+      }
+    })
   }
 
   ret.push({
@@ -368,7 +410,8 @@ const fixedBtns = computed(() => {
     style: {
       bottom: getBottom()
     },
-    children: gridRatioList
+    children: gridRatioList,
+    activeValue: gridForm.gridHWRatio
   })
   // 切换格子尺寸
   const gridSize = gridSizeList.find((item) => item.value === gridForm.gridSize)
@@ -382,7 +425,8 @@ const fixedBtns = computed(() => {
     style: {
       bottom: getBottom()
     },
-    children: gridSizeList
+    children: gridSizeList,
+    activeValue: gridForm.gridSize
   })
   return ret
 })
@@ -515,6 +559,9 @@ const onWordClick = (item) => {
 
 const onFixedBtnClick = (action, actionParams, childVal) => {
   switch (action) {
+    case 'exitSimilar':
+      exitSimilarMode()
+      break
     case 'toggleFixedBtns':
       toggleFixedBtns()
       break
@@ -790,8 +837,29 @@ const calculateOptimalBuffer = (blockHeight, cardHeight) => {
   )
 }
 
+// 找相似：首屏未满且仍有候选时继续拉取
+const doCompleteSimilarList = async () => {
+  if (!similarMode.value || flags.loading || !similarHasMore.value) return
+  const pageSize = Math.max(1, searchForm.pageSize || 50)
+  let guard = 0
+  while (
+    guard < 8 &&
+    !flags.loading &&
+    similarHasMore.value &&
+    cardList.value.length < pageSize &&
+    cardList.value.length < similarTotal.value
+  ) {
+    guard += 1
+    await loadMoreSimilar({ anchorPrevious: false })
+  }
+}
+
 // 补齐列表
 const doCompleteList = async () => {
+  if (similarMode.value) {
+    await doCompleteSimilarList()
+    return
+  }
   if (cardList.value.length && searchForm.pageSize > cardList.value.length) {
     await getNextList()
     // 在获取新数据后强制更新视图，但不重置滚动位置
@@ -914,6 +982,8 @@ const onExploreHeaderMenuCommand = (command) => {
 
 const onRefresh = async (flag = true) => {
   // 重置数据
+  listFetchGeneration += 1
+  duplicatePageRetries = 0
   searchForm.startPage = 1
   searchForm.total = 0
   if (flag) {
@@ -935,6 +1005,8 @@ const onRefresh = async (flag = true) => {
   }
 
   cardList.value = []
+  resetSimilar()
+  similarListSnapshot.value = null
   // 重置标识
   flags.loading = false
   flags.empty = false
@@ -952,7 +1024,35 @@ const onSearch = async () => {
   await onRefresh(false)
 }
 
+/** @param {{ anchorPrevious?: boolean }} [opts] */
+const loadMoreSimilar = async (opts = {}) => {
+  const { anchorPrevious = true } = opts
+  if (!similarMode.value || flags.loading || !similarHasMore.value) return
+  flags.loading = true
+  try {
+    const lastIndex = cardList.value.length - 1
+    await appendSimilarPage(
+      () => cardList.value,
+      (list) => {
+        cardList.value = list
+      }
+    )
+    flags.hasMore = similarHasMore.value
+    if (anchorPrevious && lastIndex >= 0) {
+      setTimeout(() => scrollRef.value?.scrollToIndex(lastIndex))
+    } else if (!anchorPrevious) {
+      nextTick(() => scrollRef.value?.scrollToTop?.(0))
+    }
+  } finally {
+    flags.loading = false
+  }
+}
+
 const onLoadMore = async () => {
+  if (similarMode.value) {
+    await loadMoreSimilar()
+    return
+  }
   if (flags.loading || !flags.hasMore) {
     return
   }
@@ -977,6 +1077,12 @@ const debouncedGetNextList = debounce(() => {
 }, 300)
 
 const onCloseBottom = () => {
+  if (similarMode.value) {
+    if (!flags.loading && similarHasMore.value) {
+      void loadMoreSimilar()
+    }
+    return
+  }
   if (flags.loading || !flags.hasMore) {
     return
   }
@@ -988,6 +1094,11 @@ const getNextList = async () => {
     return
   }
 
+  const fetchGen = listFetchGeneration
+  const pageToFetch = Math.max(1, Number(searchForm.startPage) || 1)
+  // 立即占用下一页页码，防止滚动触底连续触发同一页
+  searchForm.startPage = pageToFetch + 1
+
   flags.loading = true
   const {
     resourceType,
@@ -996,7 +1107,6 @@ const getNextList = async () => {
     filterType,
     quality,
     orientation,
-    startPage,
     pageSize,
     isRandom,
     sortField,
@@ -1017,7 +1127,7 @@ const getNextList = async () => {
   let payload = {
     resourceType,
     resourceName,
-    startPage,
+    startPage: pageToFetch,
     pageSize,
     isRandom,
     sortField,
@@ -1026,8 +1136,7 @@ const getNextList = async () => {
     filterType,
     quality: quality.toString(),
     orientation: orientation.toString(),
-    hideUnsafe: !!settingData.value?.ai?.enableNsfwCheck,
-    scoreMin: settingData.value?.ai?.scoreMinFilter ?? 70
+    hideUnsafe: !!settingData.value?.ai?.enableNsfwCheck
   }
   let res
   try {
@@ -1040,11 +1149,21 @@ const getNextList = async () => {
     } else {
       res = await window.FBW.search(payload)
     }
+    if (fetchGen !== listFetchGeneration) {
+      return
+    }
+    if (!res?.success) {
+      searchForm.startPage = pageToFetch
+    }
     if (res && res.success && Array.isArray(res.data.list)) {
+      const reportedTotal = Number(res.data.total) || 0
+      if (reportedTotal > 0) {
+        searchForm.total = reportedTotal
+      }
+
       if (res.data.list.length) {
-        // 去重
         const ids = cardList.value.map((item) => item.uniqueKey)
-        const list = res.data.list
+        const newItems = res.data.list
           .filter((item) => !ids.includes(item.uniqueKey))
           .map((item) => {
             const row = normalizeResourceItem(item, {
@@ -1064,30 +1183,26 @@ const getNextList = async () => {
             return row
           })
 
-        cardList.value.push(...list)
-        searchForm.total = res.data.total
-        flags.hasMore = cardList.value.length < res.data.total
+        if (newItems.length) {
+          duplicatePageRetries = 0
+          cardList.value.push(...newItems)
+        } else if (duplicatePageRetries < 5 && cardList.value.length < searchForm.total) {
+          // 本页与已加载重复（多为重复请求同一页），静默跳页重试，勿改 total
+          duplicatePageRetries += 1
+          flags.loading = false
+          flags.loadMoreClicked = false
+          return getNextList()
+        }
 
-        if (list.length) {
-          searchForm.startPage = res.data.startPage + 1
-        } else {
-          // 如果没有新数据但还未达到总数，可能是数据重复，尝试跳过当前页
-          if (flags.hasMore && !flags.loadMoreClicked) {
-            searchForm.startPage += 1
-          } else {
-            flags.hasMore = false
-            ElMessage({
-              type: 'warning',
-              message: res.message || t('messages.noMoreData')
-            })
-          }
+        flags.hasMore = cardList.value.length < searchForm.total
+        if (!flags.hasMore && cardList.value.length > 0 && flags.loadMoreClicked) {
+          ElMessage({ type: 'info', message: t('messages.noMoreData') })
         }
       } else {
-        flags.hasMore = false
-        ElMessage({
-          type: 'warning',
-          message: res.message || t('messages.noMoreData')
-        })
+        flags.hasMore = cardList.value.length > 0 && cardList.value.length < searchForm.total
+        if (!flags.hasMore && cardList.value.length > 0) {
+          ElMessage({ type: 'info', message: t('messages.noMoreData') })
+        }
       }
     } else {
       ElMessage({
@@ -1097,6 +1212,7 @@ const getNextList = async () => {
     }
   } catch (err) {
     console.error(err)
+    searchForm.startPage = pageToFetch
     ElMessage({
       type: 'error',
       message: t('messages.getDataFail')
@@ -1221,25 +1337,97 @@ const onAiAnalyze = async (item, index) => {
   }
 }
 
+const similarSourceImageSrc = computed(() => similarSourceItem.value?.imageSrc || '')
+
+const exitSimilarMode = () => {
+  const snap = similarListSnapshot.value
+  resetSimilar()
+  if (!snap) {
+    return
+  }
+  cardList.value = snap.cardList
+  flags.hasMore = snap.hasMore
+  flags.empty = snap.empty
+  searchForm.total = snap.searchTotal ?? searchForm.total
+  similarListSnapshot.value = null
+  nextTick(() => scrollRef.value?.resetScroll?.())
+}
+
+const buildSimilarScope = () => {
+  if (flags.inPrivacySpace) {
+    return { type: 'privacy' }
+  }
+  if (isFavoritesMenu.value) {
+    return { type: 'favorites' }
+  }
+  if (isHistoryMenu.value) {
+    return { type: 'history' }
+  }
+  return {
+    type: 'search',
+    resourceType: searchForm.resourceType,
+    resourceName: searchForm.resourceName
+  }
+}
+
+const listCountTotal = computed(() =>
+  similarMode.value ? similarTotal.value : searchForm.total
+)
+
+const similarBannerBackground = computed(() =>
+  flags.inPrivacySpace ? 'rgba(0, 0, 0, 0.8)' : 'rgba(50, 57, 65, 1)'
+)
+
 const onFindSimilar = async (item) => {
   if (!item?.id) return
   flags.loading = true
+  let shouldFillSimilar = false
   try {
-    const res = await window.FBW.findSimilar({ resourceId: item.id, limit: 40 })
+    const scope = buildSimilarScope()
+    const pageSize = Math.max(1, searchForm.pageSize || 50)
+    const res = await window.FBW.findSimilar({
+      resourceId: item.id,
+      limit: pageSize,
+      scope: JSON.parse(JSON.stringify(scope))
+    })
     if (res?.success && res.data?.list?.length) {
-      cardList.value = res.data.list.map((row) => ({
-        ...row,
-        srcType: 'file',
-        uniqueKey: String(row.id),
-        rawImageUrl: `fbwtp://fbw/api/images/get?filePath=${encodeURIComponent(row.filePath)}`,
-        imageSrc: `fbwtp://fbw/api/images/get?filePath=${encodeURIComponent(row.filePath)}`
-      }))
-      flags.hasMore = false
+      // 已在相似列表内再次找相似时勿覆盖快照，否则返回会落到上一层相似结果而非最初列表
+      if (!similarMode.value) {
+        similarListSnapshot.value = {
+          cardList: cardList.value.slice(),
+          hasMore: flags.hasMore,
+          empty: flags.empty,
+          searchTotal: searchForm.total
+        }
+      }
+      const sourceItem = normalizeResourceItem(item, {
+        resourceType: isLocalResource.value ? 'localResource' : 'remoteResource',
+        gridHWRatio: settingData.value?.gridHWRatio ?? 0.618
+      })
+      const firstRows = mapSimilarListRows(res.data.list)
+      cardList.value = startSimilar({
+        resourceId: item.id,
+        scope,
+        sourceItem,
+        firstRows,
+        pageSize,
+        total: res.data?.total
+      })
+      await nextTick()
+      scrollRef.value?.resetScroll?.()
+      flags.hasMore = similarHasMore.value
+      flags.empty = false
+      shouldFillSimilar = true
     } else {
       ElMessage({ type: 'info', message: t('exploreCommon.findSimilarEmpty') })
     }
   } finally {
     flags.loading = false
+  }
+  if (shouldFillSimilar) {
+    await doCompleteSimilarList()
+    await nextTick()
+    scrollRef.value?.resetScroll?.()
   }
 }
 
@@ -1724,6 +1912,8 @@ onBeforeMount(() => {
 })
 
 onMounted(() => {
+  resetSimilar()
+  similarListSnapshot.value = null
   // 监听元素宽度变化
   const entry = cardBlockRef.value
   if (entry) {
@@ -1770,25 +1960,36 @@ onBeforeUnmount(() => {
     :class="{ 'privacy-space': flags.inPrivacySpace }"
     element-loading-background="rgba(0, 0, 0, 0.2)"
   >
-    <ExploreSearchHeader
-      :menu="props.menu"
-      :loading="flags.loading"
-      :search-form="searchForm"
-      :selected-resource="selectedResource"
-      :resource-group-list="resourceGroupList"
-      :support-search-types="supportSearchTypes"
-      :is-local-resource="isLocalResource"
-      :in-privacy-space="flags.inPrivacySpace"
-      :auto-refresh-enabled="autoRefreshForm.enabled"
-      :hot-tags="hotTags"
-      :use-semantic-search="useSemanticSearch"
-      :semantic-search-available="semanticSearchAvailable"
-      @resource-change="onResourceChange"
-      @search="onSearch"
-      @apply-filters="onApplyFilters"
-      @menu-command="onExploreHeaderMenuCommand"
-      @update-use-semantic-search="onSemanticSearchChange"
-    />
+    <div class="explore-header-host">
+      <ExploreSearchHeader
+        :class="{ 'explore-search-header--under-similar-banner': similarMode }"
+        :menu="props.menu"
+        :loading="flags.loading"
+        :search-form="searchForm"
+        :selected-resource="selectedResource"
+        :resource-group-list="resourceGroupList"
+        :support-search-types="supportSearchTypes"
+        :is-local-resource="isLocalResource"
+        :in-privacy-space="flags.inPrivacySpace"
+        :auto-refresh-enabled="autoRefreshForm.enabled"
+        :hot-tags="hotTags"
+        :use-semantic-search="useSemanticSearch"
+        :semantic-search-available="semanticSearchAvailable"
+        @resource-change="onResourceChange"
+        @search="onSearch"
+        @apply-filters="onApplyFilters"
+        @menu-command="onExploreHeaderMenuCommand"
+        @update-use-semantic-search="onSemanticSearchChange"
+      />
+      <ExploreSimilarModeBanner
+        v-if="similarMode"
+        :message="t('exploreCommon.similarModeBanner')"
+        :source-image-src="similarSourceImageSrc"
+        :back-aria-label="t('exploreCommon.similarBack')"
+        :bar-background="similarBannerBackground"
+        @back="exitSimilarMode"
+      />
+    </div>
     <div class="body-block">
       <div
         v-if="enabledWordDraw"
@@ -1846,6 +2047,7 @@ onBeforeUnmount(() => {
               v-for="child in item.children"
               :key="child.value"
               class="fixed-btn-child"
+              :class="{ 'is-active': item.activeValue !== undefined && child.value === item.activeValue }"
               :title="child.alt || child.title || child.label"
               @click="onFixedBtnClick(item.action, item.actionParams, child.value)"
             >
@@ -2022,7 +2224,7 @@ onBeforeUnmount(() => {
         <EmptyHelp v-if="flags.empty" />
       </div>
     </div>
-    <ListCountIndicator :current="cardList.length" :total="searchForm.total" />
+    <ListCountIndicator :current="cardList.length" :total="listCountTotal" />
     <view-image
       ref="viewImageRef"
       :options="viewImageOptions"
@@ -2042,6 +2244,24 @@ onBeforeUnmount(() => {
 
   &.privacy-space {
     background-color: rgba(0, 0, 0, 0.8);
+  }
+}
+
+.explore-header-host {
+  position: relative;
+  flex-shrink: 0;
+  min-width: 0;
+  box-sizing: border-box;
+  width: calc(100% - 20px);
+  max-width: calc(100% - 20px);
+  margin: 10px;
+  border-bottom: 1px solid #ffffff;
+
+  :deep(.explore-search-header) {
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    border-bottom: none !important;
   }
 }
 .body-block {
@@ -2149,8 +2369,14 @@ onBeforeUnmount(() => {
       cursor: pointer;
       color: #ffffff;
 
-      &:hover {
+      &:hover,
+      &.is-active {
         color: #95d475;
+      }
+
+      &.is-active {
+        background: rgba(149, 212, 117, 0.22);
+        border-radius: 6px;
       }
 
       &:active {

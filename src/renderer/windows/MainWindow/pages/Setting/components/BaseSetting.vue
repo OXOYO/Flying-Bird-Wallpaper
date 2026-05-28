@@ -25,12 +25,34 @@ import {
 import { localeOptions } from '@i18n/locale/index.js'
 import { useTranslation } from 'i18next-vue'
 import { useSettingAnchorScroll } from '../utils/useSettingAnchorScroll.js'
+import { useAiAnalysisDashboard } from '../utils/useAiAnalysisDashboard.js'
+import AiAnalysisDashboardPanel from './AiAnalysisDashboardPanel.vue'
+
+const props = defineProps({
+  tabActive: { type: Boolean, default: true }
+})
 
 const { t } = useTranslation()
 const commonStore = UseCommonStore()
 const settingStore = UseSettingStore()
 const { commonData, resourceMap } = storeToRefs(commonStore)
 const { settingData } = storeToRefs(settingStore)
+
+const {
+  analysisStats,
+  loadingAnalysisStats,
+  showAnalysisProgress,
+  analysisProgressPercent,
+  analysisStatusLabel,
+  analysisStatusTooltip,
+  analysisStatusTagType,
+  analysisProgressSummary,
+  analysisFooterHint,
+  analysisSpeedLine,
+  analysisSpeedTooltip
+} = useAiAnalysisDashboard(computed(() => settingData.value?.ai || {}), {
+  tabActive: toRef(props, 'tabActive')
+})
 
 const baseSettingsScrollbarRef = ref(null)
 const settingDataFormRef = ref(null)
@@ -361,14 +383,16 @@ defineExpose({
 
 <template>
   <div class="base-settings-wrapper">
-    <el-anchor
-      class="anchor-block"
-      :container="anchorContainer"
-      direction="vertical"
-      :offset="20"
-      type="default"
-      @change="onAnchorChange"
-    >
+    <aside class="setting-anchor-sidebar">
+      <el-scrollbar class="setting-anchor-sidebar__scroll">
+        <el-anchor
+          class="anchor-block ai-sidebar-card"
+          :container="anchorContainer"
+          direction="vertical"
+          :offset="20"
+          type="default"
+          @change="onAnchorChange"
+        >
       <el-anchor-link
         class="anchor-link"
         href="#divider-base"
@@ -444,7 +468,23 @@ defineExpose({
           </el-anchor-link>
         </template>
       </el-anchor-link>
-    </el-anchor>
+        </el-anchor>
+      </el-scrollbar>
+      <AiAnalysisDashboardPanel
+        v-if="showAnalysisProgress"
+        :loading="loadingAnalysisStats && !analysisStats"
+        :stats="analysisStats"
+        :percent="analysisProgressPercent"
+        :status-label="analysisStatusLabel"
+        :status-tooltip="analysisStatusTooltip"
+        :status-tag-type="analysisStatusTagType"
+        :summary="analysisProgressSummary"
+        :footer-hint="analysisFooterHint"
+        :speed-line="analysisSpeedLine"
+        :speed-tooltip="analysisSpeedTooltip"
+        :running="!!analysisStats?.running"
+      />
+    </aside>
     <el-scrollbar ref="baseSettingsScrollbarRef" style="height: 100%; flex: 1">
       <el-form ref="settingDataFormRef" :model="settingDataForm" label-width="auto">
         <div class="form-card">
@@ -1464,10 +1504,49 @@ defineExpose({
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 20px;
   height: calc(100vh - 110px);
   overflow: hidden;
+}
+
+.setting-anchor-sidebar {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  width: 200px;
+  min-width: 200px;
+  height: 100%;
+  min-height: 0;
+  gap: 10px;
+
+  &__scroll {
+    flex: 1 1 0;
+    min-height: 0;
+    align-self: stretch;
+    overflow: hidden;
+
+    :deep(.el-scrollbar__wrap) {
+      height: 100%;
+      overflow-x: hidden;
+    }
+
+    :deep(.el-scrollbar__view) {
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+  }
+}
+
+.ai-sidebar-card {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--el-border-color-lighter);
+  background-color: #ffffff;
+  box-shadow: none;
 }
 
 .color-picker-block {
@@ -1480,6 +1559,15 @@ defineExpose({
 </style>
 
 <style lang="scss">
+.setting-anchor-sidebar__scroll .anchor-block {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 100%;
+  height: auto;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
 .anchor-block {
   width: 200px;
   height: 100%;
