@@ -82,7 +82,9 @@ export const defaultAiSettings = {
   autoCollectionsMaxCount: 20,
   scoreMinFilter: 70,
   /** 后台分析单张最大失败次数 */
-  analysisMaxRetries: 5
+  analysisMaxRetries: 5,
+  autoCurateSettled: false,
+  autoCurateSettledAnalyzed: 0
 }
 
 export const AI_ANALYSIS_MAX_RETRIES_MIN = 1

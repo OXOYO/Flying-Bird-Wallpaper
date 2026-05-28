@@ -214,7 +214,9 @@ export const defaultSettingData = {
     scoreMinFilter: 70,
     autoCollectionsEnabled: true,
     autoCollectionsMaxCount: 20,
-    analysisMaxRetries: 5
+    analysisMaxRetries: 5,
+    autoCurateSettled: false,
+    autoCurateSettledAnalyzed: 0
   },
   /*** 搜索（仅搜索页 / H5 搜索） ***/
   search: {
@@ -391,6 +393,12 @@ export function migrateSettingData(storeData = {}) {
   }
   if (next.ai.analysisMaxRetries == null || next.ai.analysisMaxRetries === '') {
     next.ai.analysisMaxRetries = defaultSettingData.ai.analysisMaxRetries
+  }
+  if (next.ai.autoCurateSettled == null) {
+    next.ai.autoCurateSettled = defaultSettingData.ai.autoCurateSettled
+  }
+  if (next.ai.autoCurateSettledAnalyzed == null) {
+    next.ai.autoCurateSettledAnalyzed = defaultSettingData.ai.autoCurateSettledAnalyzed
   }
   if (typeof next.h5FullscreenImageCompress !== 'boolean') {
     if (typeof next.h5ImageCompress === 'boolean') {

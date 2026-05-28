@@ -1,7 +1,7 @@
 # AI 分析性能与设置体验（2.0.0+ 增量）
 
-> 文档版本：**v1.0**  
-> 整理日期：2026-05-27  
+> 文档版本：**v1.2**  
+> 整理日期：2026-05-28  
 > 状态：**已实现**  
 > 关联：[ai-dev-plan.md](./ai-dev-plan.md) · [ai-feature-roadmap.md](./ai-feature-roadmap.md) · [README.md](./README.md)
 
@@ -94,8 +94,24 @@
 |----|------|
 | 文件类型 | **仅 `fileType=image`**；视频等标 `skipped` |
 | 分析模式 | `off` / `on_demand` / `background_slow` / `new_only`（设置页 ⓘ 说明） |
-| 后台批次 | 每轮最多 5 张，串行；`pending` + `failed` 可重试 |
+| 后台批次 | 每轮最多 5 张，串行；队列含 `pending` + `failed` |
+| 失败重试上限 | **`ai.analysisMaxRetries`**（默认 **5**，1～20）；后台连续失败达上限 → `skipped`，不再自动重试 |
+| 手动分析 | 探索页「AI 分析」**不受**重试上限（仍可一直试；成功则 `aiAnalysisFailCount` 归零） |
+| 失败计数 | DB 列 `aiAnalysisFailCount`；`markPendingForResources` 时归零 |
 | 状态「等待中」 | `pending>0` 且当前未 `running`；侧边栏 Tooltip 多行展示原因 |
+
+### 4.1 后台失败重试（v1.2+）
+
+实现：`AiAnalysisManager.handleAnalysisFailure` + `resolveAnalysisMaxRetries`（`aiConstants.mjs`）。
+
+| 场景 | 行为 |
+|------|------|
+| 后台 `background_slow` / `new_only` | 失败递增计数；达 `analysisMaxRetries` → `aiAnalysisStatus=skipped`，日志 `reason=max_retries` |
+| 浏览页手动 `analyzeResourceById` | `respectRetryLimit=false`，不因上限自动 skipped |
+| 设置位置 | AI 设置 → **分析模式**下方（仅后台模式显示） |
+| 非法/空配置 | 迁移与 `ensureAiFields` 回退默认 **5** |
+
+与合集联动：队列稳定（无 pending/failed）且完成至少一轮自动整理后，系统策展暂停定时任务 — 见 [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) §2.5。
 
 ---
 
@@ -132,7 +148,7 @@
 | 分析模式 / 超时 / 视觉输入 / 功能开关 | 均用 Tooltip，无大块 `field-hint` |
 | 标签列宽 | `label-width="auto"`（按最宽标签对齐），**不固定宽度**，避免长标签换行 |
 | 进度卡 Tooltip | `AiAnalysisDashboardPanel.vue` 同步换行样式 |
-| 合集相关子项 | `scoreMinFilter`、`autoCollectionsMaxCount` 在「AI 自动整理合集」下 — 见 [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) |
+| 合集相关子项 | `scoreMinFilter`、`autoCollectionsMaxCount` 在「AI 自动整理合集」下；`analysisMaxRetries` 在分析模式旁 — 见 [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) |
 
 ---
 
@@ -147,8 +163,11 @@
 | `visionMaxLongEdge` | 2048 | 最长边 px |
 | `visionPreprocessMinSizeMB` | 1.5 | 低于此体积且长边已够则不缩 |
 | `visionJpegQuality` | 88 | 缩图 JPEG 质量 |
-| `scoreMinFilter` | null | 最低评分；搜索 + 系统合集 |
+| `scoreMinFilter` | 70 | 最低评分（0～100）；搜索 + 系统合集；无「不限制」 |
 | `autoCollectionsMaxCount` | 20 | 系统推荐合集数量上限（3～50） |
+| `analysisMaxRetries` | 5 | 后台单张最大连续失败次数（1～20） |
+| `autoCurateSettled` | false | 内部：分析稳定且已跑完至少一轮自动整理 |
+| `autoCurateSettledAnalyzed` | 0 | 锁存时的已分析张数 |
 
 ### `settingData.search`
 
@@ -176,6 +195,8 @@
 3. 小图：日志 `preprocess=original reason=below_threshold`  
 4. 探索搜索：筛选内可开关语义搜索；AI 设置无该开关  
 5. 功能选项长标签（如「允许远程模型上传图片」）单行不换行  
+6. 后台模式：失败重试次数默认 5；连续失败后进度卡「已跳过」增加、「失败」下降  
+7. 分析全部完成后：自动整理至少一轮后暂停；手动「立即整理」仍可用  
 
 ---
 
@@ -184,8 +205,9 @@
 | 模块 | 路径 |
 |------|------|
 | 缩图 | `src/main/ai/AiVisionImagePrep.mjs` |
-| 超时常量/公式 | `src/main/ai/aiConstants.mjs` |
+| 超时常量/公式/重试 | `src/main/ai/aiConstants.mjs` |
 | 分析调度 | `src/main/ai/AiAnalysisManager.mjs` |
+| 策展门控 | `src/main/store/collectionCurateGate.mjs` |
 | Provider | `src/main/ai/AiAnalysisProvider.mjs`、`providers/HttpAiProviders.mjs` |
 | 默认/迁移 | `src/common/publicData.js` → `migrateSettingData` |
 | 设置 UI | `src/renderer/.../Setting/components/AiSetting.vue` |
@@ -200,3 +222,4 @@
 |------|------|------|
 | v1.0 | 2026-05-27 | 缩图、动态超时、语义搜索迁移、探索顶栏、设置 Tooltip/对齐 |
 | v1.1 | 2026-05-28 | 设置速查补充 `scoreMinFilter` / `autoCollectionsMaxCount`；链至合集专题文档 |
+| v1.2 | 2026-05-28 | `analysisMaxRetries` 与 `aiAnalysisFailCount`；`scoreMinFilter` 默认 70；链至策展稳定暂停 |

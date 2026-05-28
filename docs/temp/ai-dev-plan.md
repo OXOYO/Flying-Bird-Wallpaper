@@ -1,6 +1,6 @@
 # 飞鸟壁纸 AI 能力开发方案
 
-> 文档版本：**v2.2**  
+> 文档版本：**v2.3**  
 > 整理日期：2026-05-28  
 > 状态：Sprint 0–4 **已落地**；2.0.0 **后续增量已落地**；Sprint 5 **未开发**  
 > 应用版本：**1.3.8 → 2.0.0**  
@@ -140,11 +140,13 @@ flowchart LR
 
 **合集数量公式：** `clamp(3, round(√已分析数 × 1.2), cap)`，`cap = ai.autoCollectionsMaxCount`（默认 **20**，可调 **3～50**）；至少 8 张 `done` 才开始。
 
-**入选壁纸：** 按 **`ai.scoreMinFilter`** 过滤（未设置则不按分过滤）；**已取消**每合集固定 40 条上限（`AUTO_COLLECTION_ITEM_LIMIT` 已移除）。
+**入选壁纸：** 按 **`ai.scoreMinFilter`** 过滤（默认 **70**，0～100）；**已取消**每合集固定 40 条上限（`AUTO_COLLECTION_ITEM_LIMIT` 已移除）。
 
-**触发：** 分析完成 ~90s 防抖；向量化完成 ~60s 防抖；每 30min 定时；合集页「立即整理」；`scoreMinFilter` / `autoCollectionsMaxCount` 变更 ~15s 后重整理；IPC `main:collections:curate`、`main:collections:curatorStats`。
+**触发：** 分析完成 ~90s 防抖；向量化完成 ~60s 防抖；每 30min 定时（**分析队列稳定且已锁存后暂停**）；合集页「立即整理」（**始终可用**）；`scoreMinFilter` / `autoCollectionsMaxCount` 变更 → 清锁存 + ~15s 后重整理；IPC `main:collections:curate`、`main:collections:curatorStats`。
 
-**设置：** `ai.autoCollectionsEnabled`（默认 true）；子项 **`scoreMinFilter`**、**`autoCollectionsMaxCount`**（见 `AiSetting.vue`）；需 `ai.enabled`；分析完成后自动向量化。
+**稳定暂停：** `pending=0` 且 `failed=0` 且非 `running` → 保证 **至少一轮** 自动整理 → 写入 `autoCurateSettled` → 停定时/防抖。实现：`collectionCurateGate.mjs`。详述 [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) §2.5。
+
+**设置：** `ai.autoCollectionsEnabled`（默认 true）；子项 **`scoreMinFilter`**、**`autoCollectionsMaxCount`**；**`analysisMaxRetries`**（后台失败重试，默认 5）— 见 `AiSetting.vue`；需 `ai.enabled`；分析完成后自动向量化。
 
 **合集页：** `collectionsGet` **分页**；列表缩略 `w=1080`；详述 [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md)。
 
@@ -180,8 +182,8 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | `main:parseSearchQuery` | NL → 搜索参数 |
 | `main:findSimilar` / `main:semanticSearch` | 相似 / 语义 |
 | `main:collections:*` | 合集 CRUD、generate、收藏；`get` 支持 `{ id, startPage, pageSize }` → `{ items, total, ... }` |
-| `main:collections:curate` | 手动触发自动策展 |
-| `main:collections:curatorStats` | 策展统计（已分析/向量/系统合集数） |
+| `main:collections:curate` | 手动触发自动策展（不受稳定锁存限制） |
+| `main:collections:curatorStats` | 策展统计（含 `autoCurateSettled`） |
 | `main:recommend` | 轻量推荐 |
 
 ---
@@ -194,8 +196,11 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | `analysisMode` | `off` / `on_demand` / `background_slow` / `new_only` |
 | `visionPreset` / `textPreset` | Ollama、OpenRouter、OpenAI 等 |
 | `autoCollectionsEnabled` | 系统自动策展 |
-| `scoreMinFilter` | 最低评分（搜索 + 系统合集选图）；`null` = 不限制 |
+| `scoreMinFilter` | 最低评分（搜索 + 系统合集选图）；默认 **70**（0～100） |
 | `autoCollectionsMaxCount` | 系统推荐合集数量上限（默认 20，3～50） |
+| `analysisMaxRetries` | 后台分析单张最大连续失败次数（默认 5，1～20）；达上限 → `skipped` |
+| `autoCurateSettled` | 内部：分析稳定后已完成至少一轮自动整理 |
+| `autoCurateSettledAnalyzed` | 锁存时的 `done` 张数 |
 | `enableNsfwCheck` | 探索安全筛选 |
 | `legacyOnnxScore` / `legacyJiebaTags` | 遗留能力 |
 | `timeout` | 默认 **300s**（60～1800s）；视觉分析另加动态加成（见下） |
@@ -219,8 +224,9 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 
 | 项 | 说明 |
 |----|------|
-| 评分门槛 | 系统合集入选仅 `score >= scoreMinFilter`（可配置；空=不限制） |
+| 评分门槛 | 系统合集入选仅 `score >= scoreMinFilter`（默认 70，0～100） |
 | 数量上限 | `autoCollectionsMaxCount` 替代写死 12/20 |
+| 稳定后暂停 | 分析队列稳定 → 至少一轮自动整理 → `autoCurateSettled`，停 30min/防抖 |
 | 合集 items 分页 | `CollectionsManager.get` + `Collections.vue` 滚到底加载 |
 | 缩略图 | `resourceImageUrl.js` + `normalizeResourceItem`，与探索一致 |
 | 卡片主色 | `ResourceExploreCard` 使用 `dominantColor` |
@@ -240,6 +246,21 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | `ExploreSearchHeader` | 搜索/收藏/回忆顶栏方案 A |
 | `AiSetting` | Tooltip 说明；功能项/分析模式/视觉输入；标签 `auto` 宽度防换行 |
 | 可观测 | `[AiVisionPrep]`、`vision-http modelMs`、`preprocess=` 日志 |
+| 失败重试上限 | `analysisMaxRetries` + `aiAnalysisFailCount`；达上限 → `skipped` |
+| 手动分析 | `analyzeResourceById` 不受重试上限 |
+
+---
+
+## §11 后续增量（分析重试与策展稳定）— 已落地
+
+> 详述：[ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) §4.1 · [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) §2.5
+
+| 项 | 说明 |
+|----|------|
+| `collectionCurateGate.mjs` | 判断分析队列是否稳定、是否应继续自动整理 |
+| `runCollectionCurator` | 自动路径受锁存约束；`manual: true` 不受限 |
+| 持久锁存 | `autoCurateSettled` / `autoCurateSettledAnalyzed` 写入设置 DB |
+| 动机 | 避免数据不变时每 30min 调 LLM 导致合集名称/分组漂移 |
 
 ---
 
@@ -250,6 +271,7 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | `fbw_collections.source` | `user`（默认）\| `auto` |
 | `fbw_collections.refreshMode` | 含 `on_analysis`（系统合集） |
 | `queryJson.autoKey` | 系统合集稳定键（`tag:*` / `vec:*` / `merged:*`） |
+| `fbw_resources.aiAnalysisFailCount` | 连续分析失败次数（成功归零） |
 | VecStore | vec0 **不支持 UPSERT** → DELETE+INSERT；维数变更 DROP 重建 |
 
 ---
@@ -295,7 +317,7 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 
 ### 智能合集
 
-5. **系统策展**：≥8 张 `done` + ≥8 条 embedding → 设 `scoreMinFilter`（可选）与 `autoCollectionsMaxCount` →「立即整理」→「AI 推荐」分区
+5. **系统策展**：≥8 张 `done` + ≥8 条 embedding → 设 `scoreMinFilter` 与 `autoCollectionsMaxCount` →「立即整理」→「AI 推荐」分区 → 后台分析完成后自动整理至少一轮 → 暂停定时  
 6. **自定义合集**：输入描述 → 生成 → 可选定时刷新策略
 7. **分页**：大合集滚到底加载；指示器 `current/total` 正确
 8. **缩略图**：网络/日志中 `imageSrc` 含 `w=1080`（本地 `fbwtp://`）
@@ -322,7 +344,8 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | OpenRouter 免费模型 | 易 429 限流，导致 `done=0`、系统合集无法生成 |
 | 分析 prerequisite | 系统策展强依赖 `aiAnalysisStatus=done` 与 AI 标签 |
 | sqlite-vec | 各平台需实机验证；失败走 BLOB + 余弦 |
-| LLM 合并 | 失败时降级为规则命名，不阻断策展 |
+| LLM 合并 | 失败时降级为规则命名，不阻断策展；**锁存前**定时重跑可能因模型非确定性漂移 |
+| 分析失败 | 后台达 `analysisMaxRetries` 后 skipped；需手动分析或改模型 |
 | build | 渲染端 Vite/Node 版本偶发不兼容（与 AI 无关） |
 | legacy | ONNX/jieba 仍可通过开关启用 |
 | VLM 耗时 | 后台每轮 5 张串行；大图建议缩图 + 超时 ≥300s |
@@ -339,3 +362,4 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | **v2.0** | 2026-05-27 | 自动策展（标签+向量+LLM）；合集定时刷新；VecStore 修复；IPC/设置/探索增量；README 索引 |
 | v2.1 | 2026-05-27 | §10 分析缩图/动态超时；语义搜索迁移；探索顶栏；设置 Tooltip |
 | **v2.2** | 2026-05-28 | §9 合集评分门槛、分页、可配上限；`collectionsGet` 分页契约；链至 ai-collections-ux-and-curate |
+| **v2.3** | 2026-05-28 | §11 分析失败重试上限、策展稳定锁存；`scoreMinFilter` 默认 70；`aiAnalysisFailCount` |

@@ -1,6 +1,6 @@
 # 智能合集：策展规则与合集页体验（2.0.0+ 增量）
 
-> 文档版本：**v1.0**  
+> 文档版本：**v1.1**  
 > 整理日期：2026-05-28  
 > 状态：**已实现**  
 > 关联：[ai-dev-plan.md](./ai-dev-plan.md) · [ai-feature-roadmap.md](./ai-feature-roadmap.md) · [README.md](./README.md)
@@ -11,9 +11,9 @@
 
 本增量在 Sprint 3 基础上完善：
 
-1. **系统自动策展**：入选壁纸改为 **最低评分门槛**（不再用固定 40 条上限）；合集数量上限可在 AI 设置配置。  
+1. **系统自动策展**：入选壁纸改为 **最低评分门槛**（不再用固定 40 条上限）；合集数量上限可在 AI 设置配置；**分析队列稳定并完成至少一轮自动整理后暂停定时/防抖**（手动整理不受限）。  
 2. **合集页**：壁纸列表 **分页加载**；缩略图与搜索页一致（`w=1080`）；卡片 **主色占位** 与探索页一致。  
-3. **AI 设置**：`scoreMinFilter`、`autoCollectionsMaxCount` 置于「AI 自动整理合集」开关下方。
+3. **AI 设置**：`scoreMinFilter`、`autoCollectionsMaxCount` 置于「AI 自动整理合集」开关下方；`analysisMaxRetries` 在后台分析模式下配置（见 [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md)）。
 
 ---
 
@@ -47,9 +47,9 @@ flowchart LR
 
 | 项 | 说明 |
 |----|------|
-| 门槛 | **`ai.scoreMinFilter`**（0～100）；**未设置** = 不按分数过滤 |
+| 门槛 | **`ai.scoreMinFilter`**（0～100，默认 **70**）；搜索与系统合集 **始终** 按最低分过滤 |
 | 作用范围 | 标签 SQL、向量簇成员过滤、写入快照前排序 |
-| 已移除 | `AUTO_COLLECTION_ITEM_LIMIT`（原每合集最多 40 张） |
+| 已移除 | `AUTO_COLLECTION_ITEM_LIMIT`（原每合集最多 40 张）；「不限制」按钮（空值迁移为 70） |
 
 同一标签/氛围下，**所有满足分数门槛** 的已分析图均可进入快照（可能很多张，靠合集页分页浏览）。
 
@@ -63,15 +63,35 @@ flowchart LR
 
 ### 2.5 触发与刷新
 
+#### 自动整理（系统策展 `CollectionCurator`）
+
 | 触发 | 说明 |
 |------|------|
-| 分析完成 | ~90s 防抖 → `collectionCurator.run` |
-| 向量化完成 | ~60s 防抖 |
-| 定时 | 约每 30min |
-| 手动 | 合集页「立即整理」；IPC `main:collections:curate` |
-| 设置变更 | `autoCollectionsMaxCount` / `scoreMinFilter` 变更 → ~15s 后重新整理 |
+| 分析完成（单张） | ~90s 防抖 → `runCollectionCurator`（**未锁存**时） |
+| 向量化完成 | ~60s 防抖（同上） |
+| 定时 | 约每 **30min**（**未锁存**时；启动后 ~5min 首次） |
+| 设置变更 | `autoCollectionsMaxCount` / `scoreMinFilter` / 自动整理开关 → 清锁存 + ~15s 后整理 |
+| 手动 | 合集页「立即整理」；IPC `main:collections:curate` — **始终可用，不受锁存限制** |
 
-系统合集 `refreshMode = on_analysis`；用户合集支持 `manual` / `1h` / `6h` / `12h` / `24h`。
+#### 分析完成后暂停自动整理（v1.1+）
+
+**问题背景：** 数据不变时若每 30min 仍调 LLM 合并，合集名称/分组可能漂移（模型非确定性）。
+
+**策略（`collectionCurateGate.mjs` + `store/index.mjs`）：**
+
+| 项 | 说明 |
+|----|------|
+| 队列稳定 | `pending=0` 且 `failed=0` 且 `running=false`（`skipped` 不计入未完成） |
+| 保证至少一轮 | 首次稳定后通过防抖或启动 ~60s 补跑 **至少一次** 自动整理 |
+| 锁存 | 该轮完成后写入 `ai.autoCurateSettled=true`、`ai.autoCurateSettledAnalyzed=已分析数`；停 30min 定时与防抖 |
+| 恢复自动 | 又出现 pending/failed；或 `done` 数超过锁存值；或改了评分/上限/自动整理开关 |
+| 手动 | **不**写入锁存、**不**因手动整理改变暂停状态 |
+
+`curatorStats` 返回 `autoCurateSettled`、`autoCurateSettledAnalyzed` 供排查。
+
+#### 用户合集刷新（与系统策展分开）
+
+系统合集 `refreshMode = on_analysis`（**不参与** 15min 的 `collectionsRefresh` 定时）；用户合集支持 `manual` / `1h` / `6h` / `12h` / `24h`。
 
 ### 2.6 系统合集 `queryJson`（增量字段）
 
@@ -99,8 +119,10 @@ flowchart LR
 | 控件 | 字段 | 说明 |
 |------|------|------|
 | 开关 | `autoCollectionsEnabled` | 系统自动整理合集 |
-| 子项 · 数字 | `scoreMinFilter` | 最低评分过滤；**不限制** 按钮清空；同时影响 **搜索** 与系统合集 |
+| 子项 · 数字 | `scoreMinFilter` | 最低评分过滤（默认 **70**，0～100）；同时影响 **搜索** 与系统合集 |
 | 子项 · 数字 | `autoCollectionsMaxCount` | 仅当自动整理开启时显示；3～50，默认 20 |
+
+后台分析相关 **`analysisMaxRetries`**（默认 5，1～20）见 [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) §4。
 
 子项在开关下方缩进展示（`ai-curate-sub-options`）。
 
@@ -163,18 +185,19 @@ flowchart LR
 |------|------------------------|-------------------------|
 | 创建 | NL → `queryJson` → `generate()` 搜索快照 | `CollectionCurator` 策展 |
 | 条数上限 | `queryJson.limitCount` 5～50（默认 20） | **仅评分门槛**，无固定条数顶 |
-| 刷新 | 用户可选定时 | `on_analysis` + 策展任务 |
+| 刷新 | 用户可选定时 | `on_analysis` + 策展任务（稳定锁存后 **仅手动** 再整理） |
 | 展示 | 同一套分页 `collectionsGet` | 同左 |
 
 ---
 
 ## 7. 验收要点
 
-1. **AI 设置**：开启自动整理 → 见「最低评分过滤」「系统推荐合集数量上限」；清空评分为「不限制」。  
+1. **AI 设置**：开启自动整理 → 见「最低评分过滤」「系统推荐合集数量上限」；评分默认 70。  
 2. **策展**：设 `scoreMinFilter=70` → 立即整理 → 系统合集中无低分图；底部 `推荐 n/上限` 的「上限」随设置变。  
-3. **分页**：大合集仅首屏请求一页；滚到底加载更多；指示器 `current < total`。  
-4. **性能**：合集卡片加载为缩略图（非原图）；占位色随壁纸主色变化。  
-5. **列表**：下拉合集名称旁张数与 `collectionsList.itemCount` 一致，切换前无需 N 次 `get`。
+3. **稳定暂停**：后台分析全部完成 → 自动整理至少跑一轮 → 日志「自动整理已暂停」→ 30min 内不再自动跑；「立即整理」仍可用。  
+4. **分页**：大合集仅首屏请求一页；滚到底加载更多；指示器 `current < total`。  
+5. **性能**：合集卡片加载为缩略图（非原图）；占位色随壁纸主色变化。  
+6. **列表**：下拉合集名称旁张数与 `collectionsList.itemCount` 一致，切换前无需 N 次 `get`。
 
 ---
 
@@ -184,6 +207,7 @@ flowchart LR
 |------|------|
 | 策展常量/公式 | `src/main/store/collectionConstants.mjs` |
 | 策展逻辑 | `src/main/store/CollectionCurator.mjs` |
+| **稳定后暂停门控** | `src/main/store/collectionCurateGate.mjs`、`store/index.mjs`（`runCollectionCurator`） |
 | 合集 CRUD/分页 | `src/main/store/CollectionsManager.mjs` |
 | 缩略 URL | `src/renderer/utils/resourceImageUrl.js` |
 | 条目规范化 | `src/renderer/composables/useResourceCardActions.js` |
@@ -199,3 +223,4 @@ flowchart LR
 | 版本 | 日期 | 说明 |
 |------|------|------|
 | v1.0 | 2026-05-28 | 评分门槛取代条数上限；可配置合集数上限；合集 items 分页；缩略图与主色对齐搜索 |
+| v1.1 | 2026-05-28 | 分析队列稳定后自动整理锁存暂停；`scoreMinFilter` 默认 70、取消「不限制」；链至分析重试文档 |

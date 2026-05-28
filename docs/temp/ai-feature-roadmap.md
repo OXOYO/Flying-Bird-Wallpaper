@@ -1,6 +1,6 @@
 # 飞鸟壁纸 AI 能力完整功能清单
 
-> 文档版本：**v1.4**  
+> 文档版本：**v1.5**  
 > 整理日期：2026-05-28  
 > 状态：**2.0.0 核心已落地**；部分 P3/P4 仍为规划  
 > 关联：[ai-dev-plan.md](./ai-dev-plan.md) · [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) · [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) · [README.md](./README.md)
@@ -50,7 +50,7 @@
 
 ### 设置项 `settingData.ai`（已实现字段）
 
-`enabled`、`visionPreset`/`textPreset`、`visionModel`/`textModel`/`embeddingModel`、`timeout`（默认 **300s**，视觉分析动态加成）、`visionPreprocess`/`visionMaxLongEdge`/`visionPreprocessMinSizeMB`/`visionJpegQuality`、`analysisMode`、`autoCollectionsEnabled`、`scoreMinFilter`、`autoCollectionsMaxCount`（默认 20，3～50）、`enableNsfwCheck`、`expandDownloadKeywords`、`legacyOnnxScore`、`legacyJiebaTags` 等（分析完成后自动向量化；电池下后台分析受全局「省电模式」约束）。`scoreMinFilter` / `autoCollectionsMaxCount` 在 **AiSetting → 功能选项 → AI 自动整理合集** 下方配置。
+`enabled`、`visionPreset`/`textPreset`、`visionModel`/`textModel`/`embeddingModel`、`timeout`（默认 **300s**，视觉分析动态加成）、`visionPreprocess`/`visionMaxLongEdge`/`visionPreprocessMinSizeMB`/`visionJpegQuality`、`analysisMode`、`analysisMaxRetries`（默认 5，后台失败重试）、`autoCollectionsEnabled`、`scoreMinFilter`（默认 70）、`autoCollectionsMaxCount`（默认 20，3～50）、`autoCurateSettled`/`autoCurateSettledAnalyzed`（内部锁存）、`enableNsfwCheck`、`expandDownloadKeywords`、`legacyOnnxScore`、`legacyJiebaTags` 等（分析完成后自动向量化；电池下后台分析受全局「省电模式」约束）。`scoreMinFilter` / `autoCollectionsMaxCount` 在 **AiSetting → 功能选项 → AI 自动整理合集** 下方；`analysisMaxRetries` 在 **分析模式** 旁（仅后台模式显示）。
 
 **`settingData.search`：** `useSemanticSearch`（智能语义搜索，探索/H5 筛选；原 `ai.smartSearch` 已迁移）。
 
@@ -73,6 +73,7 @@
 | AI-009 | 分析前缩图 | ✅ | `AiVisionImagePrep.mjs` |
 | AI-010 | 视觉动态超时 | ✅ | `resolveEffectiveVisionTimeout` |
 | AI-011 | 分析耗时日志 | ✅ | `[AiVisionPrep]`、`vision-http modelMs` |
+| AI-012 | 后台失败重试上限 | ✅ | `analysisMaxRetries` + `aiAnalysisFailCount`；达上限 → `skipped`；手动分析不限 |
 
 ### 4.2 发现与搜索（P1）
 
@@ -102,6 +103,7 @@
 | AI-206b | 合集缩略图/主色 | ✅ | `resourceImageUrl.js`、`dominantColor` 与探索一致 |
 | AI-207 | 合集作自动切换源 | ⬜ | |
 | AI-208a | 氛围型合集（系统策展） | ✅ | 向量 K-Means + LLM 合并命名，`CollectionCurator` |
+| AI-208c | 分析完成后暂停自动整理 | ✅ | `collectionCurateGate`；至少一轮后锁存；手动 `curate` 不限 |
 | AI-208b | 氛围型合集（用户 NL 语义扩召回） | ⬜ | `queryJson.useSemantic` 已解析，`CollectionsManager.generate()` 未接入 `semanticSearch` |
 
 #### 系统自动策展（AI-205+ 扩展，已实现）
@@ -114,7 +116,8 @@
 | 重叠 | 多合集可含同一张图 |
 | 可删 | 系统合集 `source=auto` 允许删除 |
 | 数量 | `computeAutoCollectionCount(已分析, ai)`，封顶 `ai.autoCollectionsMaxCount`（默认 20，3～50） |
-| 入选 | `ai.scoreMinFilter`（空=不限制）；**无**每合集固定条数顶 |
+| 入选 | `ai.scoreMinFilter`（默认 **70**，0～100）；**无**每合集固定条数顶 |
+| 稳定暂停 | 分析队列稳定 + 至少一轮自动整理 → 停 30min/防抖；手动 `curate` 不限 |
 
 **数据表：**
 
@@ -278,3 +281,4 @@ AI 助手、AIGC 工具
 | **v1.2** | 2026-05-27 | AI-104 按 dev-plan 标 ✅；AI-208 拆为 208a/208b；AI-104+ 标为后续增强 |
 | v1.3 | 2026-05-27 | AI-009～011、AI-102a；`search.useSemanticSearch`；超时/缩图默认值 |
 | **v1.4** | 2026-05-28 | AI-206a/b；评分门槛取代条数顶；`autoCollectionsMaxCount`；合集分页；AiSetting 子项 |
+| **v1.5** | 2026-05-28 | AI-012 失败重试上限；AI-208c 稳定后暂停自动整理；`scoreMinFilter` 默认 70 |

@@ -11,16 +11,16 @@
 |------|------|------|
 | [ai-dev-plan.md](./ai-dev-plan.md) | **开发方案 + 实施清单 + 验收**（Sprint 0–4 及后续增量） | 持续更新 |
 | [ai-feature-roadmap.md](./ai-feature-roadmap.md) | **完整功能清单**（48 项 AI 能力，含优先级与实现状态） | 持续更新 |
-| [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) | **分析缩图、动态超时、语义搜索迁移、探索顶栏、设置 UX** | 2026-05-27 |
-| [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) | **系统策展规则、评分门槛、合集分页、缩略图/主色、AI 设置子项** | 2026-05-28 |
+| [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) | **分析缩图、动态超时、失败重试上限、语义搜索迁移、探索顶栏、设置 UX** | 2026-05-28 |
+| [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) | **系统策展规则、评分门槛、稳定后暂停自动整理、合集分页、缩略图/主色** | 2026-05-28 |
 | [openclaw-agent-integration.md](./openclaw-agent-integration.md) | 外部 Agent / OpenClaw / MCP 集成规划 | **未编码**（Sprint 5 跳过） |
 
 **阅读顺序建议：**
 
 1. 想了解「做了什么、怎么验收」→ `ai-dev-plan.md`
 2. 想查「某功能 ID 是否规划/已实现」→ `ai-feature-roadmap.md`
-3. 想查 **大图分析慢/超时、缩图、语义搜索开关位置** → `ai-analysis-ux-and-performance.md`
-4. 想查 **系统合集数量/评分门槛、合集页分页与加载** → `ai-collections-ux-and-curate.md`
+3. 想查 **大图分析慢/超时、缩图、失败重试、语义搜索开关** → `ai-analysis-ux-and-performance.md`
+4. 想查 **系统合集数量/评分门槛、稳定后暂停整理、合集页分页** → `ai-collections-ux-and-curate.md`
 5. 想接 OpenClaw / Telegram 控制壁纸 → `openclaw-agent-integration.md`
 
 ---
@@ -46,6 +46,7 @@
 | 向量 | `src/main/ai/EmbeddingManager.mjs`、`VecStore.mjs`、`VectorCluster.mjs` |
 | 自定义合集 / 分页 get | `src/main/store/CollectionsManager.mjs` |
 | **自动策展** | `src/main/store/CollectionCurator.mjs`、`collectionConstants.mjs` |
+| **策展门控（稳定暂停）** | `src/main/store/collectionCurateGate.mjs`、`store/index.mjs` |
 | 列表缩略 URL | `src/renderer/utils/resourceImageUrl.js` |
 | 探索 / 搜索 UI | `src/renderer/.../ExploreCommon.vue` |
 | 合集 UI | `src/renderer/.../Collections.vue`、`ResourceExploreCard.vue` |
@@ -58,6 +59,7 @@
 
 | 日期 | 说明 |
 |------|------|
+| 2026-05-28 | 文档同步：失败重试上限、评分默认 70、分析完成后暂停自动整理（AI-012 / AI-208c） |
 | 2026-05-28 | 新增 `ai-collections-ux-and-curate.md`；策展评分门槛、合集分页、AI 设置子项 |
 | 2026-05-27 | 新增 `ai-analysis-ux-and-performance.md`；索引补充缩图/顶栏/动态超时 |
 | 2026-05-27 | 同步自动策展、向量聚类、LLM 合并等实现 |

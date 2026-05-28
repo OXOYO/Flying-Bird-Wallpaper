@@ -385,10 +385,13 @@ export default class CollectionCurator {
     const embeddings = this.countEmbeddings()
     const target = computeAutoCollectionCount(analyzed, this.ai)
     const autoCount = this.listAutoCollections().length
+    const ai = this.ai
     return {
       enabled: this.isEnabled(),
-      aiEnabled: !!this.ai.enabled,
-      autoCollectionsEnabled: this.ai.autoCollectionsEnabled !== false,
+      aiEnabled: !!ai.enabled,
+      autoCollectionsEnabled: ai.autoCollectionsEnabled !== false,
+      autoCurateSettled: ai.autoCurateSettled === true,
+      autoCurateSettledAnalyzed: Number(ai.autoCurateSettledAnalyzed) || 0,
       analyzed,
       embeddings,
       targetCollections: target,
@@ -396,7 +399,7 @@ export default class CollectionCurator {
     }
   }
 
-  async run(locks) {
+  async run(locks, { manual = false } = {}) {
     if (!this.isEnabled()) {
       return { success: true, data: { skipped: true, reason: 'disabled' } }
     }
@@ -442,7 +445,7 @@ export default class CollectionCurator {
       const updated = Math.max(0, plans.length - created)
 
       this.logger.info(
-        `[CollectionCurator] 完成：候选 标签${tagCandidates.length}+向量${vectorCandidates.length} → 最终${plans.length} 个系统合集`
+        `[CollectionCurator] 完成${manual ? '（手动）' : ''}：候选 标签${tagCandidates.length}+向量${vectorCandidates.length} → 最终${plans.length} 个系统合集`
       )
 
       return {

@@ -37,6 +37,7 @@ export default class AiAnalysisManager {
     this.params = { startPage: 1, pageSize: 5 }
     this.isRunning = false
     this.onAnalysisDone = null
+    this.onAnalysisBatchDone = null
     AiAnalysisManager._instance = this
   }
 
@@ -285,11 +286,17 @@ export default class AiAnalysisManager {
         )
         this.isRunning = false
         locks.aiAnalysis = false
+        if (typeof this.onAnalysisBatchDone === 'function') {
+          setImmediate(() => this.onAnalysisBatchDone())
+        }
       }
     }
     run().catch(() => {
       this.isRunning = false
       locks.aiAnalysis = false
+      if (typeof this.onAnalysisBatchDone === 'function') {
+        setImmediate(() => this.onAnalysisBatchDone())
+      }
     })
   }
 

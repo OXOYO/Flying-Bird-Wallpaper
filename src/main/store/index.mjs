@@ -22,6 +22,13 @@ import TextQueryParser from '../ai/TextQueryParser.mjs'
 import CollectionsManager from './CollectionsManager.mjs'
 import CollectionCurator from './CollectionCurator.mjs'
 import RecommendManager from './RecommendManager.mjs'
+import {
+  buildAutoCurateLatchFields,
+  buildClearAutoCurateLatchFields,
+  isAnalysisQueueStable,
+  isAutoCurateSettled,
+  shouldRunScheduledAutoCurate
+} from './collectionCurateGate.mjs'
 import { handleTimeByUnit } from '../utils/utils.mjs'
 import { migrateRemoteResourceSecretKeys } from '../../common/utils.js'
 
@@ -168,7 +175,11 @@ export default class Store {
         this.dbManager,
         this.settingManager
       )
-      this.aiAnalysisManager.onAnalysisDone = () => this.scheduleCollectionCurator()
+      this.aiAnalysisManager.onAnalysisDone = () => {
+        this.scheduleCollectionCurator()
+        this.syncAutoCurateGateFromAnalysis()
+      }
+      this.aiAnalysisManager.onAnalysisBatchDone = () => this.syncAutoCurateGateFromAnalysis()
       this.embeddingManager.onEmbeddingDone = () => this.scheduleCollectionCurator(60 * 1000)
       this.recommendManager = RecommendManager.getInstance(global.logger, this.dbManager)
       this.wallpaperManager.textQueryParser = this.textQueryParser
@@ -195,6 +206,8 @@ export default class Store {
 
       // 开启定时任务
       this.startScheduledTasks()
+      this.ensurePostAnalysisCurateScheduled()
+      this.syncAutoCurateGateFromAnalysis()
 
       // 处理开机自启动设置
       this.handleStartup()
@@ -351,6 +364,7 @@ export default class Store {
       5 * 60 * 1000,
       () => {
         if (this.isPowerSaveOnBattery()) return
+        this.syncAutoCurateGateFromAnalysis()
         this.aiAnalysisManager.intervalAnalyze(this.locks)
       },
       4 * 60 * 1000
@@ -373,16 +387,116 @@ export default class Store {
     )
   }
 
+  getAnalysisStatsData() {
+    return this.aiAnalysisManager.getStats()?.data || {}
+  }
+
+  shouldAutoCurate() {
+    const ai = this.settingData?.ai || {}
+    return shouldRunScheduledAutoCurate(this.getAnalysisStatsData(), ai)
+  }
+
+  stopAutoCollectionCurator() {
+    this.taskScheduler.clearTask('collectionCurator')
+    if (this.collectionCuratorTimer) {
+      clearTimeout(this.collectionCuratorTimer)
+      this.collectionCuratorTimer = null
+    }
+  }
+
+  clearAutoCurateLatchLocal() {
+    const ai = this.settingData?.ai || {}
+    if (!isAutoCurateSettled(ai)) return false
+    this.settingData.ai = buildClearAutoCurateLatchFields(ai)
+    return true
+  }
+
+  async clearAutoCurateLatch() {
+    if (!this.clearAutoCurateLatchLocal()) return
+    try {
+      await this.settingManager.updateSettingData({ ai: this.settingData.ai })
+    } catch (err) {
+      global.logger.warn(`[CollectionCurator] 清除自动整理锁存失败: ${err.message}`)
+    }
+  }
+
+  async persistAutoCurateLatch(stats) {
+    const ai = { ...(this.settingData?.ai || {}), ...buildAutoCurateLatchFields(stats) }
+    this.settingData.ai = ai
+    try {
+      await this.settingManager.updateSettingData({ ai })
+    } catch (err) {
+      global.logger.warn(`[CollectionCurator] 写入自动整理锁存失败: ${err.message}`)
+    }
+  }
+
+  async maybeSettleAutoCurateAfterRun(ret) {
+    const stats = this.getAnalysisStatsData()
+    if (!isAnalysisQueueStable(stats)) return
+    if (ret?.data?.skipped && ret.data.reason === 'busy') return
+
+    await this.persistAutoCurateLatch(stats)
+    this.stopAutoCollectionCurator()
+    global.logger.info(
+      `[CollectionCurator] 分析队列已稳定，自动整理已暂停（已分析 ${stats.done ?? 0} 张；手动整理仍可用）`
+    )
+  }
+
+  syncAutoCurateGateFromAnalysis() {
+    const stats = this.getAnalysisStatsData()
+    const ai = this.settingData?.ai || {}
+
+    if (!isAnalysisQueueStable(stats)) {
+      if (isAutoCurateSettled(ai)) {
+        this.clearAutoCurateLatchLocal()
+        void this.settingManager.updateSettingData({ ai: this.settingData.ai })
+        this.initCollectionCuratorTask()
+      }
+      return
+    }
+
+    if (isAutoCurateSettled(ai)) {
+      this.stopAutoCollectionCurator()
+      return
+    }
+
+    if (this.shouldAutoCurate() && !this.collectionCuratorTimer && !this.locks.collectionCurator) {
+      this.scheduleCollectionCurator(90 * 1000)
+    }
+  }
+
+  ensurePostAnalysisCurateScheduled() {
+    if (!this.shouldAutoCurate()) return
+    const stats = this.getAnalysisStatsData()
+    if (!isAnalysisQueueStable(stats)) return
+    if (this.collectionCuratorTimer || this.locks.collectionCurator) return
+    this.scheduleCollectionCurator(60 * 1000)
+  }
+
+  async runCollectionCurator({ manual = false } = {}) {
+    if (!manual && !this.shouldAutoCurate()) {
+      return { success: true, data: { skipped: true, reason: 'auto_curate_settled' } }
+    }
+    const ret = await this.collectionCurator.run(this.locks, { manual })
+    if (!manual) {
+      await this.maybeSettleAutoCurateAfterRun(ret)
+    }
+    return ret
+  }
+
   initCollectionCuratorTask() {
     this.taskScheduler.clearTask('collectionCurator')
     if (!this.settingData?.ai?.enabled || this.settingData?.ai?.autoCollectionsEnabled === false) {
+      return
+    }
+    if (!this.shouldAutoCurate()) {
       return
     }
     this.taskScheduler.scheduleTask(
       'collectionCurator',
       30 * 60 * 1000,
       () => {
-        this.collectionCurator.run(this.locks)
+        this.runCollectionCurator({ manual: false })
       },
       5 * 60 * 1000
     )
@@ -392,12 +506,15 @@ export default class Store {
     if (!this.settingData?.ai?.enabled || this.settingData?.ai?.autoCollectionsEnabled === false) {
       return
     }
+    if (!this.shouldAutoCurate()) {
+      return
+    }
     if (this.collectionCuratorTimer) {
       clearTimeout(this.collectionCuratorTimer)
     }
     this.collectionCuratorTimer = setTimeout(() => {
       this.collectionCuratorTimer = null
-      this.collectionCurator.run(this.locks)
+      this.runCollectionCurator({ manual: false })
     }, delayMs)
   }
 
@@ -410,6 +527,10 @@ export default class Store {
       o.autoCollectionsMaxCount !== n.autoCollectionsMaxCount ||
       o.scoreMinFilter !== n.scoreMinFilter
     ) {
+      if (n.enabled && n.autoCollectionsEnabled !== false && isAutoCurateSettled(n)) {
+        this.settingData.ai = buildClearAutoCurateLatchFields(n)
+        void this.settingManager.updateSettingData({ ai: this.settingData.ai })
+      }
       this.initCollectionCuratorTask()
       if (n.enabled && n.autoCollectionsEnabled !== false) {
         this.scheduleCollectionCurator(15 * 1000)
@@ -993,7 +1114,7 @@ export default class Store {
     )
 
     ipcMain.handle('main:collections:curate', async () => {
-      return await this.collectionCurator.run(this.locks)
+      return await this.runCollectionCurator({ manual: true })
     })
 
     ipcMain.handle('main:collections:curatorStats', () => {
