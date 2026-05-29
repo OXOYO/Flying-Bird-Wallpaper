@@ -13,6 +13,7 @@ import {
 import { debounce } from '@common/utils.js'
 import ExploreSearchHeader from './ExploreSearchHeader.vue'
 import ExploreSimilarModeBanner from '@renderer/components/ExploreSimilarModeBanner.vue'
+import InstantTooltip from '@renderer/components/InstantTooltip.vue'
 import { normalizeResourceItem } from '@renderer/composables/useResourceCardActions.js'
 import { useSimilarResultsLoadMore } from '@renderer/composables/useSimilarResultsLoadMore.mjs'
 
@@ -381,7 +382,7 @@ const fixedBtns = computed(() => {
     ret.push({
       action: 'onSwitchSortType',
       actionParams: [],
-      title: searchForm.sortType > 0 ? t('sortType.asc') : t('sortType.desc'),
+      title: searchForm.sortType > 0 ? t('sortTypeOptions.asc') : t('sortTypeOptions.desc'),
       icon: searchForm.sortType > 0 ? 'custom:sort-asc' : 'custom:sort-desc',
       iconStyle: {},
       style: {
@@ -459,7 +460,7 @@ const cardItemBtns = computed(() => {
     ret.push({
       title: t('exploreCommon.findSimilar'),
       action: 'findSimilar',
-      icon: 'custom:search'
+      icon: 'custom:find-similar'
     })
   }
   if (item.isFavorite) {
@@ -2043,29 +2044,33 @@ onBeforeUnmount(() => {
         />
         <div v-for="item in fixedBtns" :key="item.action" class="fixed-btn" :style="item.style">
           <div v-if="item.children && item.children.length" class="fixed-btn-children">
-            <div
+            <InstantTooltip
               v-for="child in item.children"
               :key="child.value"
-              class="fixed-btn-child"
-              :class="{ 'is-active': item.activeValue !== undefined && child.value === item.activeValue }"
-              :title="child.alt || child.title || child.label"
-              @click="onFixedBtnClick(item.action, item.actionParams, child.value)"
+              :content="child.alt || child.title || child.label"
             >
-              <IconifyIcon v-if="child.icon" :icon="child.icon" :style="child.iconStyle" />
-              <span v-else class="fixed-btn-text">{{ child.title || child.label }}</span>
-            </div>
+              <div
+                class="fixed-btn-child"
+                :class="{ 'is-active': item.activeValue !== undefined && child.value === item.activeValue }"
+                @click="onFixedBtnClick(item.action, item.actionParams, child.value)"
+              >
+                <IconifyIcon v-if="child.icon" :icon="child.icon" :style="child.iconStyle" />
+                <span v-else class="fixed-btn-text">{{ child.title || child.label }}</span>
+              </div>
+            </InstantTooltip>
           </div>
-          <el-button
-            class="fixed-btn-show"
-            circle
-            :disabled="flags.loading"
-            :title="item.alt || item.title"
-            size="large"
-            @click="onFixedBtnClick(item.action, item.actionParams)"
-          >
-            <IconifyIcon v-if="item.icon" :icon="item.icon" :style="item.iconStyle" />
-            <span v-else class="fixed-btn-text">{{ item.title }}</span>
-          </el-button>
+          <InstantTooltip :content="item.alt || item.title">
+            <el-button
+              class="fixed-btn-show"
+              circle
+              :disabled="flags.loading"
+              size="large"
+              @click="onFixedBtnClick(item.action, item.actionParams)"
+            >
+              <IconifyIcon v-if="item.icon" :icon="item.icon" :style="item.iconStyle" />
+              <span v-else class="fixed-btn-text">{{ item.title }}</span>
+            </el-button>
+          </InstantTooltip>
         </div>
 
         <VirtualList
@@ -2101,61 +2106,60 @@ onBeforeUnmount(() => {
             >
               <div class="card-item-btns__trigger"></div>
               <div v-if="isShowTag" class="card-item-tags">
-                <div
-                  v-if="item.resourceName"
-                  class="tag-item"
-                  :class="{ 'tag-item__disabled': !isSearchMenu }"
-                  :title="item.resourceName"
-                  @click.stop="onTagClick('resourceName', item.resourceName)"
-                >
-                  {{ item.resourceName }}
-                </div>
-                <div
+                <InstantTooltip v-if="item.resourceName" :content="item.resourceName">
+                  <div
+                    class="tag-item"
+                    :class="{ 'tag-item__disabled': !isSearchMenu }"
+                    @click.stop="onTagClick('resourceName', item.resourceName)"
+                  >
+                    {{ item.resourceName }}
+                  </div>
+                </InstantTooltip>
+                <InstantTooltip
                   v-if="item.quality && item.quality !== 'unset'"
-                  class="tag-item"
-                  :title="item.quality"
-                  @click.stop="onTagClick('quality', item.quality)"
+                  :content="item.quality"
                 >
-                  {{ item.quality }}
-                </div>
-                <div
-                  v-if="item.score"
-                  class="tag-item tag-item__disabled"
-                  :title="t('exploreCommon.tagItem.score')"
-                >
-                  {{ item.score }}
-                </div>
-                <div
+                  <div class="tag-item" @click.stop="onTagClick('quality', item.quality)">
+                    {{ item.quality }}
+                  </div>
+                </InstantTooltip>
+                <InstantTooltip v-if="item.score" :content="t('exploreCommon.tagItem.score')">
+                  <div class="tag-item tag-item__disabled">
+                    {{ item.score }}
+                  </div>
+                </InstantTooltip>
+                <InstantTooltip
                   v-if="item.aiAnalysisStatus === 'done'"
-                  class="tag-item tag-item__disabled tag-item--icon"
-                  :title="t('exploreCommon.tagItem.aiAnalyzed')"
+                  :content="t('exploreCommon.tagItem.aiAnalyzed')"
                 >
-                  <IconifyIcon class="tag-item-icon" icon="custom:ai-sparkles" />
-                </div>
-                <div
+                  <div class="tag-item tag-item__disabled tag-item--icon">
+                    <IconifyIcon class="tag-item-icon" icon="custom:ai-sparkles" />
+                  </div>
+                </InstantTooltip>
+                <InstantTooltip
                   v-if="item.isLandscape === 1"
-                  class="tag-item"
-                  :title="t('orientationOptions.landscape')"
-                  @click.stop="onTagClick('orientation', 1)"
+                  :content="t('orientationOptions.landscape')"
                 >
-                  <IconifyIcon icon="custom:landscape-outline" />
-                </div>
-                <div
+                  <div class="tag-item" @click.stop="onTagClick('orientation', 1)">
+                    <IconifyIcon icon="custom:landscape-outline" />
+                  </div>
+                </InstantTooltip>
+                <InstantTooltip
                   v-else-if="item.isLandscape === 0"
-                  class="tag-item"
-                  :title="t('orientationOptions.portrait')"
-                  @click.stop="onTagClick('orientation', 0)"
+                  :content="t('orientationOptions.portrait')"
                 >
-                  <IconifyIcon icon="custom:portrait-outline" />
-                </div>
-                <!-- 收藏 -->
-                <div
+                  <div class="tag-item" @click.stop="onTagClick('orientation', 0)">
+                    <IconifyIcon icon="custom:portrait-outline" />
+                  </div>
+                </InstantTooltip>
+                <InstantTooltip
                   v-if="item.isFavorite"
-                  class="tag-item tag-item__disabled"
-                  :title="t('exploreCommon.tagItem.favorited')"
+                  :content="t('exploreCommon.tagItem.favorited')"
                 >
-                  <IconifyIcon icon="custom:star-fill" />
-                </div>
+                  <div class="tag-item tag-item__disabled">
+                    <IconifyIcon icon="custom:star-fill" />
+                  </div>
+                </InstantTooltip>
               </div>
               <div v-if="item.fileType === 'image'" class="card-item-image-wrapper">
                 <!-- 高清图 -->
@@ -2203,20 +2207,25 @@ onBeforeUnmount(() => {
                   @click="toggleVideo(item, index)"
                 />
               </div>
-              <div class="card-item-btns" @dblclick.stop>
-                <el-button
-                  v-for="btn in cardItemBtns"
-                  :key="btn.action"
-                  class="card-item-btn"
-                  type="primary"
-                  link
-                  :title="btn.title"
-                  @click="onCardItemBtnClick(btn.action, item, index)"
-                  @dblclick.stop
-                >
-                  <IconifyIcon class="card-item-btn-icon" :icon="btn.icon" />
-                </el-button>
-              </div>
+              <el-scrollbar class="card-item-btns" @dblclick.stop>
+                <div class="card-item-btns-track">
+                  <InstantTooltip
+                    v-for="btn in cardItemBtns"
+                    :key="btn.action"
+                    :content="btn.title"
+                  >
+                    <el-button
+                      class="card-item-btn"
+                      type="primary"
+                      link
+                      @click="onCardItemBtnClick(btn.action, item, index)"
+                      @dblclick.stop
+                    >
+                      <IconifyIcon class="card-item-btn-icon" :icon="btn.icon" />
+                    </el-button>
+                  </InstantTooltip>
+                </div>
+              </el-scrollbar>
             </div>
           </template>
         </VirtualList>
@@ -2597,23 +2606,64 @@ onBeforeUnmount(() => {
   left: 0;
   transform: translate(0, 100%);
   z-index: 10;
+  box-sizing: border-box;
   width: 100%;
+  height: 34px;
   line-height: 1;
-  padding: 2px 4px;
+  padding: 4px 6px;
   transition: all 0.3s ease-in-out;
-  display: grid;
-  /* 使用 auto-fit 和 minmax 实现自动换行 */
-  grid-template-columns: repeat(auto-fit, minmax(30px, 1fr));
-  /* 当元素在单行时水平垂直居中对齐 */
-  justify-items: center;
-  align-items: center;
-  /* 网格间距 */
-  gap: 4px;
   backdrop-filter: blur(10px);
   background-color: var(--dominant-color-rgba);
 
+  :deep(.el-scrollbar__wrap) {
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+  }
+
+  :deep(.el-scrollbar__view) {
+    display: inline-block;
+    min-width: 100%;
+    text-align: center;
+    line-height: 1;
+  }
+
+  :deep(.el-scrollbar__bar.is-vertical) {
+    display: none;
+  }
+
+  :deep(.el-scrollbar__bar.is-horizontal) {
+    height: 3px;
+
+    .el-scrollbar__thumb {
+      background: rgba(255, 255, 255, 0.35);
+      opacity: 1;
+    }
+  }
+}
+
+.card-item-btns-track {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 2px;
+  max-width: 100%;
+  vertical-align: top;
+
+  :deep(.el-tooltip__trigger) {
+    flex: 0 0 auto;
+    display: inline-flex;
+  }
+
+  :deep(.instant-tooltip-trigger) {
+    flex: 0 0 auto;
+    display: inline-flex;
+  }
+
   .card-item-btn {
+    flex: 0 0 auto;
     margin: 0;
+    padding: 2px 4px;
     + .card-item-btn {
       margin: 0;
     }

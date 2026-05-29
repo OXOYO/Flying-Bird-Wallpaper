@@ -6,6 +6,14 @@ import {
   mapOpenAiCompatibleModel,
   normalizeModelDescriptor
 } from '../../../common/aiModelCatalog.js'
+import {
+  buildImageEmbedRequestBody,
+  buildTextEmbedRequestBody,
+  EMBED_INPUT_TYPE,
+  extractEmbeddingVector,
+  TEST_EMBED_IMAGE_B64,
+  TEST_EMBED_IMAGE_MIME
+} from '../EmbedRequestBuilder.mjs'
 
 const withTimeout = async (promise, ms) => {
   const ctrl = new AbortController()
@@ -85,6 +93,28 @@ const readImageSource = (provider, input) => {
   return { buf, b64: buf.toString('base64'), mime }
 }
 
+const l2Normalize = (vec) => {
+  if (!Array.isArray(vec) || !vec.length) return []
+  let norm = 0
+  for (let i = 0; i < vec.length; i++) norm += vec[i] * vec[i]
+  norm = Math.sqrt(norm) || 1
+  return vec.map((v) => Number(v) / norm)
+}
+
+const visionTestImage = () => ({
+  buffer: Buffer.from(TEST_EMBED_IMAGE_B64, 'base64'),
+  mime: TEST_EMBED_IMAGE_MIME
+})
+
+const runVisionConnectionTest = async (provider, model) => {
+  const sample = await provider.analyzeImage(
+    visionTestImage(),
+    'Reply with exactly: OK',
+    model
+  )
+  return { success: true, sample: String(sample).slice(0, 32) }
+}
+
 const mapWithConcurrency = async (items, limit, worker) => {
   const results = new Array(items.length)
   let index = 0
@@ -143,26 +173,74 @@ export class OllamaProvider {
     return runWithModelLog(this, 'chat', usedModel, () => this.chatRaw({ messages, model: usedModel }))
   }
 
-  async embed(text, model) {
+  async embed(text, model, options = {}) {
     const usedModel = model || this.model
     return runWithModelLog(this, 'embed', usedModel, async () => {
-      const url = `${this.baseUrl}/api/embeddings`
+      const attempts = [
+        {
+          url: `${this.baseUrl}/api/embed`,
+          body: { model: usedModel, input: text }
+        },
+        {
+          url: `${this.baseUrl}/api/embeddings`,
+          body: { model: usedModel, prompt: text }
+        }
+      ]
+      let lastErr = null
+      for (const attempt of attempts) {
+        try {
+          const res = await withTimeout(
+            (signal) =>
+              fetch(attempt.url, {
+                method: 'POST',
+                headers: this.headers(),
+                body: JSON.stringify(attempt.body),
+                signal
+              }),
+            this.timeout
+          )
+          if (!res.ok) {
+            const errBody = await res.text().catch(() => '')
+            lastErr = new Error(`Ollama embed ${res.status}: ${errBody.slice(0, 200)}`)
+            continue
+          }
+          const data = await res.json()
+          const raw = extractEmbeddingVector(data)
+          if (raw.length) return raw
+          lastErr = new Error('Ollama embed empty vector')
+        } catch (err) {
+          lastErr = err
+        }
+      }
+      throw lastErr || new Error('Ollama embed failed')
+    })
+  }
+
+  /**
+   * 多模态图像 embedding（实验性：依赖 Ollama 对 embed+images 的支持）
+   * @param {string|{ filePath?: string }} input
+   */
+  async embedImage(input, model, options = {}) {
+    const usedModel = model || this.model
+    const { b64 } = readImageSource(this, input)
+    return runWithModelLog(this, 'embed-image', usedModel, async () => {
       const res = await withTimeout(
         (signal) =>
-          fetch(url, {
+          fetch(`${this.baseUrl}/api/embed`, {
             method: 'POST',
             headers: this.headers(),
-            body: JSON.stringify({ model: usedModel, prompt: text }),
+            body: JSON.stringify({ model: usedModel, input: 'image', images: [b64] }),
             signal
           }),
         this.timeout
       )
       if (!res.ok) {
         const body = await res.text().catch(() => '')
-        throw new Error(`Ollama embed ${res.status}: ${body.slice(0, 200)}`)
+        throw new Error(`Ollama embed-image ${res.status}: ${body.slice(0, 200)}`)
       }
       const data = await res.json()
-      return data.embedding || []
+      const raw = extractEmbeddingVector(data)
+      return l2Normalize(raw)
     })
   }
 
@@ -177,10 +255,22 @@ export class OllamaProvider {
     )
   }
 
-  async testConnection(type, model) {
-    if (type === 'embed') {
-      const vec = await this.embed('ping', model)
+  async testConnection(type, model, options = {}) {
+    if (type === 'embed-image') {
+      const testImg = options.testImage || visionTestImage()
+      const vec = await this.embedImage(testImg, model, {
+        inputType: EMBED_INPUT_TYPE.PASSAGE
+      })
       return { success: true, dim: vec.length }
+    }
+    if (type === 'embed') {
+      const vec = await this.embed('ping', model, {
+        inputType: options.inputType || EMBED_INPUT_TYPE.QUERY
+      })
+      return { success: true, dim: vec.length }
+    }
+    if (type === 'vision') {
+      return await runVisionConnectionTest(this, model)
     }
     const text = await this.chat({
       model,
@@ -296,25 +386,68 @@ export class OpenAiCompatibleProvider {
     return runWithModelLog(this, 'chat', usedModel, () => this.chatRaw({ messages, model: usedModel }))
   }
 
-  async embed(text, model) {
+  async embed(text, model, options = {}) {
     const usedModel = model || this.model
     return runWithModelLog(this, 'embed', usedModel, async () => {
+      const { body, profile } = buildTextEmbedRequestBody(usedModel, text, {
+        baseUrl: this.baseUrl,
+        inputType: options.inputType || EMBED_INPUT_TYPE.QUERY
+      })
       const res = await withTimeout(
         (signal) =>
           fetch(this.api('/embeddings'), {
             method: 'POST',
             headers: this.headers(),
-            body: JSON.stringify({ model: usedModel, input: text }),
+            body: JSON.stringify(body),
             signal
           }),
         this.timeout
       )
       if (!res.ok) {
-        const body = await res.text().catch(() => '')
-        throw new Error(`OpenAI-compatible embed ${res.status}: ${body.slice(0, 200)}`)
+        const errBody = await res.text().catch(() => '')
+        throw new Error(
+          `OpenAI-compatible embed ${res.status} profile=${profile}: ${errBody.slice(0, 200)}`
+        )
       }
       const data = await res.json()
-      return data.data?.[0]?.embedding || []
+      return extractEmbeddingVector(data)
+    })
+  }
+
+  /**
+   * 多模态图像 embedding（OpenAI 兼容；NVIDIA / vLLM 非对称模型需 input_type）
+   * @param {object} [options] - { inputType?: 'query'|'passage', imageName?: string }
+   */
+  async embedImage(input, model, options = {}) {
+    const usedModel = model || this.model
+    const { b64, mime } = readImageSource(this, input)
+    const dataUri = `data:${mime};base64,${b64}`
+
+    return runWithModelLog(this, 'embed-image', usedModel, async () => {
+      const { body, profile } = buildImageEmbedRequestBody(usedModel, dataUri, {
+        baseUrl: this.baseUrl,
+        inputType: options.inputType || EMBED_INPUT_TYPE.PASSAGE
+      })
+
+      const res = await withTimeout(
+        (signal) =>
+          fetch(this.api('/embeddings'), {
+            method: 'POST',
+            headers: this.headers(),
+            body: JSON.stringify(body),
+            signal
+          }),
+        this.timeout
+      )
+      if (!res.ok) {
+        const errBody = await res.text().catch(() => '')
+        throw new Error(
+          `OpenAI-compatible embed-image ${res.status} profile=${profile}: ${errBody.slice(0, 200)}`
+        )
+      }
+      const data = await res.json()
+      const raw = extractEmbeddingVector(data)
+      return l2Normalize(raw)
     })
   }
 
@@ -337,10 +470,22 @@ export class OpenAiCompatibleProvider {
     )
   }
 
-  async testConnection(type, model) {
-    if (type === 'embed') {
-      const vec = await this.embed('ping', model)
+  async testConnection(type, model, options = {}) {
+    if (type === 'embed-image') {
+      const testImg = options.testImage || visionTestImage()
+      const vec = await this.embedImage(testImg, model, {
+        inputType: EMBED_INPUT_TYPE.PASSAGE
+      })
       return { success: true, dim: vec.length }
+    }
+    if (type === 'embed') {
+      const vec = await this.embed('ping', model, {
+        inputType: options.inputType || EMBED_INPUT_TYPE.QUERY
+      })
+      return { success: true, dim: vec.length }
+    }
+    if (type === 'vision') {
+      return await runVisionConnectionTest(this, model)
     }
     const text = await this.chat({
       model,

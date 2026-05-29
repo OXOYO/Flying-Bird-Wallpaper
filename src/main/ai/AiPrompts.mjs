@@ -9,6 +9,9 @@ export const buildCollectionQueryPrompt = (prompt) => t('ai.prompts.collectionQu
 export const buildKeywordExpandPrompt = (keywords) =>
   t('ai.prompts.keywordExpand', { keywords: JSON.stringify(keywords) })
 
+export const buildCollectionTagExpandPrompt = (keyword) =>
+  t('ai.prompts.collectionTagExpand', { keyword })
+
 export const buildCollectionMergePrompt = (candidates, targetCount) => {
   const payload = candidates.map((item) => ({
     id: item.id,

@@ -721,19 +721,33 @@ export default class ResourcesManager {
         : null
 
     const ai = this.settingManager?.settingData?.ai || {}
-    const useVisual =
-      ai.visualEmbedEnabled !== false && String(ai.findSimilarMode || 'visual') !== 'text'
-    const table = useVisual ? 'fbw_resource_image_vec_blob' : 'fbw_resource_vec_blob'
+    const activeVisualModel =
+      String(ai.visualEmbedSource || 'builtin').toLowerCase() === 'remote' &&
+      String(ai.visualEmbedModel || '').trim()
+        ? String(ai.visualEmbedModel).trim()
+        : 'mobileclip2-s0'
 
     let total = 0
     const chunkSize = 400
     for (let i = 0; i < ids.length; i += chunkSize) {
       const chunk = ids.slice(i, i + chunkSize)
       const ph = chunk.map(() => '?').join(',')
-      const params = [...chunk]
-      let sql = `SELECT COUNT(*) AS c FROM ${table} WHERE resourceId IN (${ph})`
+      const params = [...chunk, activeVisualModel]
+      let sql = `
+        SELECT COUNT(DISTINCT r.id) AS c
+        FROM fbw_resources r
+        WHERE r.id IN (${ph})
+          AND (
+            EXISTS (
+              SELECT 1 FROM fbw_resource_image_vec_blob v
+              WHERE v.resourceId = r.id AND v.model = ?
+            )
+            OR EXISTS (
+              SELECT 1 FROM fbw_resource_vec_blob t WHERE t.resourceId = r.id
+            )
+          )`
       if (excludeId != null) {
-        sql += ' AND resourceId != ?'
+        sql += ' AND r.id != ?'
         params.push(excludeId)
       }
       total += this.db.prepare(sql).get(...params)?.c || 0

@@ -31,14 +31,18 @@ const { anchorContainer, onAnchorChange, restoreAnchorScroll } = useSettingAncho
 const flags = reactive({ saving: false })
 const testingVision = ref(false)
 const testingText = ref(false)
+const testingVisualEmbed = ref(false)
 const loadingVisionModels = ref(false)
 const loadingTextModels = ref(false)
 const loadingEmbedModels = ref(false)
+const loadingVisualEmbedModels = ref(false)
 const testVisionResult = ref(null)
 const testTextResult = ref(null)
+const testVisualEmbedResult = ref(null)
 const visionModels = ref([])
 const textModels = ref([])
 const embedModels = ref([])
+const visualEmbedModels = ref([])
 
 const aiForm = reactive({
   ...JSON.parse(JSON.stringify(settingData.value.ai || {}))
@@ -58,27 +62,45 @@ const analysisModeOptions = computed(() => [
   { label: t('pages.Setting.aiSetting.analysisModeNewOnly'), value: 'new_only' }
 ])
 
-/** AI 功能开关：说明放 tooltip，避免表单项纵向堆叠过乱 */
-const featureSwitches = [
+/** AI 功能开关分组 */
+const featureSwitchGroups = [
   {
-    key: 'enableNsfwCheck',
-    labelKey: 'pages.Setting.aiSetting.enableNsfwCheck',
-    hintKey: 'pages.Setting.aiSetting.enableNsfwCheckHint'
+    titleKey: 'pages.Setting.aiSetting.sectionFeaturesSearch',
+    items: [
+      {
+        key: 'enableNsfwCheck',
+        labelKey: 'pages.Setting.aiSetting.enableNsfwCheck',
+        hintKey: 'pages.Setting.aiSetting.enableNsfwCheckHint'
+      },
+      {
+        key: 'expandDownloadKeywords',
+        labelKey: 'pages.Setting.aiSetting.expandDownloadKeywords',
+        hintKey: 'pages.Setting.aiSetting.expandDownloadKeywordsHint'
+      }
+    ]
   },
   {
-    key: 'expandDownloadKeywords',
-    labelKey: 'pages.Setting.aiSetting.expandDownloadKeywords',
-    hintKey: 'pages.Setting.aiSetting.expandDownloadKeywordsHint'
-  },
-  {
-    key: 'legacyOnnxScore',
-    labelKey: 'pages.Setting.aiSetting.legacyOnnxScore',
-    hintKey: 'pages.Setting.aiSetting.legacyOnnxScoreHint'
-  },
-  {
-    key: 'legacyJiebaTags',
-    labelKey: 'pages.Setting.aiSetting.legacyJiebaTags',
-    hintKey: 'pages.Setting.aiSetting.legacyJiebaTagsHint'
+    titleKey: 'pages.Setting.aiSetting.sectionFeaturesLegacy',
+    items: [
+      {
+        key: 'legacyOnnxScore',
+        labelKey: 'pages.Setting.aiSetting.legacyOnnxScore',
+        hintKey: 'pages.Setting.aiSetting.legacyOnnxScoreHint'
+      },
+      {
+        key: 'legacyJiebaTags',
+        labelKey: 'pages.Setting.aiSetting.legacyJiebaTags',
+        hintKey: 'pages.Setting.aiSetting.legacyJiebaTagsHint'
+      },
+      {
+        toggleField: 'visualEmbedSource',
+        toggleOn: 'builtin',
+        toggleOff: 'remote',
+        labelKey: 'pages.Setting.aiSetting.legacyLocalVisualEmbed',
+        hintKey: 'pages.Setting.aiSetting.legacyLocalVisualEmbedHint',
+        changeHandler: 'visualEmbedSource'
+      }
+    ]
   }
 ]
 
@@ -90,6 +112,10 @@ const showRemoteVisionPrivacyNote = computed(() => visionRequiresApiKey.value)
 const textRequiresApiKey = computed(() =>
   presetRequiresApiKey(aiForm.textPreset, aiForm.textBaseUrl)
 )
+const visualEmbedRequiresApiKey = computed(() =>
+  presetRequiresApiKey(aiForm.visualEmbedPreset, aiForm.visualEmbedBaseUrl)
+)
+const showRemoteVisualEmbedPrivacyNote = computed(() => visualEmbedRequiresApiKey.value)
 
 const localModelHintKey = (presetId) => {
   if (!isLocalPreset(presetId)) return ''
@@ -98,6 +124,7 @@ const localModelHintKey = (presetId) => {
 }
 const visionModelHintKey = computed(() => localModelHintKey(aiForm.visionPreset))
 const textModelHintKey = computed(() => localModelHintKey(aiForm.textPreset))
+const visualEmbedModelHintKey = computed(() => localModelHintKey(aiForm.visualEmbedPreset))
 
 const visionBaseUrlPlaceholder = computed(() => {
   const preset = getPresetById(aiForm.visionPreset)
@@ -109,12 +136,21 @@ const textBaseUrlPlaceholder = computed(() => {
   if (preset?.custom) return t('pages.Setting.aiSetting.customBaseUrlPlaceholder')
   return preset?.baseUrl || t('pages.Setting.aiSetting.customBaseUrlPlaceholder')
 })
+const visualEmbedBaseUrlPlaceholder = computed(() => {
+  const preset = getPresetById(aiForm.visualEmbedPreset)
+  if (preset?.custom) return t('pages.Setting.aiSetting.customBaseUrlPlaceholder')
+  return preset?.baseUrl || t('pages.Setting.aiSetting.customBaseUrlPlaceholder')
+})
 
 const visionPresetPrev = ref(aiForm.visionPreset || 'ollama')
 const textPresetPrev = ref(aiForm.textPreset || 'ollama')
+const visualEmbedPresetPrev = ref(aiForm.visualEmbedPreset || 'ollama')
 
 const showOpenRouterFields = computed(
-  () => aiForm.visionPreset === 'openrouter' || aiForm.textPreset === 'openrouter'
+  () =>
+    aiForm.visionPreset === 'openrouter' ||
+    aiForm.textPreset === 'openrouter' ||
+    aiForm.visualEmbedPreset === 'openrouter'
 )
 
 const {
@@ -187,14 +223,12 @@ const ensureAiFields = () => {
   if (aiForm.scoreMinFilter == null || aiForm.scoreMinFilter === '') {
     aiForm.scoreMinFilter = 70
   }
-  if (aiForm.similarMinCosine == null || aiForm.similarMinCosine === '') {
-    aiForm.similarMinCosine = 0.62
-  }
-  if (!aiForm.findSimilarMode) aiForm.findSimilarMode = 'visual'
-  if (aiForm.similarMinCosineVisual == null || aiForm.similarMinCosineVisual === '') {
-    aiForm.similarMinCosineVisual = 0.72
-  }
-  if (aiForm.visualEmbedEnabled === undefined) aiForm.visualEmbedEnabled = true
+  if (!aiForm.visualEmbedSource) aiForm.visualEmbedSource = 'builtin'
+  if (!aiForm.visualEmbedPreset) aiForm.visualEmbedPreset = 'ollama'
+  if (!aiForm.visualEmbedProvider) aiForm.visualEmbedProvider = 'ollama'
+  if (!aiForm.visualEmbedBaseUrl) aiForm.visualEmbedBaseUrl = 'http://127.0.0.1:11434'
+  if (aiForm.visualEmbedApiKey == null) aiForm.visualEmbedApiKey = ''
+  if (aiForm.visualEmbedModel == null) aiForm.visualEmbedModel = ''
   if (aiForm.analysisMaxRetries == null || aiForm.analysisMaxRetries === '') {
     aiForm.analysisMaxRetries = AI_ANALYSIS_MAX_RETRIES_DEFAULT
   }
@@ -216,6 +250,7 @@ const syncAiFormFromStore = () => {
   ensureAiFields()
   visionPresetPrev.value = aiForm.visionPreset || 'ollama'
   textPresetPrev.value = aiForm.textPreset || 'ollama'
+  visualEmbedPresetPrev.value = aiForm.visualEmbedPreset || 'ollama'
 }
 
 const onAiFormChange = async () => {
@@ -223,7 +258,9 @@ const onAiFormChange = async () => {
   if (flags.saving) return
   flags.saving = true
   try {
-    const res = await window.FBW.updateSettingData({ ai: { ...toRaw(aiForm) } })
+    const aiPayload = { ...toRaw(aiForm) }
+    delete aiPayload.visualEmbedEnabled
+    const res = await window.FBW.updateSettingData({ ai: aiPayload })
     if (res?.success) {
       settingStore.updateSettingData(res.data)
       ElMessage({
@@ -264,7 +301,9 @@ const fetchModels = async (kind, purpose, targetRef, loadingRef, silent = false)
               ? 'pages.Setting.aiSetting.purposeVision'
               : purpose === 'embed'
                 ? 'pages.Setting.aiSetting.purposeEmbed'
-                : 'pages.Setting.aiSetting.purposeText'
+                : purpose === 'visual-embed'
+                  ? 'pages.Setting.aiSetting.purposeVisualEmbed'
+                  : 'pages.Setting.aiSetting.purposeText'
           ElMessage.success(
             t('pages.Setting.aiSetting.listModelsSuccess', {
               purpose: t(purposeLabelKey),
@@ -277,7 +316,9 @@ const fetchModels = async (kind, purpose, targetRef, loadingRef, silent = false)
               ? 'pages.Setting.aiSetting.listEmptyVision'
               : purpose === 'embed'
                 ? 'pages.Setting.aiSetting.listEmptyEmbed'
-                : 'pages.Setting.aiSetting.listEmptyText'
+                : purpose === 'visual-embed'
+                  ? 'pages.Setting.aiSetting.listEmptyVisualEmbed'
+                  : 'pages.Setting.aiSetting.listEmptyText'
           ElMessage.warning(t(emptyKey))
         }
       }
@@ -294,6 +335,9 @@ const fetchModels = async (kind, purpose, targetRef, loadingRef, silent = false)
 
 const refreshVisionModels = (silent = false) =>
   fetchModels('vision', 'vision', visionModels, loadingVisionModels, silent)
+
+const refreshVisualEmbedModels = (silent = false) =>
+  fetchModels('visualEmbed', 'visual-embed', visualEmbedModels, loadingVisualEmbedModels, silent)
 
 const refreshTextModels = async (silent = false, scope = 'all') => {
   if (scope === 'text') {
@@ -327,6 +371,13 @@ const onVisionPresetChange = async () => {
   visionPresetPrev.value = aiForm.visionPreset
   await onAiFormChange()
   await refreshVisionModels(true)
+}
+
+const onVisualEmbedPresetChange = async () => {
+  applyServicePreset(aiForm, 'visualEmbed', { previousPresetId: visualEmbedPresetPrev.value })
+  visualEmbedPresetPrev.value = aiForm.visualEmbedPreset
+  await onAiFormChange()
+  await refreshVisualEmbedModels(true)
 }
 
 const onTextPresetChange = async () => {
@@ -370,11 +421,45 @@ const onTestText = async () => {
     testTextResult.value = {
       success: embedRes.success,
       message: embedRes.success
-        ? t('pages.Setting.aiSetting.testOkWithEmbed')
+        ? t('pages.Setting.aiSetting.testOk')
         : resolveAiUserMessage(embedRes, t)
     }
   } finally {
     testingText.value = false
+  }
+}
+
+const onTestVisualEmbed = async () => {
+  testingVisualEmbed.value = true
+  testVisualEmbedResult.value = null
+  ensureAiFields()
+  try {
+    const res = await window.FBW.testAiConnection({ type: 'visual-embed', ai: aiSnapshot() })
+    testVisualEmbedResult.value = {
+      success: res.success,
+      message: res.success
+        ? t('pages.Setting.aiSetting.testOk')
+        : resolveAiUserMessage(res, t)
+    }
+  } finally {
+    testingVisualEmbed.value = false
+  }
+}
+
+const onVisualEmbedSourceChange = async () => {
+  await onAiFormChange()
+  if (aiForm.visualEmbedSource === 'remote') {
+    await refreshVisualEmbedModels(true)
+  }
+}
+
+const onFeatureToggleChange = async (item, enabled) => {
+  if (!item.toggleField) return
+  aiForm[item.toggleField] = enabled ? item.toggleOn : item.toggleOff
+  if (item.changeHandler === 'visualEmbedSource') {
+    await onVisualEmbedSourceChange()
+  } else {
+    await onAiFormChange()
   }
 }
 
@@ -385,6 +470,7 @@ const resetForm = () => {
   visionModels.value = []
   textModels.value = []
   embedModels.value = []
+  visualEmbedModels.value = []
 }
 
 watch(
@@ -395,7 +481,11 @@ watch(
 
 onMounted(async () => {
   syncAiFormFromStore()
-  await Promise.all([refreshVisionModels(true), refreshTextModels(true)])
+  const tasks = [refreshVisionModels(true), refreshTextModels(true)]
+  if (aiForm.visualEmbedSource === 'remote') {
+    tasks.push(refreshVisualEmbedModels(true))
+  }
+  await Promise.all(tasks)
 })
 
 defineExpose({ resetForm, restoreAnchorScroll })
@@ -427,6 +517,12 @@ defineExpose({ resetForm, restoreAnchorScroll })
           class="anchor-link"
           href="#divider-ai-text"
           :title="t('pages.Setting.aiSetting.textSection')"
+        />
+        <el-anchor-link
+          v-if="aiForm.visualEmbedSource === 'remote'"
+          class="anchor-link"
+          href="#divider-ai-visual-embed"
+          :title="t('pages.Setting.aiSetting.visualEmbedSection')"
         />
         <el-anchor-link
           class="anchor-link"
@@ -778,7 +874,7 @@ defineExpose({ resetForm, restoreAnchorScroll })
           </el-form-item>
           <el-form-item label=" ">
             <el-button :loading="testingVision" @click="onTestVision">
-              {{ t('pages.Setting.aiSetting.testVision') }}
+              {{ t('pages.Setting.aiSetting.testConnection') }}
             </el-button>
             <el-text
               v-if="testVisionResult"
@@ -872,7 +968,7 @@ defineExpose({ resetForm, restoreAnchorScroll })
           </el-form-item>
           <el-form-item label=" ">
             <el-button :loading="testingText" @click="onTestText">
-              {{ t('pages.Setting.aiSetting.testText') }}
+              {{ t('pages.Setting.aiSetting.testConnection') }}
             </el-button>
             <el-text
               v-if="testTextResult"
@@ -902,9 +998,102 @@ defineExpose({ resetForm, restoreAnchorScroll })
           </template>
         </div>
 
+        <div v-if="aiForm.visualEmbedSource === 'remote'" class="form-card">
+          <div id="divider-ai-visual-embed" class="divider">
+            {{ t('pages.Setting.aiSetting.visualEmbedSection') }}
+          </div>
+          <el-form-item :label="t('pages.Setting.aiSetting.serviceProvider')">
+            <div class="vision-provider-block">
+              <el-select
+                v-model="aiForm.visualEmbedPreset"
+                style="width: 290px"
+                @change="onVisualEmbedPresetChange"
+              >
+                <el-option
+                  v-for="item in presetOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+              <div v-if="showRemoteVisualEmbedPrivacyNote" class="field-hint">
+                {{ t('pages.Setting.aiSetting.remoteVisionPrivacyNote') }}
+              </div>
+            </div>
+          </el-form-item>
+          <el-form-item :label="t('pages.Setting.aiSetting.visualEmbedBaseUrl')">
+            <el-input
+              v-model="aiForm.visualEmbedBaseUrl"
+              style="width: 290px"
+              :placeholder="visualEmbedBaseUrlPlaceholder"
+              @change="onAiFormChange"
+            />
+          </el-form-item>
+          <el-form-item v-if="visualEmbedRequiresApiKey" :label="t('pages.Setting.aiSetting.apiKey')">
+            <div class="api-key-row">
+              <el-input
+                v-model="aiForm.visualEmbedApiKey"
+                type="password"
+                show-password
+                class="api-key-row__input"
+                :placeholder="t('pages.Setting.aiSetting.apiKeyPlaceholder')"
+                @change="onAiFormChange"
+              />
+              <el-button @click="copyApiKey(aiForm.visualEmbedApiKey)">
+                {{ t('pages.Setting.aiSetting.copyApiKey') }}
+              </el-button>
+            </div>
+          </el-form-item>
+          <el-form-item :label="t('pages.Setting.aiSetting.visualEmbedModel')">
+            <div class="model-row">
+              <el-select
+                v-model="aiForm.visualEmbedModel"
+                filterable
+                allow-create
+                default-first-option
+                style="width: 290px"
+                :placeholder="t('pages.Setting.aiSetting.modelPlaceholder')"
+                @change="onAiFormChange"
+              >
+                <el-option
+                  v-for="item in visualEmbedModels"
+                  :key="item"
+                  :label="item"
+                  :value="item"
+                />
+              </el-select>
+              <el-button
+                :loading="loadingVisualEmbedModels"
+                @click="refreshVisualEmbedModels(false)"
+              >
+                {{ t('pages.Setting.aiSetting.refreshModels') }}
+              </el-button>
+            </div>
+            <div v-if="visualEmbedModelHintKey" class="field-hint">
+              {{ t(visualEmbedModelHintKey) }}
+            </div>
+          </el-form-item>
+          <el-form-item label=" ">
+            <el-button :loading="testingVisualEmbed" @click="onTestVisualEmbed">
+              {{ t('pages.Setting.aiSetting.testConnection') }}
+            </el-button>
+            <el-text
+              v-if="testVisualEmbedResult"
+              class="test-result"
+              :type="testVisualEmbedResult.success ? 'success' : 'danger'"
+            >
+              {{ testVisualEmbedResult.message }}
+            </el-text>
+          </el-form-item>
+        </div>
+
         <div class="form-card">
           <div id="divider-ai-features" class="divider">
             {{ t('pages.Setting.aiSetting.sectionFeatures') }}
+          </div>
+
+          <div class="ai-form-section-divider ai-form-section-divider--first">
+            {{ t('pages.Setting.aiSetting.sectionFeaturesCollections') }}
           </div>
 
           <el-form-item class="ai-form-item-labeled">
@@ -938,7 +1127,7 @@ defineExpose({ resetForm, restoreAnchorScroll })
             />
           </el-form-item>
 
-          <div v-if="aiForm.enabled" class="ai-curate-sub-options">
+          <template v-if="aiForm.enabled">
             <el-form-item
               v-if="aiForm.autoCollectionsEnabled !== false"
               class="ai-form-item-labeled"
@@ -972,146 +1161,6 @@ defineExpose({ resetForm, restoreAnchorScroll })
                   :min="AUTO_COLLECTION_COUNT_MIN"
                   :max="AUTO_COLLECTION_COUNT_ABSOLUTE_MAX"
                   :step="1"
-                  :disabled="!aiForm.enabled"
-                  controls-position="right"
-                  @change="onAiFormChange"
-                />
-              </div>
-            </el-form-item>
-
-            <el-form-item class="ai-form-item-labeled">
-              <template #label>
-                <span class="form-item-label-with-tip">
-                  <span class="form-item-label-with-tip__text">{{
-                    t('pages.Setting.aiSetting.findSimilarMode')
-                  }}</span>
-                  <el-tooltip
-                    :content="t('pages.Setting.aiSetting.findSimilarModeHint')"
-                    placement="top"
-                    :show-after="300"
-                    popper-class="ai-setting-feature-tip"
-                  >
-                    <span
-                      class="form-item-tip-trigger"
-                      tabindex="0"
-                      role="button"
-                      :aria-label="t('pages.Setting.aiSetting.findSimilarModeHint')"
-                      @click.stop
-                    >
-                      <IconifyIcon icon="custom:info-outline-rounded" />
-                    </span>
-                  </el-tooltip>
-                </span>
-              </template>
-              <div class="ai-form-control-row">
-                <el-radio-group v-model="aiForm.findSimilarMode" @change="onAiFormChange">
-                  <el-radio value="visual">{{
-                    t('pages.Setting.aiSetting.findSimilarModeVisual')
-                  }}</el-radio>
-                  <el-radio value="text">{{
-                    t('pages.Setting.aiSetting.findSimilarModeText')
-                  }}</el-radio>
-                </el-radio-group>
-              </div>
-            </el-form-item>
-
-            <el-form-item class="ai-form-item-labeled">
-              <template #label>
-                <span class="form-item-label-with-tip">
-                  <span class="form-item-label-with-tip__text">{{
-                    t('pages.Setting.aiSetting.visualEmbedEnabled')
-                  }}</span>
-                  <el-tooltip
-                    :content="t('pages.Setting.aiSetting.visualEmbedEnabledHint')"
-                    placement="top"
-                    :show-after="300"
-                    popper-class="ai-setting-feature-tip"
-                  >
-                    <span
-                      class="form-item-tip-trigger"
-                      tabindex="0"
-                      role="button"
-                      :aria-label="t('pages.Setting.aiSetting.visualEmbedEnabledHint')"
-                      @click.stop
-                    >
-                      <IconifyIcon icon="custom:info-outline-rounded" />
-                    </span>
-                  </el-tooltip>
-                </span>
-              </template>
-              <el-switch v-model="aiForm.visualEmbedEnabled" @change="onAiFormChange" />
-            </el-form-item>
-
-            <el-form-item class="ai-form-item-labeled">
-              <template #label>
-                <span class="form-item-label-with-tip">
-                  <span class="form-item-label-with-tip__text">{{
-                    t('pages.Setting.aiSetting.similarMinCosineVisual')
-                  }}</span>
-                  <el-tooltip
-                    :content="t('pages.Setting.aiSetting.similarMinCosineVisualHint')"
-                    placement="top"
-                    :show-after="300"
-                    popper-class="ai-setting-feature-tip"
-                  >
-                    <span
-                      class="form-item-tip-trigger"
-                      tabindex="0"
-                      role="button"
-                      :aria-label="t('pages.Setting.aiSetting.similarMinCosineVisualHint')"
-                      @click.stop
-                    >
-                      <IconifyIcon icon="custom:info-outline-rounded" />
-                    </span>
-                  </el-tooltip>
-                </span>
-              </template>
-              <div class="ai-form-control-row ai-form-control-row--score-min">
-                <el-input-number
-                  v-model="aiForm.similarMinCosineVisual"
-                  :min="0.35"
-                  :max="0.95"
-                  :step="0.01"
-                  :precision="2"
-                  :disabled="aiForm.findSimilarMode === 'text' || !aiForm.visualEmbedEnabled"
-                  controls-position="right"
-                  @change="onAiFormChange"
-                />
-              </div>
-            </el-form-item>
-
-            <el-form-item class="ai-form-item-labeled">
-              <template #label>
-                <span class="form-item-label-with-tip">
-                  <span class="form-item-label-with-tip__text">{{
-                    t('pages.Setting.aiSetting.similarMinCosine')
-                  }}</span>
-                  <el-tooltip
-                    :content="t('pages.Setting.aiSetting.similarMinCosineHint')"
-                    placement="top"
-                    :show-after="300"
-                    popper-class="ai-setting-feature-tip"
-                  >
-                    <span
-                      class="form-item-tip-trigger"
-                      tabindex="0"
-                      role="button"
-                      :aria-label="t('pages.Setting.aiSetting.similarMinCosineHint')"
-                      @click.stop
-                    >
-                      <IconifyIcon icon="custom:info-outline-rounded" />
-                    </span>
-                  </el-tooltip>
-                </span>
-              </template>
-              <div class="ai-form-control-row ai-form-control-row--score-min">
-                <el-input-number
-                  v-model="aiForm.similarMinCosine"
-                  :min="0.35"
-                  :max="0.95"
-                  :step="0.01"
-                  :precision="2"
-                  :disabled="!aiForm.enabled || aiForm.findSimilarMode === 'visual'"
                   controls-position="right"
                   @change="onAiFormChange"
                 />
@@ -1148,46 +1197,51 @@ defineExpose({ resetForm, restoreAnchorScroll })
                   :min="0"
                   :max="100"
                   :step="1"
-                  :disabled="!aiForm.enabled"
                   controls-position="right"
                   @change="onScoreMinFilterChange"
                 />
               </div>
             </el-form-item>
-          </div>
 
-          <el-form-item
-            v-for="item in featureSwitches"
-            :key="item.key"
-            class="ai-form-item-labeled"
-          >
-            <template #label>
-              <span class="form-item-label-with-tip">
-                <span class="form-item-label-with-tip__text">{{ t(item.labelKey) }}</span>
-                <el-tooltip
-                  :content="t(item.hintKey)"
-                  placement="top"
-                  :show-after="300"
-                  popper-class="ai-setting-feature-tip"
-                >
-                  <span
-                    class="form-item-tip-trigger"
-                    tabindex="0"
-                    role="button"
-                    :aria-label="t(item.hintKey)"
-                    @click.stop
-                  >
-                    <IconifyIcon icon="custom:info-outline-rounded" />
+            <template v-for="group in featureSwitchGroups" :key="group.titleKey">
+              <div class="ai-form-section-divider">
+                {{ t(group.titleKey) }}
+              </div>
+              <el-form-item
+                v-for="item in group.items"
+                :key="item.key || item.toggleField"
+                class="ai-form-item-labeled"
+              >
+                <template #label>
+                  <span class="form-item-label-with-tip">
+                    <span class="form-item-label-with-tip__text">{{ t(item.labelKey) }}</span>
+                    <el-tooltip
+                      :content="t(item.hintKey)"
+                      placement="top"
+                      :show-after="300"
+                      popper-class="ai-setting-feature-tip"
+                    >
+                      <span
+                        class="form-item-tip-trigger"
+                        tabindex="0"
+                        role="button"
+                        :aria-label="t(item.hintKey)"
+                        @click.stop
+                      >
+                        <IconifyIcon icon="custom:info-outline-rounded" />
+                      </span>
+                    </el-tooltip>
                   </span>
-                </el-tooltip>
-              </span>
+                </template>
+                <el-switch
+                  v-if="item.toggleField"
+                  :model-value="aiForm[item.toggleField] === item.toggleOn"
+                  @change="(val) => onFeatureToggleChange(item, val)"
+                />
+                <el-switch v-else v-model="aiForm[item.key]" @change="onAiFormChange" />
+              </el-form-item>
             </template>
-            <el-switch
-              v-model="aiForm[item.key]"
-              :disabled="!aiForm.enabled"
-              @change="onAiFormChange"
-            />
-          </el-form-item>
+          </template>
         </div>
       </el-form>
     </el-scrollbar>
@@ -1302,9 +1356,10 @@ defineExpose({ resetForm, restoreAnchorScroll })
   }
 }
 
-.ai-curate-sub-options {
-  margin: 4px 0 12px;
-  padding: 0;
+.ai-form-hint-text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--el-text-color-secondary);
 }
 
 .ai-form-section-divider {
@@ -1315,6 +1370,10 @@ defineExpose({ resetForm, restoreAnchorScroll })
   font-weight: 600;
   line-height: 1.4;
   color: var(--el-text-color-primary);
+
+  &--first {
+    margin-top: 4px;
+  }
 }
 
 .form-item-label-with-tip {

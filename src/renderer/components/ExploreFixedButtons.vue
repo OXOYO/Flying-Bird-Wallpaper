@@ -1,5 +1,6 @@
 <script setup>
 import { nextTick, onMounted, ref, watch } from 'vue'
+import InstantTooltip from '@renderer/components/InstantTooltip.vue'
 
 const props = defineProps({
   buttons: { type: Array, default: () => [] },
@@ -65,29 +66,33 @@ const isChildActive = (item, child) => {
     :style="item.style"
   >
     <div v-if="item.children?.length" class="explore-fixed-btn__children">
-      <div
+      <InstantTooltip
         v-for="child in item.children"
         :key="child.value"
-        class="explore-fixed-btn__child"
-        :class="{ 'is-active': isChildActive(item, child) }"
-        :title="child.alt || child.title || child.label"
-        @click="onClick(item.action, item.actionParams, child.value)"
+        :content="child.alt || child.title || child.label"
       >
-        <IconifyIcon v-if="child.icon" :icon="child.icon" :style="child.iconStyle" />
-        <span v-else class="explore-fixed-btn__child-text">{{ child.title || child.label }}</span>
-      </div>
+        <div
+          class="explore-fixed-btn__child"
+          :class="{ 'is-active': isChildActive(item, child) }"
+          @click="onClick(item.action, item.actionParams, child.value)"
+        >
+          <IconifyIcon v-if="child.icon" :icon="child.icon" :style="child.iconStyle" />
+          <span v-else class="explore-fixed-btn__child-text">{{ child.title || child.label }}</span>
+        </div>
+      </InstantTooltip>
     </div>
-    <el-button
-      class="explore-fixed-btn__trigger"
-      circle
-      :disabled="loading"
-      :title="item.alt || item.title"
-      size="large"
-      @click="onClick(item.action, item.actionParams)"
-    >
-      <IconifyIcon v-if="item.icon" :icon="item.icon" :style="item.iconStyle" />
-      <span v-else class="explore-fixed-btn__child-text">{{ item.title }}</span>
-    </el-button>
+    <InstantTooltip :content="item.alt || item.title">
+      <el-button
+        class="explore-fixed-btn__trigger"
+        circle
+        :disabled="loading"
+        size="large"
+        @click="onClick(item.action, item.actionParams)"
+      >
+        <IconifyIcon v-if="item.icon" :icon="item.icon" :style="item.iconStyle" />
+        <span v-else class="explore-fixed-btn__child-text">{{ item.title }}</span>
+      </el-button>
+    </InstantTooltip>
   </div>
 </template>
 

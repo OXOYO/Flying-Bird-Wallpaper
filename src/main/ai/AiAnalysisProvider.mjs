@@ -2,7 +2,7 @@ import { OllamaProvider, OpenAiCompatibleProvider } from './providers/HttpAiProv
 import { buildImageAnalysisPrompt } from './AiPrompts.mjs'
 import { extractJsonObject, normalizeAnalysisResult } from './AiResponseParser.mjs'
 import { calculateImageScore } from '../utils/utils.mjs'
-import { AI_PROVIDER_TYPES, DEFAULT_AI_TIMEOUT_MS, resolveEffectiveVisionTimeout } from './aiConstants.mjs'
+import { AI_PROVIDER_TYPES, DEFAULT_AI_TIMEOUT_MS, AI_TEST_CONNECTION_TIMEOUT_MS, resolveEffectiveVisionTimeout } from './aiConstants.mjs'
 import { prepareVisionImageForAnalysis, formatVisionPrepLog } from './AiVisionImagePrep.mjs'
 import fs from 'node:fs'
 import {
@@ -17,11 +17,43 @@ import { buildRemoteExtraHeaders, presetRequiresApiKey } from '../../common/aiPr
 const PURPOSE_LABEL = {
   vision: 'vision',
   text: 'text',
-  embed: 'embed'
+  embed: 'embed',
+  'visual-embed': 'visual-embed'
 }
 
 /** 解析失败时写入日志的模型原文最大长度 */
 const AI_RAW_RESPONSE_LOG_MAX = 2000
+
+function resolveServiceProfile(kind, ai) {
+  if (kind === 'visualEmbed') {
+    return {
+      providerType: ai.visualEmbedProvider,
+      baseUrl: ai.visualEmbedBaseUrl,
+      presetId: ai.visualEmbedPreset,
+      model: ai.visualEmbedModel,
+      apiKeyKind: 'visualEmbed',
+      logTag: 'visual-embed'
+    }
+  }
+  if (kind === 'vision') {
+    return {
+      providerType: ai.visionProvider,
+      baseUrl: ai.visionBaseUrl,
+      presetId: ai.visionPreset,
+      model: ai.visionModel,
+      apiKeyKind: 'vision',
+      logTag: 'vision'
+    }
+  }
+  return {
+    providerType: ai.textProvider,
+    baseUrl: ai.textBaseUrl,
+    presetId: ai.textPreset,
+    model: ai.textModel,
+    apiKeyKind: 'text',
+    logTag: 'text'
+  }
+}
 
 export default class AiAnalysisProvider {
   static _instance = null
@@ -50,6 +82,7 @@ export default class AiAnalysisProvider {
   }
 
   getApiKey(kind, ai) {
+    if (kind === 'visualEmbed') return ai.visualEmbedApiKey || ai.apiKey || ''
     if (kind === 'vision') return ai.visionApiKey || ai.apiKey || ''
     return ai.textApiKey || ai.apiKey || ''
   }
@@ -63,19 +96,17 @@ export default class AiAnalysisProvider {
 
   createProvider(kind, aiOverrides) {
     const ai = this.resolveAi(aiOverrides)
-    const isVision = kind === 'vision'
-    const provider = isVision ? ai.visionProvider : ai.textProvider
-    const baseUrl = isVision ? ai.visionBaseUrl : ai.textBaseUrl
+    const profile = resolveServiceProfile(kind, ai)
     const config = {
-      baseUrl,
-      model: isVision ? ai.visionModel : ai.textModel,
+      baseUrl: profile.baseUrl,
+      model: profile.model,
       timeout: ai.timeout || DEFAULT_AI_TIMEOUT_MS,
-      apiKey: this.getApiKey(isVision ? 'vision' : 'text', ai),
-      extraHeaders: buildRemoteExtraHeaders(ai, baseUrl),
+      apiKey: this.getApiKey(profile.apiKeyKind, ai),
+      extraHeaders: buildRemoteExtraHeaders(ai, profile.baseUrl),
       logger: this.logger,
-      logTag: isVision ? 'vision' : 'text'
+      logTag: profile.logTag
     }
-    if (provider === AI_PROVIDER_TYPES.OPENAI_COMPATIBLE) {
+    if (profile.providerType === AI_PROVIDER_TYPES.OPENAI_COMPATIBLE) {
       return new OpenAiCompatibleProvider(config)
     }
     return new OllamaProvider(config)
@@ -99,7 +130,10 @@ export default class AiAnalysisProvider {
     }
 
     const prepared = await prepareVisionImageForAnalysis(filePath, ai, this.logger)
-    const effectiveTimeoutMs = resolveEffectiveVisionTimeout(ai, prepared.meta?.originalBytes || fileSizeBytes)
+    const effectiveTimeoutMs = resolveEffectiveVisionTimeout(
+      ai,
+      prepared.meta?.originalBytes || fileSizeBytes
+    )
     const provider = this.createProvider('vision', { timeout: effectiveTimeoutMs })
 
     const visionInput = prepared.buffer
@@ -146,15 +180,24 @@ export default class AiAnalysisProvider {
     return content
   }
 
-  async embedText(text) {
+  async embedText(text, options = {}) {
     const ai = this.ai
     if (!ai.enabled) return []
     const provider = this.createProvider('text')
     const model = ai.embeddingModel || ai.textModel
     if (typeof provider.embed === 'function') {
-      return await provider.embed(text, model)
+      return await provider.embed(text, model, options)
     }
     return []
+  }
+
+  async embedImageFile(filePath, aiOverrides, options = {}) {
+    const ai = this.resolveAi(aiOverrides)
+    const model = String(ai.visualEmbedModel || '').trim()
+    if (!model) return []
+    const provider = this.createProvider('visualEmbed', ai)
+    if (typeof provider.embedImage !== 'function') return []
+    return await provider.embedImage(filePath, model, options)
   }
 
   assertModelPurpose(modelId, purpose) {
@@ -173,23 +216,27 @@ export default class AiAnalysisProvider {
 
   async listModels(kind = 'vision', purpose = 'text', aiOverrides) {
     const ai = this.resolveAi(aiOverrides)
-    const isVision = kind === 'vision'
-    const providerType = isVision ? ai.visionProvider : ai.textProvider
-    const baseUrl = isVision ? ai.visionBaseUrl : ai.textBaseUrl
+    const profile = resolveServiceProfile(kind === 'visualEmbed' ? 'visualEmbed' : kind, ai)
     const catalogPurpose =
-      purpose === 'embed' ? MODEL_PURPOSE.EMBED : purpose === 'vision' ? MODEL_PURPOSE.VISION : MODEL_PURPOSE.TEXT
+      purpose === 'visual-embed'
+        ? MODEL_PURPOSE.VISUAL_EMBED
+        : purpose === 'embed'
+          ? MODEL_PURPOSE.EMBED
+          : purpose === 'vision'
+            ? MODEL_PURPOSE.VISION
+            : MODEL_PURPOSE.TEXT
 
-    const presetId = isVision ? ai.visionPreset : ai.textPreset
     if (
-      providerType === AI_PROVIDER_TYPES.OPENAI_COMPATIBLE &&
-      presetRequiresApiKey(presetId, baseUrl) &&
-      !this.getApiKey(kind, ai)
+      profile.providerType === AI_PROVIDER_TYPES.OPENAI_COMPATIBLE &&
+      presetRequiresApiKey(profile.presetId, profile.baseUrl) &&
+      !this.getApiKey(profile.apiKeyKind, ai)
     ) {
       return { success: false, errorCode: AI_ERROR_CODE.API_KEY_MISSING, message: '' }
     }
 
     try {
-      const provider = this.createProvider(kind, ai)
+      const providerKind = kind === 'visualEmbed' ? 'visualEmbed' : kind === 'vision' ? 'vision' : 'text'
+      const provider = this.createProvider(providerKind, ai)
       const catalog =
         typeof provider.listModelCatalog === 'function'
           ? await provider.listModelCatalog(catalogPurpose)
@@ -205,22 +252,47 @@ export default class AiAnalysisProvider {
         }
       }
     } catch (err) {
-      const parsed = parseAiError(err, { providerType, baseUrl })
+      const parsed = parseAiError(err, { providerType: profile.providerType, baseUrl: profile.baseUrl })
       return { success: false, message: '', ...parsed }
     }
   }
 
   async testConnection(type = 'vision', aiOverrides) {
     const ai = this.resolveAi(aiOverrides)
-    const kind = type === 'text' || type === 'embed' ? 'text' : 'vision'
-    const providerType = kind === 'vision' ? ai.visionProvider : ai.textProvider
-    const baseUrl = kind === 'vision' ? ai.visionBaseUrl : ai.textBaseUrl
+    if (type === 'visual-embed') {
+      const profile = resolveServiceProfile('visualEmbed', ai)
+      if (
+        profile.providerType === AI_PROVIDER_TYPES.OPENAI_COMPATIBLE &&
+        presetRequiresApiKey(profile.presetId, profile.baseUrl) &&
+        !this.getApiKey('visualEmbed', ai)
+      ) {
+        return { success: false, errorCode: AI_ERROR_CODE.API_KEY_MISSING, message: '' }
+      }
+      const model = ai.visualEmbedModel || ''
+      const mismatch = this.assertModelPurpose(model, MODEL_PURPOSE.VISUAL_EMBED)
+      if (mismatch) return mismatch
+      try {
+        const provider = this.createProvider('visualEmbed', { ...ai, timeout: AI_TEST_CONNECTION_TIMEOUT_MS })
+        if (typeof provider.testConnection === 'function' && typeof provider.embedImage === 'function') {
+          return await provider.testConnection('embed-image', model)
+        }
+        return await provider.testConnection('embed', model)
+      } catch (err) {
+        const parsed = parseAiError(err, {
+          providerType: profile.providerType,
+          baseUrl: profile.baseUrl
+        })
+        return { success: false, message: '', ...parsed }
+      }
+    }
 
-    const presetId = kind === 'vision' ? ai.visionPreset : ai.textPreset
+    const kind = type === 'text' || type === 'embed' ? 'text' : 'vision'
+    const profile = resolveServiceProfile(kind, ai)
+
     if (
-      providerType === AI_PROVIDER_TYPES.OPENAI_COMPATIBLE &&
-      presetRequiresApiKey(presetId, baseUrl) &&
-      !this.getApiKey(kind, ai)
+      profile.providerType === AI_PROVIDER_TYPES.OPENAI_COMPATIBLE &&
+      presetRequiresApiKey(profile.presetId, profile.baseUrl) &&
+      !this.getApiKey(profile.apiKeyKind, ai)
     ) {
       return { success: false, errorCode: AI_ERROR_CODE.API_KEY_MISSING, message: '' }
     }
@@ -234,14 +306,18 @@ export default class AiAnalysisProvider {
     if (mismatch) return mismatch
 
     try {
+      const testAi = { ...ai, timeout: AI_TEST_CONNECTION_TIMEOUT_MS }
       if (type === 'embed') {
-        const provider = this.createProvider('text', ai)
+        const provider = this.createProvider('text', testAi)
         return await provider.testConnection('embed', model)
       }
-      const provider = this.createProvider(kind, ai)
+      const provider = this.createProvider(kind, testAi)
+      if (type === 'vision') {
+        return await provider.testConnection('vision', model)
+      }
       return await provider.testConnection('chat', model)
     } catch (err) {
-      const parsed = parseAiError(err, { providerType, baseUrl })
+      const parsed = parseAiError(err, { providerType: profile.providerType, baseUrl: profile.baseUrl })
       return { success: false, message: '', ...parsed }
     }
   }

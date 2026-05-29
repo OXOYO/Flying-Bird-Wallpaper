@@ -56,7 +56,7 @@ export function buildResourceCardButtons(item, context, t) {
         action: 'aiAnalyze',
         icon: 'custom:ai-sparkles'
       },
-      { title: t('exploreCommon.findSimilar'), action: 'findSimilar', icon: 'custom:search' }
+      { title: t('exploreCommon.findSimilar'), action: 'findSimilar', icon: 'custom:find-similar' }
     )
   }
   if (item.isFavorite) {

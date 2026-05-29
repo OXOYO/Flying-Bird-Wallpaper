@@ -1,5 +1,6 @@
 import { AI_ANALYSIS_STATUS } from '../ai/aiConstants.mjs'
 import AiAnalysisProvider from '../ai/AiAnalysisProvider.mjs'
+import EmbeddingManager from '../ai/EmbeddingManager.mjs'
 import VecStore from '../ai/VecStore.mjs'
 import { kMeansCluster } from '../ai/VectorCluster.mjs'
 import { buildCollectionMergePrompt } from '../ai/AiPrompts.mjs'
@@ -35,6 +36,7 @@ export default class CollectionCurator {
     this.settingManager = settingManager
     this.vecStore = VecStore.getInstance(logger, this.db)
     this.provider = AiAnalysisProvider.getInstance(logger, settingManager)
+    this.embeddingManager = EmbeddingManager.getInstance(logger, this.db, settingManager)
     CollectionCurator._instance = this
   }
 
@@ -60,16 +62,25 @@ export default class CollectionCurator {
     )
   }
 
+  getActiveVisualModelId() {
+    return this.embeddingManager.getActiveVisualModelId()
+  }
+
   countEmbeddings() {
+    return this.countImageEmbeddings()
+  }
+
+  countImageEmbeddings() {
+    const model = this.getActiveVisualModelId()
     return (
       this.db
         .prepare(
           `SELECT COUNT(*) as c
-           FROM fbw_resource_vec_blob v
+           FROM fbw_resource_image_vec_blob v
            JOIN fbw_resources r ON r.id = v.resourceId
-           WHERE r.fileType='image' AND r.aiAnalysisStatus = ?`
+           WHERE r.fileType='image' AND r.aiAnalysisStatus = ? AND v.model = ?`
         )
-        .get(AI_ANALYSIS_STATUS.DONE)?.c || 0
+        .get(AI_ANALYSIS_STATUS.DONE, model)?.c || 0
     )
   }
 
@@ -186,11 +197,12 @@ export default class CollectionCurator {
   }
 
   buildVectorCandidates(targetCount) {
-    const embedCount = this.countEmbeddings()
+    const embedCount = this.countImageEmbeddings()
     if (embedCount < AUTO_COLLECTION_MIN_EMBEDDINGS) return []
 
     const scoreMin = this.getScoreMin()
-    const vecParams = [AI_ANALYSIS_STATUS.DONE]
+    const activeModel = this.getActiveVisualModelId()
+    const vecParams = [activeModel, AI_ANALYSIS_STATUS.DONE]
     let vecScoreClause = ''
     if (scoreMin != null) {
       vecScoreClause = ' AND r.score >= ?'
@@ -200,7 +212,7 @@ export default class CollectionCurator {
       .prepare(
         `SELECT r.id, v.embedding, v.dim
          FROM fbw_resources r
-         JOIN fbw_resource_vec_blob v ON v.resourceId = r.id
+         JOIN fbw_resource_image_vec_blob v ON v.resourceId = r.id AND v.model = ?
          WHERE r.fileType = 'image' AND r.aiAnalysisStatus = ?${vecScoreClause}`
       )
       .all(...vecParams)
@@ -241,7 +253,7 @@ export default class CollectionCurator {
           label: `氛围 ${index + 1}`,
           tags,
           samples: this.getSamplesForResources(resourceIds),
-          themeHint: tags.slice(0, 3).join('、') || '视觉语义相近的壁纸'
+          themeHint: tags.slice(0, 3).join('、') || '画面视觉相近的壁纸'
         }
       })
     })
@@ -267,7 +279,7 @@ export default class CollectionCurator {
           prompt:
             candidate.type === 'tag'
               ? `系统推荐：${candidate.hints.label}`
-              : `氛围推荐：${candidate.hints.themeHint || '语义相近壁纸'}`,
+              : `氛围推荐：${candidate.hints.themeHint || '画面相近壁纸'}`,
           semanticQuery: candidate.hints.themeHint || candidate.hints.label || '',
           tags: candidate.hints.tags || [],
           mergeIds: [candidate.id],

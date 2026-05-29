@@ -212,10 +212,12 @@ export const defaultSettingData = {
     runOnWifiOnly: false,
     expandDownloadKeywords: false,
     scoreMinFilter: 70,
-    similarMinCosine: 0.62,
-    findSimilarMode: 'visual',
-    similarMinCosineVisual: 0.72,
-    visualEmbedEnabled: true,
+    visualEmbedSource: 'builtin',
+    visualEmbedProvider: 'ollama',
+    visualEmbedPreset: 'ollama',
+    visualEmbedBaseUrl: 'http://127.0.0.1:11434',
+    visualEmbedApiKey: '',
+    visualEmbedModel: '',
     autoCollectionsEnabled: true,
     autoCollectionsMaxCount: 20,
     analysisMaxRetries: 5,
@@ -392,20 +394,45 @@ export function migrateSettingData(storeData = {}) {
   if (next.ai.scoreMinFilter == null || next.ai.scoreMinFilter === '') {
     next.ai.scoreMinFilter = defaultSettingData.ai.scoreMinFilter
   }
-  if (next.ai.similarMinCosine == null || next.ai.similarMinCosine === '') {
-    next.ai.similarMinCosine = defaultSettingData.ai.similarMinCosine
-  } else if (Number(next.ai.similarMinCosine) === 0.42) {
-    next.ai.similarMinCosine = defaultSettingData.ai.similarMinCosine
+  if (!next.ai.visualEmbedSource) {
+    next.ai.visualEmbedSource = defaultSettingData.ai.visualEmbedSource
   }
-  if (!next.ai.findSimilarMode) {
-    next.ai.findSimilarMode = defaultSettingData.ai.findSimilarMode
+  if (!next.ai.visualEmbedPreset) {
+    next.ai.visualEmbedPreset = inferPresetFromAi(
+      next.ai.visualEmbedProvider,
+      next.ai.visualEmbedBaseUrl
+    )
   }
-  if (next.ai.similarMinCosineVisual == null || next.ai.similarMinCosineVisual === '') {
-    next.ai.similarMinCosineVisual = defaultSettingData.ai.similarMinCosineVisual
+  if (!next.ai.visualEmbedProvider) {
+    next.ai.visualEmbedProvider =
+      next.ai.visualEmbedPreset === 'ollama' ? 'ollama' : 'openai-compatible'
   }
-  if (next.ai.visualEmbedEnabled === undefined) {
-    next.ai.visualEmbedEnabled = defaultSettingData.ai.visualEmbedEnabled
+  if (!next.ai.visualEmbedBaseUrl) {
+    next.ai.visualEmbedBaseUrl = defaultSettingData.ai.visualEmbedBaseUrl
   }
+  if (next.ai.visualEmbedApiKey == null) {
+    next.ai.visualEmbedApiKey = defaultSettingData.ai.visualEmbedApiKey
+  }
+  if (next.ai.visualEmbedModel == null) {
+    next.ai.visualEmbedModel = defaultSettingData.ai.visualEmbedModel
+  }
+  // 旧版远程画面向量复用视觉服务：首次迁移时复制连接信息到独立字段
+  const rawAi = storeData.ai || {}
+  if (
+    next.ai.visualEmbedSource === 'remote' &&
+    rawAi.visualEmbedSource === 'remote' &&
+    rawAi.visualEmbedPreset == null &&
+    rawAi.visionPreset
+  ) {
+    next.ai.visualEmbedPreset = rawAi.visionPreset
+    next.ai.visualEmbedProvider = rawAi.visionProvider || next.ai.visualEmbedProvider
+    next.ai.visualEmbedBaseUrl = rawAi.visionBaseUrl || next.ai.visualEmbedBaseUrl
+    next.ai.visualEmbedApiKey = rawAi.visionApiKey || next.ai.visualEmbedApiKey || ''
+  }
+  delete next.ai.similarMinCosine
+  delete next.ai.similarMinCosineVisual
+  delete next.ai.findSimilarMode
+  delete next.ai.visualEmbedEnabled
   if (next.ai.autoCollectionsMaxCount == null || next.ai.autoCollectionsMaxCount === '') {
     next.ai.autoCollectionsMaxCount = defaultSettingData.ai.autoCollectionsMaxCount
   }

@@ -120,22 +120,29 @@ export const inferPresetFromAi = (provider, baseUrl = '') => {
 
 /**
  * @param {object} ai
- * @param {'vision'|'text'} kind
+ * @param {'vision'|'text'|'visualEmbed'} kind
  * @param {{ previousPresetId?: string }} [options] 切换前预设 id，用于从 Ollama 等切到 custom 时清空旧地址
  */
 export const applyServicePreset = (ai, kind, options = {}) => {
   const { previousPresetId } = options
-  const presetField = kind === 'vision' ? 'visionPreset' : 'textPreset'
-  const providerField = kind === 'vision' ? 'visionProvider' : 'textProvider'
-  const urlField = kind === 'vision' ? 'visionBaseUrl' : 'textBaseUrl'
-  const preset = getPresetById(ai[presetField])
-  ai[providerField] = preset.provider
+  const fields =
+    kind === 'vision'
+      ? { preset: 'visionPreset', provider: 'visionProvider', url: 'visionBaseUrl' }
+      : kind === 'visualEmbed'
+        ? {
+            preset: 'visualEmbedPreset',
+            provider: 'visualEmbedProvider',
+            url: 'visualEmbedBaseUrl'
+          }
+        : { preset: 'textPreset', provider: 'textProvider', url: 'textBaseUrl' }
+  const preset = getPresetById(ai[fields.preset])
+  ai[fields.provider] = preset.provider
   if (preset.custom) {
     if (previousPresetId && previousPresetId !== 'custom') {
-      ai[urlField] = ''
+      ai[fields.url] = ''
     }
   } else if (preset.baseUrl) {
-    ai[urlField] = preset.baseUrl
+    ai[fields.url] = preset.baseUrl
   }
 }
 

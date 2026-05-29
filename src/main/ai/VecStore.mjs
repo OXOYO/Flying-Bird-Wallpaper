@@ -1,5 +1,5 @@
 import * as sqliteVec from 'sqlite-vec'
-import { VISUAL_EMBED_MODEL_ID } from './aiConstants.mjs'
+import { VISUAL_EMBED_DIM, VISUAL_EMBED_MODEL_ID, SIMILAR_RECALL_K } from './aiConstants.mjs'
 
 /**
  * sqlite-vec 封装；加载失败时降级为 BLOB 存储 + 内存余弦检索
@@ -21,6 +21,7 @@ export default class VecStore {
     this.mode = 'blob'
     this.dim = 768
     this.vecIndexDim = null
+    this.imageVecIndexDim = null
     this._init()
     VecStore._instance = this
   }
@@ -36,6 +37,14 @@ export default class VecStore {
         .get()
       const initDim = latest?.dim || this.dim
       this._ensureVecTable(initDim)
+      const latestImage = this.db
+        .prepare(
+          `SELECT dim FROM fbw_resource_image_vec_blob WHERE model = ? ORDER BY updated_at DESC LIMIT 1`
+        )
+        .get(VISUAL_EMBED_MODEL_ID)
+      if (latestImage?.dim === VISUAL_EMBED_DIM) {
+        this._ensureImageVecTable(VISUAL_EMBED_DIM)
+      }
       this.logger.info('[VecStore] sqlite-vec 已加载')
     } catch (err) {
       this.logger.warn(`[VecStore] sqlite-vec 不可用，使用 BLOB 降级: ${err.message}`)
@@ -291,7 +300,139 @@ export default class VecStore {
            updated_at=excluded.updated_at`
       )
       .run(resourceId, blob, d, model || VISUAL_EMBED_MODEL_ID)
+
+    if (this.mode === 'sqlite-vec' && d === VISUAL_EMBED_DIM && (model || VISUAL_EMBED_MODEL_ID) === VISUAL_EMBED_MODEL_ID) {
+      try {
+        this._ensureImageVecTable(d)
+        this._insertImageVecRow(resourceId, vector)
+      } catch (err) {
+        this.logger.warn(`[VecStore] image vec upsert 失败: ${err.message}`)
+      }
+    }
     return true
+  }
+
+  _ensureImageVecTable(dim) {
+    if (this.mode !== 'sqlite-vec') return
+    if (this.imageVecIndexDim === dim) return
+
+    try {
+      this.db.exec('DROP TABLE IF EXISTS fbw_image_vec_index')
+      this.db.exec(`
+        CREATE VIRTUAL TABLE fbw_image_vec_index USING vec0(
+          resourceId INTEGER PRIMARY KEY,
+          embedding float[${dim}]
+        )
+      `)
+      this.imageVecIndexDim = dim
+      this._rebuildImageVecIndexFromBlobs(dim, VISUAL_EMBED_MODEL_ID)
+    } catch (err) {
+      this.logger.warn(`[VecStore] image vec0 表创建失败: ${err.message}`)
+    }
+  }
+
+  _insertImageVecRow(resourceId, vector) {
+    const pk = this._toVecPk(resourceId)
+    this.db.prepare('DELETE FROM fbw_image_vec_index WHERE resourceId = ?').run(pk)
+    this.db
+      .prepare('INSERT INTO fbw_image_vec_index(resourceId, embedding) VALUES (?, ?)')
+      .run(pk, JSON.stringify(vector))
+  }
+
+  _rebuildImageVecIndexFromBlobs(dim, model = VISUAL_EMBED_MODEL_ID) {
+    if (this.mode !== 'sqlite-vec') return
+    const rows = this.db
+      .prepare(
+        `SELECT resourceId, embedding FROM fbw_resource_image_vec_blob WHERE dim = ? AND model = ?`
+      )
+      .all(dim, model)
+    if (!rows.length) return
+
+    const tx = this.db.transaction(() => {
+      for (const row of rows) {
+        const vec = this.blobToFloat32(row.embedding, dim)
+        this._insertImageVecRow(row.resourceId, vec)
+      }
+    })
+    tx()
+    this.logger.info(
+      `[VecStore] 已从 BLOB 重建 image vec 索引 ${rows.length} 条 (dim=${dim}, model=${model})`
+    )
+  }
+
+  knnImage(queryVec, limit = 20, excludeId = null, model = VISUAL_EMBED_MODEL_ID) {
+    const k = Math.min(Math.max(limit, 1), SIMILAR_RECALL_K)
+    const queryDim = queryVec?.length || 0
+    if (
+      this.mode === 'sqlite-vec' &&
+      queryDim === VISUAL_EMBED_DIM &&
+      model === VISUAL_EMBED_MODEL_ID &&
+      this.imageVecIndexDim === VISUAL_EMBED_DIM
+    ) {
+      try {
+        const rows = this.db
+          .prepare(
+            `SELECT resourceId, distance
+             FROM fbw_image_vec_index
+             WHERE embedding MATCH ?
+             ORDER BY distance
+             LIMIT ?`
+          )
+          .all(JSON.stringify(queryVec), k + 5)
+        return rows
+          .filter((r) => excludeId == null || Number(r.resourceId) !== Number(excludeId))
+          .slice(0, k)
+          .map((r) => ({ resourceId: r.resourceId, distance: r.distance }))
+      } catch {
+        // fallback blob
+      }
+    }
+    return this.recallTopKImageGlobal(queryVec, excludeId, k, model).map((h) => ({
+      resourceId: h.resourceId,
+      distance: 1 - (h.similarity ?? 0)
+    }))
+  }
+
+  /** @returns {{ resourceId: number, similarity: number }[]} */
+  recallTopKGlobal(queryVec, excludeId = null, limit = 200) {
+    const ranked = this.rankSimilarGlobal(queryVec, excludeId, 0)
+    return ranked.slice(0, Math.max(1, limit)).map(({ resourceId, similarity }) => ({
+      resourceId,
+      similarity
+    }))
+  }
+
+  /** @returns {{ resourceId: number, similarity: number }[]} */
+  recallTopKAmongIds(queryVec, resourceIds = [], excludeId = null, limit = 200) {
+    const ranked = this.rankSimilarAmongIds(queryVec, resourceIds, excludeId, 0)
+    return ranked.slice(0, Math.max(1, limit)).map(({ resourceId, similarity }) => ({
+      resourceId,
+      similarity
+    }))
+  }
+
+  /** @returns {{ resourceId: number, similarity: number }[]} */
+  recallTopKImageGlobal(queryVec, excludeId = null, limit = 200, model = null) {
+    const ranked = this.rankSimilarGlobalImage(queryVec, excludeId, 0, model)
+    return ranked.slice(0, Math.max(1, limit)).map(({ resourceId, similarity }) => ({
+      resourceId,
+      similarity
+    }))
+  }
+
+  /** @returns {{ resourceId: number, similarity: number }[]} */
+  recallTopKImageAmongIds(
+    queryVec,
+    resourceIds = [],
+    excludeId = null,
+    limit = 200,
+    model = null
+  ) {
+    const ranked = this.rankSimilarAmongImageIds(queryVec, resourceIds, excludeId, 0, model)
+    return ranked.slice(0, Math.max(1, limit)).map(({ resourceId, similarity }) => ({
+      resourceId,
+      similarity
+    }))
   }
 
   getImageVectorRow(resourceId) {
@@ -302,12 +443,19 @@ export default class VecStore {
       .get(resourceId)
   }
 
-  rankSimilarAmongImageIds(queryVec, resourceIds = [], excludeId = null, minSimilarity = 0) {
+  rankSimilarAmongImageIds(
+    queryVec,
+    resourceIds = [],
+    excludeId = null,
+    minSimilarity = 0,
+    model = null
+  ) {
     const ids = [...new Set(resourceIds.map((id) => Number(id)).filter((id) => id > 0))]
     if (!ids.length) return []
 
     const queryDim = queryVec?.length || 0
     const minSim = Math.min(1, Math.max(0, Number(minSimilarity) || 0))
+    const modelFilter = model ? String(model) : null
     const scored = []
     const chunkSize = 400
     for (let i = 0; i < ids.length; i += chunkSize) {
@@ -315,10 +463,11 @@ export default class VecStore {
       const ph = chunk.map(() => '?').join(',')
       const rows = this.db
         .prepare(
-          `SELECT resourceId, embedding, dim FROM fbw_resource_image_vec_blob WHERE resourceId IN (${ph})`
+          `SELECT resourceId, embedding, dim, model FROM fbw_resource_image_vec_blob WHERE resourceId IN (${ph})`
         )
         .all(...chunk)
       for (const row of rows) {
+        if (modelFilter && String(row.model) !== modelFilter) continue
         const hit = this._scoreEmbeddingRow(queryVec, row, queryDim, excludeId)
         if (hit && hit.similarity >= minSim) scored.push(hit)
       }
@@ -327,14 +476,16 @@ export default class VecStore {
     return scored
   }
 
-  rankSimilarGlobalImage(queryVec, excludeId = null, minSimilarity = 0) {
+  rankSimilarGlobalImage(queryVec, excludeId = null, minSimilarity = 0, model = null) {
     const queryDim = queryVec?.length || 0
     const minSim = Math.min(1, Math.max(0, Number(minSimilarity) || 0))
+    const modelFilter = model ? String(model) : null
     const rows = this.db
-      .prepare(`SELECT resourceId, embedding, dim FROM fbw_resource_image_vec_blob`)
+      .prepare(`SELECT resourceId, embedding, dim, model FROM fbw_resource_image_vec_blob`)
       .all()
     const scored = []
     for (const row of rows) {
+      if (modelFilter && String(row.model) !== modelFilter) continue
       const hit = this._scoreEmbeddingRow(queryVec, row, queryDim, excludeId)
       if (hit && hit.similarity >= minSim) scored.push(hit)
     }

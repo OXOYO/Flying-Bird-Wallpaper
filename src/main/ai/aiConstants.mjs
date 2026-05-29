@@ -16,6 +16,9 @@ export const AI_PROVIDER_DEFAULTS = {
 /** AI HTTP 请求默认超时（毫秒） */
 export const DEFAULT_AI_TIMEOUT_MS = 300_000
 
+/** 设置页「测试连接」专用超时（避免长时间 loading） */
+export const AI_TEST_CONNECTION_TIMEOUT_MS = 60_000
+
 export const AI_TIMEOUT_MIN_SEC = 60
 export const AI_TIMEOUT_MAX_SEC = 1800
 
@@ -81,23 +84,46 @@ export const defaultAiSettings = {
   autoCollectionsEnabled: true,
   autoCollectionsMaxCount: 20,
   scoreMinFilter: 70,
-  /** 找相似最低余弦相似度 0~1（文本回退；0.42 过松易凑数，默认 0.62） */
-  similarMinCosine: 0.62,
-  /** 找相似：visual=视觉向量 | text=文本向量 */
-  findSimilarMode: 'visual',
-  /** 视觉找相似最低余弦相似度（MobileCLIP2-S0，默认 0.72） */
-  similarMinCosineVisual: 0.72,
-  /** 内置 MobileCLIP2-S0 视觉向量（不依赖 Ollama） */
-  visualEmbedEnabled: true,
+  /** 画面向量来源：builtin=内置 MobileCLIP | remote=独立远程 embed 服务 */
+  visualEmbedSource: 'builtin',
+  visualEmbedProvider: AI_PROVIDER_TYPES.OLLAMA,
+  visualEmbedPreset: 'ollama',
+  visualEmbedBaseUrl: AI_PROVIDER_DEFAULTS.ollama.baseUrl,
+  visualEmbedApiKey: '',
+  /** 远程画面 embedding 模型名 */
+  visualEmbedModel: '',
   /** 后台分析单张最大失败次数 */
   analysisMaxRetries: 5,
   autoCurateSettled: false,
   autoCurateSettledAnalyzed: 0
 }
 
+export const VISUAL_EMBED_SOURCES = {
+  BUILTIN: 'builtin',
+  REMOTE: 'remote'
+}
+
 export const VISUAL_EMBED_MODEL_ID = 'mobileclip2-s0'
 export const VISUAL_EMBED_DIM = 512
 export const VISUAL_EMBED_IMAGE_SIZE = 256
+
+/** 找相似 RRF：每路召回 Top-K（内部常量，不暴露设置） */
+export const SIMILAR_RECALL_K = 200
+export const SIMILAR_RRF_K = 60
+export const SIMILAR_SESSION_TTL_MS = 5 * 60 * 1000
+/** 画面路最低余弦相似度（内部过滤，非用户设置） */
+export const SIMILAR_VISUAL_MIN_COSINE = 0.72
+/** 文案路最低余弦相似度（仅无画面向量时的回退） */
+export const SIMILAR_TEXT_MIN_COSINE = 0.62
+/** 文案路对画面候选的加权 boost（不引入画面路以外的结果） */
+export const SIMILAR_TEXT_BOOST_WEIGHT = 0.12
+
+/** 合集画面语义检索：最低余弦（略低于找相似，提高召回） */
+export const COLLECTION_VISUAL_SEARCH_MIN_COSINE = 0.65
+/** 内置画面模型无文本编码器时：用文本语义种子数推算画面 query 向量 */
+export const COLLECTION_VISUAL_SEED_COUNT = 24
+/** 用户合集启用画面向量补充：至少已有多少张画面向量 */
+export const COLLECTION_VISUAL_MIN_EMBEDDINGS = 12
 
 export const AI_ANALYSIS_MAX_RETRIES_MIN = 1
 export const AI_ANALYSIS_MAX_RETRIES_MAX = 20

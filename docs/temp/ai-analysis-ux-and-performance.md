@@ -1,7 +1,7 @@
 # AI 分析性能与设置体验（2.0.0+ 增量）
 
-> 文档版本：**v1.3**  
-> 整理日期：2026-05-28  
+> 文档版本：**v1.6**  
+> 整理日期：2026-05-29  
 > 状态：**已实现**  
 > 关联：[ai-dev-plan.md](./ai-dev-plan.md) · [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) · [ai-feature-roadmap.md](./ai-feature-roadmap.md) · [README.md](./README.md)
 
@@ -66,7 +66,7 @@
 | 设置范围 | **60～1800s** |
 | 迁移 | 仍为旧默认 `120000` 的配置在 `migrateSettingData` 升为 `300000` |
 
-测试连接、embed 等仍使用**基础** `ai.timeout`（取 `min(timeout, 10s/15s)` 的子路径不变）。
+测试连接、embed 等使用 **`AI_TEST_CONNECTION_TIMEOUT_MS`（60s）** 或各子路径更短上限；视觉测试发 **小图 + analyzeImage**（非纯文本 chat）。
 
 ### 3.2 视觉分析动态超时
 
@@ -123,8 +123,9 @@
 
 - **启用位置**：探索页顶栏筛选（仅资源库搜索）、H5 搜索筛选；**已从 AI 设置页移除**
 - **仍走语义**：桌面搜索页（非收藏/回忆/隐私）、H5 `/api/search/images`；无结果回退关键词 SQL
-- **不走语义**：收藏/回忆/隐私、找相似、合集生成（`useSemantic` 已解析未接入 `semanticSearch`）
-- **找相似**：默认 **视觉向量**（非语义搜索）；见 [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md)
+- **不走语义**：收藏/回忆/隐私、找相似
+- **合集生成**：实体词 **仅 SQL/tags**（`regenPrompt` 默认 false；短 prompt ≤32 字兜底）；氛围型可走画面补充；标签扩展见 `TextQueryParser.expandCollectionKeywordTags` — [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) §6
+- **找相似**：**画面向量 RRF**（非语义搜索）；见 [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md)
 
 ---
 
@@ -150,7 +151,8 @@
 | 标签列宽 | `label-width="auto"`（按最宽标签对齐），**不固定宽度**，避免长标签换行 |
 | 进度卡 Tooltip | `AiAnalysisDashboardPanel.vue` 同步换行样式 |
 | 进度卡统计 | `已向量化`（文本）+ **`已向量化(视觉)`**（`imageEmbedding`） |
-| 找相似设置 | `findSimilarMode`、`visualEmbedEnabled`、`similarMinCosineVisual` / `similarMinCosine` — 见 [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) |
+| 画面向量 | 兼容选项「**内置画面向量**」；关则显示 **画面向量服务** 卡片 — 见 [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) |
+| 测试连接 | 视觉 / 文本 / 文本向量 / 画面向量 四处统一 **「测试连接」**、成功 **「连接成功」** |
 | 合集相关子项 | `scoreMinFilter`、`autoCollectionsMaxCount` 在「AI 自动整理合集」下；`analysisMaxRetries` 在分析模式旁 — 见 [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) |
 
 ---
@@ -171,10 +173,8 @@
 | `analysisMaxRetries` | 5 | 后台单张最大连续失败次数（1～20） |
 | `autoCurateSettled` | false | 内部：分析稳定且已跑完至少一轮自动整理 |
 | `autoCurateSettledAnalyzed` | 0 | 锁存时的已分析张数 |
-| `findSimilarMode` | `visual` | 找相似：画面 / 文案 |
-| `visualEmbedEnabled` | true | 内置 MobileCLIP2-S0 视觉向量 |
-| `similarMinCosineVisual` | 0.72 | 视觉找相似阈值 |
-| `similarMinCosine` | 0.62 | 文本找相似 / 回退 |
+| `visualEmbedSource` | `builtin` | 内置 / 远程画面向量（兼容选项开关） |
+| `visualEmbedPreset` … `visualEmbedModel` | — | 远程画面向量服务四件套 |
 
 ### `settingData.search`
 
@@ -204,6 +204,7 @@
 5. 功能选项长标签（如「允许远程模型上传图片」）单行不换行  
 6. 后台模式：失败重试次数默认 5；连续失败后进度卡「已跳过」增加、「失败」下降  
 7. 分析全部完成后：自动整理至少一轮后暂停；手动「立即整理」仍可用  
+8. 三处/四处「测试连接」文案一致；画面向量 remote 时独立卡片可测通  
 
 ---
 
@@ -216,6 +217,7 @@
 | 分析调度 | `src/main/ai/AiAnalysisManager.mjs` |
 | 策展门控 | `src/main/store/collectionCurateGate.mjs` |
 | Provider | `src/main/ai/AiAnalysisProvider.mjs`、`providers/HttpAiProviders.mjs` |
+| Embed 方言 | `src/main/ai/EmbedRequestBuilder.mjs` |
 | 默认/迁移 | `src/common/publicData.js` → `migrateSettingData` |
 | 设置 UI | `src/renderer/.../Setting/components/AiSetting.vue` |
 | 进度卡 | `AiAnalysisDashboardPanel.vue` |
@@ -227,7 +229,7 @@
 
 ## 12. 探索卡片角标（与向量无关）
 
-开启「显示标签」且卡片足够大时，探索页角标包括：资源来源、画质、评分、**AI 已分析** ✨（`aiAnalysisStatus === done`）、横竖屏、收藏。**不显示**单张文本/视觉向量化状态。合集页默认不显示 ✨（`show-ai-badge=false`）。详见 [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) §6。
+开启「显示标签」且卡片足够大时，探索页角标包括：资源来源、画质、评分、**AI 已分析** ✨（`aiAnalysisStatus === done`）、横竖屏、收藏。**不显示**单张文本/视觉向量化状态；卡片上的数字评分为 **美学分**，非相似度。合集页默认不显示 ✨（`show-ai-badge=false`）。详见 [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) §9。
 
 ---
 
@@ -239,3 +241,6 @@
 | v1.1 | 2026-05-28 | 设置速查补充 `scoreMinFilter` / `autoCollectionsMaxCount`；链至合集专题文档 |
 | v1.2 | 2026-05-28 | `analysisMaxRetries` 与 `aiAnalysisFailCount`；`scoreMinFilter` 默认 70；链至策展稳定暂停 |
 | v1.3 | 2026-05-28 | 视觉向量/找相似设置与统计；§12 卡片角标说明；链至 ai-visual-embedding-and-similar |
+| **v1.4** | 2026-05-29 | 测试连接 60s、统一文案；移除找相似用户设置；`visualEmbedSource` / 画面向量服务卡片 |
+| **v1.5** | 2026-05-29 | 合集生成策略更新：关键词优先 + 画面补充；链至 ai-collections-ux-and-curate §6 |
+| **v1.6** | 2026-05-29 | 合集生成：`regenPrompt`、实体词/氛围分流、LLM 标签扩展；链至 ai-collections §6 |

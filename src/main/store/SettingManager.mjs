@@ -72,12 +72,12 @@ export default class SettingManager extends EventEmitter {
         const migrated = migrateSettingData(raw)
         this._settingData = migrated
         if (
-          Number(raw?.ai?.similarMinCosine) === 0.42 &&
-          Number(migrated.ai?.similarMinCosine) === 0.62
+          raw?.ai?.similarMinCosine != null &&
+          migrated.ai?.similarMinCosine == null
         ) {
           const saveRes = await this.dbManager.setSysRecord('settingData', migrated, 'object')
           if (saveRes.success) {
-            this.logger.info('[SettingManager] 已迁移 ai.similarMinCosine: 0.42 -> 0.62')
+            this.logger.info('[SettingManager] 已迁移找相似设置：移除阈值/mode，启用 RRF 融合')
           }
         }
         ret.success = true

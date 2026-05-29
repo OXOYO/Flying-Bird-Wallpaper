@@ -5,7 +5,8 @@
 export const MODEL_PURPOSE = {
   VISION: 'vision',
   TEXT: 'text',
-  EMBED: 'embed'
+  EMBED: 'embed',
+  VISUAL_EMBED: 'visual-embed'
 }
 
 const VISION_NAME_RE =
@@ -13,6 +14,9 @@ const VISION_NAME_RE =
 
 const EMBED_NAME_RE =
   /(?:embed|bge-|e5-|mxbai-embed|nomic-embed|text-embedding|snowflake-arctic-embed|nemotron-embed)/i
+
+const VISUAL_EMBED_NAME_RE =
+  /(?:vl-embed|qwen3-vl-embed|clip|colpali|jina-clip|embed.*vl|llava.*embed|nemotron-embed.*vl)/i
 
 const uniq = (list) => [...new Set((list || []).filter(Boolean))]
 
@@ -131,6 +135,13 @@ const isTextChatCapable = (descriptor) => {
 const isEmbedCapable = (descriptor) =>
   hasOutput(descriptor, 'embeddings') || EMBED_NAME_RE.test(descriptor.id)
 
+const isVisualEmbedCapable = (descriptor) => {
+  const model = normalizeModelDescriptor(descriptor)
+  if (!isEmbedCapable(model)) return false
+  if (hasInput(model, 'image') && hasOutput(model, 'embeddings')) return true
+  return VISUAL_EMBED_NAME_RE.test(model.id)
+}
+
 /**
  * @param {ModelDescriptor} descriptor
  * @param {ModelPurpose} purpose
@@ -144,6 +155,8 @@ export function modelMatchesPurpose(descriptor, purpose) {
       return isVisionCapable(model)
     case MODEL_PURPOSE.EMBED:
       return isEmbedCapable(model)
+    case MODEL_PURPOSE.VISUAL_EMBED:
+      return isVisualEmbedCapable(model)
     case MODEL_PURPOSE.TEXT:
     default:
       return isTextChatCapable(model)
@@ -167,6 +180,15 @@ export function filterModelsByPurpose(models, purpose = MODEL_PURPOSE.TEXT) {
     result.push(item.id)
   }
 
+  if (purpose === MODEL_PURPOSE.VISUAL_EMBED && !result.length) {
+    for (const item of normalized) {
+      if (!modelMatchesPurpose(item, MODEL_PURPOSE.EMBED)) continue
+      if (seen.has(item.id)) continue
+      seen.add(item.id)
+      result.push(item.id)
+    }
+  }
+
   return result.sort((a, b) => a.localeCompare(b))
 }
 
@@ -181,7 +203,7 @@ export function validateModelForPurpose(modelId, purpose) {
 }
 
 export function purposeToConnectionType(purpose) {
-  if (purpose === MODEL_PURPOSE.EMBED) return 'embed'
+  if (purpose === MODEL_PURPOSE.EMBED || purpose === MODEL_PURPOSE.VISUAL_EMBED) return 'embed'
   if (purpose === MODEL_PURPOSE.VISION) return 'vision'
   return 'text'
 }

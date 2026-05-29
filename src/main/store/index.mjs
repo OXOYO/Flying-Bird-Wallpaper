@@ -169,7 +169,8 @@ export default class Store {
         this.dbManager,
         this.settingManager,
         this.resourcesManager,
-        this.textQueryParser
+        this.textQueryParser,
+        this.embeddingManager
       )
       this.collectionCurator = CollectionCurator.getInstance(
         global.logger,
@@ -182,6 +183,7 @@ export default class Store {
       }
       this.aiAnalysisManager.onAnalysisBatchDone = () => this.syncAutoCurateGateFromAnalysis()
       this.embeddingManager.onEmbeddingDone = () => this.scheduleCollectionCurator(60 * 1000)
+      this.embeddingManager.onVisualEmbeddingDone = () => this.scheduleCollectionCurator(60 * 1000)
       this.recommendManager = RecommendManager.getInstance(global.logger, this.dbManager)
       this.wallpaperManager.textQueryParser = this.textQueryParser
       this.wallpaperManager.aiAnalysisManager = this.aiAnalysisManager
@@ -386,8 +388,6 @@ export default class Store {
   }
 
   startVisualEmbedTask() {
-    const ai = this.settingData?.ai
-    if (ai?.visualEmbedEnabled === false) return
     if (this.isPowerSaveOnBattery()) return
     this.taskScheduler.scheduleTask(
       'visualEmbed',
@@ -1105,7 +1105,10 @@ export default class Store {
           excludeIds
         )
         const list = this.resourcesManager.getResourcesByIds(similar.resourceIds)
-        return { success: true, data: { list, total: similar.total } }
+        return {
+          success: true,
+          data: { list, total: similar.total, signals: similar.signals || [] }
+        }
       } catch (err) {
         return { success: false, message: String(err.message || err) }
       }

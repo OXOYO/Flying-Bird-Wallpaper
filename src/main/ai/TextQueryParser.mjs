@@ -3,7 +3,8 @@ import { AI_ANALYSIS_STATUS } from './aiConstants.mjs'
 import {
   buildSearchParsePrompt,
   buildCollectionQueryPrompt,
-  buildKeywordExpandPrompt
+  buildKeywordExpandPrompt,
+  buildCollectionTagExpandPrompt
 } from './AiPrompts.mjs'
 import {
   extractJsonObject,
@@ -80,6 +81,27 @@ export default class TextQueryParser {
           limitCount: 20
         })
       }
+    }
+  }
+
+  async expandCollectionKeywordTags(keyword) {
+    const word = String(keyword || '').trim()
+    if (!word) return { success: true, data: [] }
+    const ai = this.settingManager.settingData?.ai
+    if (!ai?.enabled) {
+      return { success: true, data: [word] }
+    }
+    try {
+      const raw = await this.provider.chatText(buildCollectionTagExpandPrompt(word))
+      const json = extractJsonObject(raw)
+      const list = Array.isArray(json?.tags)
+        ? json.tags.map((x) => String(x).trim()).filter(Boolean)
+        : []
+      const merged = [...new Set([word, ...list])].slice(0, 16)
+      return { success: true, data: merged }
+    } catch (err) {
+      this.logger.warn(`[TextQueryParser] expandCollectionKeywordTags: ${err.message}`)
+      return { success: true, data: [word] }
     }
   }
 

@@ -1,5 +1,6 @@
 <script setup>
 import { useTranslation } from 'i18next-vue'
+import InstantTooltip from '@renderer/components/InstantTooltip.vue'
 import { buildResourceCardButtons } from '@renderer/composables/useResourceCardActions.js'
 
 const props = defineProps({
@@ -81,29 +82,37 @@ const onVideoEnded = () => {
     @dblclick="onDblClick"
   >
     <div v-if="showTags" class="card-item-tags">
-      <div
-        v-if="item.resourceName"
-        class="tag-item tag-item__disabled"
-        :title="item.resourceName"
+      <InstantTooltip v-if="item.resourceName" :content="item.resourceName">
+        <div class="tag-item tag-item__disabled">
+          {{ item.resourceName }}
+        </div>
+      </InstantTooltip>
+      <InstantTooltip
+        v-if="item.quality && item.quality !== 'unset'"
+        :content="item.quality"
       >
-        {{ item.resourceName }}
-      </div>
-      <div v-if="item.quality && item.quality !== 'unset'" class="tag-item tag-item__disabled" :title="item.quality">
-        {{ item.quality }}
-      </div>
-      <div v-if="item.score" class="tag-item tag-item__disabled" :title="t('exploreCommon.tagItem.score')">
-        {{ item.score }}
-      </div>
-      <div
+        <div class="tag-item tag-item__disabled">
+          {{ item.quality }}
+        </div>
+      </InstantTooltip>
+      <InstantTooltip v-if="item.score" :content="t('exploreCommon.tagItem.score')">
+        <div class="tag-item tag-item__disabled">
+          {{ item.score }}
+        </div>
+      </InstantTooltip>
+      <InstantTooltip
         v-if="showAiBadge && item.aiAnalysisStatus === 'done'"
-        class="tag-item tag-item__disabled tag-item--icon"
-        :title="t('exploreCommon.tagItem.aiAnalyzed')"
+        :content="t('exploreCommon.tagItem.aiAnalyzed')"
       >
-        <IconifyIcon class="tag-item-icon" icon="custom:ai-sparkles" />
-      </div>
-      <div v-if="item.isFavorite" class="tag-item tag-item__disabled" :title="t('exploreCommon.tagItem.favorited')">
-        <IconifyIcon icon="custom:star-fill" />
-      </div>
+        <div class="tag-item tag-item__disabled tag-item--icon">
+          <IconifyIcon class="tag-item-icon" icon="custom:ai-sparkles" />
+        </div>
+      </InstantTooltip>
+      <InstantTooltip v-if="item.isFavorite" :content="t('exploreCommon.tagItem.favorited')">
+        <div class="tag-item tag-item__disabled">
+          <IconifyIcon icon="custom:star-fill" />
+        </div>
+      </InstantTooltip>
     </div>
 
     <div class="card-media">
@@ -142,20 +151,25 @@ const onVideoEnded = () => {
         </div>
       </div>
 
-      <div class="card-item-btns" @dblclick.stop>
-        <el-button
-          v-for="btn in buttons"
-          :key="btn.action"
-          class="card-item-btn"
-          type="primary"
-          link
-          :title="btn.title"
-          @click="onBtnClick(btn.action)"
-          @dblclick.stop
-        >
-          <IconifyIcon class="card-item-btn-icon" :icon="btn.icon" />
-        </el-button>
-      </div>
+      <el-scrollbar class="card-item-btns" @dblclick.stop>
+        <div class="card-item-btns-track">
+          <InstantTooltip
+            v-for="btn in buttons"
+            :key="btn.action"
+            :content="btn.title"
+          >
+            <el-button
+              class="card-item-btn"
+              type="primary"
+              link
+              @click="onBtnClick(btn.action)"
+              @dblclick.stop
+            >
+              <IconifyIcon class="card-item-btn-icon" :icon="btn.icon" />
+            </el-button>
+          </InstantTooltip>
+        </div>
+      </el-scrollbar>
     </div>
 
     <div
@@ -341,6 +355,11 @@ const onVideoEnded = () => {
   gap: 4px;
   pointer-events: none;
 
+  :deep(.instant-tooltip-trigger) {
+    pointer-events: auto;
+    max-width: 100%;
+  }
+
   .tag-item {
     padding: 2px 6px;
     font-size: 11px;
@@ -381,10 +400,9 @@ const onVideoEnded = () => {
   bottom: 0;
   left: 0;
   z-index: 10;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(28px, 1fr));
-  gap: 2px;
-  padding: 4px;
+  box-sizing: border-box;
+  height: 32px;
+  padding: 4px 6px;
   backdrop-filter: blur(8px);
   background-color: var(--dominant-color-rgba, rgba(0, 0, 0, 0.55));
   transform: translate3d(0, 100%, 0);
@@ -396,9 +414,51 @@ const onVideoEnded = () => {
     opacity 0.2s ease,
     visibility 0.2s ease;
 
+  :deep(.el-scrollbar__wrap) {
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+  }
+
+  :deep(.el-scrollbar__view) {
+    display: inline-block;
+    min-width: 100%;
+    text-align: center;
+    line-height: 1;
+  }
+
+  :deep(.el-scrollbar__bar.is-vertical) {
+    display: none;
+  }
+
+  :deep(.el-scrollbar__bar.is-horizontal) {
+    height: 3px;
+
+    .el-scrollbar__thumb {
+      background: rgba(255, 255, 255, 0.35);
+      opacity: 1;
+    }
+  }
+}
+
+.card-item-btns-track {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 2px;
+  max-width: 100%;
+  vertical-align: top;
+
+  :deep(.el-tooltip__trigger),
+  :deep(.instant-tooltip-trigger) {
+    flex: 0 0 auto;
+    display: inline-flex;
+  }
+
   .card-item-btn {
+    flex: 0 0 auto;
     margin: 0;
-    padding: 4px;
+    padding: 2px 4px;
     height: auto;
     color: #fff;
 

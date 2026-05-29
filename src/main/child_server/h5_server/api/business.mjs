@@ -153,7 +153,8 @@ export const registerBusinessApi = (router, deps) => {
       dbManager,
       settingManager,
       resourcesManager,
-      parser
+      parser,
+      embeddingManager
     )
     sendJson(ctx, cm.list())
   })
@@ -168,7 +169,8 @@ export const registerBusinessApi = (router, deps) => {
       dbManager,
       settingManager,
       resourcesManager,
-      parser
+      parser,
+      embeddingManager
     )
     if (body.prompt) {
       sendJson(ctx, await cm.createFromPrompt(body.prompt))
