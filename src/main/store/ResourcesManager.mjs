@@ -720,13 +720,18 @@ export default class ResourcesManager {
         ? Number(excludeResourceId)
         : null
 
+    const ai = this.settingManager?.settingData?.ai || {}
+    const useVisual =
+      ai.visualEmbedEnabled !== false && String(ai.findSimilarMode || 'visual') !== 'text'
+    const table = useVisual ? 'fbw_resource_image_vec_blob' : 'fbw_resource_vec_blob'
+
     let total = 0
     const chunkSize = 400
     for (let i = 0; i < ids.length; i += chunkSize) {
       const chunk = ids.slice(i, i + chunkSize)
       const ph = chunk.map(() => '?').join(',')
       const params = [...chunk]
-      let sql = `SELECT COUNT(*) AS c FROM fbw_resource_vec_blob WHERE resourceId IN (${ph})`
+      let sql = `SELECT COUNT(*) AS c FROM ${table} WHERE resourceId IN (${ph})`
       if (excludeId != null) {
         sql += ' AND resourceId != ?'
         params.push(excludeId)

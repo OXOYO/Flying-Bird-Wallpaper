@@ -1,0 +1,11 @@
+{
+  "image_processor_type": "CLIPImageProcessor",
+  "crop_size": {"height": 256, "width": 256},
+  "do_center_crop": true,
+  "do_normalize": true,
+  "do_resize": true,
+  "image_mean": [0.0, 0.0, 0.0],
+  "image_std": [1.0, 1.0, 1.0],
+  "resample": 3,
+  "size": {"shortest_edge": 256}
+}

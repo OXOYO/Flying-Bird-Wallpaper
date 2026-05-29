@@ -244,8 +244,13 @@ export default class AiAnalysisManager {
       }
 
       setImmediate(() => {
-        this.embeddingManager.upsertForResource(row.id).catch((err) => {
-          this.logger.warn(`[AiAnalysisManager] embedding ${row.id}: ${err}`)
+        if (ai.enabled) {
+          this.embeddingManager.upsertForResource(row.id).catch((err) => {
+            this.logger.warn(`[AiAnalysisManager] text embedding ${row.id}: ${err}`)
+          })
+        }
+        this.embeddingManager.upsertImageForResource(row.id).catch((err) => {
+          this.logger.warn(`[AiAnalysisManager] visual embedding ${row.id}: ${err}`)
         })
       })
 
@@ -355,8 +360,11 @@ export default class AiAnalysisManager {
     const skipped = map.skipped || 0
     const total = pending + done + failed
     let embedding = 0
+    let imageEmbedding = 0
     try {
       embedding = this.db.prepare('SELECT COUNT(*) as c FROM fbw_resource_vec_blob').get()?.c || 0
+      imageEmbedding =
+        this.db.prepare('SELECT COUNT(*) as c FROM fbw_resource_image_vec_blob').get()?.c || 0
     } catch {
       // ignore
     }
@@ -370,6 +378,7 @@ export default class AiAnalysisManager {
         skipped,
         total,
         embedding,
+        imageEmbedding,
         running: this.isRunning,
         ...this.getAnalysisSpeedStats(pending)
       }

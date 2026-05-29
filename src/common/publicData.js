@@ -213,6 +213,9 @@ export const defaultSettingData = {
     expandDownloadKeywords: false,
     scoreMinFilter: 70,
     similarMinCosine: 0.62,
+    findSimilarMode: 'visual',
+    similarMinCosineVisual: 0.72,
+    visualEmbedEnabled: true,
     autoCollectionsEnabled: true,
     autoCollectionsMaxCount: 20,
     analysisMaxRetries: 5,
@@ -393,6 +396,15 @@ export function migrateSettingData(storeData = {}) {
     next.ai.similarMinCosine = defaultSettingData.ai.similarMinCosine
   } else if (Number(next.ai.similarMinCosine) === 0.42) {
     next.ai.similarMinCosine = defaultSettingData.ai.similarMinCosine
+  }
+  if (!next.ai.findSimilarMode) {
+    next.ai.findSimilarMode = defaultSettingData.ai.findSimilarMode
+  }
+  if (next.ai.similarMinCosineVisual == null || next.ai.similarMinCosineVisual === '') {
+    next.ai.similarMinCosineVisual = defaultSettingData.ai.similarMinCosineVisual
+  }
+  if (next.ai.visualEmbedEnabled === undefined) {
+    next.ai.visualEmbedEnabled = defaultSettingData.ai.visualEmbedEnabled
   }
   if (next.ai.autoCollectionsMaxCount == null || next.ai.autoCollectionsMaxCount === '') {
     next.ai.autoCollectionsMaxCount = defaultSettingData.ai.autoCollectionsMaxCount

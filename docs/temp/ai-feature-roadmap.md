@@ -1,9 +1,9 @@
 # 飞鸟壁纸 AI 能力完整功能清单
 
-> 文档版本：**v1.5**  
+> 文档版本：**v1.6**  
 > 整理日期：2026-05-28  
 > 状态：**2.0.0 核心已落地**；部分 P3/P4 仍为规划  
-> 关联：[ai-dev-plan.md](./ai-dev-plan.md) · [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) · [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) · [README.md](./README.md)
+> 关联：[ai-dev-plan.md](./ai-dev-plan.md) · [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) · [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) · [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) · [README.md](./README.md)
 
 **图例：** ✅ 已实现 · 🟡 部分实现 · ⬜ 未开始
 
@@ -14,7 +14,7 @@
 飞鸟壁纸 AI 2.0 目标：
 
 1. 可配置本地/远程 AI 替代 ONNX 评分与 jieba 分词（legacy 开关过渡）
-2. sqlite-vec 语义检索与相似图
+2. sqlite-vec 语义检索（文本向量）与**画面找相似**（内置 MobileCLIP2-S0 视觉向量）
 3. **智能合集**独立菜单：用户自定义 + **系统自动策展**
 4. 推荐、自动化、H5 文字能力
 
@@ -41,8 +41,9 @@
 |------|------|-----------|
 | AiAnalysisProvider | ✅ | `src/main/ai/AiAnalysisProvider.mjs` |
 | AiAnalysisManager | ✅ | 队列、写库、tags、触发策展 |
-| EmbeddingManager | ✅ | 分析后异步向量化 |
-| VecStore | ✅ | sqlite-vec；DELETE+INSERT；维数迁移 |
+| EmbeddingManager | ✅ | 文本向量化 + **视觉向量化** + `findSimilar` 分流 |
+| ImageVisualEmbedder | ✅ | ONNX MobileCLIP2-S0，`ImageVisualEmbedder.mjs` |
+| VecStore | ✅ | 文本表 + **`fbw_resource_image_vec_blob`**；文本 sqlite-vec；视觉内存 KNN |
 | VectorCluster | ✅ | K-Means 氛围聚类 |
 | CollectionCurator | ✅ | 自动策展三阶段 |
 | TaskScheduler | ✅ | `aiAnalysis`、`collectionCurator`、`collectionsRefresh` |
@@ -50,7 +51,7 @@
 
 ### 设置项 `settingData.ai`（已实现字段）
 
-`enabled`、`visionPreset`/`textPreset`、`visionModel`/`textModel`/`embeddingModel`、`timeout`（默认 **300s**，视觉分析动态加成）、`visionPreprocess`/`visionMaxLongEdge`/`visionPreprocessMinSizeMB`/`visionJpegQuality`、`analysisMode`、`analysisMaxRetries`（默认 5，后台失败重试）、`autoCollectionsEnabled`、`scoreMinFilter`（默认 70）、`autoCollectionsMaxCount`（默认 20，3～50）、`autoCurateSettled`/`autoCurateSettledAnalyzed`（内部锁存）、`enableNsfwCheck`、`expandDownloadKeywords`、`legacyOnnxScore`、`legacyJiebaTags` 等（分析完成后自动向量化；电池下后台分析受全局「省电模式」约束）。`scoreMinFilter` / `autoCollectionsMaxCount` 在 **AiSetting → 功能选项 → AI 自动整理合集** 下方；`analysisMaxRetries` 在 **分析模式** 旁（仅后台模式显示）。
+`enabled`、`visionPreset`/`textPreset`、`visionModel`/`textModel`/`embeddingModel`（**仅文本 embed**）、`timeout`（默认 **300s**，视觉分析动态加成）、`visionPreprocess`/`visionMaxLongEdge`/`visionPreprocessMinSizeMB`/`visionJpegQuality`、`analysisMode`、`analysisMaxRetries`（默认 5，后台失败重试）、`findSimilarMode`（默认 `visual`）、`visualEmbedEnabled`（默认 true）、`similarMinCosineVisual`（默认 **0.72**）、`similarMinCosine`（默认 **0.62**，文本/回退）、`autoCollectionsEnabled`、`scoreMinFilter`（默认 70）、`autoCollectionsMaxCount`（默认 20，3～50）、`autoCurateSettled`/`autoCurateSettledAnalyzed`（内部锁存）、`enableNsfwCheck`、`expandDownloadKeywords`、`legacyOnnxScore`、`legacyJiebaTags` 等。分析成功后：**文本向量**需 `ai.enabled`；**视觉向量**仅需 `visualEmbedEnabled`。电池下后台分析/视觉补算受「省电模式」约束。`scoreMinFilter` / `autoCollectionsMaxCount` 在 **AiSetting → 功能选项 → AI 自动整理合集** 下方；找相似相关在 **功能选项** 找相似区块；`analysisMaxRetries` 在 **分析模式** 旁（仅后台模式显示）。
 
 **`settingData.search`：** `useSemanticSearch`（智能语义搜索，探索/H5 筛选；原 `ai.smartSearch` 已迁移）。
 
@@ -69,7 +70,9 @@
 | AI-005 | AiAnalysisProvider | ✅ | Ollama + OpenAI 兼容 |
 | AI-006 | AI 设置页 | ✅ | `AiSetting.vue`：进度卡、模型测试、ⓘ Tooltip |
 | AI-007 | 分析任务队列 | ✅ | `background_slow` / `new_only`；仅 **image** |
-| AI-008 | embedding 入库 | ✅ | `EmbeddingManager` + `VecStore` |
+| AI-008 | 文本 embedding 入库 | ✅ | `fbw_resource_vec_blob`；分析后 + 语义搜索 |
+| AI-008a | **视觉 embedding 入库** | ✅ | `ImageVisualEmbedder` + `fbw_resource_image_vec_blob`；见 [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) |
+| AI-008b | 视觉向量后台补算 | ✅ | 定时任务 `visualEmbed`；每轮 4 张 |
 | AI-009 | 分析前缩图 | ✅ | `AiVisionImagePrep.mjs` |
 | AI-010 | 视觉动态超时 | ✅ | `resolveEffectiveVisionTimeout` |
 | AI-011 | 分析耗时日志 | ✅ | `[AiVisionPrep]`、`vision-http modelMs` |
@@ -82,8 +85,10 @@
 | AI-101 | 自然语言搜索 | ✅ | `TextQueryParser.parseSearchQuery` |
 | AI-102 | 语义搜索 | ✅ | `semanticSearch`；开关 `search.useSemanticSearch`（探索/H5 筛选） |
 | AI-102a | 探索顶栏方案 A | ✅ | `ExploreSearchHeader.vue` + `ExploreCommon` |
-| AI-103 | 相似壁纸 | ✅ | `findSimilar` |
-| AI-104 | 探索页 AI 元数据 | ✅ | score 标签 + **AI 已分析** 标识（`done` + 开启「显示标签」）；见 [ai-dev-plan.md](./ai-dev-plan.md) 验收 |
+| AI-103 | 相似壁纸 | ✅ | `findSimilar`；默认 **画面向量**；scope 内 KNN + 阈值 `similarMinCosineVisual` |
+| AI-103a | 找相似文本回退 | ✅ | 无视觉向量时回退 `similarMinCosine` + 文本表 |
+| AI-104 | 探索页 AI 元数据 | ✅ | score 标签 + **AI 已分析** ✨（`done`）；**无**单张「已向量化」角标 |
+| AI-104b | 卡片展示向量状态 | ⬜ | 列表未下发 `hasTextVec`/`hasVisualVec`；统计仅在设置进度卡 |
 | AI-104+ | 探索页展示 AI tags/summary | ⬜ | v1.0 扩展项，**非 2.0 验收** |
 | AI-105 | score 排序/筛选 | ✅ | Explore + `scoreMinFilter` |
 | AI-106 | 智能搜索词建议 | ⬜ | 热词仍主要为插件 tags |
@@ -255,8 +260,8 @@ AI 助手、AIGC 工具
 
 | 优先级 | 规划数 | 已实现/部分 |
 |--------|--------|-------------|
-| P0 | 11 | 11 ✅ |
-| P1 | 16+2 子项 | 15 ✅ / 2 ⬜（AI-104+、AI-208b） |
+| P0 | 13 | 13 ✅（含 AI-008a/b） |
+| P1 | 18+2 子项 | 17 ✅ / 2 ⬜（AI-104+、AI-208b）；AI-104b 向量角标 ⬜ |
 | P2 | 10 | 4 ✅ / 4 🟡 / 2 ⬜ |
 | P3+ | 15 | 少量 🟡 |
 
@@ -267,6 +272,7 @@ AI 助手、AIGC 工具
 - [ai-dev-plan.md](./ai-dev-plan.md) — 开发与验收
 - [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) — 策展规则、合集分页、评分/上限设置
 - [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) — 缩图、超时、语义搜索、设置 UX
+- [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) — 视觉向量、画面找相似、模型与角标说明
 - [openclaw-agent-integration.md](./openclaw-agent-integration.md) — Agent 规划（未编码）
 - [README.md](./README.md) — 本目录索引
 
@@ -282,3 +288,4 @@ AI 助手、AIGC 工具
 | v1.3 | 2026-05-27 | AI-009～011、AI-102a；`search.useSemanticSearch`；超时/缩图默认值 |
 | **v1.4** | 2026-05-28 | AI-206a/b；评分门槛取代条数顶；`autoCollectionsMaxCount`；合集分页；AiSetting 子项 |
 | **v1.5** | 2026-05-28 | AI-012 失败重试上限；AI-208c 稳定后暂停自动整理；`scoreMinFilter` 默认 70 |
+| **v1.6** | 2026-05-28 | AI-008a/b、AI-103/103a；MobileCLIP2-S0；`findSimilarMode` / `similarMinCosineVisual`；AI-104b 规划 |

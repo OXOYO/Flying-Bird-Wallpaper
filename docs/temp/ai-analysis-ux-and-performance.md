@@ -1,9 +1,9 @@
 # AI 分析性能与设置体验（2.0.0+ 增量）
 
-> 文档版本：**v1.2**  
+> 文档版本：**v1.3**  
 > 整理日期：2026-05-28  
 > 状态：**已实现**  
-> 关联：[ai-dev-plan.md](./ai-dev-plan.md) · [ai-feature-roadmap.md](./ai-feature-roadmap.md) · [README.md](./README.md)
+> 关联：[ai-dev-plan.md](./ai-dev-plan.md) · [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) · [ai-feature-roadmap.md](./ai-feature-roadmap.md) · [README.md](./README.md)
 
 ---
 
@@ -21,7 +21,7 @@
 |----|------|
 | 实现 | `src/main/ai/AiVisionImagePrep.mjs` |
 | 接入 | `AiAnalysisProvider.analyzeImage` → `HttpAiProviders` 支持 `buffer` / `filePath` |
-| 范围 | **仅视觉 analyze**；embed、测连接、文本 chat 不缩图 |
+| 范围 | **仅视觉 analyze**；文本 embed、**视觉 ONNX embed**、测连接、文本 chat 不缩图 |
 
 ### 2.2 触发条件
 
@@ -124,6 +124,7 @@
 - **启用位置**：探索页顶栏筛选（仅资源库搜索）、H5 搜索筛选；**已从 AI 设置页移除**
 - **仍走语义**：桌面搜索页（非收藏/回忆/隐私）、H5 `/api/search/images`；无结果回退关键词 SQL
 - **不走语义**：收藏/回忆/隐私、找相似、合集生成（`useSemantic` 已解析未接入 `semanticSearch`）
+- **找相似**：默认 **视觉向量**（非语义搜索）；见 [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md)
 
 ---
 
@@ -148,6 +149,8 @@
 | 分析模式 / 超时 / 视觉输入 / 功能开关 | 均用 Tooltip，无大块 `field-hint` |
 | 标签列宽 | `label-width="auto"`（按最宽标签对齐），**不固定宽度**，避免长标签换行 |
 | 进度卡 Tooltip | `AiAnalysisDashboardPanel.vue` 同步换行样式 |
+| 进度卡统计 | `已向量化`（文本）+ **`已向量化(视觉)`**（`imageEmbedding`） |
+| 找相似设置 | `findSimilarMode`、`visualEmbedEnabled`、`similarMinCosineVisual` / `similarMinCosine` — 见 [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) |
 | 合集相关子项 | `scoreMinFilter`、`autoCollectionsMaxCount` 在「AI 自动整理合集」下；`analysisMaxRetries` 在分析模式旁 — 见 [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) |
 
 ---
@@ -168,6 +171,10 @@
 | `analysisMaxRetries` | 5 | 后台单张最大连续失败次数（1～20） |
 | `autoCurateSettled` | false | 内部：分析稳定且已跑完至少一轮自动整理 |
 | `autoCurateSettledAnalyzed` | 0 | 锁存时的已分析张数 |
+| `findSimilarMode` | `visual` | 找相似：画面 / 文案 |
+| `visualEmbedEnabled` | true | 内置 MobileCLIP2-S0 视觉向量 |
+| `similarMinCosineVisual` | 0.72 | 视觉找相似阈值 |
+| `similarMinCosine` | 0.62 | 文本找相似 / 回退 |
 
 ### `settingData.search`
 
@@ -213,13 +220,22 @@
 | 设置 UI | `src/renderer/.../Setting/components/AiSetting.vue` |
 | 进度卡 | `AiAnalysisDashboardPanel.vue` |
 | 探索顶栏 | `ExploreSearchHeader.vue`、`ExploreCommon.vue` |
+| 视觉 ONNX | `src/main/ai/ImageVisualEmbedder.mjs` |
+| 模型文件 | `resources/models/mobileclip2_s0_vision.onnx` |
 
 ---
 
-## 12. 修订记录
+## 12. 探索卡片角标（与向量无关）
+
+开启「显示标签」且卡片足够大时，探索页角标包括：资源来源、画质、评分、**AI 已分析** ✨（`aiAnalysisStatus === done`）、横竖屏、收藏。**不显示**单张文本/视觉向量化状态。合集页默认不显示 ✨（`show-ai-badge=false`）。详见 [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) §6。
+
+---
+
+## 13. 修订记录
 
 | 版本 | 日期 | 说明 |
 |------|------|------|
 | v1.0 | 2026-05-27 | 缩图、动态超时、语义搜索迁移、探索顶栏、设置 Tooltip/对齐 |
 | v1.1 | 2026-05-28 | 设置速查补充 `scoreMinFilter` / `autoCollectionsMaxCount`；链至合集专题文档 |
 | v1.2 | 2026-05-28 | `analysisMaxRetries` 与 `aiAnalysisFailCount`；`scoreMinFilter` 默认 70；链至策展稳定暂停 |
+| v1.3 | 2026-05-28 | 视觉向量/找相似设置与统计；§12 卡片角标说明；链至 ai-visual-embedding-and-similar |

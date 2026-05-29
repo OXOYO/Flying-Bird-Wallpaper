@@ -44,7 +44,8 @@ export default class Store {
       handleWords: false,
       aiAnalysis: false,
       collectionsRefresh: false,
-      collectionCurator: false
+      collectionCurator: false,
+      visualEmbed: false
     }
 
     this.collectionCuratorTimer = null
@@ -206,6 +207,9 @@ export default class Store {
 
       // 开启定时任务
       this.startScheduledTasks()
+      setTimeout(() => {
+        this.embeddingManager?.intervalVisualEmbed?.(this.locks)
+      }, 60 * 1000)
       this.ensurePostAnalysisCurateScheduled()
       this.syncAutoCurateGateFromAnalysis()
 
@@ -283,6 +287,7 @@ export default class Store {
     this.initHandleQualityTask()
     this.initHandleWordsTask()
     this.initAiAnalysisTask()
+    this.initVisualEmbedTask()
     this.initCollectionsRefreshTask()
     this.initCollectionCuratorTask()
     this.initSwitchWallpaperTask()
@@ -373,6 +378,30 @@ export default class Store {
 
   stopAiAnalysisTask() {
     this.taskScheduler.clearTask('aiAnalysis')
+  }
+
+  initVisualEmbedTask() {
+    this.stopVisualEmbedTask()
+    this.startVisualEmbedTask()
+  }
+
+  startVisualEmbedTask() {
+    const ai = this.settingData?.ai
+    if (ai?.visualEmbedEnabled === false) return
+    if (this.isPowerSaveOnBattery()) return
+    this.taskScheduler.scheduleTask(
+      'visualEmbed',
+      4 * 60 * 1000,
+      () => {
+        if (this.isPowerSaveOnBattery()) return
+        this.embeddingManager.intervalVisualEmbed(this.locks)
+      },
+      2 * 60 * 1000
+    )
+  }
+
+  stopVisualEmbedTask() {
+    this.taskScheduler.clearTask('visualEmbed')
   }
 
   initCollectionsRefreshTask() {
@@ -543,6 +572,7 @@ export default class Store {
     const n = newData?.ai || {}
     if (JSON.stringify(o) !== JSON.stringify(n)) {
       this.initAiAnalysisTask()
+      this.initVisualEmbedTask()
     }
   }
 

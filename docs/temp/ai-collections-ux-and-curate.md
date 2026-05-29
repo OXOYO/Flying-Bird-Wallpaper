@@ -3,7 +3,7 @@
 > 文档版本：**v1.1**  
 > 整理日期：2026-05-28  
 > 状态：**已实现**  
-> 关联：[ai-dev-plan.md](./ai-dev-plan.md) · [ai-feature-roadmap.md](./ai-feature-roadmap.md) · [README.md](./README.md)
+> 关联：[ai-dev-plan.md](./ai-dev-plan.md) · [ai-feature-roadmap.md](./ai-feature-roadmap.md) · [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) · [README.md](./README.md)
 
 ---
 
@@ -59,7 +59,7 @@ flowchart LR
 |------|-----|------|
 | `AUTO_COLLECTION_MIN_TAG_RESOURCES` | 3 | 单标签至少 3 张图才成候选 |
 | `AUTO_COLLECTION_MIN_ITEMS` | 3 | 合并后合集至少 3 张 |
-| `AUTO_COLLECTION_MIN_EMBEDDINGS` | 8 | 向量聚类至少 8 条 embedding |
+| `AUTO_COLLECTION_MIN_EMBEDDINGS` | 8 | 向量聚类至少 8 条 **文本** embedding（`fbw_resource_vec_blob`，非视觉表） |
 
 ### 2.5 触发与刷新
 
@@ -68,7 +68,7 @@ flowchart LR
 | 触发 | 说明 |
 |------|------|
 | 分析完成（单张） | ~90s 防抖 → `runCollectionCurator`（**未锁存**时） |
-| 向量化完成 | ~60s 防抖（同上） |
+| 文本向量化完成 | ~60s 防抖（`EmbeddingManager.onEmbeddingDone`；**非**视觉向量） |
 | 定时 | 约每 **30min**（**未锁存**时；启动后 ~5min 首次） |
 | 设置变更 | `autoCollectionsMaxCount` / `scoreMinFilter` / 自动整理开关 → 清锁存 + ~15s 后整理 |
 | 手动 | 合集页「立即整理」；IPC `main:collections:curate` — **始终可用，不受锁存限制** |
@@ -224,3 +224,4 @@ flowchart LR
 |------|------|------|
 | v1.0 | 2026-05-28 | 评分门槛取代条数上限；可配置合集数上限；合集 items 分页；缩略图与主色对齐搜索 |
 | v1.1 | 2026-05-28 | 分析队列稳定后自动整理锁存暂停；`scoreMinFilter` 默认 70、取消「不限制」；链至分析重试文档 |
+| v1.2 | 2026-05-28 | 明确向量聚类/防抖使用 **文本** embedding；链至 ai-visual-embedding-and-similar |

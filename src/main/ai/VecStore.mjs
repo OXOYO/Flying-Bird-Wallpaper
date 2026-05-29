@@ -1,4 +1,5 @@
 import * as sqliteVec from 'sqlite-vec'
+import { VISUAL_EMBED_MODEL_ID } from './aiConstants.mjs'
 
 /**
  * sqlite-vec 封装；加载失败时降级为 BLOB 存储 + 内存余弦检索
@@ -26,6 +27,7 @@ export default class VecStore {
 
   _init() {
     this._ensureBlobTable()
+    this._ensureImageBlobTable()
     try {
       sqliteVec.load(this.db)
       this.mode = 'sqlite-vec'
@@ -46,6 +48,18 @@ export default class VecStore {
         resourceId INTEGER PRIMARY KEY,
         embedding BLOB NOT NULL,
         dim INTEGER NOT NULL,
+        updated_at DATETIME DEFAULT (datetime('now', 'localtime'))
+      )
+    `)
+  }
+
+  _ensureImageBlobTable() {
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS fbw_resource_image_vec_blob (
+        resourceId INTEGER PRIMARY KEY,
+        embedding BLOB NOT NULL,
+        dim INTEGER NOT NULL,
+        model TEXT NOT NULL DEFAULT 'mobileclip2-s0',
         updated_at DATETIME DEFAULT (datetime('now', 'localtime'))
       )
     `)
@@ -253,6 +267,72 @@ export default class VecStore {
     const queryDim = queryVec?.length || 0
     const minSim = Math.min(1, Math.max(0, Number(minSimilarity) || 0))
     const rows = this.db.prepare(`SELECT resourceId, embedding, dim FROM fbw_resource_vec_blob`).all()
+    const scored = []
+    for (const row of rows) {
+      const hit = this._scoreEmbeddingRow(queryVec, row, queryDim, excludeId)
+      if (hit && hit.similarity >= minSim) scored.push(hit)
+    }
+    scored.sort((a, b) => b.similarity - a.similarity)
+    return scored
+  }
+
+  upsertImage(resourceId, vector, dim, model = VISUAL_EMBED_MODEL_ID) {
+    if (!Array.isArray(vector) || !vector.length) return false
+    const d = dim || vector.length
+    const blob = this.float32ToBlob(vector)
+    this.db
+      .prepare(
+        `INSERT INTO fbw_resource_image_vec_blob (resourceId, embedding, dim, model, updated_at)
+         VALUES (?, ?, ?, ?, datetime('now', 'localtime'))
+         ON CONFLICT(resourceId) DO UPDATE SET
+           embedding=excluded.embedding,
+           dim=excluded.dim,
+           model=excluded.model,
+           updated_at=excluded.updated_at`
+      )
+      .run(resourceId, blob, d, model || VISUAL_EMBED_MODEL_ID)
+    return true
+  }
+
+  getImageVectorRow(resourceId) {
+    return this.db
+      .prepare(
+        `SELECT resourceId, embedding, dim, model FROM fbw_resource_image_vec_blob WHERE resourceId = ?`
+      )
+      .get(resourceId)
+  }
+
+  rankSimilarAmongImageIds(queryVec, resourceIds = [], excludeId = null, minSimilarity = 0) {
+    const ids = [...new Set(resourceIds.map((id) => Number(id)).filter((id) => id > 0))]
+    if (!ids.length) return []
+
+    const queryDim = queryVec?.length || 0
+    const minSim = Math.min(1, Math.max(0, Number(minSimilarity) || 0))
+    const scored = []
+    const chunkSize = 400
+    for (let i = 0; i < ids.length; i += chunkSize) {
+      const chunk = ids.slice(i, i + chunkSize)
+      const ph = chunk.map(() => '?').join(',')
+      const rows = this.db
+        .prepare(
+          `SELECT resourceId, embedding, dim FROM fbw_resource_image_vec_blob WHERE resourceId IN (${ph})`
+        )
+        .all(...chunk)
+      for (const row of rows) {
+        const hit = this._scoreEmbeddingRow(queryVec, row, queryDim, excludeId)
+        if (hit && hit.similarity >= minSim) scored.push(hit)
+      }
+    }
+    scored.sort((a, b) => b.similarity - a.similarity)
+    return scored
+  }
+
+  rankSimilarGlobalImage(queryVec, excludeId = null, minSimilarity = 0) {
+    const queryDim = queryVec?.length || 0
+    const minSim = Math.min(1, Math.max(0, Number(minSimilarity) || 0))
+    const rows = this.db
+      .prepare(`SELECT resourceId, embedding, dim FROM fbw_resource_image_vec_blob`)
+      .all()
     const scored = []
     for (const row of rows) {
       const hit = this._scoreEmbeddingRow(queryVec, row, queryDim, excludeId)

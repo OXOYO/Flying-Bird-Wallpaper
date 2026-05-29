@@ -81,13 +81,23 @@ export const defaultAiSettings = {
   autoCollectionsEnabled: true,
   autoCollectionsMaxCount: 20,
   scoreMinFilter: 70,
-  /** 找相似最低余弦相似度 0~1（文本向量；0.42 过松易凑数，默认 0.62） */
+  /** 找相似最低余弦相似度 0~1（文本回退；0.42 过松易凑数，默认 0.62） */
   similarMinCosine: 0.62,
+  /** 找相似：visual=视觉向量 | text=文本向量 */
+  findSimilarMode: 'visual',
+  /** 视觉找相似最低余弦相似度（MobileCLIP2-S0，默认 0.72） */
+  similarMinCosineVisual: 0.72,
+  /** 内置 MobileCLIP2-S0 视觉向量（不依赖 Ollama） */
+  visualEmbedEnabled: true,
   /** 后台分析单张最大失败次数 */
   analysisMaxRetries: 5,
   autoCurateSettled: false,
   autoCurateSettledAnalyzed: 0
 }
+
+export const VISUAL_EMBED_MODEL_ID = 'mobileclip2-s0'
+export const VISUAL_EMBED_DIM = 512
+export const VISUAL_EMBED_IMAGE_SIZE = 256
 
 export const AI_ANALYSIS_MAX_RETRIES_MIN = 1
 export const AI_ANALYSIS_MAX_RETRIES_MAX = 20

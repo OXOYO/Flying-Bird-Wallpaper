@@ -1,10 +1,10 @@
 # 飞鸟壁纸 AI 能力开发方案
 
-> 文档版本：**v2.3**  
+> 文档版本：**v2.4**  
 > 整理日期：2026-05-28  
 > 状态：Sprint 0–4 **已落地**；2.0.0 **后续增量已落地**；Sprint 5 **未开发**  
 > 应用版本：**1.3.8 → 2.0.0**  
-> 关联：[ai-feature-roadmap.md](./ai-feature-roadmap.md) · [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) · [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) · [README.md](./README.md)
+> 关联：[ai-feature-roadmap.md](./ai-feature-roadmap.md) · [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) · [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) · [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) · [README.md](./README.md)
 
 ---
 
@@ -15,7 +15,7 @@
 | 版本跨度 | DB/功能迁移 `1.3.8_to_2.0.0.mjs`，发版 **2.0.0** |
 | Sprint 5（OpenClaw / Agent） | **暂不开发** |
 | Sprint 0～4 | **全部开发** |
-| 2.0.0 后续增量 | **自动策展、合集页分页/缩略图、评分门槛与可配上限、分析缩图与动态超时**（见 §8～§10 及专题文档） |
+| 2.0.0 后续增量 | **自动策展、合集页分页/缩略图、评分门槛与可配上限、分析缩图与动态超时、视觉向量找相似**（见 §8～§11 及专题文档） |
 | Git | 由用户自行提交 |
 
 ---
@@ -32,7 +32,7 @@
 - **AiAnalysisProvider**（Ollama / OpenAI 兼容 / OpenRouter 等预设）
 - **后台分析队列** + 按需单张分析
 - **sqlite-vec** + BLOB 降级（`VecStore`）
-- **语义搜索 / 找相似**（`EmbeddingManager`）
+- **语义搜索**（文本向量）/ **找相似**（默认 **视觉向量** MobileCLIP2-S0，`EmbeddingManager` + `ImageVisualEmbedder`）
 - **智能合集**：用户 NL 创建 + **系统自动策展**（标签 + 向量 + LLM）
 - **legacy** 开关：`legacyOnnxScore`、`legacyJiebaTags`
 - 探索页：统一顶栏（方案 A）、score 筛选、语义搜索开关（`search.useSemanticSearch`）、AI 标签、分析进度（设置页）
@@ -52,22 +52,28 @@ flowchart TB
   subgraph main [主进程]
     AAM[AiAnalysisManager]
     EM[EmbeddingManager]
+    IVE[ImageVisualEmbedder]
     CM[CollectionsManager]
     CC[CollectionCurator]
     TS[TaskScheduler]
   end
   subgraph db [SQLite + sqlite-vec]
     RES[fbw_resources]
-    VEC[fbw_vec_index / BLOB]
+    VEC[fbw_resource_vec_blob / vec_index]
+    IVEC[fbw_resource_image_vec_blob]
     COL[fbw_collections source=user|auto]
   end
   AiSetting --> AAM
   Explore --> EM
+  AAM --> IVE
+  IVE --> IVEC
+  EM --> VEC
   Collections --> CM
   Collections --> CC
   AAM -->|分析完成| CC
-  EM -->|向量化完成| CC
-  TS -->|aiAnalysis / collectionCurator| AAM
+  EM -->|文本向量化完成| CC
+  TS -->|aiAnalysis / visualEmbed / collectionCurator| AAM
+  TS --> EM
   TS --> CC
   CC --> COL
   CM --> COL
@@ -104,9 +110,15 @@ flowchart TB
 
 ## Sprint 2 — Embedding + 搜索（P1）
 
-- `EmbeddingManager.mjs`、`TextQueryParser.mjs`、`VecStore.mjs`
+- `EmbeddingManager.mjs`、`TextQueryParser.mjs`、`VecStore.mjs`（**文本向量**）
 - `main:findSimilar`、`main:parseSearchQuery`、`main:semanticSearch`
-- ExploreCommon：相似、语义搜索、score 筛选、卡片 AI 已分析标识（`aiAnalysisStatus === done`）
+- ExploreCommon：相似、语义搜索、score 筛选、卡片 **AI 已分析** ✨（`aiAnalysisStatus === done`）
+
+**2.0.0+ 增量（视觉）：** 见 [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md)
+
+- `ImageVisualEmbedder.mjs`、`fbw_resource_image_vec_blob`
+- 找相似默认画面向量；`findSimilarMode` / `similarMinCosineVisual` / `visualEmbedEnabled`
+- 定时 `visualEmbed` 补算；`getAiAnalysisStats.imageEmbedding`
 
 ---
 
@@ -180,7 +192,7 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | `main:listAiModels` | 拉取模型列表（含用途过滤） |
 | `main:getAiAnalysisStats` | 分析进度统计 |
 | `main:parseSearchQuery` | NL → 搜索参数 |
-| `main:findSimilar` / `main:semanticSearch` | 相似 / 语义 |
+| `main:findSimilar` / `main:semanticSearch` | 相似（默认视觉）/ 语义（文本） |
 | `main:collections:*` | 合集 CRUD、generate、收藏；`get` 支持 `{ id, startPage, pageSize }` → `{ items, total, ... }` |
 | `main:collections:curate` | 手动触发自动策展（不受稳定锁存限制） |
 | `main:collections:curatorStats` | 策展统计（含 `autoCurateSettled`） |
@@ -203,6 +215,10 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | `autoCurateSettledAnalyzed` | 锁存时的 `done` 张数 |
 | `enableNsfwCheck` | 探索安全筛选 |
 | `legacyOnnxScore` / `legacyJiebaTags` | 遗留能力 |
+| `findSimilarMode` | `visual`（默认）\| `text` |
+| `visualEmbedEnabled` | 内置视觉向量开关（默认 true） |
+| `similarMinCosineVisual` | 画面找相似阈值（默认 0.72） |
+| `similarMinCosine` | 文本找相似 / 回退（默认 0.62） |
 | `timeout` | 默认 **300s**（60～1800s）；视觉分析另加动态加成（见下） |
 | `visionPreprocess` | 默认 true；`visionMaxLongEdge` 2048 等 |
 
@@ -264,6 +280,21 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 
 ---
 
+## §12 后续增量（视觉向量与画面找相似）— 已落地
+
+> 详述：[ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md)
+
+| 项 | 说明 |
+|----|------|
+| `ImageVisualEmbedder` | MobileCLIP2-S0 ONNX，`resources/models/mobileclip2_s0_vision.onnx` |
+| `fbw_resource_image_vec_blob` | 视觉向量存储，512 维 |
+| `findSimilar` | 默认 `visual`；无视觉向量回退文本 |
+| `visualEmbed` 任务 | 每 4min 补算最多 4 张；启动约 60s 后首轮 |
+| 设置统计 | `embedding`（文本）+ `imageEmbedding`（视觉） |
+| 卡片角标 | **未**展示单张向量状态；✨ 仅表示 AI 分析 `done` |
+
+---
+
 ## 数据库补充（2.0.0 增量）
 
 | 变更 | 说明 |
@@ -273,6 +304,7 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | `queryJson.autoKey` | 系统合集稳定键（`tag:*` / `vec:*` / `merged:*`） |
 | `fbw_resources.aiAnalysisFailCount` | 连续分析失败次数（成功归零） |
 | VecStore | vec0 **不支持 UPSERT** → DELETE+INSERT；维数变更 DROP 重建 |
+| `fbw_resource_image_vec_blob` | 视觉向量表（找相似）；不参与 vec0 索引 |
 
 ---
 
@@ -283,7 +315,7 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | 2.0.0-dev | Sprint 0+1 |
 | 2.0.0-beta | + Sprint 2+3 |
 | 2.0.0 | + Sprint 4 |
-| 2.0.0+ | 自动策展、合集分页/缩略图、评分与上限可配、VecStore 修复、探索顶栏、分析缩图、动态超时 |
+| 2.0.0+ | 自动策展、合集分页/缩略图、评分与上限可配、VecStore 修复、探索顶栏、分析缩图、动态超时、**视觉向量找相似** |
 
 ---
 
@@ -299,6 +331,7 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | **增量** | ✅ | CollectionCurator、VectorCluster、LLM 合并、定时刷新、分析进度、VecStore 修复 |
 | **增量²** | ✅ | 视觉缩图、动态超时、语义搜索迁移、ExploreSearchHeader、AiSetting UX |
 | **增量³** | ✅ | 合集评分门槛、可配上限、items 分页、缩略图/主色、AiSetting 合集子项 |
+| **增量⁴** | ✅ | MobileCLIP2-S0 视觉向量、画面找相似、双表存储、视觉补算任务 |
 | Sprint 5 | ⏸ | OpenClaw/Agent — 仅文档 |
 
 ---
@@ -313,7 +346,8 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 
 ### 向量与搜索
 
-4. AI 开启并分析若干张（自动向量化）→「找相似 / 智能搜索」（探索筛选可开语义搜索）
+4. AI 开启并分析若干张（文本 + 视觉向量化）→「找相似」（默认画面）/「智能搜索」（文本语义；探索筛选可开语义搜索）  
+4a. 设置进度卡：`已向量化` 与 `已向量化(视觉)` 分别计数；卡片角标 **无** 单张向量状态（见 [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) §6）
 
 ### 智能合集
 
@@ -344,6 +378,8 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | OpenRouter 免费模型 | 易 429 限流，导致 `done=0`、系统合集无法生成 |
 | 分析 prerequisite | 系统策展强依赖 `aiAnalysisStatus=done` 与 AI 标签 |
 | sqlite-vec | 各平台需实机验证；失败走 BLOB + 余弦 |
+| 视觉向量补算 | 万级图库需较长时间（约 4 张/4min）；找相似前可现场 embed 源图 |
+| 找相似 vs 策展 | 找相似用视觉表；合集聚类仍用文本表 |
 | LLM 合并 | 失败时降级为规则命名，不阻断策展；**锁存前**定时重跑可能因模型非确定性漂移 |
 | 分析失败 | 后台达 `analysisMaxRetries` 后 skipped；需手动分析或改模型 |
 | build | 渲染端 Vite/Node 版本偶发不兼容（与 AI 无关） |
@@ -363,3 +399,4 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | v2.1 | 2026-05-27 | §10 分析缩图/动态超时；语义搜索迁移；探索顶栏；设置 Tooltip |
 | **v2.2** | 2026-05-28 | §9 合集评分门槛、分页、可配上限；`collectionsGet` 分页契约；链至 ai-collections-ux-and-curate |
 | **v2.3** | 2026-05-28 | §11 分析失败重试上限、策展稳定锁存；`scoreMinFilter` 默认 70；`aiAnalysisFailCount` |
+| **v2.4** | 2026-05-28 | §12 视觉向量 MobileCLIP2-S0；`ai-visual-embedding-and-similar.md`；验收/清单增量⁴ |

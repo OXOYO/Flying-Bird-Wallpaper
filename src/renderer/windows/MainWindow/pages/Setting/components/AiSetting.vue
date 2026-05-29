@@ -190,6 +190,11 @@ const ensureAiFields = () => {
   if (aiForm.similarMinCosine == null || aiForm.similarMinCosine === '') {
     aiForm.similarMinCosine = 0.62
   }
+  if (!aiForm.findSimilarMode) aiForm.findSimilarMode = 'visual'
+  if (aiForm.similarMinCosineVisual == null || aiForm.similarMinCosineVisual === '') {
+    aiForm.similarMinCosineVisual = 0.72
+  }
+  if (aiForm.visualEmbedEnabled === undefined) aiForm.visualEmbedEnabled = true
   if (aiForm.analysisMaxRetries == null || aiForm.analysisMaxRetries === '') {
     aiForm.analysisMaxRetries = AI_ANALYSIS_MAX_RETRIES_DEFAULT
   }
@@ -978,6 +983,107 @@ defineExpose({ resetForm, restoreAnchorScroll })
               <template #label>
                 <span class="form-item-label-with-tip">
                   <span class="form-item-label-with-tip__text">{{
+                    t('pages.Setting.aiSetting.findSimilarMode')
+                  }}</span>
+                  <el-tooltip
+                    :content="t('pages.Setting.aiSetting.findSimilarModeHint')"
+                    placement="top"
+                    :show-after="300"
+                    popper-class="ai-setting-feature-tip"
+                  >
+                    <span
+                      class="form-item-tip-trigger"
+                      tabindex="0"
+                      role="button"
+                      :aria-label="t('pages.Setting.aiSetting.findSimilarModeHint')"
+                      @click.stop
+                    >
+                      <IconifyIcon icon="custom:info-outline-rounded" />
+                    </span>
+                  </el-tooltip>
+                </span>
+              </template>
+              <div class="ai-form-control-row">
+                <el-radio-group v-model="aiForm.findSimilarMode" @change="onAiFormChange">
+                  <el-radio value="visual">{{
+                    t('pages.Setting.aiSetting.findSimilarModeVisual')
+                  }}</el-radio>
+                  <el-radio value="text">{{
+                    t('pages.Setting.aiSetting.findSimilarModeText')
+                  }}</el-radio>
+                </el-radio-group>
+              </div>
+            </el-form-item>
+
+            <el-form-item class="ai-form-item-labeled">
+              <template #label>
+                <span class="form-item-label-with-tip">
+                  <span class="form-item-label-with-tip__text">{{
+                    t('pages.Setting.aiSetting.visualEmbedEnabled')
+                  }}</span>
+                  <el-tooltip
+                    :content="t('pages.Setting.aiSetting.visualEmbedEnabledHint')"
+                    placement="top"
+                    :show-after="300"
+                    popper-class="ai-setting-feature-tip"
+                  >
+                    <span
+                      class="form-item-tip-trigger"
+                      tabindex="0"
+                      role="button"
+                      :aria-label="t('pages.Setting.aiSetting.visualEmbedEnabledHint')"
+                      @click.stop
+                    >
+                      <IconifyIcon icon="custom:info-outline-rounded" />
+                    </span>
+                  </el-tooltip>
+                </span>
+              </template>
+              <el-switch v-model="aiForm.visualEmbedEnabled" @change="onAiFormChange" />
+            </el-form-item>
+
+            <el-form-item class="ai-form-item-labeled">
+              <template #label>
+                <span class="form-item-label-with-tip">
+                  <span class="form-item-label-with-tip__text">{{
+                    t('pages.Setting.aiSetting.similarMinCosineVisual')
+                  }}</span>
+                  <el-tooltip
+                    :content="t('pages.Setting.aiSetting.similarMinCosineVisualHint')"
+                    placement="top"
+                    :show-after="300"
+                    popper-class="ai-setting-feature-tip"
+                  >
+                    <span
+                      class="form-item-tip-trigger"
+                      tabindex="0"
+                      role="button"
+                      :aria-label="t('pages.Setting.aiSetting.similarMinCosineVisualHint')"
+                      @click.stop
+                    >
+                      <IconifyIcon icon="custom:info-outline-rounded" />
+                    </span>
+                  </el-tooltip>
+                </span>
+              </template>
+              <div class="ai-form-control-row ai-form-control-row--score-min">
+                <el-input-number
+                  v-model="aiForm.similarMinCosineVisual"
+                  :min="0.35"
+                  :max="0.95"
+                  :step="0.01"
+                  :precision="2"
+                  :disabled="aiForm.findSimilarMode === 'text' || !aiForm.visualEmbedEnabled"
+                  controls-position="right"
+                  @change="onAiFormChange"
+                />
+              </div>
+            </el-form-item>
+
+            <el-form-item class="ai-form-item-labeled">
+              <template #label>
+                <span class="form-item-label-with-tip">
+                  <span class="form-item-label-with-tip__text">{{
                     t('pages.Setting.aiSetting.similarMinCosine')
                   }}</span>
                   <el-tooltip
@@ -1005,7 +1111,7 @@ defineExpose({ resetForm, restoreAnchorScroll })
                   :max="0.95"
                   :step="0.01"
                   :precision="2"
-                  :disabled="!aiForm.enabled"
+                  :disabled="!aiForm.enabled || aiForm.findSimilarMode === 'visual'"
                   controls-position="right"
                   @change="onAiFormChange"
                 />

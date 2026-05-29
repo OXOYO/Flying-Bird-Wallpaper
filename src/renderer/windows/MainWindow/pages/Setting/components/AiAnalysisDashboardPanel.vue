@@ -106,6 +106,10 @@ const titleTooltipPopperOptions = {
       <span class="stat-chip stat-chip--embedding">
         {{ t('pages.Setting.aiSetting.statEmbeddingLabel') }} {{ stats?.embedding ?? 0 }}
       </span>
+      <span class="stat-chip stat-chip--embedding">
+        {{ t('pages.Setting.aiSetting.statImageEmbeddingLabel') }}
+        {{ stats?.imageEmbedding ?? 0 }}
+      </span>
       <span v-if="(stats?.skipped ?? 0) > 0" class="stat-chip stat-chip--skipped">
         {{ t('pages.Setting.aiSetting.statSkippedLabel') }} {{ stats?.skipped ?? 0 }}
       </span>

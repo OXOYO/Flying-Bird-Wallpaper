@@ -130,6 +130,14 @@ export const createTables = [
     dim INTEGER NOT NULL DEFAULT 0,
     updated_at DATETIME DEFAULT (datetime('now', 'localtime'))
   )`,
+  // 数据表：资源视觉向量（找相似 · MobileCLIP2-S0 等）
+  `CREATE TABLE IF NOT EXISTS fbw_resource_image_vec_blob (
+    resourceId INTEGER PRIMARY KEY,
+    embedding BLOB NOT NULL,
+    dim INTEGER NOT NULL,
+    model TEXT NOT NULL DEFAULT 'mobileclip2-s0',
+    updated_at DATETIME DEFAULT (datetime('now', 'localtime'))
+  )`,
   // 系统表：版本管理
   `CREATE TABLE IF NOT EXISTS fbw_version (
     id INTEGER PRIMARY KEY AUTOINCREMENT, -- 记录自增ID
