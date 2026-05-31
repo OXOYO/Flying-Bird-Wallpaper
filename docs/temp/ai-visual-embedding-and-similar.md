@@ -137,9 +137,10 @@
 
 | 时机 | 文本向量 | 画面向量 |
 |------|----------|----------|
-| AI 分析成功 | ✅（需 `ai.enabled`） | ✅（builtin 或 remote） |
+| AI 分析成功 | ✅（需 `ai.enabled`） | ✅（需 `ai.enabled`；builtin 或 remote） |
 | 找相似（源图无向量） | 按需 `upsertForResource` | 优先 `upsertImageForResource` |
-| 后台 `visualEmbed` | — | 每轮最多 4 张，按 **当前 active visual model** 补算 |
+| 后台 `visualEmbed` | — | 须 **`ai.enabled`**；每轮批量补算（内置约 40 张/批），按 **当前 active visual model** |
+| 找相似（用户点击） | 按需 | 源图无向量时可 **单张** `upsertImageForResource`（**不要求** `ai.enabled`） |
 
 入库：远程非对称模型用 `input_type: passage`；语义搜索 query 用 `input_type: query`。
 

@@ -1,9 +1,9 @@
 # AI 分析性能与设置体验（2.0.0+ 增量）
 
-> 文档版本：**v1.7**  
+> 文档版本：**v1.8**  
 > 整理日期：2026-05-27  
 > 状态：**已实现**  
-> 关联：[ai-dev-plan.md](./ai-dev-plan.md) · [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) · [ai-feature-roadmap.md](./ai-feature-roadmap.md) · [README.md](./README.md)
+> 关联：[data-model-resources-and-ai.md](./data-model-resources-and-ai.md) · [ai-dev-plan.md](./ai-dev-plan.md) · [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) · [ai-feature-roadmap.md](./ai-feature-roadmap.md) · [README.md](./README.md)
 
 ---
 
@@ -97,7 +97,7 @@
 | 后台批次 | 每轮 `fetchPendingBatch(concurrency)` 张，**并行**（`Promise.all`）；`ai.concurrency` 默认 **1** |
 | 失败重试上限 | **`ai.analysisMaxRetries`**（默认 **1**，1～20）；后台连续失败达上限 → `skipped`，不再自动重试 |
 | 手动分析 | 探索页「AI 分析」**不受**重试上限（仍可一直试；成功则 `aiAnalysisFailCount` 归零） |
-| 失败计数 | DB 列 `aiAnalysisFailCount`；`markPendingForResources` 时归零 |
+| 失败计数 | 附表列 **`fbw_resource_ai.aiAnalysisFailCount`**；`markPendingForResources` 时归零 |
 | 状态「等待中」 | `pending>0` 且当前未 `running`；侧边栏 Tooltip 多行展示原因 |
 
 ### 4.1 后台失败重试（v1.2+）
@@ -150,6 +150,8 @@
 | 分析模式 / 超时 / 视觉输入 / 功能开关 | 均用 Tooltip，无大块 `field-hint` |
 | 标签列宽 | `label-width="auto"`（按最宽标签对齐），**不固定宽度**，避免长标签换行 |
 | 进度卡 Tooltip | `AiAnalysisDashboardPanel.vue` 同步换行样式 |
+| 进度卡显隐 | **与「启用 AI」无关，常显**（`useAiAnalysisDashboard.showAnalysisProgress`） |
+| 失败重试 | 失败 chip 可点击 → 确认后 `requeueFailedAiAnalysis`（重置失败次数并标 `pending`） |
 | 进度卡统计 | `已向量化`（文本）+ **`已向量化(视觉)`**（`imageEmbedding`） |
 | 画面向量 | 兼容选项「**内置画面向量**」；关则显示 **画面向量服务** 卡片 — 见 [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) |
 | 测试连接 | 视觉 / 文本 / 文本向量 / 画面向量 四处统一 **「测试连接」**、成功 **「连接成功」** |
@@ -208,6 +210,8 @@
 7. AI 设置无「后台失败重试次数」「后台分析并发」表单项  
 8. 分析全部完成后：自动整理至少一轮后暂停；手动「立即整理」仍可用  
 9. 三处/四处「测试连接」文案一致；画面向量 remote 时独立卡片可测通  
+10. 工具页清空 AI：成功提示显示数字非 `{count}`；插件 `title`/`desc` 仍在  
+11. 设置页：未开 AI 时进度卡仍可见；失败 chip 重试后 pending 上升  
 
 ---
 
@@ -223,7 +227,9 @@
 | Embed 方言 | `src/main/ai/EmbedRequestBuilder.mjs` |
 | 默认/迁移 | `src/common/publicData.js` → `migrateSettingData` |
 | 设置 UI | `src/renderer/.../Setting/components/AiSetting.vue` |
-| 进度卡 | `AiAnalysisDashboardPanel.vue` |
+| 进度卡 / 重试 | `AiAnalysisDashboardPanel.vue`、`useAiAnalysisDashboard.js` |
+| 清空 AI | `Utils.vue` → `resetAiAnalysis` |
+| AI 附表 | `resourceAiSql.mjs`、`schemaUpgrade.mjs` |
 | 探索顶栏 | `ExploreSearchHeader.vue`、`ExploreCommon.vue` |
 | 视觉 ONNX | `src/main/ai/ImageVisualEmbedder.mjs` |
 | 模型文件 | `resources/models/mobileclip2_s0_vision.onnx` |
@@ -232,7 +238,33 @@
 
 ## 12. 探索卡片角标（与向量无关）
 
-开启「显示标签」且卡片足够大时，探索页角标包括：资源来源、画质、评分、**AI 已分析** ✨（`aiAnalysisStatus === done`）、横竖屏、收藏。**不显示**单张文本/视觉向量化状态；卡片上的数字评分为 **美学分**，非相似度。合集页默认不显示 ✨（`show-ai-badge=false`）。详见 [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) §9。
+开启「显示标签」且卡片足够大时，探索页角标包括：资源来源、画质、评分、**AI 已分析** ✨（`aiAnalysisStatus === done`）、横竖屏、收藏。**不显示**单张文本/视觉向量化状态；卡片上的数字评分为 **AI 美学分**（附表 `aiScore`，列表投影为 `score`），非相似度。合集页默认不显示 ✨（`show-ai-badge=false`）。详见 [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) §9。
+
+---
+
+## 14. 工具页：清空 AI 分析数据
+
+| 项 | 说明 |
+|----|------|
+| 入口 | **工具** → 数据工具 →「清空 AI 分析数据」 |
+| IPC | `resetAiAnalysis`（无参数，全库图片） |
+| 范围 | `DELETE fbw_resource_ai` + 标签 + 文本/画面向量；**删除** `fbw_collections.source='auto'` 及成员；**不**改主表 `title`/`desc` |
+| 语义 | 库内全部图片 AI 附表清空，视为待分析；**不**保留任何 AI 字段；用户自建合集保留 |
+| 策展锁存 | 清除 `autoCurateSettled`，分析完成后可重新生成系统合集 |
+| 提示 | 主进程 `t('pages.Utils.resetAiAnalysis*', { count })`；须用 **`{count}`** 单花括号 |
+| 自动分析 | 须 **启用 AI** 且模式为 **后台连续** / **仅新图**，否则仅入队不 pump |
+
+代码：`Utils.vue`、`AiAnalysisManager.clearAllAiAnalysisData`。
+
+---
+
+## 15. 国际化与提示文案
+
+| 项 | 约定 |
+|----|------|
+| 占位符 | `src/i18n/i18next.js`：`prefix: '{'`、`suffix: '}'` → 文案写 `{count}`，**勿**写 `{{count}}` |
+| 主进程消息 | 清空/重试成功类由主进程 `t()` 生成完整句，渲染端直接 `ElMessage({ message: res.message })` |
+| 新键语言 | `clearAiAnalysis*`、`requeueFailed*`、`runStatusDisabled*` 当前 **zh-CN / en-US** 完整；其它语言回退英文 |
 
 ---
 
@@ -248,3 +280,4 @@
 | **v1.5** | 2026-05-29 | 合集生成策略更新：关键词优先 + 画面补充；链至 ai-collections-ux-and-curate §6 |
 | **v1.6** | 2026-05-29 | 合集生成：`regenPrompt`、实体词/氛围分流、LLM 标签扩展；链至 ai-collections §6 |
 | **v1.7** | 2026-05-27 | 后台 `concurrency` 并行说明；`analysisMaxRetries`/`concurrency` 默认 1 且 UI 移除；链至 [privacy-and-sensitive-content.md](./privacy-and-sensitive-content.md) |
+| **v1.8** | 2026-05-27 | 进度卡常显、失败重试入队、工具页清空 AI；附表 `aiAnalysisFailCount`；§12–§15；链至 [data-model-resources-and-ai.md](./data-model-resources-and-ai.md) |

@@ -1,7 +1,7 @@
 # 主窗口侧栏 UX 与基础设施修订
 
-> 整理日期：2026-05-31  
-> 说明：记录主窗口侧栏、快捷键管理器、检查更新通知等实现约定与代码锚点。正式文档 `docs/renderer_process.md`、`docs/shortcut_guide.md` 部分片段仍偏旧，以本文与源码为准。敏感内容遮罩与壁纸过滤见 [privacy-and-sensitive-content.md](./privacy-and-sensitive-content.md)。
+> 整理日期：2026-05-31（§7 同步 2026-05-27）  
+> 说明：记录主窗口侧栏、快捷键管理器、检查更新通知、工具页等实现约定与代码锚点。正式文档 `docs/renderer_process.md`、`docs/shortcut_guide.md` 部分片段仍偏旧，以本文与源码为准。敏感内容遮罩与壁纸过滤见 [privacy-and-sensitive-content.md](./privacy-and-sensitive-content.md)。
 
 ---
 
@@ -127,7 +127,18 @@ local:{name}:{winName}
 
 ---
 
-## 5. 验收要点
+## 5. 工具页（`Utils.vue`）
+
+| 项 | 说明 |
+|----|------|
+| 清空 AI | 数据工具 →「清空 AI 分析数据」→ IPC `resetAiAnalysis`（全库图片） |
+| 确认文案 | `pages.Utils.clearAiAnalysisDataConfirm`（HTML 确认框） |
+| 成功提示 | 展示主进程返回的 `res.message`（已含 `{count}` 插值） |
+| 关联文档 | [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) §14 · [data-model-resources-and-ai.md](./data-model-resources-and-ai.md) |
+
+---
+
+## 6. 验收要点
 
 ### 侧栏
 
@@ -143,9 +154,10 @@ local:{name}:{winName}
 
 ---
 
-## 6. 修订记录
+## 7. 修订记录
 
 | 日期 | 说明 |
 |------|------|
+| 2026-05-27 | §5 工具页「清空 AI 分析数据」；链至数据模型与分析 UX 文档 |
 | 2026-05-31 | 初版：侧栏折叠钮样式、SideMenu hover 主题色、ShortcutManager 复合键与冲突检测、Updater 通知修复 |
 | 2026-05-27 | 索引：链至 `privacy-and-sensitive-content.md`（敏感遮罩与壁纸上/下一张过滤） |

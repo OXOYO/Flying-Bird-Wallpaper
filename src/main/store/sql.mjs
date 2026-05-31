@@ -64,12 +64,7 @@ export const createTables = [
     width INTEGER NOT NULL DEFAULT 0, -- 图片宽度
     height INTEGER NOT NULL DEFAULT 0, -- 图片高度
     isLandscape INTEGER NOT NULL DEFAULT -1, -- 是否为横屏
-    score INTEGER NOT NULL DEFAULT 0, -- 图片美学评分
-    summary TEXT NOT NULL DEFAULT '', -- AI 摘要
-    nsfwLevel INTEGER NOT NULL DEFAULT 0, -- 内容安全等级 0=未知/安全
-    aiAnalysisStatus TEXT NOT NULL DEFAULT 'pending', -- pending|done|failed|skipped
-    aiAnalyzedAt DATETIME, -- AI 分析完成时间
-    aiAnalysisFailCount INTEGER NOT NULL DEFAULT 0, -- 连续分析失败次数（成功归零）
+    qualityScore INTEGER NOT NULL DEFAULT 0, -- 本地质量任务评分（非 AI）
     dominantColor TEXT NOT NULL DEFAULT '', -- 主色调
     atimeMs INTEGER NOT NULL DEFAULT 0, -- 本地文件最后访问时间
     mtimeMs INTEGER NOT NULL DEFAULT 0, -- 本地文件最后修改时间
@@ -130,6 +125,21 @@ export const createTables = [
     dim INTEGER NOT NULL DEFAULT 0,
     updated_at DATETIME DEFAULT (datetime('now', 'localtime'))
   )`,
+  // 数据表：资源 AI 视觉分析结果（1:1 附表，仅图片）
+  `CREATE TABLE IF NOT EXISTS fbw_resource_ai (
+    resourceId INTEGER PRIMARY KEY,
+    aiTitle TEXT NOT NULL DEFAULT '',
+    aiDesc TEXT NOT NULL DEFAULT '',
+    summary TEXT NOT NULL DEFAULT '',
+    aiScore INTEGER NOT NULL DEFAULT 0,
+    nsfwLevel INTEGER,
+    safeForWork INTEGER,
+    aiAnalysisStatus TEXT NOT NULL DEFAULT 'pending',
+    aiAnalyzedAt DATETIME,
+    aiAnalysisFailCount INTEGER NOT NULL DEFAULT 0,
+    updated_at DATETIME DEFAULT (datetime('now', 'localtime')),
+    FOREIGN KEY (resourceId) REFERENCES fbw_resources(id) ON DELETE CASCADE
+  )`,
   // 数据表：资源视觉向量（找相似 · MobileCLIP2-S0 等）
   `CREATE TABLE IF NOT EXISTS fbw_resource_image_vec_blob (
     resourceId INTEGER PRIMARY KEY,
@@ -177,8 +187,10 @@ export const createIndexes = [
   // 分词相关索引
   'CREATE INDEX IF NOT EXISTS idx_resource_words_resourceid ON fbw_resource_words(resourceId)',
   'CREATE INDEX IF NOT EXISTS idx_resource_words_wordid ON fbw_resource_words(wordId)',
-  'CREATE INDEX IF NOT EXISTS idx_resources_score ON fbw_resources(score)',
-  'CREATE INDEX IF NOT EXISTS idx_resources_ai_status ON fbw_resources(aiAnalysisStatus)',
+  'CREATE INDEX IF NOT EXISTS idx_resources_quality_score ON fbw_resources(qualityScore)',
+  'CREATE INDEX IF NOT EXISTS idx_resource_ai_status ON fbw_resource_ai(aiAnalysisStatus)',
+  'CREATE INDEX IF NOT EXISTS idx_resource_ai_nsfw ON fbw_resource_ai(nsfwLevel)',
+  'CREATE INDEX IF NOT EXISTS idx_resource_ai_score ON fbw_resource_ai(aiScore)',
   'CREATE INDEX IF NOT EXISTS idx_collections_pinned ON fbw_collections(isPinned, updated_at)',
   'CREATE INDEX IF NOT EXISTS idx_collection_items_collection ON fbw_collection_items(collectionId, rank)'
 ]

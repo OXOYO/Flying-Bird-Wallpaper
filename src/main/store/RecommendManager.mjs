@@ -57,7 +57,8 @@ export default class RecommendManager {
       qParams.push(...tagList)
     }
 
-    query += ` ORDER BY r.score DESC, s.wallpapers DESC, r.updated_at DESC LIMIT ?`
+    query += ` LEFT JOIN fbw_resource_ai ai ON ai.resourceId = r.id
+      ORDER BY COALESCE(ai.aiScore, 0) DESC, s.wallpapers DESC, r.updated_at DESC LIMIT ?`
     qParams.push(limit)
 
     const list = this.db.prepare(query).all(...qParams)

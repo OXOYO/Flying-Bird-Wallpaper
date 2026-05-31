@@ -238,20 +238,21 @@ export default class CollectionsManager {
     const params = [AI_ANALYSIS_STATUS.DONE, word]
     let scoreClause = ''
     if (scoreMin != null) {
-      scoreClause = ' AND r.score >= ?'
+      scoreClause = ' AND COALESCE(ai.aiScore, 0) >= ?'
       params.push(scoreMin)
     }
     return this.db
       .prepare(
         `SELECT r.id
          FROM fbw_resources r
+         INNER JOIN fbw_resource_ai ai ON ai.resourceId = r.id
          JOIN fbw_resource_words rw ON rw.resourceId = r.id
          JOIN fbw_words w ON w.id = rw.wordId
          WHERE r.fileType = 'image'
-           AND r.aiAnalysisStatus = ?
+           AND ai.aiAnalysisStatus = ?
            AND ${COLLECTION_PRIVACY_EXCLUDE_SQL}
            AND w.word = ?${scoreClause}
-         ORDER BY r.score DESC, r.id DESC
+         ORDER BY COALESCE(ai.aiScore, 0) DESC, r.id DESC
          LIMIT ?`
       )
       .all(...params, limit)

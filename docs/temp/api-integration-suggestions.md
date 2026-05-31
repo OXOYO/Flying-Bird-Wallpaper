@@ -1,6 +1,7 @@
 # 图片和壁纸 API 集成建议
 
-> 临时文档 · 与 AI 2.0 无直接依赖 · 索引见 [README.md](./README.md)
+> 临时文档 · 与 AI 2.0 无直接依赖 · 索引见 [README.md](./README.md)  
+> 插件本地资源 ID 约定（`源名_插件名`）见 [data-model-resources-and-ai.md](./data-model-resources-and-ai.md)
 
 ## 已集成的API
 

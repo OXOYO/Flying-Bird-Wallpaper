@@ -3,6 +3,11 @@ import path from 'node:path'
 import { setWallpaper } from 'wallpaper'
 import axios from 'axios'
 import { t } from '../../i18n/server.js'
+import {
+  buildDownloadParamStoreKey,
+  parseDownloadParamStoreKey,
+  parseLegacyDownloadParamStoreKey
+} from '../../common/pluginResourceId.js'
 import { isMac, handleTimeByUnit, createSolidColorBMP } from '../utils/utils.mjs'
 import {
   API_ERROR_CODE,
@@ -107,6 +112,7 @@ export default class WallpaperManager {
     }
 
     this.downloadParams = downloadParams
+    this.resourceMaintenance = false
   }
 
   async getDownloadParams() {
@@ -904,6 +910,11 @@ export default class WallpaperManager {
       this.logger.info('下载任务已完成，等待新的内容或设置变更')
     }
 
+    if (this.resourceMaintenance) {
+      this.logger.info('资源维护中，跳过本次自动下载')
+      return
+    }
+
     try {
       // 确保下载目录存在
       if (!fs.existsSync(downloadFolder)) {
@@ -1063,7 +1074,7 @@ export default class WallpaperManager {
   // 获取特定资源-关键词组合的参数
   async getResourceKeywordParams(source, keyword) {
     try {
-      const key = `download_params_${source}_${keyword}`
+      const key = buildDownloadParamStoreKey(source, keyword)
       const res = await this.dbManager.getSysRecord(key)
       if (res.success && res.data?.storeData) {
         return res.data.storeData
@@ -1083,7 +1094,7 @@ export default class WallpaperManager {
   // 保存特定资源-关键词组合的参数
   async saveResourceKeywordParams(source, keyword, params) {
     try {
-      const key = `download_params_${source}_${keyword}`
+      const key = buildDownloadParamStoreKey(source, keyword)
       await this.dbManager.setSysRecord(key, params, 'object')
       this.logger.info(`保存资源: ${source} 关键词: ${keyword} 参数成功: ${JSON.stringify(params)}`)
       return true
@@ -1104,26 +1115,22 @@ export default class WallpaperManager {
         throw new Error('获取所有键失败')
       }
 
-      const resourceKeywordParamKeys = allKeysRes.data.filter((key) =>
-        key.startsWith('download_params_')
+      const resourceKeywordParamKeys = allKeysRes.data.filter(
+        (key) =>
+          key.startsWith('download_params|') ||
+          (key.startsWith('download_params_') && !key.startsWith('download_params|'))
       )
 
-      // 删除不再使用的参数
       for (const key of resourceKeywordParamKeys) {
-        const parts = key.split('_')
-        if (parts.length >= 4) {
-          const source = parts[2]
-          const keyword = parts.slice(3).join('_') // 关键词可能包含下划线
+        const parsed = parseDownloadParamStoreKey(key) || parseLegacyDownloadParamStoreKey(key)
+        if (!parsed) continue
 
-          // 检查这个组合是否还在当前设置中
-          const isSourceInUse = currentSources.includes(source)
-          const isKeywordInUse = currentKeywords.includes(keyword)
+        const isSourceInUse = currentSources.includes(parsed.source)
+        const isKeywordInUse = currentKeywords.includes(parsed.keyword)
 
-          // 如果资源或关键词已不在使用中，则删除相关参数
-          if (!isSourceInUse || !isKeywordInUse) {
-            await this.dbManager.removeSysRecord(`download_params_${source}_${keyword}`)
-            this.logger.info(`清理无用的资源${source}关键词${keyword}参数`)
-          }
+        if (!isSourceInUse || !isKeywordInUse) {
+          await this.dbManager.removeSysRecord(key)
+          this.logger.info(`清理无用的资源${parsed.source}关键词${parsed.keyword}参数`)
         }
       }
     } catch (err) {

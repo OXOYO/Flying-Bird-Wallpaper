@@ -32,7 +32,14 @@ import {
   shouldRunScheduledAutoCurate
 } from './collectionCurateGate.mjs'
 import { handleTimeByUnit } from '../utils/utils.mjs'
-import { migrateRemoteResourceSecretKeys } from '../../common/utils.js'
+import {
+  normalizeSourceName,
+  validateSourceName
+} from '../../common/pluginResourceId.js'
+import {
+  applyPluginSourceRename,
+  runPluginResourceIdMigration
+} from './pluginResourceMigration.mjs'
 import {
   AI_ANALYSIS_PUMP_START_DELAY_MS,
   AI_ANALYSIS_WATCHDOG_MS,
@@ -121,7 +128,6 @@ export default class Store {
       this.apiManager = ApiManager.getInstance(global.logger, this.dbManager)
       // 等待API管理器初始化完成
       await this.apiManager.waitForInitialization()
-      await this.migrateLegacyPluginSecretKeys()
 
       // 文件服务子进程
       this.fileServer = createFileServer()
@@ -202,6 +208,8 @@ export default class Store {
       this.wallpaperManager.textQueryParser = this.textQueryParser
       this.wallpaperManager.aiAnalysisManager = this.aiAnalysisManager
 
+      await this.runPluginResourceIdBootstrap()
+
       // 处理IPC通信
       this.handleIpc()
 
@@ -223,9 +231,11 @@ export default class Store {
 
       // 开启定时任务
       this.startScheduledTasks()
-      setTimeout(() => {
-        this.triggerVisualEmbedPump()
-      }, VISUAL_EMBED_PUMP_START_DELAY_MS)
+      if (this.settingData?.ai?.enabled) {
+        setTimeout(() => {
+          this.triggerVisualEmbedPump()
+        }, VISUAL_EMBED_PUMP_START_DELAY_MS)
+      }
       this.ensurePostAnalysisCurateScheduled()
       this.syncAutoCurateGateFromAnalysis()
 
@@ -256,17 +266,140 @@ export default class Store {
     return this.settingManager.settingData
   }
 
-  /** 旧版插件资源名为 unsplash，新版为 official:unsplash，迁移已保存的密钥键名 */
-  async migrateLegacyPluginSecretKeys() {
-    const secretKeys = this.settingData?.remoteResourceSecretKeys
-    if (!secretKeys || typeof secretKeys !== 'object') return
+  getPluginResourceMigrationContext() {
+    return {
+      db: this.db,
+      dbManager: this.dbManager,
+      logger: global.logger,
+      settingManager: this.settingManager,
+      runtimePluginsDir: this.pluginManager?.runtimePluginsDir
+    }
+  }
 
-    const resourceNames = Object.keys(this.apiManager?.apiMap || {})
-    const migrated = migrateRemoteResourceSecretKeys(secretKeys, resourceNames)
-    if (migrated === secretKeys) return
+  async runPluginResourceIdBootstrap() {
+    try {
+      const res = await runPluginResourceIdMigration(this.getPluginResourceMigrationContext())
+      if (res.success && !res.skipped) {
+        await this.refreshApiPlugins()
+        global.logger.info(
+          `[pluginResourceId] 本地库已迁移 resources=${res.stats?.resources ?? 0}`
+        )
+      }
+    } catch (err) {
+      global.logger.error(`[pluginResourceId] 迁移失败: ${err}`)
+    }
+  }
 
-    global.logger.info('已迁移旧版插件资源密钥键名（如 unsplash → official:unsplash）')
-    await this.updateSettingData({ remoteResourceSecretKeys: migrated })
+  async waitForAnalysisPumpSettle(maxMs = 120000) {
+    const started = Date.now()
+    while (this.aiAnalysisManager?.isRunning && Date.now() - started < maxMs) {
+      await new Promise((r) => setTimeout(r, 200))
+    }
+  }
+
+  async enterResourceMaintenance() {
+    this.aiAnalysisManager?.setMaintenancePaused(true)
+    this.locks.aiAnalysis = true
+    this.stopAiAnalysisTask()
+    this.wallpaperManager.resourceMaintenance = true
+    this.stopDownloadTask()
+    await this.waitForAnalysisPumpSettle()
+  }
+
+  async exitResourceMaintenance() {
+    this.wallpaperManager.resourceMaintenance = false
+    this.aiAnalysisManager?.setMaintenancePaused(false)
+    this.locks.aiAnalysis = false
+    if (this.settingData?.ai?.enabled) {
+      this.startAiAnalysisTask()
+      this.triggerBackgroundAnalysisPump()
+    }
+    if (this.settingData?.autoDownload) {
+      this.startDownloadTask()
+    }
+  }
+
+  async requeueFailedAiAnalysis() {
+    try {
+      const res = this.aiAnalysisManager.requeueFailedAiAnalysis()
+      if (res?.success && res.data?.autoPump) {
+        this.triggerBackgroundAnalysisPump()
+      }
+      return res
+    } catch (err) {
+      global.logger.error(`requeueFailedAiAnalysis: ${err}`)
+      return { success: false, message: t('messages.operationFail') }
+    }
+  }
+
+  async resetAiAnalysis() {
+    await this.enterResourceMaintenance()
+    try {
+      return this.aiAnalysisManager.clearAllAiAnalysisData()
+    } catch (err) {
+      global.logger.error(`resetAiAnalysis: ${err}`)
+      return { success: false, message: t('messages.operationFail') }
+    } finally {
+      await this.exitResourceMaintenance()
+    }
+  }
+
+  async renamePluginSource(oldSourceName, newSourceName) {
+    const oldNorm = normalizeSourceName(oldSourceName)
+    const newNorm = normalizeSourceName(newSourceName)
+    if (!oldNorm || !newNorm || oldNorm === newNorm) {
+      return { success: false, message: t('messages.operationFail') }
+    }
+    const nameCheck = validateSourceName(newNorm)
+    if (!nameCheck.valid) {
+      return {
+        success: false,
+        message: t('pages.Setting.pluginMarketplace.ops.invalidSourceName')
+      }
+    }
+    const listRes = await this.pluginManager.getPluginSources()
+    const sources = listRes.data || []
+    if (!sources.some((s) => s.name === oldNorm)) {
+      return {
+        success: false,
+        message: t('pages.Setting.pluginMarketplace.ops.sourceNotFound')
+      }
+    }
+    if (sources.some((s) => s.name === newNorm)) {
+      return {
+        success: false,
+        message: t('pages.Setting.pluginMarketplace.ops.sourceNameExists')
+      }
+    }
+    const target = sources.find((s) => s.name === oldNorm)
+    if (target?.isOfficial) {
+      return {
+        success: false,
+        message: t('pages.Setting.pluginMarketplace.ops.officialSourceCannotRename')
+      }
+    }
+
+    await this.enterResourceMaintenance()
+    try {
+      const res = await applyPluginSourceRename(
+        this.getPluginResourceMigrationContext(),
+        oldNorm,
+        newNorm
+      )
+      if (!res.success) {
+        return { success: false, message: res.message || t('messages.operationFail') }
+      }
+      await this.refreshApiPlugins()
+      return {
+        success: true,
+        message: t('pages.Setting.pluginMarketplace.feedback.updateSourceSuccess')
+      }
+    } catch (err) {
+      global.logger.error(`renamePluginSource: ${err}`)
+      return { success: false, message: t('messages.operationFail') }
+    } finally {
+      await this.exitResourceMaintenance()
+    }
   }
 
   /** 主进程与 H5 子进程重新加载已安装 API 插件（安装/更新/卸载后调用） */
@@ -382,6 +515,8 @@ export default class Store {
   }
 
   triggerVisualEmbedPump() {
+    const ai = this.settingData?.ai
+    if (!ai?.enabled) return
     if (this.isPowerSaveOnBattery()) return
     this.embeddingManager?.pumpVisualEmbedBackfill?.(this.locks)
   }
@@ -417,6 +552,8 @@ export default class Store {
   }
 
   startVisualEmbedTask() {
+    const ai = this.settingData?.ai
+    if (!ai?.enabled) return
     if (this.isPowerSaveOnBattery()) return
     this.taskScheduler.scheduleTask(
       'visualEmbed',
@@ -1097,6 +1234,14 @@ export default class Store {
       return await this.aiAnalysisManager.analyzeResourceById(params?.id ?? params?.resourceId)
     })
 
+    ipcMain.handle('main:resetAiAnalysis', async (event, params) => {
+      return await this.resetAiAnalysis(params)
+    })
+
+    ipcMain.handle('main:requeueFailedAiAnalysis', async () => {
+      return await this.requeueFailedAiAnalysis()
+    })
+
     ipcMain.handle('main:testAiConnection', async (event, params) => {
       const type = params?.type || 'vision'
       const AiAnalysisProvider = (await import('../ai/AiAnalysisProvider.mjs')).default
@@ -1279,6 +1424,11 @@ export default class Store {
     })
 
     ipcMain.handle('main:updatePluginSource', async (event, sourceName, patch) => {
+      const nextName = patch?.name != null ? normalizeSourceName(patch.name) : ''
+      const currentName = normalizeSourceName(sourceName)
+      if (nextName && nextName !== currentName) {
+        return await this.renamePluginSource(currentName, nextName)
+      }
       return await this.pluginManager.updatePluginSource(sourceName, patch)
     })
 

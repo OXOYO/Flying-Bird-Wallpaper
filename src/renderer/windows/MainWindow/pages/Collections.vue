@@ -565,9 +565,13 @@ const onRefreshModeChange = async (mode) => {
   }
 }
 
+const openCreateDialog = () => {
+  createDialogVisible.value = true
+}
+
 const onHeaderMenuCommand = async (command) => {
   if (command === 'create') {
-    createDialogVisible.value = true
+    openCreateDialog()
     return
   }
   if (command === 'curate') {
@@ -797,7 +801,13 @@ onBeforeUnmount(() => {
             </template>
           </VirtualList>
           <div v-else-if="!collections.length && !loading" class="body-empty">
-            <EmptyHelp :text="t('pages.Collections.empty')" :enable-jump="false" />
+            <EmptyHelp :text="t('pages.Collections.empty')" :enable-jump="false">
+              <template #action>
+                <el-button type="primary" @click="openCreateDialog">
+                  {{ t('pages.Collections.createNew') }}
+                </el-button>
+              </template>
+            </EmptyHelp>
           </div>
           <div
             v-else-if="selectedCollection && !gridItems.length && !loading && !itemsLoading"

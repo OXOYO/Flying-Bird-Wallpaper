@@ -18,10 +18,8 @@ export function useAiAnalysisDashboard(aiSource, options = {}) {
   const loadingAnalysisStats = ref(false)
   let statsTimer = null
 
-  const showAnalysisProgress = computed(() => {
-    const ai = unref(aiSource) || {}
-    return !!(ai.enabled && ai.analysisMode && ai.analysisMode !== 'off')
-  })
+  /** 设置侧栏 AI 分析卡片始终展示（与「启用 AI」开关无关） */
+  const showAnalysisProgress = computed(() => true)
 
   const analysisProgressPercent = computed(() => {
     const s = analysisStats.value
@@ -35,6 +33,7 @@ export function useAiAnalysisDashboard(aiSource, options = {}) {
     const s = analysisStats.value
     const ai = unref(aiSource) || {}
     if (!s) return 'loading'
+    if (!ai.enabled) return 'disabled'
     if (s.running) return 'running'
     if (ai.analysisMode === 'on_demand') return 'onDemand'
     if (analysisProgressPercent.value >= 100 && (s.total ?? 0) > 0) return 'complete'
@@ -45,6 +44,7 @@ export function useAiAnalysisDashboard(aiSource, options = {}) {
   const analysisStatusLabel = computed(() => {
     const map = {
       loading: 'runStatusLoading',
+      disabled: 'runStatusDisabled',
       running: 'runStatusRunning',
       queued: 'runStatusQueued',
       complete: 'runStatusComplete',
@@ -59,6 +59,7 @@ export function useAiAnalysisDashboard(aiSource, options = {}) {
       queued: 'runStatusQueuedHint',
       running: 'statsRunning',
       onDemand: 'statsOnDemandHint',
+      disabled: 'runStatusDisabledHint',
       complete: 'statsComplete'
     }
     const key = map[analysisRunStatus.value]
@@ -75,12 +76,8 @@ export function useAiAnalysisDashboard(aiSource, options = {}) {
     })
   })
 
-  const analysisFooterHint = computed(() => {
-    if (analysisRunStatus.value === 'onDemand') {
-      return t('pages.Setting.aiSetting.statsOnDemandHint')
-    }
-    return ''
-  })
+  /** 状态说明已由右上角状态标签 + Tooltip 承担，底部不再重复提示 */
+  const analysisFooterHint = computed(() => '')
 
   const nowTick = ref(Date.now())
   let tickTimer = null
@@ -156,8 +153,6 @@ export function useAiAnalysisDashboard(aiSource, options = {}) {
   })
 
   const fetchAnalysisStats = async () => {
-    const ai = unref(aiSource) || {}
-    if (!ai.enabled) return
     loadingAnalysisStats.value = true
     try {
       const res = await window.FBW.getAiAnalysisStats()
@@ -169,7 +164,7 @@ export function useAiAnalysisDashboard(aiSource, options = {}) {
 
   const startStatsPolling = () => {
     stopStatsPolling()
-    if (!unref(tabActive) || !showAnalysisProgress.value) {
+    if (!unref(tabActive)) {
       analysisStats.value = null
       return
     }
@@ -195,6 +190,29 @@ export function useAiAnalysisDashboard(aiSource, options = {}) {
     { deep: true }
   )
 
+  const requeueFailedAiAnalysis = async () => {
+    const failed = analysisStats.value?.failed ?? 0
+    if (!failed) return { success: false }
+    try {
+      await ElMessageBox.confirm(t('pages.Setting.aiSetting.requeueFailedConfirm', { count: failed }), {
+        type: 'warning',
+        draggable: true,
+        dangerouslyUseHTMLString: true
+      })
+    } catch {
+      return { success: false, cancelled: true }
+    }
+    const res = await window.FBW.requeueFailedAiAnalysis()
+    if (res?.message) {
+      ElMessage({
+        type: res.success ? 'success' : 'error',
+        message: res.message
+      })
+    }
+    if (res?.success) await fetchAnalysisStats()
+    return res
+  }
+
   onMounted(() => startStatsPolling())
   onUnmounted(() => {
     stopStatsPolling()
@@ -215,6 +233,7 @@ export function useAiAnalysisDashboard(aiSource, options = {}) {
     analysisSpeedTooltip,
     fetchAnalysisStats,
     startStatsPolling,
-    stopStatsPolling
+    stopStatsPolling,
+    requeueFailedAiAnalysis
   }
 }

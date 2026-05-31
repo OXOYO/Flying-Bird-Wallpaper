@@ -10,8 +10,11 @@ import {
   PLUGIN_LOAD_ERROR_CODE,
   resolvePluginAppVersion
 } from '../../common/utils.js'
-
-const SOURCE_NAME_REGEXP = /^[A-Za-z0-9_-]+$/
+import {
+  buildCompositeId,
+  normalizeSourceName,
+  validateSourceName
+} from '../../common/pluginResourceId.js'
 
 export default class PluginManager {
   static _instance = null
@@ -235,11 +238,7 @@ export default class PluginManager {
   }
 
   createPluginKey(sourceName, pluginName) {
-    return `${sourceName}:${pluginName}`
-  }
-
-  normalizeSourceName(name) {
-    return String(name || '').trim()
+    return buildCompositeId(sourceName, pluginName)
   }
 
   getDefaultSources() {
@@ -364,8 +363,9 @@ export default class PluginManager {
 
   async addPluginSource(source) {
     try {
-      const name = this.normalizeSourceName(source?.name)
-      if (!name || !SOURCE_NAME_REGEXP.test(name)) {
+      const name = normalizeSourceName(source?.name)
+      const nameCheck = validateSourceName(name)
+      if (!nameCheck.valid) {
         return { success: false, message: t(this.opKey('invalidSourceName')) }
       }
       if (!source?.type || !['github', 'local'].includes(source.type)) {
@@ -409,7 +409,7 @@ export default class PluginManager {
   }
 
   async removePluginSource(sourceName) {
-    const name = this.normalizeSourceName(sourceName)
+    const name = normalizeSourceName(sourceName)
     const listRes = await this.getPluginSources()
     const sources = listRes.data || []
     const target = sources.find((item) => item.name === name)
@@ -433,7 +433,7 @@ export default class PluginManager {
   }
 
   async updatePluginSource(sourceName, patch) {
-    const name = this.normalizeSourceName(sourceName)
+    const name = normalizeSourceName(sourceName)
     const listRes = await this.getPluginSources()
     const sources = listRes.data || []
     const idx = sources.findIndex((item) => item.name === name)
@@ -444,26 +444,15 @@ export default class PluginManager {
     const next = {
       ...sources[idx],
       ...patch,
-      name: patch?.name ? this.normalizeSourceName(patch.name) : sources[idx].name,
+      name: patch?.name ? normalizeSourceName(patch.name) : sources[idx].name,
       updatedAt: new Date().toISOString()
     }
-    if (!SOURCE_NAME_REGEXP.test(next.name)) {
+    const nameCheck = validateSourceName(next.name)
+    if (!nameCheck.valid) {
       return { success: false, message: t(this.opKey('invalidSourceName')) }
     }
     if (sources.some((item, i) => i !== idx && item.name === next.name)) {
       return { success: false, message: t(this.opKey('sourceNameExists')) }
-    }
-    if (next.name !== sources[idx].name) {
-      const installedPlugins = await this.getSysRecordData('plugins', {})
-      const relatedInstalledCount = Object.values(installedPlugins).filter(
-        (item) => item && item.sourceName === sources[idx].name
-      ).length
-      if (relatedInstalledCount > 0) {
-        return {
-          success: false,
-          message: t(this.opKey('installedPluginsBlockRename'), { count: relatedInstalledCount })
-        }
-      }
     }
 
     const validation = await this.validateSourceStructure(next)
@@ -738,10 +727,12 @@ export default class PluginManager {
         pluginKey,
         sourceName,
         name: manifest.name,
+        value: pluginKey,
+        label: pluginKey,
         logo: manifest.logo,
         logoUrl: this.resolveLogoUrl(source, pluginName, manifest.logo, version),
         version: manifest.version,
-        displayName: manifest.displayName,
+        displayName: pluginKey,
         description: manifest.description,
         author: manifest.author,
         site: manifest.site,
@@ -838,10 +829,12 @@ export default class PluginManager {
             pluginKey,
             sourceName,
             name: manifest.name,
+            value: pluginKey,
+            label: pluginKey,
             logo: manifest.logo,
             logoUrl: this.resolveInstalledLogoUrl(pluginDir, manifest.logo),
             version: manifest.version,
-            displayName: manifest.displayName,
+            displayName: pluginKey,
             description: manifest.description,
             author: manifest.author,
             site: manifest.site,

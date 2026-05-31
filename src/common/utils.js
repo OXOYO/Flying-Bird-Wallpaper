@@ -222,7 +222,7 @@ export const resolveApiUserMessage = (input, t) => {
  * @param {string|object|null|undefined} input - 推荐传入完整响应对象；兼容仅 message 字符串。
  */
 /**
- * 解析远程资源密钥（兼容 official:unsplash 与历史短名 unsplash 等键名）
+ * 解析远程资源密钥（键名须与 resourceName 复合 ID 完全一致）
  * @param {string} resourceName
  * @param {Record<string, string>} secretKeys
  */
@@ -230,33 +230,9 @@ export const resolveRemoteSecretKey = (resourceName, secretKeys = {}) => {
   if (!secretKeys || typeof secretKeys !== 'object') return ''
   const key = String(resourceName || '').trim()
   if (!key) return ''
-
-  const shortName = key.includes(':') ? key.split(':').pop() : key
-  const matchedRaw = []
-
-  const pushRaw = (raw) => {
-    if (raw) matchedRaw.push(String(raw))
-  }
-
-  pushRaw(secretKeys[key])
-  if (shortName) pushRaw(secretKeys[shortName])
-
-  for (const [storedKey, raw] of Object.entries(secretKeys)) {
-    if (!raw) continue
-    if (storedKey === key || storedKey === shortName || storedKey.endsWith(`:${shortName}`)) {
-      pushRaw(raw)
-    }
-  }
-
-  const normalized = matchedRaw
-    .map((raw) => normalizeRemoteSecretKey(key, raw))
-    .filter(Boolean)
-
-  if (!normalized.length) return ''
-  // 同一密钥可能同时存在 official:unsplash 与 unsplash，取最短有效值（避免重复拼接的脏数据）
-  return normalized.reduce((shortest, current) =>
-    !shortest || current.length < shortest.length ? current : shortest
-  )
+  const raw = secretKeys[key]
+  if (!raw) return ''
+  return normalizeRemoteSecretKey(key, raw)
 }
 
 /** 修复密钥被重复拼接两次（迁移或历史数据可能导致） */
@@ -279,47 +255,8 @@ export const normalizeRemoteSecretKey = (resourceName, raw) => {
 export const hasRemoteSecretKey = (resourceName, secretKeys = {}) =>
   Boolean(resolveRemoteSecretKey(resourceName, secretKeys))
 
-/**
- * 将旧版短名密钥（unsplash）迁移到新版插件源名（official:unsplash）
- * @param {Record<string, string>} secretKeys
- * @param {string[]} resourceNames 当前已加载插件的 resourceName 列表
- */
-export const migrateRemoteResourceSecretKeys = (secretKeys, resourceNames = []) => {
-  if (!secretKeys || typeof secretKeys !== 'object') return secretKeys
-  const next = { ...secretKeys }
-  let changed = false
-
-  for (const [storedKey, raw] of Object.entries(next)) {
-    const normalized = normalizeRemoteSecretKey(storedKey, raw)
-    if (normalized !== raw) {
-      next[storedKey] = normalized
-      changed = true
-    }
-  }
-
-  for (const resourceName of resourceNames) {
-    const fullName = String(resourceName || '').trim()
-    if (!fullName.includes(':')) continue
-
-    const shortName = fullName.split(':').pop()
-    const legacy = shortName ? next[shortName] : ''
-    const existing = next[fullName]
-    const bestLegacy = legacy
-      ? normalizeRemoteSecretKey(fullName, legacy)
-      : ''
-    const bestExisting = existing ? normalizeRemoteSecretKey(fullName, existing) : ''
-
-    if (bestLegacy && (!bestExisting || bestLegacy.length < bestExisting.length)) {
-      next[fullName] = bestLegacy
-      changed = true
-    } else if (bestExisting && bestExisting !== existing) {
-      next[fullName] = bestExisting
-      changed = true
-    }
-  }
-
-  return changed ? next : secretKeys
-}
+/** @deprecated 插件资源键已统一为 源_插件，由 pluginResourceMigration 一次性处理 */
+export const migrateRemoteResourceSecretKeys = (secretKeys) => secretKeys
 
 export const isTransientSearchFailure = (input) => {
   const res = normalizeApiErrorInput(input)

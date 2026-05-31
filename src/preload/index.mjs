@@ -277,6 +277,8 @@ const api = {
   updatePlugin: (...args) => ipcRenderer.invoke('main:updatePlugin', ...args),
 
   analyzeResource: (...args) => ipcRenderer.invoke('main:analyzeResource', ...args),
+  resetAiAnalysis: (...args) => ipcRenderer.invoke('main:resetAiAnalysis', ...args),
+  requeueFailedAiAnalysis: (...args) => ipcRenderer.invoke('main:requeueFailedAiAnalysis', ...args),
   testAiConnection: (...args) => ipcRenderer.invoke('main:testAiConnection', ...args),
   listAiModels: (...args) => ipcRenderer.invoke('main:listAiModels', ...args),
   getAiAnalysisStats: (...args) => ipcRenderer.invoke('main:getAiAnalysisStats', ...args),

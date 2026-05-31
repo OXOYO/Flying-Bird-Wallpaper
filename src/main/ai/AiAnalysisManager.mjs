@@ -12,6 +12,10 @@ import {
   resolveEffectiveVisionTimeout
 } from './aiConstants.mjs'
 import { t } from '../../i18n/server.js'
+import {
+  buildClearAutoCurateLatchFields,
+  isAutoCurateSettled
+} from '../store/collectionCurateGate.mjs'
 
 export default class AiAnalysisManager {
   static _instance = null
@@ -38,6 +42,7 @@ export default class AiAnalysisManager {
     this.embeddingManager = embeddingManager
     this.provider = AiAnalysisProvider.getInstance(logger, settingManager)
     this.isRunning = false
+    this.maintenancePaused = false
     this.onAnalysisDone = null
     this.onAnalysisBatchDone = null
     this._recentAnalysisMs = []
@@ -107,7 +112,12 @@ export default class AiAnalysisManager {
     }
   }
 
+  setMaintenancePaused(paused) {
+    this.maintenancePaused = !!paused
+  }
+
   shouldRunBackground() {
+    if (this.maintenancePaused) return false
     const ai = this.ai
     if (!this.provider.isEnabled()) return false
     if (ai.analysisMode !== 'background_slow' && ai.analysisMode !== 'new_only') return false
@@ -129,12 +139,21 @@ export default class AiAnalysisManager {
     return null
   }
 
-  markAnalysisSkipped(row, reason) {
+  _upsertAiStatus(resourceId, status, failCount = 0) {
     this.db
       .prepare(
-        `UPDATE fbw_resources SET aiAnalysisStatus = ?, updated_at = datetime('now', 'localtime') WHERE id = ?`
+        `INSERT INTO fbw_resource_ai (resourceId, aiAnalysisStatus, aiAnalysisFailCount, updated_at)
+         VALUES (?, ?, ?, datetime('now', 'localtime'))
+         ON CONFLICT(resourceId) DO UPDATE SET
+           aiAnalysisStatus = excluded.aiAnalysisStatus,
+           aiAnalysisFailCount = excluded.aiAnalysisFailCount,
+           updated_at = excluded.updated_at`
       )
-      .run(AI_ANALYSIS_STATUS.SKIPPED, row.id)
+      .run(resourceId, status, failCount)
+  }
+
+  markAnalysisSkipped(row, reason) {
+    this._upsertAiStatus(row.id, AI_ANALYSIS_STATUS.SKIPPED, Number(row.aiAnalysisFailCount) || 0)
     this.logger.warn(
       `[AiAnalysisManager] skip analyze id=${row.id} reason=${reason} file=${row.filePath || ''}`
     )
@@ -149,7 +168,11 @@ export default class AiAnalysisManager {
   async analyzeResourceById(resourceId, options = {}) {
     const row = this.db
       .prepare(
-        `SELECT id, filePath, fileType, resourceName, title, desc, fileName, aiAnalysisFailCount FROM fbw_resources WHERE id = ?`
+        `SELECT r.id, r.filePath, r.fileType, r.resourceName, r.title, r.desc, r.fileName,
+                COALESCE(ai.aiAnalysisFailCount, 0) AS aiAnalysisFailCount
+         FROM fbw_resources r
+         LEFT JOIN fbw_resource_ai ai ON ai.resourceId = r.id
+         WHERE r.id = ?`
       )
       .get(resourceId)
     if (!row) {
@@ -171,11 +194,7 @@ export default class AiAnalysisManager {
     const failCount = prevCount + 1
     const maxRetries = resolveAnalysisMaxRetries(this.ai)
     if (respectRetryLimit && failCount >= maxRetries) {
-      this.db
-        .prepare(
-          `UPDATE fbw_resources SET aiAnalysisStatus = ?, aiAnalysisFailCount = ?, updated_at = datetime('now', 'localtime') WHERE id = ?`
-        )
-        .run(AI_ANALYSIS_STATUS.SKIPPED, failCount, row.id)
+      this._upsertAiStatus(row.id, AI_ANALYSIS_STATUS.SKIPPED, failCount)
       this.logger.warn(
         `[AiAnalysisManager] skip analyze id=${row.id} reason=max_retries failCount=${failCount} max=${maxRetries} file=${row.filePath || ''}`
       )
@@ -187,11 +206,7 @@ export default class AiAnalysisManager {
       }
     }
 
-    this.db
-      .prepare(
-        `UPDATE fbw_resources SET aiAnalysisStatus = ?, aiAnalysisFailCount = ?, updated_at = datetime('now', 'localtime') WHERE id = ?`
-      )
-      .run(AI_ANALYSIS_STATUS.FAILED, failCount, row.id)
+    this._upsertAiStatus(row.id, AI_ANALYSIS_STATUS.FAILED, failCount)
     row.aiAnalysisFailCount = failCount
     return { success: false, message: String(err.message || err) }
   }
@@ -213,28 +228,43 @@ export default class AiAnalysisManager {
     try {
       const result = await this.provider.analyzeImage(row.filePath)
       modelMs = Date.now() - modelStartedAt
-      const update = this.db.prepare(`
-        UPDATE fbw_resources SET
-          score = @score,
-          title = CASE WHEN @title != '' THEN @title ELSE title END,
-          desc = CASE WHEN @desc != '' THEN @desc ELSE desc END,
-          summary = @summary,
-          nsfwLevel = @nsfwLevel,
-          aiAnalysisStatus = @status,
-          aiAnalyzedAt = datetime('now', 'localtime'),
-          aiAnalysisFailCount = 0,
-          updated_at = datetime('now', 'localtime')
-        WHERE id = @id
-      `)
-      update.run({
-        id: row.id,
-        score: result.score,
-        title: result.title,
-        desc: result.desc,
-        summary: result.summary,
-        nsfwLevel: result.nsfwLevel,
-        status: AI_ANALYSIS_STATUS.DONE
-      })
+      const safeForWork = result.safeForWork === false ? 0 : 1
+      this.db
+        .prepare(
+          `INSERT INTO fbw_resource_ai (
+            resourceId, aiTitle, aiDesc, summary, aiScore, nsfwLevel, safeForWork,
+            aiAnalysisStatus, aiAnalyzedAt, aiAnalysisFailCount, updated_at
+          ) VALUES (
+            @id, @title, @desc, @summary, @score, @nsfwLevel, @safeForWork,
+            @status, datetime('now', 'localtime'), 0, datetime('now', 'localtime')
+          )
+          ON CONFLICT(resourceId) DO UPDATE SET
+            aiTitle = excluded.aiTitle,
+            aiDesc = excluded.aiDesc,
+            summary = excluded.summary,
+            aiScore = excluded.aiScore,
+            nsfwLevel = excluded.nsfwLevel,
+            safeForWork = excluded.safeForWork,
+            aiAnalysisStatus = excluded.aiAnalysisStatus,
+            aiAnalyzedAt = excluded.aiAnalyzedAt,
+            aiAnalysisFailCount = 0,
+            updated_at = excluded.updated_at`
+        )
+        .run({
+          id: row.id,
+          score: result.score,
+          title: result.title || '',
+          desc: result.desc || '',
+          summary: result.summary,
+          nsfwLevel: result.nsfwLevel,
+          safeForWork,
+          status: AI_ANALYSIS_STATUS.DONE
+        })
+      this.db
+        .prepare(
+          `UPDATE fbw_resources SET updated_at = datetime('now', 'localtime') WHERE id = ?`
+        )
+        .run(row.id)
 
       const ai = this.ai
       if (result.tags?.length && ai.enabled && !ai.legacyJiebaTags) {
@@ -249,9 +279,11 @@ export default class AiAnalysisManager {
             this.logger.warn(`[AiAnalysisManager] text embedding ${row.id}: ${err}`)
           })
         }
-        this.embeddingManager.upsertImageForResource(row.id).catch((err) => {
-          this.logger.warn(`[AiAnalysisManager] visual embedding ${row.id}: ${err}`)
-        })
+        if (ai.enabled) {
+          this.embeddingManager.upsertImageForResource(row.id).catch((err) => {
+            this.logger.warn(`[AiAnalysisManager] visual embedding ${row.id}: ${err}`)
+          })
+        }
       })
 
       if (typeof this.onAnalysisDone === 'function') {
@@ -280,13 +312,15 @@ export default class AiAnalysisManager {
   _buildPendingQuerySql() {
     const mode = this.ai.analysisMode
     let query_sql = `
-      SELECT id, filePath, fileType, resourceName, title, desc, fileName, aiAnalysisFailCount
-      FROM fbw_resources
-      WHERE fileType = 'image'
-        AND aiAnalysisStatus IN ('pending', 'failed')
+      SELECT r.id, r.filePath, r.fileType, r.resourceName, r.title, r.desc, r.fileName,
+             COALESCE(ai.aiAnalysisFailCount, 0) AS aiAnalysisFailCount
+      FROM fbw_resources r
+      LEFT JOIN fbw_resource_ai ai ON ai.resourceId = r.id
+      WHERE r.fileType = 'image'
+        AND (ai.resourceId IS NULL OR ai.aiAnalysisStatus IN ('pending', 'failed'))
     `
     if (mode === 'new_only') {
-      query_sql += ` AND aiAnalyzedAt IS NULL`
+      query_sql += ` AND (ai.resourceId IS NULL OR ai.aiAnalyzedAt IS NULL)`
     }
     return query_sql
   }
@@ -300,8 +334,11 @@ export default class AiAnalysisManager {
   countPendingInQueue() {
     const row = this.db
       .prepare(
-        `SELECT COUNT(*) as c FROM fbw_resources WHERE fileType='image' AND aiAnalysisStatus IN ('pending','failed')${
-          this.ai.analysisMode === 'new_only' ? ' AND aiAnalyzedAt IS NULL' : ''
+        `SELECT COUNT(*) as c FROM fbw_resources r
+         LEFT JOIN fbw_resource_ai ai ON ai.resourceId = r.id
+         WHERE r.fileType='image'
+           AND (ai.resourceId IS NULL OR ai.aiAnalysisStatus IN ('pending','failed'))${
+          this.ai.analysisMode === 'new_only' ? ' AND (ai.resourceId IS NULL OR ai.aiAnalyzedAt IS NULL)' : ''
         }`
       )
       .get()
@@ -396,7 +433,11 @@ export default class AiAnalysisManager {
   getStats() {
     const rows = this.db
       .prepare(
-        `SELECT aiAnalysisStatus as status, COUNT(*) as count FROM fbw_resources WHERE fileType='image' GROUP BY aiAnalysisStatus`
+        `SELECT COALESCE(ai.aiAnalysisStatus, 'pending') AS status, COUNT(*) AS count
+         FROM fbw_resources r
+         LEFT JOIN fbw_resource_ai ai ON ai.resourceId = r.id
+         WHERE r.fileType='image'
+         GROUP BY status`
       )
       .all()
     const map = {}
@@ -422,8 +463,9 @@ export default class AiAnalysisManager {
             .prepare(
               `SELECT COUNT(*) as c
                FROM fbw_resources r
+               INNER JOIN fbw_resource_ai ai ON ai.resourceId = r.id
                WHERE r.fileType = 'image'
-                 AND r.aiAnalysisStatus = ?
+                 AND ai.aiAnalysisStatus = ?
                  AND NOT EXISTS (
                    SELECT 1 FROM fbw_resource_image_vec_blob v
                    WHERE v.resourceId = r.id AND v.model = ?
@@ -456,9 +498,196 @@ export default class AiAnalysisManager {
   markPendingForResources(ids = []) {
     if (!ids.length) return
     const stmt = this.db.prepare(
-      `UPDATE fbw_resources SET aiAnalysisStatus='pending', aiAnalysisFailCount=0 WHERE id = ? AND fileType='image'`
+      `INSERT INTO fbw_resource_ai (resourceId, aiAnalysisStatus, aiAnalysisFailCount, updated_at)
+       VALUES (?, 'pending', 0, datetime('now', 'localtime'))
+       ON CONFLICT(resourceId) DO UPDATE SET
+         aiAnalysisStatus='pending', aiAnalysisFailCount=0, updated_at=datetime('now', 'localtime')`
     )
     const tx = this.db.transaction(() => ids.forEach((id) => stmt.run(id)))
     tx()
+  }
+
+  _decrementWordCountsForResourceIds(resourceIds = []) {
+    if (!resourceIds.length) return
+    const ph = resourceIds.map(() => '?').join(',')
+    const wordRows = this.db
+      .prepare(
+        `SELECT DISTINCT wordId FROM fbw_resource_words WHERE resourceId IN (${ph})`
+      )
+      .all(...resourceIds)
+    const wordIds = wordRows.map((r) => r.wordId).filter((id) => id != null)
+    this.db
+      .prepare(`DELETE FROM fbw_resource_words WHERE resourceId IN (${ph})`)
+      .run(...resourceIds)
+    if (!wordIds.length) return
+    const wph = wordIds.map(() => '?').join(',')
+    this.db
+      .prepare(
+        `UPDATE fbw_words SET count = MAX(count - 1, 0), updated_at = datetime('now', 'localtime') WHERE id IN (${wph})`
+      )
+      .run(...wordIds)
+    this.db.prepare(`DELETE FROM fbw_words WHERE count <= 0`).run()
+  }
+
+  _deleteEmbeddingsForResourceIds(resourceIds = []) {
+    if (!resourceIds.length) return
+    const ph = resourceIds.map(() => '?').join(',')
+    this.db.prepare(`DELETE FROM fbw_resource_vec_blob WHERE resourceId IN (${ph})`).run(...resourceIds)
+    this.db
+      .prepare(`DELETE FROM fbw_resource_embeddings WHERE resourceId IN (${ph})`)
+      .run(...resourceIds)
+    this.db
+      .prepare(`DELETE FROM fbw_resource_image_vec_blob WHERE resourceId IN (${ph})`)
+      .run(...resourceIds)
+    try {
+      this.db.prepare(`DELETE FROM fbw_vec_index WHERE resourceId IN (${ph})`).run(...resourceIds)
+    } catch {
+      // sqlite-vec 表可能不存在
+    }
+  }
+
+  /**
+   * 清空库内全部图片的 AI 分析数据（评分、摘要、标题、描述、敏感等级、标签、向量等），并标为待分析。
+   * @returns {{ success: boolean, message: string, data?: { affected: number, autoPump: boolean } }}
+   */
+  clearAllAiAnalysisData() {
+    const imageWhere = `fileType = 'image'`
+    const count =
+      this.db.prepare(`SELECT COUNT(*) as c FROM fbw_resources WHERE ${imageWhere}`).get()?.c || 0
+    const autoCollectionCount =
+      this.db.prepare(`SELECT COUNT(*) as c FROM fbw_collections WHERE source = 'auto'`).get()?.c || 0
+    if (!count) {
+      return {
+        success: true,
+        message: t('pages.Utils.resetAiAnalysisEmpty'),
+        data: { affected: 0, autoCollectionsRemoved: 0, autoPump: false }
+      }
+    }
+
+    const tx = this.db.transaction(() => {
+      this.db
+        .prepare(
+          `DELETE FROM fbw_resource_words WHERE resourceId IN (SELECT id FROM fbw_resources WHERE ${imageWhere})`
+        )
+        .run()
+      this.db
+        .prepare(
+          `DELETE FROM fbw_words WHERE id NOT IN (SELECT DISTINCT wordId FROM fbw_resource_words WHERE wordId IS NOT NULL)`
+        )
+        .run()
+
+      this.db
+        .prepare(
+          `DELETE FROM fbw_resource_vec_blob WHERE resourceId IN (SELECT id FROM fbw_resources WHERE ${imageWhere})`
+        )
+        .run()
+      this.db
+        .prepare(
+          `DELETE FROM fbw_resource_embeddings WHERE resourceId IN (SELECT id FROM fbw_resources WHERE ${imageWhere})`
+        )
+        .run()
+      this.db
+        .prepare(
+          `DELETE FROM fbw_resource_image_vec_blob WHERE resourceId IN (SELECT id FROM fbw_resources WHERE ${imageWhere})`
+        )
+        .run()
+      try {
+        this.db
+          .prepare(
+            `DELETE FROM fbw_vec_index WHERE resourceId IN (SELECT id FROM fbw_resources WHERE ${imageWhere})`
+          )
+          .run()
+      } catch {
+        // sqlite-vec 表可能不存在
+      }
+
+      this.db
+        .prepare(`DELETE FROM fbw_resource_ai WHERE resourceId IN (SELECT id FROM fbw_resources WHERE ${imageWhere})`)
+        .run()
+
+      this.db
+        .prepare(
+          `DELETE FROM fbw_collection_items WHERE collectionId IN (SELECT id FROM fbw_collections WHERE source = 'auto')`
+        )
+        .run()
+      this.db.prepare(`DELETE FROM fbw_collections WHERE source = 'auto'`).run()
+    })
+    tx()
+
+    const ai = this.ai
+    if (isAutoCurateSettled(ai)) {
+      const cleared = buildClearAutoCurateLatchFields(ai)
+      this.settingManager.settingData.ai = cleared
+      void this.settingManager.updateSettingData({ ai: cleared }).catch((err) => {
+        this.logger.warn(`[AiAnalysisManager] clearAllAiAnalysisData: clear autoCurate latch failed: ${err}`)
+      })
+    }
+    const autoPump =
+      !!this.provider.isEnabled() &&
+      ai.analysisMode !== 'off' &&
+      ai.analysisMode !== 'on_demand'
+
+    this.logger.info(
+      `[AiAnalysisManager] clearAllAiAnalysisData affected=${count} autoCollections=${autoCollectionCount} autoPump=${autoPump}`
+    )
+
+    const msgParams = { count, autoCollections: autoCollectionCount }
+    let message = t('pages.Utils.resetAiAnalysisSuccess', msgParams)
+    if (!this.provider.isEnabled()) {
+      message = t('pages.Utils.resetAiAnalysisSuccessNoAi', msgParams)
+    } else if (!autoPump) {
+      message = t('pages.Utils.resetAiAnalysisSuccessNoPump', msgParams)
+    }
+
+    return {
+      success: true,
+      message,
+      data: { affected: count, autoCollectionsRemoved: autoCollectionCount, autoPump }
+    }
+  }
+
+  /** @deprecated 使用 clearAllAiAnalysisData */
+  resetAiAnalysisScope() {
+    return this.clearAllAiAnalysisData()
+  }
+
+  /** 将全部 failed 标为 pending 并入队（不改动分析结果字段） */
+  requeueFailedAiAnalysis() {
+    const row = this.db
+      .prepare(
+        `SELECT COUNT(*) as c FROM fbw_resource_ai ai
+         JOIN fbw_resources r ON r.id = ai.resourceId
+         WHERE r.fileType = 'image' AND ai.aiAnalysisStatus = ?`
+      )
+      .get(AI_ANALYSIS_STATUS.FAILED)
+    const count = row?.c || 0
+    if (!count) {
+      return { success: true, message: t('pages.Setting.aiSetting.requeueFailedEmpty'), data: { affected: 0, autoPump: false } }
+    }
+
+    this.db
+      .prepare(
+        `UPDATE fbw_resource_ai SET aiAnalysisStatus = ?, aiAnalysisFailCount = 0, updated_at = datetime('now', 'localtime')
+         WHERE aiAnalysisStatus = ?
+           AND resourceId IN (SELECT id FROM fbw_resources WHERE fileType = 'image')`
+      )
+      .run(AI_ANALYSIS_STATUS.PENDING, AI_ANALYSIS_STATUS.FAILED)
+
+    const ai = this.ai
+    const autoPump =
+      !!this.provider.isEnabled() &&
+      ai.analysisMode !== 'off' &&
+      ai.analysisMode !== 'on_demand'
+
+    this.logger.info(`[AiAnalysisManager] requeueFailed affected=${count} autoPump=${autoPump}`)
+
+    let message = t('pages.Setting.aiSetting.requeueFailedSuccess', { count })
+    if (!this.provider.isEnabled()) {
+      message = t('pages.Setting.aiSetting.requeueFailedSuccessNoAi', { count })
+    } else if (!autoPump) {
+      message = t('pages.Setting.aiSetting.requeueFailedSuccessNoPump', { count })
+    }
+
+    return { success: true, message, data: { affected: count, autoPump } }
   }
 }

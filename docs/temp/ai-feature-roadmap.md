@@ -1,9 +1,9 @@
 # 飞鸟壁纸 AI 能力完整功能清单
 
-> 文档版本：**v1.9**  
-> 整理日期：2026-05-29  
+> 文档版本：**v2.0**  
+> 整理日期：2026-05-27  
 > 状态：**2.0.0 核心已落地**；找相似方案 C + 远程画面向量 + **合集画面向量**已落地；用户合集 **regenPrompt/标签扩展**已落地；部分 P3/P4 仍为规划  
-> 关联：[ai-dev-plan.md](./ai-dev-plan.md) · [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) · [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) · [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) · [README.md](./README.md)
+> 关联：[data-model-resources-and-ai.md](./data-model-resources-and-ai.md) · [ai-dev-plan.md](./ai-dev-plan.md) · [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) · [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) · [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) · [README.md](./README.md)
 
 **图例：** ✅ 已实现 · 🟡 部分实现 · ⬜ 未开始
 
@@ -51,7 +51,9 @@
 | VectorCluster | ✅ | K-Means 氛围聚类 |
 | CollectionCurator | ✅ | 自动策展三阶段 |
 | TaskScheduler | ✅ | `aiAnalysis`、`collectionCurator`、`collectionsRefresh` |
-| schemaUpgrade | ✅ | 旧库补列 `source` 等 |
+| schemaUpgrade | ✅ | 旧库补列；**`migrateResourceAiSplitV1`**（AI 附表） |
+| resourceAiSql | ✅ | `fbw_resource_ai`、JOIN、列表投影 |
+| pluginResourceId | ✅ | 本地 `resourceName` = `源名_插件名` |
 
 ### 设置项 `settingData.ai`（已实现字段）
 
@@ -67,7 +69,7 @@
 
 | ID | 功能 | 状态 | 说明 |
 |----|------|------|------|
-| AI-001 | AI 美学评分 | ✅ | 写入 `score` |
+| AI-001 | AI 美学评分 | ✅ | 写入 **`fbw_resource_ai.aiScore`**（列表投影 `score`） |
 | AI-002 | AI 标签 | ✅ | `applyTagsFromAnalysis` → `fbw_words` |
 | AI-003 | 自动标题/描述 | ✅ | 分析 pipeline |
 | AI-004 | summary | ✅ | 预览/搜索 |
@@ -81,7 +83,11 @@
 | AI-009 | 分析前缩图 | ✅ | `AiVisionImagePrep.mjs` |
 | AI-010 | 视觉动态超时 | ✅ | `resolveEffectiveVisionTimeout` |
 | AI-011 | 分析耗时日志 | ✅ | `[AiVisionPrep]`、`vision-http modelMs` |
-| AI-012 | 后台失败重试上限 | ✅ | `analysisMaxRetries`（默认 1，UI 隐藏）+ `aiAnalysisFailCount`；达上限 → `skipped`；手动分析不限 |
+| AI-012 | 后台失败重试上限 | ✅ | `analysisMaxRetries`（默认 1，UI 隐藏）+ **`fbw_resource_ai.aiAnalysisFailCount`**；达上限 → `skipped`；手动分析不限 |
+| AI-013 | 清空库内 AI 分析数据 | ✅ | 工具页 → `resetAiAnalysis`；删附表+标签+向量+**系统推荐合集**；保留主表插件 `title`/`desc` 与用户合集 |
+| AI-014 | 失败项重新入队 | ✅ | 设置进度卡失败 chip → `requeueFailedAiAnalysis` |
+| AI-015 | AI 字段附表拆分 | ✅ | `fbw_resource_ai`；主表 `qualityScore`；启动迁移 |
+| AI-016 | 分析进度卡常显 | ✅ | 与 `ai.enabled` 解耦；`BaseSetting` / `AiSetting` 均挂载 |
 
 ### 4.2 发现与搜索（P1）
 
@@ -274,6 +280,7 @@ AI 助手、AIGC 工具
 
 ## 10. 相关文档
 
+- [data-model-resources-and-ai.md](./data-model-resources-and-ai.md) — 主表 / AI 附表
 - [ai-dev-plan.md](./ai-dev-plan.md) — 开发与验收
 - [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) — 策展规则、合集分页、评分/上限设置
 - [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) — 缩图、超时、语义搜索、设置 UX
@@ -297,3 +304,4 @@ AI 助手、AIGC 工具
 | **v1.7** | 2026-05-29 | 方案 C、AI-008c、远程画面向量、`EmbedRequestBuilder`；移除 `findSimilarMode` 等用户设置 |
 | **v1.8** | 2026-05-29 | 合集画面向量：策展 K-Means、AI-208b 部分、`VisualCollectionSearch`、关键词优先 |
 | **v1.9** | 2026-05-29 | `regenPrompt` 默认 false；`expandCollectionKeywordTags`；实体词禁用画面补充 |
+| **v2.0** | 2026-05-27 | AI-013～016：附表拆分、清空 AI、失败重试、进度卡常显；AI-001/012 字段路径更新 |

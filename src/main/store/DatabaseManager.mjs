@@ -43,6 +43,7 @@ export default class DatabaseManager {
       this.db = new Database(process.env.FBW_DATABASE_FILE_PATH)
       this.db.exec('PRAGMA journal_mode = WAL')
       this.db.exec('PRAGMA busy_timeout = 5000')
+      this.db.exec('PRAGMA foreign_keys = ON')
 
       // 删除指定表
       if (Array.isArray(dropTables) && dropTables.length) {

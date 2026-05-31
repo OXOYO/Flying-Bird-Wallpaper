@@ -69,7 +69,12 @@ export default class EmbeddingManager {
   }
 
   buildResourceText(row, resourceId = row?.id) {
-    const parts = [row.title, row.desc, row.summary, row.fileName].filter(Boolean)
+    const parts = [
+      row.aiTitle || row.title,
+      row.aiDesc || row.desc,
+      row.summary,
+      row.fileName
+    ].filter(Boolean)
     const id = Number(resourceId)
     if (Number.isFinite(id) && id > 0) {
       try {
@@ -95,7 +100,15 @@ export default class EmbeddingManager {
   async upsertForResource(resourceId) {
     if (!this.ai.enabled) return { success: false }
     const row = this.db
-      .prepare(`SELECT id, title, desc, summary, fileName FROM fbw_resources WHERE id = ?`)
+      .prepare(
+        `SELECT r.id, r.title, r.desc, r.fileName,
+                COALESCE(ai.summary, '') AS summary,
+                COALESCE(ai.aiTitle, '') AS aiTitle,
+                COALESCE(ai.aiDesc, '') AS aiDesc
+         FROM fbw_resources r
+         LEFT JOIN fbw_resource_ai ai ON ai.resourceId = r.id
+         WHERE r.id = ?`
+      )
       .get(resourceId)
     if (!row) return { success: false, message: 'resource not found' }
     const text = this.buildResourceText(row, resourceId)
@@ -306,7 +319,8 @@ export default class EmbeddingManager {
             `SELECT COUNT(*) as c
              FROM fbw_resource_image_vec_blob v
              JOIN fbw_resources r ON r.id = v.resourceId
-             WHERE r.fileType='image' AND r.aiAnalysisStatus = 'done' AND v.model = ?`
+             INNER JOIN fbw_resource_ai ai ON ai.resourceId = r.id
+             WHERE r.fileType='image' AND ai.aiAnalysisStatus = 'done' AND v.model = ?`
           )
           .get(model)?.c || 0
       )
@@ -384,6 +398,7 @@ export default class EmbeddingManager {
 
   _scheduleVisualPumpContinue(locks) {
     setImmediate(() => {
+      if (!this.ai.enabled) return
       if (locks.visualEmbed) return
       const activeModel = this.getActiveVisualModelId()
       const pending = this._fetchVisualBackfillBatch(activeModel, 1)
@@ -396,6 +411,7 @@ export default class EmbeddingManager {
    * 画面向量补算：内置连续大批次；远程小批次并短暂让出 GPU。
    */
   pumpVisualEmbedBackfill(locks) {
+    if (!this.ai.enabled) return
     if (locks.visualEmbed) return
     locks.visualEmbed = true
     this._visualBackfillRunning = true
@@ -409,6 +425,7 @@ export default class EmbeddingManager {
     const run = async () => {
       try {
         while (true) {
+          if (!this.ai.enabled) break
           const list = this._fetchVisualBackfillBatch(activeModel, batchSize)
           if (!list.length) break
 

@@ -60,9 +60,13 @@ const jumpToPage = () => {
         ></path>
       </svg>
     </template>
-    <el-button v-if="props.enableJump" type="primary" @click="jumpToPage">{{
-      props.jumpText || $t('emptyHelp.jumpText')
-    }}</el-button>
+    <template #default>
+      <slot name="action">
+        <el-button v-if="props.enableJump" type="primary" @click="jumpToPage">{{
+          props.jumpText || $t('emptyHelp.jumpText')
+        }}</el-button>
+      </slot>
+    </template>
   </el-empty>
 </template>
 
@@ -84,5 +88,18 @@ const jumpToPage = () => {
   width: 100px;
   height: 100px;
   fill: var(--el-color-primary);
+}
+
+/* 与探索页无数据态一致：收紧插图 / 文案 / 按钮间距 */
+.empty-help :deep(.el-empty__image) {
+  margin-bottom: 0;
+}
+
+.empty-help :deep(.el-empty__description) {
+  margin-top: 8px;
+}
+
+.empty-help :deep(.el-empty__bottom) {
+  margin-top: 12px;
 }
 </style>

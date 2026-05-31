@@ -50,7 +50,8 @@ const {
   analysisProgressSummary,
   analysisFooterHint,
   analysisSpeedLine,
-  analysisSpeedTooltip
+  analysisSpeedTooltip,
+  requeueFailedAiAnalysis
 } = useAiAnalysisDashboard(computed(() => settingData.value?.ai || {}), {
   tabActive: toRef(props, 'tabActive')
 })
@@ -472,7 +473,6 @@ defineExpose({
         </el-anchor>
       </el-scrollbar>
       <AiAnalysisDashboardPanel
-        v-if="showAnalysisProgress"
         :loading="loadingAnalysisStats && !analysisStats"
         :stats="analysisStats"
         :percent="analysisProgressPercent"
@@ -484,6 +484,7 @@ defineExpose({
         :speed-line="analysisSpeedLine"
         :speed-tooltip="analysisSpeedTooltip"
         :running="!!analysisStats?.running"
+        @requeue-failed="requeueFailedAiAnalysis"
       />
     </aside>
     <el-scrollbar ref="baseSettingsScrollbarRef" style="height: 100%; flex: 1">

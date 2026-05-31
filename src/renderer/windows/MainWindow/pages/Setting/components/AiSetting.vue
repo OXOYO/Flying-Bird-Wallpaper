@@ -161,7 +161,8 @@ const {
   analysisProgressSummary,
   analysisFooterHint,
   analysisSpeedLine,
-  analysisSpeedTooltip
+  analysisSpeedTooltip,
+  requeueFailedAiAnalysis
 } = useAiAnalysisDashboard(computed(() => aiForm), { tabActive: toRef(props, 'tabActive') })
 
 const AI_TIMEOUT_MIN_SEC = 60
@@ -547,7 +548,6 @@ defineExpose({ resetForm, restoreAnchorScroll })
         </el-anchor>
       </el-scrollbar>
       <AiAnalysisDashboardPanel
-        v-if="showAnalysisProgress"
         :loading="loadingAnalysisStats && !analysisStats"
         :stats="analysisStats"
         :percent="analysisProgressPercent"
@@ -559,6 +559,7 @@ defineExpose({ resetForm, restoreAnchorScroll })
         :speed-line="analysisSpeedLine"
         :speed-tooltip="analysisSpeedTooltip"
         :running="!!analysisStats?.running"
+        @requeue-failed="requeueFailedAiAnalysis"
       />
     </aside>
 

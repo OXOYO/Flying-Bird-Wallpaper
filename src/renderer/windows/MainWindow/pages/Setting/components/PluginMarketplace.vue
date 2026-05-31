@@ -9,6 +9,12 @@ import {
   PLUGIN_APP_VERSION_MIN,
   resolveApiUserMessage
 } from '@common/utils.js'
+import {
+  buildCompositeId,
+  SOURCE_NAME_MAX_LEN,
+  getSourceNameLength,
+  validateSourceName
+} from '@common/pluginResourceId.js'
 
 const { t } = useTranslation()
 const settingStore = UseSettingStore()
@@ -170,7 +176,8 @@ const filteredInstalledPlugins = computed(() => {
 
 const remoteResourceSecretKeys = computed(() => settingData.value?.remoteResourceSecretKeys || {})
 
-const toPluginKey = (plugin) => plugin.pluginKey || `${plugin.sourceName}:${plugin.name}`
+const toPluginKey = (plugin) =>
+  plugin.pluginKey || buildCompositeId(plugin.sourceName, plugin.name)
 
 const dismissMarketplaceLoadAlert = () => {
   marketplaceLoadNotice.value = null
@@ -489,10 +496,6 @@ const configureSecretKey = async (plugin) => {
       ...remoteResourceSecretKeys.value,
       [key]: normalized
     }
-    const shortName = key.includes(':') ? key.split(':').pop() : null
-    if (shortName && shortName !== key && Object.prototype.hasOwnProperty.call(nextKeys, shortName)) {
-      delete nextKeys[shortName]
-    }
     const res = await window.FBW.updateSettingData({ remoteResourceSecretKeys: nextKeys })
     if (res.success) {
       settingData.value = res.data || settingData.value
@@ -508,6 +511,15 @@ const configureSecretKey = async (plugin) => {
   }
 }
 
+const validateSourceNameField = (_rule, value, callback) => {
+  const check = validateSourceName(value)
+  if (!check.valid) {
+    callback(new Error(t('pages.Setting.pluginMarketplace.sourceForm.validation.namePattern')))
+    return
+  }
+  callback()
+}
+
 const sourceFormRules = {
   name: [
     {
@@ -515,11 +527,7 @@ const sourceFormRules = {
       message: t('pages.Setting.pluginMarketplace.sourceForm.validation.nameRequired'),
       trigger: 'blur'
     },
-    {
-      pattern: /^[A-Za-z0-9_-]+$/,
-      message: t('pages.Setting.pluginMarketplace.sourceForm.validation.namePattern'),
-      trigger: 'blur'
-    }
+    { validator: validateSourceNameField, trigger: 'blur' }
   ],
   location: [
     {
@@ -676,12 +684,21 @@ const renamePluginSource = async (source) => {
         inputValue: source.name,
         confirmButtonText: t('pages.Setting.pluginMarketplace.confirm.confirm'),
         cancelButtonText: t('pages.Setting.pluginMarketplace.confirm.cancel'),
-        inputPattern: /^[A-Za-z0-9_-]+$/,
-        inputErrorMessage: t('pages.Setting.pluginMarketplace.sourceForm.validation.namePattern')
+        inputValidator: (val) => {
+          const check = validateSourceName(val)
+          if (!check.valid) {
+            return t('pages.Setting.pluginMarketplace.sourceForm.validation.namePattern')
+          }
+          return true
+        }
       }
     )
     const nextName = String(value || '').trim()
     if (!nextName || nextName === source.name) return
+    if (getSourceNameLength(nextName) > SOURCE_NAME_MAX_LEN) {
+      ElMessage.error(t('pages.Setting.pluginMarketplace.sourceForm.validation.namePattern'))
+      return
+    }
     const result = await window.FBW.updatePluginSource(source.name, { name: nextName })
     if (result.success) {
       ElMessage.success(
@@ -1203,6 +1220,8 @@ defineExpose({
         <el-form-item :label="t('pages.Setting.pluginMarketplace.sourceForm.name')" prop="name">
           <el-input
             v-model="sourceForm.name"
+            :maxlength="SOURCE_NAME_MAX_LEN"
+            show-word-limit
             :placeholder="t('pages.Setting.pluginMarketplace.sourceForm.namePlaceholder')"
           />
         </el-form-item>

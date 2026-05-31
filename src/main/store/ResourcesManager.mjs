@@ -6,6 +6,7 @@ import {
   applyCodedErrorToResult
 } from '../../common/utils.js'
 import { normalizeOrientationToIsLandscape } from './collectionConstants.mjs'
+import { RESOURCE_AI_JOIN, RESOURCE_AI_SELECT_SQL } from './resourceAiSql.mjs'
 
 /** 列表去重/分页用稳定键（勿每次请求生成 uuid） */
 const buildStableResourceUniqueKey = (item) => {
@@ -133,15 +134,15 @@ export default class ResourcesManager {
         }
 
         if (scoreMin != null && scoreMin !== '') {
-          query_where.push(`r.score >= ?`)
+          query_where.push(`COALESCE(ai.aiScore, 0) >= ?`)
           query_params.push(Number(scoreMin))
         }
         if (scoreMax != null && scoreMax !== '') {
-          query_where.push(`r.score <= ?`)
+          query_where.push(`COALESCE(ai.aiScore, 0) <= ?`)
           query_params.push(Number(scoreMax))
         }
         if (hideUnsafe) {
-          query_where.push(`(r.nsfwLevel IS NULL OR r.nsfwLevel <= 1)`)
+          query_where.push(`(ai.nsfwLevel IS NULL OR ai.nsfwLevel <= 1)`)
         }
         if (Array.isArray(resourceIds) && resourceIds.length) {
           const ph = resourceIds.map(() => '?').join(',')
@@ -171,7 +172,7 @@ export default class ResourcesManager {
 
         if (filterKeywords) {
           query_where.push(
-            `(r.filePath LIKE ? OR r.title LIKE ? OR r.desc LIKE ? OR r.summary LIKE ? OR EXISTS (
+            `(r.filePath LIKE ? OR r.title LIKE ? OR r.desc LIKE ? OR COALESCE(ai.summary, '') LIKE ? OR EXISTS (
               SELECT 1 FROM fbw_resource_words rw
               JOIN fbw_words w ON w.id = rw.wordId
               WHERE rw.resourceId = r.id AND w.word LIKE ?
@@ -199,7 +200,9 @@ export default class ResourcesManager {
           const statsFields = ['views', 'downloads', 'favorites', 'wallpapers']
           const sortFieldForOrder = statsFields.includes(sortField)
             ? `stats.${sortField}`
-            : `r.${sortField}`
+            : sortField === 'score'
+              ? 'COALESCE(ai.aiScore, 0)'
+              : `r.${sortField}`
           const order_by_str = isRandom
             ? `ORDER BY RANDOM(), ${sortFieldForOrder} ${sortOrder}`
             : `ORDER BY ${sortFieldForOrder} ${sortOrder}`
@@ -207,6 +210,7 @@ export default class ResourcesManager {
           query_sql = `
             SELECT
             r.*,
+            ${RESOURCE_AI_SELECT_SQL},
             stats.views,
             stats.downloads,
             stats.favorites,
@@ -214,18 +218,21 @@ export default class ResourcesManager {
               (SELECT COUNT(*) FROM fbw_favorites f WHERE f.resourceId = r.id) AS isFavorite
             FROM fbw_${resourceName} s
             JOIN fbw_resources r ON s.resourceId = r.id
+            ${RESOURCE_AI_JOIN}
             LEFT JOIN fbw_statistics stats ON r.id = stats.resourceId
             ${query_where_str}
             ${order_by_str}
             LIMIT ? OFFSET ?
           `
-          count_sql = `SELECT COUNT(*) AS total FROM fbw_${resourceName} s JOIN fbw_resources r ON s.resourceId = r.id ${query_where_str}`
+          count_sql = `SELECT COUNT(*) AS total FROM fbw_${resourceName} s JOIN fbw_resources r ON s.resourceId = r.id ${RESOURCE_AI_JOIN} ${query_where_str}`
         } else {
           // 处理排序字段，统计字段需要从stats表中获取
           const statsFields = ['views', 'downloads', 'favorites', 'wallpapers']
           const sortFieldForOrder = statsFields.includes(sortField)
             ? `stats.${sortField}`
-            : `r.${sortField}`
+            : sortField === 'score'
+              ? 'COALESCE(ai.aiScore, 0)'
+              : `r.${sortField}`
           const order_by_str = isRandom
             ? `ORDER BY RANDOM(), ${sortFieldForOrder} ${sortOrder}`
             : `ORDER BY ${sortFieldForOrder} ${sortOrder}`
@@ -233,18 +240,20 @@ export default class ResourcesManager {
           query_sql = `
             SELECT
             r.*,
+            ${RESOURCE_AI_SELECT_SQL},
             stats.views,
             stats.downloads,
             stats.favorites,
             stats.wallpapers,
             (SELECT COUNT(*) FROM fbw_favorites f WHERE f.resourceId = r.id) AS isFavorite
             FROM fbw_resources r
+            ${RESOURCE_AI_JOIN}
             LEFT JOIN fbw_statistics stats ON r.id = stats.resourceId
             ${query_where_str}
             ${order_by_str}
             LIMIT ? OFFSET ?
           `
-          count_sql = `SELECT COUNT(*) AS total FROM fbw_resources r ${query_where_str}`
+          count_sql = `SELECT COUNT(*) AS total FROM fbw_resources r ${RESOURCE_AI_JOIN} ${query_where_str}`
         }
 
         const page = Math.max(1, Number.parseInt(startPage, 10) || Number(startPage) || 1)
@@ -770,7 +779,9 @@ export default class ResourcesManager {
     if (!orderedIds.length) return []
     const ph = orderedIds.map(() => '?').join(',')
     const rows = this.db
-      .prepare(`SELECT r.* FROM fbw_resources r WHERE r.id IN (${ph})`)
+      .prepare(
+        `SELECT r.*, ${RESOURCE_AI_SELECT_SQL} FROM fbw_resources r ${RESOURCE_AI_JOIN} WHERE r.id IN (${ph})`
+      )
       .all(...orderedIds)
     const byId = new Map(rows.map((row) => [Number(row.id), row]))
     return orderedIds.map((id) => byId.get(id)).filter(Boolean)

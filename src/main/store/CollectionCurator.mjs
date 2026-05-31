@@ -59,7 +59,9 @@ export default class CollectionCurator {
     return (
       this.db
         .prepare(
-          `SELECT COUNT(*) as c FROM fbw_resources WHERE fileType='image' AND aiAnalysisStatus = ?`
+          `SELECT COUNT(*) as c FROM fbw_resource_ai ai
+           JOIN fbw_resources r ON r.id = ai.resourceId
+           WHERE r.fileType='image' AND ai.aiAnalysisStatus = ?`
         )
         .get(AI_ANALYSIS_STATUS.DONE)?.c || 0
     )
@@ -81,7 +83,8 @@ export default class CollectionCurator {
           `SELECT COUNT(*) as c
            FROM fbw_resource_image_vec_blob v
            JOIN fbw_resources r ON r.id = v.resourceId
-           WHERE r.fileType='image' AND r.aiAnalysisStatus = ? AND v.model = ?`
+           INNER JOIN fbw_resource_ai ai ON ai.resourceId = r.id
+           WHERE r.fileType='image' AND ai.aiAnalysisStatus = ? AND v.model = ?`
         )
         .get(AI_ANALYSIS_STATUS.DONE, model)?.c || 0
     )
@@ -94,8 +97,9 @@ export default class CollectionCurator {
          FROM fbw_words w
          JOIN fbw_resource_words rw ON rw.wordId = w.id
          JOIN fbw_resources r ON r.id = rw.resourceId
+         INNER JOIN fbw_resource_ai ai ON ai.resourceId = r.id
          WHERE r.fileType = 'image'
-           AND r.aiAnalysisStatus = ?
+           AND ai.aiAnalysisStatus = ?
            AND ${COLLECTION_PRIVACY_EXCLUDE_SQL}
          GROUP BY w.word
          HAVING cnt >= ?
@@ -111,20 +115,21 @@ export default class CollectionCurator {
     const params = [AI_ANALYSIS_STATUS.DONE, tag]
     let scoreClause = ''
     if (scoreMin != null) {
-      scoreClause = ' AND r.score >= ?'
+      scoreClause = ' AND COALESCE(ai.aiScore, 0) >= ?'
       params.push(scoreMin)
     }
     return this.db
       .prepare(
         `SELECT r.id
          FROM fbw_resources r
+         INNER JOIN fbw_resource_ai ai ON ai.resourceId = r.id
          JOIN fbw_resource_words rw ON rw.resourceId = r.id
          JOIN fbw_words w ON w.id = rw.wordId
          WHERE r.fileType = 'image'
-           AND r.aiAnalysisStatus = ?
+           AND ai.aiAnalysisStatus = ?
            AND ${COLLECTION_PRIVACY_EXCLUDE_SQL}
            AND w.word = ?${scoreClause}
-         ORDER BY r.score DESC, r.id DESC`
+         ORDER BY COALESCE(ai.aiScore, 0) DESC, r.id DESC`
       )
       .all(...params)
       .map((row) => row.id)
@@ -150,15 +155,17 @@ export default class CollectionCurator {
     const ph = resourceIds.slice(0, 8).map(() => '?').join(',')
     const rows = this.db
       .prepare(
-        `SELECT title, summary, desc
-         FROM fbw_resources
-         WHERE id IN (${ph})
-         ORDER BY score DESC
+        `SELECT r.title, COALESCE(ai.summary, '') AS summary, r.desc,
+                COALESCE(ai.aiTitle, '') AS aiTitle, COALESCE(ai.aiDesc, '') AS aiDesc
+         FROM fbw_resources r
+         LEFT JOIN fbw_resource_ai ai ON ai.resourceId = r.id
+         WHERE r.id IN (${ph})
+         ORDER BY COALESCE(ai.aiScore, 0) DESC
          LIMIT ?`
       )
       .all(...resourceIds.slice(0, 8), limit)
     return rows
-      .map((row) => row.summary || row.title || row.desc)
+      .map((row) => row.summary || row.aiTitle || row.title || row.aiDesc || row.desc)
       .filter(Boolean)
       .slice(0, limit)
   }
@@ -170,12 +177,15 @@ export default class CollectionCurator {
     const params = [...resourceIds]
     let scoreClause = ''
     if (scoreMin != null) {
-      scoreClause = ' AND score >= ?'
+      scoreClause = ' AND COALESCE(ai.aiScore, 0) >= ?'
       params.push(scoreMin)
     }
     return this.db
       .prepare(
-        `SELECT id FROM fbw_resources WHERE id IN (${ph})${scoreClause} ORDER BY score DESC, id DESC`
+        `SELECT r.id FROM fbw_resources r
+         LEFT JOIN fbw_resource_ai ai ON ai.resourceId = r.id
+         WHERE r.id IN (${ph})${scoreClause}
+         ORDER BY COALESCE(ai.aiScore, 0) DESC, r.id DESC`
       )
       .all(...params)
       .map((row) => row.id)
@@ -210,7 +220,7 @@ export default class CollectionCurator {
     const vecParams = [activeModel, AI_ANALYSIS_STATUS.DONE]
     let vecScoreClause = ''
     if (scoreMin != null) {
-      vecScoreClause = ' AND r.score >= ?'
+      vecScoreClause = ' AND COALESCE(ai.aiScore, 0) >= ?'
       vecParams.push(scoreMin)
     }
     const rows = this.db
@@ -218,8 +228,9 @@ export default class CollectionCurator {
         `SELECT r.id, v.embedding, v.dim
          FROM fbw_resources r
          JOIN fbw_resource_image_vec_blob v ON v.resourceId = r.id AND v.model = ?
+         INNER JOIN fbw_resource_ai ai ON ai.resourceId = r.id
          WHERE r.fileType = 'image'
-           AND r.aiAnalysisStatus = ?
+           AND ai.aiAnalysisStatus = ?
            AND ${COLLECTION_PRIVACY_EXCLUDE_SQL}${vecScoreClause}`
       )
       .all(...vecParams)
@@ -446,7 +457,10 @@ export default class CollectionCurator {
 
     const row = this.db
       .prepare(
-        `SELECT id, score, aiAnalysisStatus FROM fbw_resources WHERE id = ? AND fileType = 'image'`
+        `SELECT r.id, COALESCE(ai.aiScore, 0) AS score, ai.aiAnalysisStatus
+         FROM fbw_resources r
+         LEFT JOIN fbw_resource_ai ai ON ai.resourceId = r.id
+         WHERE r.id = ? AND r.fileType = 'image'`
       )
       .get(resourceId)
     if (!row || row.aiAnalysisStatus !== AI_ANALYSIS_STATUS.DONE) {

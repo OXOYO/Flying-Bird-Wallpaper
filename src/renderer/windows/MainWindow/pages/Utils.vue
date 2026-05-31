@@ -110,6 +110,13 @@ const utilGroups = ref([
         confirm: true
       },
       {
+        name: 'clearAiAnalysisData',
+        text: '清空 AI 分析数据',
+        locale: 'pages.Utils.clearAiAnalysisData',
+        confirmLocale: 'pages.Utils.clearAiAnalysisDataConfirm',
+        confirm: true
+      },
+      {
         name: 'clearCache',
         text: '清空缓存数据',
         locale: 'pages.Utils.clearCache',
@@ -191,6 +198,10 @@ const onExec = (name) => {
       }
       break
     }
+    case 'clearAiAnalysisData':
+      funcName = 'resetAiAnalysis'
+      args = []
+      break
     case 'clearWordsDB':
     case 'clearHistoryDB':
     case 'clearFavoritesDB':
@@ -241,9 +252,11 @@ const onExec = (name) => {
   if (!util.confirm) {
     handler()
   } else {
-    let text = util.locale
-      ? t('messages.confirmMessageTemplate', { text: t(util.locale) })
-      : t('messages.confirmMessageDanger')
+    let text = util.confirmLocale
+      ? t(util.confirmLocale)
+      : util.locale
+        ? t('messages.confirmMessageTemplate', { text: t(util.locale) })
+        : t('messages.confirmMessageDanger')
     ElMessageBox.confirm(text, {
       type: 'warning',
       draggable: true,

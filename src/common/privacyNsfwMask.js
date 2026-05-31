@@ -25,10 +25,13 @@ export function shouldFilterSensitiveForWallpaper(settingData) {
   return isNsfwContentMaskSwitchOn(settingData)
 }
 
-/** @param {string} [tableAlias] 表别名，如 `r` */
+/** @param {string} [tableAlias] 资源表别名，如 `r`；敏感等级在 fbw_resource_ai */
 export function getNsfwSafeSqlClause(tableAlias = '') {
-  const col = tableAlias ? `${tableAlias}.nsfwLevel` : 'nsfwLevel'
-  return `(${col} IS NULL OR ${col} <= 1)`
+  const idCol = tableAlias ? `${tableAlias}.id` : 'fbw_resources.id'
+  return `NOT EXISTS (
+    SELECT 1 FROM fbw_resource_ai ai
+    WHERE ai.resourceId = ${idCol} AND ai.nsfwLevel >= ${NSFW_MASK_MIN_LEVEL}
+  )`
 }
 
 export function shouldApplyNsfwMask(item, { featureActive, pageUnlocked, inPrivacySpace }) {

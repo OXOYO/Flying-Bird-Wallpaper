@@ -1,10 +1,10 @@
 # 飞鸟壁纸 AI 能力开发方案
 
-> 文档版本：**v2.7**  
-> 整理日期：2026-05-29  
-> 状态：Sprint 0–4 **已落地**；2.0.0 **后续增量已落地**（含找相似方案 C + 远程画面向量）；Sprint 5 **未开发**  
+> 文档版本：**v2.9**  
+> 整理日期：2026-05-27  
+> 状态：Sprint 0–4 **已落地**；2.0.0 **后续增量已落地**（含找相似、AI 附表拆分、工具页清空 AI）；Sprint 5 **未开发**  
 > 应用版本：**1.3.8 → 2.0.0**  
-> 关联：[ai-feature-roadmap.md](./ai-feature-roadmap.md) · [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) · [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) · [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) · [README.md](./README.md)
+> 关联：[data-model-resources-and-ai.md](./data-model-resources-and-ai.md) · [ai-feature-roadmap.md](./ai-feature-roadmap.md) · [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) · [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) · [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) · [README.md](./README.md)
 
 ---
 
@@ -61,10 +61,13 @@ flowchart TB
   end
   subgraph db [SQLite + sqlite-vec]
     RES[fbw_resources]
+    RAI[fbw_resource_ai]
     VEC[fbw_resource_vec_blob / vec_index]
     IVEC[fbw_resource_image_vec_blob]
     COL[fbw_collections source=user|auto]
   end
+  AAM --> RAI
+  RES --- RAI
   AiSetting --> AAM
   Explore --> EM
   EM --> HSS
@@ -89,9 +92,11 @@ flowchart TB
 
 ## Sprint 0 — 数据层
 
-- `sql.mjs` 新表/新列；`schemaUpgrade.mjs` 旧库补列
+- `sql.mjs` 新表/新列；`schemaUpgrade.mjs` 旧库补列与 **`migrateResourceAiSplitV1`**
 - `resources/migrations/1.3.8_to_2.0.0.mjs`
-- `fbw_resources`：`summary`、`aiAnalyzedAt`、`nsfwLevel`、`aiAnalysisStatus`
+- **`fbw_resources`**：文件元数据、插件 `title`/`desc`、`qualityScore`（本地质量分，非 AI）
+- **`fbw_resource_ai`**：AI 文案/摘要/美学分/敏感等级/分析状态/失败计数（详见 [data-model-resources-and-ai.md](./data-model-resources-and-ai.md)）
+- 插件本地 `resourceName`：**`源名_插件名`**（`pluginResourceId.js` + `pluginResourceMigration.mjs`）
 - `fbw_collections` + `fbw_collection_items` + `fbw_resource_embeddings` + vec 索引
 - `defaultSettingData.ai`、`enabledMenus` 含 `Collections`
 
@@ -335,6 +340,21 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 
 ---
 
+## §15 后续增量（AI 附表拆分 + 运维工具）— 已落地
+
+> 详述：[data-model-resources-and-ai.md](./data-model-resources-and-ai.md) · [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) §14–§15
+
+| 项 | 说明 |
+|----|------|
+| `fbw_resource_ai` | AI 字段从主表迁出；主表 `score` → **`qualityScore`** |
+| 列表 API | `RESOURCE_AI_JOIN` + `RESOURCE_AI_SELECT_SQL` 保持 `score`/`title`/`nsfwLevel` 等别名 |
+| 工具页 | **清空 AI 分析数据** → `resetAiAnalysis`：删附表+标签+向量，主表插件 `title`/`desc` 保留 |
+| 设置页 | 分析进度卡 **常显**；失败数可点 **重新入队**（`requeueFailedAiAnalysis`） |
+| 自动入队 | 清空/重试后仅当 `ai.enabled` 且模式为 `background_slow` / `new_only` 时启动 pump |
+| i18n | 带数量文案用 `{count}`，主进程 `t()` 后由渲染进程直接展示 `res.message` |
+
+---
+
 ## 数据库补充（2.0.0 增量）
 
 | 变更 | 说明 |
@@ -342,7 +362,8 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | `fbw_collections.source` | `user`（默认）\| `auto` |
 | `fbw_collections.refreshMode` | 含 `on_analysis`（系统合集） |
 | `queryJson.autoKey` | 系统合集稳定键（`tag:*` / `vec:*` / `merged:*`） |
-| `fbw_resources.aiAnalysisFailCount` | 连续分析失败次数（成功归零） |
+| `fbw_resource_ai.aiAnalysisFailCount` | 连续分析失败次数（成功归零） |
+| `fbw_resources.qualityScore` | 本地质量任务分（与 `aiScore` 分离） |
 | VecStore | vec0 **不支持 UPSERT** → DELETE+INSERT；维数变更 DROP 重建 |
 | `fbw_resource_image_vec_blob` | 画面向量表（找相似、系统策展、用户合集补充） |
 
@@ -374,6 +395,7 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | **增量⁴** | ✅ | MobileCLIP2-S0 视觉向量、画面找相似、双表存储、视觉补算任务 |
 | **增量⁶** | ✅ | 合集画面向量：策展 K-Means、用户合集关键词优先 + `VisualCollectionSearch` |
 | **增量⁷** | ✅ | 刷新 `regenPrompt` 默认 false；LLM 标签扩展；实体词禁用画面补充 |
+| **增量⁸** | ✅ | AI 附表拆分、插件复合 ID、工具页清空 AI、失败重试入队、进度卡常显 |
 | Sprint 5 | ⏸ | OpenClaw/Agent — 仅文档 |
 
 ---
@@ -450,4 +472,5 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | **v2.5** | 2026-05-29 | §13 方案 C、远程画面向量、EmbedRequestBuilder；移除用户找相似阈值；设置/IPC 同步 |
 | **v2.6** | 2026-05-29 | §14 合集画面向量；用户合集关键词优先；`VisualCollectionSearch` |
 | **v2.7** | 2026-05-29 | §14 增补：`regenPrompt`、动态标签扩展、实体词禁用画面补充、风景顶替修复 |
+| **v2.9** | 2026-05-27 | §15 AI 附表拆分、`qualityScore`、工具页清空/重试；`data-model-resources-and-ai.md`；Sprint 0/架构图/库表补充同步 |
 | **v2.8** | 2026-05-27 | 移除 `enableNsfwCheck`；`privacy-and-sensitive-content.md`；AI 设置隐藏 `analysisMaxRetries`/`concurrency`（默认 1） |

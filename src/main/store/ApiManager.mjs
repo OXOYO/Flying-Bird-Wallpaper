@@ -3,6 +3,7 @@ import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 import ApiBase from '../ApiBase.js'
 import { t } from '../../i18n/server.js'
+import { buildCompositeId } from '../../common/pluginResourceId.js'
 import { API_ERROR_CODE, createCodedError, resolvePluginAppVersion } from '../../common/utils.js'
 
 /** 绕过 ESM 模块缓存，安装/更新插件后需重新加载 main.mjs */
@@ -112,10 +113,10 @@ export default class ApiManager {
     const manifest = api.manifest || {}
     const resourceName = api.resourceName
     return {
-      label: manifest.displayName || manifest.name || resourceName,
+      label: resourceName,
       value: resourceName,
       name: manifest.name || resourceName,
-      displayName: manifest.displayName || manifest.name || resourceName,
+      displayName: resourceName,
       description: manifest.description || '',
       author: manifest.author || '',
       site: manifest.site || '',
@@ -201,7 +202,10 @@ export default class ApiManager {
           const PluginClass = module.default
           if (PluginClass && PluginClass.prototype instanceof ApiBase) {
             const pluginInstance = new PluginClass()
-            const resourceName = `${sourceName}:${manifest.name || pluginDir.name}`
+            const resourceName = buildCompositeId(
+              sourceName,
+              manifest.name || pluginDir.name
+            )
             pluginInstance.resourceName = resourceName
             pluginInstance.manifest = manifest
             if (plugins[resourceName]) {

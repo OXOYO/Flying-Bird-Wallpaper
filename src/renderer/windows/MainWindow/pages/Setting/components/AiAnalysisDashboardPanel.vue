@@ -1,7 +1,7 @@
 <script setup>
 import { useTranslation } from 'i18next-vue'
 
-defineProps({
+const props = defineProps({
   loading: { type: Boolean, default: false },
   stats: { type: Object, default: null },
   percent: { type: Number, default: 0 },
@@ -15,7 +15,14 @@ defineProps({
   speedTooltip: { type: String, default: '' }
 })
 
+const emit = defineEmits(['requeueFailed'])
+
 const { t } = useTranslation()
+
+const onFailedChipClick = () => {
+  if (!(Number(props.stats?.failed) > 0)) return
+  emit('requeueFailed')
+}
 
 /** 侧栏窄：从标题左缘向上展开，向右延伸，避免左侧溢出 */
 const titleTooltipPopperOptions = {
@@ -100,9 +107,24 @@ const titleTooltipPopperOptions = {
       <span class="stat-chip stat-chip--pending">
         {{ t('pages.Setting.aiSetting.statPendingLabel') }} {{ stats?.pending ?? 0 }}
       </span>
-      <span class="stat-chip stat-chip--failed">
-        {{ t('pages.Setting.aiSetting.statFailedLabel') }} {{ stats?.failed ?? 0 }}
-      </span>
+      <el-tooltip
+        :content="t('pages.Setting.aiSetting.statFailedHint')"
+        placement="top"
+        :disabled="!(stats?.failed > 0)"
+        :show-after="300"
+        popper-class="ai-setting-feature-tip"
+      >
+        <span
+          class="stat-chip stat-chip--failed"
+          :class="{ 'stat-chip--clickable': (stats?.failed ?? 0) > 0 }"
+          role="button"
+          :tabindex="(stats?.failed ?? 0) > 0 ? 0 : -1"
+          @click="onFailedChipClick"
+          @keydown.enter.prevent="onFailedChipClick"
+        >
+          {{ t('pages.Setting.aiSetting.statFailedLabel') }} {{ stats?.failed ?? 0 }}
+        </span>
+      </el-tooltip>
       <span class="stat-chip stat-chip--embedding">
         {{ t('pages.Setting.aiSetting.statEmbeddingLabel') }} {{ stats?.embedding ?? 0 }}
       </span>
@@ -256,6 +278,15 @@ const titleTooltipPopperOptions = {
 
   &--failed {
     color: var(--el-color-danger);
+  }
+
+  &--clickable {
+    cursor: pointer;
+
+    &:hover {
+      background: var(--el-color-danger-light-9);
+      border-color: var(--el-color-danger-light-5);
+    }
   }
 
   &--embedding {
