@@ -16,7 +16,7 @@ const EMBED_NAME_RE =
   /(?:embed|bge-|e5-|mxbai-embed|nomic-embed|text-embedding|snowflake-arctic-embed|nemotron-embed)/i
 
 const VISUAL_EMBED_NAME_RE =
-  /(?:vl-embed|qwen3-vl-embed|clip|colpali|jina-clip|embed.*vl|llava.*embed|nemotron-embed.*vl)/i
+  /(?:vl-embed|qwen[23]-vl-embed|qwen2-vl-embed|clip|colpali|jina-clip|embed.*vl|llava.*embed|nemotron-embed.*vl)/i
 
 const uniq = (list) => [...new Set((list || []).filter(Boolean))]
 
@@ -178,15 +178,6 @@ export function filterModelsByPurpose(models, purpose = MODEL_PURPOSE.TEXT) {
     if (seen.has(item.id)) continue
     seen.add(item.id)
     result.push(item.id)
-  }
-
-  if (purpose === MODEL_PURPOSE.VISUAL_EMBED && !result.length) {
-    for (const item of normalized) {
-      if (!modelMatchesPurpose(item, MODEL_PURPOSE.EMBED)) continue
-      if (seen.has(item.id)) continue
-      seen.add(item.id)
-      result.push(item.id)
-    }
   }
 
   return result.sort((a, b) => a.localeCompare(b))

@@ -54,8 +54,8 @@
 **设置 UI：**
 
 - **兼容选项** →「内置画面向量」开关（开=builtin，关=remote）
-- 关 remote 时显示 **「画面向量服务」** 卡片（服务商、地址、API Key、模型、测试连接）
-- 侧边栏锚点 `#divider-ai-visual-embed`
+- **「画面向量服务」** 卡片始终显示（服务商、地址、API Key、模型、测试连接）
+- 侧边栏锚点 `#divider-ai-visual-embed` 始终可见
 
 **主进程路由：** `AiAnalysisProvider.resolveServiceProfile('visualEmbed')` → `createProvider('visualEmbed')`。
 

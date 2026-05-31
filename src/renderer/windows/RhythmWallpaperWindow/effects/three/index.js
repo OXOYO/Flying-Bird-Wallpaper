@@ -7,5 +7,6 @@ export { ThreeStageBars } from './stages/ThreeStageBars.js'
 export { ThreeStageWall } from './stages/ThreeStageWall.js'
 export { ThreeStageGrid } from './stages/ThreeStageGrid.js'
 export { ThreeStageTexturedSphere } from './stages/ThreeStageTexturedSphere.js'
+export { ThreeStageRoomMeshGrid } from './stages/ThreeStageRoomMeshGrid.js'
 /** 历史配置 `ThreeStage` → 演唱会柱 */
 export { ThreeStageBars as ThreeStage } from './stages/ThreeStageBars.js'

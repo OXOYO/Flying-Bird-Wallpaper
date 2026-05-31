@@ -1,0 +1,151 @@
+# 主窗口侧栏 UX 与基础设施修订
+
+> 整理日期：2026-05-31  
+> 说明：记录主窗口侧栏、快捷键管理器、检查更新通知等实现约定与代码锚点。正式文档 `docs/renderer_process.md`、`docs/shortcut_guide.md` 部分片段仍偏旧，以本文与源码为准。敏感内容遮罩与壁纸过滤见 [privacy-and-sensitive-content.md](./privacy-and-sensitive-content.md)。
+
+---
+
+## 1. 侧栏折叠手柄（`side-expand-btn`）
+
+### 1.1 行为与位置（保持原设计）
+
+| 项 | 约定 |
+|----|------|
+| 位置 | `el-aside` 内，`top: 50%`、`right: -18px`，半圆贴在侧栏右缘垂直居中 |
+| 显隐 | 默认 `visibility: hidden` + `opacity: 0`；鼠标移入 `.window-container` 时显示 |
+| 开关 | 设置项 `enableExpandSideMenu`；状态 `expandSideMenu`（宽 70px / 0） |
+| 图标 | 展开：`custom:caret-left`；收起：`custom:caret-right` |
+
+### 1.2 样式（2026-05-31）
+
+- 背景与侧栏一致：`#f6f7f9`（各状态不改为纯白）
+- 无 `box-shadow`、无 `border`
+- hover / focus / 收起态：仅箭头使用 `var(--el-color-primary)`
+- 扩大点击：`min-height: 44px`、`::before` 扩展热区
+- 使用 `<button type="button">` + `aria-expanded`
+
+### 1.3 代码锚点
+
+- `src/renderer/windows/MainWindow/containers/MainWindow.vue`
+- 配置默认值：`src/common/publicData.js` → `enableExpandSideMenu`、`expandSideMenu`
+
+---
+
+## 2. 侧栏菜单与底部工具钮（`SideMenu`）
+
+### 2.1 本地快捷键绑定窗口
+
+`publicData.js` 中 **local** 类型快捷键的 `windowNames` 仅为：
+
+```text
+['mainWindow', 'viewImageWindow']
+```
+
+**不包含** `loadingWindow`、`suspensionBall`（启动 Loading、悬浮球不注册菜单级 local 快捷键）。
+
+### 2.2 Hover 主题色（2026-05-31）
+
+| 区域 | hover 表现 |
+|------|------------|
+| 菜单项（`side-menu-btn`） | 图标与文字 `var(--el-color-primary)` |
+| 底部工具（`side-footer-btn`） | `.footer-btn-icon` → `var(--el-color-primary)` |
+| 底部「开启」态 | `.footer-btn-icon.active` → `var(--el-color-success)`（替代写死 `#67c23a`） |
+| 关闭动态/律动壁纸按下 | 仍为红色（`btn-close`） |
+
+### 2.3 代码锚点
+
+- `src/renderer/windows/MainWindow/components/SideMenu.vue`
+- 窗口生命周期注册：`MainWindow.mjs`、`ViewImageWindow.mjs`（`registerLocalShortcuts` / `unregisterLocalShortcuts`）
+
+---
+
+## 3. 快捷键管理器（`ShortcutManager`）
+
+### 3.1 分层
+
+| 类型 | 机制 | 典型能力 |
+|------|------|----------|
+| `global` | `electron.globalShortcut` | 切壁纸、显隐主窗/悬浮球（后台也可触发） |
+| `local` | `electron-localshortcut` | 退出、关窗、打开设置等（**窗口有焦点**时） |
+
+### 3.2 设计决策：`quitApp` 保持 local
+
+- **不**改为 global，避免 macOS `Command+Q` / Win `Ctrl+Q` 与系统及其他应用抢键。
+- 主窗 `hide()` 到托盘后，快捷键退出可能无效 → 使用托盘/菜单「退出」。
+- 托盘场景不依赖全局 `quitApp`。
+
+### 3.3 登记表复合键（P0 修复）
+
+`registeredShortcuts` Map 键格式：
+
+```text
+global:{name}
+local:{name}:{winName}
+```
+
+避免多窗口 local 同 `name` 互相覆盖导致注销残留。
+
+### 3.4 全局注册与冲突检测
+
+- `globalShortcut.register()` 检查返回值，失败打 warn 且不写入 Map。
+- `detectGlobalConflicts`：`isRegistered` 为真且归属本应用同一 global 项 → 不报「系统冲突」。
+- `checkShortcutConflict`：先应用内冲突，再系统冲突；排除本应用已占用的 global。
+- `before-quit`：`unregisterAllShortcuts()`（`src/main/index.mjs`）。
+
+### 3.5 设置页录制
+
+- `main:disableShortcuts` / `main:enableShortcuts` → 全量注销/重注册。
+- 录制时全局键卸载，`isRegistered` 检测更准确。
+
+### 3.6 代码锚点
+
+| 模块 | 路径 |
+|------|------|
+| 管理器 | `src/main/store/ShortcutManager.mjs` |
+| 默认配置 | `src/common/publicData.js` → `keyboardShortcuts` |
+| IPC | `src/main/store/index.mjs` |
+| 设置 UI | `src/renderer/.../ShortcutSetting.vue` |
+
+---
+
+## 4. 检查更新与通知（`Updater`）
+
+### 4.1 问题与修复摘要
+
+| 问题 | 处理 |
+|------|------|
+| `global.FBW.notificationManager` 不存在 | 使用 `global.FBW.store.notificationManager` |
+| Updater 在 Store 前绑定事件 | `new Updater()` + `bindUpdaterEvents()` 移到 `waitForInitialization()` 之后 |
+| 更新失败未通知 / 崩溃 | `error` 回调发系统通知；`checkForUpdates().catch()` 避免未捕获 rejection |
+| 开发环境 `ERR_CONNECTION_REFUSED` | 仍提示「检查更新失败」；日志说明 dev 需可访问 `dev-app-update.yml` |
+
+### 4.2 代码锚点
+
+- `src/main/updater.mjs` — `checkUpdate()` 包装 Promise
+- `src/main/index.mjs` — `sendUpdateNotification()`、`bindUpdaterEvents()`
+- `src/main/store/NotificationManager.mjs` — `send(options, name?)`
+
+---
+
+## 5. 验收要点
+
+### 侧栏
+
+- [ ] 移入主窗口后，折叠钮在侧栏右缘中部出现，背景与侧栏同色
+- [ ] 折叠/展开不遮挡菜单文字；底部图标 hover 为主题色
+- [ ] 悬浮球、Loading 窗无 local 菜单快捷键
+
+### 快捷键
+
+- [ ] 主窗 + 看图窗分别注销后无幽灵 `quitApp`
+- [ ] 设置页冲突检测不把本应用 global 误报为系统占用
+- [ ] `Ctrl+Shift+R` 检查更新：dev 可失败但有通知，无 `reading 'send'` 异常
+
+---
+
+## 6. 修订记录
+
+| 日期 | 说明 |
+|------|------|
+| 2026-05-31 | 初版：侧栏折叠钮样式、SideMenu hover 主题色、ShortcutManager 复合键与冲突检测、Updater 通知修复 |
+| 2026-05-27 | 索引：链至 `privacy-and-sensitive-content.md`（敏感遮罩与壁纸上/下一张过滤） |

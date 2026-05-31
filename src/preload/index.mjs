@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
+import { invokeWithObject } from './ipcSerialize.mjs'
 
 // 创建一个对象来存储已注册的回调引用
 const listeners = {
@@ -158,8 +159,8 @@ const api = {
   selectFolder: (...args) => ipcRenderer.invoke('main:selectFolder', ...args),
   selectFile: (...args) => ipcRenderer.invoke('main:selectFile', ...args),
   showItemInFolder: (...args) => ipcRenderer.invoke('main:showItemInFolder', ...args),
-  deleteFile: (...args) => ipcRenderer.invoke('main:deleteFile', ...args),
-  downloadFile: (...args) => ipcRenderer.invoke('main:downloadFile', ...args),
+  deleteFile: (item) => invokeWithObject('main:deleteFile', ipcRenderer, item),
+  downloadFile: (item) => invokeWithObject('main:downloadFile', ipcRenderer, item),
   openDir: (...args) => ipcRenderer.invoke('main:openDir', ...args),
   openUrl: (...args) => ipcRenderer.invoke('main:openUrl', ...args),
   openPath: (...args) => ipcRenderer.invoke('main:openPath', ...args),
@@ -167,22 +168,24 @@ const api = {
 
   // 数据操作
   getSettingData: (...args) => ipcRenderer.invoke('main:getSettingData', ...args),
-  updateSettingData: (...args) => ipcRenderer.invoke('main:updateSettingData', ...args),
+  updateSettingData: (patch) => invokeWithObject('main:updateSettingData', ipcRenderer, patch),
   getResourceMap: (...args) => ipcRenderer.invoke('main:getResourceMap', ...args),
   getPostData: (...args) => ipcRenderer.invoke('main:getPostData', ...args),
   checkPrivacyPassword: (...args) => ipcRenderer.invoke('main:checkPrivacyPassword', ...args),
   hasPrivacyPassword: (...args) => ipcRenderer.invoke('main:hasPrivacyPassword', ...args),
+  getPrivacyPasswordHint: (...args) => ipcRenderer.invoke('main:getPrivacyPasswordHint', ...args),
   updatePrivacyPassword: (...args) => ipcRenderer.invoke('main:updatePrivacyPassword', ...args),
   addToFavorites: (...args) => ipcRenderer.invoke('main:addToFavorites', ...args),
   removeFavorites: (...args) => ipcRenderer.invoke('main:removeFavorites', ...args),
   getWords: (...args) => ipcRenderer.invoke('main:getWords', ...args),
+  getResourceTags: (resourceId) => ipcRenderer.invoke('main:getResourceTags', resourceId),
 
   // 窗口操作
   resizeWindow: (...args) => ipcRenderer.invoke('main:resizeWindow', ...args),
   getWindowPosition: (name) => ipcRenderer.invoke('main:getWindowPosition', name),
   setWindowPosition: (...args) => ipcRenderer.invoke('main:setWindowPosition', ...args),
   toggleMainWindow: (...args) => ipcRenderer.invoke('main:toggleMainWindow', ...args),
-  openViewImageWindow: (...args) => ipcRenderer.invoke('main:openViewImageWindow', ...args),
+  openViewImageWindow: (data) => invokeWithObject('main:openViewImageWindow', ipcRenderer, data),
   closeViewImageWindow: (...args) => ipcRenderer.invoke('main:closeViewImageWindow', ...args),
   openSuspensionBall: (...args) => ipcRenderer.invoke('main:openSuspensionBall', ...args),
   closeSuspensionBall: (...args) => ipcRenderer.invoke('main:closeSuspensionBall', ...args),
@@ -194,13 +197,13 @@ const api = {
   suspensionBallDragEnd: () => ipcRenderer.invoke('main:suspensionBallDragEnd'),
 
   // 壁纸操作
-  search: (...args) => ipcRenderer.invoke('main:search', ...args),
+  search: (payload) => invokeWithObject('main:search', ipcRenderer, payload),
   // 获取热门标签
   getHotTags: (...args) => ipcRenderer.invoke('main:getHotTags', ...args),
   toggleAutoSwitchWallpaper: (...args) =>
     ipcRenderer.invoke('main:toggleAutoSwitchWallpaper', ...args),
-  setAsWallpaperWithDownload: (...args) =>
-    ipcRenderer.invoke('main:setAsWallpaperWithDownload', ...args),
+  setAsWallpaperWithDownload: (item) =>
+    invokeWithObject('main:setAsWallpaperWithDownload', ipcRenderer, item),
   nextWallpaper: (...args) => ipcRenderer.invoke('main:nextWallpaper', ...args),
   prevWallpaper: (...args) => ipcRenderer.invoke('main:prevWallpaper', ...args),
   setWebWallpaper: (...args) => ipcRenderer.invoke('main:setWebWallpaper', ...args),
@@ -278,8 +281,8 @@ const api = {
   listAiModels: (...args) => ipcRenderer.invoke('main:listAiModels', ...args),
   getAiAnalysisStats: (...args) => ipcRenderer.invoke('main:getAiAnalysisStats', ...args),
   parseSearchQuery: (...args) => ipcRenderer.invoke('main:parseSearchQuery', ...args),
-  findSimilar: (...args) => ipcRenderer.invoke('main:findSimilar', ...args),
-  semanticSearch: (...args) => ipcRenderer.invoke('main:semanticSearch', ...args),
+  findSimilar: (payload) => invokeWithObject('main:findSimilar', ipcRenderer, payload),
+  semanticSearch: (payload) => invokeWithObject('main:semanticSearch', ipcRenderer, payload),
   recommend: (...args) => ipcRenderer.invoke('main:recommend', ...args),
   collectionsList: (...args) => ipcRenderer.invoke('main:collections:list', ...args),
   collectionsGet: (...args) => ipcRenderer.invoke('main:collections:get', ...args),

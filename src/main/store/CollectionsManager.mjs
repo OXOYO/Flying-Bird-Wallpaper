@@ -2,9 +2,19 @@ import { t } from '../../i18n/server.js'
 import TextQueryParser from '../ai/TextQueryParser.mjs'
 import {
   COLLECTION_ITEMS_DEFAULT_PAGE_SIZE,
-  isCollectionRefreshDue
+  isCollectionRefreshDue,
+  resolveAutoCollectionScoreMin,
+  isValidAutoCollectionTag,
+  normalizeCollectionQuality,
+  normalizeOrientationToIsLandscape,
+  COLLECTION_PRIVACY_EXCLUDE_SQL
 } from './collectionConstants.mjs'
-import { COLLECTION_VISUAL_SEARCH_MIN_COSINE, COLLECTION_VISUAL_MIN_EMBEDDINGS } from '../ai/aiConstants.mjs'
+import WordsManager from './WordsManager.mjs'
+import {
+  AI_ANALYSIS_STATUS,
+  COLLECTION_VISUAL_SEARCH_MIN_COSINE,
+  COLLECTION_VISUAL_MIN_EMBEDDINGS
+} from '../ai/aiConstants.mjs'
 
 export default class CollectionsManager {
   static _instance = null
@@ -15,7 +25,8 @@ export default class CollectionsManager {
     settingManager,
     resourcesManager,
     textQueryParser,
-    embeddingManager
+    embeddingManager,
+    wordsManager = null
   ) {
     if (!CollectionsManager._instance) {
       CollectionsManager._instance = new CollectionsManager(
@@ -24,13 +35,22 @@ export default class CollectionsManager {
         settingManager,
         resourcesManager,
         textQueryParser,
-        embeddingManager
+        embeddingManager,
+        wordsManager
       )
     }
     return CollectionsManager._instance
   }
 
-  constructor(logger, dbManager, settingManager, resourcesManager, textQueryParser, embeddingManager) {
+  constructor(
+    logger,
+    dbManager,
+    settingManager,
+    resourcesManager,
+    textQueryParser,
+    embeddingManager,
+    wordsManager = null
+  ) {
     if (CollectionsManager._instance) return CollectionsManager._instance
     this.logger = logger
     this.db = dbManager.db
@@ -38,6 +58,8 @@ export default class CollectionsManager {
     this.resourcesManager = resourcesManager
     this.textQueryParser = textQueryParser
     this.embeddingManager = embeddingManager
+    this.wordsManager =
+      wordsManager || WordsManager.getInstance(logger, dbManager, settingManager)
     CollectionsManager._instance = this
   }
 
@@ -87,7 +109,7 @@ export default class CollectionsManager {
         .prepare(`SELECT COUNT(*) AS c FROM fbw_collection_items WHERE collectionId = ?`)
         .get(id)?.c || 0
     const offset = (startPage - 1) * pageSize
-    const items = this.db
+    const rows = this.db
       .prepare(
         `SELECT ci.*, r.* FROM fbw_collection_items ci
          JOIN fbw_resources r ON r.id = ci.resourceId
@@ -96,6 +118,12 @@ export default class CollectionsManager {
          LIMIT ? OFFSET ?`
       )
       .all(id, pageSize, offset)
+
+    const items = rows.map((row) => ({
+      ...row,
+      id: row.resourceId ?? row.id,
+      srcType: row.filePath ? 'file' : row.link || row.videoUrl || row.imageUrl ? 'url' : 'file'
+    }))
 
     return {
       success: true,
@@ -147,7 +175,7 @@ export default class CollectionsManager {
   async createFromPrompt(prompt) {
     const parsed = await this.textQueryParser.parseCollectionPrompt(prompt)
     if (!parsed.success) return parsed
-    const queryJson = parsed.data
+    const queryJson = this._normalizeCollectionQueryJson(parsed.data, { source: 'user' })
     const created = this.create({ name: prompt.slice(0, 40), prompt, queryJson })
     if (!created.success) return created
     const gen = await this.generate(created.data.id, queryJson)
@@ -157,15 +185,112 @@ export default class CollectionsManager {
   /**
    * 短实体词合集：AI 动态扩展 tags（结果写入 queryJson 缓存，同关键词不重复调 LLM）
    */
+  /** 刷新阶段：推荐/自定义统一全库 fbw_resources */
+  _normalizeCollectionQueryJson(queryJson, collection) {
+    if (!queryJson) return queryJson
+    queryJson.resourceName = 'resources'
+    queryJson.quality = normalizeCollectionQuality(queryJson.quality)
+    queryJson.orientation = normalizeOrientationToIsLandscape(queryJson.orientation)
+    queryJson.scoreMin = resolveAutoCollectionScoreMin(this.settingManager.settingData?.ai)
+
+    if (collection?.source === 'user') {
+      const ai = this.settingManager.settingData?.ai
+      if (ai?.enabled) {
+        if (queryJson.useSemantic == null) queryJson.useSemantic = true
+        else if (queryJson.useSemantic === false) queryJson.useSemantic = true
+      }
+    }
+    return queryJson
+  }
+
+  _resolveCollectionScoreMin() {
+    return resolveAutoCollectionScoreMin(this.settingManager.settingData?.ai)
+  }
+
+  _buildCollectionSearchParams(collection, queryJson, resolved, pageSize) {
+    const scoreMin = this._resolveCollectionScoreMin()
+    const orientation = Array.isArray(queryJson.orientation) ? queryJson.orientation : []
+    return {
+      resourceType: 'localResource',
+      resourceName: 'resources',
+      filterKeywords: resolved.filterKeywords,
+      filterType:
+        queryJson.fileType === 'video' ? 'videos' : queryJson.fileType === 'image' ? 'images' : '',
+      quality: Array.isArray(queryJson.quality) ? queryJson.quality.join(',') : '',
+      orientation: orientation.length ? orientation.join(',') : '',
+      startPage: 1,
+      pageSize,
+      isRandom: !!queryJson.isRandom,
+      sortField: queryJson.sortField || collection.sortField || 'score',
+      sortType: queryJson.sortType ?? collection.sortType ?? -1,
+      scoreMin,
+      scoreMax: queryJson.scoreMax,
+      tags: resolved.tags,
+      tagsMode: resolved.tagsMode,
+      includePrivacySpace: false
+    }
+  }
+
+  /** 与 CollectionCurator.getResourceIdsForTag 一致，供短词合集兜底 */
+  _getResourceIdsByTagKeyword(tag, scoreMin, limit = 50) {
+    const word = String(tag || '').trim()
+    if (!word || !isValidAutoCollectionTag(word)) return []
+    const params = [AI_ANALYSIS_STATUS.DONE, word]
+    let scoreClause = ''
+    if (scoreMin != null) {
+      scoreClause = ' AND r.score >= ?'
+      params.push(scoreMin)
+    }
+    return this.db
+      .prepare(
+        `SELECT r.id
+         FROM fbw_resources r
+         JOIN fbw_resource_words rw ON rw.resourceId = r.id
+         JOIN fbw_words w ON w.id = rw.wordId
+         WHERE r.fileType = 'image'
+           AND r.aiAnalysisStatus = ?
+           AND ${COLLECTION_PRIVACY_EXCLUDE_SQL}
+           AND w.word = ?${scoreClause}
+         ORDER BY r.score DESC, r.id DESC
+         LIMIT ?`
+      )
+      .all(...params, limit)
+      .map((row) => row.id)
+  }
+
   async _resolveSearchFilters(queryJson, collection) {
     const filterKeywords = this._resolveFilterKeywords(queryJson, collection)
-    let tags = Array.isArray(queryJson.tags) ? queryJson.tags.map(String).filter(Boolean) : []
+    let tags = Array.isArray(queryJson.tags)
+      ? queryJson.tags.map(String).filter((t) => t && isValidAutoCollectionTag(t))
+      : []
     let tagsMode = queryJson.tagsMode === 'all' ? 'all' : 'any'
     let searchKeywords = filterKeywords
 
     const ai = this.settingManager.settingData?.ai
     const cachedFor = String(queryJson.keywordTagsExpandedFor || '').trim()
     const isShortEntity = filterKeywords && filterKeywords.length <= 32
+
+    if (isShortEntity) {
+      tags = [...new Set([filterKeywords, ...tags])]
+      tagsMode = 'any'
+    }
+
+    if (
+      collection?.source === 'user' &&
+      filterKeywords &&
+      /[\u4e00-\u9fff]/.test(filterKeywords)
+    ) {
+      const zhTags = tags.filter((t) => /[\u4e00-\u9fff]/.test(String(t)))
+      tags = [
+        ...new Set([
+          filterKeywords,
+          ...this.wordsManager.cutSearchTokens(filterKeywords),
+          ...zhTags
+        ])
+      ]
+      tagsMode = 'any'
+    }
+
     const shouldExpand =
       isShortEntity &&
       ai?.enabled &&
@@ -174,18 +299,110 @@ export default class CollectionsManager {
     if (shouldExpand) {
       const ret = await this.textQueryParser.expandCollectionKeywordTags(filterKeywords)
       if (ret.success && ret.data?.length) {
-        tags = [...new Set([...tags, ...ret.data])]
+        const expanded = ret.data.filter((t) => isValidAutoCollectionTag(t))
+        tags = [...new Set([filterKeywords, ...tags, ...expanded])]
         tagsMode = 'any'
         queryJson.tags = tags
         queryJson.tagsMode = tagsMode
         queryJson.keywordTagsExpandedFor = filterKeywords
-        searchKeywords = ''
       }
-    } else if (cachedFor === filterKeywords && tags.length) {
-      searchKeywords = ''
     }
 
-    return { filterKeywords: searchKeywords, tags, tagsMode }
+    if (isShortEntity) {
+      tagsMode = 'any'
+      queryJson.tagsMode = tagsMode
+    }
+
+    return { filterKeywords: searchKeywords, tags, tagsMode, isShortEntity, primaryKeyword: filterKeywords }
+  }
+
+  async _searchCollectionResources(searchParams, queryJson, collection, pageSize) {
+    const primaryKw = this._resolveFilterKeywords(queryJson, collection)
+    let list = []
+
+    if (primaryKw) {
+      const kwRet = await this.resourcesManager.searchWithFilters({
+        ...searchParams,
+        filterKeywords: primaryKw,
+        tags: [],
+        tagsMode: 'any'
+      })
+      list = kwRet.data?.list || []
+    }
+
+    if (list.length < pageSize && Array.isArray(searchParams.tags) && searchParams.tags.length) {
+      const tagRet = await this.resourcesManager.searchWithFilters({
+        ...searchParams,
+        filterKeywords: ''
+      })
+      const tagList = tagRet.data?.list || []
+      tagCount = tagList.length
+      list = this._mergeResourceLists(list, tagList, pageSize)
+    }
+
+    if (list.length < pageSize && primaryKw && primaryKw.length <= 32) {
+      const tokenTags = this.wordsManager.cutSearchTokens(primaryKw)
+      if (tokenTags.length) {
+        const tokenRet = await this.resourcesManager.searchWithFilters({
+          ...searchParams,
+          filterKeywords: '',
+          tags: tokenTags,
+          tagsMode: 'any'
+        })
+        const tokenList = tokenRet.data?.list || []
+        list = this._mergeResourceLists(list, tokenList, pageSize)
+      }
+    }
+
+    if (list.length >= pageSize) return list
+    if (!primaryKw || primaryKw.length > 32) return list
+
+    const scoreMin = searchParams.scoreMin
+    const tagIds = this._getResourceIdsByTagKeyword(primaryKw, scoreMin, pageSize)
+    if (!tagIds.length) return list
+
+    const existing = new Set(list.map((item) => item.id))
+    const missing = tagIds.filter((id) => !existing.has(id))
+    if (!missing.length) return list
+
+    const fillRet = await this.resourcesManager.searchWithFilters({
+      ...searchParams,
+      filterKeywords: '',
+      tags: [],
+      quality: '',
+      resourceIds: missing,
+      pageSize: missing.length,
+      startPage: 1
+    })
+    const extra = fillRet.data?.list || []
+    list = this._mergeResourceLists(list, extra, pageSize)
+    return list
+  }
+
+  async _searchCollectionSemanticFallback(searchParams, queryJson, collection, pageSize, existing = []) {
+    if (collection.source !== 'user' || !this.embeddingManager) return []
+    const query =
+      this._resolveVisualSearchQuery(queryJson, collection) || String(collection.prompt || '').trim()
+    if (!query) return []
+    const need = pageSize - existing.length
+    if (need <= 0) return []
+
+    const ranked = await this.embeddingManager.semanticSearchRanked(query, {
+      maxResults: Math.max(need * 4, 40)
+    })
+    if (!ranked.resourceIds.length) return []
+
+    const filtered = await this.resourcesManager._filterOrderedResourceIdsBySearchParams(
+      ranked.resourceIds,
+      { ...searchParams, filterKeywords: '', tags: [] }
+    )
+    if (!filtered.length) return []
+
+    const exclude = new Set(existing.map((item) => item.id))
+    const pick = filtered.filter((id) => !exclude.has(id)).slice(0, need)
+    if (!pick.length) return []
+
+    return this.resourcesManager.getResourcesByIds(pick)
   }
 
   _resolveFilterKeywords(queryJson, collection) {
@@ -212,7 +429,12 @@ export default class CollectionsManager {
     if (collection.source === 'auto') return false
     if (queryJson.useSemantic === false) return false
     if (!this.embeddingManager) return false
-    if (this._hasStructuredFilters(queryJson, collection)) return false
+    if (
+      collection.source !== 'user' &&
+      this._hasStructuredFilters(queryJson, collection)
+    ) {
+      return false
+    }
     const q = this._resolveVisualSearchQuery(queryJson, collection) || String(collection.prompt || '').trim()
     if (!q) return false
     return this.embeddingManager.countImageEmbeddings(true) >= COLLECTION_VISUAL_MIN_EMBEDDINGS
@@ -231,6 +453,9 @@ export default class CollectionsManager {
 
     const poolParams = {
       ...searchParams,
+      filterKeywords: '',
+      tags: [],
+      tagsMode: 'any',
       startPage: 1,
       pageSize: Math.min(800, Math.max(limit * 10, 120))
     }
@@ -261,9 +486,6 @@ export default class CollectionsManager {
     if (list.length) {
       queryJson.useVisualSearch = true
       queryJson.visualSearchQuery = semanticQuery
-      this.logger.info(
-        `[CollectionsManager] 画面向量补充合集 ${collection.id}: +${list.length} 项 (query="${semanticQuery.slice(0, 40)}")`
-      )
     }
     return list
   }
@@ -293,10 +515,12 @@ export default class CollectionsManager {
         queryJson = {}
       }
     }
+    queryJson = this._normalizeCollectionQueryJson(queryJson, collection)
+
     if (regenPrompt && collection.prompt && !queryJsonOverride) {
       const parsed = await this.textQueryParser.parseCollectionPrompt(collection.prompt)
       if (parsed.success) {
-        queryJson = { ...queryJson, ...parsed.data }
+        queryJson = this._normalizeCollectionQueryJson({ ...queryJson, ...parsed.data }, collection)
         delete queryJson.keywordTagsExpandedFor
       }
     }
@@ -304,27 +528,20 @@ export default class CollectionsManager {
     const pageSize = queryJson.limitCount || collection.limitCount || 20
     const resolved = await this._resolveSearchFilters(queryJson, collection)
     const filterKeywords = this._resolveFilterKeywords(queryJson, collection)
-    const searchParams = {
-      resourceType: 'localResource',
-      resourceName: queryJson.resourceName || collection.resourceScope || 'resources',
-      filterKeywords: resolved.filterKeywords,
-      filterType: queryJson.fileType === 'video' ? 'videos' : 'images',
-      quality: Array.isArray(queryJson.quality) ? queryJson.quality.join(',') : '',
-      orientation: Array.isArray(queryJson.orientation) ? queryJson.orientation.join(',') : '',
-      startPage: 1,
-      pageSize,
-      isRandom: !!queryJson.isRandom,
-      sortField: queryJson.sortField || collection.sortField || 'score',
-      sortType: queryJson.sortType ?? collection.sortType ?? -1,
-      scoreMin: queryJson.scoreMin,
-      scoreMax: queryJson.scoreMax,
-      tags: resolved.tags,
-      tagsMode: resolved.tagsMode,
-      hideUnsafe: this.settingManager.settingData?.ai?.enableNsfwCheck
-    }
+    const searchParams = this._buildCollectionSearchParams(collection, queryJson, resolved, pageSize)
 
-    const searchRet = await this.resourcesManager.searchWithFilters(searchParams)
-    let list = searchRet.data?.list || []
+    let list = await this._searchCollectionResources(searchParams, queryJson, collection, pageSize)
+
+    if (list.length < pageSize) {
+      const semanticList = await this._searchCollectionSemanticFallback(
+        searchParams,
+        queryJson,
+        collection,
+        pageSize,
+        list
+      )
+      list = this._mergeResourceLists(list, semanticList, pageSize)
+    }
 
     const canVisual = this._canUseVisualSearch(collection, queryJson)
 
@@ -343,11 +560,6 @@ export default class CollectionsManager {
     if (filterKeywords) {
       queryJson.filterKeywords = filterKeywords
     }
-
-    this.logger.info(
-      `[CollectionsManager] 生成合集 ${collectionId} "${collection.name}": ${list.length} 项` +
-        ` keyword=${filterKeywords ? 'yes' : 'no'} visual=${canVisual ? 'yes' : 'no'} regenPrompt=${regenPrompt}`
-    )
 
     this.db.prepare(`DELETE FROM fbw_collection_items WHERE collectionId = ?`).run(collectionId)
     const insert = this.db.prepare(

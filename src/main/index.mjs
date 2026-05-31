@@ -40,6 +40,9 @@ import cache from './cache.mjs'
 import { menuList } from '../common/publicData.js'
 import axios from 'axios'
 import Updater from './updater.mjs'
+import electronUpdater from 'electron-updater'
+
+const { autoUpdater } = electronUpdater
 import { appInfo } from '../common/config.js'
 import LoadingWindow from './windows/LoadingWindow.mjs'
 import MainWindow from './windows/MainWindow.mjs'
@@ -47,6 +50,58 @@ import ViewImageWindow from './windows/ViewImageWindow.mjs'
 import SuspensionBall from './windows/SuspensionBall.mjs'
 import DynamicWallpaperWindow from './windows/DynamicWallpaperWindow.mjs'
 import RhythmWallpaperWindow from './windows/RhythmWallpaperWindow.mjs'
+
+function sendUpdateNotification(body, onClick) {
+  const nm = global.FBW.store?.notificationManager
+  if (!nm) {
+    global.logger.warn('通知管理器未就绪，无法发送更新通知')
+    return
+  }
+  const notice = nm.send({
+    title: t('actions.checkUpdate'),
+    body,
+    icon: global.FBW.iconLogo
+  })
+  if (!notice) {
+    global.logger.warn('系统通知未创建（请检查系统通知权限或 Windows 通知设置）')
+    return
+  }
+  if (onClick) {
+    notice.on('click', onClick)
+  }
+  notice.show()
+}
+
+function bindUpdaterEvents() {
+  global.FBW.updater.on('update-available', (info) => {
+    global.logger.info('有可用更新', info)
+    sendUpdateNotification(
+      t('messages.updateAvailable', { version: `v${info.version}` }),
+      () => shell.openExternal(appInfo.github + '/releases')
+    )
+  })
+
+  global.FBW.updater.on('update-downloaded', (info) => {
+    global.logger.info('更新下载完成', info)
+    sendUpdateNotification(
+      t('messages.updateDownloaded', { version: `v${info.version}` }),
+      () => autoUpdater.quitAndInstall()
+    )
+  })
+
+  global.FBW.updater.on('update-not-available', (info) => {
+    global.logger.info('无需更新', info)
+    sendUpdateNotification(t('messages.updateNotAvailable'))
+  })
+
+  global.FBW.updater.on('error', (err) => {
+    global.logger.error(`更新失败： error => ${err}`)
+    if (isDev()) {
+      global.logger.warn('开发环境需可访问 dev-app-update.yml 对应更新服务')
+    }
+    sendUpdateNotification(t('messages.checkUpdateFail'))
+  })
+}
 
 const userDataPath = app.getPath('userData')
 
@@ -458,6 +513,11 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
 
     app.on('before-quit', async () => {
       global.logger.info('APP BEFORE QUIT!')
+      try {
+        global.FBW?.store?.shortcutManager?.unregisterAllShortcuts()
+      } catch (error) {
+        global.logger.warn(`注销快捷键失败: ${error.message}`)
+      }
     })
 
     app.on('window-all-closed', () => {
@@ -515,60 +575,6 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
         })
       }
 
-      // 检查更新
-      global.FBW.updater = new Updater()
-      // 绑定事件
-      global.FBW.updater.on('update-available', (info) => {
-        global.logger.info('有可用更新', info)
-        // 显示系统通知
-        const notice = global.FBW.notificationManager.send({
-          title: t('actions.checkUpdate'),
-          body: t('messages.updateAvailable', {
-            version: `v${info.version}`
-          })
-        })
-        notice?.on('click', () => {
-          // 打开更新页面
-          shell.openExternal(appInfo.github + '/releases')
-        })
-        notice?.show()
-      })
-
-      // 添加更新下载完成的事件监听器
-      global.FBW.updater.on('update-downloaded', (info) => {
-        global.logger.info('更新下载完成', info)
-        // 显示系统通知提示用户安装更新
-        const notice = global.FBW.notificationManager.send({
-          title: t('actions.checkUpdate'),
-          body: t('messages.updateDownloaded', {
-            version: `v${info.version}`
-          })
-        })
-        notice?.on('click', () => {
-          // 退出并安装更新
-          autoUpdater.quitAndInstall()
-        })
-        notice?.show()
-      })
-      global.FBW.updater.on('update-not-available', (info) => {
-        global.logger.info('无需更新', info)
-        // 显示系统通知
-        const notice = global.FBW.notificationManager.send({
-          title: t('actions.checkUpdate'),
-          body: t('messages.updateNotAvailable')
-        })
-        notice?.show()
-      })
-      global.FBW.updater.on('error', (err) => {
-        global.logger.error(`更新失败： error => ${err}`)
-        // 显示系统通知
-        const notice = global.FBW.notificationManager.send({
-          title: t('actions.checkUpdate'),
-          body: t('messages.checkUpdateFail')
-        })
-        notice?.show()
-      })
-
       electronApp.setAppUserModelId('co.oxoyo.flying-bird-wallpaper')
 
       // FIXME 清空菜单
@@ -581,7 +587,7 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
       }
 
       ipcMain.handle('main:sendNotification', async (event, options) => {
-        const notice = global.FBW.notificationManager.send(
+        const notice = global.FBW.store?.notificationManager?.send(
           {
             title: options.title || t('appInfo.appName'),
             body: options.body || '',
@@ -680,6 +686,9 @@ app.commandLine.appendSwitch('enable-oop-rasterization')
       global.FBW.store = new Store()
       // 等待 Store 初始化完成
       await global.FBW.store?.waitForInitialization()
+
+      global.FBW.updater = new Updater()
+      bindUpdaterEvents()
 
       // 恢复上次设置的动态壁纸或律动壁纸
       if (global.FBW.store?.settingData?.wallpaperType === 'dynamic') {

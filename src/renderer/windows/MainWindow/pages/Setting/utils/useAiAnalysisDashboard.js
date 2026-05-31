@@ -1,5 +1,6 @@
 import { computed, onMounted, onUnmounted, ref, unref, watch } from 'vue'
 import { useTranslation } from 'i18next-vue'
+import { resolveAnalysisStatusTagType } from '@common/analysisRunStatus.mjs'
 import { formatAnalysisRemaining, msToAnalysisSeconds } from './formatAnalysisDuration.js'
 
 const ANALYSIS_SPEED_MIN_SAMPLES = 3
@@ -64,17 +65,7 @@ export function useAiAnalysisDashboard(aiSource, options = {}) {
     return key ? t(`pages.Setting.aiSetting.${key}`) : ''
   })
 
-  const analysisStatusTagType = computed(() => {
-    const map = {
-      loading: 'info',
-      running: 'primary',
-      queued: 'warning',
-      complete: 'success',
-      idle: 'info',
-      onDemand: 'info'
-    }
-    return map[analysisRunStatus.value]
-  })
+  const analysisStatusTagType = computed(() => resolveAnalysisStatusTagType(analysisRunStatus.value))
 
   const analysisProgressSummary = computed(() => {
     const s = analysisStats.value

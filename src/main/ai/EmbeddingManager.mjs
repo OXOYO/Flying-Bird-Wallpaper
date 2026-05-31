@@ -7,7 +7,11 @@ import VisualCollectionSearch from './VisualCollectionSearch.mjs'
 import {
   VISUAL_EMBED_MODEL_ID,
   VISUAL_EMBED_SOURCES,
-  SIMILAR_RECALL_K
+  SIMILAR_RECALL_K,
+  SEMANTIC_SEARCH_MIN_COSINE,
+  VISUAL_EMBED_BACKFILL_BATCH_BUILTIN,
+  VISUAL_EMBED_BACKFILL_BATCH_REMOTE,
+  VISUAL_EMBED_REMOTE_BATCH_PAUSE_MS
 } from './aiConstants.mjs'
 import { EMBED_INPUT_TYPE, isAsymmetricEmbedModel, supportsImageAsQuery } from './AsymmetricEmbedUtils.mjs'
 
@@ -40,7 +44,7 @@ export default class EmbeddingManager {
     )
     this.onEmbeddingDone = null
     this.onVisualEmbeddingDone = null
-    this._visualBackfillPage = 1
+    this._visualBackfillRunning = false
     EmbeddingManager._instance = this
   }
 
@@ -64,8 +68,27 @@ export default class EmbeddingManager {
     return VISUAL_EMBED_MODEL_ID
   }
 
-  buildResourceText(row) {
+  buildResourceText(row, resourceId = row?.id) {
     const parts = [row.title, row.desc, row.summary, row.fileName].filter(Boolean)
+    const id = Number(resourceId)
+    if (Number.isFinite(id) && id > 0) {
+      try {
+        const tagRows = this.db
+          .prepare(
+            `SELECT DISTINCT w.word
+             FROM fbw_resource_words rw
+             JOIN fbw_words w ON w.id = rw.wordId
+             WHERE rw.resourceId = ?
+             ORDER BY w.word ASC
+             LIMIT 24`
+          )
+          .all(id)
+        const tagText = tagRows.map((r) => r.word).filter(Boolean).join(' ')
+        if (tagText) parts.push(tagText)
+      } catch {
+        /* ignore */
+      }
+    }
     return parts.join(' ').trim() || row.fileName || 'wallpaper'
   }
 
@@ -75,7 +98,7 @@ export default class EmbeddingManager {
       .prepare(`SELECT id, title, desc, summary, fileName FROM fbw_resources WHERE id = ?`)
       .get(resourceId)
     if (!row) return { success: false, message: 'resource not found' }
-    const text = this.buildResourceText(row)
+    const text = this.buildResourceText(row, resourceId)
     const embedModel = this.ai.embeddingModel || this.ai.textModel || ''
     const modelStartedAt = Date.now()
     try {
@@ -306,58 +329,120 @@ export default class EmbeddingManager {
     })
   }
 
-  async semanticSearch(query, limit = 30) {
+  /**
+   * 按余弦阈值召回文本语义命中（相似度降序）
+   * @returns {{ hits: { resourceId: number, similarity: number }[], resourceIds: number[], total: number }}
+   */
+  async semanticSearchRanked(query, options = {}) {
+    const minSimilarity =
+      options.minSimilarity != null ? options.minSimilarity : SEMANTIC_SEARCH_MIN_COSINE
+    const maxResults =
+      options.maxResults != null && options.maxResults > 0 ? Number(options.maxResults) : null
     const vector = await this.provider.embedText(query, {
       inputType: EMBED_INPUT_TYPE.QUERY
     })
-    if (!vector?.length) return []
-    const knn = this.vecStore.knn(vector, limit)
-    return knn.map((x) => x.resourceId)
+    if (!vector?.length) {
+      return { hits: [], resourceIds: [], total: 0 }
+    }
+    const ranked = this.vecStore.rankSimilarGlobal(vector, null, minSimilarity)
+    const hits = maxResults != null ? ranked.slice(0, maxResults) : ranked
+    return {
+      hits,
+      resourceIds: hits.map((h) => h.resourceId),
+      total: hits.length
+    }
+  }
+
+  /** 合集种子等场景：取 Top-N，不设相似度下限 */
+  async semanticSearch(query, limit = 30) {
+    const { resourceIds } = await this.semanticSearchRanked(query, {
+      minSimilarity: 0,
+      maxResults: limit
+    })
+    return resourceIds
   }
 
   /**
    * 后台补算尚未生成视觉向量的图片（按当前 active visual model）
    */
-  async intervalVisualEmbed(locks) {
+  _fetchVisualBackfillBatch(activeModel, limit) {
+    return this.db
+      .prepare(
+        `SELECT r.id
+         FROM fbw_resources r
+         WHERE r.fileType = 'image'
+           AND r.filePath IS NOT NULL AND r.filePath != ''
+           AND NOT EXISTS (
+             SELECT 1 FROM fbw_resource_image_vec_blob v
+             WHERE v.resourceId = r.id AND v.model = ?
+           )
+         ORDER BY r.id ASC
+         LIMIT ?`
+      )
+      .all(activeModel, limit)
+  }
+
+  _scheduleVisualPumpContinue(locks) {
+    setImmediate(() => {
+      if (locks.visualEmbed) return
+      const activeModel = this.getActiveVisualModelId()
+      const pending = this._fetchVisualBackfillBatch(activeModel, 1)
+      if (!pending.length) return
+      this.pumpVisualEmbedBackfill(locks)
+    })
+  }
+
+  /**
+   * 画面向量补算：内置连续大批次；远程小批次并短暂让出 GPU。
+   */
+  pumpVisualEmbedBackfill(locks) {
     if (locks.visualEmbed) return
     locks.visualEmbed = true
+    this._visualBackfillRunning = true
 
+    const remote = this.usesRemoteVisualEmbed()
+    const batchSize = remote
+      ? VISUAL_EMBED_BACKFILL_BATCH_REMOTE
+      : VISUAL_EMBED_BACKFILL_BATCH_BUILTIN
     const activeModel = this.getActiveVisualModelId()
-    const pageSize = 4
-    try {
-      const list = this.db
-        .prepare(
-          `SELECT r.id
-           FROM fbw_resources r
-           WHERE r.fileType = 'image'
-             AND r.filePath IS NOT NULL AND r.filePath != ''
-             AND NOT EXISTS (
-               SELECT 1 FROM fbw_resource_image_vec_blob v
-               WHERE v.resourceId = r.id AND v.model = ?
-             )
-           ORDER BY r.id DESC
-           LIMIT ? OFFSET ?`
-        )
-        .all(activeModel, pageSize, (this._visualBackfillPage - 1) * pageSize)
 
-      if (!list.length) {
-        this._visualBackfillPage = 1
-        return
-      }
+    const run = async () => {
+      try {
+        while (true) {
+          const list = this._fetchVisualBackfillBatch(activeModel, batchSize)
+          if (!list.length) break
 
-      if (list.length < pageSize) {
-        this._visualBackfillPage = 1
-      } else {
-        this._visualBackfillPage += 1
-      }
+          const startedAt = Date.now()
+          for (const row of list) {
+            await this.upsertImageForResource(row.id)
+          }
+          this.logger.info(
+            `[EmbeddingManager] visual backfill batch=${list.length} remote=${remote} model=${activeModel} ms=${Date.now() - startedAt}`
+          )
 
-      for (const row of list) {
-        await this.upsertImageForResource(row.id)
+          if (remote) {
+            await new Promise((r) => setTimeout(r, VISUAL_EMBED_REMOTE_BATCH_PAUSE_MS))
+          }
+        }
+      } catch (err) {
+        this.logger.warn(`[EmbeddingManager] visual backfill pump: ${err}`)
+      } finally {
+        locks.visualEmbed = false
+        this._visualBackfillRunning = false
+        this._scheduleVisualPumpContinue(locks)
       }
-    } catch (err) {
-      this.logger.warn(`[EmbeddingManager] visual backfill: ${err}`)
-    } finally {
-      locks.visualEmbed = false
     }
+
+    run().catch((err) => {
+      this.logger.warn(`[EmbeddingManager] visual backfill pump fatal: ${err}`)
+      locks.visualEmbed = false
+      this._visualBackfillRunning = false
+      this._scheduleVisualPumpContinue(locks)
+    })
+  }
+
+  /** @deprecated 请使用 pumpVisualEmbedBackfill */
+  intervalVisualEmbed(locks) {
+    this.pumpVisualEmbedBackfill(locks)
   }
 }

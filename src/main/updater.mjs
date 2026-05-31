@@ -24,7 +24,7 @@ export default class Updater {
 
     // 监听渲染进程的检查更新事件，触发检查更新
     ipcMain.on('main:checkUpdate', () => {
-      autoUpdater.checkForUpdates()
+      this.checkUpdate()
     })
 
     this.startupCheckUpdate()
@@ -55,7 +55,7 @@ export default class Updater {
       setInterval(
         () => {
           global.logger.info('定时检查更新')
-          autoUpdater.checkForUpdates()
+          this.checkUpdate()
         },
         8 * 60 * 60 * 1000
       )
@@ -63,6 +63,9 @@ export default class Updater {
   }
 
   checkUpdate() {
-    autoUpdater.checkForUpdates()
+    autoUpdater.checkForUpdates().catch((err) => {
+      // error 事件会同步触发 UI 通知；此处仅避免 Uncaught Promise Rejection
+      global.logger.debug(`checkForUpdates rejected: ${err?.message || err}`)
+    })
   }
 }

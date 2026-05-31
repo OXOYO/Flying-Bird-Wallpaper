@@ -24,12 +24,10 @@ const onJumpToPageCallback = (event, key) => {
 }
 
 onBeforeMount(() => {
-  // 监听主进程的页面跳转事件
   window.FBW.onJumpToPage(onJumpToPageCallback)
 })
 
 onMounted(() => {
-  // 主窗口挂载后，根据用户配置的defaultMenu设置默认菜单
   const menu =
     settingData.value.defaultMenu === 'LastMenu'
       ? settingData.value.selectedMenu
@@ -38,7 +36,6 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
-  // 取消监听主进程的页面跳转事件
   window.FBW.offJumpToPage(onJumpToPageCallback)
 })
 </script>
@@ -47,16 +44,19 @@ onBeforeUnmount(() => {
   <el-container class="window-container">
     <el-aside class="window-side-wrapper" :width="settingData.expandSideMenu ? '70px' : '0'">
       <SideMenu v-if="settingData.expandSideMenu" />
-      <div
+      <button
         v-if="settingData.enableExpandSideMenu"
+        type="button"
         class="side-expand-btn"
+        :class="{ 'is-collapsed': !settingData.expandSideMenu }"
+        :aria-expanded="settingData.expandSideMenu"
         @click="toggleExpandSideMenu"
       >
         <IconifyIcon
           class="expand-btn-icon"
           :icon="settingData.expandSideMenu ? 'custom:caret-left' : 'custom:caret-right'"
         />
-      </div>
+      </button>
     </el-aside>
     <el-main class="window-main-wrapper">
       <MainContainer />
@@ -69,18 +69,19 @@ onBeforeUnmount(() => {
   width: 100%;
   height: 100%;
 
-  &:hover {
-    .side-expand-btn {
-      visibility: visible;
-    }
+  &:hover .side-expand-btn {
+    visibility: visible;
+    opacity: 1;
   }
 }
+
 .window-side-wrapper {
   position: relative;
   height: 100%;
   overflow: unset;
   transition: all 0.3s ease-in-out;
 }
+
 .window-main-wrapper {
   height: 100%;
   padding: 0;
@@ -89,6 +90,7 @@ onBeforeUnmount(() => {
 
 .side-expand-btn {
   visibility: hidden;
+  opacity: 0;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -97,26 +99,57 @@ onBeforeUnmount(() => {
   top: 50%;
   right: -18px;
   width: 18px;
+  min-height: 44px;
+  padding: 8px 0;
+  margin: 0;
   transform: translate(0, -50%);
-  transition: all 0.3s ease-in-out;
-  color: var(--el-text-color-regular);
-  background-color: #f6f7f9;
+  border: none;
   border-top-right-radius: 50%;
   border-bottom-right-radius: 50%;
-  padding: 5px 0;
-  margin: 0;
-  overflow: hidden;
+  color: var(--el-text-color-secondary);
+  background-color: #f6f7f9;
+  cursor: pointer;
+  outline: none;
+  overflow: visible;
+  transition:
+    visibility 0.2s ease,
+    opacity 0.2s ease,
+    color 0.2s ease;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -6px -8px -6px -4px;
+  }
 
   &:hover {
     color: var(--el-color-primary);
+    background-color: #f6f7f9;
   }
 
   &:active {
     color: var(--el-color-primary);
   }
 
+  &:focus-visible {
+    opacity: 1;
+    visibility: visible;
+    color: var(--el-color-primary);
+    background-color: #f6f7f9;
+    outline: 2px solid var(--el-color-primary-light-7);
+    outline-offset: 1px;
+  }
+
+  &.is-collapsed {
+    color: var(--el-color-primary);
+    background-color: #f6f7f9;
+  }
+
   .expand-btn-icon {
-    cursor: pointer;
+    position: relative;
+    z-index: 1;
+    font-size: 13px;
+    pointer-events: none;
   }
 }
 </style>

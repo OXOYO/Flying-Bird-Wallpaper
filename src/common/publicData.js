@@ -208,7 +208,6 @@ export const defaultSettingData = {
     analysisMode: 'on_demand',
     legacyOnnxScore: false,
     legacyJiebaTags: false,
-    enableNsfwCheck: false,
     runOnWifiOnly: false,
     expandDownloadKeywords: false,
     scoreMinFilter: 70,
@@ -220,13 +219,17 @@ export const defaultSettingData = {
     visualEmbedModel: '',
     autoCollectionsEnabled: true,
     autoCollectionsMaxCount: 20,
-    analysisMaxRetries: 5,
+    analysisMaxRetries: 1,
     autoCurateSettled: false,
     autoCurateSettledAnalyzed: 0
   },
   /*** 搜索（仅搜索页 / H5 搜索） ***/
   search: {
     useSemanticSearch: false
+  },
+  /*** 隐私空间 ***/
+  privacy: {
+    enableNsfwContentMask: false
   },
   /*** 功能配置 ***/
   startup: true,
@@ -359,6 +362,7 @@ export function migrateSettingData(storeData = {}) {
   const next = { ...defaultSettingData, ...storeData }
   next.ai = { ...defaultSettingData.ai, ...(storeData.ai || {}) }
   next.search = { ...defaultSettingData.search, ...(storeData.search || {}) }
+  next.privacy = { ...defaultSettingData.privacy, ...(storeData.privacy || {}) }
   if (next.search.useSemanticSearch === undefined && storeData.ai?.smartSearch != null) {
     next.search.useSemanticSearch = !!storeData.ai.smartSearch
   }
@@ -438,6 +442,14 @@ export function migrateSettingData(storeData = {}) {
   }
   if (next.ai.analysisMaxRetries == null || next.ai.analysisMaxRetries === '') {
     next.ai.analysisMaxRetries = defaultSettingData.ai.analysisMaxRetries
+  }
+  {
+    const c = Math.round(Number(next.ai.concurrency))
+    if (!Number.isFinite(c)) {
+      next.ai.concurrency = defaultSettingData.ai.concurrency
+    } else {
+      next.ai.concurrency = Math.min(10, Math.max(1, c))
+    }
   }
   if (next.ai.autoCurateSettled == null) {
     next.ai.autoCurateSettled = defaultSettingData.ai.autoCurateSettled
@@ -547,6 +559,11 @@ export const unitToValField = {
 }
 
 export const qualityList = ['2K', '4K', '5K', '8K']
+
+/** 分辨率质量筛选仅适用于图片（视频资源不使用 2K/4K 等等级） */
+export function isQualityFilterApplicable(filterType) {
+  return filterType !== 'videos'
+}
 
 export const filterTypeIcons = {
   images: 'custom:image',
@@ -696,6 +713,11 @@ export const rhythmEffectOptions = [
     label: '纹理球',
     locale: 'rhythmEffectOptions.ThreeStageTexturedSphere',
     value: 'ThreeStageTexturedSphere'
+  },
+  {
+    label: '脉动空间',
+    locale: 'rhythmEffectOptions.ThreeStageRoomMeshGrid',
+    value: 'ThreeStageRoomMeshGrid'
   }
 ]
 
@@ -735,6 +757,10 @@ export const positionOptions = [
 export const infoKeys = [
   'title',
   'desc',
+  'summary',
+  'tags',
+  'nsfwLevel',
+  'aiAnalysisStatus',
   'author',
   'link',
   'resourceName',
@@ -763,7 +789,7 @@ export const keyboardShortcuts = [
     locale: 'keyboardShortcuts.quitApp',
     description: '完全退出应用',
     type: 'local',
-    windowNames: ['mainWindow', 'loadingWindow', 'viewImageWindow', 'suspensionBall'],
+    windowNames: ['mainWindow', 'viewImageWindow'],
     category: 'system',
     editable: false,
     visible: true,
@@ -779,7 +805,7 @@ export const keyboardShortcuts = [
     locale: 'keyboardShortcuts.closeWindow',
     description: '关闭当前窗口',
     type: 'local',
-    windowNames: ['mainWindow', 'loadingWindow', 'viewImageWindow', 'suspensionBall'],
+    windowNames: ['mainWindow', 'viewImageWindow'],
     category: 'window',
     editable: false,
     visible: true,
@@ -794,7 +820,7 @@ export const keyboardShortcuts = [
     locale: 'keyboardShortcuts.minimizeWindow',
     description: '最小化当前窗口',
     type: 'local',
-    windowNames: ['mainWindow', 'loadingWindow', 'viewImageWindow', 'suspensionBall'],
+    windowNames: ['mainWindow', 'viewImageWindow'],
     category: 'window',
     editable: false,
     visible: true,
@@ -809,7 +835,7 @@ export const keyboardShortcuts = [
     locale: 'keyboardShortcuts.toggleMainWindow',
     description: '显示/隐藏主窗口',
     type: 'global',
-    windowNames: ['mainWindow', 'loadingWindow', 'viewImageWindow', 'suspensionBall'],
+    windowNames: ['mainWindow', 'viewImageWindow'],
     category: 'window',
     editable: true,
     visible: true,
@@ -931,7 +957,7 @@ export const keyboardShortcuts = [
     locale: 'keyboardShortcuts.openSettings',
     description: '打开设置',
     type: 'local',
-    windowNames: ['mainWindow', 'loadingWindow', 'viewImageWindow', 'suspensionBall'],
+    windowNames: ['mainWindow', 'viewImageWindow'],
     category: 'settings',
     editable: true,
     visible: true,
@@ -946,7 +972,7 @@ export const keyboardShortcuts = [
     locale: 'keyboardShortcuts.openUtils',
     description: '打开工具',
     type: 'local',
-    windowNames: ['mainWindow', 'loadingWindow', 'viewImageWindow', 'suspensionBall'],
+    windowNames: ['mainWindow', 'viewImageWindow'],
     category: 'settings',
     editable: true,
     visible: true,
@@ -961,7 +987,7 @@ export const keyboardShortcuts = [
     locale: 'keyboardShortcuts.openAbout',
     description: '打开关于',
     type: 'local',
-    windowNames: ['mainWindow', 'loadingWindow', 'viewImageWindow', 'suspensionBall'],
+    windowNames: ['mainWindow', 'viewImageWindow'],
     category: 'settings',
     editable: true,
     visible: true,
@@ -976,7 +1002,7 @@ export const keyboardShortcuts = [
     locale: 'keyboardShortcuts.checkUpdate',
     description: '检查更新',
     type: 'local',
-    windowNames: ['mainWindow', 'loadingWindow', 'viewImageWindow', 'suspensionBall'],
+    windowNames: ['mainWindow', 'viewImageWindow'],
     category: 'settings',
     editable: true,
     visible: true,

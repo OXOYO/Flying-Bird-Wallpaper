@@ -2,6 +2,8 @@
 import { useTranslation } from 'i18next-vue'
 import InstantTooltip from '@renderer/components/InstantTooltip.vue'
 import { buildResourceCardButtons } from '@renderer/composables/useResourceCardActions.js'
+import { useHorizontalWheelScroll } from '@renderer/composables/useHorizontalWheelScroll.mjs'
+import NsfwContentMask from '@renderer/components/NsfwContentMask.vue'
 
 const props = defineProps({
   item: { type: Object, required: true },
@@ -20,12 +22,15 @@ const props = defineProps({
   showAiBadge: { type: Boolean, default: true },
   showCaption: { type: Boolean, default: true },
   fill: { type: Boolean, default: false },
-  statusClass: { type: String, default: '' }
+  statusClass: { type: String, default: '' },
+  nsfwMasked: { type: Boolean, default: false },
+  actionsDisabled: { type: Boolean, default: false }
 })
 
-const emit = defineEmits(['action', 'dblclick-card'])
+const emit = defineEmits(['action', 'dblclick-card', 'nsfw-mask-click'])
 
 const { t } = useTranslation()
+const { onHorizontalWheel } = useHorizontalWheelScroll()
 const videoRef = ref(null)
 const isPlaying = ref(false)
 
@@ -43,10 +48,12 @@ const cardStyle = computed(() => {
 })
 
 const onBtnClick = (action) => {
+  if (props.actionsDisabled) return
   emit('action', action, props.item, props.index)
 }
 
 const onDblClick = () => {
+  if (props.actionsDisabled) return
   emit('dblclick-card', props.item, props.index)
 }
 
@@ -81,7 +88,8 @@ const onVideoEnded = () => {
     :style="cardStyle"
     @dblclick="onDblClick"
   >
-    <div v-if="showTags" class="card-item-tags">
+    <NsfwContentMask :visible="nsfwMasked" @click="emit('nsfw-mask-click', $event)" />
+    <div v-if="showTags && !nsfwMasked" class="card-item-tags">
       <InstantTooltip v-if="item.resourceName" :content="item.resourceName">
         <div class="tag-item tag-item__disabled">
           {{ item.resourceName }}
@@ -115,8 +123,8 @@ const onVideoEnded = () => {
       </InstantTooltip>
     </div>
 
-    <div class="card-media">
-      <div class="card-item-btns__trigger"></div>
+    <div class="card-media" :class="{ 'card-media--nsfw-masked': nsfwMasked }">
+      <div v-if="!nsfwMasked" class="card-item-btns__trigger"></div>
       <div v-if="item.fileType === 'image'" class="card-item-image-wrapper">
         <el-image class="card-item-image-inner" :src="item.imageSrc" loading="lazy" lazy fit="cover">
           <template #error>
@@ -139,6 +147,7 @@ const onVideoEnded = () => {
           @ended="onVideoEnded"
         ></video>
         <IconifyIcon
+          v-if="!nsfwMasked"
           class="card-item-video-btn"
           :icon="isPlaying ? 'custom:pause-circle' : 'custom:play-circle'"
           @click.stop="toggleVideo"
@@ -151,8 +160,13 @@ const onVideoEnded = () => {
         </div>
       </div>
 
-      <el-scrollbar class="card-item-btns" @dblclick.stop>
-        <div class="card-item-btns-track">
+      <el-scrollbar
+        v-if="!nsfwMasked"
+        class="card-item-btns"
+        @dblclick.stop
+        @wheel.capture="onHorizontalWheel"
+      >
+        <div class="card-item-btns-track" @wheel.capture="onHorizontalWheel">
           <InstantTooltip
             v-for="btn in buttons"
             :key="btn.action"
@@ -189,6 +203,11 @@ const onVideoEnded = () => {
   overflow: hidden;
   background: var(--el-fill-color-light);
   cursor: pointer;
+
+  :deep(.nsfw-content-mask) {
+    z-index: 30;
+    border-radius: inherit;
+  }
 
   &--fill {
     width: 100%;
@@ -252,6 +271,13 @@ const onVideoEnded = () => {
 .card-media {
   position: relative;
   overflow: hidden;
+
+  &--nsfw-masked {
+    .card-item-btns__trigger,
+    .card-item-btns {
+      pointer-events: none;
+    }
+  }
 }
 
 .card-item-image-wrapper {
@@ -401,8 +427,8 @@ const onVideoEnded = () => {
   left: 0;
   z-index: 10;
   box-sizing: border-box;
-  height: 32px;
-  padding: 4px 6px;
+  height: 38px;
+  padding: 0 8px;
   backdrop-filter: blur(8px);
   background-color: var(--dominant-color-rgba, rgba(0, 0, 0, 0.55));
   transform: translate3d(0, 100%, 0);
@@ -414,16 +440,25 @@ const onVideoEnded = () => {
     opacity 0.2s ease,
     visibility 0.2s ease;
 
+  :deep(.el-scrollbar) {
+    height: 100%;
+  }
+
   :deep(.el-scrollbar__wrap) {
+    height: 100%;
+    display: flex;
+    align-items: center;
     overflow-x: auto;
     overflow-y: hidden;
     overscroll-behavior-x: contain;
   }
 
   :deep(.el-scrollbar__view) {
-    display: inline-block;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     min-width: 100%;
-    text-align: center;
+    height: 100%;
     line-height: 1;
   }
 
@@ -447,19 +482,25 @@ const onVideoEnded = () => {
   align-items: center;
   gap: 2px;
   max-width: 100%;
-  vertical-align: top;
 
   :deep(.el-tooltip__trigger),
   :deep(.instant-tooltip-trigger) {
     flex: 0 0 auto;
     display: inline-flex;
+    align-items: center;
+    line-height: 0;
   }
 
   .card-item-btn {
     flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     margin: 0;
-    padding: 2px 4px;
-    height: auto;
+    padding: 0 4px;
+    height: 28px;
+    min-height: 28px;
+    line-height: 1;
     color: #fff;
 
     &:hover {
@@ -468,7 +509,9 @@ const onVideoEnded = () => {
   }
 
   .card-item-btn-icon {
-    font-size: 18px;
+    font-size: 22px;
+    line-height: 1;
+    display: block;
   }
 }
 

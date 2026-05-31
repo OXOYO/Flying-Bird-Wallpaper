@@ -1,7 +1,4 @@
-/**
- * 片段着色器共用：在 uColors[0..uColorCount-1] 间按 t∈[0,1] 线性插值。
- * CPU 侧 `heightColorHex` / `buildRhythmShaderColors` 与之对应（低→首色，高→末色）。
- */
+/** 着色器内按律动配色插值（与 heightColorHex 一致：低→首色，高→末色） */
 export const RHYTHM_PALETTE_GLSL = `
 uniform vec3 uColors[8];
 uniform int uColorCount;

@@ -1,7 +1,7 @@
 # AI 分析性能与设置体验（2.0.0+ 增量）
 
-> 文档版本：**v1.6**  
-> 整理日期：2026-05-29  
+> 文档版本：**v1.7**  
+> 整理日期：2026-05-27  
 > 状态：**已实现**  
 > 关联：[ai-dev-plan.md](./ai-dev-plan.md) · [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) · [ai-feature-roadmap.md](./ai-feature-roadmap.md) · [README.md](./README.md)
 
@@ -94,8 +94,8 @@
 |----|------|
 | 文件类型 | **仅 `fileType=image`**；视频等标 `skipped` |
 | 分析模式 | `off` / `on_demand` / `background_slow` / `new_only`（设置页 ⓘ 说明） |
-| 后台批次 | 每轮最多 5 张，串行；队列含 `pending` + `failed` |
-| 失败重试上限 | **`ai.analysisMaxRetries`**（默认 **5**，1～20）；后台连续失败达上限 → `skipped`，不再自动重试 |
+| 后台批次 | 每轮 `fetchPendingBatch(concurrency)` 张，**并行**（`Promise.all`）；`ai.concurrency` 默认 **1** |
+| 失败重试上限 | **`ai.analysisMaxRetries`**（默认 **1**，1～20）；后台连续失败达上限 → `skipped`，不再自动重试 |
 | 手动分析 | 探索页「AI 分析」**不受**重试上限（仍可一直试；成功则 `aiAnalysisFailCount` 归零） |
 | 失败计数 | DB 列 `aiAnalysisFailCount`；`markPendingForResources` 时归零 |
 | 状态「等待中」 | `pending>0` 且当前未 `running`；侧边栏 Tooltip 多行展示原因 |
@@ -108,8 +108,8 @@
 |------|------|
 | 后台 `background_slow` / `new_only` | 失败递增计数；达 `analysisMaxRetries` → `aiAnalysisStatus=skipped`，日志 `reason=max_retries` |
 | 浏览页手动 `analyzeResourceById` | `respectRetryLimit=false`，不因上限自动 skipped |
-| 设置位置 | AI 设置 → **分析模式**下方（仅后台模式显示） |
-| 非法/空配置 | 迁移与 `ensureAiFields` 回退默认 **5** |
+| 设置位置 | **已从 AI 设置页移除**（默认 1，逻辑仍在 `aiConstants` / `ensureAiFields`） |
+| 非法/空配置 | 迁移与 `ensureAiFields` 回退默认 **1** |
 
 与合集联动：队列稳定（无 pending/failed）且完成至少一轮自动整理后，系统策展暂停定时任务 — 见 [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) §2.5。
 
@@ -153,7 +153,8 @@
 | 进度卡统计 | `已向量化`（文本）+ **`已向量化(视觉)`**（`imageEmbedding`） |
 | 画面向量 | 兼容选项「**内置画面向量**」；关则显示 **画面向量服务** 卡片 — 见 [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) |
 | 测试连接 | 视觉 / 文本 / 文本向量 / 画面向量 四处统一 **「测试连接」**、成功 **「连接成功」** |
-| 合集相关子项 | `scoreMinFilter`、`autoCollectionsMaxCount` 在「AI 自动整理合集」下；`analysisMaxRetries` 在分析模式旁 — 见 [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) |
+| 合集相关子项 | `scoreMinFilter`、`autoCollectionsMaxCount` 在「AI 自动整理合集」下 — 见 [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) |
+| 后台调参（隐藏） | **`analysisMaxRetries`**、**`concurrency`** 默认均为 **1**；表单项已从 `AiSetting.vue` 删除（勿用 HTML 注释隐藏模板） |
 
 ---
 
@@ -170,7 +171,8 @@
 | `visionJpegQuality` | 88 | 缩图 JPEG 质量 |
 | `scoreMinFilter` | 70 | 最低评分（0～100）；搜索 + 系统合集；无「不限制」 |
 | `autoCollectionsMaxCount` | 20 | 系统推荐合集数量上限（3～50） |
-| `analysisMaxRetries` | 5 | 后台单张最大连续失败次数（1～20） |
+| `analysisMaxRetries` | 1 | 后台单张最大连续失败次数（1～20）；**设置页不展示** |
+| `concurrency` | 1 | 后台并行分析张数（1～10）；**设置页不展示** |
 | `autoCurateSettled` | false | 内部：分析稳定且已跑完至少一轮自动整理 |
 | `autoCurateSettledAnalyzed` | 0 | 锁存时的已分析张数 |
 | `visualEmbedSource` | `builtin` | 内置 / 远程画面向量（兼容选项开关） |
@@ -202,9 +204,10 @@
 3. 小图：日志 `preprocess=original reason=below_threshold`  
 4. 探索搜索：筛选内可开关语义搜索；AI 设置无该开关  
 5. 功能选项长标签（如「允许远程模型上传图片」）单行不换行  
-6. 后台模式：失败重试次数默认 5；连续失败后进度卡「已跳过」增加、「失败」下降  
-7. 分析全部完成后：自动整理至少一轮后暂停；手动「立即整理」仍可用  
-8. 三处/四处「测试连接」文案一致；画面向量 remote 时独立卡片可测通  
+6. 后台模式：失败重试默认 1（无 UI）；连续失败后进度卡「已跳过」增加、「失败」下降  
+7. AI 设置无「后台失败重试次数」「后台分析并发」表单项  
+8. 分析全部完成后：自动整理至少一轮后暂停；手动「立即整理」仍可用  
+9. 三处/四处「测试连接」文案一致；画面向量 remote 时独立卡片可测通  
 
 ---
 
@@ -244,3 +247,4 @@
 | **v1.4** | 2026-05-29 | 测试连接 60s、统一文案；移除找相似用户设置；`visualEmbedSource` / 画面向量服务卡片 |
 | **v1.5** | 2026-05-29 | 合集生成策略更新：关键词优先 + 画面补充；链至 ai-collections-ux-and-curate §6 |
 | **v1.6** | 2026-05-29 | 合集生成：`regenPrompt`、实体词/氛围分流、LLM 标签扩展；链至 ai-collections §6 |
+| **v1.7** | 2026-05-27 | 后台 `concurrency` 并行说明；`analysisMaxRetries`/`concurrency` 默认 1 且 UI 移除；链至 [privacy-and-sensitive-content.md](./privacy-and-sensitive-content.md) |

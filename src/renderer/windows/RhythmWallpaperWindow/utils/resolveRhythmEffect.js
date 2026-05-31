@@ -7,8 +7,7 @@ const LEGACY_RHYTHM_EFFECT_MAP = {
   ThreeParticle: 'ThreeStageBars',
   ThreeSphere: 'ThreeStageTexturedSphere',
   ThreeAudioVisualizer: 'ThreeStageBars',
-  ThreeStageMeshGrid: 'ThreeStageBars',
-  ThreeStageRoomMeshGrid: 'ThreeStageBars'
+  ThreeStageMeshGrid: 'ThreeStageBars'
 }
 
 const REMOVED_LEAFER_PREFIX = 'Leafer'

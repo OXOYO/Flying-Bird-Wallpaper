@@ -1,5 +1,312 @@
 :root {
   --fbw-tabbar-height: var(--van-tabbar-height);
+  /** 与 van-search / h5-chrome-icon-btn 内容区对齐 */
+  --fbw-browse-chrome-content-height: 34px;
+  /** H5BrowseChrome padding 8+4 + 内容 34 */
+  --fbw-browse-toolbar-height: 46px;
+  --fbw-browse-pull-padding-top: 10px;
+}
+
+/** 页头图标按钮（抽屉、布局切换、筛选等）统一尺寸 */
+.van-button.h5-chrome-icon-btn {
+  --van-button-default-height: 34px;
+  --van-button-default-padding: 0;
+  --van-button-default-line-height: 1;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  min-height: 34px;
+  max-height: 34px;
+  padding: 0;
+  border-radius: 8px;
+  line-height: 1;
+}
+
+.van-button.h5-chrome-icon-btn .van-button__content {
+  justify-content: center;
+  min-width: 0;
+}
+
+.van-button.h5-chrome-icon-btn .van-icon {
+  font-size: 18px;
+}
+
+.van-button.h5-chrome-icon-btn--active {
+  color: var(--van-primary-color);
+  background: rgba(25, 137, 250, 0.1);
+}
+
+/** 铺满 / 瀑布流 — 暂无数据区域占满可视区并居中 */
+.h5-browse-empty-stage {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+  min-height: calc(
+    100dvh - var(--fbw-tabbar-height) - var(--fbw-browse-toolbar-height) -
+      var(--fbw-browse-pull-padding-top)
+  );
+  box-sizing: border-box;
+}
+
+.browse-pull-inner--fullscreen.h5-browse-empty-stage,
+.search-pull-inner--fullscreen.h5-browse-empty-stage {
+  min-height: 0;
+}
+
+.h5-browse-empty-stage > .fullscreen-slider {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.h5-browse-empty-stage > .h5-list-empty,
+.h5-browse-empty-stage .fullscreen-slider > .h5-list-empty {
+  flex: 1;
+  min-height: 0;
+}
+
+.page-browse:not(.page-browse--fullscreen) :deep(.van-pull-refresh__track:has(.h5-browse-empty-stage)),
+.page-search:not(.page-search--fullscreen) :deep(.van-pull-refresh__track:has(.h5-browse-empty-stage)) {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100dvh - var(--fbw-tabbar-height));
+}
+
+/** H5 搜索 / 收藏 / 回忆 / 合集 — 顶栏容器统一 */
+.search-toolbar-wrap,
+.browse-chrome-host.browse-toolbar,
+.collections-header.browse-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--van-background-2, #fff);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06);
+}
+
+.search-toolbar-wrap .h5-browse-chrome__main,
+.browse-chrome-host.browse-toolbar .h5-browse-chrome__main,
+.collections-header .h5-browse-chrome__main {
+  display: flex;
+  align-items: center;
+  min-height: var(--fbw-browse-chrome-content-height);
+}
+
+.search-toolbar-wrap .van-search.search-input,
+.search-toolbar-wrap .van-search,
+.browse-chrome-host .browse-search-input.van-search,
+.browse-chrome-host .browse-search-input {
+  --van-search-padding: 0;
+  padding: 0 !important;
+}
+
+.collections-header .collection-dropdown {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  height: var(--fbw-browse-chrome-content-height);
+  min-height: var(--fbw-browse-chrome-content-height);
+  max-height: var(--fbw-browse-chrome-content-height);
+  padding: 0;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  box-sizing: border-box;
+}
+
+.collections-header .collection-dropdown--disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.collections-header .collection-dropdown__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+}
+
+.collections-header .collection-dropdown__name {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.collections-header .collection-dropdown__meta {
+  flex-shrink: 0;
+  font-size: 12px;
+  line-height: 1.2;
+  color: var(--van-text-color-2);
+  white-space: nowrap;
+}
+
+.collections-header .collection-dropdown__meta::before {
+  content: '·';
+  margin-right: 4px;
+  color: var(--van-text-color-3);
+}
+
+.collections-header .collection-dropdown__arrow {
+  flex-shrink: 0;
+  color: var(--van-text-color-2);
+  font-size: 14px;
+}
+
+/**
+ * H5 收藏 · 隐私空间（全局样式，避免 scoped 无法穿透子组件 / Vant）
+ * 与桌面 ExploreCommon.privacy-space 背景 rgba(0,0,0,0.8) 一致
+ */
+.page-wrapper.page-browse--privacy-space {
+  background: rgba(0, 0, 0, 0.8) !important;
+}
+
+.page-wrapper.page-browse--privacy-space .browse-chrome-host.browse-toolbar,
+.page-wrapper.page-browse--privacy-space .browse-toolbar--privacy {
+  background: rgba(0, 0, 0, 0.8) !important;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.page-wrapper.page-browse--privacy-space .browse-search-input--privacy.van-search,
+.page-wrapper.page-browse--privacy-space .browse-search-input--privacy {
+  --van-search-background: transparent !important;
+  --van-search-content-background: rgba(255, 255, 255, 0.1) !important;
+  --van-search-left-icon-color: rgba(255, 255, 255, 0.55) !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+.page-wrapper.page-browse--privacy-space .browse-search-input--privacy .van-search__content {
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+}
+
+.page-wrapper.page-browse--privacy-space .browse-search-input--privacy .van-field__control {
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+.page-wrapper.page-browse--privacy-space .browse-search-input--privacy .van-field__control::placeholder {
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+
+.page-wrapper.page-browse--privacy-space .h5-browse-chrome--privacy .van-button.h5-chrome-icon-btn,
+.page-wrapper.page-browse--privacy-space .browse-toolbar--privacy .van-button.h5-chrome-icon-btn {
+  --van-button-default-color: rgba(255, 255, 255, 0.92) !important;
+  --van-button-default-background: rgba(255, 255, 255, 0.1) !important;
+  --van-button-default-border-color: rgba(255, 255, 255, 0.14) !important;
+  color: rgba(255, 255, 255, 0.92) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+}
+
+.page-wrapper.page-browse--privacy-space .h5-browse-chrome--privacy .van-button.h5-chrome-icon-btn--active,
+.page-wrapper.page-browse--privacy-space .browse-toolbar--privacy .van-button.h5-chrome-icon-btn--active {
+  --van-button-default-color: #95d475 !important;
+  --van-button-default-background: rgba(149, 212, 117, 0.28) !important;
+  --van-button-default-border-color: rgba(149, 212, 117, 0.55) !important;
+  color: #95d475 !important;
+  background: rgba(149, 212, 117, 0.28) !important;
+  border: 1px solid rgba(149, 212, 117, 0.55) !important;
+  box-shadow: 0 0 0 1px rgba(149, 212, 117, 0.15) !important;
+}
+
+.page-wrapper.page-browse--privacy-space .h5-browse-chrome--privacy .van-button.h5-chrome-icon-btn--active svg,
+.page-wrapper.page-browse--privacy-space .browse-toolbar--privacy .van-button.h5-chrome-icon-btn--active svg {
+  color: #95d475 !important;
+}
+
+.page-wrapper.page-browse--privacy-space .chrome-mini-btn {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+.page-wrapper.page-browse--privacy-space .chrome-mini-btn .van-icon {
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+.page-wrapper.page-browse--privacy-space .chrome-mini-btn--active {
+  color: #95d475 !important;
+  background: rgba(149, 212, 117, 0.28) !important;
+  border-color: rgba(149, 212, 117, 0.55) !important;
+  box-shadow: 0 0 0 1px rgba(149, 212, 117, 0.15) !important;
+}
+
+.page-wrapper.page-browse--privacy-space .chrome-mini-btn--active .van-icon {
+  color: #95d475 !important;
+}
+
+/** H5 长按操作菜单（搜索 / 收藏 / 回忆等共用） */
+.action-popup-content {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.action-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1 1 0;
+  min-width: 0;
+  gap: 6px;
+}
+
+.action-icon-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  background-color: #eee;
+  border-radius: 10px;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.action-icon-inner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1em;
+  height: 1em;
+  font-size: 24px;
+  line-height: 1;
+  transition: transform 0.3s ease-out;
+}
+
+.action-icon-inner svg {
+  display: block;
+  width: 1em;
+  height: 1em;
+}
+
+.action-label {
+  width: 100%;
+  font-size: 11px;
+  line-height: 1.35;
+  text-align: center;
+  min-height: calc(1.35em * 2);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.delete-action {
+  color: #ff4d4f;
 }
 
 html,
@@ -21,13 +328,27 @@ body {
 }
 
 .page-wrapper {
-  width: 100vw;
+  width: 100%;
+  max-width: none;
   height: calc(100vh - var(--fbw-tabbar-height));
   /* 禁止下拉刷新 */
   overscroll-behavior: none;
   /* 允许正常滚动 */
   overflow: auto;
   position: relative;
+  box-sizing: border-box;
+}
+
+#app {
+  width: 100%;
+  max-width: none;
+}
+
+.page-search-inner,
+.page-setting-inner {
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
 }
 
 /* 针对图片滑动容器的特殊处理 */

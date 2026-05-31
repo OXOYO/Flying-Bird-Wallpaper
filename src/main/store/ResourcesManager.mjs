@@ -5,6 +5,7 @@ import {
   resolveRemoteSecretKey,
   applyCodedErrorToResult
 } from '../../common/utils.js'
+import { normalizeOrientationToIsLandscape } from './collectionConstants.mjs'
 
 /** 列表去重/分页用稳定键（勿每次请求生成 uuid） */
 const buildStableResourceUniqueKey = (item) => {
@@ -72,7 +73,8 @@ export default class ResourcesManager {
       tags,
       tagsMode = 'any',
       hideUnsafe = false,
-      resourceIds
+      resourceIds,
+      includePrivacySpace = false
     } = params
 
     let ret = {
@@ -90,7 +92,9 @@ export default class ResourcesManager {
       const { remoteResourceSecretKeys } = this.settingData
 
       const sortOrder = sortType > 0 ? 'ASC' : 'DESC'
-      const orientation = orientationStr ? orientationStr.split(',') : []
+      const orientation = normalizeOrientationToIsLandscape(
+        orientationStr ? orientationStr.split(',') : []
+      )
 
       if (resourceType === 'localResource') {
         const isResources = resourceName === 'resources'
@@ -99,7 +103,8 @@ export default class ResourcesManager {
         const isHistory = resourceName === 'history'
 
         const keywords = `%${filterKeywords}%`
-        const fileType = filterType === 'videos' ? 'video' : 'image'
+        const fileType =
+          filterType === 'videos' ? 'video' : filterType === 'images' ? 'image' : ''
         const quality = qualityStr ? qualityStr.split(',') : []
 
         let query_where_str = ''
@@ -108,9 +113,8 @@ export default class ResourcesManager {
         let query_sql
         let count_sql
 
-        // 非历史记录、非隐私空间需排除隐私表中的数据
-        if (!(isHistory || isPrivacySpace)) {
-          // 添加 NOT EXISTS 条件排除隐私表中的数据
+        // 非历史记录、非隐私空间需排除隐私表中的数据（合集生成等场景可 includePrivacySpace）
+        if (!(isHistory || isPrivacySpace || includePrivacySpace)) {
           query_where.push(
             'NOT EXISTS (SELECT 1 FROM fbw_privacy_space p WHERE p.resourceId = r.id)'
           )
@@ -772,28 +776,82 @@ export default class ResourcesManager {
     return orderedIds.map((id) => byId.get(id)).filter(Boolean)
   }
 
+  /**
+   * 在语义召回的有序 id 上套用 search 筛选（方向/类型/NSFW 等），保持向量相似度顺序
+   */
+  async _filterOrderedResourceIdsBySearchParams(orderedIds, params) {
+    if (!Array.isArray(orderedIds) || !orderedIds.length) return []
+    const batch = await this.search({
+      ...params,
+      resourceIds: orderedIds,
+      filterKeywords: '',
+      startPage: 1,
+      pageSize: orderedIds.length,
+      isRandom: false
+    })
+    if (!batch?.success || !Array.isArray(batch.data?.list) || !batch.data.list.length) {
+      return []
+    }
+    const found = new Set(batch.data.list.map((item) => Number(item.id)))
+    return orderedIds.map((id) => Number(id)).filter((id) => found.has(id))
+  }
+
   async semanticSearch(params = {}) {
     const { embeddingManager, ...rest } = params
     const query = String(params.query ?? params.filterKeywords ?? '').trim()
     const pageSize = Number(params.pageSize) > 0 ? Number(params.pageSize) : 30
-    const knnLimit = Math.min(Math.max(pageSize, 30), 200)
+    const startPage = Math.max(1, Number.parseInt(rest.startPage, 10) || Number(rest.startPage) || 1)
 
     if (!embeddingManager || !query) {
       return this.search({ ...rest, filterKeywords: query })
     }
     try {
-      const ids = await embeddingManager.semanticSearch(query, knnLimit)
-      if (!ids.length) {
+      const ranked = await embeddingManager.semanticSearchRanked(query)
+      if (!ranked.resourceIds.length) {
         return this.search({ ...rest, filterKeywords: query })
       }
-      // 向量命中后按 id 拉取，并保留方向/类型等筛选；不再重复 LIKE 关键词
-      return this.search({
+
+      const filteredIds = await this._filterOrderedResourceIdsBySearchParams(
+        ranked.resourceIds,
+        rest
+      )
+      const total = filteredIds.length
+      const offset = (startPage - 1) * pageSize
+      const pageIds = filteredIds.slice(offset, offset + pageSize)
+
+      if (!pageIds.length) {
+        return {
+          success: true,
+          message: t('messages.queryEmpty'),
+          data: {
+            list: [],
+            total,
+            startPage,
+            pageSize
+          }
+        }
+      }
+
+      const pageResult = await this.search({
         ...rest,
-        resourceIds: ids,
+        resourceIds: pageIds,
         filterKeywords: '',
         startPage: 1,
-        pageSize
+        pageSize: pageIds.length,
+        isRandom: false
       })
+      if (!pageResult?.success) {
+        return pageResult
+      }
+
+      const orderMap = new Map(pageIds.map((id, index) => [Number(id), index]))
+      pageResult.data.list.sort(
+        (a, b) => (orderMap.get(Number(a.id)) ?? 0) - (orderMap.get(Number(b.id)) ?? 0)
+      )
+      pageResult.data.total = total
+      pageResult.data.startPage = startPage
+      pageResult.data.pageSize = pageSize
+      return pageResult
     } catch (err) {
       this.logger.error(`semanticSearch: ${err}`)
       return this.search({ ...rest, filterKeywords: query })

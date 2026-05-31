@@ -130,10 +130,10 @@ export const toggleFavorite = async (id) => {
   })
 }
 
-export const addToFavorites = async (id) => {
+export const addToFavorites = async (id, isPrivacySpace = false) => {
   return await request('/api/favorites/add', {
     method: 'POST',
-    body: { id }
+    body: { id, isPrivacySpace: !!isPrivacySpace }
   })
 }
 
@@ -144,10 +144,25 @@ export const updateFavoriteCount = async (id, count) => {
   })
 }
 
-export const removeFavorites = async (id) => {
+export const removeFavorites = async (id, isPrivacySpace = false) => {
   return await request('/api/favorites/remove', {
     method: 'POST',
-    body: { id }
+    body: { id, isPrivacySpace: !!isPrivacySpace }
+  })
+}
+
+export const hasPrivacyPassword = async () => {
+  return await request('/api/privacy/has-password')
+}
+
+export const getPrivacyPasswordHint = async () => {
+  return await request('/api/privacy/password-hint')
+}
+
+export const checkPrivacyPassword = async (password) => {
+  return await request('/api/privacy/check-password', {
+    method: 'POST',
+    body: { password }
   })
 }
 
@@ -186,7 +201,54 @@ export const getResourceMap = async () => {
   return await request('/api/resources/map')
 }
 
+export const getResourceTags = async (resourceId) => {
+  const id = Number(resourceId)
+  if (!Number.isFinite(id) || id <= 0) return { success: false, data: [] }
+  return request(`/api/resources/tags?resourceId=${id}`)
+}
+
 export const getHotTags = async (resourceName) => {
   const query = resourceName ? `?resourceName=${encodeURIComponent(resourceName)}` : ''
   return await request(`/api/hot-tags${query}`)
+}
+
+export const collectionsList = async () => {
+  return await request('/api/collections/list')
+}
+
+export const collectionsGet = async ({ id, startPage = 1, pageSize = 20 } = {}) => {
+  const query = new URLSearchParams({
+    id: String(id),
+    startPage: String(startPage),
+    pageSize: String(pageSize)
+  })
+  return await request(`/api/collections/get?${query}`)
+}
+
+export const collectionsCreate = async (body) => {
+  return await request('/api/collections/create', { method: 'POST', body })
+}
+
+export const collectionsUpdate = async (body) => {
+  return await request('/api/collections/update', { method: 'POST', body })
+}
+
+export const collectionsGenerate = async (id) => {
+  return await request('/api/collections/generate', { method: 'POST', body: { id } })
+}
+
+export const collectionsDelete = async (id) => {
+  return await request('/api/collections/delete', { method: 'POST', body: { id } })
+}
+
+export const collectionsAddAllToFavorites = async (id) => {
+  return await request('/api/collections/add-all-favorites', { method: 'POST', body: { id } })
+}
+
+export const collectionsCurate = async () => {
+  return await request('/api/collections/curate', { method: 'POST', body: {} })
+}
+
+export const collectionsCuratorStats = async () => {
+  return await request('/api/collections/curator-stats')
 }

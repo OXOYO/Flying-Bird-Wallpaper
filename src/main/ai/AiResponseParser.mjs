@@ -1,4 +1,30 @@
+import {
+  normalizeOrientationToIsLandscape,
+  normalizeCollectionQuality
+} from '../store/collectionConstants.mjs'
+
 const clamp = (n, min, max) => Math.min(max, Math.max(min, n))
+
+/** 与 prompt 中 nsfwLevel / safeForWork 联动规则对齐 */
+export const applyNsfwConsistency = (obj = {}) => {
+  let nsfwLevel = clamp(Math.round(Number(obj.nsfwLevel) || 0), 0, 3)
+  let safeForWork = obj.safeForWork !== false
+
+  if (safeForWork === false && nsfwLevel < 2) {
+    nsfwLevel = 2
+  }
+  if (nsfwLevel >= 2) {
+    safeForWork = false
+  }
+  if (nsfwLevel === 0) {
+    safeForWork = true
+  }
+  if (nsfwLevel === 1 && !safeForWork) {
+    nsfwLevel = 2
+  }
+
+  return { nsfwLevel, safeForWork }
+}
 
 export const extractJsonObject = (text) => {
   if (!text || typeof text !== 'string') return null
@@ -21,27 +47,35 @@ export const normalizeAnalysisResult = (raw) => {
   const tags = Array.isArray(obj.tags)
     ? obj.tags.map((t) => String(t).trim()).filter(Boolean).slice(0, 12)
     : []
+  const { nsfwLevel, safeForWork } = applyNsfwConsistency(obj)
   return {
     score: clamp(Math.round(Number(obj.score) || 0), 0, 100),
     tags,
     title: String(obj.title || '').trim().slice(0, 120),
     desc: String(obj.desc || '').trim().slice(0, 500),
     summary: String(obj.summary || '').trim().slice(0, 200),
-    nsfwLevel: clamp(Math.round(Number(obj.nsfwLevel) || 0), 0, 3),
-    safeForWork: obj.safeForWork !== false
+    nsfwLevel,
+    safeForWork
   }
 }
 
 export const normalizeSearchParams = (raw) => {
   const obj = typeof raw === 'object' && raw ? raw : {}
+  const typeRaw = String(obj.filterType ?? obj.fileType ?? '')
+    .trim()
+    .toLowerCase()
+  let filterType = ''
+  if (typeRaw === 'videos' || typeRaw === 'video') filterType = 'videos'
+  else if (typeRaw === 'images' || typeRaw === 'image') filterType = 'images'
+
   return {
     filterKeywords: String(obj.filterKeywords || '').trim(),
     tags: Array.isArray(obj.tags) ? obj.tags.map(String) : [],
-    orientation: Array.isArray(obj.orientation) ? obj.orientation.map(String) : [],
-    quality: Array.isArray(obj.quality) ? obj.quality.map(String) : [],
+    orientation: normalizeOrientationToIsLandscape(obj.orientation),
+    quality: normalizeCollectionQuality(obj.quality),
     scoreMin: obj.scoreMin != null ? clamp(Number(obj.scoreMin), 0, 100) : null,
     scoreMax: obj.scoreMax != null ? clamp(Number(obj.scoreMax), 0, 100) : null,
-    fileType: obj.fileType === 'video' ? 'video' : obj.fileType === 'image' ? 'image' : ''
+    filterType
   }
 }
 
@@ -52,13 +86,11 @@ export const normalizeCollectionQueryJson = (raw) => {
     filterKeywords: String(obj.filterKeywords || '').trim(),
     tags: Array.isArray(obj.tags) ? obj.tags.map(String) : [],
     tagsMode: obj.tagsMode === 'all' ? 'all' : 'any',
-    orientation: Array.isArray(obj.orientation) ? obj.orientation.map(String) : [],
-    quality: Array.isArray(obj.quality) ? obj.quality.map(String) : [],
-    scoreMin: obj.scoreMin != null ? clamp(Number(obj.scoreMin), 0, 100) : null,
+    orientation: [],
+    quality: normalizeCollectionQuality(obj.quality),
+    scoreMin: null,
     scoreMax: obj.scoreMax != null ? clamp(Number(obj.scoreMax), 0, 100) : null,
-    resourceName: ['resources', 'favorites', 'local', 'history'].includes(obj.resourceName)
-      ? obj.resourceName
-      : 'resources',
+    resourceName: 'resources',
     isRandom: !!obj.isRandom,
     sortField: String(obj.sortField || 'score'),
     sortType: Number(obj.sortType) > 0 ? 1 : -1,

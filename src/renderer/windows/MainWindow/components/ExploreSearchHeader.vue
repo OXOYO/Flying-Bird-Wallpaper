@@ -5,7 +5,8 @@ import {
   filterTypeOptions,
   orientationOptions,
   qualityList,
-  autoRefreshListOptions
+  autoRefreshListOptions,
+  isQualityFilterApplicable
 } from '@common/publicData.js'
 
 const props = defineProps({
@@ -46,7 +47,16 @@ const visibleFilterTypes = computed(() =>
 )
 
 const showFilterTypeField = computed(() => visibleFilterTypes.value.length > 1)
-const showQualityField = computed(() => isSearchMenu.value && props.isLocalResource)
+
+const isLocalBrowseMenu = computed(
+  () =>
+    (isSearchMenu.value || isFavoritesMenu.value || isHistoryMenu.value) && props.isLocalResource
+)
+
+const isQualityFilterVisible = (filterType) =>
+  isLocalBrowseMenu.value && isQualityFilterApplicable(filterType)
+
+const showQualityField = computed(() => isQualityFilterVisible(draft.filterType))
 
 const keywordsPlaceholder = computed(() =>
   t('exploreCommon.searchForm.filterKeywords.placeholder')
@@ -133,6 +143,15 @@ watch(filterPopoverVisible, (visible) => {
   }
 })
 
+watch(
+  () => draft.filterType,
+  (type) => {
+    if (!isQualityFilterApplicable(type)) {
+      draft.quality = []
+    }
+  }
+)
+
 const activeFilterCount = computed(() => {
   let n = 0
   if (String(props.searchForm.filterKeywords ?? '').trim()) {
@@ -144,7 +163,7 @@ const activeFilterCount = computed(() => {
   if (props.searchForm.orientation?.length) {
     n += 1
   }
-  if (showQualityField.value && props.searchForm.quality?.length) {
+  if (isQualityFilterVisible(props.searchForm.filterType) && props.searchForm.quality?.length) {
     n += 1
   }
   return n
@@ -167,7 +186,7 @@ const onApplyFilters = () => {
     filterKeywords: draft.filterKeywords ?? '',
     filterType: draft.filterType,
     orientation: [...draft.orientation],
-    quality: [...draft.quality]
+    quality: isQualityFilterApplicable(draft.filterType) ? [...draft.quality] : []
   }
   if (isSearchMenu.value && draft.resource) {
     payload.resource = { ...draft.resource }

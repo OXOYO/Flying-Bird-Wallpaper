@@ -96,6 +96,28 @@ export function hexToNumber(hex) {
   return parseInt(s.replace('#', '').slice(0, 6), 16) || 0xffffff
 }
 
+/** 冷暖得分：越高越偏暖（红），越低越偏冷（蓝） */
+export function colorWarmthScore(hex) {
+  const n = hexToNumber(hex)
+  const r = ((n >> 16) & 255) / 255
+  const g = ((n >> 8) & 255) / 255
+  const b = (n & 255) / 255
+  return r * 1.15 - b * 0.95 + Math.max(0, r - g * 0.45) * 0.25
+}
+
+/** 冷→暖排序，供线框「低处冷色、高处暖色」高度着色 */
+export function sortRhythmColorsColdToWarm(colors) {
+  const list = Array.isArray(colors) ? colors : []
+  if (list.length < 2) return list
+  return [...list].sort((a, b) => colorWarmthScore(a) - colorWarmthScore(b))
+}
+
+/** 线框网格：按冷暖重排后构建 shader 配色 */
+export function buildRhythmShaderColorsForHeightGrid(config) {
+  const sorted = sortRhythmColorsColdToWarm(getRhythmColors(config))
+  return buildRhythmShaderColors({ ...config, colors: sorted })
+}
+
 export function lerpColor(hexA, hexB, t) {
   const a = hexToNumber(hexA)
   const b = hexToNumber(hexB)

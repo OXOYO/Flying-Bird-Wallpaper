@@ -1,4 +1,4 @@
-import { app, globalShortcut, BrowserWindow } from 'electron'
+import { app, globalShortcut } from 'electron'
 import localShortcut from 'electron-localshortcut'
 import { keyboardShortcuts } from '../../common/publicData.js'
 import { t } from '../../i18n/server.js'
@@ -29,6 +29,53 @@ class ShortcutManager {
     this._currentShortcuts = new Map()
 
     ShortcutManager._instance = this
+  }
+
+  _registryKey(type, name, winName = '') {
+    if (type === 'global') return `global:${name}`
+    return `local:${name}:${winName}`
+  }
+
+  _getGlobalOwnerName(accelerator) {
+    for (const info of this.registeredShortcuts.values()) {
+      if (info.type === 'global' && info.shortcut === accelerator) {
+        return info.name
+      }
+    }
+    return null
+  }
+
+  _removeRegistryEntriesByName(name) {
+    for (const [key, info] of [...this.registeredShortcuts.entries()]) {
+      if (info.name === name) {
+        this.registeredShortcuts.delete(key)
+      }
+    }
+  }
+
+  _registerGlobalItem(item) {
+    if (!item?.shortcut) return false
+
+    try {
+      const ok = globalShortcut.register(item.shortcut, () => {
+        this.handleShortcut(item)
+      })
+      if (!ok) {
+        this.logger.warn(
+          `全局快捷键注册失败（可能被占用）: ${item.shortcut} (${item.name})`
+        )
+        return false
+      }
+      this.registeredShortcuts.set(this._registryKey('global', item.name), {
+        type: 'global',
+        name: item.name,
+        shortcut: item.shortcut
+      })
+      return true
+    } catch (error) {
+      this.logger.error(`注册全局快捷键 ${item.shortcut} 失败: ${error.message}`)
+      return false
+    }
   }
 
   // 初始化方法
@@ -187,19 +234,13 @@ class ShortcutManager {
       (item) => item.type === 'global'
     )
 
+    let registeredCount = 0
     globalShortcuts.forEach((item) => {
-      if (item.shortcut) {
-        try {
-          globalShortcut.register(item.shortcut, () => {
-            this.handleShortcut(item)
-          })
-          this.registeredShortcuts.set(item.name, { type: 'global', shortcut: item.shortcut })
-        } catch (error) {
-          this.logger.error(`注册全局快捷键 ${item.shortcut} 失败: ${error.message}`)
-        }
+      if (this._registerGlobalItem(item)) {
+        registeredCount += 1
       }
     })
-    this.logger.info(`注册了 ${this.registeredShortcuts.size} 个全局快捷键`)
+    this.logger.info(`注册了 ${registeredCount} 个全局快捷键`)
   }
 
   // 注册本地快捷键
@@ -222,8 +263,9 @@ class ShortcutManager {
               localShortcut.register(win, item.shortcut, () => {
                 this.handleShortcut(item, winName, win)
               })
-              this.registeredShortcuts.set(item.name, {
+              this.registeredShortcuts.set(this._registryKey('local', item.name, winName), {
                 type: 'local',
+                name: item.name,
                 shortcut: item.shortcut,
                 winName
               })
@@ -245,11 +287,12 @@ class ShortcutManager {
       const win = global.FBW?.[winName]?.win
       if (win) {
         // 只注销当前应用注册的本地快捷键
-        this.registeredShortcuts.forEach((shortcutInfo, name) => {
+        const keysToDelete = []
+        this.registeredShortcuts.forEach((shortcutInfo, key) => {
           if (shortcutInfo.type === 'local' && shortcutInfo.winName === winName) {
             try {
               localShortcut.unregister(win, shortcutInfo.shortcut)
-              this.registeredShortcuts.delete(name)
+              keysToDelete.push(key)
             } catch (error) {
               this.logger.error(
                 `${winName} 注销本地快捷键 ${shortcutInfo.shortcut} 失败: ${error.message}`
@@ -257,6 +300,7 @@ class ShortcutManager {
             }
           }
         })
+        keysToDelete.forEach((key) => this.registeredShortcuts.delete(key))
         this.logger.info(`${winName} 注销了所有本地快捷键`)
       }
     }
@@ -264,7 +308,7 @@ class ShortcutManager {
 
   // 注册所有本地快捷键
   registerAllLocalShortcuts() {
-    const winNames = ['mainWindow', 'loadingWindow', 'viewImageWindow', 'suspensionBall']
+    const winNames = ['mainWindow', 'viewImageWindow']
     winNames.forEach((winName) => {
       this.registerLocalShortcuts(winName, true)
     })
@@ -272,25 +316,21 @@ class ShortcutManager {
 
   // 注销所有本地快捷键
   unregisterAllLocalShortcuts() {
-    const windows = BrowserWindow.getAllWindows()
-    windows.forEach((win) => {
-      // 只注销当前应用注册的本地快捷键
-      this.registeredShortcuts.forEach((shortcutInfo, name) => {
-        if (shortcutInfo.type === 'local') {
-          try {
-            localShortcut.unregister(win, shortcutInfo.shortcut)
-          } catch (error) {
-            // 忽略错误，可能窗口已经关闭
-          }
+    const keysToDelete = []
+    this.registeredShortcuts.forEach((shortcutInfo, key) => {
+      if (shortcutInfo.type !== 'local') return
+
+      const win = global.FBW?.[shortcutInfo.winName]?.win
+      if (win) {
+        try {
+          localShortcut.unregister(win, shortcutInfo.shortcut)
+        } catch (error) {
+          // 忽略错误，可能窗口已经关闭
         }
-      })
-    })
-    // 清除注册记录
-    this.registeredShortcuts.forEach((shortcutInfo, name) => {
-      if (shortcutInfo.type === 'local') {
-        this.registeredShortcuts.delete(name)
       }
+      keysToDelete.push(key)
     })
+    keysToDelete.forEach((key) => this.registeredShortcuts.delete(key))
     this.logger.info('注销了所有本地快捷键')
   }
 
@@ -483,7 +523,12 @@ class ShortcutManager {
         try {
           // 使用try-register-unregister方法检测系统冲突
           const isRegistered = globalShortcut.isRegistered(item.shortcut)
-          if (isRegistered) {
+          const ownerName = isRegistered ? this._getGlobalOwnerName(item.shortcut) : null
+          if (isRegistered && ownerName === item.name) {
+            // 本应用已注册该全局键，非系统占用
+          } else if (isRegistered && ownerName) {
+            // 本应用其它全局项占用，由 detectAppConflicts 处理
+          } else if (isRegistered) {
             ret.push({
               ...item,
               message: t('messages.conflictSystemShortcut')
@@ -557,25 +602,10 @@ class ShortcutManager {
         message: ''
       }
 
-    // 检查系统冲突
-    try {
-      if (globalShortcut.isRegistered(shortcut)) {
-        return {
-          success: false,
-          data: {
-            type: 'system',
-            shortcut
-          },
-          message: t('messages.conflictSystemShortcut')
-        }
-      }
-    } catch (error) {
-      this.logger.error(`检查系统快捷键冲突失败: ${error.message}`)
-    }
-
-    // 检查应用内冲突
     const platformShortcuts = this.getPlatformShortcuts()
-    for (const [name, item] of Object.entries(platformShortcuts)) {
+
+    // 先检查应用内冲突
+    for (const [, item] of Object.entries(platformShortcuts)) {
       if (item.name !== excludeName && item.shortcut === shortcut) {
         return {
           success: false,
@@ -588,6 +618,25 @@ class ShortcutManager {
           message: t('messages.conflictAppShortcut', { name: item.name || item.description })
         }
       }
+    }
+
+    // 再检查系统冲突（排除本应用已注册的全局键）
+    try {
+      if (globalShortcut.isRegistered(shortcut)) {
+        const ownerName = this._getGlobalOwnerName(shortcut)
+        if (!ownerName || ownerName !== excludeName) {
+          return {
+            success: false,
+            data: {
+              type: 'system',
+              shortcut
+            },
+            message: t('messages.conflictSystemShortcut')
+          }
+        }
+      }
+    } catch (error) {
+      this.logger.error(`检查系统快捷键冲突失败: ${error.message}`)
     }
 
     return {
@@ -678,21 +727,16 @@ class ShortcutManager {
           }
         })
       }
-      this.registeredShortcuts.delete(name)
+      this._removeRegistryEntriesByName(name)
       this.logger.info(`已注销快捷键 ${oldShortcut} (${name})`)
     }
 
     // 注册新的快捷键
     if (newShortcut && !this.isModifierOnlyShortcut(newShortcut)) {
       if (shortcutItem.type === 'global') {
-        try {
-          globalShortcut.register(newShortcut, () => {
-            this.handleShortcut(shortcutItem)
-          })
-          this.registeredShortcuts.set(name, { type: 'global', shortcut: newShortcut })
+        const item = { ...shortcutItem, shortcut: newShortcut }
+        if (this._registerGlobalItem(item)) {
           this.logger.info(`已注册全局快捷键 ${newShortcut} (${name})`)
-        } catch (error) {
-          this.logger.error(`注册全局快捷键 ${newShortcut} 失败: ${error.message}`)
         }
       } else if (shortcutItem.type === 'local' && shortcutItem.windowNames) {
         shortcutItem.windowNames.forEach((winName) => {
@@ -702,8 +746,9 @@ class ShortcutManager {
               localShortcut.register(win, newShortcut, () => {
                 this.handleShortcut(shortcutItem, winName, win)
               })
-              this.registeredShortcuts.set(name, {
+              this.registeredShortcuts.set(this._registryKey('local', name, winName), {
                 type: 'local',
+                name,
                 shortcut: newShortcut,
                 winName
               })

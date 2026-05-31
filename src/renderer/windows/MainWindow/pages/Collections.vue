@@ -11,14 +11,18 @@ import { useExploreCardGrid } from '@renderer/composables/useExploreCardGrid.mjs
 import { useExploreGridSettings } from '@renderer/composables/useExploreGridSettings.mjs'
 import { useCollectionFloatingButtons } from '@renderer/composables/useCollectionFloatingButtons.mjs'
 import ExploreFixedButtons from '@renderer/components/ExploreFixedButtons.vue'
+import CuratorStatsIndicator from '@renderer/components/CuratorStatsIndicator.vue'
+import PrivacyPasswordDialog from '@renderer/components/PrivacyPasswordDialog.vue'
 import { useSimilarResultsLoadMore } from '@renderer/composables/useSimilarResultsLoadMore.mjs'
+import { usePrivacyNsfwMask } from '@common/composables/usePrivacyNsfwMask.mjs'
+import { resolveNsfwMaskVerifyFailMessage } from '@common/privacyNsfwMask.js'
 
 const { t } = useTranslation()
 const settingStore = UseSettingStore()
 const { settingData } = storeToRefs(settingStore)
 
 const collections = ref([])
-const curatorStats = ref(null)
+const curatorStatsRef = ref(null)
 const loading = ref(false)
 const prompt = ref('')
 const selectedId = ref(null)
@@ -32,7 +36,29 @@ const itemsHasMore = ref(false)
 const itemsLoading = ref(false)
 const viewImageRef = ref(null)
 const viewInfoRef = ref(null)
+const privacyPasswordDialogRef = ref(null)
 const viewImageOptions = { button: true, backdrop: true }
+
+const {
+  shouldMaskItem,
+  onMaskClick: onNsfwMaskClick,
+  isActionBlocked: isNsfwActionBlocked
+} = usePrivacyNsfwMask({
+  settingData,
+  hasPrivacyPassword: () => window.FBW.hasPrivacyPassword(),
+  openPasswordDialog: () => privacyPasswordDialogRef.value?.open(),
+  checkPrivacyPassword: (pwd) => window.FBW.checkPrivacyPassword(pwd),
+  onVerifyFail: (res) => {
+    ElMessage({
+      type: res?.errorCode === 'PRIVACY_PASSWORD_NOT_SET' ? 'warning' : 'error',
+      message: resolveNsfwMaskVerifyFailMessage(res, t)
+    })
+  }
+})
+
+const notifyNsfwMaskBlocked = () => {
+  ElMessage({ type: 'warning', message: t('privacyNsfwMask.actionBlocked') })
+}
 
 const isAutoCollection = (item) => item?.source === 'auto'
 
@@ -287,10 +313,18 @@ const exitSimilarMode = () => {
 }
 
 const onCardAction = (action, item, index) => {
+  if (isNsfwActionBlocked(item)) {
+    notifyNsfwMaskBlocked()
+    return
+  }
   resourceActions.onCardAction(action, item, index)
 }
 
 const onCardDblClick = (item, index) => {
+  if (isNsfwActionBlocked(item)) {
+    notifyNsfwMaskBlocked()
+    return
+  }
   resourceActions.onDblClickCard(item, index)
 }
 
@@ -298,6 +332,12 @@ const autoCollections = computed(() => collections.value.filter((item) => isAuto
 const userCollections = computed(() => collections.value.filter((item) => !isAutoCollection(item)))
 
 const createDialogVisible = ref(false)
+const createSubmitting = ref(false)
+
+const onCreateDialogBeforeClose = (done) => {
+  if (createSubmitting.value) return
+  done()
+}
 
 const collectionOptionGroups = computed(() => {
   const groups = []
@@ -341,16 +381,6 @@ const refreshModeLabel = (mode) => {
   return refreshModeOptions.value.find((item) => item.value === mode)?.label || mode
 }
 
-const curatorStatsShort = computed(() => {
-  if (!curatorStats.value) return ''
-  return t('pages.Collections.curatorStatsShort', {
-    analyzed: curatorStats.value.analyzed ?? 0,
-    embeddings: curatorStats.value.embeddings ?? 0,
-    auto: curatorStats.value.autoCollections ?? 0,
-    target: curatorStats.value.targetCollections ?? 0
-  })
-})
-
 const resetGridScroll = () => {
   nextTick(() => scrollRef.value?.resetScroll?.())
 }
@@ -378,25 +408,22 @@ const onCollectionChange = async (id) => {
   await loadDetail(id)
 }
 
-const applyCollectionListResponse = (listRes, statsRes) => {
+const applyCollectionListResponse = (listRes) => {
   if (listRes?.success && Array.isArray(listRes.data)) {
     collections.value = listRes.data.map((row) => ({
       ...row,
       itemCount: Number(row.itemCount ?? row.itemcount ?? 0)
     }))
   }
-  if (statsRes?.success) {
-    curatorStats.value = statsRes.data
-  }
 }
 
-const fetchCollectionList = () =>
-  Promise.all([window.FBW.collectionsList(), window.FBW.collectionsCuratorStats()])
+const fetchCollectionList = () => window.FBW.collectionsList()
 
 /** 展开下拉时静默刷新列表（不触发整页 loading） */
 const refreshCollectionList = async () => {
-  const [listRes, statsRes] = await fetchCollectionList()
-  applyCollectionListResponse(listRes, statsRes)
+  const listRes = await fetchCollectionList()
+  applyCollectionListResponse(listRes)
+  await curatorStatsRef.value?.refresh()
   await nextTick()
   await selectFirstDisplayed()
 }
@@ -408,8 +435,9 @@ const onCollectionSelectVisibleChange = (visible) => {
 const loadList = async () => {
   loading.value = true
   try {
-    const [listRes, statsRes] = await fetchCollectionList()
-    applyCollectionListResponse(listRes, statsRes)
+    const listRes = await fetchCollectionList()
+    applyCollectionListResponse(listRes)
+    await curatorStatsRef.value?.refresh()
     await nextTick()
     if (!selectedId.value && collections.value.length) {
       await loadDetail(collections.value[0].id)
@@ -436,8 +464,8 @@ const loadDetail = async (id) => {
 }
 
 const onCreate = async () => {
-  if (!prompt.value.trim()) return
-  loading.value = true
+  if (!prompt.value.trim() || createSubmitting.value) return
+  createSubmitting.value = true
   try {
     const res = await window.FBW.collectionsCreate({ prompt: prompt.value.trim() })
     ElMessage({
@@ -447,11 +475,16 @@ const onCreate = async () => {
     if (res.success) {
       prompt.value = ''
       createDialogVisible.value = false
-      await loadList()
-      if (res.data?.id) await loadDetail(res.data.id)
+      loading.value = true
+      try {
+        await loadList()
+        if (res.data?.id) await loadDetail(res.data.id)
+      } finally {
+        loading.value = false
+      }
     }
   } finally {
-    loading.value = false
+    createSubmitting.value = false
   }
 }
 
@@ -532,50 +565,6 @@ const onRefreshModeChange = async (mode) => {
   }
 }
 
-const autoCollectionsEnabled = computed(() => curatorStats.value?.autoCollectionsEnabled !== false)
-const aiEnabled = computed(() => curatorStats.value?.aiEnabled === true)
-
-const onAutoCollectionsChange = async (value) => {
-  loading.value = true
-  try {
-    const res = await window.FBW.updateSettingData({
-      ai: { ...(settingData.value?.ai || {}), autoCollectionsEnabled: value }
-    })
-    ElMessage({
-      type: res?.success ? 'success' : 'error',
-      message: res?.success
-        ? t('pages.Collections.autoCollectionsUpdated')
-        : resolveApiUserMessage(res, t)
-    })
-    if (res?.success) {
-      settingStore.updateSettingData(res.data)
-      const statsRes = await window.FBW.collectionsCuratorStats()
-      if (statsRes?.success) curatorStats.value = statsRes.data
-    }
-  } finally {
-    loading.value = false
-  }
-}
-
-const onCurateNow = async () => {
-  loading.value = true
-  try {
-    const res = await window.FBW.collectionsCurate()
-    ElMessage({
-      type: res.success ? 'success' : 'warning',
-      message: res.success
-        ? t('pages.Collections.curateSuccess', {
-            count: res.data?.autoCollections ?? 0
-          })
-        : resolveApiUserMessage(res, t)
-    })
-    await loadList()
-    if (selectedId.value) await loadDetail(selectedId.value)
-  } finally {
-    loading.value = false
-  }
-}
-
 const onHeaderMenuCommand = async (command) => {
   if (command === 'create') {
     createDialogVisible.value = true
@@ -598,7 +587,41 @@ const onHeaderMenuCommand = async (command) => {
   }
 }
 
-const isRefreshModeActive = (mode) => (selectedCollection.value?.refreshMode || 'manual') === mode
+const currentRefreshMode = computed(
+  () => selectedCollection.value?.refreshMode || 'manual'
+)
+
+const isRefreshModeActive = (mode) => currentRefreshMode.value === mode
+
+const onCurateNow = async () => {
+  if (curatorStatsRef.value?.stats?.autoCurateSettled) {
+    try {
+      await ElMessageBox.confirm(t('pages.Collections.curateManualConfirmSettled'), {
+        type: 'warning',
+        confirmButtonText: t('pages.Collections.curateNow'),
+        cancelButtonText: t('pages.Collections.dialogCancel')
+      })
+    } catch {
+      return
+    }
+  }
+  loading.value = true
+  try {
+    const res = await window.FBW.collectionsCurate()
+    ElMessage({
+      type: res.success ? 'success' : 'warning',
+      message: res.success
+        ? t('pages.Collections.curateSuccess', {
+            count: res.data?.autoCollections ?? 0
+          })
+        : resolveApiUserMessage(res, t)
+    })
+    await loadList()
+    if (selectedId.value) await loadDetail(selectedId.value)
+  } finally {
+    loading.value = false
+  }
+}
 
 watch(selectedId, async (id) => {
   unbindResizeObserver()
@@ -677,57 +700,39 @@ onBeforeUnmount(() => {
             <IconifyIcon icon="custom:more-vertical" />
           </el-button>
           <template #dropdown>
-            <el-dropdown-menu>
+            <el-dropdown-menu class="collections-actions-menu">
+              <li class="dropdown-group-header" role="presentation">
+                {{ t('pages.Collections.actionsSectionCreate') }}
+              </li>
               <el-dropdown-item command="create">
                 {{ t('pages.Collections.createNew') }}
               </el-dropdown-item>
               <el-dropdown-item command="curate" :disabled="loading">
                 {{ t('pages.Collections.curateNow') }}
               </el-dropdown-item>
-              <el-dropdown-item divided @click.stop>
-                <div class="dropdown-switch-row">
-                  <span>{{ t('pages.Collections.autoCurateShort') }}</span>
-                  <el-tooltip
-                    v-if="!aiEnabled"
-                    :content="t('pages.Collections.autoCollectionsDisabledHint')"
-                    placement="left"
-                  >
-                    <el-switch :model-value="autoCollectionsEnabled" disabled size="small" />
-                  </el-tooltip>
-                  <el-switch
-                    v-else
-                    :model-value="autoCollectionsEnabled"
-                    :disabled="loading"
-                    size="small"
-                    @click.stop
-                    @change="onAutoCollectionsChange"
-                  />
-                </div>
-              </el-dropdown-item>
 
               <template v-if="selectedCollection">
+                <li class="dropdown-group-header" role="presentation">
+                  {{ t('pages.Collections.actionsSectionCurrent') }}
+                </li>
                 <template v-if="!isAutoCollection(selectedCollection)">
-                  <el-dropdown-item divided disabled class="dropdown-section-title">
+                  <li class="dropdown-group-caption" role="presentation">
                     {{ t('pages.Collections.refreshMode') }}
-                  </el-dropdown-item>
+                  </li>
                   <el-dropdown-item
                     v-for="item in refreshModeOptions"
                     :key="item.value"
                     :command="`refreshMode:${item.value}`"
+                    class="dropdown-option-item"
                     :class="{ 'is-active': isRefreshModeActive(item.value) }"
                   >
-                    <span v-if="isRefreshModeActive(item.value)" class="dropdown-check-mark"
-                      >✓</span
-                    >
+                    <span v-if="isRefreshModeActive(item.value)" class="dropdown-check-mark">✓</span>
                     {{ item.label }}
                   </el-dropdown-item>
                   <el-dropdown-item command="refresh" :disabled="loading" divided>
                     {{ t('pages.Collections.refresh') }}
                   </el-dropdown-item>
                 </template>
-                <el-dropdown-item v-else divided disabled class="dropdown-hint-item">
-                  {{ t('pages.Collections.autoCollectionRefreshHint') }}
-                </el-dropdown-item>
                 <el-dropdown-item
                   command="favorites"
                   :divided="isAutoCollection(selectedCollection)"
@@ -782,8 +787,11 @@ onBeforeUnmount(() => {
                   :show-tags="showResourceTags"
                   :show-ai-badge="false"
                   :show-caption="false"
+                  :nsfw-masked="shouldMaskItem(item)"
+                  :actions-disabled="shouldMaskItem(item)"
                   @action="onCardAction"
                   @dblclick-card="onCardDblClick"
+                  @nsfw-mask-click="onNsfwMaskClick"
                 />
               </div>
             </template>
@@ -814,9 +822,7 @@ onBeforeUnmount(() => {
       />
     </div>
 
-    <span v-if="curatorStats" class="collections-curator-stats" role="status">
-      {{ curatorStatsShort }}
-    </span>
+    <CuratorStatsIndicator ref="curatorStatsRef" />
     <ListCountIndicator v-if="selectedCollection" :current="gridItems.length" :total="itemsTotal" />
 
     <el-dialog
@@ -824,20 +830,25 @@ onBeforeUnmount(() => {
       :title="t('pages.Collections.createDialogTitle')"
       width="520px"
       destroy-on-close
+      :close-on-click-modal="!createSubmitting"
+      :close-on-press-escape="!createSubmitting"
+      :show-close="!createSubmitting"
+      :before-close="onCreateDialogBeforeClose"
       @closed="prompt = ''"
     >
       <el-input
         v-model="prompt"
         type="textarea"
         :rows="4"
+        :disabled="createSubmitting"
         :placeholder="t('pages.Collections.promptPlaceholder')"
         @keyup.enter.ctrl="onCreate"
       />
       <template #footer>
-        <el-button @click="createDialogVisible = false">{{
+        <el-button :disabled="createSubmitting" @click="createDialogVisible = false">{{
           t('pages.Collections.dialogCancel')
         }}</el-button>
-        <el-button type="primary" :loading="loading" @click="onCreate">
+        <el-button type="primary" :loading="createSubmitting" :disabled="createSubmitting" @click="onCreate">
           {{ t('pages.Collections.create') }}
         </el-button>
       </template>
@@ -849,6 +860,7 @@ onBeforeUnmount(() => {
       @prev-more="resourceActions.onViewImagePrevMore"
       @next-more="resourceActions.onViewImageNextMore"
     />
+    <PrivacyPasswordDialog ref="privacyPasswordDialogRef" />
     <ViewInfo ref="viewInfoRef" />
   </el-main>
 </template>
@@ -948,37 +960,67 @@ onBeforeUnmount(() => {
   }
 }
 
-.dropdown-switch-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  min-width: 200px;
+.collections-actions-menu {
+  min-width: 240px;
+  padding: 4px 0 !important;
+
+  :deep(.el-dropdown-menu__item) {
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--el-text-color-primary);
+  }
+
+  :deep(.el-dropdown-menu__item.dropdown-option-item) {
+    position: relative;
+    padding-left: 28px;
+    font-size: 13px;
+  }
+
+  :deep(.el-dropdown-menu__item.is-active) {
+    color: var(--el-color-primary);
+    font-weight: 600;
+  }
 }
 
-.dropdown-section-title {
+.dropdown-group-caption {
+  list-style: none;
+  margin: 0;
+  padding: 4px 14px 2px 20px;
   font-size: 12px;
-  font-weight: 600;
+  line-height: 1.3;
+  color: var(--el-text-color-secondary);
+  user-select: none;
+  pointer-events: none;
 }
 
 .dropdown-check-mark {
-  margin-right: 6px;
+  position: absolute;
+  left: 12px;
   font-weight: 700;
 }
 
-:deep(.el-dropdown-menu__item.is-active) {
-  color: var(--el-color-primary);
+.dropdown-group-header {
+  list-style: none;
+  margin: 0;
+  padding: 10px 14px 6px;
+  font-size: 11px;
   font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  color: var(--el-text-color-secondary);
+  background: var(--el-fill-color-light);
+  border-top: 1px solid var(--el-border-color-lighter);
+  user-select: none;
+  pointer-events: none;
+
+  &:first-child {
+    border-top: none;
+    padding-top: 8px;
+  }
 }
 
 .dropdown-danger {
   color: var(--el-color-danger);
-}
-
-.dropdown-hint-item {
-  max-width: 240px;
-  line-height: 1.4;
-  white-space: normal;
 }
 
 .collections-body {
@@ -1001,22 +1043,6 @@ onBeforeUnmount(() => {
 
 .body-block :deep(.explore-fixed-btn) {
   z-index: 30;
-}
-
-.collections-curator-stats {
-  position: fixed;
-  bottom: 8px;
-  left: 80px;
-  z-index: 20;
-  max-width: min(520px, calc(100% - 120px));
-  font-size: 12px;
-  line-height: 1.4;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  pointer-events: none;
-  user-select: none;
-  color: var(--el-text-color-secondary);
 }
 
 .card-item {

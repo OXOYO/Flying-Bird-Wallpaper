@@ -78,7 +78,6 @@ export const defaultAiSettings = {
   analysisMode: 'on_demand',
   legacyOnnxScore: false,
   legacyJiebaTags: false,
-  enableNsfwCheck: false,
   runOnWifiOnly: false,
   embeddingDim: 768,
   autoCollectionsEnabled: true,
@@ -93,7 +92,7 @@ export const defaultAiSettings = {
   /** 远程画面 embedding 模型名 */
   visualEmbedModel: '',
   /** 后台分析单张最大失败次数 */
-  analysisMaxRetries: 5,
+  analysisMaxRetries: 1,
   autoCurateSettled: false,
   autoCurateSettledAnalyzed: 0
 }
@@ -118,6 +117,9 @@ export const SIMILAR_TEXT_MIN_COSINE = 0.62
 /** 文案路对画面候选的加权 boost（不引入画面路以外的结果） */
 export const SIMILAR_TEXT_BOOST_WEIGHT = 0.12
 
+/** 探索页文本语义搜索：最低余弦相似度（低于此阈值的命中丢弃，不设条数上限） */
+export const SEMANTIC_SEARCH_MIN_COSINE = 0.58
+
 /** 合集画面语义检索：最低余弦（略低于找相似，提高召回） */
 export const COLLECTION_VISUAL_SEARCH_MIN_COSINE = 0.65
 /** 内置画面模型无文本编码器时：用文本语义种子数推算画面 query 向量 */
@@ -127,7 +129,7 @@ export const COLLECTION_VISUAL_MIN_EMBEDDINGS = 12
 
 export const AI_ANALYSIS_MAX_RETRIES_MIN = 1
 export const AI_ANALYSIS_MAX_RETRIES_MAX = 20
-export const AI_ANALYSIS_MAX_RETRIES_DEFAULT = 5
+export const AI_ANALYSIS_MAX_RETRIES_DEFAULT = 1
 
 export function resolveAnalysisMaxRetries(ai = {}) {
   const v = ai.analysisMaxRetries
@@ -139,6 +141,32 @@ export function resolveAnalysisMaxRetries(ai = {}) {
     Math.max(AI_ANALYSIS_MAX_RETRIES_MIN, n)
   )
 }
+
+export const AI_ANALYSIS_CONCURRENCY_MIN = 1
+export const AI_ANALYSIS_CONCURRENCY_MAX = 10
+export const AI_ANALYSIS_CONCURRENCY_DEFAULT = 1
+
+export function resolveAnalysisConcurrency(ai = {}) {
+  const v = ai.concurrency
+  if (v == null || v === '') return AI_ANALYSIS_CONCURRENCY_DEFAULT
+  const n = Math.round(Number(v))
+  if (!Number.isFinite(n)) return AI_ANALYSIS_CONCURRENCY_DEFAULT
+  return Math.min(
+    AI_ANALYSIS_CONCURRENCY_MAX,
+    Math.max(AI_ANALYSIS_CONCURRENCY_MIN, n)
+  )
+}
+
+/** 画面向量补算：内置连续大批次；远程小批次并短暂让出 GPU */
+export const VISUAL_EMBED_BACKFILL_BATCH_BUILTIN = 40
+export const VISUAL_EMBED_BACKFILL_BATCH_REMOTE = 8
+export const VISUAL_EMBED_REMOTE_BATCH_PAUSE_MS = 1500
+
+/** 后台分析看门狗（队列空转时偶尔复核；主路径为连续 pump） */
+export const AI_ANALYSIS_WATCHDOG_MS = 3 * 60 * 1000
+export const AI_ANALYSIS_PUMP_START_DELAY_MS = 2000
+export const VISUAL_EMBED_PUMP_START_DELAY_MS = 3000
+export const VISUAL_EMBED_WATCHDOG_MS = 5 * 60 * 1000
 
 export const AI_ANALYSIS_STATUS = {
   PENDING: 'pending',

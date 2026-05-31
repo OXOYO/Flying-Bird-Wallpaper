@@ -18,7 +18,9 @@
     "checkUpdate": "업데이트 확인",
     "menu": "메뉴",
     "wordDrawer": "단어",
-    "qrCode": "QR 코드"
+    "qrCode": "QR 코드",
+    "expandSideMenu": "사이드바 펼치기",
+    "collapseSideMenu": "사이드바 접기"
   },
   "qrCode": {
     "notice": "QR 코드를 스캔하여 모바일 버전 접속",
@@ -50,7 +52,8 @@
         "dynamicWallpaper": "동적 배경화면",
         "rhythmWallpaper": "리듬 배경화면",
         "remoteResource": "원격 리소스",
-        "privacyPassword": "프라이버시 비밀번호"
+        "privacyPassword": "프라이버시 비밀번호",
+        "privacySpaceOptions": "Privacy space options"
       },
       "settingDataForm": {
         "locale": "언어",
@@ -156,7 +159,26 @@
         "showTag": "태그 표시",
         "confirmOnDeleteFile": "삭제 전 확인",
         "enableSegmentationTask": "분할 작업 활성화",
-        "powerSaveMode": "절전 모드"
+        "powerSaveMode": "절전 모드",
+        "enableExpandSideMenuHint": "When on, hover the left edge of the main window to expand/collapse the narrow sidebar for quick navigation",
+        "showSideMenuLabelHint": "Off: icons only to save width; On: show menu text under icons",
+        "suspensionBallVisibleHint": "Shows a small floating ball on the desktop; hover for prev/next/play/close shortcuts",
+        "startH5ServerOnStartupHint": "Starts the local H5 web server on launch; scan the sidebar QR code to browse wallpapers on your phone",
+        "enableSegmentationTaskHint": "Shows the word-cloud drawer on Search; segments the current list (may pause in power-save mode)",
+        "powerSaveModeHint": "Reduces background wallpaper switching, folder refresh, and AI analysis—good for battery saving",
+        "showTagHint": "Shows source/quality badges on cards; some tags are clickable filters",
+        "confirmOnDeleteFileHint": "Ask for confirmation before deleting local files from browse pages",
+        "viewImageIntervalTimeHint": "How long each image stays visible during autoplay in the built-in viewer",
+        "autoSwitchWallpaperHint": "Automatically change the desktop wallpaper at the interval below; off = manual or suspension ball only",
+        "switchTypeHint": "Sequential: in list order; Random: pick a random image each time",
+        "allScreenHint": "Apply the same wallpaper to all monitors when on",
+        "scaleTypeHint": "How the image is cropped or stretched to fill the screen",
+        "filterKeywordsHint": "Only images whose path/name contains a keyword are used for rotation (empty = no filter)",
+        "localResourceFoldersHint": "Local folders used as wallpaper libraries; scanning respects allowed file types",
+        "allowedFileExtHint": "Only these extensions are indexed when scanning local folders",
+        "autoRefreshDirectoryHint": "Rescan local folders on a schedule to pick up new or removed files",
+        "autoDownloadHint": "Periodically download images from selected sources using your keywords into the download folder",
+        "dynamicPerformanceModeHint": "Lowers video decode/render load; try a lighter mode if playback stutters"
       },
       "privacyPasswordForm": {
         "old": {
@@ -169,7 +191,12 @@
           "placeholder": "새 비밀번호를 입력해 주세요",
           "tooltip": "비밀번호는 숫자로 구성되며, 최소 3자리에서 최대 6자리입니다"
         },
-        "confirm": "비밀번호 업데이트"
+        "confirm": "비밀번호 업데이트",
+        "hint": {
+          "label": "Password hint",
+          "placeholder": "e.g. last four digits of a date (optional)",
+          "tooltip": "Saved with your password to help you remember it; shown when verifying. Do not enter the password itself"
+        }
       },
       "shortcutSetting": {
         "conflict": "충돌",
@@ -439,7 +466,6 @@
         "remoteRefererPlaceholder": "선택 사항, OpenRouter 분석용",
         "remoteAppTitle": "OpenRouter 앱 이름",
         "modelPlaceholder": "모델 이름 선택 또는 입력",
-        "refreshModels": "모델 새로고침",
         "ollamaModelHint": "목록은 로컬 Ollama에서 가져옵니다. 모델 이름을 직접 입력할 수도 있습니다",
         "presetHints": {
           "lmstudio": "LM Studio에서 Local Server를 활성화하세요(기본 http://127.0.0.1:1234). 이미지 분석에는 시각 지원 모델을 사용하세요.",
@@ -454,10 +480,7 @@
         "purposeVision": "시각",
         "purposeText": "텍스트",
         "purposeEmbed": "임베딩",
-        "testVision": "시각 연결 테스트",
-        "testText": "텍스트 연결 테스트",
         "testOk": "연결 성공",
-        "testOkWithEmbed": "텍스트 및 임베딩 연결 성공",
         "errors": {
           "apiKeyMissing": "먼저 API Key를 입력하세요",
           "ollamaUnreachable": "Ollama에 연결할 수 없습니다. 로컬 서비스가 실행 중인지 확인하세요(기본 http://127.0.0.1:11434)",
@@ -472,18 +495,11 @@
           "modelPurposeMismatch": "모델 \"{model}\"은(는) {purpose} 모델로 적합하지 않습니다. 다른 모델을 선택하거나 목록을 새로고침하세요",
           "serverError": "AI 서비스를 일시적으로 사용할 수 없습니다(HTTP {status}). 나중에 다시 시도하세요",
           "providerError": "AI 서비스 오류: {detail}",
-          "providerErrorGeneric": "알 수 없는 AI 서비스 오류입니다. 나중에 다시 시도하세요"
+          "providerErrorGeneric": "알 수 없는 AI 서비스 오류입니다. 나중에 다시 시도하세요",
+          "modelNameMissing": "Select or enter a model name first"
         },
         "autoCollectionsEnabled": "AI 자동 컬렉션 정리",
         "autoCollectionsEnabledHint": "태그와 벡터 분위기로 클러스터링한 뒤 LLM으로 시스템 컬렉션 병합(중복 허용, 삭제 가능)",
-        "similarMinCosine": "유사 찾기 최소 유사도(텍스트)",
-        "similarMinCosineHint": "문안 모드 코사인 임계값(0~1). 기본 0.62",
-        "findSimilarMode": "유사 찾기 기준",
-        "findSimilarModeVisual": "화면 유사",
-        "findSimilarModeText": "문안 유사",
-        "findSimilarModeHint": "화면 모드는 이미지 내용으로 유사 검색(백그라운드 벡터 보충). 문안 모드는 제목·설명 사용",
-        "similarMinCosineVisual": "최소 유사도(화면)",
-        "similarMinCosineVisualHint": "화면 유사 코사인 임계값(0~1). 기본 0.72. 화면 모드만",
         "statImageEmbeddingLabel": "시각 벡터",
         "scoreMinFilter": "최소 점수 필터",
         "scoreMinFilterHint": "시스템 자동 컬렉션에는 AI 점수가 이 값 이상인 이미지만 포함됩니다(기본 70). 변경 후 약 15초 뒤 재정리 실행",
@@ -505,8 +521,36 @@
         "sectionFeaturesCollections": "스마트 컬렉션",
         "sectionFeaturesFindSimilar": "유사 찾기",
         "sectionFeaturesSearch": "검색 및 다운로드",
-        "sectionFeaturesLegacy": "호환 옵션"
-      }
+        "sectionFeaturesLegacy": "호환 옵션",
+        "enabledHint": "Master switch: when off, auto analysis, semantic search, and AI collections stop; settings are kept",
+        "analysisConcurrency": "Background concurrency",
+        "analysisConcurrencyHint": "In background continuous / new-images-only modes, how many images call the vision model at once (1–10). Takes effect after save; lower if VRAM is tight. Text embeddings run async per image and do not use this slot",
+        "copyModelName": "모델 이름 복사",
+        "textEmbedModelHint": "Text-only embeddings for semantic search (e.g. nomic-embed-text)—not visual vectors or vision analysis",
+        "listEmptyVisualEmbed": "No visual embedding models found. Enter manually (e.g. batiai/qwen2-vl-embed-2b:q8). Text-only embed models (e.g. nomic-embed-text) cannot embed images.",
+        "purposeVisualEmbed": "visual embedding",
+        "testConnection": "연결 테스트",
+        "findSimilarHintTitle": "Find similar",
+        "findSimilarHint": "Automatically fuses visual vectors (built-in MobileCLIP) and text vectors (embedding model) with RRF ranking—no similarity threshold to tune. Text channel joins when AI is enabled.",
+        "findSimilarHintShort": "Uses built-in MobileCLIP for visual similarity by default; when an embedding model is configured, title and description are considered too.",
+        "visualEmbedSource": "Visual vector source",
+        "visualEmbedSourceHint": "Built-in: offline, bundled, best for visual similarity. Remote: experimental image embedding via Ollama or compatible APIs; falls back to built-in on failure.",
+        "visualEmbedSourceBuiltin": "Built-in MobileCLIP",
+        "visualEmbedSourceRemote": "Remote embedding model",
+        "visualEmbedSection": "Visual vectors",
+        "visualEmbedBaseUrl": "Service URL",
+        "visualEmbedModel": "Visual vector model",
+        "visualEmbedModelHint": "Image embeddings for find-similar; built-in MobileCLIP recommended. Remote models must support image vectors—not vision or text embed models. Falls back to built-in on failure.",
+        "visualEmbedRemoteSectionHint": "Configure provider, URL, API key, and model in the Visual vector service section below.",
+        "visualEmbedModelPlaceholder": "e.g. batiai/qwen3-vl-embed-2b",
+        "legacyLocalVisualEmbed": "Built-in visual vectors",
+        "legacyLocalVisualEmbedHint": "When enabled, uses built-in visual vectors for similarity and Find similar. When disabled, uses the remote embedding model in Visual vector service (falls back to built-in on failure)."
+      },
+      "privacySpace": {
+        "enableNsfwContentMask": "민감 콘텐츠 숨기기",
+        "enableNsfwContentMaskHint": "Requires a privacy password: cannot turn on without one; turning off requires verification. When on, sensitivity level ≥ 2 is masked on browse pages (search and collections unchanged—display only). Previous/next wallpaper skip those images (manual Set as wallpaper is not affected). Tap the mask and enter your password to view on the current page; masking returns when you switch menus or the app goes to background. Not masked in Privacy Space."
+      },
+      "privacyPasswordHintLabel": "Password hint"
     },
     "Utils": {
       "dataUtils": "데이터 도구",
@@ -556,10 +600,12 @@
       "listSearchPlaceholder": "컬렉션 검색",
       "selectPlaceholder": "컬렉션 선택 또는 검색",
       "actionsMenu": "작업",
+      "actionsSectionCreate": "컬렉션",
+      "actionsSectionCurrent": "선택한 컬렉션",
       "listNoMatch": "일치하는 컬렉션이 없습니다",
       "collapseList": "목록 접기",
       "expandList": "목록 펼치기",
-      "createNew": "새 컬렉션",
+      "createNew": "사용자 컬렉션 새로 만들기",
       "createDialogTitle": "설명으로 생성",
       "dialogCancel": "취소",
       "autoCurateShort": "자동 정리",
@@ -571,9 +617,9 @@
       "itemCount": "이미지 {count}장",
       "promptPlaceholder": "원하는 배경화면 컬렉션을 설명하세요. 예: 가로형 고점수 야경 20장",
       "create": "컬렉션 생성",
-      "refresh": "새로고침",
+      "refresh": "수동 새로고침",
       "refreshMode": "자동 새로고침",
-      "refreshModeManual": "수동",
+      "refreshModeManual": "자동 안 함",
       "refreshMode1h": "1시간마다",
       "refreshMode6h": "6시간마다",
       "refreshMode12h": "12시간마다",
@@ -590,18 +636,33 @@
       "footerPage": "{page} / {pages} 페이지",
       "footerPrevPage": "이전",
       "footerNextPage": "다음",
-      "curateNow": "지금 정리",
+      "curateNow": "시스템 컬렉션 정리",
       "similarModeBanner": "유사 이미지 표시 중",
       "similarBack": "컬렉션으로 돌아가기",
       "autoCollectionsUpdated": "자동 큐레이션 설정이 저장되었습니다",
       "autoCollectionsDisabledHint": "먼저 설정 → AI에서 AI를 활성화하세요",
       "curateSuccess": "완료 — 시스템 컬렉션 {count}개",
       "addFavorites": "전체 즐겨찾기",
-      "delete": "컬렉션 삭제",
+      "delete": "현재 컬렉션 삭제",
       "empty": "컬렉션이 없습니다",
       "noItems": "컬렉션이 비어 있습니다. 새로고침하여 생성하세요",
       "selectHint": "컬렉션을 선택하여 배경화면을 둘러보세요",
-      "confirmDelete": "이 컬렉션을 삭제할까요?"
+      "confirmDelete": "이 컬렉션을 삭제할까요?",
+      "curatorStatsShortSettled": "Settled · Analyzed {analyzed} · {auto} picks (new images added incrementally)",
+      "curatorFooterLine": "AI Analysis · {status} · Progress {done}/{total} · {percent}% · Collections {auto}/{target}",
+      "curatorFooterLabel": "AI Analysis",
+      "curatorFooterProgress": "Progress {done}/{total}",
+      "curatorFooterCollections": "Collections {auto}/{target}",
+      "curatorFooterStatus": {
+        "disabled": "Off",
+        "settled": "Settled",
+        "running": "Running",
+        "queued": "Queued",
+        "complete": "Complete",
+        "idle": "Idle",
+        "onDemand": "On demand"
+      },
+      "curateManualConfirmSettled": "System collections are settled. Manual curation will run a full LLM rebuild and remove collections not in the new plan. Continue?"
     }
   },
   "messages": {
@@ -701,8 +762,6 @@
     "indexOutOfRange": "인덱스가 범위를 벗어났습니다",
     "indexTooLarge": "인덱스가 너무 큽니다",
     "autoRefreshDirectoryTask": "디렉토리 새로고침 작업",
-    "autoRefreshDirectoryTaskSuccess": "작업이 성공적으로 완료되었습니다!",
-    "autoRefreshDirectoryTaskFailed": "작업에 실패했습니다!",
     "downloadTask": "다운로드 작업",
     "downloadTaskCompleted": "다운로드 작업 완료!",
     "downloadTaskFailed": "다운로드 작업 실패!",
@@ -736,7 +795,8 @@
     "h5ServerError": "H5 서버 오류: {error}",
     "h5ServerStartFailDetail": "H5 서버 시작 실패: {error}",
     "conflictWindowShortcut": "창 \"{window}\"에서 \"{name}\"과(와) 단축키가 충돌합니다",
-    "invalidShortcutOnlyModifiers": "단축키는 수정 키만으로 구성할 수 없습니다. 다른 키를 누르세요."
+    "invalidShortcutOnlyModifiers": "단축키는 수정 키만으로 구성할 수 없습니다. 다른 키를 누르세요.",
+    "dialogOk": "OK"
   },
   "resourceTypeList": {
     "localResource": "로컬 리소스",
@@ -840,6 +900,7 @@
     "ThreeStageWall": "네온 벽",
     "ThreeStageGrid": "바닥 기둥 그리드",
     "ThreeStageTexturedSphere": "텍스처 구",
+    "ThreeStageRoomMeshGrid": "맥동 공간",
     "ThreeStage": "콘서트 스테이지"
   },
   "rhythmAnimationOptions": {
@@ -1022,14 +1083,31 @@
       "created_at": "레코드 생성 시간",
       "updated_at": "레코드 수정 시간",
       "ctimeMs": "리소스 생성 시간",
-      "mtimeMs": "리소스 수정 시간"
+      "mtimeMs": "리소스 수정 시간",
+      "summary": "Summary",
+      "tags": "Tags",
+      "nsfwLevel": "NSFW level",
+      "aiAnalysisStatus": "AI analysis"
+    },
+    "nsfwLevel": {
+      "0": "Safe (0)",
+      "1": "Mild (1)",
+      "2": "Moderate (2)",
+      "3": "High (3)"
+    },
+    "aiAnalysisStatus": {
+      "pending": "Pending",
+      "done": "Done",
+      "failed": "Failed",
+      "skipped": "Skipped"
     }
   },
   "h5": {
     "tabbar": {
       "home": "홈",
       "search": "검색",
-      "setting": "설정"
+      "setting": "설정",
+      "browse": "Browse"
     },
     "pages": {
       "home": {
@@ -1065,7 +1143,11 @@
           "created_at": "레코드 생성 시간",
           "updated_at": "레코드 수정 시간",
           "ctimeMs": "리소스 생성 시간",
-          "mtimeMs": "리소스 수정 시간"
+          "mtimeMs": "리소스 수정 시간",
+          "summary": "Summary",
+          "tags": "Tags",
+          "nsfwLevel": "NSFW level",
+          "aiAnalysisStatus": "AI analysis"
         }
       },
       "search": {
@@ -1186,15 +1268,23 @@
         },
         "sponsor": "후원"
       }
+    },
+    "drawer": {
+      "title": "Browse"
     }
   },
   "ai": {
     "prompts": {
-      "imageAnalysis": "당신은 배경화면 이미지 분석 도우미입니다. JSON 객체 하나만 출력하고, markdown 코드 블록이나 추가 설명은 하지 마세요.\n필드 요구사항:\n- score: 1-100 정수, 전체 미학 점수\n- tags: 문자열 배열, 3-8개 태그, 이 프롬프트와 같은 언어 사용\n- title: 짧은 제목, 최대 30자\n- desc: 설명, 최대 80자\n- summary: 한 줄 요약, 최대 50자\n- nsfwLevel: 0-3 정수, 0은 안전\n- safeForWork: boolean\n\n예시: {\"score\":82,\"tags\":[\"밤\",\"도시\"],\"title\":\"비 내리는 도시의 밤\",\"desc\":\"푸른 톤의 도시 야경\",\"summary\":\"어두운 데스크톱에 어울리는 비 오는 도시\",\"nsfwLevel\":0,\"safeForWork\":true}",
-      "searchParse": "사용자의 배경화면 검색 설명을 JSON으로 파싱하세요. markdown 사용 금지.\n사용자 입력: {query}\n출력 필드:\n- filterKeywords: 문자열, 핵심 키워드\n- tags: 문자열 배열, 선택적 태그\n- orientation: 배열, 선택적 landscape 또는 portrait\n- quality: 배열, 선택적 4k,2k,1080p,720p\n- scoreMin: 0-100 정수 또는 null\n- scoreMax: 0-100 정수 또는 null\n- fileType: image 또는 video 또는 빈 문자열\n\n예시: {\"filterKeywords\":\"바다\",\"tags\":[\"바다\",\"파란색\"],\"orientation\":[\"landscape\"],\"quality\":[\"4k\"],\"scoreMin\":70,\"scoreMax\":null,\"fileType\":\"image\"}",
-      "collectionQuery": "사용자가 스마트 배경화면 컬렉션을 만들려고 합니다. 설명을 queryJson으로 파싱하세요. JSON만 출력하세요.\n사용자 설명: {prompt}\n필드:\n- filterKeywords: string\n- tags: string[]\n- tagsMode: any|all\n- orientation: string[]\n- quality: string[]\n- scoreMin: number|null\n- scoreMax: number|null\n- resourceName: resources|favorites|local\n- isRandom: boolean\n- sortField: score|created_at|views\n- sortType: -1|1\n- semanticQuery: string\n- useSemantic: boolean\n- limitCount: 5-50 정수",
+      "imageAnalysis": "You are a wallpaper image analysis assistant. Output only one JSON object, no markdown fences, no extra commentary.\n\n[Field roles — do not mix]\n- title: short headline, ≤40 chars, subject + scene\n- summary: one line for search, ≤80 chars, theme and key visible elements (no use-case, no \"good for desktop\")\n- desc: detailed visible description for humans, 120–220 chars (same language as UI). Cover: subject(s), pose/action, clothing and body exposure level, environment, framing/composition, color and lighting, style/mood. Visible facts only; no invented story; no suitability advice\n- tags: 3–10 search tags (same language as UI)\n- score: integer 1–100, overall aesthetic score\n- nsfwLevel: integer 0–3 (sensitivity rubric below)\n- safeForWork: boolean, must follow linkage rules below\n\n[Sensitivity rubric nsfwLevel — EN + 中文]\n0 Safe 安全: landscapes, still life, everyday portraits, no sexual or sensitive focus. Counter-example: do NOT use 0 when erotic focus or clearly visible intimate body parts, not workplace-appropriate\n1 Mild 轻微: swimwear/sportswear/fashion look, much skin but no nipples/genitals, mildly suggestive pose. Counter-example: do NOT use 1 for full nudity, sex acts as main subject, visible intimate parts (use ≥2)\n2 Moderate 中度: visible nipples/partial nudity, strong sexual suggestion, graphic gore, obvious adult-oriented framing. Counter-example: do NOT use 2 when intercourse is central or intimate close-ups (use 3)\n3 Explicit 重度: erotic or sexual acts as main subject, clearly visible genitals, extreme gore. Counter-example: do NOT use 3 for bikini/swimwear with no nudity (use 1)\n\n[safeForWork ↔ nsfwLevel linkage — mandatory]\n- nsfwLevel≥2 ⇒ safeForWork must be false\n- safeForWork false ⇒ nsfwLevel must be ≥2\n- nsfwLevel=0 ⇒ safeForWork must be true\n- Never output nsfwLevel=0 with safeForWork=false\n\nExample (safe): {\"score\":82,\"tags\":[\"night\",\"city\",\"neon\",\"rain\",\"blue\"],\"title\":\"Rainy city skyline\",\"summary\":\"Night cityscape after rain, towers and wet reflections\",\"desc\":\"Wide skyline in the upper frame with warm and cool neon; wet mid-ground pavement mirrors lights and car streaks; sharp deep focus, cinematic calm mood.\",\"nsfwLevel\":0,\"safeForWork\":true}",
+      "searchParse": "Parse the user's wallpaper search description into JSON. No markdown.\nUser input: {query}\nOutput fields:\n- filterKeywords: string, core keywords\n- tags: string array, [] if omitted\n- orientation: array, [] if omitted; elements 1 (landscape) or 0 (portrait), or landscape/portrait\n- quality: array, [] if omitted; only 8K, 5K, 4K, 2K (must match DB field; no 1080p/720p/lowercase 4k)\n- filterType: images | videos | \"\" (empty if type not specified; do not output fileType)\n- scoreMin: integer 0-100 or null unless user asks for a minimum score\n- scoreMax: integer 0-100 or null\n\nExample: {\"filterKeywords\":\"ocean\",\"tags\":[\"ocean\",\"blue\"],\"orientation\":[1],\"quality\":[\"4K\"],\"filterType\":\"images\",\"scoreMin\":null,\"scoreMax\":null}",
+      "collectionQuery": "The user wants to create a smart wallpaper collection. Parse the description into queryJson. Output JSON only.\nUser description: {prompt}\nFields:\n- filterKeywords: string (core search term)\n- tags: string[]\n- tagsMode: any|all\n- quality: string[] (must be [] unless user asks resolution; only 8K, 5K, 4K, 2K; no 1080p/720p)\n(Do not output orientation, scoreMin, or scoreMax; minimum score comes from app AI settings.)\n- resourceName: always \"resources\" (full library; never favorites/local/history)\n- isRandom: boolean\n- sortField: score|created_at|views\n- sortType: -1|1\n- semanticQuery: string\n- useSemantic: boolean (true when theme/mood is described)\n- limitCount: integer 5-50\n\nRules: tags should match resource AI tag language (prefer same as UI); do not invent orientation/quality/scoreMin/scoreMax; for entity words put the word in filterKeywords and Chinese-style synonyms in tags.",
       "keywordExpand": "자동 배경화면 다운로드를 위한 검색 키워드를 확장하세요. 입력: {keywords}\n출력 JSON: {\"keywords\":[\"단어1\",\"단어2\"]}, 최대 10개, 이 프롬프트와 같은 언어 사용, 설명 없음.",
-      "collectionMerge": "당신은 배경화면 라이브러리 큐레이터입니다. 아래는 후보 그룹(태그 그룹 + 벡터 분위기 그룹)입니다. 의미적으로 유사한 그룹을 병합하고 각 최종 컬렉션에 이름을 붙이세요.\n\n규칙:\n1. JSON만 출력하고 markdown은 사용하지 마세요\n2. 최종 컬렉션은 최대 {targetCount}개\n3. 한 배경화면이 여러 컬렉션에 포함될 수 있습니다(후보 id 병합으로 구현)\n4. 관련 테마 병합(예: 밤 + 도시 + 네온 → 하나의 분위기 있는 제목)\n5. 이름: 2-12단어, 분위기 있게, 단일 일반 단어 금지, 이 프롬프트와 같은 언어 사용\n6. mergeIds는 입력 후보에 존재하는 id여야 함\n\n입력 후보:\n{candidates}\n\n출력 형식:\n{\n  \"collections\": [\n    {\n      \"name\": \"컬렉션 이름\",\n      \"prompt\": \"한 줄 분위기 설명\",\n      \"semanticQuery\": \"의미 검색용 구문\",\n      \"mergeIds\": [\"tag:밤\", \"vec:0\"]\n    }\n  ]\n}"
+      "collectionMerge": "당신은 배경화면 라이브러리 큐레이터입니다. 아래는 후보 그룹(태그 그룹 + 벡터 분위기 그룹)입니다. 의미적으로 유사한 그룹을 병합하고 각 최종 컬렉션에 이름을 붙이세요.\n\n규칙:\n1. JSON만 출력하고 markdown은 사용하지 마세요\n2. 최종 컬렉션은 최대 {targetCount}개\n3. 한 배경화면이 여러 컬렉션에 포함될 수 있습니다(후보 id 병합으로 구현)\n4. 관련 테마 병합(예: 밤 + 도시 + 네온 → 하나의 분위기 있는 제목)\n5. 이름: 2-12단어, 분위기 있게, 단일 일반 단어 금지, 이 프롬프트와 같은 언어 사용\n6. mergeIds는 입력 후보에 존재하는 id여야 함\n\n입력 후보:\n{candidates}\n\n출력 형식:\n{\n  \"collections\": [\n    {\n      \"name\": \"컬렉션 이름\",\n      \"prompt\": \"한 줄 분위기 설명\",\n      \"semanticQuery\": \"의미 검색용 구문\",\n      \"mergeIds\": [\"tag:밤\", \"vec:0\"]\n    }\n  ]\n}",
+      "collectionTagExpand": "Expand wallpaper collection search tags for synonyms. Theme: {keyword}\nOutput JSON: {\"tags\":[\"tag1\",\"tag2\"]}, up to 8 items, prefer tags in the same language as resource AI analysis, at most 2 English synonyms, no explanation."
     }
+  },
+  "privacyNsfwMask": {
+    "tapToUnlock": "Tap to enter privacy password",
+    "actionBlocked": "Verify privacy password via the hide overlay first"
   }
 }

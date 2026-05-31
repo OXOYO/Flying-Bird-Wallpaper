@@ -13,8 +13,11 @@ import {
   COLLECTION_SOURCE,
   computeAutoCollectionCount,
   isValidAutoCollectionTag,
-  resolveAutoCollectionScoreMin
+  resolveAutoCollectionCountMax,
+  resolveAutoCollectionScoreMin,
+  COLLECTION_PRIVACY_EXCLUDE_SQL
 } from './collectionConstants.mjs'
+import { isAutoCurateSettled } from './collectionCurateGate.mjs'
 
 /**
  * 自动策展：标签候选 + 向量聚类 + LLM 命名合并
@@ -93,6 +96,7 @@ export default class CollectionCurator {
          JOIN fbw_resources r ON r.id = rw.resourceId
          WHERE r.fileType = 'image'
            AND r.aiAnalysisStatus = ?
+           AND ${COLLECTION_PRIVACY_EXCLUDE_SQL}
          GROUP BY w.word
          HAVING cnt >= ?
          ORDER BY cnt DESC, w.word ASC`
@@ -118,6 +122,7 @@ export default class CollectionCurator {
          JOIN fbw_words w ON w.id = rw.wordId
          WHERE r.fileType = 'image'
            AND r.aiAnalysisStatus = ?
+           AND ${COLLECTION_PRIVACY_EXCLUDE_SQL}
            AND w.word = ?${scoreClause}
          ORDER BY r.score DESC, r.id DESC`
       )
@@ -213,7 +218,9 @@ export default class CollectionCurator {
         `SELECT r.id, v.embedding, v.dim
          FROM fbw_resources r
          JOIN fbw_resource_image_vec_blob v ON v.resourceId = r.id AND v.model = ?
-         WHERE r.fileType = 'image' AND r.aiAnalysisStatus = ?${vecScoreClause}`
+         WHERE r.fileType = 'image'
+           AND r.aiAnalysisStatus = ?
+           AND ${COLLECTION_PRIVACY_EXCLUDE_SQL}${vecScoreClause}`
       )
       .all(...vecParams)
 
@@ -387,9 +394,129 @@ export default class CollectionCurator {
       if (!key || !activeSet.has(key)) {
         this.db.prepare(`DELETE FROM fbw_collection_items WHERE collectionId = ?`).run(col.id)
         this.db.prepare(`DELETE FROM fbw_collections WHERE id = ?`).run(col.id)
-        this.logger.info(`[CollectionCurator] 移除过期系统合集: ${col.name}`)
+        this.logger.info(`[CollectionCurator] 移除未入选系统合集: ${col.name}`)
       }
     }
+  }
+
+  countCollectionItems(collectionId) {
+    return (
+      this.db
+        .prepare(`SELECT COUNT(*) as c FROM fbw_collection_items WHERE collectionId = ?`)
+        .get(collectionId)?.c || 0
+    )
+  }
+
+  /** 仅移除空合集或不足最少张数的系统合集（不按 targetCount 裁剪） */
+  pruneInvalidAutoCollections() {
+    let removed = 0
+    for (const col of this.listAutoCollections()) {
+      const count = this.countCollectionItems(col.id)
+      if (count >= AUTO_COLLECTION_MIN_ITEMS) continue
+      this.db.prepare(`DELETE FROM fbw_collection_items WHERE collectionId = ?`).run(col.id)
+      this.db.prepare(`DELETE FROM fbw_collections WHERE id = ?`).run(col.id)
+      this.logger.info(
+        `[CollectionCurator] 移除无效系统合集: ${col.name}（${count} 张，少于 ${AUTO_COLLECTION_MIN_ITEMS}）`
+      )
+      removed++
+    }
+    return removed
+  }
+
+  getResourceTags(resourceId) {
+    const rows = this.db
+      .prepare(
+        `SELECT DISTINCT w.word AS tag
+         FROM fbw_resource_words rw
+         JOIN fbw_words w ON w.id = rw.wordId
+         WHERE rw.resourceId = ?
+         ORDER BY w.word ASC`
+      )
+      .all(resourceId)
+    return rows.map((r) => r.tag).filter(isValidAutoCollectionTag)
+  }
+
+  /**
+   * 锁存后：新分析完成的图按标签增量加入已有系统合集（不删组、不 LLM）
+   */
+  incrementalAddResource(resourceId) {
+    if (!this.isEnabled() || !isAutoCurateSettled(this.ai)) {
+      return { success: true, data: { added: 0, skipped: true } }
+    }
+
+    const row = this.db
+      .prepare(
+        `SELECT id, score, aiAnalysisStatus FROM fbw_resources WHERE id = ? AND fileType = 'image'`
+      )
+      .get(resourceId)
+    if (!row || row.aiAnalysisStatus !== AI_ANALYSIS_STATUS.DONE) {
+      return { success: true, data: { added: 0 } }
+    }
+
+    const scoreMin = this.getScoreMin()
+    if (scoreMin != null && (row.score ?? 0) < scoreMin) {
+      return { success: true, data: { added: 0 } }
+    }
+
+    const resourceTags = this.getResourceTags(resourceId)
+    if (!resourceTags.length) {
+      return { success: true, data: { added: 0 } }
+    }
+
+    const resourceTagSet = new Set(resourceTags.map((tag) => tag.toLowerCase()))
+    let added = 0
+
+    for (const col of this.listAutoCollections()) {
+      let queryJson = {}
+      try {
+        queryJson = JSON.parse(col.queryJson || '{}')
+      } catch {
+        queryJson = {}
+      }
+
+      const colTags = []
+      if (Array.isArray(queryJson.tags)) {
+        queryJson.tags.forEach((tag) => {
+          if (tag) colTags.push(String(tag))
+        })
+      }
+      const autoKey = this.parseAutoKey(col)
+      if (autoKey?.startsWith('tag:')) {
+        colTags.push(autoKey.slice(4))
+      }
+
+      const matches = colTags.some((tag) => resourceTagSet.has(String(tag).toLowerCase()))
+      if (!matches) continue
+
+      const exists = this.db
+        .prepare(
+          `SELECT 1 FROM fbw_collection_items WHERE collectionId = ? AND resourceId = ? LIMIT 1`
+        )
+        .get(col.id, resourceId)
+      if (exists) continue
+
+      const maxRank =
+        this.db
+          .prepare(`SELECT MAX(rank) as m FROM fbw_collection_items WHERE collectionId = ?`)
+          .get(col.id)?.m ?? 0
+      this.db
+        .prepare(
+          `INSERT INTO fbw_collection_items (collectionId, resourceId, rank) VALUES (?, ?, ?)`
+        )
+        .run(col.id, resourceId, maxRank + 1)
+      this.db
+        .prepare(
+          `UPDATE fbw_collections SET updated_at = datetime('now', 'localtime') WHERE id = ?`
+        )
+        .run(col.id)
+      added++
+    }
+
+    if (added > 0) {
+      this.logger.info(`[CollectionCurator] 增量加入资源 ${resourceId} → ${added} 个系统合集`)
+    }
+
+    return { success: true, data: { added } }
   }
 
   getStats() {
@@ -404,6 +531,7 @@ export default class CollectionCurator {
       autoCollectionsEnabled: ai.autoCollectionsEnabled !== false,
       autoCurateSettled: ai.autoCurateSettled === true,
       autoCurateSettledAnalyzed: Number(ai.autoCurateSettledAnalyzed) || 0,
+      curatePhase: ai.autoCurateSettled === true ? 'settled' : 'progressive',
       analyzed,
       embeddings,
       targetCollections: target,
@@ -411,9 +539,12 @@ export default class CollectionCurator {
     }
   }
 
-  async run(locks, { manual = false } = {}) {
+  async run(locks, { manual = false, pipelineStable = false } = {}) {
     if (!this.isEnabled()) {
       return { success: true, data: { skipped: true, reason: 'disabled' } }
+    }
+    if (!manual && isAutoCurateSettled(this.ai)) {
+      return { success: true, data: { skipped: true, reason: 'settled' } }
     }
     if (locks.collectionCurator) {
       return { success: true, data: { skipped: true, reason: 'busy' } }
@@ -427,37 +558,77 @@ export default class CollectionCurator {
       if (!targetCount) {
         return {
           success: true,
-          data: { analyzed, embeddings, created: 0, updated: 0, removed: 0 },
+          data: {
+            analyzed,
+            embeddings,
+            phase: manual ? 'manual' : 'progressive',
+            created: 0,
+            updated: 0,
+            removed: 0
+          },
           message: t('messages.operationSuccess')
         }
       }
 
-      const tagCandidates = this.buildTagCandidates(targetCount)
-      const vectorCandidates = this.buildVectorCandidates(targetCount)
+      const isFinalize = !manual && pipelineStable
+      const candidateLimit = manual || isFinalize
+        ? targetCount
+        : resolveAutoCollectionCountMax(this.ai)
+
+      const tagCandidates = this.buildTagCandidates(candidateLimit)
+      const vectorCandidates = this.buildVectorCandidates(candidateLimit)
       const candidates = [...tagCandidates, ...vectorCandidates]
 
       if (!candidates.length) {
         return {
           success: true,
-          data: { analyzed, embeddings, created: 0, updated: 0, removed: 0, autoCollections: 0 },
+          data: {
+            analyzed,
+            embeddings,
+            phase: manual ? 'manual' : isFinalize ? 'finalize' : 'progressive',
+            created: 0,
+            updated: 0,
+            removed: 0,
+            autoCollections: this.listAutoCollections().length
+          },
           message: t('messages.operationSuccess')
         }
       }
 
-      const plans = await this.mergeWithLlm(candidates, targetCount)
+      const planCap =
+        manual || isFinalize
+          ? targetCount
+          : Math.min(candidates.length, resolveAutoCollectionCountMax(this.ai))
+
+      let plans
+      let usedLlm = false
+      if (manual || isFinalize) {
+        plans = await this.mergeWithLlm(candidates, targetCount)
+        usedLlm = plans.some((p) => p.autoKey.startsWith('merged:'))
+      } else {
+        plans = this.buildFallbackPlans(candidates, planCap)
+      }
+
       const beforeAuto = this.listAutoCollections().length
 
       for (const plan of plans) {
         this.upsertAutoCollection(plan)
       }
-      this.removeStaleAutoCollections(plans.map((p) => p.autoKey))
+
+      let removed = 0
+      if (manual) {
+        this.removeStaleAutoCollections(plans.map((p) => p.autoKey))
+        removed = Math.max(0, beforeAuto - this.listAutoCollections().length)
+      } else {
+        removed = this.pruneInvalidAutoCollections()
+      }
 
       const afterAuto = this.listAutoCollections().length
       const created = Math.max(0, afterAuto - beforeAuto)
-      const updated = Math.max(0, plans.length - created)
+      const phase = manual ? 'manual' : isFinalize ? 'finalize' : 'progressive'
 
       this.logger.info(
-        `[CollectionCurator] 完成${manual ? '（手动）' : ''}：候选 标签${tagCandidates.length}+向量${vectorCandidates.length} → 最终${plans.length} 个系统合集`
+        `[CollectionCurator] 完成${manual ? '（手动）' : ''} [${phase}]：候选 标签${tagCandidates.length}+向量${vectorCandidates.length} → 写入${plans.length} 个计划，当前共 ${afterAuto} 个系统合集`
       )
 
       return {
@@ -466,13 +637,16 @@ export default class CollectionCurator {
           analyzed,
           embeddings,
           targetCount,
+          phase,
           tagCandidates: tagCandidates.length,
           vectorCandidates: vectorCandidates.length,
           finalCollections: plans.length,
           created,
-          updated,
+          updated: Math.max(0, plans.length - created),
+          removed,
           autoCollections: afterAuto,
-          usedLlm: plans.some((p) => p.autoKey.startsWith('merged:'))
+          usedLlm,
+          pipelineStable: !!pipelineStable
         },
         message: t('messages.operationSuccess')
       }

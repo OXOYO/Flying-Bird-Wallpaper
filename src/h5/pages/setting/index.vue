@@ -7,8 +7,11 @@ import {
 import { localeOptions } from '@i18n/locale/index.js'
 import { appInfo } from '@common/config.js'
 import UseSettingStore from '@h5/stores/settingStore.js'
+import * as api from '@h5/api/index.js'
 import { resolveApiUserMessage } from '@common/utils.js'
 import { useTranslation } from 'i18next-vue'
+import H5PrivacyPasswordDialog from '@h5/components/H5PrivacyPasswordDialog.vue'
+import { useNsfwMaskSettingToggle } from '@common/composables/useNsfwMaskSettingToggle.mjs'
 
 const { t } = useTranslation()
 
@@ -19,7 +22,59 @@ const settingDataForm = reactive(settingData.value)
 const localSettingForm = reactive(localSetting.value)
 
 /** 设置分类折叠，默认展开「应用设置」 */
-const expandedSections = ref(['application'])
+const expandedSections = ref(['application', 'privacy'])
+
+const ensurePrivacyForm = () => {
+  if (!settingDataForm.privacy || typeof settingDataForm.privacy !== 'object') {
+    settingDataForm.privacy = {
+      enableNsfwContentMask: !!settingData.value?.privacy?.enableNsfwContentMask
+    }
+  }
+}
+ensurePrivacyForm()
+
+const privacyPasswordDialogRef = ref(null)
+
+const syncNsfwMaskFromStore = () => {
+  ensurePrivacyForm()
+  settingDataForm.privacy.enableNsfwContentMask = !!settingData.value?.privacy?.enableNsfwContentMask
+}
+
+const { toggling: nsfwMaskToggling, onToggle: onNsfwMaskSwitchChange } = useNsfwMaskSettingToggle({
+  t,
+  getEnabled: () => !!settingDataForm.privacy?.enableNsfwContentMask,
+  setEnabled: (v) => {
+    ensurePrivacyForm()
+    settingDataForm.privacy.enableNsfwContentMask = v
+  },
+  hasPrivacyPassword: () => api.hasPrivacyPassword(),
+  openPasswordDialog: () => privacyPasswordDialogRef.value?.open(),
+  checkPrivacyPassword: (pwd) => api.checkPrivacyPassword(pwd),
+  persistEnabled: async (enabled) => {
+    const res = await settingStore.h5UpdateSettingData({
+      privacy: { enableNsfwContentMask: enabled }
+    })
+    if (res?.success) {
+      showNotify({
+        type: 'success',
+        message: String(res.message ?? '').trim() || t('messages.operationSuccess')
+      })
+      return true
+    }
+    syncNsfwMaskFromStore()
+    showNotify({
+      type: 'danger',
+      message: resolveApiUserMessage(res, t)
+    })
+    return false
+  },
+  onNotify: ({ type, message }) => {
+    showNotify({
+      type: type === 'warn' ? 'warning' : type === 'error' ? 'danger' : 'success',
+      message
+    })
+  }
+})
 
 const showPickers = reactive({
   h5Locale: false,
@@ -77,6 +132,7 @@ watch(
     Object.keys(newValue).forEach((key) => {
       settingDataForm[key] = newValue[key]
     })
+    ensurePrivacyForm()
   }
 )
 
@@ -253,6 +309,26 @@ onMounted(() => {
           </van-cell-group>
         </van-collapse-item>
 
+        <van-collapse-item name="privacy" :title="t('pages.Setting.tabs.privacySpace')">
+          <van-cell-group inset :border="false">
+            <van-cell :title="t('pages.Setting.privacySpace.enableNsfwContentMask')">
+              <template #label>
+                <span class="setting-cell-hint">{{
+                  t('pages.Setting.privacySpace.enableNsfwContentMaskHint')
+                }}</span>
+              </template>
+              <template #right-icon>
+                <van-switch
+                  :model-value="!!settingDataForm.privacy.enableNsfwContentMask"
+                  size="20px"
+                  :disabled="nsfwMaskToggling"
+                  @update:model-value="onNsfwMaskSwitchChange"
+                />
+              </template>
+            </van-cell>
+          </van-cell-group>
+        </van-collapse-item>
+
         <van-collapse-item name="general" :title="t('h5.pages.setting.form.h5GeneralSettings')">
           <van-cell-group inset :border="false">
             <van-field
@@ -400,12 +476,16 @@ onMounted(() => {
         </van-collapse-item>
       </van-collapse>
     </div>
+    <H5PrivacyPasswordDialog ref="privacyPasswordDialogRef" />
   </div>
 </template>
 
 <style scoped lang="scss">
 .page-setting {
   .page-setting-inner {
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
     padding-top: var(--van-nav-bar-height);
     padding-bottom: var(--fbw-tabbar-height);
   }

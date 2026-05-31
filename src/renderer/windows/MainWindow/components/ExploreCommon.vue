@@ -14,7 +14,14 @@ import { debounce } from '@common/utils.js'
 import ExploreSearchHeader from './ExploreSearchHeader.vue'
 import ExploreSimilarModeBanner from '@renderer/components/ExploreSimilarModeBanner.vue'
 import InstantTooltip from '@renderer/components/InstantTooltip.vue'
+import PrivacyPasswordDialog from '@renderer/components/PrivacyPasswordDialog.vue'
+import NsfwContentMask from '@renderer/components/NsfwContentMask.vue'
+import { usePrivacyNsfwMask } from '@common/composables/usePrivacyNsfwMask.mjs'
+import { resolveNsfwMaskVerifyFailMessage } from '@common/privacyNsfwMask.js'
+import CuratorStatsIndicator from '@renderer/components/CuratorStatsIndicator.vue'
 import { normalizeResourceItem } from '@renderer/composables/useResourceCardActions.js'
+import { cloneForIpc } from '@renderer/utils/cloneForIpc.js'
+import { useHorizontalWheelScroll } from '@renderer/composables/useHorizontalWheelScroll.mjs'
 import { useSimilarResultsLoadMore } from '@renderer/composables/useSimilarResultsLoadMore.mjs'
 
 const { t } = useTranslation()
@@ -38,6 +45,37 @@ const viewImageOptions = {
 const viewSize = 5
 
 const viewInfoRef = ref(null)
+const privacyPasswordDialogRef = ref(null)
+
+const {
+  shouldMaskItem,
+  onMaskClick: onNsfwMaskClick,
+  lockPage: lockNsfwMaskPage,
+  isActionBlocked: isNsfwActionBlocked
+} = usePrivacyNsfwMask({
+  settingData,
+  inPrivacySpace: () => flags.inPrivacySpace,
+  hasPrivacyPassword: () => window.FBW.hasPrivacyPassword(),
+  openPasswordDialog: () => privacyPasswordDialogRef.value?.open(),
+  checkPrivacyPassword: (pwd) => window.FBW.checkPrivacyPassword(pwd),
+  onVerifyFail: (res) => {
+    const msg = resolveNsfwMaskVerifyFailMessage(res, t)
+    ElMessage({
+      type: res?.errorCode === 'PRIVACY_PASSWORD_NOT_SET' ? 'warning' : 'error',
+      message: msg
+    })
+  }
+})
+
+const notifyNsfwMaskBlocked = () => {
+  ElMessage({ type: 'warning', message: t('privacyNsfwMask.actionBlocked') })
+}
+
+watch(selectedMenu, () => {
+  lockNsfwMaskPage()
+})
+
+const { onHorizontalWheel } = useHorizontalWheelScroll()
 
 const videoRefs = ref([])
 
@@ -597,6 +635,10 @@ const onFixedBtnClick = (action, actionParams, childVal) => {
 }
 
 const onCardItemBtnClick = (action, item, index) => {
+  if (isNsfwActionBlocked(item)) {
+    notifyNsfwMaskBlocked()
+    return
+  }
   switch (action) {
     case 'setAsWallpaperWithDownload':
       setAsWallpaperWithDownload(item, index)
@@ -661,28 +703,22 @@ const onTogglePrivacySpace = async () => {
       return
     }
     // 弹窗输入隐私空间密码，验证后才能进入隐私空间
-    ElMessageBox.prompt(t('messages.inputPrivacySpacePassword'), {
-      draggable: true,
-      inputType: 'password',
-      // 只能输入3到6位的数字，不可以是小数、中文、字母
-      inputPattern: /^[0-9]{3,6}$/,
-      inputErrorMessage: t('messages.inputPrivacySpacePasswordErrorMessage')
-    }).then(async ({ value }) => {
-      const res = await window.FBW.checkPrivacyPassword(value)
-      if (res && res.success) {
-        flags.inPrivacySpace = true
-        ElMessage({
-          type: 'success',
-          message: t('messages.enterPrivacySpaceSuccess')
-        })
-        await onRefresh(true)
-      } else {
-        ElMessage({
-          type: 'error',
-          message: res.message
-        })
-      }
-    })
+    const value = await privacyPasswordDialogRef.value?.open()
+    if (!value) return
+    const checkRes = await window.FBW.checkPrivacyPassword(value)
+    if (checkRes && checkRes.success) {
+      flags.inPrivacySpace = true
+      ElMessage({
+        type: 'success',
+        message: t('messages.enterPrivacySpaceSuccess')
+      })
+      await onRefresh(true)
+    } else {
+      ElMessage({
+        type: 'error',
+        message: checkRes.message
+      })
+    }
   } else {
     flags.inPrivacySpace = false
     ElMessage({
@@ -950,7 +986,7 @@ const onApplyFilters = ({ filterType, orientation, quality, filterKeywords, reso
   }
   searchForm.filterType = filterType
   searchForm.orientation = orientation
-  searchForm.quality = quality
+  searchForm.quality = filterType === 'videos' ? [] : quality
   if (resourceChanged) {
     const types = supportSearchTypes.value
     const isArray = Array.isArray(types)
@@ -1077,6 +1113,15 @@ const debouncedGetNextList = debounce(() => {
   getNextList()
 }, 300)
 
+/** 根据 total 与当前页行数判断是否还能加载更多 */
+const resolveSearchHasMore = (listLength, total, lastPageRows, pageSize) => {
+  const size = Math.max(1, Number(pageSize) || 50)
+  if (total > 0) {
+    return listLength < total
+  }
+  return lastPageRows >= size
+}
+
 const onCloseBottom = () => {
   if (similarMode.value) {
     if (!flags.loading && similarHasMore.value) {
@@ -1136,8 +1181,7 @@ const getNextList = async () => {
     filterKeywords: keywordText,
     filterType,
     quality: quality.toString(),
-    orientation: orientation.toString(),
-    hideUnsafe: !!settingData.value?.ai?.enableNsfwCheck
+    orientation: orientation.toString()
   }
   let res
   try {
@@ -1159,7 +1203,12 @@ const getNextList = async () => {
     if (res && res.success && Array.isArray(res.data.list)) {
       const reportedTotal = Number(res.data.total) || 0
       if (reportedTotal > 0) {
-        searchForm.total = reportedTotal
+        // 首屏或尚未有 total 时写入；加载更多时仅允许 total 变小（修正），忽略更大的 total
+        if (pageToFetch === 1 || !searchForm.total) {
+          searchForm.total = reportedTotal
+        } else if (reportedTotal < searchForm.total) {
+          searchForm.total = reportedTotal
+        }
       }
 
       if (res.data.list.length) {
@@ -1195,12 +1244,22 @@ const getNextList = async () => {
           return getNextList()
         }
 
-        flags.hasMore = cardList.value.length < searchForm.total
+        flags.hasMore = resolveSearchHasMore(
+          cardList.value.length,
+          searchForm.total,
+          res.data.list.length,
+          pageSize
+        )
         if (!flags.hasMore && cardList.value.length > 0 && flags.loadMoreClicked) {
           ElMessage({ type: 'info', message: t('messages.noMoreData') })
         }
       } else {
-        flags.hasMore = cardList.value.length > 0 && cardList.value.length < searchForm.total
+        flags.hasMore = resolveSearchHasMore(
+          cardList.value.length,
+          searchForm.total,
+          0,
+          pageSize
+        )
         if (!flags.hasMore && cardList.value.length > 0) {
           ElMessage({ type: 'info', message: t('messages.noMoreData') })
         }
@@ -1260,7 +1319,7 @@ const onSyncToWallpaperSetting = async () => {
 
 // 设置为壁纸
 const setAsWallpaperWithDownload = async (item, index) => {
-  const res = await window.FBW.setAsWallpaperWithDownload(JSON.parse(JSON.stringify(item)))
+  const res = await window.FBW.setAsWallpaperWithDownload(cloneForIpc(item))
 
   let options = {}
   if (res && res.success) {
@@ -1277,6 +1336,11 @@ const setAsWallpaperWithDownload = async (item, index) => {
 
 // 添加事件处理函数
 const onTagClick = (field, value) => {
+  const hovered = cardList.value[hoverCardIndex.value]
+  if (hovered && isNsfwActionBlocked(hovered)) {
+    notifyNsfwMaskBlocked()
+    return
+  }
   // 设置查询条件
   switch (field) {
     case 'resourceName':
@@ -1309,7 +1373,7 @@ const onTagClick = (field, value) => {
 
 // 查看图片
 const doViewImage = async (item, index, inner = false) => {
-  const list = getRecords(index, viewSize)
+  const list = cloneForIpc(getRecords(index, viewSize))
   const activeIndex = list.findIndex((i) => i.uniqueKey === item.uniqueKey)
   if (inner) {
     viewImageRef.value.view(activeIndex, list)
@@ -1389,7 +1453,7 @@ const onFindSimilar = async (item) => {
     const res = await window.FBW.findSimilar({
       resourceId: item.id,
       limit: pageSize,
-      scope: JSON.parse(JSON.stringify(scope))
+      scope: cloneForIpc(scope)
     })
     if (res?.success && res.data?.list?.length) {
       // 已在相似列表内再次找相似时勿覆盖快照，否则返回会落到上一层相似结果而非最初列表
@@ -1444,7 +1508,7 @@ const onViewImagePrevMore = (item) => {
       start = 0
       end = start + viewSize
     }
-    const list = cardList.value.slice(start, end)
+    const list = cloneForIpc(cardList.value.slice(start, end))
     if (list.length) {
       const targetIndex = list.findIndex((i) => i.uniqueKey === item.uniqueKey)
       const activeIndex = targetIndex > 0 ? targetIndex - 1 : list.length - 1
@@ -1474,7 +1538,7 @@ const onViewImageNextMore = (item) => {
       start = cardList.value.length - viewSize
       end = cardList.value.length
     }
-    const list = cardList.value.slice(start, end)
+    const list = cloneForIpc(cardList.value.slice(start, end))
     if (list.length) {
       const targetIndex = list.findIndex((i) => i.uniqueKey === item.uniqueKey)
       const activeIndex = targetIndex < list.length - 1 ? targetIndex + 1 : 0
@@ -1596,7 +1660,7 @@ const onCopyFilePath = (filePath) => {
 
 const onDeleteFile = (item, index) => {
   const onConfirmDeleteFile = async () => {
-    const res = await window.FBW.deleteFile(JSON.parse(JSON.stringify(item)))
+    const res = await window.FBW.deleteFile(cloneForIpc(item))
     let callback
     if (res.success) {
       callback = async () => {
@@ -1653,7 +1717,7 @@ const openLink = (url) => {
 }
 
 const onDownloadFile = async (item, index) => {
-  const res = await window.FBW.downloadFile(JSON.parse(JSON.stringify(item)))
+  const res = await window.FBW.downloadFile(cloneForIpc(item))
 
   let options = {}
   if (res && res.success) {
@@ -1698,6 +1762,10 @@ const onLeaveCard = (item, index) => {
 }
 
 const onDblClickCard = (item, index) => {
+  if (isNsfwActionBlocked(item)) {
+    notifyNsfwMaskBlocked()
+    return
+  }
   if (item.fileType === 'image') {
     doViewImage(item, index, true)
   }
@@ -1777,6 +1845,10 @@ const onVideoMouseLeave = (item, index) => {
 }
 
 const toggleVideo = (item, index) => {
+  if (isNsfwActionBlocked(item)) {
+    notifyNsfwMaskBlocked()
+    return
+  }
   const video = videoRefs.value[index]
   if (!video) return
   try {
@@ -2104,8 +2176,18 @@ onBeforeUnmount(() => {
               @mouseleave="onLeaveCard(item, index)"
               @dblclick="onDblClickCard(item, index)"
             >
-              <div class="card-item-btns__trigger"></div>
-              <div v-if="isShowTag" class="card-item-tags">
+              <NsfwContentMask
+                :visible="shouldMaskItem(item)"
+                @click="onNsfwMaskClick"
+              />
+              <div
+                v-if="!shouldMaskItem(item)"
+                class="card-item-btns__trigger"
+              ></div>
+              <div
+                v-if="isShowTag && !shouldMaskItem(item)"
+                class="card-item-tags"
+              >
                 <InstantTooltip v-if="item.resourceName" :content="item.resourceName">
                   <div
                     class="tag-item"
@@ -2161,7 +2243,10 @@ onBeforeUnmount(() => {
                   </div>
                 </InstantTooltip>
               </div>
-              <div v-if="item.fileType === 'image'" class="card-item-image-wrapper">
+              <div
+                v-if="item.fileType === 'image'"
+                class="card-item-image-wrapper"
+              >
                 <!-- 高清图 -->
                 <el-image
                   class="card-item-image-inner"
@@ -2178,7 +2263,10 @@ onBeforeUnmount(() => {
                 </el-image>
               </div>
               <!-- 视频 -->
-              <div v-else-if="item.fileType === 'video'" class="card-item-video-wrapper">
+              <div
+                v-else-if="item.fileType === 'video'"
+                class="card-item-video-wrapper"
+              >
                 <video
                   :ref="
                     (el) => {
@@ -2202,13 +2290,19 @@ onBeforeUnmount(() => {
                   @error="onVideoError(item, index)"
                 ></video>
                 <IconifyIcon
+                  v-if="!shouldMaskItem(item)"
                   class="card-item-video-btn"
                   :icon="item.isPlaying ? 'custom:pause-circle' : 'custom:play-circle'"
                   @click="toggleVideo(item, index)"
                 />
               </div>
-              <el-scrollbar class="card-item-btns" @dblclick.stop>
-                <div class="card-item-btns-track">
+              <el-scrollbar
+                v-if="!shouldMaskItem(item)"
+                class="card-item-btns"
+                @dblclick.stop
+                @wheel.capture="onHorizontalWheel"
+              >
+                <div class="card-item-btns-track" @wheel.capture="onHorizontalWheel">
                   <InstantTooltip
                     v-for="btn in cardItemBtns"
                     :key="btn.action"
@@ -2234,6 +2328,8 @@ onBeforeUnmount(() => {
       </div>
     </div>
     <ListCountIndicator :current="cardList.length" :total="listCountTotal" />
+    <CuratorStatsIndicator />
+    <PrivacyPasswordDialog ref="privacyPasswordDialogRef" />
     <view-image
       ref="viewImageRef"
       :options="viewImageOptions"
@@ -2428,6 +2524,10 @@ onBeforeUnmount(() => {
   position: relative;
   cursor: pointer;
   overflow: hidden;
+
+  :deep(.nsfw-content-mask) {
+    z-index: 30;
+  }
   will-change: transform;
   transform: translateZ(0);
   backface-visibility: hidden;
@@ -2608,23 +2708,32 @@ onBeforeUnmount(() => {
   z-index: 10;
   box-sizing: border-box;
   width: 100%;
-  height: 34px;
+  height: 38px;
   line-height: 1;
-  padding: 4px 6px;
+  padding: 0 6px;
   transition: all 0.3s ease-in-out;
   backdrop-filter: blur(10px);
   background-color: var(--dominant-color-rgba);
 
+  :deep(.el-scrollbar) {
+    height: 100%;
+  }
+
   :deep(.el-scrollbar__wrap) {
+    height: 100%;
+    display: flex;
+    align-items: center;
     overflow-x: auto;
     overflow-y: hidden;
     overscroll-behavior-x: contain;
   }
 
   :deep(.el-scrollbar__view) {
-    display: inline-block;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     min-width: 100%;
-    text-align: center;
+    height: 100%;
     line-height: 1;
   }
 
@@ -2648,22 +2757,31 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 2px;
   max-width: 100%;
-  vertical-align: top;
 
   :deep(.el-tooltip__trigger) {
     flex: 0 0 auto;
     display: inline-flex;
+    align-items: center;
+    line-height: 0;
   }
 
   :deep(.instant-tooltip-trigger) {
     flex: 0 0 auto;
     display: inline-flex;
+    align-items: center;
+    line-height: 0;
   }
 
   .card-item-btn {
     flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     margin: 0;
-    padding: 2px 4px;
+    padding: 0 4px;
+    height: 28px;
+    min-height: 28px;
+    line-height: 1;
     + .card-item-btn {
       margin: 0;
     }
@@ -2676,6 +2794,8 @@ onBeforeUnmount(() => {
 
 .card-item-btn-icon {
   font-size: 22px;
+  line-height: 1;
+  display: block;
 }
 
 .card-item-tags {

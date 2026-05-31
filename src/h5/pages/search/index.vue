@@ -9,14 +9,19 @@ import {
   qualityList,
   sortFieldOptions,
   sortTypeOptions,
-  imageDisplaySizeOptions
+  imageDisplaySizeOptions,
+  isQualityFilterApplicable
 } from '@common/publicData.js'
 import { useTranslation } from 'i18next-vue'
 import { infoKeys } from '@common/publicData.js'
 import { handleInfoVal, resolveApiUserMessage, isTransientSearchFailure } from '@common/utils.js'
+import { usePrivacyNsfwMask } from '@common/composables/usePrivacyNsfwMask.mjs'
+import H5PrivacyPasswordDialog from '@h5/components/H5PrivacyPasswordDialog.vue'
+import H5NsfwContentMask from '@h5/components/H5NsfwContentMask.vue'
 import H5FullscreenPager from '@h5/components/H5FullscreenPager.vue'
 import H5FloatingButtons from '@h5/components/H5FloatingButtons.vue'
 import H5ListEmpty from '@h5/components/H5ListEmpty.vue'
+import H5BrowseChrome from '@h5/components/H5BrowseChrome.vue'
 import { useH5FullscreenAutoPlay } from '@h5/composables/useH5FullscreenAutoPlay.js'
 import {
   applyH5CardImageCompress,
@@ -30,6 +35,42 @@ const commonStore = UseCommonStore()
 const settingStore = UseSettingStore()
 const { settingData } = storeToRefs(settingStore)
 const { immersiveMode } = storeToRefs(commonStore)
+
+const privacyPasswordDialogRef = ref(null)
+
+const {
+  shouldMaskItem,
+  onMaskClick: onNsfwMaskClick,
+  lockPage: lockNsfwMaskPage,
+  refreshHasPassword: refreshNsfwMaskHasPassword,
+  isActionBlocked: isNsfwActionBlocked
+} = usePrivacyNsfwMask({
+  settingData,
+  hasPrivacyPassword: () => api.hasPrivacyPassword(),
+  openPasswordDialog: () => privacyPasswordDialogRef.value?.open(),
+  checkPrivacyPassword: (pwd) => api.checkPrivacyPassword(pwd),
+  onVerifyFail: (res) => {
+    const isNoPwd = res?.errorCode === 'PRIVACY_PASSWORD_NOT_SET'
+    showNotify({
+      type: isNoPwd ? 'warning' : 'danger',
+      message: isNoPwd
+        ? t('messages.privacyPasswordNotSet')
+        : resolveApiUserMessage(res, t) || t('messages.verifyPrivacyPasswordFail')
+    })
+  }
+})
+
+const notifyNsfwMaskBlocked = () => {
+  showNotify({ type: 'warning', message: t('privacyNsfwMask.actionBlocked') })
+}
+
+const blockIfNsfwMasked = (item) => {
+  if (item && isNsfwActionBlocked(item)) {
+    notifyNsfwMaskBlocked()
+    return true
+  }
+  return false
+}
 
 const useSemanticSearch = computed(() => !!settingData.value?.search?.useSemanticSearch)
 
@@ -81,8 +122,8 @@ const resetSearchLocalSort = () => {
 
 const page = reactive({
   startPage: 1,
-  pageSize: 20,
-  total: 0
+  total: 0,
+  lastPageSize: 20
 })
 
 let loadListSeq = 0
@@ -160,7 +201,14 @@ watch(
 const list = ref([])
 const FALLBACK_ITEM_HEIGHT = 220
 const GRID_GAP = 10
+const GRID_HORIZONTAL_PADDING = 24
+const GRID_MIN_CARD_WIDTH = 160
+const GRID_MAX_COLUMNS = 8
 const GRID_BUFFER_PX = 900
+const FULLSCREEN_PAGE_SIZE = 20
+const WATERFALL_PAGE_SIZE_MIN = 24
+const WATERFALL_PAGE_SIZE_MAX = 160
+const WATERFALL_VIEWPORT_BUFFER_ROWS = 2
 /** 铺满模式：仅为当前张及相邻张设置图片 src，避免虚拟列表缓冲项拉原图 */
 const FULLSCREEN_IMAGE_PRELOAD_RANGE = 1
 /** 与 .search-pull-inner 的 padding-top 保持一致 */
@@ -270,6 +318,17 @@ const listModeRadioOptions = computed(() => [
   { value: false, text: t('h5.pages.search.filters.listModeOrder') },
   { value: true, text: t('h5.pages.search.filters.listModeRandom') }
 ])
+
+const showSearchQualityFilter = computed(() => isQualityFilterApplicable(form.filterType))
+
+watch(
+  () => form.filterType,
+  (type) => {
+    if (!isQualityFilterApplicable(type)) {
+      form.quality = ''
+    }
+  }
+)
 
 const displaySizeRadioOptions = computed(() =>
   imageDisplaySizeOptions.map((item) => ({
@@ -622,6 +681,7 @@ const syncFullscreenActiveMedia = async () => {
 }
 
 const toggleInlineVideo = async (item, index) => {
+  if (blockIfNsfwMasked(item)) return
   if (!item?.videoSrc) {
     showNotify({ type: 'warning', message: t('messages.noData') })
     return
@@ -680,6 +740,45 @@ const fetchSearchPageWithRetry = async (payload) => {
   return lastRes
 }
 
+let ensureWaterfallSeq = 0
+let waterfallFillEnsuring = false
+
+/** 首屏高度不足时连续补拉，直到可滚动或已无更多数据 */
+const ensureWaterfallCanScroll = async () => {
+  if (waterfallFillEnsuring) return
+  if (displayMode.value !== 'waterfall' || state.finished || state.loading) return
+  const seq = ++ensureWaterfallSeq
+  const wrap = pageWrapperRef.value
+  if (!wrap || !list.value.length) return
+
+  waterfallFillEnsuring = true
+  try {
+    await nextTick()
+    if (seq !== ensureWaterfallSeq) return
+
+    const needsMore = () => wrap.scrollHeight <= wrap.clientHeight + 80
+
+    let guard = 0
+    while (
+      guard < 8 &&
+      seq === ensureWaterfallSeq &&
+      !state.finished &&
+      !state.loading &&
+      list.value.length > 0 &&
+      needsMore()
+    ) {
+      guard += 1
+      const prevLen = list.value.length
+      await loadList(false)
+      if (seq !== ensureWaterfallSeq) return
+      await nextTick()
+      if (list.value.length === prevLen) break
+    }
+  } finally {
+    waterfallFillEnsuring = false
+  }
+}
+
 const loadList = async (reset = false) => {
   if (state.loading) return
   const reqSeq = ++loadListSeq
@@ -700,6 +799,8 @@ const loadList = async (reset = false) => {
     })
   }
   state.loading = true
+  const requestPageSize = resolveSearchPageSize()
+  page.lastPageSize = requestPageSize
   try {
     const rawForm = toRaw(form)
     const payload = {
@@ -707,10 +808,11 @@ const loadList = async (reset = false) => {
       filterKeywords: rawForm.keywords,
       keywords: rawForm.keywords,
       startPage: page.startPage,
-      pageSize: page.pageSize,
+      pageSize: requestPageSize,
       sortField: rawForm.sortField || SEARCH_LOCAL_SORT_DEFAULT.sortField,
       sortType: Number(rawForm.sortType) || SEARCH_LOCAL_SORT_DEFAULT.sortType,
-      isRandom: !!rawForm.isRandom
+      isRandom: !!rawForm.isRandom,
+      quality: isQualityFilterApplicable(rawForm.filterType) ? rawForm.quality || '' : ''
     }
     const res = await fetchSearchPageWithRetry(payload)
     if (reqSeq !== loadListSeq) return
@@ -731,7 +833,7 @@ const loadList = async (reset = false) => {
       page.startPage += 1
       const pageRows = res.data.list.length
       const noNewRows = pageRows > 0 && list.value.length === prevCount
-      if (!pageRows || pageRows < page.pageSize || noNewRows) {
+      if (!pageRows || pageRows < requestPageSize || noNewRows) {
         state.finished = true
         if (list.value.length > 0) {
           showToast({ message: t('messages.noMoreData') })
@@ -760,6 +862,9 @@ const loadList = async (reset = false) => {
     if (reqSeq === loadListSeq) {
       nextTick(() => {
         void syncFullscreenActiveMedia()
+        if (displayMode.value === 'waterfall' && !waterfallFillEnsuring) {
+          void ensureWaterfallCanScroll()
+        }
       })
     }
   }
@@ -855,16 +960,37 @@ const getPreviewIndexForListIndex = (listIndex) => {
 }
 
 const gridColumns = computed(() => {
-  const width = state.viewportWidth
-  if (width >= 1200) return 4
-  if (width >= 768) return 3
-  return 2
+  const contentWidth = Math.max(0, state.viewportWidth - GRID_HORIZONTAL_PADDING)
+  const cols = Math.floor((contentWidth + GRID_GAP) / (GRID_MIN_CARD_WIDTH + GRID_GAP))
+  return Math.max(2, Math.min(GRID_MAX_COLUMNS, cols))
 })
 const cardWidth = computed(() => {
-  const pageWidth = Math.min(state.viewportWidth, 1080)
-  const contentWidth = Math.max(0, pageWidth - 24)
+  const contentWidth = Math.max(0, state.viewportWidth - GRID_HORIZONTAL_PADDING)
   return Math.max(80, (contentWidth - GRID_GAP * (gridColumns.value - 1)) / gridColumns.value)
 })
+
+/** 瀑布流每页条数：按列数与视口高度估算，避免宽屏首屏无法滚动 */
+const estimateWaterfallPageSize = () => {
+  const cols = Math.max(1, gridColumns.value)
+  const wrap = pageWrapperRef.value
+  const viewportH = Math.max(
+    state.viewportHeight || 0,
+    wrap?.clientHeight || 0,
+    typeof window !== 'undefined' ? window.innerHeight : 800
+  )
+  const toolbarH = immersiveMode.value ? 0 : searchToolbarHeight.value || 52
+  const availableH = Math.max(280, viewportH - toolbarH - SEARCH_WATERFALL_CONTENT_GAP_PX - 16)
+  const avgItemH = FALLBACK_ITEM_HEIGHT + GRID_GAP
+  const rowsNeeded = Math.ceil(availableH / avgItemH) + WATERFALL_VIEWPORT_BUFFER_ROWS
+  const itemsNeeded = rowsNeeded * cols
+  return Math.max(
+    WATERFALL_PAGE_SIZE_MIN,
+    Math.min(WATERFALL_PAGE_SIZE_MAX, itemsNeeded)
+  )
+}
+
+const resolveSearchPageSize = () =>
+  displayMode.value === 'waterfall' ? estimateWaterfallPageSize() : FULLSCREEN_PAGE_SIZE
 
 const getItemHeight = (item) => {
   const width = Number(item?.width) || 0
@@ -1060,6 +1186,10 @@ const layoutToggleTitle = computed(() =>
     : t('h5.pages.search.displayMode.toggleToWaterfall')
 )
 
+const showSearchListEmpty = computed(
+  () => state.finished && !state.loading && !list.value.length
+)
+
 const toggleDisplayMode = () => {
   if (displayMode.value === 'waterfall') {
     persistWaterfallScrollPosition()
@@ -1070,6 +1200,12 @@ const toggleDisplayMode = () => {
     localStorage.setItem(DISPLAY_MODE_STORAGE_KEY, displayMode.value)
   } catch (_) {
     /* noop */
+  }
+  if (displayMode.value === 'waterfall') {
+    nextTick(() => {
+      syncWaterfallViewportMetrics()
+      void ensureWaterfallCanScroll()
+    })
   }
 }
 
@@ -1210,25 +1346,20 @@ const jumpToIndex = async () => {
   fullscreenAutoPlay.stop()
   try {
     if (index >= list.value.length) {
-      const neededPage = Math.ceil((index + 1) / page.pageSize)
-      const currentPage = page.startPage
-      if (neededPage > currentPage) {
-        const pagesToLoad = neededPage - currentPage
-        if (pagesToLoad > 10) {
-          showNotify({ type: 'warning', message: t('messages.indexTooLarge') })
-          jumpIndex.value = ''
-          return
+      let guard = 0
+      while (index >= list.value.length && !state.finished && guard < 24) {
+        guard += 1
+        const prevLen = list.value.length
+        await loadList(false)
+        if (list.value.length === prevLen) break
+        if (guard < 24) {
+          await sleep(48)
         }
-        for (let i = 0; i < pagesToLoad; i++) {
-          if (!state.finished) {
-            await loadList(false)
-            if (i < pagesToLoad - 1) {
-              await sleep(48)
-            }
-          } else {
-            break
-          }
-        }
+      }
+      if (index >= list.value.length) {
+        showNotify({ type: 'warning', message: t('messages.indexTooLarge') })
+        jumpIndex.value = ''
+        return
       }
     }
 
@@ -1252,6 +1383,8 @@ const jumpToIndex = async () => {
 }
 
 const handleFavoriteTouchStart = (event) => {
+  const current = fullscreenCurrentItem.value
+  if (current && isNsfwActionBlocked(current)) return
   favoriteClick.startTime = Date.now()
   favoriteClick.startX = event.touches[0].clientX
   favoriteClick.startY = event.touches[0].clientY
@@ -1543,6 +1676,7 @@ const openPreview = (index) => {
   }
   const row = list.value[index]
   if (!row) return
+  if (blockIfNsfwMasked(row)) return
   longPress.selectedIndex = index
   if (row.fileType === 'video') {
     if (isInlineVideoPlaying(row)) pauseInlineVideo(row)
@@ -1614,10 +1748,9 @@ const onPreviewLayerTouchStart = (event) => {
     previewLongPress.timer = null
     const listIdx = resolveListIndexFromPreviewIndex(previewCurrentIndex.value)
     if (listIdx < 0) return
-    longPress.selectedIndex = listIdx
+    openActionByIndex(listIdx)
     longPress.suppressClick = true
     settingStore.vibrate()
-    state.showActionPopup = true
   }, 500)
 }
 
@@ -1640,15 +1773,19 @@ const clearCardPress = () => {
 
 const onImageTouchStart = (index, event) => {
   if (!event.touches?.length) return
+  const row = list.value[index]
+  if (row && isNsfwActionBlocked(row)) return
   cardPressIndex.value = index
   longPress.startX = event.touches[0].clientX
   longPress.startY = event.touches[0].clientY
   longPress.timer = setTimeout(() => {
     longPress.timer = null
-    longPress.selectedIndex = index
+    const current = list.value[index]
+    if (current && isNsfwActionBlocked(current)) return
+    openActionByIndex(index)
+    if (!state.showActionPopup) return
     longPress.suppressClick = true
     settingStore.vibrate()
-    state.showActionPopup = true
   }, 500)
 }
 
@@ -1673,12 +1810,43 @@ const onImageTouchEnd = () => {
   }
 }
 
-const onCardMouseDown = (index) => {
+const onCardMouseDown = (index, event) => {
+  if (event?.button != null && event.button !== 0) return
+  const row = list.value[index]
+  if (row && isNsfwActionBlocked(row)) return
   cardPressIndex.value = index
+  if (longPress.timer) {
+    clearTimeout(longPress.timer)
+    longPress.timer = null
+  }
+  longPress.startX = event?.clientX ?? 0
+  longPress.startY = event?.clientY ?? 0
+  longPress.timer = setTimeout(() => {
+    longPress.timer = null
+    longPress.suppressClick = true
+    openActionByIndex(index)
+  }, 500)
+}
+
+const onCardMouseMove = (event) => {
+  if (!longPress.timer) return
+  const moveX = (event?.clientX ?? 0) - longPress.startX
+  const moveY = (event?.clientY ?? 0) - longPress.startY
+  if (Math.sqrt(moveX * moveX + moveY * moveY) > 10) {
+    clearCardPress()
+    if (longPress.timer) {
+      clearTimeout(longPress.timer)
+      longPress.timer = null
+    }
+  }
 }
 
 const onCardMouseUp = () => {
   clearCardPress()
+  if (longPress.timer) {
+    clearTimeout(longPress.timer)
+    longPress.timer = null
+  }
 }
 
 /** 操作菜单目标：预览打开时以当前预览张为准，否则为长按项 */
@@ -1693,6 +1861,15 @@ const actionTargetListIndex = computed(() => {
 const selectedItem = computed(() => {
   const idx = actionTargetListIndex.value
   return idx >= 0 ? list.value[idx] ?? null : null
+})
+
+const imageInfoTagWords = ref([])
+
+const imageInfoItem = computed(() => {
+  const base = selectedItem.value
+  if (!base) return null
+  if (!imageInfoTagWords.value.length) return base
+  return { ...base, _tagWords: imageInfoTagWords.value }
 })
 
 const selectedFavoriteActionLabel = computed(() => {
@@ -1733,10 +1910,19 @@ const triggerBrowserDownload = (url, filename) => {
   document.body.removeChild(link)
 }
 
-const showImageInfo = () => {
+const showImageInfo = async () => {
   if (!selectedItem.value) return
+  if (blockIfNsfwMasked(selectedItem.value)) return
   state.showActionPopup = false
   imageInfoPanelHeight.value = imageInfoPanelAnchors[1]
+  imageInfoTagWords.value = []
+  const id = selectedItem.value.id
+  if (id) {
+    const res = await api.getResourceTags(id)
+    if (res?.success && Array.isArray(res.data)) {
+      imageInfoTagWords.value = res.data
+    }
+  }
 }
 
 const saveSelectedMedia = async () => {
@@ -1856,7 +2042,36 @@ const toggleSelectedFavorite = async () => {
   state.showActionPopup = false
 }
 
+const addSelectedToPrivacySpace = async () => {
+  const item = selectedItem.value
+  if (!item?.id) {
+    showNotify({ type: 'warning', message: t('messages.noData') })
+    return
+  }
+  try {
+    const res = await api.addToFavorites(item.id, true)
+    if (!res?.success) {
+      showNotify({
+        type: 'danger',
+        message: resolveApiUserMessage(res, t) || t('messages.operationFail')
+      })
+      return
+    }
+    if (item.isFavorite) {
+      await api.removeFavorites(item.id, false)
+      item.isFavorite = 0
+    }
+    showNotify({ type: 'success', message: t('messages.operationSuccess') })
+  } catch (_) {
+    showNotify({ type: 'danger', message: t('messages.operationFail') })
+  } finally {
+    state.showActionPopup = false
+  }
+}
+
 const openActionByIndex = (index) => {
+  const row = list.value[index]
+  if (blockIfNsfwMasked(row)) return
   longPress.selectedIndex = index
   state.showActionPopup = true
 }
@@ -1882,14 +2097,21 @@ const isSearchPageMediaTarget = (el) =>
     el.tagName === 'VIDEO'
   )
 
-/** 捕获阶段：阻止图片/视频上的浏览器默认长按菜单 */
+/** 捕获阶段：阻止浏览器默认菜单；桌面右键在冒泡或预览层打开操作菜单 */
 const onSearchMediaContextMenuCapture = (event) => {
   const el = event.target
   if (!(el instanceof Element)) return
   if (!el.closest('.page-search') && !el.closest('.van-image-preview')) return
   if (!isSearchPageMediaTarget(el)) return
   event.preventDefault()
-  event.stopPropagation()
+
+  if (isTouchLikeContextMenu(event)) return
+
+  if (el.closest('.van-image-preview')) {
+    event.stopPropagation()
+    const listIdx = resolveListIndexFromPreviewIndex(previewCurrentIndex.value)
+    if (listIdx >= 0) openActionByIndex(listIdx)
+  }
 }
 
 /** 小米等国产浏览器：长按还会走 selectstart / 拖拽出图，需一并拦截 */
@@ -1941,6 +2163,7 @@ const onPageResize = () => {
       fullscreenPagerRef.value?.measureHeight?.()
     } else {
       syncWaterfallViewportMetrics()
+      void ensureWaterfallCanScroll()
     }
   })
 }
@@ -1990,6 +2213,7 @@ watch(
 )
 
 onActivated(() => {
+  void refreshNsfwMaskHasPassword()
   nextTick(() => {
     measureSearchToolbarHeight()
     if (displayMode.value === 'fullscreen') {
@@ -2001,6 +2225,7 @@ onActivated(() => {
 })
 
 onDeactivated(() => {
+  lockNsfwMaskPage()
   persistWaterfallScrollPosition()
   clearCardPress()
   fullscreenAutoPlay.stop()
@@ -2100,7 +2325,8 @@ onMounted(async () => {
     @scroll.passive="onPageScroll"
   >
     <div class="page-search-inner">
-      <div v-if="!immersiveMode" ref="searchToolbarRef" class="search-toolbar">
+      <div ref="searchToolbarRef" class="search-toolbar-wrap">
+      <H5BrowseChrome :immersive-mode="immersiveMode">
         <div class="search-row">
           <form class="search-form" autocomplete="off" @submit.prevent="onSearch">
             <van-search
@@ -2115,11 +2341,13 @@ onMounted(async () => {
               @search="onSearch"
             />
           </form>
-          <van-button class="filter-btn" plain @click="state.showFilters = true">
+          <van-button class="h5-chrome-icon-btn" plain @click="state.showFilters = true">
             <van-icon name="arrow-down" />
           </van-button>
+        </div>
+        <template #trailing>
           <van-button
-            class="layout-mode-btn"
+            class="h5-chrome-icon-btn"
             plain
             :title="layoutToggleTitle"
             :aria-label="layoutToggleTitle"
@@ -2127,28 +2355,32 @@ onMounted(async () => {
           >
             <van-icon :name="displayMode === 'waterfall' ? 'expand-o' : 'apps-o'" />
           </van-button>
-        </div>
+        </template>
+        <template #mini-trailing>
+          <van-button class="chrome-mini-btn filter-btn" plain @click="state.showFilters = true">
+            <van-icon name="arrow-down" />
+          </van-button>
+          <van-button
+            class="chrome-mini-btn"
+            plain
+            :title="layoutToggleTitle"
+            :aria-label="layoutToggleTitle"
+            @click="toggleDisplayMode"
+          >
+            <van-icon :name="displayMode === 'waterfall' ? 'expand-o' : 'apps-o'" />
+          </van-button>
+        </template>
+      </H5BrowseChrome>
       </div>
 
-      <div v-else ref="searchToolbarRef" class="search-chrome-mini">
-        <van-button class="chrome-mini-btn filter-btn" plain @click="state.showFilters = true">
-          <van-icon name="arrow-down" />
-        </van-button>
-        <van-button
-          class="chrome-mini-btn layout-mode-btn"
-          plain
-          :title="layoutToggleTitle"
-          :aria-label="layoutToggleTitle"
-          @click="toggleDisplayMode"
-        >
-          <van-icon :name="displayMode === 'waterfall' ? 'expand-o' : 'apps-o'" />
-        </van-button>
-      </div>
 
       <van-pull-refresh v-model="state.refreshing" :disabled="isPullRefreshDisabled" @refresh="onRefresh">
         <div
           class="search-pull-inner"
-          :class="{ 'search-pull-inner--fullscreen': displayMode === 'fullscreen' }"
+          :class="{
+            'search-pull-inner--fullscreen': displayMode === 'fullscreen',
+            'h5-browse-empty-stage': showSearchListEmpty
+          }"
         >
           <div
             v-if="state.loading && !list.length"
@@ -2191,7 +2423,8 @@ onMounted(async () => {
                     @touchmove="onImageTouchMove"
                     @touchend="onImageTouchEnd"
                     @touchcancel="onImageTouchEnd"
-                    @mousedown="onCardMouseDown(row.globalIndex)"
+                    @mousedown="(e) => onCardMouseDown(row.globalIndex, e)"
+                    @mousemove="onCardMouseMove"
                     @mouseup="onCardMouseUp"
                     @mouseleave="onCardMouseUp"
                     @contextmenu="onMediaContextMenu(row.globalIndex, $event)"
@@ -2257,7 +2490,11 @@ onMounted(async () => {
                           </div>
                         </template>
                         <button
-                          v-if="row.item.videoSrc && !isInlineVideoPlaying(row.item)"
+                          v-if="
+                            row.item.videoSrc &&
+                            !isInlineVideoPlaying(row.item) &&
+                            !shouldMaskItem(row.item)
+                          "
                           type="button"
                           class="video-play-badge"
                           :aria-label="t('h5.pages.search.videoPreview.play')"
@@ -2291,6 +2528,10 @@ onMounted(async () => {
                         />
                         <div class="media-touch-shield" aria-hidden="true" />
                       </template>
+                      <H5NsfwContentMask
+                        :visible="shouldMaskItem(row.item)"
+                        @click="onNsfwMaskClick"
+                      />
                     </div>
                   </div>
                   <div class="virtual-spacer" :style="{ height: `${column.bottomSpacer}px` }"></div>
@@ -2323,6 +2564,10 @@ onMounted(async () => {
                     @touchmove="onImageTouchMove"
                     @touchend="onImageTouchEnd"
                     @touchcancel="onImageTouchEnd"
+                    @mousedown="(e) => onCardMouseDown(index, e)"
+                    @mousemove="onCardMouseMove"
+                    @mouseup="onCardMouseUp"
+                    @mouseleave="onCardMouseUp"
                     @contextmenu="onMediaContextMenu(index, $event)"
                     @click="openPreview(index)"
                   >
@@ -2382,7 +2627,7 @@ onMounted(async () => {
                         @error="onInlineVideoError(item)"
                       />
                       <button
-                        v-if="!isInlineVideoPlaying(item)"
+                        v-if="!isInlineVideoPlaying(item) && !shouldMaskItem(item)"
                         type="button"
                         class="fullscreen-slide-video-btn"
                         :aria-label="t('h5.pages.search.videoPreview.play')"
@@ -2401,6 +2646,10 @@ onMounted(async () => {
                     >
                       <IconifyIcon class="fullscreen-slide-play-icon" icon="custom:play-circle" />
                     </div>
+                    <H5NsfwContentMask
+                      :visible="shouldMaskItem(item)"
+                      @click="onNsfwMaskClick"
+                    />
                   </div>
                 </template>
               </H5FullscreenPager>
@@ -2504,7 +2753,7 @@ onMounted(async () => {
             </van-radio>
           </van-radio-group>
         </div>
-        <div class="filter-group">
+        <div v-if="showSearchQualityFilter" class="filter-group">
           <div class="group-title">{{ t('exploreCommon.searchForm.quality.placeholder') }}</div>
           <van-radio-group v-model="form.quality" class="filter-options" direction="horizontal">
             <van-radio name="">{{ t('h5.pages.search.filters.all') }}</van-radio>
@@ -2570,6 +2819,12 @@ onMounted(async () => {
           </div>
           <span class="action-label">{{ selectedFavoriteActionLabel }}</span>
         </div>
+        <div class="action-item" @click="addSelectedToPrivacySpace">
+          <div class="action-icon-wrapper">
+            <IconifyIcon class="action-icon-inner" icon="custom:privacy-tip-outline" />
+          </div>
+          <span class="action-label">{{ t('exploreCommon.addToPrivacySpace') }}</span>
+        </div>
         <div class="action-item" @click="saveSelectedMedia">
           <div class="action-icon-wrapper">
             <IconifyIcon class="action-icon-inner" icon="custom:download-line" />
@@ -2598,13 +2853,13 @@ onMounted(async () => {
       @height-change="onImageInfoHeightChange"
     >
       <div class="image-info-content">
-        <van-cell-group v-if="selectedItem">
+        <van-cell-group v-if="imageInfoItem">
           <van-cell
             v-for="key in infoKeys"
             :key="key"
             value-class="image-info-value"
             :title="t(`h5.pages.home.imageInfo.${key}`)"
-            :value="handleInfoVal(selectedItem, key)"
+            :value="handleInfoVal(imageInfoItem, key, t)"
           />
         </van-cell-group>
       </div>
@@ -2673,11 +2928,16 @@ onMounted(async () => {
         @focus="onJumpDialogViewportChange(true)"
       />
     </van-dialog>
+
+    <H5PrivacyPasswordDialog ref="privacyPasswordDialogRef" />
   </div>
 </template>
 
 <style scoped lang="scss">
 .page-search-inner {
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
   padding-bottom: var(--fbw-tabbar-height);
 }
 .page-search.page-search--fullscreen {
@@ -2841,25 +3101,25 @@ onMounted(async () => {
   background: rgba(0, 0, 0, 0.45);
   pointer-events: none;
 }
-.layout-mode-btn {
-  width: 34px;
-  height: 34px;
-  min-width: 34px;
-  border-radius: 8px;
-  padding: 0;
+/* 顶栏基础样式见 h5/assets/styles/main.css */
+
+.search-toolbar-wrap .search-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
 }
-.search-toolbar {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: #fff;
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06);
+.search-toolbar-wrap .search-form {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
 }
 .search-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px 10px;
+  padding: 0;
 }
 .search-form {
   flex: 1;
@@ -2873,12 +3133,14 @@ onMounted(async () => {
 .filter-keyword-form {
   margin: 0;
 }
-.filter-btn {
-  width: 34px;
-  height: 34px;
-  min-width: 34px;
-  border-radius: 8px;
+
+.filter-keyword-input {
   padding: 0;
+  margin: 0;
+}
+
+.filter-keyword-input :deep(.van-search__content) {
+  align-items: center;
 }
 .result-list {
   padding: 0 12px;
@@ -2946,6 +3208,10 @@ onMounted(async () => {
       opacity: 1;
     }
   }
+}
+.preview-wrap > .h5-nsfw-content-mask,
+.fullscreen-slide > .h5-nsfw-content-mask {
+  z-index: 50;
 }
 .preview-wrap {
   border-radius: 0;
@@ -3106,15 +3372,17 @@ onMounted(async () => {
   padding: 8px 0 12px;
 }
 .search-filters-popup :deep(.van-popup) {
+  width: 100%;
+  max-width: none;
   max-height: 60dvh;
   overflow: hidden;
 }
 .filter-panel {
   display: flex;
   flex-direction: column;
+  width: 100%;
+  max-width: none;
   max-height: 60dvh;
-  max-width: 820px;
-  margin: 0 auto;
   padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px));
   box-sizing: border-box;
 }
@@ -3165,9 +3433,6 @@ onMounted(async () => {
   font-size: 13px;
   color: var(--van-text-color-2);
 }
-.filter-keyword-input {
-  margin-bottom: 10px;
-}
 .filter-options {
   display: flex;
   flex-wrap: wrap;
@@ -3193,44 +3458,6 @@ onMounted(async () => {
   flex: 1;
 }
 
-.action-popup-content {
-  display: flex;
-  justify-content: space-evenly;
-  align-items: center;
-  flex-direction: row;
-  gap: 16px;
-}
-
-.action-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  font-size: 16px;
-}
-
-.action-icon-wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: #eee;
-  border-radius: 10px;
-  padding: 14px;
-  font-size: 24px;
-}
-
-.action-icon-inner {
-  transition: transform 0.3s ease-out;
-}
-
-.action-label {
-  font-size: 12px;
-}
-
-.delete-action {
-  color: #ff4d4f;
-}
-
 .image-info-backdrop {
   position: fixed;
   inset: 0;
@@ -3253,23 +3480,6 @@ onMounted(async () => {
 
 .image-info-content {
   padding-bottom: env(safe-area-inset-bottom, 0px);
-}
-
-@media (min-width: 768px) {
-  .page-search-inner {
-    max-width: 1080px;
-    margin: 0 auto;
-  }
-
-  .result-list {
-    gap: 10px;
-  }
-}
-
-@media (min-width: 1200px) {
-  .result-list {
-    gap: 10px;
-  }
 }
 </style>
 

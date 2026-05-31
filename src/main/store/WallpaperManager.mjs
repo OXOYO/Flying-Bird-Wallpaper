@@ -9,6 +9,11 @@ import {
   resolveRemoteSecretKey,
   applyCodedErrorToResult
 } from '../../common/utils.js'
+import {
+  getNsfwSafeSqlClause,
+  isNsfwMaskableItem,
+  shouldFilterSensitiveForWallpaper
+} from '../../common/privacyNsfwMask.js'
 
 export default class WallpaperManager {
   // 单例实例
@@ -190,6 +195,10 @@ export default class WallpaperManager {
       const placeholders = quality.map(() => '?').join(',')
       query_where.push(`quality IN (${placeholders})`)
       query_params.push(...quality)
+    }
+
+    if (shouldFilterSensitiveForWallpaper(this.settingData)) {
+      query_where.push(getNsfwSafeSqlClause(isFavorites ? 'r' : ''))
     }
 
     if (query_where.length) {
@@ -457,28 +466,38 @@ export default class WallpaperManager {
 
   // 切换到上一个壁纸
   async doSwitchToPrevWallpaper() {
+    const filterSensitive = shouldFilterSensitiveForWallpaper(this.settingData)
     const { index } = this.switchParams
-    // 查询历史记录总数
     const count_stmt = this.db.prepare(`SELECT COUNT(*) AS total FROM fbw_history`)
     const count_result = count_stmt.get()
     this.switchParams.count = count_result && count_result.total ? count_result.total : 0
 
-    // 支持循环切换
-    if (this.switchParams.count) {
-      const nextIndex = index + 1 < this.switchParams.count ? index + 1 : 0
-      // 查询历史记录
-      const query_stmt = this.db.prepare(
-        `SELECT h.id as hid, r.* FROM fbw_history h LEFT JOIN fbw_resources r ON h.resourceId = r.id ORDER BY h.id DESC LIMIT ? OFFSET ?`
-      )
-      const query_result = query_stmt.get(1, nextIndex)
-
-      if (query_result) {
-        // 更新索引
-        this.switchParams.index = nextIndex
-
-        return await this.setAsWallpaper(query_result, false, false)
+    if (!this.switchParams.count) {
+      return {
+        success: false,
+        message: t('messages.operationFail')
       }
     }
+
+    const query_stmt = this.db.prepare(
+      `SELECT h.id as hid, r.* FROM fbw_history h LEFT JOIN fbw_resources r ON h.resourceId = r.id ORDER BY h.id DESC LIMIT ? OFFSET ?`
+    )
+
+    const startIndex = index + 1 < this.switchParams.count ? index + 1 : 0
+    let nextIndex = startIndex
+    let tries = 0
+
+    do {
+      const query_result = query_stmt.get(1, nextIndex)
+      if (!query_result?.id) break
+      if (!filterSensitive || !isNsfwMaskableItem(query_result)) {
+        this.switchParams.index = nextIndex
+        return await this.setAsWallpaper(query_result, false, false)
+      }
+      tries += 1
+      nextIndex = nextIndex + 1 < this.switchParams.count ? nextIndex + 1 : 0
+    } while (tries < this.switchParams.count && nextIndex !== startIndex)
+
     return {
       success: false,
       message: t('messages.operationFail')

@@ -307,7 +307,6 @@ export default class SuspensionBall {
 
   create() {
     this.win = new BrowserWindow(this.options)
-    global.FBW.store.shortcutManager.registerLocalShortcuts('suspensionBall', true)
 
     if (isDev()) {
       this.win.loadURL(this.url)
@@ -325,7 +324,6 @@ export default class SuspensionBall {
 
   destroy() {
     this.endDrag()
-    global.FBW.store.shortcutManager.unregisterLocalShortcuts('suspensionBall')
     this.win?.destroy()
   }
 

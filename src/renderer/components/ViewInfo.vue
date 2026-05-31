@@ -17,13 +17,29 @@ const transform = reactive({
 })
 const showResetBtn = ref(false)
 
-const view = (item) => {
+const loadResourceTags = async (row) => {
+  const id = row?.id
+  if (!id || !window.FBW?.getResourceTags) return row
+  try {
+    const res = await window.FBW.getResourceTags(id)
+    if (res?.success && Array.isArray(res.data) && res.data.length) {
+      return { ...row, _tagWords: res.data }
+    }
+  } catch {
+    /* ignore */
+  }
+  return row
+}
+
+const view = async (item) => {
   flags.visible = true
-  info.value = item
-  // 重置变换状态
+  info.value = item ? { ...item } : {}
   transform.scale = 1
   transform.originX = '50%'
   transform.originY = '50%'
+  if (item?.id) {
+    info.value = await loadResourceTags(info.value)
+  }
 }
 
 const handleClose = () => {
@@ -122,7 +138,7 @@ defineExpose({
       <el-scrollbar class="info-block">
         <div v-for="key in infoKeys" :key="key" class="info-row">
           <div class="info-key">{{ t(`viewInfo.row.${key}`) }}:</div>
-          <div class="info-value">{{ handleInfoVal(info, key) }}</div>
+          <div class="info-value">{{ handleInfoVal(info, key, t) }}</div>
         </div>
       </el-scrollbar>
     </div>

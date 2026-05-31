@@ -25,12 +25,20 @@ import RecommendManager from './RecommendManager.mjs'
 import {
   buildAutoCurateLatchFields,
   buildClearAutoCurateLatchFields,
+  buildCuratorFooterStats,
+  isAiPipelineStable,
   isAnalysisQueueStable,
   isAutoCurateSettled,
   shouldRunScheduledAutoCurate
 } from './collectionCurateGate.mjs'
 import { handleTimeByUnit } from '../utils/utils.mjs'
 import { migrateRemoteResourceSecretKeys } from '../../common/utils.js'
+import {
+  AI_ANALYSIS_PUMP_START_DELAY_MS,
+  AI_ANALYSIS_WATCHDOG_MS,
+  VISUAL_EMBED_PUMP_START_DELAY_MS,
+  VISUAL_EMBED_WATCHDOG_MS
+} from '../ai/aiConstants.mjs'
 
 export default class Store {
   constructor() {
@@ -170,14 +178,20 @@ export default class Store {
         this.settingManager,
         this.resourcesManager,
         this.textQueryParser,
-        this.embeddingManager
+        this.embeddingManager,
+        this.wordsManager
       )
       this.collectionCurator = CollectionCurator.getInstance(
         global.logger,
         this.dbManager,
         this.settingManager
       )
-      this.aiAnalysisManager.onAnalysisDone = () => {
+      this.aiAnalysisManager.onAnalysisDone = (resourceId) => {
+        const ai = this.settingData?.ai || {}
+        if (isAutoCurateSettled(ai)) {
+          void this.collectionCurator.incrementalAddResource(resourceId)
+          return
+        }
         this.scheduleCollectionCurator()
         this.syncAutoCurateGateFromAnalysis()
       }
@@ -210,8 +224,8 @@ export default class Store {
       // 开启定时任务
       this.startScheduledTasks()
       setTimeout(() => {
-        this.embeddingManager?.intervalVisualEmbed?.(this.locks)
-      }, 60 * 1000)
+        this.triggerVisualEmbedPump()
+      }, VISUAL_EMBED_PUMP_START_DELAY_MS)
       this.ensurePostAnalysisCurateScheduled()
       this.syncAutoCurateGateFromAnalysis()
 
@@ -358,6 +372,20 @@ export default class Store {
     return !!(this.settingData?.powerSaveMode && this.powerState?.isOnBattery)
   }
 
+  triggerBackgroundAnalysisPump() {
+    const ai = this.settingData?.ai
+    if (!ai?.enabled || ai.analysisMode === 'off' || ai.analysisMode === 'on_demand') {
+      return
+    }
+    if (this.isPowerSaveOnBattery()) return
+    this.aiAnalysisManager.pumpBackgroundAnalysis(this.locks)
+  }
+
+  triggerVisualEmbedPump() {
+    if (this.isPowerSaveOnBattery()) return
+    this.embeddingManager?.pumpVisualEmbedBackfill?.(this.locks)
+  }
+
   startAiAnalysisTask() {
     const ai = this.settingData?.ai
     if (!ai?.enabled || ai.analysisMode === 'off' || ai.analysisMode === 'on_demand') {
@@ -368,14 +396,15 @@ export default class Store {
     }
     this.taskScheduler.scheduleTask(
       'aiAnalysis',
-      5 * 60 * 1000,
+      AI_ANALYSIS_WATCHDOG_MS,
       () => {
         if (this.isPowerSaveOnBattery()) return
         this.syncAutoCurateGateFromAnalysis()
-        this.aiAnalysisManager.intervalAnalyze(this.locks)
+        this.triggerBackgroundAnalysisPump()
       },
-      4 * 60 * 1000
+      AI_ANALYSIS_PUMP_START_DELAY_MS
     )
+    setImmediate(() => this.triggerBackgroundAnalysisPump())
   }
 
   stopAiAnalysisTask() {
@@ -391,13 +420,14 @@ export default class Store {
     if (this.isPowerSaveOnBattery()) return
     this.taskScheduler.scheduleTask(
       'visualEmbed',
-      4 * 60 * 1000,
+      VISUAL_EMBED_WATCHDOG_MS,
       () => {
         if (this.isPowerSaveOnBattery()) return
-        this.embeddingManager.intervalVisualEmbed(this.locks)
+        this.triggerVisualEmbedPump()
       },
-      2 * 60 * 1000
+      VISUAL_EMBED_PUMP_START_DELAY_MS
     )
+    setImmediate(() => this.triggerVisualEmbedPump())
   }
 
   stopVisualEmbedTask() {
@@ -461,33 +491,28 @@ export default class Store {
 
   async maybeSettleAutoCurateAfterRun(ret) {
     const stats = this.getAnalysisStatsData()
-    if (!isAnalysisQueueStable(stats)) return
+    if (!isAiPipelineStable(stats)) return
     if (ret?.data?.skipped && ret.data.reason === 'busy') return
+    if (ret?.data?.skipped && ret.data.reason === 'disabled') return
+    if (ret?.data?.phase && ret.data.phase === 'progressive') return
 
     await this.persistAutoCurateLatch(stats)
     this.stopAutoCollectionCurator()
     global.logger.info(
-      `[CollectionCurator] 分析队列已稳定，自动整理已暂停（已分析 ${stats.done ?? 0} 张；手动整理仍可用）`
+      `[CollectionCurator] AI 管道已稳定，系统合集已定格（已分析 ${stats.done ?? 0} 张；新图将增量加入；手动整理可全量重建）`
     )
   }
 
   syncAutoCurateGateFromAnalysis() {
-    const stats = this.getAnalysisStatsData()
     const ai = this.settingData?.ai || {}
-
-    if (!isAnalysisQueueStable(stats)) {
-      if (isAutoCurateSettled(ai)) {
-        this.clearAutoCurateLatchLocal()
-        void this.settingManager.updateSettingData({ ai: this.settingData.ai })
-        this.initCollectionCuratorTask()
-      }
-      return
-    }
 
     if (isAutoCurateSettled(ai)) {
       this.stopAutoCollectionCurator()
       return
     }
+
+    const stats = this.getAnalysisStatsData()
+    if (!isAnalysisQueueStable(stats)) return
 
     if (this.shouldAutoCurate() && !this.collectionCuratorTimer && !this.locks.collectionCurator) {
       this.scheduleCollectionCurator(90 * 1000)
@@ -506,7 +531,12 @@ export default class Store {
     if (!manual && !this.shouldAutoCurate()) {
       return { success: true, data: { skipped: true, reason: 'auto_curate_settled' } }
     }
-    const ret = await this.collectionCurator.run(this.locks, { manual })
+    const stats = this.getAnalysisStatsData()
+    const pipelineStable = isAiPipelineStable(stats)
+    const ret = await this.collectionCurator.run(this.locks, {
+      manual,
+      pipelineStable: manual ? true : pipelineStable
+    })
     if (!manual) {
       await this.maybeSettleAutoCurateAfterRun(ret)
     }
@@ -573,6 +603,10 @@ export default class Store {
     if (JSON.stringify(o) !== JSON.stringify(n)) {
       this.initAiAnalysisTask()
       this.initVisualEmbedTask()
+      setImmediate(() => {
+        this.triggerBackgroundAnalysisPump()
+        this.triggerVisualEmbedPump()
+      })
     }
   }
 
@@ -967,6 +1001,10 @@ export default class Store {
       return await this.settingManager.hasPrivacyPassword()
     })
 
+    ipcMain.handle('main:getPrivacyPasswordHint', async () => {
+      return await this.settingManager.getPrivacyPasswordHint()
+    })
+
     ipcMain.handle('main:updatePrivacyPassword', async (event, formData) => {
       return await this.settingManager.updatePrivacyPassword(formData)
     })
@@ -1049,6 +1087,10 @@ export default class Store {
     // 查找词库
     ipcMain.handle('main:getWords', async (event, params) => {
       return this.wordsManager.getWords(params)
+    })
+
+    ipcMain.handle('main:getResourceTags', async (event, resourceId) => {
+      return this.wordsManager.getResourceTags(resourceId)
     })
 
     ipcMain.handle('main:analyzeResource', async (event, params) => {
@@ -1162,7 +1204,13 @@ export default class Store {
     })
 
     ipcMain.handle('main:collections:curatorStats', () => {
-      return { success: true, data: this.collectionCurator.getStats() }
+      const curator = this.collectionCurator.getStats()
+      const analysis = this.getAnalysisStatsData()
+      const ai = this.settingData?.ai || {}
+      return {
+        success: true,
+        data: buildCuratorFooterStats(curator, analysis, ai)
+      }
     })
 
     // H5服务相关

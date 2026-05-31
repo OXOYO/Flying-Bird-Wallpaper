@@ -1,5 +1,5 @@
 <template>
-  <div class="page-empty">
+  <div class="page-empty" :class="{ 'page-empty--fill': fillParent }">
     <van-empty>
       <template #image>
         <div class="page-empty-image-wrapper">
@@ -48,6 +48,11 @@ const props = defineProps({
   description: {
     type: String,
     default: ''
+  },
+  /** 嵌入列表区域时由父级撑满高度，避免 100vh 导致垂直偏移 */
+  fillParent: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -60,9 +65,17 @@ const description = computed(() => {
 .page-empty {
   width: 100%;
   height: calc(100vh - var(--fbw-tabbar-height));
+  height: calc(100dvh - var(--fbw-tabbar-height));
   display: flex;
   justify-content: center;
   align-items: center;
+  box-sizing: border-box;
+}
+
+.page-empty--fill {
+  height: 100%;
+  min-height: 0;
+  flex: 1;
 }
 .page-empty-image-wrapper {
   width: 100%;

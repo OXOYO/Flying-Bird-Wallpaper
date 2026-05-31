@@ -18,7 +18,9 @@
     "checkUpdate": "Controlla aggiornamenti",
     "menu": "Menu",
     "wordDrawer": "Parole",
-    "qrCode": "Codice QR"
+    "qrCode": "Codice QR",
+    "expandSideMenu": "Espandi barra laterale",
+    "collapseSideMenu": "Comprimi barra laterale"
   },
   "qrCode": {
     "notice": "Scansiona il codice QR per accedere alla versione mobile",
@@ -50,7 +52,8 @@
         "dynamicWallpaper": "Sfondo dinamico",
         "rhythmWallpaper": "Sfondo ritmico",
         "remoteResource": "Risorse remote",
-        "privacyPassword": "Password di privacy"
+        "privacyPassword": "Password di privacy",
+        "privacySpaceOptions": "Privacy space options"
       },
       "settingDataForm": {
         "locale": "Lingua",
@@ -156,7 +159,26 @@
         "showTag": "Mostra tag",
         "confirmOnDeleteFile": "Conferma prima di eliminare",
         "enableSegmentationTask": "Abilita attività di segmentazione",
-        "powerSaveMode": "Modalità risparmio energetico"
+        "powerSaveMode": "Modalità risparmio energetico",
+        "enableExpandSideMenuHint": "When on, hover the left edge of the main window to expand/collapse the narrow sidebar for quick navigation",
+        "showSideMenuLabelHint": "Off: icons only to save width; On: show menu text under icons",
+        "suspensionBallVisibleHint": "Shows a small floating ball on the desktop; hover for prev/next/play/close shortcuts",
+        "startH5ServerOnStartupHint": "Starts the local H5 web server on launch; scan the sidebar QR code to browse wallpapers on your phone",
+        "enableSegmentationTaskHint": "Shows the word-cloud drawer on Search; segments the current list (may pause in power-save mode)",
+        "powerSaveModeHint": "Reduces background wallpaper switching, folder refresh, and AI analysis—good for battery saving",
+        "showTagHint": "Shows source/quality badges on cards; some tags are clickable filters",
+        "confirmOnDeleteFileHint": "Ask for confirmation before deleting local files from browse pages",
+        "viewImageIntervalTimeHint": "How long each image stays visible during autoplay in the built-in viewer",
+        "autoSwitchWallpaperHint": "Automatically change the desktop wallpaper at the interval below; off = manual or suspension ball only",
+        "switchTypeHint": "Sequential: in list order; Random: pick a random image each time",
+        "allScreenHint": "Apply the same wallpaper to all monitors when on",
+        "scaleTypeHint": "How the image is cropped or stretched to fill the screen",
+        "filterKeywordsHint": "Only images whose path/name contains a keyword are used for rotation (empty = no filter)",
+        "localResourceFoldersHint": "Local folders used as wallpaper libraries; scanning respects allowed file types",
+        "allowedFileExtHint": "Only these extensions are indexed when scanning local folders",
+        "autoRefreshDirectoryHint": "Rescan local folders on a schedule to pick up new or removed files",
+        "autoDownloadHint": "Periodically download images from selected sources using your keywords into the download folder",
+        "dynamicPerformanceModeHint": "Lowers video decode/render load; try a lighter mode if playback stutters"
       },
       "privacyPasswordForm": {
         "old": {
@@ -169,7 +191,12 @@
           "placeholder": "Per favore, inserisci la nuova password",
           "tooltip": "La password consiste in numeri, minimo 3 cifre e massimo 6 cifre"
         },
-        "confirm": "Aggiorna password"
+        "confirm": "Aggiorna password",
+        "hint": {
+          "label": "Password hint",
+          "placeholder": "e.g. last four digits of a date (optional)",
+          "tooltip": "Saved with your password to help you remember it; shown when verifying. Do not enter the password itself"
+        }
       },
       "shortcutSetting": {
         "conflict": "Conflitto",
@@ -439,7 +466,6 @@
         "remoteRefererPlaceholder": "Opzionale, per le statistiche OpenRouter",
         "remoteAppTitle": "Nome app OpenRouter",
         "modelPlaceholder": "Seleziona o inserisci nome modello",
-        "refreshModels": "Aggiorna modelli",
         "ollamaModelHint": "L'elenco proviene da Ollama locale; puoi anche digitare un nome modello",
         "presetHints": {
           "lmstudio": "Abilita Local Server in LM Studio (predefinito http://127.0.0.1:1234). Usa un modello con capacità vision per l'analisi immagini.",
@@ -454,10 +480,7 @@
         "purposeVision": "visione",
         "purposeText": "testo",
         "purposeEmbed": "vettorializzazione",
-        "testVision": "Test connessione vision",
-        "testText": "Test connessione testo",
         "testOk": "Connessione riuscita",
-        "testOkWithEmbed": "Connessione testo ed embedding riuscita",
         "errors": {
           "apiKeyMissing": "Inserisci prima la tua API Key",
           "ollamaUnreachable": "Impossibile raggiungere Ollama. Assicurati che il servizio locale sia in esecuzione (predefinito http://127.0.0.1:11434)",
@@ -472,18 +495,11 @@
           "modelPurposeMismatch": "Il modello \"{model}\" non è adatto come modello {purpose}. Scegline un altro o aggiorna l'elenco",
           "serverError": "Servizio AI temporaneamente non disponibile (HTTP {status}). Riprova più tardi",
           "providerError": "Errore servizio AI: {detail}",
-          "providerErrorGeneric": "Errore servizio AI sconosciuto. Riprova più tardi"
+          "providerErrorGeneric": "Errore servizio AI sconosciuto. Riprova più tardi",
+          "modelNameMissing": "Select or enter a model name first"
         },
         "autoCollectionsEnabled": "Curatela automatica raccolte AI",
         "autoCollectionsEnabledHint": "Raggruppa per tag e atmosfera vettoriale, poi unisci in raccolte di sistema tramite LLM (sovrapposizione consentita, eliminabili)",
-        "similarMinCosine": "Similarità minima trova simili (testo)",
-        "similarMinCosineHint": "Soglia coseno (0–1) in modalità testuale. Predefinito 0,62.",
-        "findSimilarMode": "Trova simili per",
-        "findSimilarModeVisual": "Similarità visiva",
-        "findSimilarModeText": "Similarità testuale",
-        "findSimilarModeHint": "La modalità visiva confronta il contenuto dell'immagine (vettori in background). Quella testuale usa titolo e descrizione.",
-        "similarMinCosineVisual": "Similarità min. (visiva)",
-        "similarMinCosineVisualHint": "Soglia coseno (0–1) per similarità visiva. Predefinito 0,72. Solo modalità visiva.",
         "statImageEmbeddingLabel": "Vettori visivi",
         "scoreMinFilter": "Filtro punteggio minimo",
         "scoreMinFilterHint": "Le raccolte automatiche di sistema includono solo immagini con punteggio AI pari o superiore a questo valore (predefinito 70). La ricuratura parte ~15s dopo la modifica",
@@ -505,8 +521,36 @@
         "sectionFeaturesCollections": "Raccolte intelligenti",
         "sectionFeaturesFindSimilar": "Trova simili",
         "sectionFeaturesSearch": "Ricerca e download",
-        "sectionFeaturesLegacy": "Compatibilità"
-      }
+        "sectionFeaturesLegacy": "Compatibilità",
+        "enabledHint": "Master switch: when off, auto analysis, semantic search, and AI collections stop; settings are kept",
+        "analysisConcurrency": "Background concurrency",
+        "analysisConcurrencyHint": "In background continuous / new-images-only modes, how many images call the vision model at once (1–10). Takes effect after save; lower if VRAM is tight. Text embeddings run async per image and do not use this slot",
+        "copyModelName": "Copia nome modello",
+        "textEmbedModelHint": "Text-only embeddings for semantic search (e.g. nomic-embed-text)—not visual vectors or vision analysis",
+        "listEmptyVisualEmbed": "No visual embedding models found. Enter manually (e.g. batiai/qwen2-vl-embed-2b:q8). Text-only embed models (e.g. nomic-embed-text) cannot embed images.",
+        "purposeVisualEmbed": "visual embedding",
+        "testConnection": "Test connessione",
+        "findSimilarHintTitle": "Find similar",
+        "findSimilarHint": "Automatically fuses visual vectors (built-in MobileCLIP) and text vectors (embedding model) with RRF ranking—no similarity threshold to tune. Text channel joins when AI is enabled.",
+        "findSimilarHintShort": "Uses built-in MobileCLIP for visual similarity by default; when an embedding model is configured, title and description are considered too.",
+        "visualEmbedSource": "Visual vector source",
+        "visualEmbedSourceHint": "Built-in: offline, bundled, best for visual similarity. Remote: experimental image embedding via Ollama or compatible APIs; falls back to built-in on failure.",
+        "visualEmbedSourceBuiltin": "Built-in MobileCLIP",
+        "visualEmbedSourceRemote": "Remote embedding model",
+        "visualEmbedSection": "Visual vectors",
+        "visualEmbedBaseUrl": "Service URL",
+        "visualEmbedModel": "Visual vector model",
+        "visualEmbedModelHint": "Image embeddings for find-similar; built-in MobileCLIP recommended. Remote models must support image vectors—not vision or text embed models. Falls back to built-in on failure.",
+        "visualEmbedRemoteSectionHint": "Configure provider, URL, API key, and model in the Visual vector service section below.",
+        "visualEmbedModelPlaceholder": "e.g. batiai/qwen3-vl-embed-2b",
+        "legacyLocalVisualEmbed": "Built-in visual vectors",
+        "legacyLocalVisualEmbedHint": "When enabled, uses built-in visual vectors for similarity and Find similar. When disabled, uses the remote embedding model in Visual vector service (falls back to built-in on failure)."
+      },
+      "privacySpace": {
+        "enableNsfwContentMask": "Nascondi contenuti sensibili",
+        "enableNsfwContentMaskHint": "Requires a privacy password: cannot turn on without one; turning off requires verification. When on, sensitivity level ≥ 2 is masked on browse pages (search and collections unchanged—display only). Previous/next wallpaper skip those images (manual Set as wallpaper is not affected). Tap the mask and enter your password to view on the current page; masking returns when you switch menus or the app goes to background. Not masked in Privacy Space."
+      },
+      "privacyPasswordHintLabel": "Password hint"
     },
     "Utils": {
       "dataUtils": "Strumenti dati",
@@ -556,10 +600,12 @@
       "listSearchPlaceholder": "Cerca raccolte",
       "selectPlaceholder": "Seleziona o cerca raccolte",
       "actionsMenu": "Azioni",
+      "actionsSectionCreate": "Raccolte",
+      "actionsSectionCurrent": "Raccolta selezionata",
       "listNoMatch": "Nessuna raccolta corrispondente",
       "collapseList": "Comprimi elenco",
       "expandList": "Espandi elenco",
-      "createNew": "Nuova raccolta",
+      "createNew": "Nuova raccolta personalizzata",
       "createDialogTitle": "Genera da descrizione",
       "dialogCancel": "Annulla",
       "autoCurateShort": "Curatela auto",
@@ -571,9 +617,9 @@
       "itemCount": "{count} immagini",
       "promptPlaceholder": "Descrivi una raccolta di wallpaper, es. 20 paesaggi notturni orizzontali ad alto punteggio",
       "create": "Crea raccolta",
-      "refresh": "Aggiorna",
+      "refresh": "Aggiorna ora",
       "refreshMode": "Aggiornamento automatico",
-      "refreshModeManual": "Manuale",
+      "refreshModeManual": "Disattivo",
       "refreshMode1h": "Ogni ora",
       "refreshMode6h": "Ogni 6 ore",
       "refreshMode12h": "Ogni 12 ore",
@@ -590,18 +636,33 @@
       "footerPage": "Pagina {page} / {pages}",
       "footerPrevPage": "Precedente",
       "footerNextPage": "Successiva",
-      "curateNow": "Cura ora",
+      "curateNow": "Organizza raccolte di sistema",
       "similarModeBanner": "Visualizzazione immagini simili",
       "similarBack": "Torna alla raccolta",
       "autoCollectionsUpdated": "Impostazione curatela automatica salvata",
       "autoCollectionsDisabledHint": "Abilita prima l'AI in Impostazioni → AI",
       "curateSuccess": "Completato — {count} raccolte di sistema",
       "addFavorites": "Aggiungi tutti ai preferiti",
-      "delete": "Elimina raccolta",
+      "delete": "Elimina raccolta corrente",
       "empty": "Nessuna raccolta ancora",
       "noItems": "Raccolta vuota, aggiorna per generare",
       "selectHint": "Seleziona una raccolta per sfogliare i wallpaper",
-      "confirmDelete": "Eliminare questa raccolta?"
+      "confirmDelete": "Eliminare questa raccolta?",
+      "curatorStatsShortSettled": "Settled · Analyzed {analyzed} · {auto} picks (new images added incrementally)",
+      "curatorFooterLine": "AI Analysis · {status} · Progress {done}/{total} · {percent}% · Collections {auto}/{target}",
+      "curatorFooterLabel": "AI Analysis",
+      "curatorFooterProgress": "Progress {done}/{total}",
+      "curatorFooterCollections": "Collections {auto}/{target}",
+      "curatorFooterStatus": {
+        "disabled": "Off",
+        "settled": "Settled",
+        "running": "Running",
+        "queued": "Queued",
+        "complete": "Complete",
+        "idle": "Idle",
+        "onDemand": "On demand"
+      },
+      "curateManualConfirmSettled": "System collections are settled. Manual curation will run a full LLM rebuild and remove collections not in the new plan. Continue?"
     }
   },
   "messages": {
@@ -701,8 +762,6 @@
     "indexOutOfRange": "Indice fuori intervallo",
     "indexTooLarge": "Indice troppo grande",
     "autoRefreshDirectoryTask": "Attività di aggiornamento directory",
-    "autoRefreshDirectoryTaskSuccess": "Attività completata con successo!",
-    "autoRefreshDirectoryTaskFailed": "Attività fallita!",
     "downloadTask": "Attività di download",
     "downloadTaskCompleted": "Attività di download completata!",
     "downloadTaskFailed": "Attività di download fallita!",
@@ -736,7 +795,8 @@
     "h5ServerError": "Errore del server H5: {error}",
     "h5ServerStartFailDetail": "Avvio del server H5 non riuscito: {error}",
     "conflictWindowShortcut": "Conflitto con \"{name}\" nella finestra \"{window}\"",
-    "invalidShortcutOnlyModifiers": "La scorciatoia non può consistere solo di tasti modificatori. Premi un altro tasto."
+    "invalidShortcutOnlyModifiers": "La scorciatoia non può consistere solo di tasti modificatori. Premi un altro tasto.",
+    "dialogOk": "OK"
   },
   "resourceTypeList": {
     "localResource": "Risorse locali",
@@ -840,6 +900,7 @@
     "ThreeStageWall": "Parete neon",
     "ThreeStageGrid": "Griglia pilastri",
     "ThreeStageTexturedSphere": "Sfera texture",
+    "ThreeStageRoomMeshGrid": "Spazio pulsante",
     "ThreeStage": "Palco concerto"
   },
   "rhythmAnimationOptions": {
@@ -1022,14 +1083,31 @@
       "created_at": "Tempo creazione record",
       "updated_at": "Tempo aggiornamento record",
       "ctimeMs": "Tempo creazione risorsa",
-      "mtimeMs": "Tempo aggiornamento risorsa"
+      "mtimeMs": "Tempo aggiornamento risorsa",
+      "summary": "Summary",
+      "tags": "Tags",
+      "nsfwLevel": "NSFW level",
+      "aiAnalysisStatus": "AI analysis"
+    },
+    "nsfwLevel": {
+      "0": "Safe (0)",
+      "1": "Mild (1)",
+      "2": "Moderate (2)",
+      "3": "High (3)"
+    },
+    "aiAnalysisStatus": {
+      "pending": "Pending",
+      "done": "Done",
+      "failed": "Failed",
+      "skipped": "Skipped"
     }
   },
   "h5": {
     "tabbar": {
       "home": "Inizio",
       "search": "Cerca",
-      "setting": "Impostazioni"
+      "setting": "Impostazioni",
+      "browse": "Browse"
     },
     "pages": {
       "home": {
@@ -1065,7 +1143,11 @@
           "created_at": "Tempo creazione record",
           "updated_at": "Tempo aggiornamento record",
           "ctimeMs": "Tempo creazione risorsa",
-          "mtimeMs": "Tempo aggiornamento risorsa"
+          "mtimeMs": "Tempo aggiornamento risorsa",
+          "summary": "Summary",
+          "tags": "Tags",
+          "nsfwLevel": "NSFW level",
+          "aiAnalysisStatus": "AI analysis"
         }
       },
       "search": {
@@ -1186,15 +1268,23 @@
         },
         "sponsor": "Sponsor"
       }
+    },
+    "drawer": {
+      "title": "Browse"
     }
   },
   "ai": {
     "prompts": {
-      "imageAnalysis": "Sei un assistente per l'analisi di immagini wallpaper. Output di un solo oggetto JSON, senza blocchi markdown, senza commenti aggiuntivi.\nRequisiti dei campi:\n- score: intero 1-100, punteggio estetico complessivo\n- tags: array di stringhe, 3-8 tag nella stessa lingua di questo prompt\n- title: titolo breve, max 30 caratteri\n- desc: descrizione, max 80 caratteri\n- summary: riepilogo in una riga, max 50 caratteri\n- nsfwLevel: intero 0-3, 0 significa sicuro\n- safeForWork: boolean\n\nEsempio: {\"score\":82,\"tags\":[\"notte\",\"città\"],\"title\":\"Notte di pioggia in città\",\"desc\":\"Paesaggio urbano notturno dai toni blu\",\"summary\":\"Città piovosa per desktop scuri\",\"nsfwLevel\":0,\"safeForWork\":true}",
-      "searchParse": "Analizza la descrizione di ricerca wallpaper dell'utente in JSON. Niente markdown.\nInput utente: {query}\nCampi di output:\n- filterKeywords: string, parole chiave principali\n- tags: array di stringhe, tag opzionali\n- orientation: array, opzionale landscape o portrait\n- quality: array, opzionale 4k,2k,1080p,720p\n- scoreMin: intero 0-100 o null\n- scoreMax: intero 0-100 o null\n- fileType: image o video o stringa vuota\n\nEsempio: {\"filterKeywords\":\"oceano\",\"tags\":[\"oceano\",\"blu\"],\"orientation\":[\"landscape\"],\"quality\":[\"4k\"],\"scoreMin\":70,\"scoreMax\":null,\"fileType\":\"image\"}",
-      "collectionQuery": "L'utente vuole creare una raccolta intelligente di wallpaper. Analizza la descrizione in queryJson. Output solo JSON.\nDescrizione utente: {prompt}\nCampi:\n- filterKeywords: string\n- tags: string[]\n- tagsMode: any|all\n- orientation: string[]\n- quality: string[]\n- scoreMin: number|null\n- scoreMax: number|null\n- resourceName: resources|favorites|local\n- isRandom: boolean\n- sortField: score|created_at|views\n- sortType: -1|1\n- semanticQuery: string\n- useSemantic: boolean\n- limitCount: integer 5-50",
+      "imageAnalysis": "You are a wallpaper image analysis assistant. Output only one JSON object, no markdown fences, no extra commentary.\n\n[Field roles — do not mix]\n- title: short headline, ≤40 chars, subject + scene\n- summary: one line for search, ≤80 chars, theme and key visible elements (no use-case, no \"good for desktop\")\n- desc: detailed visible description for humans, 120–220 chars (same language as UI). Cover: subject(s), pose/action, clothing and body exposure level, environment, framing/composition, color and lighting, style/mood. Visible facts only; no invented story; no suitability advice\n- tags: 3–10 search tags (same language as UI)\n- score: integer 1–100, overall aesthetic score\n- nsfwLevel: integer 0–3 (sensitivity rubric below)\n- safeForWork: boolean, must follow linkage rules below\n\n[Sensitivity rubric nsfwLevel — EN + 中文]\n0 Safe 安全: landscapes, still life, everyday portraits, no sexual or sensitive focus. Counter-example: do NOT use 0 when erotic focus or clearly visible intimate body parts, not workplace-appropriate\n1 Mild 轻微: swimwear/sportswear/fashion look, much skin but no nipples/genitals, mildly suggestive pose. Counter-example: do NOT use 1 for full nudity, sex acts as main subject, visible intimate parts (use ≥2)\n2 Moderate 中度: visible nipples/partial nudity, strong sexual suggestion, graphic gore, obvious adult-oriented framing. Counter-example: do NOT use 2 when intercourse is central or intimate close-ups (use 3)\n3 Explicit 重度: erotic or sexual acts as main subject, clearly visible genitals, extreme gore. Counter-example: do NOT use 3 for bikini/swimwear with no nudity (use 1)\n\n[safeForWork ↔ nsfwLevel linkage — mandatory]\n- nsfwLevel≥2 ⇒ safeForWork must be false\n- safeForWork false ⇒ nsfwLevel must be ≥2\n- nsfwLevel=0 ⇒ safeForWork must be true\n- Never output nsfwLevel=0 with safeForWork=false\n\nExample (safe): {\"score\":82,\"tags\":[\"night\",\"city\",\"neon\",\"rain\",\"blue\"],\"title\":\"Rainy city skyline\",\"summary\":\"Night cityscape after rain, towers and wet reflections\",\"desc\":\"Wide skyline in the upper frame with warm and cool neon; wet mid-ground pavement mirrors lights and car streaks; sharp deep focus, cinematic calm mood.\",\"nsfwLevel\":0,\"safeForWork\":true}",
+      "searchParse": "Parse the user's wallpaper search description into JSON. No markdown.\nUser input: {query}\nOutput fields:\n- filterKeywords: string, core keywords\n- tags: string array, [] if omitted\n- orientation: array, [] if omitted; elements 1 (landscape) or 0 (portrait), or landscape/portrait\n- quality: array, [] if omitted; only 8K, 5K, 4K, 2K (must match DB field; no 1080p/720p/lowercase 4k)\n- filterType: images | videos | \"\" (empty if type not specified; do not output fileType)\n- scoreMin: integer 0-100 or null unless user asks for a minimum score\n- scoreMax: integer 0-100 or null\n\nExample: {\"filterKeywords\":\"ocean\",\"tags\":[\"ocean\",\"blue\"],\"orientation\":[1],\"quality\":[\"4K\"],\"filterType\":\"images\",\"scoreMin\":null,\"scoreMax\":null}",
+      "collectionQuery": "The user wants to create a smart wallpaper collection. Parse the description into queryJson. Output JSON only.\nUser description: {prompt}\nFields:\n- filterKeywords: string (core search term)\n- tags: string[]\n- tagsMode: any|all\n- quality: string[] (must be [] unless user asks resolution; only 8K, 5K, 4K, 2K; no 1080p/720p)\n(Do not output orientation, scoreMin, or scoreMax; minimum score comes from app AI settings.)\n- resourceName: always \"resources\" (full library; never favorites/local/history)\n- isRandom: boolean\n- sortField: score|created_at|views\n- sortType: -1|1\n- semanticQuery: string\n- useSemantic: boolean (true when theme/mood is described)\n- limitCount: integer 5-50\n\nRules: tags should match resource AI tag language (prefer same as UI); do not invent orientation/quality/scoreMin/scoreMax; for entity words put the word in filterKeywords and Chinese-style synonyms in tags.",
       "keywordExpand": "Espandi le parole chiave di ricerca per il download automatico di wallpaper. Input: {keywords}\nOutput JSON: {\"keywords\":[\"parola1\",\"parola2\"]}, al massimo 10 elementi, stessa lingua di questo prompt, nessuna spiegazione.",
-      "collectionMerge": "Sei un curatore di librerie di wallpaper. Di seguito trovi gruppi candidati (gruppi di tag + gruppi di atmosfera vettoriale). Unisci i gruppi semanticamente simili e assegna un nome a ogni raccolta finale.\n\nRegole:\n1. Output solo JSON, niente markdown\n2. Al massimo {targetCount} raccolte finali\n3. Un wallpaper può comparire in più raccolte (unendo gli id candidati)\n4. Unisci temi correlati (es. notte + città + neon → un titolo evocativo)\n5. Nomi: 2-12 parole, evocativi, non una singola parola generica, stessa lingua di questo prompt\n6. mergeIds devono esistere tra i candidati in input\n\nCandidati in input:\n{candidates}\n\nFormato di output:\n{\n  \"collections\": [\n    {\n      \"name\": \"Nome raccolta\",\n      \"prompt\": \"Descrizione dell'atmosfera in una riga\",\n      \"semanticQuery\": \"Frase per la ricerca semantica\",\n      \"mergeIds\": [\"tag:night\", \"vec:0\"]\n    }\n  ]\n}"
+      "collectionMerge": "Sei un curatore di librerie di wallpaper. Di seguito trovi gruppi candidati (gruppi di tag + gruppi di atmosfera vettoriale). Unisci i gruppi semanticamente simili e assegna un nome a ogni raccolta finale.\n\nRegole:\n1. Output solo JSON, niente markdown\n2. Al massimo {targetCount} raccolte finali\n3. Un wallpaper può comparire in più raccolte (unendo gli id candidati)\n4. Unisci temi correlati (es. notte + città + neon → un titolo evocativo)\n5. Nomi: 2-12 parole, evocativi, non una singola parola generica, stessa lingua di questo prompt\n6. mergeIds devono esistere tra i candidati in input\n\nCandidati in input:\n{candidates}\n\nFormato di output:\n{\n  \"collections\": [\n    {\n      \"name\": \"Nome raccolta\",\n      \"prompt\": \"Descrizione dell'atmosfera in una riga\",\n      \"semanticQuery\": \"Frase per la ricerca semantica\",\n      \"mergeIds\": [\"tag:night\", \"vec:0\"]\n    }\n  ]\n}",
+      "collectionTagExpand": "Expand wallpaper collection search tags for synonyms. Theme: {keyword}\nOutput JSON: {\"tags\":[\"tag1\",\"tag2\"]}, up to 8 items, prefer tags in the same language as resource AI analysis, at most 2 English synonyms, no explanation."
     }
+  },
+  "privacyNsfwMask": {
+    "tapToUnlock": "Tap to enter privacy password",
+    "actionBlocked": "Verify privacy password via the hide overlay first"
   }
 }

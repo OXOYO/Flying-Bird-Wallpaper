@@ -143,6 +143,13 @@ export const STAGE_GRID_COUNTS = {
   dense: { cols: 48, rows: 22 }
 }
 
+/** 线框网格平面细分段数（与律动「密集度」联动） */
+export const STAGE_MESH_SEGMENTS = {
+  sparse: 72,
+  normal: 96,
+  dense: 128
+}
+
 /** 格子极坐标（中心 = 地板中心） */
 function gridCellPolar(x, z, cols, rows) {
   const cx = (cols - 1) * 0.5

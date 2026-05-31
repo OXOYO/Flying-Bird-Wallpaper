@@ -2,7 +2,9 @@
 defineProps({
   content: { type: String, default: '' },
   placement: { type: String, default: 'top' },
-  disabled: { type: Boolean, default: false }
+  disabled: { type: Boolean, default: false },
+  /** 与触发元素间距，侧栏建议 10～12 */
+  offset: { type: Number, default: 12 }
 })
 </script>
 
@@ -11,6 +13,7 @@ defineProps({
     v-if="content && !disabled"
     :content="content"
     :placement="placement"
+    :offset="offset"
     :show-after="0"
     :hide-after="0"
   >

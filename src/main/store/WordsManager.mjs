@@ -2,6 +2,7 @@ import { Jieba } from '@node-rs/jieba'
 import { dict } from '@node-rs/jieba/dict.js'
 
 import { t } from '../../i18n/server.js'
+import { expandChineseKeywordTags, isValidAutoCollectionTag } from './collectionConstants.mjs'
 
 const jieba = Jieba.withDict(dict)
 
@@ -284,6 +285,36 @@ export default class WordsManager {
   }
 
   /**
+   * 合集/探索中文关键词结构拆词：jieba 精确模式 + 标签校验；仅整词时回退规则对半切
+   * @param {string} keyword
+   * @returns {string[]}
+   */
+  cutSearchTokens(keyword) {
+    const w = String(keyword || '').trim()
+    if (!w) return []
+
+    const set = new Set()
+    if (isValidAutoCollectionTag(w)) set.add(w)
+
+    try {
+      for (const part of jieba.cut(w, true)) {
+        const t = String(part || '').trim()
+        if (isValidAutoCollectionTag(t)) set.add(t)
+      }
+    } catch (err) {
+      this.logger?.warn?.(`[WordsManager] cutSearchTokens: ${err.message}`)
+    }
+
+    const onlyWhole =
+      set.size === 1 && set.has(w) && /[\u4e00-\u9fff]/.test(w) && w.length >= 3
+    if (onlyWhole) {
+      for (const t of expandChineseKeywordTags(w)) set.add(t)
+    }
+
+    return [...set].filter((t) => isValidAutoCollectionTag(t))
+  }
+
+  /**
    * 获取词库
    * @param {Object} params - 查询参数
    * @returns {Object} 查询结果
@@ -335,5 +366,33 @@ export default class WordsManager {
     }
 
     return ret
+  }
+
+  /** 某资源的 AI 标签词（按字母序） */
+  getResourceTags(resourceId) {
+    const id = Number(resourceId)
+    if (!Number.isFinite(id) || id <= 0) {
+      return { success: false, message: t('messages.operationFail'), data: [] }
+    }
+    try {
+      const rows = this.db
+        .prepare(
+          `SELECT DISTINCT w.word AS tag
+           FROM fbw_resource_words rw
+           JOIN fbw_words w ON w.id = rw.wordId
+           WHERE rw.resourceId = ?
+           ORDER BY w.word ASC`
+        )
+        .all(id)
+      const data = rows.map((r) => r.tag).filter(Boolean)
+      return {
+        success: true,
+        message: t(data.length ? 'messages.querySuccess' : 'messages.queryEmpty'),
+        data
+      }
+    } catch (err) {
+      this.logger.error(`获取资源标签失败: error => ${err}`)
+      return { success: false, message: t('messages.operationFail'), data: [] }
+    }
   }
 }

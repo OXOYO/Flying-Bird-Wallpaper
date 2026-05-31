@@ -3,6 +3,7 @@ import UseCommonStore from '@renderer/stores/commonStore.js'
 import UseMenuStore from '@renderer/stores/menuStore.js'
 import UseSettingStore from '@renderer/stores/settingStore.js'
 import UseWordsStore from '@renderer/stores/wordsStore.js'
+import InstantTooltip from '@renderer/components/InstantTooltip.vue'
 import iconLogo from '@resources/icons/icon_64x64.png'
 import QRCode from 'qrcode'
 import clipboard from 'clipboardy'
@@ -20,9 +21,22 @@ const { commonData } = storeToRefs(commonStore)
 
 const { t } = useTranslation()
 
+/** 侧栏 tooltip 与触发元素间距（菜单 / 底部工具统一） */
+const SIDE_TOOLTIP_OFFSET = 12
+/** 二维码弹层与生成尺寸 */
+const QR_POPOVER_WIDTH = 200
+const QR_CODE_SIZE = 160
+
 const hoverMenu = ref(null)
 
 const qrCodeImg = ref(null)
+const qrPopoverVisible = ref(false)
+
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    qrPopoverVisible.value = false
+  })
+}
 
 // 启用的菜单列表
 const enabledMenus = computed(() => {
@@ -56,7 +70,7 @@ watch(
       QRCode.toDataURL(commonData.value.h5ServerUrl, {
         errorCorrectionLevel: 'H', // 高容错级别
         margin: 4, // 边距
-        width: 200, // 确保生成的图像足够大
+        width: QR_CODE_SIZE,
         color: {
           dark: '#000000', // 二维码颜色
           light: '#ffffff' // 背景色
@@ -97,6 +111,10 @@ const onToolClick = async (funcName) => {
   }
 }
 
+const toggleQrPopover = () => {
+  qrPopoverVisible.value = !qrPopoverVisible.value
+}
+
 const onCopyH5ServerUrl = () => {
   const { h5ServerUrl } = commonData.value
   if (h5ServerUrl) {
@@ -125,163 +143,244 @@ const onCopyH5ServerUrl = () => {
       <img :src="iconLogo" alt="logo" />
     </div>
     <el-scrollbar style="height: auto; flex: 1">
-      <el-button
+      <InstantTooltip
         v-for="item in enabledMenus"
         :key="item.name"
-        class="side-menu-btn"
-        :class="{ active: selectedMenu && selectedMenu.name === item.name }"
-        size="large"
-        :type="
-          (selectedMenu && selectedMenu.name === item.name) || item.name === hoverMenu
-            ? 'primary'
-            : ''
-        "
-        link
-        @click="onSelect(item.name)"
-        @mouseenter="onOverMenu(item.name)"
-        @mouseleave="onOutMenu()"
+        :content="$t(item.locale)"
+        placement="right"
+        :offset="SIDE_TOOLTIP_OFFSET"
+        :disabled="settingData.showSideMenuLabel"
       >
-        <div class="side-menu-btn__inner">
-          <IconifyIcon
-            class="side-menu-btn-icon"
-            :class="{ 'side-menu-btn-icon_large': !settingData.showSideMenuLabel }"
-            :icon="item.icon"
-          />
-          <div v-if="settingData.showSideMenuLabel" class="side-menu-btn-text">
-            {{ $t(item.locale) }}
+        <el-button
+          class="side-menu-btn"
+          :class="{
+            active: selectedMenu && selectedMenu.name === item.name,
+            'side-menu-btn--icon-only': !settingData.showSideMenuLabel
+          }"
+          size="large"
+          :type="
+            (selectedMenu && selectedMenu.name === item.name) || item.name === hoverMenu
+              ? 'primary'
+              : ''
+          "
+          link
+          :aria-label="$t(item.locale)"
+          @click="onSelect(item.name)"
+          @mouseenter="onOverMenu(item.name)"
+          @mouseleave="onOutMenu()"
+        >
+          <div class="side-menu-btn__inner">
+            <IconifyIcon
+              class="side-menu-btn-icon"
+              :class="{ 'side-menu-btn-icon_large': !settingData.showSideMenuLabel }"
+              :icon="item.icon"
+            />
+            <div v-if="settingData.showSideMenuLabel" class="side-menu-btn-text">
+              {{ $t(item.locale) }}
+            </div>
           </div>
-        </div>
-      </el-button>
+        </el-button>
+      </InstantTooltip>
     </el-scrollbar>
     <div class="side-footer">
       <el-button
         v-if="enabledWordDraw"
         class="side-footer-btn"
-        :title="$t('actions.wordDrawer')"
-        size="large"
         link
+        :aria-label="$t('actions.wordDrawer')"
         @click="toggleWordDrawerVisible()"
       >
-        <IconifyIcon
-          class="footer-btn-icon"
-          :class="{ active: wordDrawerVisible }"
-          icon="custom:cloud"
-        />
+        <InstantTooltip
+          :content="$t('actions.wordDrawer')"
+          placement="right"
+          :offset="SIDE_TOOLTIP_OFFSET"
+        >
+          <span class="side-footer-btn__hit">
+            <IconifyIcon
+              class="footer-btn-icon"
+              :class="{ active: wordDrawerVisible }"
+              icon="custom:cloud"
+            />
+          </span>
+        </InstantTooltip>
       </el-button>
-      <el-tooltip effect="light" placement="right" :offset="20" trigger="click">
-        <el-button class="side-footer-btn" size="large" link :title="$t('actions.qrCode')">
-          <IconifyIcon
-            class="footer-btn-icon"
-            :class="{ active: commonData?.h5ServerUrl }"
-            icon="custom:qrcode"
-          />
-        </el-button>
-        <template #content>
-          <div class="qr-code-wrapper">
-            <el-image :src="qrCodeImg" style="width: 200px; height: 200px">
-              <template #placeholder>
-                <div class="qr-code-placeholder">
-                  {{ $t('qrCode.imgPlaceholder') }}
-                </div>
-              </template>
-              <template #error>
-                <div class="qr-code-error">
-                  {{ $t('qrCode.imgError') }}
-                </div>
-              </template>
-            </el-image>
-            <div class="qr-code-link">
-              <el-link :href="commonData.h5ServerUrl" target="_blank" style="height: 20px">
-                {{ commonData.h5ServerUrl }}
-              </el-link>
-              <IconifyIcon
-                v-if="commonData.h5ServerUrl"
-                class="qr-code-copy"
-                icon="custom:copy"
-                @click="onCopyH5ServerUrl"
-              />
-            </div>
-            <div class="qr-code-title">{{ $t('qrCode.notice') }}</div>
-            <el-button
-              v-if="commonData.h5ServerUrl"
-              class="qr-code-btn"
-              :title="$t('qrCode.stopH5Server')"
-              size="large"
-              type="danger"
-              plain
-              @click="onToolClick('stopH5Server')"
+      <el-popover
+        v-model:visible="qrPopoverVisible"
+        placement="right"
+        :width="QR_POPOVER_WIDTH"
+        :offset="20"
+        trigger="manual"
+        popper-class="side-qr-popover"
+      >
+        <template #reference>
+          <el-button
+            class="side-footer-btn"
+            link
+            :aria-label="$t('actions.qrCode')"
+            :aria-expanded="qrPopoverVisible"
+            @click="toggleQrPopover"
+          >
+            <InstantTooltip
+              :content="$t('actions.qrCode')"
+              placement="right"
+              :offset="SIDE_TOOLTIP_OFFSET"
+              :disabled="qrPopoverVisible"
             >
-              {{ $t('qrCode.stopH5Server') }}
-            </el-button>
-            <el-button
-              v-else
-              class="qr-code-btn"
-              :title="$t('qrCode.startH5Server')"
-              size="large"
-              plain
-              @click="onToolClick('startH5Server')"
-            >
-              {{ $t('qrCode.startH5Server') }}
-            </el-button>
-          </div>
+              <span class="side-footer-btn__hit">
+                <IconifyIcon
+                  class="footer-btn-icon"
+                  :class="{ active: commonData?.h5ServerUrl }"
+                  icon="custom:qrcode"
+                />
+              </span>
+            </InstantTooltip>
+          </el-button>
         </template>
-      </el-tooltip>
+        <div class="qr-code-wrapper" @mousedown.stop @click.stop>
+          <el-image
+            :src="qrCodeImg"
+            class="qr-code-image"
+            :style="{ width: `${QR_CODE_SIZE}px`, height: `${QR_CODE_SIZE}px` }"
+          >
+            <template #placeholder>
+              <div class="qr-code-placeholder">
+                {{ $t('qrCode.imgPlaceholder') }}
+              </div>
+            </template>
+            <template #error>
+              <div class="qr-code-error">
+                {{ $t('qrCode.imgError') }}
+              </div>
+            </template>
+          </el-image>
+          <div class="qr-code-link">
+            <el-link :href="commonData.h5ServerUrl" target="_blank" class="qr-code-url">
+              {{ commonData.h5ServerUrl }}
+            </el-link>
+            <IconifyIcon
+              v-if="commonData.h5ServerUrl"
+              class="qr-code-copy"
+              icon="custom:copy"
+              @click="onCopyH5ServerUrl"
+            />
+          </div>
+          <div class="qr-code-title">{{ $t('qrCode.notice') }}</div>
+          <el-button
+            v-if="commonData.h5ServerUrl"
+            class="qr-code-btn"
+            type="danger"
+            plain
+            @click="onToolClick('stopH5Server')"
+          >
+            {{ $t('qrCode.stopH5Server') }}
+          </el-button>
+          <el-button
+            v-else
+            class="qr-code-btn"
+            plain
+            @click="onToolClick('startH5Server')"
+          >
+            {{ $t('qrCode.startH5Server') }}
+          </el-button>
+        </div>
+      </el-popover>
       <el-button
         v-if="settingData.wallpaperType === 'dynamic'"
         class="side-footer-btn btn-close"
-        :title="$t('actions.closeDynamicWallpaper')"
-        size="large"
         link
+        :aria-label="$t('actions.closeDynamicWallpaper')"
         @click="onToolClick('closeDynamicWallpaper')"
       >
-        <IconifyIcon class="footer-btn-icon" icon="custom:close-circle" />
+        <InstantTooltip
+          :content="$t('actions.closeDynamicWallpaper')"
+          placement="right"
+          :offset="SIDE_TOOLTIP_OFFSET"
+        >
+          <span class="side-footer-btn__hit">
+            <IconifyIcon class="footer-btn-icon" icon="custom:close-circle" />
+          </span>
+        </InstantTooltip>
       </el-button>
       <el-button
         v-if="settingData.wallpaperType === 'rhythm'"
         class="side-footer-btn btn-close"
-        :title="$t('actions.closeRhythmWallpaper')"
-        size="large"
         link
+        :aria-label="$t('actions.closeRhythmWallpaper')"
         @click="onToolClick('closeRhythmWallpaper')"
       >
-        <IconifyIcon class="footer-btn-icon" icon="custom:close-circle" />
+        <InstantTooltip
+          :content="$t('actions.closeRhythmWallpaper')"
+          placement="right"
+          :offset="SIDE_TOOLTIP_OFFSET"
+        >
+          <span class="side-footer-btn__hit">
+            <IconifyIcon class="footer-btn-icon" icon="custom:close-circle" />
+          </span>
+        </InstantTooltip>
       </el-button>
       <el-button
         class="side-footer-btn"
-        :title="
+        link
+        :aria-label="
           settingData.autoSwitchWallpaper
             ? $t('actions.autoSwitchWallpaper.stop')
             : $t('actions.autoSwitchWallpaper.start')
         "
-        size="large"
-        link
         @click="onToolClick('toggleAutoSwitchWallpaper')"
       >
-        <IconifyIcon
-          class="footer-btn-icon"
-          :class="{ active: settingData.autoSwitchWallpaper }"
-          :icon="
+        <InstantTooltip
+          :content="
             settingData.autoSwitchWallpaper
-              ? 'custom:pause-circle-outline-rounded'
-              : 'custom:play-circle-outline-rounded'
+              ? $t('actions.autoSwitchWallpaper.stop')
+              : $t('actions.autoSwitchWallpaper.start')
           "
-        />
+          placement="right"
+          :offset="SIDE_TOOLTIP_OFFSET"
+        >
+          <span class="side-footer-btn__hit">
+            <IconifyIcon
+              class="footer-btn-icon"
+              :class="{ active: settingData.autoSwitchWallpaper }"
+              :icon="
+                settingData.autoSwitchWallpaper
+                  ? 'custom:pause-circle-outline-rounded'
+                  : 'custom:play-circle-outline-rounded'
+              "
+            />
+          </span>
+        </InstantTooltip>
       </el-button>
       <el-button
         class="side-footer-btn"
-        :title="$t('actions.nextWallpaper')"
         link
+        :aria-label="$t('actions.nextWallpaper')"
         @click="onToolClick('nextWallpaper')"
       >
-        <IconifyIcon class="footer-btn-icon" icon="custom:skip-next-outline-rounded" />
+        <InstantTooltip
+          :content="$t('actions.nextWallpaper')"
+          placement="right"
+          :offset="SIDE_TOOLTIP_OFFSET"
+        >
+          <span class="side-footer-btn__hit">
+            <IconifyIcon class="footer-btn-icon" icon="custom:skip-next-outline-rounded" />
+          </span>
+        </InstantTooltip>
       </el-button>
       <el-button
         class="side-footer-btn"
-        :title="$t('actions.prevWallpaper')"
         link
+        :aria-label="$t('actions.prevWallpaper')"
         @click="onToolClick('prevWallpaper')"
       >
-        <IconifyIcon class="footer-btn-icon" icon="custom:skip-previous-outline-rounded" />
+        <InstantTooltip
+          :content="$t('actions.prevWallpaper')"
+          placement="right"
+          :offset="SIDE_TOOLTIP_OFFSET"
+        >
+          <span class="side-footer-btn__hit">
+            <IconifyIcon class="footer-btn-icon" icon="custom:skip-previous-outline-rounded" />
+          </span>
+        </InstantTooltip>
       </el-button>
     </div>
   </div>
@@ -295,6 +394,12 @@ const onCopyH5ServerUrl = () => {
   flex-direction: column;
   height: 100%;
   background-color: #f6f7f9;
+
+  :deep(.instant-tooltip-trigger) {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+  }
 }
 .side-logo {
   display: flex;
@@ -333,6 +438,13 @@ const onCopyH5ServerUrl = () => {
     margin-left: 0;
   }
 
+  &:hover {
+    :deep(.side-menu-btn-icon),
+    .side-menu-btn-text {
+      color: var(--el-color-primary);
+    }
+  }
+
   &.active {
     .side-menu-btn-icon {
       font-weight: bolder;
@@ -348,6 +460,10 @@ const onCopyH5ServerUrl = () => {
   justify-content: flex-start;
   align-items: center;
   min-height: 46px;
+}
+
+.side-menu-btn--icon-only .side-menu-btn__inner {
+  justify-content: center;
 }
 .side-menu-btn-icon {
   font-size: 20px;
@@ -368,11 +484,23 @@ const onCopyH5ServerUrl = () => {
   justify-content: flex-end;
   align-items: center;
   width: 100%;
-  padding-bottom: 15px;
+  padding-bottom: 18px;
 
   .side-footer-btn {
+    display: flex;
+    width: 100%;
     margin: 0;
+    padding: 8px 0;
+    justify-content: center;
+    align-items: center;
     outline: none;
+
+    &__hit {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
 
     &:focus,
     &:focus-visible {
@@ -381,22 +509,24 @@ const onCopyH5ServerUrl = () => {
     }
 
     &:hover {
-      opacity: 0.8;
+      .footer-btn-icon {
+        color: var(--el-color-primary);
+      }
     }
 
     &:active {
-      opacity: 0.6;
       .footer-btn-icon {
-        color: #67c23a;
+        color: var(--el-color-primary);
       }
     }
 
     .footer-btn-icon {
       font-size: 30px;
-      color: inherit;
+      color: var(--el-text-color-regular);
+      transition: color 0.2s ease;
 
       &.active {
-        color: #67c23a;
+        color: var(--el-color-success);
       }
     }
 
@@ -412,13 +542,22 @@ const onCopyH5ServerUrl = () => {
 </style>
 
 <style lang="scss">
+.side-qr-popover.el-popover {
+  padding: 10px 12px !important;
+}
+
 .qr-code-wrapper {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  gap: 6px;
   padding: 0;
   margin: 0;
+
+  .qr-code-image {
+    display: block;
+  }
 
   .qr-code-placeholder,
   .qr-code-error {
@@ -444,8 +583,15 @@ const onCopyH5ServerUrl = () => {
     justify-content: center;
     align-items: center;
     width: 100%;
+    max-width: 100%;
     padding: 0;
     margin: 0;
+  }
+
+  .qr-code-url {
+    font-size: 12px;
+    line-height: 1.3;
+    word-break: break-all;
   }
 
   .qr-code-copy {
@@ -463,13 +609,16 @@ const onCopyH5ServerUrl = () => {
   .qr-code-title {
     width: 100%;
     text-align: center;
+    font-size: 12px;
+    line-height: 1.35;
+    color: #909399;
     padding: 0;
     margin: 0;
   }
 
   .qr-code-btn {
     width: 100%;
-    margin-top: 10px;
+    margin-top: 2px;
   }
 }
 </style>

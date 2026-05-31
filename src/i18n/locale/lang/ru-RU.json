@@ -18,7 +18,9 @@
     "checkUpdate": "Проверить обновление",
     "menu": "Меню",
     "wordDrawer": "Слова",
-    "qrCode": "QR-код"
+    "qrCode": "QR-код",
+    "expandSideMenu": "Развернуть боковую панель",
+    "collapseSideMenu": "Свернуть боковую панель"
   },
   "qrCode": {
     "notice": "Отсканируйте QR-код для доступа к мобильной версии",
@@ -50,7 +52,8 @@
         "dynamicWallpaper": "Динамические обои",
         "rhythmWallpaper": "Ритмические обои",
         "remoteResource": "Удаленные ресурсы",
-        "privacyPassword": "Пароль конфиденциальности"
+        "privacyPassword": "Пароль конфиденциальности",
+        "privacySpaceOptions": "Privacy space options"
       },
       "settingDataForm": {
         "locale": "Язык",
@@ -156,7 +159,26 @@
         "showTag": "Показать тег",
         "confirmOnDeleteFile": "Подтверждение перед удалением",
         "enableSegmentationTask": "Включить задачу сегментации",
-        "powerSaveMode": "Режим энергосбережения"
+        "powerSaveMode": "Режим энергосбережения",
+        "enableExpandSideMenuHint": "When on, hover the left edge of the main window to expand/collapse the narrow sidebar for quick navigation",
+        "showSideMenuLabelHint": "Off: icons only to save width; On: show menu text under icons",
+        "suspensionBallVisibleHint": "Shows a small floating ball on the desktop; hover for prev/next/play/close shortcuts",
+        "startH5ServerOnStartupHint": "Starts the local H5 web server on launch; scan the sidebar QR code to browse wallpapers on your phone",
+        "enableSegmentationTaskHint": "Shows the word-cloud drawer on Search; segments the current list (may pause in power-save mode)",
+        "powerSaveModeHint": "Reduces background wallpaper switching, folder refresh, and AI analysis—good for battery saving",
+        "showTagHint": "Shows source/quality badges on cards; some tags are clickable filters",
+        "confirmOnDeleteFileHint": "Ask for confirmation before deleting local files from browse pages",
+        "viewImageIntervalTimeHint": "How long each image stays visible during autoplay in the built-in viewer",
+        "autoSwitchWallpaperHint": "Automatically change the desktop wallpaper at the interval below; off = manual or suspension ball only",
+        "switchTypeHint": "Sequential: in list order; Random: pick a random image each time",
+        "allScreenHint": "Apply the same wallpaper to all monitors when on",
+        "scaleTypeHint": "How the image is cropped or stretched to fill the screen",
+        "filterKeywordsHint": "Only images whose path/name contains a keyword are used for rotation (empty = no filter)",
+        "localResourceFoldersHint": "Local folders used as wallpaper libraries; scanning respects allowed file types",
+        "allowedFileExtHint": "Only these extensions are indexed when scanning local folders",
+        "autoRefreshDirectoryHint": "Rescan local folders on a schedule to pick up new or removed files",
+        "autoDownloadHint": "Periodically download images from selected sources using your keywords into the download folder",
+        "dynamicPerformanceModeHint": "Lowers video decode/render load; try a lighter mode if playback stutters"
       },
       "privacyPasswordForm": {
         "old": {
@@ -169,7 +191,12 @@
           "placeholder": "Введите новый пароль",
           "tooltip": "Пароль состоит из цифр, минимум 3 цифры и максимум 6 цифр"
         },
-        "confirm": "Обновить пароль"
+        "confirm": "Обновить пароль",
+        "hint": {
+          "label": "Password hint",
+          "placeholder": "e.g. last four digits of a date (optional)",
+          "tooltip": "Saved with your password to help you remember it; shown when verifying. Do not enter the password itself"
+        }
       },
       "shortcutSetting": {
         "conflict": "Конфликт",
@@ -439,7 +466,6 @@
         "remoteRefererPlaceholder": "Необязательно, для статистики OpenRouter",
         "remoteAppTitle": "Имя приложения OpenRouter",
         "modelPlaceholder": "Выберите или введите имя модели",
-        "refreshModels": "Обновить модели",
         "ollamaModelHint": "Список загружается из локального Ollama; также можно ввести имя модели вручную",
         "presetHints": {
           "lmstudio": "Включите Local Server в LM Studio (по умолчанию http://127.0.0.1:1234). Для анализа изображений используйте модель с поддержкой зрения.",
@@ -454,10 +480,7 @@
         "purposeVision": "визуальная",
         "purposeText": "текстовая",
         "purposeEmbed": "векторная",
-        "testVision": "Проверить визуальное подключение",
-        "testText": "Проверить текстовое подключение",
         "testOk": "Подключение успешно",
-        "testOkWithEmbed": "Текстовое и векторное подключение успешно",
         "errors": {
           "apiKeyMissing": "Сначала введите API Key",
           "ollamaUnreachable": "Не удаётся подключиться к Ollama. Убедитесь, что локальный сервис запущен (по умолчанию http://127.0.0.1:11434)",
@@ -472,18 +495,11 @@
           "modelPurposeMismatch": "Модель «{model}» не подходит как {purpose}-модель. Выберите другую или обновите список",
           "serverError": "AI-сервис временно недоступен (HTTP {status}). Повторите позже",
           "providerError": "Ошибка AI-сервиса: {detail}",
-          "providerErrorGeneric": "Неизвестная ошибка AI-сервиса. Повторите позже"
+          "providerErrorGeneric": "Неизвестная ошибка AI-сервиса. Повторите позже",
+          "modelNameMissing": "Select or enter a model name first"
         },
         "autoCollectionsEnabled": "AI-автоподборка коллекций",
         "autoCollectionsEnabledHint": "Кластеризация по тегам и векторному настроению, затем объединение в системные подборки через LLM (пересечения допускаются, можно удалить)",
-        "similarMinCosine": "Мин. сходство для похожих (текст)",
-        "similarMinCosineHint": "Порог косинуса (0–1) в текстовом режиме. По умолчанию 0,62.",
-        "findSimilarMode": "Поиск похожих по",
-        "findSimilarModeVisual": "Визуальное сходство",
-        "findSimilarModeText": "Текстовое сходство",
-        "findSimilarModeHint": "Визуальный режим сравнивает содержание изображений (векторы дополняются в фоне). Текстовый — по заголовку и описанию.",
-        "similarMinCosineVisual": "Мин. сходство (визуал)",
-        "similarMinCosineVisualHint": "Порог косинуса (0–1) для визуального сходства. По умолчанию 0,72. Только визуальный режим.",
         "statImageEmbeddingLabel": "Визуальные векторы",
         "scoreMinFilter": "Минимальный порог оценки",
         "scoreMinFilterHint": "Системные автоподборки включают только изображения с AI-оценкой не ниже этого значения (по умолчанию 70). Переподборка запускается ~15 с после изменения",
@@ -505,8 +521,36 @@
         "sectionFeaturesCollections": "Умные подборки",
         "sectionFeaturesFindSimilar": "Поиск похожих",
         "sectionFeaturesSearch": "Поиск и загрузка",
-        "sectionFeaturesLegacy": "Совместимость"
-      }
+        "sectionFeaturesLegacy": "Совместимость",
+        "enabledHint": "Master switch: when off, auto analysis, semantic search, and AI collections stop; settings are kept",
+        "analysisConcurrency": "Background concurrency",
+        "analysisConcurrencyHint": "In background continuous / new-images-only modes, how many images call the vision model at once (1–10). Takes effect after save; lower if VRAM is tight. Text embeddings run async per image and do not use this slot",
+        "copyModelName": "Копировать имя модели",
+        "textEmbedModelHint": "Text-only embeddings for semantic search (e.g. nomic-embed-text)—not visual vectors or vision analysis",
+        "listEmptyVisualEmbed": "No visual embedding models found. Enter manually (e.g. batiai/qwen2-vl-embed-2b:q8). Text-only embed models (e.g. nomic-embed-text) cannot embed images.",
+        "purposeVisualEmbed": "visual embedding",
+        "testConnection": "Проверить подключение",
+        "findSimilarHintTitle": "Find similar",
+        "findSimilarHint": "Automatically fuses visual vectors (built-in MobileCLIP) and text vectors (embedding model) with RRF ranking—no similarity threshold to tune. Text channel joins when AI is enabled.",
+        "findSimilarHintShort": "Uses built-in MobileCLIP for visual similarity by default; when an embedding model is configured, title and description are considered too.",
+        "visualEmbedSource": "Visual vector source",
+        "visualEmbedSourceHint": "Built-in: offline, bundled, best for visual similarity. Remote: experimental image embedding via Ollama or compatible APIs; falls back to built-in on failure.",
+        "visualEmbedSourceBuiltin": "Built-in MobileCLIP",
+        "visualEmbedSourceRemote": "Remote embedding model",
+        "visualEmbedSection": "Visual vectors",
+        "visualEmbedBaseUrl": "Service URL",
+        "visualEmbedModel": "Visual vector model",
+        "visualEmbedModelHint": "Image embeddings for find-similar; built-in MobileCLIP recommended. Remote models must support image vectors—not vision or text embed models. Falls back to built-in on failure.",
+        "visualEmbedRemoteSectionHint": "Configure provider, URL, API key, and model in the Visual vector service section below.",
+        "visualEmbedModelPlaceholder": "e.g. batiai/qwen3-vl-embed-2b",
+        "legacyLocalVisualEmbed": "Built-in visual vectors",
+        "legacyLocalVisualEmbedHint": "When enabled, uses built-in visual vectors for similarity and Find similar. When disabled, uses the remote embedding model in Visual vector service (falls back to built-in on failure)."
+      },
+      "privacySpace": {
+        "enableNsfwContentMask": "Скрывать деликатный контент",
+        "enableNsfwContentMaskHint": "Requires a privacy password: cannot turn on without one; turning off requires verification. When on, sensitivity level ≥ 2 is masked on browse pages (search and collections unchanged—display only). Previous/next wallpaper skip those images (manual Set as wallpaper is not affected). Tap the mask and enter your password to view on the current page; masking returns when you switch menus or the app goes to background. Not masked in Privacy Space."
+      },
+      "privacyPasswordHintLabel": "Password hint"
     },
     "Utils": {
       "dataUtils": "Утилиты данных",
@@ -556,10 +600,12 @@
       "listSearchPlaceholder": "Поиск подборок",
       "selectPlaceholder": "Выберите или найдите подборку",
       "actionsMenu": "Действия",
+      "actionsSectionCreate": "Подборки",
+      "actionsSectionCurrent": "Выбранная подборка",
       "listNoMatch": "Подходящих подборок нет",
       "collapseList": "Свернуть список",
       "expandList": "Развернуть список",
-      "createNew": "Новая подборка",
+      "createNew": "Новая пользовательская подборка",
       "createDialogTitle": "Сгенерировать по описанию",
       "dialogCancel": "Отмена",
       "autoCurateShort": "Автоподборка",
@@ -571,9 +617,9 @@
       "itemCount": "{count} изображений",
       "promptPlaceholder": "Опишите подборку обоев, например: 20 альбомных ночных сцен с высокой оценкой",
       "create": "Создать подборку",
-      "refresh": "Обновить",
+      "refresh": "Обновить сейчас",
       "refreshMode": "Автообновление",
-      "refreshModeManual": "Вручную",
+      "refreshModeManual": "Выкл.",
       "refreshMode1h": "Каждый час",
       "refreshMode6h": "Каждые 6 часов",
       "refreshMode12h": "Каждые 12 часов",
@@ -590,18 +636,33 @@
       "footerPage": "Страница {page} / {pages}",
       "footerPrevPage": "Назад",
       "footerNextPage": "Далее",
-      "curateNow": "Подобрать сейчас",
+      "curateNow": "Организовать системные подборки",
       "similarModeBanner": "Показаны похожие изображения",
       "similarBack": "Вернуться к подборке",
       "autoCollectionsUpdated": "Настройка автоматической подборки сохранена",
       "autoCollectionsDisabledHint": "Сначала включите AI в «Настройки → AI»",
       "curateSuccess": "Готово — {count} системных подборок",
       "addFavorites": "Добавить все в избранное",
-      "delete": "Удалить подборку",
+      "delete": "Удалить текущую подборку",
       "empty": "Подборок пока нет",
       "noItems": "Подборка пуста, обновите для генерации",
       "selectHint": "Выберите подборку для просмотра обоев",
-      "confirmDelete": "Удалить эту подборку?"
+      "confirmDelete": "Удалить эту подборку?",
+      "curatorStatsShortSettled": "Settled · Analyzed {analyzed} · {auto} picks (new images added incrementally)",
+      "curatorFooterLine": "AI Analysis · {status} · Progress {done}/{total} · {percent}% · Collections {auto}/{target}",
+      "curatorFooterLabel": "AI Analysis",
+      "curatorFooterProgress": "Progress {done}/{total}",
+      "curatorFooterCollections": "Collections {auto}/{target}",
+      "curatorFooterStatus": {
+        "disabled": "Off",
+        "settled": "Settled",
+        "running": "Running",
+        "queued": "Queued",
+        "complete": "Complete",
+        "idle": "Idle",
+        "onDemand": "On demand"
+      },
+      "curateManualConfirmSettled": "System collections are settled. Manual curation will run a full LLM rebuild and remove collections not in the new plan. Continue?"
     }
   },
   "messages": {
@@ -701,8 +762,6 @@
     "indexOutOfRange": "Индекс вне диапазона",
     "indexTooLarge": "Индекс слишком большой",
     "autoRefreshDirectoryTask": "Задача обновления каталога",
-    "autoRefreshDirectoryTaskSuccess": "Задача обновления каталога выполнена успешно!",
-    "autoRefreshDirectoryTaskFailed": "Задача обновления каталога не выполнена!",
     "downloadTask": "Задача загрузки",
     "downloadTaskCompleted": "Задача загрузки завершена!",
     "downloadTaskFailed": "Задача загрузки не выполнена!",
@@ -736,7 +795,8 @@
     "h5ServerError": "Ошибка H5-сервера: {error}",
     "h5ServerStartFailDetail": "Не удалось запустить H5-сервер: {error}",
     "conflictWindowShortcut": "Конфликт с «{name}» в окне «{window}»",
-    "invalidShortcutOnlyModifiers": "Сочетание не может состоять только из модификаторов. Нажмите ещё одну клавишу."
+    "invalidShortcutOnlyModifiers": "Сочетание не может состоять только из модификаторов. Нажмите ещё одну клавишу.",
+    "dialogOk": "OK"
   },
   "resourceTypeList": {
     "localResource": "Локальные ресурсы",
@@ -840,6 +900,7 @@
     "ThreeStageWall": "Неоновая стена",
     "ThreeStageGrid": "Сетка столбов",
     "ThreeStageTexturedSphere": "Текстурированная сфера",
+    "ThreeStageRoomMeshGrid": "Пульсирующее пространство",
     "ThreeStage": "Концертная сцена"
   },
   "rhythmAnimationOptions": {
@@ -1022,14 +1083,31 @@
       "created_at": "Запись создана в",
       "updated_at": "Запись обновлена в",
       "ctimeMs": "Ресурс создан в",
-      "mtimeMs": "Ресурс обновлен в"
+      "mtimeMs": "Ресурс обновлен в",
+      "summary": "Summary",
+      "tags": "Tags",
+      "nsfwLevel": "NSFW level",
+      "aiAnalysisStatus": "AI analysis"
+    },
+    "nsfwLevel": {
+      "0": "Safe (0)",
+      "1": "Mild (1)",
+      "2": "Moderate (2)",
+      "3": "High (3)"
+    },
+    "aiAnalysisStatus": {
+      "pending": "Pending",
+      "done": "Done",
+      "failed": "Failed",
+      "skipped": "Skipped"
     }
   },
   "h5": {
     "tabbar": {
       "home": "Главная",
       "search": "Поиск",
-      "setting": "Настройки"
+      "setting": "Настройки",
+      "browse": "Browse"
     },
     "pages": {
       "home": {
@@ -1065,7 +1143,11 @@
           "created_at": "Запись создана в",
           "updated_at": "Запись обновлена в",
           "ctimeMs": "Ресурс создан в",
-          "mtimeMs": "Ресурс обновлен в"
+          "mtimeMs": "Ресурс обновлен в",
+          "summary": "Summary",
+          "tags": "Tags",
+          "nsfwLevel": "NSFW level",
+          "aiAnalysisStatus": "AI analysis"
         }
       },
       "search": {
@@ -1186,15 +1268,23 @@
         },
         "sponsor": "Спонсор"
       }
+    },
+    "drawer": {
+      "title": "Browse"
     }
   },
   "ai": {
     "prompts": {
-      "imageAnalysis": "Вы — помощник по анализу изображений обоев. Выводите только один JSON-объект, без markdown-блоков и лишних комментариев.\nТребования к полям:\n- score: целое число 1–100, общая эстетическая оценка\n- tags: массив строк, 3–8 тегов на том же языке, что и эта инструкция\n- title: короткий заголовок, не более 30 символов\n- desc: описание, не более 80 символов\n- summary: однострочное резюме, не более 50 символов\n- nsfwLevel: целое число 0–3, 0 означает безопасно\n- safeForWork: boolean\n\nПример: {\"score\":82,\"tags\":[\"ночь\",\"город\"],\"title\":\"Дождливая городская ночь\",\"desc\":\"Городской ночной пейзаж в синих тонах\",\"summary\":\"Дождливый город для тёмного рабочего стола\",\"nsfwLevel\":0,\"safeForWork\":true}",
-      "searchParse": "Разберите описание поиска обоев пользователя в JSON. Без markdown.\nВвод пользователя: {query}\nВыходные поля:\n- filterKeywords: string, основные ключевые слова\n- tags: массив строк, необязательные теги\n- orientation: массив, необязательно landscape или portrait\n- quality: массив, необязательно 4k,2k,1080p,720p\n- scoreMin: целое число 0–100 или null\n- scoreMax: целое число 0–100 или null\n- fileType: image или video или пустая строка\n\nПример: {\"filterKeywords\":\"океан\",\"tags\":[\"океан\",\"синий\"],\"orientation\":[\"landscape\"],\"quality\":[\"4k\"],\"scoreMin\":70,\"scoreMax\":null,\"fileType\":\"image\"}",
-      "collectionQuery": "Пользователь хочет создать умную подборку обоев. Разберите описание в queryJson. Выводите только JSON.\nОписание пользователя: {prompt}\nПоля:\n- filterKeywords: string\n- tags: string[]\n- tagsMode: any|all\n- orientation: string[]\n- quality: string[]\n- scoreMin: number|null\n- scoreMax: number|null\n- resourceName: resources|favorites|local\n- isRandom: boolean\n- sortField: score|created_at|views\n- sortType: -1|1\n- semanticQuery: string\n- useSemantic: boolean\n- limitCount: целое число 5-50",
+      "imageAnalysis": "You are a wallpaper image analysis assistant. Output only one JSON object, no markdown fences, no extra commentary.\n\n[Field roles — do not mix]\n- title: short headline, ≤40 chars, subject + scene\n- summary: one line for search, ≤80 chars, theme and key visible elements (no use-case, no \"good for desktop\")\n- desc: detailed visible description for humans, 120–220 chars (same language as UI). Cover: subject(s), pose/action, clothing and body exposure level, environment, framing/composition, color and lighting, style/mood. Visible facts only; no invented story; no suitability advice\n- tags: 3–10 search tags (same language as UI)\n- score: integer 1–100, overall aesthetic score\n- nsfwLevel: integer 0–3 (sensitivity rubric below)\n- safeForWork: boolean, must follow linkage rules below\n\n[Sensitivity rubric nsfwLevel — EN + 中文]\n0 Safe 安全: landscapes, still life, everyday portraits, no sexual or sensitive focus. Counter-example: do NOT use 0 when erotic focus or clearly visible intimate body parts, not workplace-appropriate\n1 Mild 轻微: swimwear/sportswear/fashion look, much skin but no nipples/genitals, mildly suggestive pose. Counter-example: do NOT use 1 for full nudity, sex acts as main subject, visible intimate parts (use ≥2)\n2 Moderate 中度: visible nipples/partial nudity, strong sexual suggestion, graphic gore, obvious adult-oriented framing. Counter-example: do NOT use 2 when intercourse is central or intimate close-ups (use 3)\n3 Explicit 重度: erotic or sexual acts as main subject, clearly visible genitals, extreme gore. Counter-example: do NOT use 3 for bikini/swimwear with no nudity (use 1)\n\n[safeForWork ↔ nsfwLevel linkage — mandatory]\n- nsfwLevel≥2 ⇒ safeForWork must be false\n- safeForWork false ⇒ nsfwLevel must be ≥2\n- nsfwLevel=0 ⇒ safeForWork must be true\n- Never output nsfwLevel=0 with safeForWork=false\n\nExample (safe): {\"score\":82,\"tags\":[\"night\",\"city\",\"neon\",\"rain\",\"blue\"],\"title\":\"Rainy city skyline\",\"summary\":\"Night cityscape after rain, towers and wet reflections\",\"desc\":\"Wide skyline in the upper frame with warm and cool neon; wet mid-ground pavement mirrors lights and car streaks; sharp deep focus, cinematic calm mood.\",\"nsfwLevel\":0,\"safeForWork\":true}",
+      "searchParse": "Parse the user's wallpaper search description into JSON. No markdown.\nUser input: {query}\nOutput fields:\n- filterKeywords: string, core keywords\n- tags: string array, [] if omitted\n- orientation: array, [] if omitted; elements 1 (landscape) or 0 (portrait), or landscape/portrait\n- quality: array, [] if omitted; only 8K, 5K, 4K, 2K (must match DB field; no 1080p/720p/lowercase 4k)\n- filterType: images | videos | \"\" (empty if type not specified; do not output fileType)\n- scoreMin: integer 0-100 or null unless user asks for a minimum score\n- scoreMax: integer 0-100 or null\n\nExample: {\"filterKeywords\":\"ocean\",\"tags\":[\"ocean\",\"blue\"],\"orientation\":[1],\"quality\":[\"4K\"],\"filterType\":\"images\",\"scoreMin\":null,\"scoreMax\":null}",
+      "collectionQuery": "The user wants to create a smart wallpaper collection. Parse the description into queryJson. Output JSON only.\nUser description: {prompt}\nFields:\n- filterKeywords: string (core search term)\n- tags: string[]\n- tagsMode: any|all\n- quality: string[] (must be [] unless user asks resolution; only 8K, 5K, 4K, 2K; no 1080p/720p)\n(Do not output orientation, scoreMin, or scoreMax; minimum score comes from app AI settings.)\n- resourceName: always \"resources\" (full library; never favorites/local/history)\n- isRandom: boolean\n- sortField: score|created_at|views\n- sortType: -1|1\n- semanticQuery: string\n- useSemantic: boolean (true when theme/mood is described)\n- limitCount: integer 5-50\n\nRules: tags should match resource AI tag language (prefer same as UI); do not invent orientation/quality/scoreMin/scoreMax; for entity words put the word in filterKeywords and Chinese-style synonyms in tags.",
       "keywordExpand": "Расширьте ключевые слова для автоматической загрузки обоев. Ввод: {keywords}\nВывод JSON: {\"keywords\":[\"слово1\",\"слово2\"]}, не более 10 элементов, на том же языке, что и эта инструкция, без пояснений.",
-      "collectionMerge": "Вы — куратор библиотеки обоев. Ниже приведены кандидаты групп (группы по тегам + векторные группы настроения). Объедините семантически близкие группы и назовите каждую итоговую подборку.\n\nПравила:\n1. Выводите только JSON, без markdown\n2. Не более {targetCount} итоговых подборок\n3. Одни и те же обои могут входить в несколько подборок (через объединение id кандидатов)\n4. Объединяйте близкие темы (например, ночь + город + неон → выразительное название)\n5. Названия: 2–12 слов, атмосферные, не одно общее слово, на том же языке, что и эта инструкция\n6. mergeIds должны существовать среди входных кандидатов\n\nВходные кандидаты:\n{candidates}\n\nФормат вывода:\n{\n  \"collections\": [\n    {\n      \"name\": \"Название подборки\",\n      \"prompt\": \"Однострочное описание настроения\",\n      \"semanticQuery\": \"Фраза для семантического поиска\",\n      \"mergeIds\": [\"tag:night\", \"vec:0\"]\n    }\n  ]\n}"
+      "collectionMerge": "Вы — куратор библиотеки обоев. Ниже приведены кандидаты групп (группы по тегам + векторные группы настроения). Объедините семантически близкие группы и назовите каждую итоговую подборку.\n\nПравила:\n1. Выводите только JSON, без markdown\n2. Не более {targetCount} итоговых подборок\n3. Одни и те же обои могут входить в несколько подборок (через объединение id кандидатов)\n4. Объединяйте близкие темы (например, ночь + город + неон → выразительное название)\n5. Названия: 2–12 слов, атмосферные, не одно общее слово, на том же языке, что и эта инструкция\n6. mergeIds должны существовать среди входных кандидатов\n\nВходные кандидаты:\n{candidates}\n\nФормат вывода:\n{\n  \"collections\": [\n    {\n      \"name\": \"Название подборки\",\n      \"prompt\": \"Однострочное описание настроения\",\n      \"semanticQuery\": \"Фраза для семантического поиска\",\n      \"mergeIds\": [\"tag:night\", \"vec:0\"]\n    }\n  ]\n}",
+      "collectionTagExpand": "Expand wallpaper collection search tags for synonyms. Theme: {keyword}\nOutput JSON: {\"tags\":[\"tag1\",\"tag2\"]}, up to 8 items, prefer tags in the same language as resource AI analysis, at most 2 English synonyms, no explanation."
     }
+  },
+  "privacyNsfwMask": {
+    "tapToUnlock": "Tap to enter privacy password",
+    "actionBlocked": "Verify privacy password via the hide overlay first"
   }
 }

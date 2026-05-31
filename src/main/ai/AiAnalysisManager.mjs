@@ -7,6 +7,7 @@ import {
   AI_ANALYSIS_SPEED_MIN_SAMPLES,
   AI_ANALYSIS_SPEED_SAMPLE_MAX,
   DEFAULT_AI_TIMEOUT_MS,
+  resolveAnalysisConcurrency,
   resolveAnalysisMaxRetries,
   resolveEffectiveVisionTimeout
 } from './aiConstants.mjs'
@@ -36,7 +37,6 @@ export default class AiAnalysisManager {
     this.wordsManager = wordsManager
     this.embeddingManager = embeddingManager
     this.provider = AiAnalysisProvider.getInstance(logger, settingManager)
-    this.params = { startPage: 1, pageSize: 5 }
     this.isRunning = false
     this.onAnalysisDone = null
     this.onAnalysisBatchDone = null
@@ -255,7 +255,7 @@ export default class AiAnalysisManager {
       })
 
       if (typeof this.onAnalysisDone === 'function') {
-        setImmediate(() => this.onAnalysisDone())
+        setImmediate(() => this.onAnalysisDone(row.id))
       }
 
       this.recordAnalysisDuration(modelMs)
@@ -277,12 +277,7 @@ export default class AiAnalysisManager {
     }
   }
 
-  intervalAnalyze(locks) {
-    if (!this.shouldRunBackground()) return
-    if (locks.aiAnalysis) return
-    locks.aiAnalysis = true
-
-    const { startPage, pageSize } = this.params
+  _buildPendingQuerySql() {
     const mode = this.ai.analysisMode
     let query_sql = `
       SELECT id, filePath, fileType, resourceName, title, desc, fileName, aiAnalysisFailCount
@@ -293,55 +288,109 @@ export default class AiAnalysisManager {
     if (mode === 'new_only') {
       query_sql += ` AND aiAnalyzedAt IS NULL`
     }
-    query_sql += ` ORDER BY id ASC LIMIT ? OFFSET ?`
+    return query_sql
+  }
 
-    const list = this.db.prepare(query_sql).all(pageSize, (startPage - 1) * pageSize)
-    if (!list.length) {
-      locks.aiAnalysis = false
-      this.params.startPage = 1
-      return
+  fetchPendingBatch(limit) {
+    const n = Math.max(1, Math.min(50, Number(limit) || 1))
+    const query_sql = `${this._buildPendingQuerySql()} ORDER BY id ASC LIMIT ?`
+    return this.db.prepare(query_sql).all(n)
+  }
+
+  countPendingInQueue() {
+    const row = this.db
+      .prepare(
+        `SELECT COUNT(*) as c FROM fbw_resources WHERE fileType='image' AND aiAnalysisStatus IN ('pending','failed')${
+          this.ai.analysisMode === 'new_only' ? ' AND aiAnalyzedAt IS NULL' : ''
+        }`
+      )
+      .get()
+    return row?.c || 0
+  }
+
+  _finishPump(locks) {
+    this.isRunning = false
+    locks.aiAnalysis = false
+    if (typeof this.onAnalysisBatchDone === 'function') {
+      setImmediate(() => this.onAnalysisBatchDone())
     }
+  }
 
-    if (list.length < pageSize) {
-      this.params.startPage = 1
-    } else {
-      this.params.startPage += 1
-    }
+  _schedulePumpContinue(locks) {
+    setImmediate(() => {
+      if (!this.shouldRunBackground()) return
+      if (locks.aiAnalysis) return
+      if (this.countPendingInQueue() <= 0) return
+      this.pumpBackgroundAnalysis(locks)
+    })
+  }
 
+  /**
+   * 连续处理待分析队列，按 ai.concurrency 并行，直至无积压或不应再跑。
+   */
+  pumpBackgroundAnalysis(locks) {
+    if (!this.shouldRunBackground()) return
+    if (locks.aiAnalysis) return
+    locks.aiAnalysis = true
+
+    const concurrency = resolveAnalysisConcurrency(this.ai)
     const batchCtx = this.getAnalysisRequestContext('')
     this.logger.info(
-      `[AiAnalysisManager] batch start count=${list.length} mode=${mode} timeout=${batchCtx.timeoutSec}s provider=${batchCtx.visionProvider} model=${batchCtx.visionModel}`
+      `[AiAnalysisManager] pump start concurrency=${concurrency} mode=${this.ai.analysisMode} timeout=${batchCtx.timeoutSec}s provider=${batchCtx.visionProvider} model=${batchCtx.visionModel}`
     )
     this.isRunning = true
+
     const run = async () => {
-      const batchStartedAt = Date.now()
-      let doneCount = 0
-      let failCount = 0
       try {
-        for (const row of list) {
-          if (!this.shouldRunBackground()) break
-          const ret = await this.analyzeResourceRow(row, { respectRetryLimit: true })
-          if (ret?.success) doneCount += 1
-          else if (!ret?.skipped) failCount += 1
+        while (this.shouldRunBackground()) {
+          const list = this.fetchPendingBatch(concurrency)
+          if (!list.length) break
+
+          const batchStartedAt = Date.now()
+          let doneCount = 0
+          let failCount = 0
+          let skipCount = 0
+
+          const results = await Promise.all(
+            list.map(async (row) => {
+              if (!this.shouldRunBackground()) {
+                return { aborted: true }
+              }
+              return this.analyzeResourceRow(row, { respectRetryLimit: true })
+            })
+          )
+
+          for (const ret of results) {
+            if (ret?.aborted) break
+            if (ret?.success) doneCount += 1
+            else if (ret?.skipped) skipCount += 1
+            else failCount += 1
+          }
+
+          this.logger.info(
+            `[AiAnalysisManager] pump batch count=${list.length} ok=${doneCount} fail=${failCount} skip=${skipCount} totalMs=${Date.now() - batchStartedAt}ms`
+          )
+
+          if (results.some((r) => r?.aborted)) break
         }
+      } catch (err) {
+        this.logger.error(`[AiAnalysisManager] pump error: ${err}`)
       } finally {
-        this.logger.info(
-          `[AiAnalysisManager] batch done count=${list.length} ok=${doneCount} fail=${failCount} totalMs=${Date.now() - batchStartedAt}ms`
-        )
-        this.isRunning = false
-        locks.aiAnalysis = false
-        if (typeof this.onAnalysisBatchDone === 'function') {
-          setImmediate(() => this.onAnalysisBatchDone())
-        }
+        this._finishPump(locks)
+        this._schedulePumpContinue(locks)
       }
     }
-    run().catch(() => {
-      this.isRunning = false
-      locks.aiAnalysis = false
-      if (typeof this.onAnalysisBatchDone === 'function') {
-        setImmediate(() => this.onAnalysisBatchDone())
-      }
+
+    run().catch((err) => {
+      this.logger.error(`[AiAnalysisManager] pump fatal: ${err}`)
+      this._finishPump(locks)
+      this._schedulePumpContinue(locks)
     })
+  }
+
+  /** @deprecated 兼容旧调用；请使用 pumpBackgroundAnalysis */
+  intervalAnalyze(locks) {
+    this.pumpBackgroundAnalysis(locks)
   }
 
   getStats() {
@@ -361,10 +410,27 @@ export default class AiAnalysisManager {
     const total = pending + done + failed
     let embedding = 0
     let imageEmbedding = 0
+    let imageEmbedPending = 0
     try {
       embedding = this.db.prepare('SELECT COUNT(*) as c FROM fbw_resource_vec_blob').get()?.c || 0
       imageEmbedding =
         this.db.prepare('SELECT COUNT(*) as c FROM fbw_resource_image_vec_blob').get()?.c || 0
+      const activeModel = this.embeddingManager?.getActiveVisualModelId?.()
+      if (activeModel) {
+        imageEmbedPending =
+          this.db
+            .prepare(
+              `SELECT COUNT(*) as c
+               FROM fbw_resources r
+               WHERE r.fileType = 'image'
+                 AND r.aiAnalysisStatus = ?
+                 AND NOT EXISTS (
+                   SELECT 1 FROM fbw_resource_image_vec_blob v
+                   WHERE v.resourceId = r.id AND v.model = ?
+                 )`
+            )
+            .get(AI_ANALYSIS_STATUS.DONE, activeModel)?.c || 0
+      }
     } catch {
       // ignore
     }
@@ -379,7 +445,9 @@ export default class AiAnalysisManager {
         total,
         embedding,
         imageEmbedding,
+        imageEmbedPending,
         running: this.isRunning,
+        concurrency: resolveAnalysisConcurrency(this.ai),
         ...this.getAnalysisSpeedStats(pending)
       }
     }

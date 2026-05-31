@@ -203,6 +203,27 @@ export default class SettingManager extends EventEmitter {
     return ret
   }
 
+  /** 仅返回密码提示语（不含 hash/salt） */
+  async getPrivacyPasswordHint() {
+    const res = await this.dbManager.getPrivacyPassword()
+    if (!res.success) {
+      return {
+        success: false,
+        message: res.message || t('messages.operationFail'),
+        data: { hasPassword: false, hint: '' }
+      }
+    }
+    const hint = String(res.data?.hint || '').trim()
+    return {
+      success: true,
+      message: t('messages.operationSuccess'),
+      data: {
+        hasPassword: !!res.data,
+        hint
+      }
+    }
+  }
+
   // 更新隐私密码
   async updatePrivacyPassword(data) {
     let ret = {
@@ -239,9 +260,10 @@ export default class SettingManager extends EventEmitter {
       // 检查完后更新待插入的密码
       const newSalt = generateSalt()
       const newHash = hashPassword(data.new, newSalt)
+      const hint = String(data.hint ?? '').trim().slice(0, 64)
       const update_res = await this.dbManager.setSysRecord(
         storeKey,
-        { hash: newHash, salt: newSalt },
+        { hash: newHash, salt: newSalt, hint },
         'object'
       )
       ret.success = update_res.success

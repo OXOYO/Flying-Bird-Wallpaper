@@ -55,7 +55,7 @@
 
 ### 设置项 `settingData.ai`（已实现字段）
 
-`enabled`、`visionPreset`/`textPreset`、`visionModel`/`textModel`/`embeddingModel`（**仅文本 embed**）、`visualEmbedSource`（默认 `builtin`）、`visualEmbedPreset`/`visualEmbedProvider`/`visualEmbedBaseUrl`/`visualEmbedApiKey`/`visualEmbedModel`（**远程画面向量**，独立第三套）、`timeout`（默认 **300s**，视觉分析动态加成；测试连接 **60s** 上限）、`visionPreprocess`/`visionMaxLongEdge`/`visionPreprocessMinSizeMB`/`visionJpegQuality`、`analysisMode`、`analysisMaxRetries`（默认 5，后台失败重试）、`autoCollectionsEnabled`、`scoreMinFilter`（默认 70）、`autoCollectionsMaxCount`（默认 20，3～50）、`autoCurateSettled`/`autoCurateSettledAnalyzed`（内部锁存）、`enableNsfwCheck`、`expandDownloadKeywords`、`legacyOnnxScore`、`legacyJiebaTags` 等。分析成功后：**文本向量**需 `ai.enabled`；**画面向量**默认内置（`visualEmbedSource=builtin`），remote 时走独立服务、失败回退内置。找相似阈值 **不暴露**（`SIMILAR_*` 内部常量）。电池下后台分析/视觉补算受「省电模式」约束。`scoreMinFilter` / `autoCollectionsMaxCount` 在 **AiSetting → 功能选项 → AI 自动整理合集** 下方；**内置画面向量**在 **兼容选项**；远程时显示 **画面向量服务** 卡片；`analysisMaxRetries` 在 **分析模式** 旁（仅后台模式显示）。
+`enabled`、`visionPreset`/`textPreset`、`visionModel`/`textModel`/`embeddingModel`（**仅文本 embed**）、`visualEmbedSource`（默认 `builtin`）、`visualEmbedPreset`/`visualEmbedProvider`/`visualEmbedBaseUrl`/`visualEmbedApiKey`/`visualEmbedModel`（**远程画面向量**，独立第三套）、`timeout`（默认 **300s**，视觉分析动态加成；测试连接 **60s** 上限）、`visionPreprocess`/`visionMaxLongEdge`/`visionPreprocessMinSizeMB`/`visionJpegQuality`、`analysisMode`、`analysisMaxRetries`（默认 **1**，**设置页不展示**）、`concurrency`（默认 **1**，**设置页不展示**）、`autoCollectionsEnabled`、`scoreMinFilter`（默认 70）、`autoCollectionsMaxCount`（默认 20，3～50）、`autoCurateSettled`/`autoCurateSettledAnalyzed`（内部锁存）、`expandDownloadKeywords`、`legacyOnnxScore`、`legacyJiebaTags` 等。**已移除** `enableNsfwCheck`（改由 `privacy.enableNsfwContentMask`，见 [privacy-and-sensitive-content.md](./privacy-and-sensitive-content.md)）。分析成功后：**文本向量**需 `ai.enabled`；**画面向量**默认内置（`visualEmbedSource=builtin`），remote 时走独立服务、失败回退内置。找相似阈值 **不暴露**（`SIMILAR_*` 内部常量）。电池下后台分析/视觉补算受「省电模式」约束。`scoreMinFilter` / `autoCollectionsMaxCount` 在 **AiSetting → 功能选项 → AI 自动整理合集** 下方；**内置画面向量**在 **兼容选项**；远程时显示 **画面向量服务** 卡片。
 
 **`settingData.search`：** `useSemanticSearch`（智能语义搜索，探索/H5 筛选；原 `ai.smartSearch` 已迁移）。
 
@@ -81,7 +81,7 @@
 | AI-009 | 分析前缩图 | ✅ | `AiVisionImagePrep.mjs` |
 | AI-010 | 视觉动态超时 | ✅ | `resolveEffectiveVisionTimeout` |
 | AI-011 | 分析耗时日志 | ✅ | `[AiVisionPrep]`、`vision-http modelMs` |
-| AI-012 | 后台失败重试上限 | ✅ | `analysisMaxRetries` + `aiAnalysisFailCount`；达上限 → `skipped`；手动分析不限 |
+| AI-012 | 后台失败重试上限 | ✅ | `analysisMaxRetries`（默认 1，UI 隐藏）+ `aiAnalysisFailCount`；达上限 → `skipped`；手动分析不限 |
 
 ### 4.2 发现与搜索（P1）
 
@@ -170,7 +170,7 @@ fbw_collections (
 | ID | 功能 | 状态 |
 |----|------|------|
 | AI-401 | NSFW 分析字段 | ✅ |
-| AI-402 | 探索页安全筛选 | ✅ `enableNsfwCheck` |
+| AI-402 | 敏感内容隐藏（原探索安全筛选） | ✅ | `privacy.enableNsfwContentMask`；浏览遮罩；壁纸上/下一张过滤；**已移除** `enableNsfwCheck` / `hideUnsafe` — [privacy-and-sensitive-content.md](./privacy-and-sensitive-content.md) |
 | AI-403 | 自动切换排除不安全 | 🟡 |
 | AI-404 | 隐私空间规则 | ⬜ |
 

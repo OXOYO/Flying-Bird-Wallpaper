@@ -11,7 +11,7 @@ defineProps({
 
 <template>
   <div class="h5-list-empty">
-    <pageEmpty :description="description" />
+    <pageEmpty fill-parent :description="description" />
   </div>
 </template>
 
@@ -21,12 +21,20 @@ defineProps({
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 320px;
   width: 100%;
+  min-height: 0;
+  box-sizing: border-box;
 }
 
 .h5-list-empty :deep(.page-empty) {
-  height: auto;
-  min-height: 280px;
+  height: 100%;
+  min-height: 0;
+}
+
+.h5-list-empty :deep(.van-empty) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 </style>

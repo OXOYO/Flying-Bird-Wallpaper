@@ -6,7 +6,26 @@ export const formatFileSize = (bytes = 0) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
 }
 
-export const handleInfoVal = (info, key) => {
+export const handleInfoVal = (info, key, t) => {
+  if (key === 'tags') {
+    const words = info?._tagWords
+    if (Array.isArray(words) && words.length) return words.join('、')
+    const raw = info?.tags
+    if (Array.isArray(raw) && raw.length) return raw.join('、')
+    if (typeof raw === 'string' && raw.trim()) return raw.trim()
+    return '-'
+  }
+  if (key === 'nsfwLevel') {
+    const n = info?.nsfwLevel
+    if (n === null || n === undefined || n === '') return '-'
+    return t ? t(`viewInfo.nsfwLevel.${n}`, { defaultValue: String(n) }) : String(n)
+  }
+  if (key === 'aiAnalysisStatus') {
+    const s = info?.aiAnalysisStatus
+    if (!s) return '-'
+    return t ? t(`viewInfo.aiAnalysisStatus.${s}`, { defaultValue: s }) : s
+  }
+
   const val = info[key]
   if (key === 'fileSize') {
     return formatFileSize(val || 0)

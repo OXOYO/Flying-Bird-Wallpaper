@@ -163,7 +163,7 @@ flowchart LR
 
 **稳定暂停：** `pending=0` 且 `failed=0` 且非 `running` → 保证 **至少一轮** 自动整理 → 写入 `autoCurateSettled` → 停定时/防抖。实现：`collectionCurateGate.mjs`。详述 [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) §2.5。
 
-**设置：** `ai.autoCollectionsEnabled`（默认 true）；子项 **`scoreMinFilter`**、**`autoCollectionsMaxCount`**；**`analysisMaxRetries`**（后台失败重试，默认 5）— 见 `AiSetting.vue`；需 `ai.enabled`；分析完成后自动向量化。
+**设置：** `ai.autoCollectionsEnabled`（默认 true）；子项 **`scoreMinFilter`**、**`autoCollectionsMaxCount`**；**`analysisMaxRetries`** / **`concurrency`** 默认 **1**（**已从 `AiSetting.vue` 移除 UI**，逻辑仍生效）；需 `ai.enabled`；分析完成后自动向量化。
 
 **合集页：** `collectionsGet` **分页**；列表缩略 `w=1080`；详述 [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md)。
 
@@ -177,7 +177,7 @@ flowchart LR
 
 - `RecommendManager` 轻量推荐
 - `WallpaperManager` smartSwitch、autoDownload 扩词
-- NSFW / score 筛选（`enableNsfwCheck`、`scoreMinFilter`）
+- 敏感内容 / 评分（`privacy.enableNsfwContentMask`、`scoreMinFilter`；**已移除** `enableNsfwCheck` — 见 [privacy-and-sensitive-content.md](./privacy-and-sensitive-content.md)）
 - H5：`/api/ai/*`、`/api/collections/*`
 
 ---
@@ -215,10 +215,11 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | `autoCollectionsEnabled` | 系统自动策展 |
 | `scoreMinFilter` | 最低评分（搜索 + 系统合集选图）；默认 **70**（0～100） |
 | `autoCollectionsMaxCount` | 系统推荐合集数量上限（默认 20，3～50） |
-| `analysisMaxRetries` | 后台分析单张最大连续失败次数（默认 5，1～20）；达上限 → `skipped` |
+| `analysisMaxRetries` | 后台分析单张最大连续失败次数（默认 **1**，1～20）；达上限 → `skipped`；**设置页不展示** |
+| `concurrency` | 后台并行分析张数（默认 **1**，1～10）；**设置页不展示** |
 | `autoCurateSettled` | 内部：分析稳定后已完成至少一轮自动整理 |
 | `autoCurateSettledAnalyzed` | 锁存时的 `done` 张数 |
-| `enableNsfwCheck` | 探索安全筛选 |
+| ~~`enableNsfwCheck`~~ | **已移除**；由 `privacy.enableNsfwContentMask` 替代 |
 | `legacyOnnxScore` / `legacyJiebaTags` | 遗留能力 |
 | `visualEmbedSource` | `builtin`（默认）\| `remote`；兼容选项「内置画面向量」 |
 | `visualEmbedPreset` … `visualEmbedModel` | 远程画面向量服务（与视觉/文本并列第三套） |
@@ -449,3 +450,4 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | **v2.5** | 2026-05-29 | §13 方案 C、远程画面向量、EmbedRequestBuilder；移除用户找相似阈值；设置/IPC 同步 |
 | **v2.6** | 2026-05-29 | §14 合集画面向量；用户合集关键词优先；`VisualCollectionSearch` |
 | **v2.7** | 2026-05-29 | §14 增补：`regenPrompt`、动态标签扩展、实体词禁用画面补充、风景顶替修复 |
+| **v2.8** | 2026-05-27 | 移除 `enableNsfwCheck`；`privacy-and-sensitive-content.md`；AI 设置隐藏 `analysisMaxRetries`/`concurrency`（默认 1） |

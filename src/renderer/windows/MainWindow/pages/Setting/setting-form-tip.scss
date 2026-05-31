@@ -1,0 +1,434 @@
+/** 设置页表单项说明：标签旁图标 + 深色 tooltip（与 AI 设置一致） */
+
+.form-item-label-with-tip {
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: flex-end;
+
+  flex-wrap: nowrap;
+
+  gap: 6px;
+
+  white-space: nowrap;
+
+
+
+  &__text {
+
+    line-height: 1.4;
+
+    white-space: nowrap;
+
+  }
+
+}
+
+
+
+.form-item-tip-trigger {
+
+  display: inline-flex;
+
+  flex-shrink: 0;
+
+  align-items: center;
+
+  justify-content: center;
+
+  width: 18px;
+
+  height: 18px;
+
+  font-size: 16px;
+
+  color: var(--el-text-color-secondary);
+
+  cursor: help;
+
+  outline: none;
+
+
+
+  &:hover,
+
+  &:focus-visible {
+
+    color: var(--el-color-primary);
+
+  }
+
+}
+
+
+
+/** 复合控件行：数字输入 + 单位选择等 */
+
+.setting-form-control-row,
+
+.ai-form-control-row {
+
+  display: inline-flex;
+
+  align-items: center;
+
+  flex-wrap: wrap;
+
+  gap: 10px;
+
+  min-height: 32px;
+
+  line-height: normal;
+
+
+
+  &--score-min {
+
+    gap: 8px;
+
+  }
+
+}
+
+
+
+/** 带说明图标的表单项：标签右对齐、与控件垂直居中 */
+
+.ai-setting-form {
+
+  .el-form-item {
+
+    align-items: center;
+
+    margin-bottom: 18px;
+
+  }
+
+
+
+  .el-form-item__label-wrap {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: flex-end;
+
+    min-height: 32px;
+
+  }
+
+
+
+  .el-form-item__label {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: flex-end;
+
+    height: auto;
+
+    min-height: 32px;
+
+    line-height: 1.4;
+
+    padding-right: 12px;
+
+    white-space: nowrap;
+
+  }
+
+
+
+  .el-form-item__content {
+
+    display: flex;
+
+    align-items: center;
+
+    flex-wrap: wrap;
+
+    gap: 0;
+
+    min-height: 32px;
+
+    line-height: normal;
+
+
+
+    > .el-switch {
+
+      flex-shrink: 0;
+
+    }
+
+  }
+
+
+
+  /* 兼容旧写法：内容区内嵌套 el-form-item（时间 + 单位） */
+
+  .el-form-item__content > .el-form-item {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    margin-bottom: 0;
+
+    vertical-align: middle;
+
+
+
+    .el-form-item__label-wrap,
+
+    .el-form-item__label {
+
+      display: none !important;
+
+      width: 0 !important;
+
+      padding: 0 !important;
+
+      margin: 0 !important;
+
+    }
+
+
+
+    .el-form-item__content {
+
+      margin-left: 0 !important;
+
+      min-height: 0;
+
+      line-height: normal;
+
+    }
+
+  }
+
+
+
+  .el-form-item__content > .el-form-item + .el-form-item {
+
+    margin-left: 10px;
+
+  }
+
+
+
+  /* 多行标签输入：标签与首行顶对齐 */
+
+  .el-form-item:has(.el-input-tag),
+
+  .ai-form-item-labeled--top {
+
+    align-items: flex-start;
+
+
+
+    > .el-form-item__label-wrap,
+
+    > .el-form-item__label {
+
+      align-items: flex-start;
+
+      padding-top: 6px;
+
+      min-height: 0;
+
+    }
+
+  }
+
+
+
+  /* 复选框组 / 单选组：统一网格列宽与垂直居中 */
+
+  .el-checkbox-group:not(.notification-settings__options),
+
+  .el-radio-group {
+
+    display: inline-grid !important;
+
+    align-items: center;
+
+    column-gap: 16px;
+
+    row-gap: 8px;
+
+  }
+
+
+
+  .el-checkbox-group:not(.notification-settings__options) {
+
+    grid-template-columns: repeat(auto-fill, minmax(108px, max-content));
+
+    max-width: 520px;
+
+  }
+
+
+
+  .setting-checkbox-group--2 {
+
+    grid-template-columns: repeat(2, 120px) !important;
+
+  }
+
+
+
+  .setting-checkbox-group--4 {
+
+    grid-template-columns: repeat(4, 72px) !important;
+
+  }
+
+
+
+  .setting-checkbox-group--menus {
+
+    grid-template-columns: repeat(3, 128px) !important;
+
+    max-width: 420px;
+
+  }
+
+
+
+  .el-radio-group {
+
+    grid-template-columns: repeat(auto-fill, minmax(100px, max-content));
+
+  }
+
+
+
+  .setting-radio-group--2 {
+
+    grid-template-columns: repeat(2, 120px) !important;
+
+  }
+
+
+
+  .el-checkbox-group:not(.notification-settings__options) .el-checkbox,
+
+  .el-radio-group .el-radio {
+
+    margin-right: 0;
+
+    height: 32px;
+
+    display: inline-flex;
+
+    align-items: center;
+
+  }
+
+
+
+  .el-checkbox-group:not(.notification-settings__options) .el-checkbox__label,
+
+  .el-radio-group .el-radio__label {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    padding-left: 8px;
+
+    line-height: 32px;
+
+  }
+
+
+
+  .setting-checkbox__content {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    line-height: 1;
+
+  }
+
+
+
+  .setting-checkbox__icon {
+
+    flex-shrink: 0;
+
+    font-size: 18px;
+
+    color: var(--el-text-color-regular);
+
+  }
+
+}
+
+
+
+/** 通知设置：复用 el-form 统一 label 宽度，右侧三列定宽对齐 */
+.ai-setting-form .notification-form-item {
+  align-items: center;
+
+  > .el-form-item__label-wrap,
+  > .el-form-item__label {
+    align-items: center;
+    padding-top: 0;
+  }
+}
+
+.ai-setting-form .notification-settings__options {
+  display: grid !important;
+  grid-template-columns: 120px 120px 188px;
+  column-gap: 12px;
+  align-items: center;
+
+  .el-checkbox {
+    margin-right: 0;
+    height: 32px;
+    white-space: nowrap;
+  }
+
+  .el-checkbox__label {
+    padding-left: 8px;
+    line-height: 32px;
+  }
+}
+
+.ai-setting-feature-tip {
+
+  max-width: min(320px, 90vw) !important;
+
+  width: max-content;
+
+
+
+  &,
+
+  .el-tooltip__content {
+
+    line-height: 1.5;
+
+    white-space: normal !important;
+
+    word-break: break-word;
+
+  }
+
+}
+
+

@@ -119,3 +119,7 @@ const onTabChange = (tab) => {
   }
 }
 </style>
+
+<style lang="scss">
+@use './setting-form-tip.scss';
+</style>

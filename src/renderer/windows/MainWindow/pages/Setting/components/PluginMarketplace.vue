@@ -230,6 +230,12 @@ const loadInstalledPlugins = async () => {
   }
 }
 
+/** 已安装页刷新：同步市场列表（更新状态）与已安装列表 */
+const refreshInstalledTab = () => {
+  loadAvailablePlugins()
+  loadInstalledPlugins()
+}
+
 const loadPluginSources = async () => {
   loading.sources = true
   try {
@@ -777,6 +783,7 @@ defineExpose({
                 {{ marketplaceLoadAlertMessage }}
               </p>
             </el-alert>
+            <div class="tab-panel-body" v-loading="loading.available">
             <div class="search-box">
               <el-input
                 v-model="marketplaceSearchQuery"
@@ -789,13 +796,15 @@ defineExpose({
                 </template>
               </el-input>
               <div class="toolbar-actions">
-                <el-button :loading="loading.available" @click="loadAvailablePlugins">
-                  <IconifyIcon icon="custom:refresh" />
+                <el-button @click="loadAvailablePlugins">
+                  <template #icon>
+                    <IconifyIcon icon="custom:refresh-right" />
+                  </template>
                   {{ t('pages.Setting.pluginMarketplace.refresh') }}
                 </el-button>
               </div>
             </div>
-            <div class="tab-scroll-wrap" v-loading="loading.available">
+            <div class="tab-scroll-wrap">
               <el-scrollbar class="tab-scrollbar">
                 <div class="tab-scroll-content">
                 <el-empty v-if="!loading.available && filteredAvailablePlugins.length === 0" />
@@ -857,7 +866,9 @@ defineExpose({
                               :loading="isInstalling(plugin)"
                               @click="installPlugin(plugin.sourceName, plugin.name)"
                             >
-                              <IconifyIcon icon="custom:download" />
+                              <template #icon>
+                                <IconifyIcon icon="custom:download-line" />
+                              </template>
                               {{ t('pages.Setting.pluginMarketplace.install') }}
                             </el-button>
                             <el-button
@@ -866,7 +877,9 @@ defineExpose({
                               :loading="isUpdating(plugin)"
                               @click="confirmUpdatePlugin(plugin)"
                             >
-                              <IconifyIcon icon="custom:refresh" />
+                              <template #icon>
+                                <IconifyIcon icon="custom:refresh-right" />
+                              </template>
                               {{ t('pages.Setting.pluginMarketplace.update') }}
                             </el-button>
                           </div>
@@ -917,11 +930,16 @@ defineExpose({
               </div>
               </el-scrollbar>
             </div>
+            </div>
           </div>
         </el-tab-pane>
 
         <el-tab-pane :label="t('pages.Setting.pluginMarketplace.tabs.installed')" name="installed">
           <div class="installed-content">
+            <div
+              class="tab-panel-body"
+              v-loading="loading.installed || loading.available"
+            >
             <div class="search-box">
               <el-input
                 v-model="installedSearchQuery"
@@ -934,19 +952,24 @@ defineExpose({
                 </template>
               </el-input>
               <div class="toolbar-actions">
-                <el-button
-                  :loading="loading.installed || loading.available"
-                  @click="loadAvailablePlugins(); loadInstalledPlugins()"
-                >
-                  <IconifyIcon icon="custom:refresh" />
+                <el-button @click="refreshInstalledTab">
+                  <template #icon>
+                    <IconifyIcon icon="custom:refresh-right" />
+                  </template>
                   {{ t('pages.Setting.pluginMarketplace.refresh') }}
                 </el-button>
               </div>
             </div>
-            <div class="tab-scroll-wrap" v-loading="loading.installed">
+            <div class="tab-scroll-wrap">
               <el-scrollbar class="tab-scrollbar">
                 <div class="tab-scroll-content">
-                <el-empty v-if="!loading.installed && filteredInstalledPlugins.length === 0" />
+                <el-empty
+                  v-if="
+                    !loading.installed &&
+                    !loading.available &&
+                    filteredInstalledPlugins.length === 0
+                  "
+                />
                 <div v-else class="plugin-grid">
                   <div
                     v-for="plugin in filteredInstalledPlugins"
@@ -1004,7 +1027,6 @@ defineExpose({
                               plain
                               @click="configureSecretKey(plugin)"
                             >
-                              <IconifyIcon icon="custom:key" />
                               {{ t('pages.Setting.pluginMarketplace.secretKey.config') }}
                             </el-button>
                             <el-button
@@ -1013,7 +1035,9 @@ defineExpose({
                               :loading="isUpdating(plugin)"
                               @click="confirmUpdatePlugin(plugin)"
                             >
-                              <IconifyIcon icon="custom:refresh" />
+                              <template #icon>
+                                <IconifyIcon icon="custom:refresh-right" />
+                              </template>
                               {{ t('pages.Setting.pluginMarketplace.update') }}
                             </el-button>
                             <el-button
@@ -1022,7 +1046,9 @@ defineExpose({
                               :loading="isUninstalling(plugin)"
                               @click="uninstallPlugin(plugin.sourceName, plugin.name)"
                             >
-                              <IconifyIcon icon="custom:delete" />
+                              <template #icon>
+                                <IconifyIcon icon="custom:delete-line" />
+                              </template>
                               {{ t('pages.Setting.pluginMarketplace.uninstall') }}
                             </el-button>
                           </div>
@@ -1093,22 +1119,26 @@ defineExpose({
               </div>
               </el-scrollbar>
             </div>
+            </div>
           </div>
         </el-tab-pane>
         <el-tab-pane :label="t('pages.Setting.pluginMarketplace.tabs.sources')" name="sources">
           <div class="sources-content">
+            <div class="tab-panel-body" v-loading="loading.sources">
             <div class="search-box">
               <div class="toolbar-actions">
                 <el-button type="primary" @click="openAddSourceDialog">
                   {{ t('pages.Setting.pluginMarketplace.sources.addSource') }}
                 </el-button>
-                <el-button :loading="loading.sources" @click="loadPluginSources">
-                  <IconifyIcon icon="custom:refresh" />
+                <el-button @click="loadPluginSources">
+                  <template #icon>
+                    <IconifyIcon icon="custom:refresh-right" />
+                  </template>
                   {{ t('pages.Setting.pluginMarketplace.sources.refreshSources') }}
                 </el-button>
               </div>
             </div>
-            <div class="tab-scroll-wrap" v-loading="loading.sources">
+            <div class="tab-scroll-wrap">
               <el-scrollbar class="tab-scrollbar">
                 <div class="tab-scroll-content">
                 <div
@@ -1152,6 +1182,7 @@ defineExpose({
               </div>
               </el-scrollbar>
             </div>
+            </div>
           </div>
         </el-tab-pane>
       </el-tabs>
@@ -1162,7 +1193,13 @@ defineExpose({
       :title="t('pages.Setting.pluginMarketplace.sourceForm.title')"
       width="650px"
     >
-      <el-form ref="sourceFormRef" :model="sourceForm" :rules="sourceFormRules" label-width="90px">
+      <el-form
+        ref="sourceFormRef"
+        :model="sourceForm"
+        :rules="sourceFormRules"
+        label-width="90px"
+        class="ai-setting-form"
+      >
         <el-form-item :label="t('pages.Setting.pluginMarketplace.sourceForm.name')" prop="name">
           <el-input
             v-model="sourceForm.name"
@@ -1170,7 +1207,7 @@ defineExpose({
           />
         </el-form-item>
         <el-form-item :label="t('pages.Setting.pluginMarketplace.sourceForm.type')" prop="type">
-          <el-radio-group v-model="sourceForm.type">
+          <el-radio-group v-model="sourceForm.type" class="setting-radio-group--2">
             <el-radio label="github">GitHub</el-radio>
             <el-radio label="local">{{
               t('pages.Setting.pluginMarketplace.sourceForm.local')
@@ -1273,6 +1310,14 @@ defineExpose({
   font-variant-numeric: tabular-nums;
 }
 
+.tab-panel-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
 .search-box {
   display: flex;
   align-items: center;
@@ -1292,7 +1337,6 @@ defineExpose({
   flex: 1;
   min-height: 0;
   overflow: hidden;
-  position: relative;
 }
 
 .tab-scrollbar {

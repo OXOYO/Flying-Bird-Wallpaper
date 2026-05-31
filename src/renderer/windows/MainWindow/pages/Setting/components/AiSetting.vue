@@ -14,6 +14,8 @@ import { useSettingAnchorScroll } from '../utils/useSettingAnchorScroll.js'
 import { useAiAnalysisDashboard } from '../utils/useAiAnalysisDashboard.js'
 import clipboard from 'clipboardy'
 import AiAnalysisDashboardPanel from './AiAnalysisDashboardPanel.vue'
+import SettingFormLabelTip from './SettingFormLabelTip.vue'
+import AiIconCopyButton from './AiIconCopyButton.vue'
 
 const props = defineProps({
   tabActive: { type: Boolean, default: true }
@@ -67,11 +69,6 @@ const featureSwitchGroups = [
   {
     titleKey: 'pages.Setting.aiSetting.sectionFeaturesSearch',
     items: [
-      {
-        key: 'enableNsfwCheck',
-        labelKey: 'pages.Setting.aiSetting.enableNsfwCheck',
-        hintKey: 'pages.Setting.aiSetting.enableNsfwCheckHint'
-      },
       {
         key: 'expandDownloadKeywords',
         labelKey: 'pages.Setting.aiSetting.expandDownloadKeywords',
@@ -167,12 +164,6 @@ const {
   analysisSpeedTooltip
 } = useAiAnalysisDashboard(computed(() => aiForm), { tabActive: toRef(props, 'tabActive') })
 
-const showBackgroundRetrySetting = computed(
-  () =>
-    aiForm.enabled &&
-    (aiForm.analysisMode === 'background_slow' || aiForm.analysisMode === 'new_only')
-)
-
 const AI_TIMEOUT_MIN_SEC = 60
 const AI_TIMEOUT_MAX_SEC = 1800
 const AI_TIMEOUT_DEFAULT_SEC = 300
@@ -180,9 +171,8 @@ const AI_TIMEOUT_DEFAULT_SEC = 300
 const AUTO_COLLECTION_COUNT_MIN = 3
 const AUTO_COLLECTION_COUNT_ABSOLUTE_MAX = 50
 
-const AI_ANALYSIS_MAX_RETRIES_MIN = 1
-const AI_ANALYSIS_MAX_RETRIES_MAX = 20
-const AI_ANALYSIS_MAX_RETRIES_DEFAULT = 5
+const AI_ANALYSIS_MAX_RETRIES_DEFAULT = 1
+const AI_ANALYSIS_CONCURRENCY_DEFAULT = 1
 
 const AI_VISION_LONG_EDGE_MIN = 1024
 const AI_VISION_LONG_EDGE_MAX = 4096
@@ -208,10 +198,6 @@ const onScoreMinFilterChange = () => {
   onAiFormChange()
 }
 
-const onAnalysisMaxRetriesChange = () => {
-  onAiFormChange()
-}
-
 const ensureAiFields = () => {
   if (!aiForm.visionApiKey) aiForm.visionApiKey = aiForm.apiKey || ''
   if (!aiForm.textApiKey) aiForm.textApiKey = aiForm.apiKey || ''
@@ -231,6 +217,14 @@ const ensureAiFields = () => {
   if (aiForm.visualEmbedModel == null) aiForm.visualEmbedModel = ''
   if (aiForm.analysisMaxRetries == null || aiForm.analysisMaxRetries === '') {
     aiForm.analysisMaxRetries = AI_ANALYSIS_MAX_RETRIES_DEFAULT
+  }
+  if (aiForm.concurrency == null || aiForm.concurrency === '') {
+    aiForm.concurrency = AI_ANALYSIS_CONCURRENCY_DEFAULT
+  } else {
+    const c = Math.round(Number(aiForm.concurrency))
+    aiForm.concurrency = Number.isFinite(c)
+      ? Math.min(10, Math.max(1, c))
+      : AI_ANALYSIS_CONCURRENCY_DEFAULT
   }
   if (!aiForm.timeout || aiForm.timeout < AI_TIMEOUT_MIN_SEC * 1000) {
     aiForm.timeout = AI_TIMEOUT_DEFAULT_SEC * 1000
@@ -350,10 +344,32 @@ const refreshTextModels = async (silent = false, scope = 'all') => {
   await fetchModels('text', 'embed', embedModels, loadingEmbedModels, silent)
 }
 
+/** 展开模型下拉时静默拉取列表（替代手动刷新按钮） */
+const onModelDropdownVisible = (visible, fetchFn, loadingRef) => {
+  if (!visible || loadingRef?.value) return
+  fetchFn(true)
+}
+
 const copyApiKey = (value) => {
   const text = String(value || '').trim()
   if (!text) {
     ElMessage.warning(t('pages.Setting.aiSetting.errors.apiKeyMissing'))
+    return
+  }
+  clipboard
+    .write(text)
+    .then(() => {
+      ElMessage.success(t('messages.copySuccess'))
+    })
+    .catch(() => {
+      ElMessage.error(t('messages.copyFail'))
+    })
+}
+
+const copyModelName = (value) => {
+  const text = String(value || '').trim()
+  if (!text) {
+    ElMessage.warning(t('pages.Setting.aiSetting.errors.modelNameMissing'))
     return
   }
   clipboard
@@ -519,7 +535,6 @@ defineExpose({ resetForm, restoreAnchorScroll })
           :title="t('pages.Setting.aiSetting.textSection')"
         />
         <el-anchor-link
-          v-if="aiForm.visualEmbedSource === 'remote'"
           class="anchor-link"
           href="#divider-ai-visual-embed"
           :title="t('pages.Setting.aiSetting.visualEmbedSection')"
@@ -553,7 +568,13 @@ defineExpose({ resetForm, restoreAnchorScroll })
           <div id="divider-ai-base" class="divider">
             {{ t('pages.Setting.aiSetting.sectionBase') }}
           </div>
-          <el-form-item :label="t('pages.Setting.aiSetting.enabled')">
+          <el-form-item class="ai-form-item-labeled">
+            <template #label>
+              <SettingFormLabelTip
+                :label="t('pages.Setting.aiSetting.enabled')"
+                :hint="t('pages.Setting.aiSetting.enabledHint')"
+              />
+            </template>
             <el-switch v-model="aiForm.enabled" @change="onAiFormChange" />
           </el-form-item>
           <el-form-item class="ai-form-item-labeled">
@@ -593,41 +614,6 @@ defineExpose({ resetForm, restoreAnchorScroll })
                   :value="item.value"
                 />
               </el-select>
-            </div>
-          </el-form-item>
-          <el-form-item v-if="showBackgroundRetrySetting" class="ai-form-item-labeled">
-            <template #label>
-              <span class="form-item-label-with-tip">
-                <span class="form-item-label-with-tip__text">{{
-                  t('pages.Setting.aiSetting.analysisMaxRetries')
-                }}</span>
-                <el-tooltip
-                  :content="t('pages.Setting.aiSetting.analysisMaxRetriesHint')"
-                  placement="top"
-                  :show-after="300"
-                  popper-class="ai-setting-feature-tip"
-                >
-                  <span
-                    class="form-item-tip-trigger"
-                    tabindex="0"
-                    role="button"
-                    :aria-label="t('pages.Setting.aiSetting.analysisMaxRetriesHint')"
-                    @click.stop
-                  >
-                    <IconifyIcon icon="custom:info-outline-rounded" />
-                  </span>
-                </el-tooltip>
-              </span>
-            </template>
-            <div class="ai-form-control-row">
-              <el-input-number
-                v-model="aiForm.analysisMaxRetries"
-                :min="AI_ANALYSIS_MAX_RETRIES_MIN"
-                :max="AI_ANALYSIS_MAX_RETRIES_MAX"
-                :step="1"
-                style="width: 290px"
-                @change="onAnalysisMaxRetriesChange"
-              />
             </div>
           </el-form-item>
           <el-form-item class="ai-form-item-labeled">
@@ -846,30 +832,33 @@ defineExpose({ resetForm, restoreAnchorScroll })
                 :placeholder="t('pages.Setting.aiSetting.apiKeyPlaceholder')"
                 @change="onAiFormChange"
               />
-              <el-button @click="copyApiKey(aiForm.visionApiKey)">
-                {{ t('pages.Setting.aiSetting.copyApiKey') }}
-              </el-button>
+              <AiIconCopyButton @copy="copyApiKey(aiForm.visionApiKey)" />
             </div>
           </el-form-item>
-          <el-form-item :label="t('pages.Setting.aiSetting.visionModel')">
+          <el-form-item class="ai-form-item-labeled">
+            <template #label>
+              <SettingFormLabelTip
+                v-if="visionModelHintKey"
+                :label="t('pages.Setting.aiSetting.visionModel')"
+                :hint="t(visionModelHintKey)"
+              />
+              <span v-else>{{ t('pages.Setting.aiSetting.visionModel') }}</span>
+            </template>
             <div class="model-row">
               <el-select
                 v-model="aiForm.visionModel"
                 filterable
                 allow-create
                 default-first-option
-                style="width: 290px"
+                class="model-row__select"
+                :loading="loadingVisionModels"
                 :placeholder="t('pages.Setting.aiSetting.modelPlaceholder')"
+                @visible-change="(v) => onModelDropdownVisible(v, refreshVisionModels, loadingVisionModels)"
                 @change="onAiFormChange"
               >
                 <el-option v-for="item in visionModels" :key="item" :label="item" :value="item" />
               </el-select>
-              <el-button :loading="loadingVisionModels" @click="refreshVisionModels()">
-                {{ t('pages.Setting.aiSetting.refreshModels') }}
-              </el-button>
-            </div>
-            <div v-if="visionModelHintKey" class="field-hint">
-              {{ t(visionModelHintKey) }}
+              <AiIconCopyButton @copy="copyModelName(aiForm.visionModel)" />
             </div>
           </el-form-item>
           <el-form-item label=" ">
@@ -922,48 +911,61 @@ defineExpose({ resetForm, restoreAnchorScroll })
                 :placeholder="t('pages.Setting.aiSetting.apiKeyPlaceholder')"
                 @change="onAiFormChange"
               />
-              <el-button @click="copyApiKey(aiForm.textApiKey)">
-                {{ t('pages.Setting.aiSetting.copyApiKey') }}
-              </el-button>
+              <AiIconCopyButton @copy="copyApiKey(aiForm.textApiKey)" />
             </div>
           </el-form-item>
-          <el-form-item :label="t('pages.Setting.aiSetting.textModel')">
+          <el-form-item class="ai-form-item-labeled">
+            <template #label>
+              <SettingFormLabelTip
+                v-if="textModelHintKey"
+                :label="t('pages.Setting.aiSetting.textModel')"
+                :hint="t(textModelHintKey)"
+              />
+              <span v-else>{{ t('pages.Setting.aiSetting.textModel') }}</span>
+            </template>
             <div class="model-row">
               <el-select
                 v-model="aiForm.textModel"
                 filterable
                 allow-create
                 default-first-option
-                style="width: 290px"
+                class="model-row__select"
+                :loading="loadingTextModels"
                 :placeholder="t('pages.Setting.aiSetting.modelPlaceholder')"
+                @visible-change="
+                  (v) => onModelDropdownVisible(v, () => refreshTextModels(true, 'text'), loadingTextModels)
+                "
                 @change="onAiFormChange"
               >
                 <el-option v-for="item in textModels" :key="item" :label="item" :value="item" />
               </el-select>
-              <el-button :loading="loadingTextModels" @click="refreshTextModels(false, 'text')">
-                {{ t('pages.Setting.aiSetting.refreshModels') }}
-              </el-button>
-            </div>
-            <div v-if="textModelHintKey" class="field-hint">
-              {{ t(textModelHintKey) }}
+              <AiIconCopyButton @copy="copyModelName(aiForm.textModel)" />
             </div>
           </el-form-item>
-          <el-form-item :label="t('pages.Setting.aiSetting.embeddingModel')">
+          <el-form-item class="ai-form-item-labeled">
+            <template #label>
+              <SettingFormLabelTip
+                :label="t('pages.Setting.aiSetting.embeddingModel')"
+                :hint="t('pages.Setting.aiSetting.textEmbedModelHint')"
+              />
+            </template>
             <div class="model-row">
               <el-select
                 v-model="aiForm.embeddingModel"
                 filterable
                 allow-create
                 default-first-option
-                style="width: 290px"
+                class="model-row__select"
+                :loading="loadingEmbedModels"
                 :placeholder="t('pages.Setting.aiSetting.modelPlaceholder')"
+                @visible-change="
+                  (v) => onModelDropdownVisible(v, () => refreshTextModels(true, 'embed'), loadingEmbedModels)
+                "
                 @change="onAiFormChange"
               >
                 <el-option v-for="item in embedModels" :key="item" :label="item" :value="item" />
               </el-select>
-              <el-button :loading="loadingEmbedModels" @click="refreshTextModels(false, 'embed')">
-                {{ t('pages.Setting.aiSetting.refreshModels') }}
-              </el-button>
+              <AiIconCopyButton @copy="copyModelName(aiForm.embeddingModel)" />
             </div>
           </el-form-item>
           <el-form-item label=" ">
@@ -998,7 +1000,7 @@ defineExpose({ resetForm, restoreAnchorScroll })
           </template>
         </div>
 
-        <div v-if="aiForm.visualEmbedSource === 'remote'" class="form-card">
+        <div class="form-card">
           <div id="divider-ai-visual-embed" class="divider">
             {{ t('pages.Setting.aiSetting.visualEmbedSection') }}
           </div>
@@ -1039,20 +1041,31 @@ defineExpose({ resetForm, restoreAnchorScroll })
                 :placeholder="t('pages.Setting.aiSetting.apiKeyPlaceholder')"
                 @change="onAiFormChange"
               />
-              <el-button @click="copyApiKey(aiForm.visualEmbedApiKey)">
-                {{ t('pages.Setting.aiSetting.copyApiKey') }}
-              </el-button>
+              <AiIconCopyButton @copy="copyApiKey(aiForm.visualEmbedApiKey)" />
             </div>
           </el-form-item>
-          <el-form-item :label="t('pages.Setting.aiSetting.visualEmbedModel')">
+          <el-form-item class="ai-form-item-labeled">
+            <template #label>
+              <SettingFormLabelTip
+                v-if="visualEmbedModelHintKey"
+                :label="t('pages.Setting.aiSetting.visualEmbedModel')"
+                :hint="t(visualEmbedModelHintKey)"
+              />
+              <span v-else>{{ t('pages.Setting.aiSetting.visualEmbedModel') }}</span>
+            </template>
             <div class="model-row">
               <el-select
                 v-model="aiForm.visualEmbedModel"
                 filterable
                 allow-create
                 default-first-option
-                style="width: 290px"
+                class="model-row__select"
+                :loading="loadingVisualEmbedModels"
                 :placeholder="t('pages.Setting.aiSetting.modelPlaceholder')"
+                @visible-change="
+                  (v) =>
+                    onModelDropdownVisible(v, refreshVisualEmbedModels, loadingVisualEmbedModels)
+                "
                 @change="onAiFormChange"
               >
                 <el-option
@@ -1062,15 +1075,7 @@ defineExpose({ resetForm, restoreAnchorScroll })
                   :value="item"
                 />
               </el-select>
-              <el-button
-                :loading="loadingVisualEmbedModels"
-                @click="refreshVisualEmbedModels(false)"
-              >
-                {{ t('pages.Setting.aiSetting.refreshModels') }}
-              </el-button>
-            </div>
-            <div v-if="visualEmbedModelHintKey" class="field-hint">
-              {{ t(visualEmbedModelHintKey) }}
+              <AiIconCopyButton @copy="copyModelName(aiForm.visualEmbedModel)" />
             </div>
           </el-form-item>
           <el-form-item label=" ">
@@ -1302,14 +1307,20 @@ defineExpose({ resetForm, restoreAnchorScroll })
   display: flex;
   gap: 8px;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  max-width: 100%;
+
+  &__select {
+    flex: 0 0 290px;
+    width: 290px;
+  }
 }
 
 .api-key-row {
   display: flex;
   gap: 8px;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   width: 100%;
   max-width: 360px;
 
@@ -1317,42 +1328,6 @@ defineExpose({ resetForm, restoreAnchorScroll })
     flex: 1;
     min-width: 200px;
     max-width: 290px;
-  }
-}
-
-.ai-setting-form {
-  :deep(.el-form-item) {
-    align-items: center;
-    margin-bottom: 18px;
-  }
-
-  :deep(.el-form-item__label) {
-    display: inline-flex;
-    align-items: center;
-    justify-content: flex-end;
-    height: 32px;
-    line-height: 32px;
-    padding-right: 12px;
-    white-space: nowrap;
-  }
-
-  :deep(.el-form-item__content) {
-    display: flex;
-    align-items: center;
-    min-height: 32px;
-    line-height: 32px;
-  }
-}
-
-.ai-form-control-row {
-  display: inline-flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0;
-  min-height: 32px;
-
-  &--score-min {
-    gap: 8px;
   }
 }
 
@@ -1373,38 +1348,6 @@ defineExpose({ resetForm, restoreAnchorScroll })
 
   &--first {
     margin-top: 4px;
-  }
-}
-
-.form-item-label-with-tip {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
-  flex-wrap: nowrap;
-  gap: 6px;
-  white-space: nowrap;
-
-  &__text {
-    line-height: 1.4;
-    white-space: nowrap;
-  }
-}
-
-.form-item-tip-trigger {
-  display: inline-flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  font-size: 16px;
-  color: var(--el-text-color-secondary);
-  cursor: help;
-  outline: none;
-
-  &:hover,
-  &:focus-visible {
-    color: var(--el-color-primary);
   }
 }
 
@@ -1454,15 +1397,4 @@ defineExpose({ resetForm, restoreAnchorScroll })
   box-sizing: border-box;
 }
 
-.ai-setting-feature-tip {
-  max-width: min(320px, 90vw) !important;
-  width: max-content;
-
-  &,
-  .el-tooltip__content {
-    line-height: 1.5;
-    white-space: normal !important;
-    word-break: break-word;
-  }
-}
 </style>

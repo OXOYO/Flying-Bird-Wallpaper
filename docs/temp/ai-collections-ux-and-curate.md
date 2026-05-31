@@ -13,7 +13,7 @@
 
 1. **系统自动策展**：入选壁纸改为 **最低评分门槛**（不再用固定 40 条上限）；合集数量上限可在 AI 设置配置；**分析队列稳定并完成至少一轮自动整理后暂停定时/防抖**（手动整理不受限）。  
 2. **合集页**：壁纸列表 **分页加载**；缩略图与搜索页一致（`w=1080`）；卡片 **主色占位** 与探索页一致。  
-3. **AI 设置**：`scoreMinFilter`、`autoCollectionsMaxCount` 置于「AI 自动整理合集」开关下方；`analysisMaxRetries` 在后台分析模式下配置（见 [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md)）。
+3. **AI 设置**：`scoreMinFilter`、`autoCollectionsMaxCount` 置于「AI 自动整理合集」开关下方；后台 `analysisMaxRetries` 默认 1（**无 UI**，见 [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md)）。
 
 ---
 
@@ -123,7 +123,7 @@ flowchart LR
 | 子项 · 数字 | `scoreMinFilter` | 最低评分过滤（默认 **70**，0～100）；同时影响 **搜索** 与系统合集 |
 | 子项 · 数字 | `autoCollectionsMaxCount` | 仅当自动整理开启时显示；3～50，默认 20 |
 
-后台分析相关 **`analysisMaxRetries`**（默认 5，1～20）见 [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) §4。
+后台分析相关 **`analysisMaxRetries`**（默认 **1**，1～20，设置页不展示）见 [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) §4。合集生成 **不** 使用 `hideUnsafe`；敏感图展示见 [privacy-and-sensitive-content.md](./privacy-and-sensitive-content.md)。
 
 子项在开关下方缩进展示（`ai-curate-sub-options`）。
 

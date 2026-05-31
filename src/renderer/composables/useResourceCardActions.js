@@ -6,6 +6,7 @@ import { ElCheckbox } from 'element-plus'
 import UseSettingStore from '@renderer/stores/settingStore.js'
 import { applyExploreImageSrc } from '@renderer/utils/resourceImageUrl.js'
 import { hex2RGB } from '@renderer/utils/gen-color.js'
+import { cloneForIpc } from '@renderer/utils/cloneForIpc.js'
 
 export function normalizeResourceItem(item, options = {}) {
   if (!item) return item
@@ -201,7 +202,7 @@ export function useResourceCardActions(options = {}) {
   }
 
   const doViewImage = async (item, index, inner = false) => {
-    const list = getViewRecords(index, viewSize)
+    const list = cloneForIpc(getViewRecords(index, viewSize))
     const activeIndex = list.findIndex((i) => i.uniqueKey === item.uniqueKey)
     if (inner && options.viewImageRef?.value) {
       options.viewImageRef.value.view(activeIndex, list)
@@ -220,7 +221,7 @@ export function useResourceCardActions(options = {}) {
       let end = index < 0 ? 0 : index
       let start = Math.max(0, end - viewSize)
       if (end - start < viewSize) start = 0
-      const slice = toRaw(list).slice(start, end)
+      const slice = cloneForIpc(toRaw(list).slice(start, end))
       if (slice.length) {
         const activeIndex = Math.max(0, slice.findIndex((i) => i.uniqueKey === item.uniqueKey) - 1)
         options.viewImageRef?.value?.prepend(activeIndex, slice)
@@ -247,7 +248,7 @@ export function useResourceCardActions(options = {}) {
         start = Math.max(0, list.length - viewSize)
         end = list.length
       }
-      const slice = toRaw(list).slice(start, end)
+      const slice = cloneForIpc(toRaw(list).slice(start, end))
       if (slice.length) {
         const ti = slice.findIndex((i) => i.uniqueKey === item.uniqueKey)
         const activeIndex = ti < slice.length - 1 ? ti + 1 : 0
@@ -263,7 +264,7 @@ export function useResourceCardActions(options = {}) {
   }
 
   const setAsWallpaperWithDownload = async (item, index) => {
-    const res = await window.FBW.setAsWallpaperWithDownload(JSON.parse(JSON.stringify(item)))
+    const res = await window.FBW.setAsWallpaperWithDownload(cloneForIpc(item))
     ElMessage({
       type: res?.success ? 'success' : 'error',
       message: res?.message || (res?.success ? t('messages.operationSuccess') : t('messages.operationFail'))
@@ -292,8 +293,7 @@ export function useResourceCardActions(options = {}) {
     if (!item?.id) return
     const scope = options.getSimilarScope?.() ?? null
     const pageSize = Math.max(1, Number(options.getSimilarPageSize?.()) || 50)
-    const plainScope =
-      scope && typeof scope === 'object' ? JSON.parse(JSON.stringify(scope)) : null
+    const plainScope = scope && typeof scope === 'object' ? cloneForIpc(scope) : null
     const res = await window.FBW.findSimilar({
       resourceId: Number(item.id),
       limit: pageSize,
@@ -335,7 +335,7 @@ export function useResourceCardActions(options = {}) {
 
   const onDeleteFile = (item, index) => {
     const onConfirmDeleteFile = async () => {
-      const res = await window.FBW.deleteFile(JSON.parse(JSON.stringify(item)))
+      const res = await window.FBW.deleteFile(cloneForIpc(item))
       if (res?.success) {
         removeListItem(item, index)
       }
@@ -364,7 +364,7 @@ export function useResourceCardActions(options = {}) {
   }
 
   const onDownloadFile = async (item, index) => {
-    const res = await window.FBW.downloadFile(JSON.parse(JSON.stringify(item)))
+    const res = await window.FBW.downloadFile(cloneForIpc(item))
     ElMessage({
       type: res?.success ? 'success' : 'error',
       message: res?.message || (res?.success ? t('messages.operationSuccess') : t('messages.operationFail'))

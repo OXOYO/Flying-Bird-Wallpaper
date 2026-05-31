@@ -1,4 +1,5 @@
 import { ref, toRaw } from 'vue'
+import { cloneForIpc } from '@renderer/utils/cloneForIpc.js'
 
 /** IPC 入参须为可结构化克隆的纯对象（避免 ref/reactive 导致 clone 失败） */
 function buildFindSimilarIpcPayload({ resourceId, limit, scope, excludeIds }) {
@@ -10,7 +11,7 @@ function buildFindSimilarIpcPayload({ resourceId, limit, scope, excludeIds }) {
       .filter((id) => Number.isFinite(id))
   }
   if (scope && typeof scope === 'object') {
-    payload.scope = JSON.parse(JSON.stringify(toRaw(scope)))
+    payload.scope = cloneForIpc(toRaw(scope))
   }
   return payload
 }
@@ -48,9 +49,7 @@ export function useSimilarResultsLoadMore({ normalizeRows, getPageSize = () => 5
   const startSimilar = ({ resourceId, scope, sourceItem, firstRows, pageSize, total }) => {
     const rows = firstRows || []
     const plainScope =
-      scope && typeof scope === 'object'
-        ? JSON.parse(JSON.stringify(toRaw(scope)))
-        : undefined
+      scope && typeof scope === 'object' ? cloneForIpc(toRaw(scope)) : undefined
     similarQuery.value = {
       resourceId: Number(resourceId),
       scope: plainScope,

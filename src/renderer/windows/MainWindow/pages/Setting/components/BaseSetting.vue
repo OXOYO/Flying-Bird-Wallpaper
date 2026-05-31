@@ -27,6 +27,7 @@ import { useTranslation } from 'i18next-vue'
 import { useSettingAnchorScroll } from '../utils/useSettingAnchorScroll.js'
 import { useAiAnalysisDashboard } from '../utils/useAiAnalysisDashboard.js'
 import AiAnalysisDashboardPanel from './AiAnalysisDashboardPanel.vue'
+import SettingFormLabelTip from './SettingFormLabelTip.vue'
 
 const props = defineProps({
   tabActive: { type: Boolean, default: true }
@@ -486,7 +487,13 @@ defineExpose({
       />
     </aside>
     <el-scrollbar ref="baseSettingsScrollbarRef" style="height: 100%; flex: 1">
-      <el-form ref="settingDataFormRef" :model="settingDataForm" label-width="auto">
+      <el-form
+        ref="settingDataFormRef"
+        :model="settingDataForm"
+        label-width="auto"
+        label-position="right"
+        class="ai-setting-form"
+      >
         <div class="form-card">
           <div id="divider-base" class="divider">{{ t('pages.Setting.divider.base') }}</div>
           <div id="divider-app" class="divider-sub">
@@ -540,51 +547,49 @@ defineExpose({
           >
             <el-checkbox-group
               v-model="settingDataForm.enabledMenus"
-              style="max-width: 450px"
+              class="setting-checkbox-group--menus"
               @change="onSettingDataFormChange"
             >
-              <el-checkbox
-                v-for="item in canBeEnabledMenus"
-                :key="item.name"
-                :label="t(item.locale)"
-                :value="item.name"
-                style="width: 100px"
-              >
-                <IconifyIcon
-                  :icon="item.icon"
-                  style="
-                    vertical-align: middle;
-                    margin-right: 10px;
-                    color: var(--el-text-color-regular);
-                  "
-                />
-                <span class="checkbox-label">{{ t(item.locale) }}</span>
+              <el-checkbox v-for="item in canBeEnabledMenus" :key="item.name" :label="item.name">
+                <span class="setting-checkbox__content">
+                  <IconifyIcon :icon="item.icon" class="setting-checkbox__icon" />
+                  <span class="checkbox-label">{{ t(item.locale) }}</span>
+                </span>
               </el-checkbox>
             </el-checkbox-group>
           </el-form-item>
-          <el-form-item
-            :label="t('pages.Setting.settingDataForm.enableExpandSideMenu')"
-            prop="enableExpandSideMenu"
-          >
-            <el-checkbox
+          <el-form-item prop="enableExpandSideMenu" class="ai-form-item-labeled">
+            <template #label>
+              <SettingFormLabelTip
+                :label="t('pages.Setting.settingDataForm.enableExpandSideMenu')"
+                :hint="t('pages.Setting.settingDataForm.enableExpandSideMenuHint')"
+              />
+            </template>
+            <el-switch
               v-model="settingDataForm.enableExpandSideMenu"
               @change="onEnableExpandSideMenuChange"
             />
           </el-form-item>
-          <el-form-item
-            :label="t('pages.Setting.settingDataForm.showSideMenuLabel')"
-            prop="showSideMenuLabel"
-          >
-            <el-checkbox
+          <el-form-item prop="showSideMenuLabel" class="ai-form-item-labeled">
+            <template #label>
+              <SettingFormLabelTip
+                :label="t('pages.Setting.settingDataForm.showSideMenuLabel')"
+                :hint="t('pages.Setting.settingDataForm.showSideMenuLabelHint')"
+              />
+            </template>
+            <el-switch
               v-model="settingDataForm.showSideMenuLabel"
               @change="onSettingDataFormChange"
             />
           </el-form-item>
-          <el-form-item
-            :label="t('pages.Setting.settingDataForm.suspensionBallVisible')"
-            prop="suspensionBallVisible"
-          >
-            <el-checkbox
+          <el-form-item prop="suspensionBallVisible" class="ai-form-item-labeled">
+            <template #label>
+              <SettingFormLabelTip
+                :label="t('pages.Setting.settingDataForm.suspensionBallVisible')"
+                :hint="t('pages.Setting.settingDataForm.suspensionBallVisibleHint')"
+              />
+            </template>
+            <el-switch
               v-model="settingDataForm.suspensionBallVisible"
               @change="onSuspensionBallVisibleChange"
             />
@@ -594,40 +599,49 @@ defineExpose({
             {{ t('pages.Setting.divider.function') }}
           </div>
           <el-form-item :label="t('pages.Setting.settingDataForm.startup')" prop="startup">
-            <el-checkbox v-model="settingDataForm.startup" @change="onSettingDataFormChange" />
+            <el-switch v-model="settingDataForm.startup" @change="onSettingDataFormChange" />
           </el-form-item>
           <el-form-item
             :label="t('pages.Setting.settingDataForm.openMainWindowOnStartup')"
             prop="openMainWindowOnStartup"
           >
-            <el-checkbox
+            <el-switch
               v-model="settingDataForm.openMainWindowOnStartup"
               @change="onSettingDataFormChange"
             />
           </el-form-item>
-          <el-form-item
-            :label="t('pages.Setting.settingDataForm.startH5ServerOnStartup')"
-            prop="startH5ServerOnStartup"
-          >
-            <el-checkbox
+          <el-form-item prop="startH5ServerOnStartup" class="ai-form-item-labeled">
+            <template #label>
+              <SettingFormLabelTip
+                :label="t('pages.Setting.settingDataForm.startH5ServerOnStartup')"
+                :hint="t('pages.Setting.settingDataForm.startH5ServerOnStartupHint')"
+              />
+            </template>
+            <el-switch
               v-model="settingDataForm.startH5ServerOnStartup"
               @change="onSettingDataFormChange"
             />
           </el-form-item>
-          <el-form-item
-            :label="t('pages.Setting.settingDataForm.enableSegmentationTask')"
-            prop="enableSegmentationTask"
-          >
-            <el-checkbox
+          <el-form-item prop="enableSegmentationTask" class="ai-form-item-labeled">
+            <template #label>
+              <SettingFormLabelTip
+                :label="t('pages.Setting.settingDataForm.enableSegmentationTask')"
+                :hint="t('pages.Setting.settingDataForm.enableSegmentationTaskHint')"
+              />
+            </template>
+            <el-switch
               v-model="settingDataForm.enableSegmentationTask"
               @change="onSettingDataFormChange"
             />
           </el-form-item>
-          <el-form-item
-            :label="t('pages.Setting.settingDataForm.powerSaveMode')"
-            prop="powerSaveMode"
-          >
-            <el-checkbox
+          <el-form-item prop="powerSaveMode" class="ai-form-item-labeled">
+            <template #label>
+              <SettingFormLabelTip
+                :label="t('pages.Setting.settingDataForm.powerSaveMode')"
+                :hint="t('pages.Setting.settingDataForm.powerSaveModeHint')"
+              />
+            </template>
+            <el-switch
               v-model="settingDataForm.powerSaveMode"
               @change="onSettingDataFormChange"
             />
@@ -639,19 +653,17 @@ defineExpose({
           <el-form-item
             v-for="group in notificationsOptions"
             :key="group.name"
+            class="notification-form-item"
             :label="t(group.locale)"
           >
             <el-checkbox-group
               v-model="settingDataForm.notifications"
+              class="notification-settings__options"
               @change="onSettingDataFormChange"
             >
-              <el-checkbox
-                v-for="item in group.children"
-                :key="item.value"
-                :label="t(item.locale)"
-                :value="item.value"
-                style="width: 100px"
-              />
+              <el-checkbox v-for="item in group.children" :key="item.value" :label="item.value">
+                <span class="checkbox-label">{{ t(item.locale) }}</span>
+              </el-checkbox>
             </el-checkbox-group>
           </el-form-item>
 
@@ -686,20 +698,35 @@ defineExpose({
               />
             </el-select>
           </el-form-item>
-          <el-form-item :label="t('pages.Setting.settingDataForm.showTag')" prop="showTag">
-            <el-checkbox v-model="settingDataForm.showTag" @change="onSettingDataFormChange" />
+          <el-form-item prop="showTag" class="ai-form-item-labeled">
+            <template #label>
+              <SettingFormLabelTip
+                :label="t('pages.Setting.settingDataForm.showTag')"
+                :hint="t('pages.Setting.settingDataForm.showTagHint')"
+              />
+            </template>
+            <el-switch v-model="settingDataForm.showTag" @change="onSettingDataFormChange" />
           </el-form-item>
-          <el-form-item
-            :label="t('pages.Setting.settingDataForm.confirmOnDeleteFile')"
-            prop="confirmOnDeleteFile"
-          >
-            <el-checkbox
+          <el-form-item prop="confirmOnDeleteFile" class="ai-form-item-labeled">
+            <template #label>
+              <SettingFormLabelTip
+                :label="t('pages.Setting.settingDataForm.confirmOnDeleteFile')"
+                :hint="t('pages.Setting.settingDataForm.confirmOnDeleteFileHint')"
+              />
+            </template>
+            <el-switch
               v-model="settingDataForm.confirmOnDeleteFile"
               @change="onSettingDataFormChange"
             />
           </el-form-item>
-          <el-form-item :label="t('pages.Setting.settingDataForm.viewImageIntervalTime')">
-            <el-form-item prop="viewImageIntervalTime">
+          <el-form-item class="ai-form-item-labeled">
+            <template #label>
+              <SettingFormLabelTip
+                :label="t('pages.Setting.settingDataForm.viewImageIntervalTime')"
+                :hint="t('pages.Setting.settingDataForm.viewImageIntervalTimeHint')"
+              />
+            </template>
+            <div class="setting-form-control-row">
               <el-input-number
                 v-model="settingDataForm.viewImageIntervalTime"
                 :min="minTimes.viewImageIntervalUnit"
@@ -708,11 +735,9 @@ defineExpose({
                 style="width: 140px"
                 @change="onSettingDataFormChange"
               />
-            </el-form-item>
-            <el-form-item prop="viewImageIntervalUnit">
               <el-select
                 v-model="settingDataForm.viewImageIntervalUnit"
-                style="width: 140px; margin-left: 10px"
+                style="width: 140px"
                 @change="(val) => onTimeUnitChange('viewImageIntervalUnit', val)"
               >
                 <el-option
@@ -722,7 +747,7 @@ defineExpose({
                   :value="item.value"
                 />
               </el-select>
-            </el-form-item>
+            </div>
           </el-form-item>
         </div>
 
@@ -733,29 +758,42 @@ defineExpose({
           <div id="divider-switch" class="divider-sub">
             {{ t('pages.Setting.divider.switch') }}
           </div>
-          <el-form-item
-            :label="t('pages.Setting.settingDataForm.autoSwitchWallpaper')"
-            prop="autoSwitchWallpaper"
-          >
-            <el-checkbox
+          <el-form-item prop="autoSwitchWallpaper" class="ai-form-item-labeled">
+            <template #label>
+              <SettingFormLabelTip
+                :label="t('pages.Setting.settingDataForm.autoSwitchWallpaper')"
+                :hint="t('pages.Setting.settingDataForm.autoSwitchWallpaperHint')"
+              />
+            </template>
+            <el-switch
               v-model="settingDataForm.autoSwitchWallpaper"
               @change="onSettingDataFormChange('autoSwitchWallpaper')"
             />
           </el-form-item>
-          <el-form-item :label="t('pages.Setting.settingDataForm.switchType')" prop="switchType">
-            <el-radio-group v-model="settingDataForm.switchType" @change="onSettingDataFormChange">
-              <el-radio
-                v-for="item in switchTypeOptions"
-                :key="item.value"
-                :value="item.value"
-                style="width: 100px"
-              >
+          <el-form-item prop="switchType" class="ai-form-item-labeled">
+            <template #label>
+              <SettingFormLabelTip
+                :label="t('pages.Setting.settingDataForm.switchType')"
+                :hint="t('pages.Setting.settingDataForm.switchTypeHint')"
+              />
+            </template>
+            <el-radio-group
+              v-model="settingDataForm.switchType"
+              class="setting-radio-group--2"
+              @change="onSettingDataFormChange"
+            >
+              <el-radio v-for="item in switchTypeOptions" :key="item.value" :label="item.value">
                 <span class="radio-label">{{ t(item.locale) }}</span>
               </el-radio>
             </el-radio-group>
           </el-form-item>
-          <el-form-item :label="t('pages.Setting.settingDataForm.switchIntervalTime')">
-            <el-form-item prop="switchIntervalTime">
+          <el-form-item class="ai-form-item-labeled">
+            <template #label>
+              <span class="form-item-label-with-tip__text">{{
+                t('pages.Setting.settingDataForm.switchIntervalTime')
+              }}</span>
+            </template>
+            <div class="setting-form-control-row">
               <el-input-number
                 v-model="settingDataForm.switchIntervalTime"
                 :min="minTimes.switchIntervalUnit"
@@ -764,11 +802,9 @@ defineExpose({
                 style="width: 140px"
                 @change="onSettingDataFormChange"
               />
-            </el-form-item>
-            <el-form-item prop="switchIntervalUnit">
               <el-select
                 v-model="settingDataForm.switchIntervalUnit"
-                style="width: 140px; margin-left: 10px"
+                style="width: 140px"
                 @change="(val) => onTimeUnitChange('switchIntervalUnit', val)"
               >
                 <el-option
@@ -778,12 +814,24 @@ defineExpose({
                   :value="item.value"
                 />
               </el-select>
-            </el-form-item>
+            </div>
           </el-form-item>
-          <el-form-item :label="t('pages.Setting.settingDataForm.allScreen')" prop="allScreen">
-            <el-checkbox v-model="settingDataForm.allScreen" @change="onSettingDataFormChange" />
+          <el-form-item prop="allScreen" class="ai-form-item-labeled">
+            <template #label>
+              <SettingFormLabelTip
+                :label="t('pages.Setting.settingDataForm.allScreen')"
+                :hint="t('pages.Setting.settingDataForm.allScreenHint')"
+              />
+            </template>
+            <el-switch v-model="settingDataForm.allScreen" @change="onSettingDataFormChange" />
           </el-form-item>
-          <el-form-item :label="t('pages.Setting.settingDataForm.scaleType')" prop="scaleType">
+          <el-form-item prop="scaleType" class="ai-form-item-labeled">
+            <template #label>
+              <SettingFormLabelTip
+                :label="t('pages.Setting.settingDataForm.scaleType')"
+                :hint="t('pages.Setting.settingDataForm.scaleTypeHint')"
+              />
+            </template>
             <el-select
               v-model="settingDataForm.scaleType"
               style="width: 140px"
@@ -818,44 +866,35 @@ defineExpose({
           <el-form-item :label="t('pages.Setting.settingDataForm.orientation')" prop="orientation">
             <el-checkbox-group
               v-model="settingDataForm.orientation"
+              class="setting-checkbox-group--2"
               @change="onSettingDataFormChange"
             >
-              <el-checkbox
-                v-for="item in orientationOptions"
-                :key="item.value"
-                :label="t(item.locale)"
-                :value="item.value"
-                style="width: 100px"
-              >
-                <IconifyIcon
-                  :icon="item.icon"
-                  style="
-                    vertical-align: middle;
-                    margin-right: 10px;
-                    color: var(--el-text-color-regular);
-                  "
-                />
-                <span class="checkbox-label">{{ t(item.locale) }}</span>
+              <el-checkbox v-for="item in orientationOptions" :key="item.value" :label="item.value">
+                <span class="setting-checkbox__content">
+                  <IconifyIcon :icon="item.icon" class="setting-checkbox__icon" />
+                  <span class="checkbox-label">{{ t(item.locale) }}</span>
+                </span>
               </el-checkbox>
             </el-checkbox-group>
           </el-form-item>
           <el-form-item :label="t('pages.Setting.settingDataForm.quality')" prop="quality">
-            <el-checkbox-group v-model="settingDataForm.quality" @change="onSettingDataFormChange">
-              <el-checkbox
-                v-for="text in qualityList"
-                :key="text"
-                :label="text"
-                :value="text"
-                style="width: 100px"
-              >
+            <el-checkbox-group
+              v-model="settingDataForm.quality"
+              class="setting-checkbox-group--4"
+              @change="onSettingDataFormChange"
+            >
+              <el-checkbox v-for="text in qualityList" :key="text" :label="text">
                 <span class="checkbox-label">{{ text }}</span>
               </el-checkbox>
             </el-checkbox-group>
           </el-form-item>
-          <el-form-item
-            :label="t('pages.Setting.settingDataForm.filterKeywords.label')"
-            prop="filterKeywords"
-          >
+          <el-form-item prop="filterKeywords" class="ai-form-item-labeled">
+            <template #label>
+              <SettingFormLabelTip
+                :label="t('pages.Setting.settingDataForm.filterKeywords.label')"
+                :hint="t('pages.Setting.settingDataForm.filterKeywordsHint')"
+              />
+            </template>
             <el-input
               v-model="settingDataForm.filterKeywords"
               :placeholder="t('pages.Setting.settingDataForm.filterKeywords.placeholder')"
@@ -868,7 +907,13 @@ defineExpose({
           <div id="divider-localResource" class="divider-sub">
             {{ t('pages.Setting.divider.localResource') }}
           </div>
-          <el-form-item :label="t('pages.Setting.settingDataForm.localResourceFolders.label')">
+          <el-form-item class="ai-form-item-labeled">
+            <template #label>
+              <SettingFormLabelTip
+                :label="t('pages.Setting.settingDataForm.localResourceFolders.label')"
+                :hint="t('pages.Setting.settingDataForm.localResourceFoldersHint')"
+              />
+            </template>
             <template v-if="settingDataForm.localResourceFolders.length">
               <el-input
                 v-for="(folderPath, index) in settingDataForm.localResourceFolders"
@@ -898,10 +943,13 @@ defineExpose({
               </el-button>
             </div>
           </el-form-item>
-          <el-form-item
-            :label="t('pages.Setting.settingDataForm.allowedFileExt.label')"
-            prop="allowedFileExt"
-          >
+          <el-form-item prop="allowedFileExt" class="ai-form-item-labeled">
+            <template #label>
+              <SettingFormLabelTip
+                :label="t('pages.Setting.settingDataForm.allowedFileExt.label')"
+                :hint="t('pages.Setting.settingDataForm.allowedFileExtHint')"
+              />
+            </template>
             <el-select
               v-model="settingDataForm.allowedFileExt"
               multiple
@@ -918,8 +966,13 @@ defineExpose({
               />
             </el-select>
           </el-form-item>
-          <el-form-item :label="t('pages.Setting.settingDataForm.refreshDirectoryIntervalTime')">
-            <el-form-item prop="refreshDirectoryIntervalTime">
+          <el-form-item class="ai-form-item-labeled">
+            <template #label>
+              <span class="form-item-label-with-tip__text">{{
+                t('pages.Setting.settingDataForm.refreshDirectoryIntervalTime')
+              }}</span>
+            </template>
+            <div class="setting-form-control-row">
               <el-input-number
                 v-model="settingDataForm.refreshDirectoryIntervalTime"
                 :min="minTimes.refreshDirectoryIntervalUnit"
@@ -928,11 +981,9 @@ defineExpose({
                 style="width: 140px"
                 @change="onSettingDataFormChange"
               />
-            </el-form-item>
-            <el-form-item prop="refreshDirectoryIntervalUnit">
               <el-select
                 v-model="settingDataForm.refreshDirectoryIntervalUnit"
-                style="width: 140px; margin-left: 10px"
+                style="width: 140px"
                 @change="(val) => onTimeUnitChange('refreshDirectoryIntervalUnit', val)"
               >
                 <el-option
@@ -942,13 +993,16 @@ defineExpose({
                   :value="item.value"
                 />
               </el-select>
-            </el-form-item>
+            </div>
           </el-form-item>
-          <el-form-item
-            :label="t('pages.Setting.settingDataForm.autoRefreshDirectory')"
-            prop="autoRefreshDirectory"
-          >
-            <el-checkbox
+          <el-form-item prop="autoRefreshDirectory" class="ai-form-item-labeled">
+            <template #label>
+              <SettingFormLabelTip
+                :label="t('pages.Setting.settingDataForm.autoRefreshDirectory')"
+                :hint="t('pages.Setting.settingDataForm.autoRefreshDirectoryHint')"
+              />
+            </template>
+            <el-switch
               v-model="settingDataForm.autoRefreshDirectory"
               :disabled="!settingDataForm.localResourceFolders.length"
               @change="onSettingDataFormChange"
@@ -983,26 +1037,15 @@ defineExpose({
           >
             <el-checkbox-group
               v-model="settingDataForm.downloadOrientation"
+              class="setting-checkbox-group--2"
               :disabled="!settingDataForm.downloadSources.length"
-              style="max-width: 450px"
               @change="onSettingDataFormChange"
             >
-              <el-checkbox
-                v-for="item in orientationOptions"
-                :key="item.value"
-                :label="t(item.locale)"
-                :value="item.value"
-                style="width: 100px"
-              >
-                <IconifyIcon
-                  :icon="item.icon"
-                  style="
-                    vertical-align: middle;
-                    margin-right: 10px;
-                    color: var(--el-text-color-regular);
-                  "
-                />
-                <span class="checkbox-label">{{ t(item.locale) }}</span>
+              <el-checkbox v-for="item in orientationOptions" :key="item.value" :label="item.value">
+                <span class="setting-checkbox__content">
+                  <IconifyIcon :icon="item.icon" class="setting-checkbox__icon" />
+                  <span class="checkbox-label">{{ t(item.locale) }}</span>
+                </span>
               </el-checkbox>
             </el-checkbox-group>
           </el-form-item>
@@ -1049,8 +1092,13 @@ defineExpose({
               </template>
             </el-input>
           </el-form-item>
-          <el-form-item :label="t('pages.Setting.settingDataForm.downloadIntervalTime')">
-            <el-form-item prop="downloadIntervalTime">
+          <el-form-item class="ai-form-item-labeled">
+            <template #label>
+              <span class="form-item-label-with-tip__text">{{
+                t('pages.Setting.settingDataForm.downloadIntervalTime')
+              }}</span>
+            </template>
+            <div class="setting-form-control-row">
               <el-input-number
                 v-model="settingDataForm.downloadIntervalTime"
                 :disabled="!settingDataForm.downloadSources.length"
@@ -1060,12 +1108,10 @@ defineExpose({
                 style="width: 140px"
                 @change="onSettingDataFormChange"
               />
-            </el-form-item>
-            <el-form-item prop="switchIntervalUnit">
               <el-select
                 v-model="settingDataForm.downloadIntervalUnit"
                 :disabled="!settingDataForm.downloadSources.length"
-                style="width: 140px; margin-left: 10px"
+                style="width: 140px"
                 @change="(val) => onTimeUnitChange('downloadIntervalUnit', val)"
               >
                 <el-option
@@ -1075,20 +1121,28 @@ defineExpose({
                   :value="item.value"
                 />
               </el-select>
-            </el-form-item>
+            </div>
           </el-form-item>
-          <el-form-item
-            :label="t('pages.Setting.settingDataForm.autoDownload')"
-            prop="autoDownload"
-          >
-            <el-checkbox
+          <el-form-item prop="autoDownload" class="ai-form-item-labeled">
+            <template #label>
+              <SettingFormLabelTip
+                :label="t('pages.Setting.settingDataForm.autoDownload')"
+                :hint="t('pages.Setting.settingDataForm.autoDownloadHint')"
+              />
+            </template>
+            <el-switch
               v-model="settingDataForm.autoDownload"
               :disabled="!settingDataForm.downloadSources.length || !settingDataForm.downloadFolder"
               @change="onSettingDataFormChange"
             />
           </el-form-item>
-          <el-form-item :label="t('pages.Setting.settingDataForm.clearDownloadedExpiredTime')">
-            <el-form-item prop="clearDownloadedExpiredTime">
+          <el-form-item class="ai-form-item-labeled">
+            <template #label>
+              <span class="form-item-label-with-tip__text">{{
+                t('pages.Setting.settingDataForm.clearDownloadedExpiredTime')
+              }}</span>
+            </template>
+            <div class="setting-form-control-row">
               <el-input-number
                 v-model="settingDataForm.clearDownloadedExpiredTime"
                 :min="minTimes.clearDownloadedExpiredUnit"
@@ -1097,11 +1151,9 @@ defineExpose({
                 style="width: 140px"
                 @change="onSettingDataFormChange"
               />
-            </el-form-item>
-            <el-form-item prop="clearDownloadedExpiredUnit">
               <el-select
                 v-model="settingDataForm.clearDownloadedExpiredUnit"
-                style="width: 140px; margin-left: 10px"
+                style="width: 140px"
                 @change="(val) => onTimeUnitChange('clearDownloadedExpiredUnit', val)"
               >
                 <el-option
@@ -1111,13 +1163,13 @@ defineExpose({
                   :value="item.value"
                 />
               </el-select>
-            </el-form-item>
+            </div>
           </el-form-item>
           <el-form-item
             :label="t('pages.Setting.settingDataForm.autoClearDownloaded')"
             prop="autoClearDownloaded"
           >
-            <el-checkbox
+            <el-switch
               v-model="settingDataForm.autoClearDownloaded"
               :disabled="!settingDataForm.downloadFolder"
               @change="onSettingDataFormChange"
@@ -1151,8 +1203,13 @@ defineExpose({
               <IconifyIcon icon="custom:wallpaper" />
             </el-button>
           </el-form-item>
-          <el-form-item :label="t('pages.Setting.settingDataForm.refreshWebWallpaperIntervalTime')">
-            <el-form-item prop="refreshWebWallpaperIntervalTime">
+          <el-form-item class="ai-form-item-labeled">
+            <template #label>
+              <span class="form-item-label-with-tip__text">{{
+                t('pages.Setting.settingDataForm.refreshWebWallpaperIntervalTime')
+              }}</span>
+            </template>
+            <div class="setting-form-control-row">
               <el-input-number
                 v-model="settingDataForm.refreshWebWallpaperIntervalTime"
                 :min="minTimes.refreshWebWallpaperIntervalUnit"
@@ -1161,11 +1218,9 @@ defineExpose({
                 style="width: 140px"
                 @change="onSettingDataFormChange"
               />
-            </el-form-item>
-            <el-form-item prop="refreshWebWallpaperIntervalUnit">
               <el-select
                 v-model="settingDataForm.refreshWebWallpaperIntervalUnit"
-                style="width: 140px; margin-left: 10px"
+                style="width: 140px"
                 @change="(val) => onTimeUnitChange('refreshWebWallpaperIntervalUnit', val)"
               >
                 <el-option
@@ -1175,13 +1230,13 @@ defineExpose({
                   :value="item.value"
                 />
               </el-select>
-            </el-form-item>
+            </div>
           </el-form-item>
           <el-form-item
             :label="t('pages.Setting.settingDataForm.autoRefreshWebWallpaper')"
             prop="autoRefreshWebWallpaper"
           >
-            <el-checkbox
+            <el-switch
               v-model="settingDataForm.autoRefreshWebWallpaper"
               :disabled="!settingDataForm.webWallpaperUrl"
               @change="onSettingDataFormChange('autoRefreshWebWallpaper')"
@@ -1245,7 +1300,7 @@ defineExpose({
             :label="t('pages.Setting.settingDataForm.dynamicMuteAudio')"
             prop="dynamicMuteAudio"
           >
-            <el-checkbox
+            <el-switch
               v-model="settingDataForm.dynamicMuteAudio"
               @change="onSettingDataFormChange"
             />
@@ -1305,10 +1360,13 @@ defineExpose({
               @change="(val) => onDynamicSettingChange('dynamicContrast', val)"
             />
           </el-form-item>
-          <el-form-item
-            :label="t('pages.Setting.settingDataForm.dynamicPerformanceMode.label')"
-            prop="dynamicPerformanceMode"
-          >
+          <el-form-item prop="dynamicPerformanceMode" class="ai-form-item-labeled">
+            <template #label>
+              <SettingFormLabelTip
+                :label="t('pages.Setting.settingDataForm.dynamicPerformanceMode.label')"
+                :hint="t('pages.Setting.settingDataForm.dynamicPerformanceModeHint')"
+              />
+            </template>
             <el-select
               v-model="settingDataForm.dynamicPerformanceMode"
               :placeholder="t('pages.Setting.settingDataForm.dynamicPerformanceMode.placeholder')"

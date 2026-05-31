@@ -18,7 +18,9 @@
     "checkUpdate": "檢查更新",
     "menu": "選單",
     "wordDrawer": "詞庫",
-    "qrCode": "QR碼"
+    "qrCode": "QR碼",
+    "expandSideMenu": "展開側邊欄",
+    "collapseSideMenu": "收起側邊欄"
   },
   "qrCode": {
     "notice": "掃描QR碼訪問行動版",
@@ -50,7 +52,8 @@
         "dynamicWallpaper": "動態桌布",
         "rhythmWallpaper": "律動桌布",
         "remoteResource": "遠程資源",
-        "privacyPassword": "隱私密碼"
+        "privacyPassword": "隱私密碼",
+        "privacySpaceOptions": "隱私空間选项"
       },
       "settingDataForm": {
         "locale": "語言",
@@ -156,7 +159,26 @@
         "showTag": "顯示標籤",
         "confirmOnDeleteFile": "刪除前確認",
         "enableSegmentationTask": "啟用分詞任務",
-        "powerSaveMode": "省電模式"
+        "powerSaveMode": "省電模式",
+        "enableExpandSideMenuHint": "開啟後，滑鼠移入主視窗左緣可展開/收起窄側欄，便於快速切換選單",
+        "showSideMenuLabelHint": "關閉後側欄僅顯示圖示以節省寬度；開啟後顯示選單文字",
+        "suspensionBallVisibleHint": "在桌面顯示小懸浮球，懸停可展開上一張/下一張/播放/關閉等快捷操作",
+        "startH5ServerOnStartupHint": "啟動後在本機開啟 H5 網頁服務；側欄 QR 碼可供手機瀏覽器存取壁紙",
+        "enableSegmentationTaskHint": "在「搜尋」頁顯示詞雲抽屜，對當前列表分詞統計（省電模式下可能暫停）",
+        "powerSaveModeHint": "開啟後降低背景壁紙切換、目錄重新整理、AI 分析等頻率，適合筆電省電",
+        "showTagHint": "在壁紙卡片角標顯示來源、品質等；部分標籤可點擊篩選",
+        "confirmOnDeleteFileHint": "從瀏覽頁刪除本機檔案前彈出確認，避免誤刪",
+        "viewImageIntervalTimeHint": "內建圖片預覽器自動輪播時，每張停留的時長",
+        "autoSwitchWallpaperHint": "按下方間隔自動更換桌面壁紙；關閉後需手動或懸浮球切換",
+        "switchTypeHint": "順序：按列表依序切換；隨機：每次隨機選取",
+        "allScreenHint": "開啟後同一壁紙套用到所有顯示器",
+        "scaleTypeHint": "壁紙鋪滿螢幕時的裁剪/拉伸方式",
+        "filterKeywordsHint": "僅當路徑或檔名包含任一關鍵詞時才參與輪換（留空表示不過濾）",
+        "localResourceFoldersHint": "新增本機資料夾作為壁紙庫；支援多個目錄，掃描受「允許檔案類型」限制",
+        "allowedFileExtHint": "掃描本機目錄時只索引所選副檔名，減少無關檔案",
+        "autoRefreshDirectoryHint": "按間隔重新掃描本機目錄，發現新增或移除的檔案",
+        "autoDownloadHint": "按間隔與關鍵詞從已選下載源儲存圖片到下載目錄",
+        "dynamicPerformanceModeHint": "降低影片解碼與渲染負載；播放卡頓時可嘗試節電檔"
       },
       "privacyPasswordForm": {
         "old": {
@@ -169,7 +191,12 @@
           "placeholder": "請輸入新密碼",
           "tooltip": "密碼由數字組成，最少3位，最多6位數字"
         },
-        "confirm": "更新密碼"
+        "confirm": "更新密碼",
+        "hint": {
+          "label": "密碼提示",
+          "placeholder": "例如：生日後四位、常用数字组合（可选）",
+          "tooltip": "仅用于帮助您回忆密碼，与密碼一并保存；验证時会顯示，請勿填写密碼本身"
+        }
       },
       "shortcutSetting": {
         "conflict": "衝突",
@@ -215,8 +242,8 @@
           "sources": "插件源"
         },
         "sources": {
-          "addSource": "新增插件源",
-          "refreshSources": "刷新插件源",
+          "addSource": "新增源",
+          "refreshSources": "刷新",
           "official": "官方",
           "renameSource": "修改源名",
           "deleteSource": "刪除源",
@@ -439,7 +466,6 @@
         "remoteRefererPlaceholder": "可選，用於 OpenRouter 統計",
         "remoteAppTitle": "OpenRouter 應用名",
         "modelPlaceholder": "選擇或輸入模型名稱",
-        "refreshModels": "重新整理模型",
         "ollamaModelHint": "列表來自本機 Ollama，也可手動輸入模型名",
         "presetHints": {
           "lmstudio": "在 LM Studio 中開啟 Local Server（預設 http://127.0.0.1:1234），視覺需選用多模態模型",
@@ -472,7 +498,8 @@
           "modelPurposeMismatch": "模型「{model}」不適合用作{purpose}模型，請更換或重新整理列表後重選",
           "serverError": "AI 服務暫時不可用（HTTP {status}），請稍後重試",
           "providerError": "AI 服務返回錯誤：{detail}",
-          "providerErrorGeneric": "AI 服務返回未知錯誤，請稍後重試"
+          "providerErrorGeneric": "AI 服務返回未知錯誤，請稍後重試",
+          "modelNameMissing": "Select or enter a model name first"
         },
         "autoCollectionsEnabled": "AI 自動整理合集",
         "autoCollectionsEnabledHint": "按標籤與向量氛圍自動聚類，並用 LLM 命名合併系統推薦合集（可重疊、可刪除）",
@@ -483,7 +510,7 @@
         "visualEmbedSourceHint": "內建：離線、隨應用提供，適合畫面相似。遠端：使用 Ollama 等支援圖像 embedding 的模型（實驗性），失敗時回退內建。",
         "visualEmbedSourceBuiltin": "內建 MobileCLIP",
         "visualEmbedSourceRemote": "遠端 embedding 模型",
-        "visualEmbedSection": "畫面向量服務",
+        "visualEmbedSection": "畫面向量",
         "visualEmbedBaseUrl": "服務位址",
         "visualEmbedModel": "畫面 embedding 模型",
         "visualEmbedModelHint": "需為支援圖像向量的 embedding 模型；與視覺分析模型無關。失敗時回退內建 MobileCLIP。",
@@ -512,8 +539,18 @@
         "sectionFeaturesCollections": "智慧合集",
         "sectionFeaturesFindSimilar": "找相似",
         "sectionFeaturesSearch": "搜尋與下載",
-        "sectionFeaturesLegacy": "相容選項"
-      }
+        "sectionFeaturesLegacy": "相容選項",
+        "enabledHint": "總開關：關閉後不再自動分析、語意搜尋與 AI 合集等；子項設定仍保留",
+        "analysisConcurrency": "Background concurrency",
+        "analysisConcurrencyHint": "In background continuous / new-images-only modes, how many images call the vision model at once (1–10). Takes effect after save; lower if VRAM is tight. Text embeddings run async per image and do not use this slot",
+        "copyModelName": "複製模型名",
+        "textEmbedModelHint": "Text-only embeddings for semantic search (e.g. nomic-embed-text)—not visual vectors or vision analysis"
+      },
+      "privacySpace": {
+        "enableNsfwContentMask": "敏感內容隱藏",
+        "enableNsfwContentMaskHint": "須先設置隱私密碼：未設置密碼無法開啟；關閉須驗證密碼。開啟後，在收藏等瀏覽頁對敏感等級≥2的圖片遮罩顯示（搜尋與合集照常，僅影響展示）；切換上/下一張桌布時跳過此類圖片（手動「設為桌布」不受影響）。點擊遮罩須輸入密碼在當前頁臨時查看；切換選單或應用進入後台後恢復。隱私空間內不遮罩。"
+      },
+      "privacyPasswordHintLabel": "密碼提示"
     },
     "Utils": {
       "dataUtils": "資料工具",
@@ -563,10 +600,12 @@
       "listSearchPlaceholder": "搜尋合集名稱",
       "selectPlaceholder": "選擇或搜尋合集",
       "actionsMenu": "操作",
+      "actionsSectionCreate": "合集",
+      "actionsSectionCurrent": "目前合集",
       "listNoMatch": "沒有匹配的合集",
       "collapseList": "收起列表",
       "expandList": "展開列表",
-      "createNew": "新建合集",
+      "createNew": "新建自訂合集",
       "createDialogTitle": "用描述產生合集",
       "dialogCancel": "取消",
       "autoCurateShort": "自動整理",
@@ -578,9 +617,9 @@
       "itemCount": "{count} 張圖片",
       "promptPlaceholder": "描述想要的壁紙合集，例如：20 張橫向高分夜景",
       "create": "產生合集",
-      "refresh": "重新整理",
+      "refresh": "手動重新整理",
       "refreshMode": "自動重新整理",
-      "refreshModeManual": "手動",
+      "refreshModeManual": "不自動",
       "refreshMode1h": "每 1 小時",
       "refreshMode6h": "每 6 小時",
       "refreshMode12h": "每 12 小時",
@@ -597,18 +636,33 @@
       "footerPage": "第 {page} / {pages} 頁",
       "footerPrevPage": "上一頁",
       "footerNextPage": "下一頁",
-      "curateNow": "立即整理",
+      "curateNow": "整理系統合集",
       "similarModeBanner": "正在顯示相似圖片",
       "similarBack": "返回合集",
       "autoCollectionsUpdated": "自動整理合集設定已儲存",
       "autoCollectionsDisabledHint": "請先在「設定 → AI 設定」中開啟 AI",
       "curateSuccess": "整理完成，目前 {count} 個系統推薦合集",
       "addFavorites": "全部收藏",
-      "delete": "刪除合集",
+      "delete": "刪除目前合集",
       "empty": "暫無合集",
       "noItems": "合集為空，請重新整理產生",
       "selectHint": "請選擇合集查看壁紙",
-      "confirmDelete": "確定刪除該合集？"
+      "confirmDelete": "確定刪除該合集？",
+      "curatorStatsShortSettled": "已定格 · 已分析 {analyzed} · 推薦 {auto} 個（新圖增量加入）",
+      "curatorFooterLine": "AI分析 · {status} · 進度 {done}/{total} · {percent}% · 推薦合集 {auto}/{target}",
+      "curatorFooterLabel": "AI分析",
+      "curatorFooterProgress": "進度 {done}/{total}",
+      "curatorFooterCollections": "推薦合集 {auto}/{target}",
+      "curatorFooterStatus": {
+        "disabled": "未启用",
+        "settled": "已定格",
+        "running": "運行中",
+        "queued": "等待中",
+        "complete": "已完成",
+        "idle": "空闲",
+        "onDemand": "按需"
+      },
+      "curateManualConfirmSettled": "系统合集已定格，手動整理将用 LLM 全量重建，并移除未入选的系统合集。是否繼續？"
     }
   },
   "messages": {
@@ -708,8 +762,6 @@
     "indexOutOfRange": "序號超出範圍",
     "indexTooLarge": "序號過大",
     "autoRefreshDirectoryTask": "刷新目錄任務",
-    "autoRefreshDirectoryTaskSuccess": "刷新目錄任務成功！",
-    "autoRefreshDirectoryTaskFailed": "刷新目錄任務失敗！",
     "downloadTask": "下載任務",
     "downloadTaskCompleted": "下載任務完成！",
     "downloadTaskFailed": "下載任務失敗！",
@@ -743,7 +795,8 @@
     "h5ServerError": "H5 伺服器錯誤：{error}",
     "h5ServerStartFailDetail": "H5 伺服器啟動失敗：{error}",
     "conflictWindowShortcut": "視窗「{window}」內與「{name}」快速鍵衝突",
-    "invalidShortcutOnlyModifiers": "快速鍵不能只包含修飾鍵，請再按一個一般鍵"
+    "invalidShortcutOnlyModifiers": "快速鍵不能只包含修飾鍵，請再按一個一般鍵",
+    "dialogOk": "確定"
   },
   "resourceTypeList": {
     "localResource": "本地資源",
@@ -847,6 +900,7 @@
     "ThreeStageWall": "霓虹牆",
     "ThreeStageGrid": "地柱網格",
     "ThreeStageTexturedSphere": "紋理球",
+    "ThreeStageRoomMeshGrid": "脈動空間",
     "ThreeStage": "演唱會舞台"
   },
   "rhythmAnimationOptions": {
@@ -1029,14 +1083,31 @@
       "created_at": "記錄建立時間",
       "updated_at": "記錄更新時間",
       "ctimeMs": "資源建立時間",
-      "mtimeMs": "資源更新時間"
+      "mtimeMs": "資源更新時間",
+      "summary": "摘要",
+      "tags": "標籤",
+      "nsfwLevel": "敏感等級",
+      "aiAnalysisStatus": "AI 分析"
+    },
+    "nsfwLevel": {
+      "0": "安全 (0)",
+      "1": "轻微 (1)",
+      "2": "中等 (2)",
+      "3": "较高 (3)"
+    },
+    "aiAnalysisStatus": {
+      "pending": "待分析",
+      "done": "已完成",
+      "failed": "分析失敗",
+      "skipped": "已跳過"
     }
   },
   "h5": {
     "tabbar": {
       "home": "首頁",
       "search": "搜尋",
-      "setting": "設定"
+      "setting": "設定",
+      "browse": "瀏覽"
     },
     "pages": {
       "home": {
@@ -1072,7 +1143,11 @@
           "created_at": "記錄建立時間",
           "updated_at": "記錄更新時間",
           "ctimeMs": "資源建立時間",
-          "mtimeMs": "資源更新時間"
+          "mtimeMs": "資源更新時間",
+          "summary": "摘要",
+          "tags": "標籤",
+          "nsfwLevel": "敏感等級",
+          "aiAnalysisStatus": "AI 分析"
         }
       },
       "search": {
@@ -1193,15 +1268,23 @@
         },
         "sponsor": "贊助"
       }
+    },
+    "drawer": {
+      "title": "瀏覽"
     }
   },
   "ai": {
     "prompts": {
-      "imageAnalysis": "你是壁紙圖像分析助手。請僅輸出一個 JSON 物件，不要 markdown 程式碼區塊，不要額外說明。\n欄位要求：\n- score: 1-100 整數，美學綜合分\n- tags: 字串陣列，3-8 個標籤，語言與當前介面一致\n- title: 簡短標題，不超過 30 字\n- desc: 描述，不超過 80 字\n- summary: 一句話摘要，不超過 50 字\n- nsfwLevel: 0-3 整數，0 安全\n- safeForWork: 布林值\n\n範例：{\"score\":82,\"tags\":[\"夜景\",\"城市\"],\"title\":\"雨夜都市\",\"desc\":\"藍調城市夜景\",\"summary\":\"適合深色桌面的雨夜城市\",\"nsfwLevel\":0,\"safeForWork\":true}",
-      "searchParse": "將用戶的壁紙搜尋描述解析為 JSON，不要 markdown。\n用戶描述：{query}\n輸出欄位：\n- filterKeywords: 字串，核心關鍵詞\n- tags: 字串陣列，可選標籤\n- orientation: 陣列，可選 landscape 或 portrait\n- quality: 陣列，可選 4k,2k,1080p,720p\n- scoreMin: 0-100 整數或 null\n- scoreMax: 0-100 整數或 null\n- fileType: image 或 video 或空字串\n\n範例：{\"filterKeywords\":\"海洋\",\"tags\":[\"海洋\",\"藍色\"],\"orientation\":[\"landscape\"],\"quality\":[\"4k\"],\"scoreMin\":70,\"scoreMax\":null,\"fileType\":\"image\"}",
-      "collectionQuery": "用戶想建立壁紙智慧合集。將描述解析為 queryJson，僅輸出 JSON。\n用戶描述：{prompt}\n欄位：\n- filterKeywords: string\n- tags: string[]\n- tagsMode: any|all\n- orientation: string[]\n- quality: string[]\n- scoreMin: number|null\n- scoreMax: number|null\n- resourceName: resources|favorites|local\n- isRandom: boolean\n- sortField: score|created_at|views\n- sortType: -1|1\n- semanticQuery: string\n- useSemantic: boolean\n- limitCount: 5-50 整數",
+      "imageAnalysis": "你是壁紙圖像分析助手。請僅輸出一個 JSON 物件，不要 markdown 程式碼塊，不要額外說明。\n\n【欄位職責（勿混用）】\n- title：簡短標題，≤40 字，點出主體與場景\n- summary：檢索用一句話，≤80 字，概括畫面主題與關鍵元素（不寫用途、不寫「適合桌面」）\n- desc：給人看的詳細描述，120–220 字，按順序寫清：主體/人物、動作與姿態、服飾與身體暴露程度、場景與環境、構圖與景別、色調與光線、風格與氛圍；只描述可見內容，不臆測故事，不評價用途\n- tags：3–10 個檢索標籤，與介面語言一致，含主體、場景、風格、色調等\n- score：1–100 整數，美學綜合分\n- nsfwLevel：0–3 整數（敏感分級，見下表）\n- safeForWork：布林，是否與下表聯動規則一致\n\n【敏感分級 nsfwLevel（中英對照）】\n0 安全 Safe：普通風景/靜物/日常人像，無性暗示或敏感主體。反例：不宜標 0——畫面以情色或隱私部位清晰呈現、明顯不適合辦公場所\n1 輕微 Mild：泳裝/運動裝/時尚攝影感、肌膚較多但無露點、姿態略曖昧。反例：不宜標 1——明顯全裸、以情色行為為主體、隱私部位清晰可見（應 ≥2）\n2 中度 Moderate：露點或大面積裸露、強性暗示、血腥特寫、明顯成人向構圖。反例：不宜標 2——情色行為為畫面中心、隱私部位特寫（應 3）\n3 重度 Explicit：以情色或性行為為主體、隱私部位清晰可辨、極端血腥暴力。反例：不宜標 3——僅泳裝/比基尼且無露點（應 1）\n\n【safeForWork 與 nsfwLevel 聯動（必須遵守）】\n- nsfwLevel≥2 ⇒ safeForWork 必須為 false\n- safeForWork 為 false ⇒ nsfwLevel 必須 ≥2\n- nsfwLevel=0 ⇒ safeForWork 必須為 true\n- 不得出現 nsfwLevel=0 且 safeForWork=false\n\n示例（安全）：{\"score\":82,\"tags\":[\"夜景\",\"城市\",\"霓虹\",\"雨\",\"藍調\"],\"title\":\"雨夜都市天際線\",\"summary\":\"雨後城市夜景，高樓燈火與濕潤路面反光\",\"desc\":\"遠景城市天際線佔據畫面上部，暖黃與冷藍霓虹交織；中景街道被雨水打濕形成鏡面反光，可見車燈拖影；構圖偏橫屏全景，景深清晰；整體氛圍潮濕而寧靜，寫實攝影風格。\",\"nsfwLevel\":0,\"safeForWork\":true}",
+      "searchParse": "將用戶的壁紙搜尋描述解析為 JSON，不要 markdown。\n用戶描述：{query}\n輸出欄位：\n- filterKeywords: 字串，核心關鍵詞\n- tags: 字串陣列，未提時 []\n- orientation: 陣列，未提時 []；元素為 1（橫屏）或 0（豎屏），或 landscape/portrait\n- quality: 陣列，未提時 []；僅 8K、5K、4K、2K（與資源 quality 欄位一致，禁止 1080p/720p 及小寫 4k）\n- filterType: images | videos | \"\"（未提類型時空字串；禁止輸出 fileType）\n- scoreMin: 0-100 整數，用戶未提評分門檻時為 null\n- scoreMax: 0-100 整數或 null\n\n範例：{\"filterKeywords\":\"海洋\",\"tags\":[\"海洋\",\"藍色\"],\"orientation\":[1],\"quality\":[\"4K\"],\"filterType\":\"images\",\"scoreMin\":null,\"scoreMax\":null}",
+      "collectionQuery": "用戶想建立壁紙智慧合集。將描述解析為 queryJson，僅輸出 JSON。\n用戶描述：{prompt}\n欄位：\n- filterKeywords: string（核心檢索詞，與描述一致）\n- tags: string[]\n- tagsMode: any|all\n- quality: string[]（未提解析度時必須是 []；僅允許 8K、5K、4K、2K，禁止 1080p/720p/high/best 等）\n（不要輸出 orientation、scoreMin、scoreMax；最低分由應用 AI 設定統一）\n- resourceName: 固定 \"resources\"（全庫，禁止 favorites/local/history）\n- isRandom: boolean\n- sortField: score|created_at|views\n- sortType: -1|1\n- semanticQuery: string\n- useSemantic: boolean（有主題/氛圍描述時 true）\n- limitCount: 5-50 整數\n\n規則：tags 以中文為主、與資源 AI 標籤語言一致，可少量英文同義詞；勿臆造 orientation/quality/scoreMin/scoreMax；具體實體詞（如「汽車」）filterKeywords 填該詞並在 tags 寫中文同義標籤。",
       "keywordExpand": "為壁紙自動下載擴展搜尋關鍵詞。輸入：{keywords}\n輸出 JSON：{\"keywords\":[\"詞1\",\"詞2\"]}，10 個以內，語言與當前介面一致，不要解釋。",
-      "collectionMerge": "你是壁紙庫策展助手。下面是一批「候選分組」（標籤分組 + 向量氛圍分組），請合併語意相近的分組，並為每個最終合集起名。\n\n要求：\n1. 僅輸出 JSON，不要 markdown\n2. 最終合集數量不超過 {targetCount} 個\n3. 允許一張壁紙出現在多個合集中（透過合併多個候選 id 實現）\n4. 合併相近主題（如「夜景」「城市」「霓虹」→「賽博雨夜都市」）\n5. 名稱 2-12 個字，有氛圍感，不要直接用單個泛詞，語言與當前介面一致\n6. mergeIds 必須是輸入候選裡存在的 id\n\n輸入候選：\n{candidates}\n\n輸出格式：\n{\n  \"collections\": [\n    {\n      \"name\": \"合集名稱\",\n      \"prompt\": \"一句話描述氛圍\",\n      \"semanticQuery\": \"用於語意搜尋的短語\",\n      \"mergeIds\": [\"tag:夜景\", \"vec:0\"]\n    }\n  ]\n}"
+      "collectionMerge": "你是壁紙庫策展助手。下面是一批「候選分組」（標籤分組 + 向量氛圍分組），請合併語意相近的分組，並為每個最終合集起名。\n\n要求：\n1. 僅輸出 JSON，不要 markdown\n2. 最終合集數量不超過 {targetCount} 個\n3. 允許一張壁紙出現在多個合集中（透過合併多個候選 id 實現）\n4. 合併相近主題（如「夜景」「城市」「霓虹」→「賽博雨夜都市」）\n5. 名稱 2-12 個字，有氛圍感，不要直接用單個泛詞，語言與當前介面一致\n6. mergeIds 必須是輸入候選裡存在的 id\n\n輸入候選：\n{candidates}\n\n輸出格式：\n{\n  \"collections\": [\n    {\n      \"name\": \"合集名稱\",\n      \"prompt\": \"一句話描述氛圍\",\n      \"semanticQuery\": \"用於語意搜尋的短語\",\n      \"mergeIds\": [\"tag:夜景\", \"vec:0\"]\n    }\n  ]\n}",
+      "collectionTagExpand": "為壁紙合集檢索擴展標籤同義詞。主題詞：{keyword}\n輸出 JSON：{\"tags\":[\"標籤1\",\"標籤2\"]}，8 個以內，優先中文標籤（與資源 AI 分析 tags 一致），英文同義最多 2 個，不要解釋。"
     }
+  },
+  "privacyNsfwMask": {
+    "tapToUnlock": "點擊輸入隱私密碼以查看",
+    "actionBlocked": "請先點擊遮罩層驗證隱私密碼"
   }
 }

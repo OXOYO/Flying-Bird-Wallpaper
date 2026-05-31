@@ -88,6 +88,60 @@ export function isCollectionRefreshDue(collection, now = Date.now()) {
   return now - last >= ms
 }
 
+/** 合集选图/搜索：排除隐私空间（与探索页主库一致） */
+export const COLLECTION_PRIVACY_EXCLUDE_SQL =
+  'NOT EXISTS (SELECT 1 FROM fbw_privacy_space p WHERE p.resourceId = r.id)'
+
+/** 与 calculateImageQuality、publicData.qualityList、探索筛选一致（库内为 8K/5K/4K/2K） */
+export const RESOURCE_QUALITY_DB_VALUES = ['8K', '5K', '4K', '2K']
+
+export const COLLECTION_ALLOWED_QUALITY = new Set(['4k', '2k', '8k', '5k'])
+
+export function normalizeCollectionQuality(quality) {
+  if (!Array.isArray(quality)) return []
+  const out = []
+  for (const raw of quality) {
+    const v = String(raw || '')
+      .trim()
+      .toLowerCase()
+    if (COLLECTION_ALLOWED_QUALITY.has(v)) {
+      out.push(v === '4k' ? '4K' : v === '2k' ? '2K' : v === '8k' ? '8K' : v === '5k' ? '5K' : v)
+    }
+  }
+  return [...new Set(out)]
+}
+
+/** 中文短词检索（规则兜底）：对半切 / 首尾二字，供 jieba 仅产出整词时使用 */
+export function expandChineseKeywordTags(keyword) {
+  const w = String(keyword || '').trim()
+  if (!w) return []
+  const set = new Set([w])
+  if (w.length >= 4) {
+    const mid = Math.floor(w.length / 2)
+    set.add(w.slice(0, mid))
+    set.add(w.slice(mid))
+  } else if (w.length >= 3) {
+    set.add(w.slice(0, 2))
+    set.add(w.slice(-2))
+  }
+  return [...set].filter((t) => isValidAutoCollectionTag(t))
+}
+
+export function normalizeOrientationToIsLandscape(orientation) {
+  if (!Array.isArray(orientation)) return []
+  const out = []
+  for (const raw of orientation) {
+    const v = String(raw).trim().toLowerCase()
+    if (v === '1' || v === 'landscape' || v === 'horizontal') out.push(1)
+    else if (v === '0' || v === 'portrait' || v === 'vertical') out.push(0)
+    else if (/^-?\d+$/.test(v)) {
+      const n = Number(v)
+      if (n === 0 || n === 1) out.push(n)
+    }
+  }
+  return out.length ? [out[0]] : []
+}
+
 export function isValidAutoCollectionTag(tag) {
   if (!tag || typeof tag !== 'string') return false
   const word = tag.trim()

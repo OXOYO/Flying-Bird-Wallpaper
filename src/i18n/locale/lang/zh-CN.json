@@ -18,7 +18,9 @@
     "checkUpdate": "检查更新",
     "menu": "菜单",
     "wordDrawer": "词库",
-    "qrCode": "二维码"
+    "qrCode": "二维码",
+    "expandSideMenu": "展开侧边栏",
+    "collapseSideMenu": "收起侧边栏"
   },
   "qrCode": {
     "notice": "扫描二维码访问移动版",
@@ -38,10 +40,12 @@
       "listSearchPlaceholder": "搜索合集名称",
       "selectPlaceholder": "选择或搜索合集",
       "actionsMenu": "操作",
+      "actionsSectionCreate": "合集",
+      "actionsSectionCurrent": "当前合集",
       "listNoMatch": "没有匹配的合集",
       "collapseList": "收起列表",
       "expandList": "展开列表",
-      "createNew": "新建合集",
+      "createNew": "新建自定义合集",
       "createDialogTitle": "用描述生成合集",
       "dialogCancel": "取消",
       "autoCurateShort": "自动整理",
@@ -53,9 +57,9 @@
       "itemCount": "{count} 张图片",
       "promptPlaceholder": "描述想要的壁纸合集，例如：20 张横屏高分夜景",
       "create": "生成合集",
-      "refresh": "刷新",
+      "refresh": "手动刷新",
       "refreshMode": "自动刷新",
-      "refreshModeManual": "手动",
+      "refreshModeManual": "不自动",
       "refreshMode1h": "每 1 小时",
       "refreshMode6h": "每 6 小时",
       "refreshMode12h": "每 12 小时",
@@ -64,22 +68,37 @@
       "refreshModeHint": "自动刷新将按已保存的筛选条件重新拉取壁纸，不会重新解析描述",
       "refreshModeUpdated": "刷新策略已更新",
       "autoRefreshTag": "定时",
-      "autoCollectionHint": "由 AI 根据标签聚类、向量氛围与 LLM 合并命名自动生成；新图分析/向量化后会更新，可删除",
-      "autoCollectionRefreshHint": "系统合集随 AI 分析自动更新，无需设置刷新策略",
+      "autoCollectionHint": "由 AI 根据标签聚类、向量氛围与 LLM 合并命名自动生成；分析/向量管道稳定后定格，新图按标签增量加入",
+      "autoCollectionRefreshHint": "系统合集在 AI 分析完成后自动定格；定格后新图增量加入，无需设置刷新策略",
       "curatorStats": "已分析 {analyzed} 张 · 向量 {embeddings} 条 · 系统推荐 {auto} 个（目标约 {target} 个）",
       "curatorStatsShort": "已分析 {analyzed} · 向量 {embeddings} · 推荐 {auto}/{target}",
+      "curatorStatsShortSettled": "已定格 · 已分析 {analyzed} · 推荐 {auto} 个（新图增量加入）",
+      "curatorFooterLine": "AI分析 · {status} · 进度 {done}/{total} · {percent}% · 推荐合集 {auto}/{target}",
+      "curatorFooterLabel": "AI分析",
+      "curatorFooterProgress": "进度 {done}/{total}",
+      "curatorFooterCollections": "推荐合集 {auto}/{target}",
+      "curatorFooterStatus": {
+        "disabled": "未启用",
+        "settled": "已定格",
+        "running": "运行中",
+        "queued": "等待中",
+        "complete": "已完成",
+        "idle": "空闲",
+        "onDemand": "按需"
+      },
       "footerGridRange": "{start}–{end} / {total}",
       "footerPage": "第 {page} / {pages} 页",
       "footerPrevPage": "上一页",
       "footerNextPage": "下一页",
-      "curateNow": "立即整理",
+      "curateNow": "整理系统合集",
+      "curateManualConfirmSettled": "系统合集已定格，手动整理将用 LLM 全量重建，并移除未入选的系统合集。是否继续？",
       "similarModeBanner": "正在显示相似图片",
       "similarBack": "返回合集",
       "autoCollectionsUpdated": "自动整理合集设置已保存",
       "autoCollectionsDisabledHint": "请先在「设置 → AI 设置」中开启 AI",
       "curateSuccess": "整理完成，当前 {count} 个系统推荐合集",
       "addFavorites": "全部收藏",
-      "delete": "删除合集",
+      "delete": "删除当前合集",
       "empty": "暂无合集",
       "noItems": "合集为空，请刷新生成",
       "selectHint": "请选择合集查看壁纸",
@@ -95,17 +114,20 @@
       },
       "aiSetting": {
         "enabled": "启用 AI",
+        "enabledHint": "总开关：关闭后不再自动分析、语义搜索与 AI 合集等；子项配置仍保留",
         "analysisMode": "分析模式",
-        "analysisModeHint": "控制图片何时自动做 AI 分析（标签、评分、向量等）。关闭：不自动分析；按需：仅在浏览页手动点「AI 分析」；后台慢速：空闲时自动处理待分析/失败队列；仅新图：后台只分析从未分析过的图片",
+        "analysisModeHint": "控制图片何时自动做视觉 AI 分析（标签、评分、描述）。关闭：不自动分析；按需：仅在浏览页手动点「AI 分析」；后台连续：有待分析则连续处理队列（可配置并发）；仅新图：后台只分析从未分析过的图片。文本/画面向量在分析后或独立补算",
         "analysisModeOff": "关闭",
         "analysisModeOnDemand": "按需",
-        "analysisModeBackground": "后台慢速",
+        "analysisModeBackground": "后台连续",
         "analysisModeNewOnly": "仅新图",
         "analysisMaxRetries": "后台失败重试次数",
         "analysisMaxRetriesHint": "后台分析模式下，单张图片连续失败达到此次数后将标记为「已跳过」，不再自动重试；浏览页手动「AI 分析」不受此限制",
+        "analysisConcurrency": "后台分析并发",
+        "analysisConcurrencyHint": "后台连续/仅新图模式下，同时调用视觉模型的张数（1～10）。保存后立即生效；显存不足时请降低并发。文本向量在每张分析成功后异步写入，不占用此并发",
         "analysisProgress": "分析进度",
         "analysisProgressCardTitle": "AI 分析",
-        "analysisProgressCardDesc": "为本地图片生成标签、评分与描述，并自动建立语义向量（用于相似搜索与智能合集）。后台按队列逐张处理，速度取决于模型与超时设置。",
+        "analysisProgressCardDesc": "为本地图片生成标签、评分与描述（视觉分析）。文本向量在分析后异步写入；画面向量由内置 MobileCLIP 或远程模型独立补算。后台有待分析时会连续处理，速度取决于模型、并发与超时。",
         "analysisProgressSummary": "已完成 {done} / {total} 张（{percent}%）",
         "analysisProgressCount": "{done} / {total} 张",
         "analysisDurationSec": "{sec} 秒",
@@ -119,7 +141,7 @@
         "runStatusLoading": "正在读取状态…",
         "runStatusRunning": "正在运行",
         "runStatusQueued": "等待中",
-        "runStatusQueuedHint": "仍有待分析图片，但当前未在调用模型；后台任务会在满足条件时继续（如非电池限制、分析模式为后台等）",
+        "runStatusQueuedHint": "仍有待分析图片，但当前未在调用模型；请确认已开启后台连续/仅新图、非省电电池限制，保存设置后会自动继续",
         "runStatusComplete": "已全部完成",
         "runStatusIdle": "未在运行",
         "runStatusOnDemand": "按需模式（不自动分析）",
@@ -130,8 +152,8 @@
         "statFailedLabel": "失败",
         "statFailedHint": "可稍后重试或检查模型",
         "statSkippedLabel": "已跳过",
-        "statEmbeddingLabel": "已向量化",
-        "statEmbeddingHint": "文本向量：语义搜索与文本找相似；视觉向量见下方「已向量化(视觉)」",
+        "statEmbeddingLabel": "文本向量",
+        "statEmbeddingHint": "由文本 embedding 模型生成，用于语义搜索；与视觉分析、画面向量独立",
         "statsDone": "已完成",
         "statsPending": "待分析",
         "statsFailed": "失败",
@@ -176,23 +198,24 @@
           "moonshot": "Moonshot（月之暗面）",
           "custom": "自定义 OpenAI 兼容"
         },
-        "visionSection": "视觉模型",
-        "textSection": "文本 / 向量模型",
+        "visionSection": "视觉分析模型",
+        "textSection": "文本与文本向量",
         "visionModel": "视觉模型",
         "visionBaseUrl": "服务地址",
         "textModel": "文本模型",
         "textBaseUrl": "服务地址",
-        "embeddingModel": "向量模型",
+        "embeddingModel": "文本向量模型",
+        "textEmbedModelHint": "仅用于语义搜索的文本 embedding（如 nomic-embed-text），与画面向量、视觉分析模型无关",
         "apiKey": "API Key",
         "copyApiKey": "复制",
+        "copyModelName": "复制模型名",
         "apiKeyPlaceholder": "请输入远程 API Key",
         "customBaseUrlPlaceholder": "https://your-api.example.com",
         "remoteReferer": "OpenRouter Referer",
         "remoteRefererPlaceholder": "可选，用于 OpenRouter 统计",
         "remoteAppTitle": "OpenRouter 应用名",
         "modelPlaceholder": "选择或输入模型名称",
-        "refreshModels": "刷新模型",
-        "ollamaModelHint": "列表来自本地 Ollama，也可手动输入模型名",
+        "ollamaModelHint": "展开下拉时自动从服务拉取模型列表，也可手动输入模型名",
         "presetHints": {
           "lmstudio": "在 LM Studio 中开启 Local Server（默认 http://127.0.0.1:1234），视觉需选用多模态模型",
           "localai": "LocalAI 默认 http://127.0.0.1:8080；视觉与向量取决于所加载模型",
@@ -203,7 +226,7 @@
         "listEmptyVision": "未找到支持图像的视觉模型，可手动输入模型名（如 qwen2.5vl:7b）",
         "listEmptyText": "未找到可用的文本模型，请检查服务配置或手动输入模型名",
         "listEmptyEmbed": "未找到向量模型，OpenRouter 等需手动输入（如 nvidia/llama-nemotron-embed-vl-1b-v2:free）",
-        "listEmptyVisualEmbed": "未找到画面 embedding 模型，可手动输入（如 batiai/qwen3-vl-embed-2b）；需支持图像向量，纯文本 embed 不可用",
+        "listEmptyVisualEmbed": "未找到画面 embedding 模型，可手动输入（如 batiai/qwen2-vl-embed-2b:q8）；需支持图像向量，纯文本 embed（如 nomic-embed-text）不可用",
         "purposeVision": "视觉",
         "purposeText": "文本",
         "purposeEmbed": "向量",
@@ -212,6 +235,7 @@
         "testOk": "连接成功",
         "errors": {
           "apiKeyMissing": "请先填写 API Key",
+          "modelNameMissing": "请先选择或输入模型名称",
           "ollamaUnreachable": "无法连接 Ollama，请确认本地服务已启动且地址正确（默认 http://127.0.0.1:11434）",
           "networkError": "网络请求失败，请检查服务地址与网络连接",
           "timeout": "请求超时，可在上方增加「请求超时」秒数后重试",
@@ -235,10 +259,10 @@
         "visualEmbedSourceHint": "内置：离线、随应用提供，适合画面相似。远程：使用 Ollama 等支持图像 embedding 的模型（实验性），失败时回退内置。",
         "visualEmbedSourceBuiltin": "内置 MobileCLIP",
         "visualEmbedSourceRemote": "远程 embedding 模型",
-        "visualEmbedSection": "画面向量服务",
+        "visualEmbedSection": "画面向量",
         "visualEmbedBaseUrl": "服务地址",
-        "visualEmbedModel": "画面 embedding 模型",
-        "visualEmbedModelHint": "需为支持图像向量的 embedding 模型；与视觉分析模型无关。失败时回退内置 MobileCLIP。",
+        "visualEmbedModel": "画面向量模型",
+        "visualEmbedModelHint": "用于找相似的画面 embedding；推荐内置 MobileCLIP。远程需支持图像向量，与视觉分析、文本向量模型无关；失败时回退内置。",
         "visualEmbedRemoteSectionHint": "请在下方「画面向量服务」卡片中独立配置服务商、地址、API Key 与模型。",
         "visualEmbedModelPlaceholder": "例如 batiai/qwen3-vl-embed-2b",
         "statImageEmbeddingLabel": "已向量化(视觉)",
@@ -276,7 +300,12 @@
         "dynamicWallpaper": "动态壁纸",
         "rhythmWallpaper": "律动壁纸",
         "remoteResource": "远程资源",
-        "privacyPassword": "隐私密码"
+        "privacyPassword": "隐私密码",
+        "privacySpaceOptions": "隐私空间选项"
+      },
+      "privacySpace": {
+        "enableNsfwContentMask": "敏感内容隐藏",
+        "enableNsfwContentMaskHint": "须先设置隐私密码：未设置密码无法开启；关闭须验证密码。开启后，在收藏等浏览页对敏感等级≥2的图片遮罩显示（搜索与合集照常，仅影响展示）；切换上/下一张壁纸时跳过此类图片（手动「设为壁纸」不受影响）。点击遮罩须输入密码在本页临时查看；切换菜单或应用进入后台后恢复。隐私空间内不遮罩。"
       },
       "settingDataForm": {
         "locale": "语言",
@@ -382,7 +411,26 @@
         "showTag": "显示标签",
         "confirmOnDeleteFile": "删除前确认",
         "enableSegmentationTask": "启用分词任务",
-        "powerSaveMode": "省电模式"
+        "powerSaveMode": "省电模式",
+        "enableExpandSideMenuHint": "开启后，鼠标移入主窗口左缘可展开/收起窄侧栏，便于快速切换菜单",
+        "showSideMenuLabelHint": "关闭后侧栏仅显示图标以节省宽度；开启后显示菜单文字",
+        "suspensionBallVisibleHint": "在桌面显示小悬浮球，悬停可展开上一张/下一张/播放/关闭等快捷操作",
+        "startH5ServerOnStartupHint": "启动后在本机开启 H5 网页服务；侧栏二维码可供手机浏览器访问壁纸",
+        "enableSegmentationTaskHint": "在「搜索」页显示词云抽屉，对当前列表分词统计（省电模式下可能暂停）",
+        "powerSaveModeHint": "开启后降低后台壁纸切换、目录刷新、AI 分析等频率，适合笔记本省电",
+        "showTagHint": "在壁纸卡片角标显示来源、质量等；部分标签可点击筛选",
+        "confirmOnDeleteFileHint": "从浏览页删除本地文件前弹出确认，避免误删",
+        "viewImageIntervalTimeHint": "内置图片预览器自动轮播时，每张停留的时长",
+        "autoSwitchWallpaperHint": "按下方间隔自动更换桌面壁纸；关闭后需手动或悬浮球切换",
+        "switchTypeHint": "顺序：按列表依次切换；随机：每次随机选取",
+        "allScreenHint": "开启后同一壁纸应用到所有显示器",
+        "scaleTypeHint": "壁纸铺满屏幕时的裁剪/拉伸方式",
+        "filterKeywordsHint": "仅当路径或文件名包含任一关键词时才参与轮换（留空表示不过滤）",
+        "localResourceFoldersHint": "添加本地文件夹作为壁纸库；支持多个目录，扫描受「允许文件类型」限制",
+        "allowedFileExtHint": "扫描本地目录时只索引所选扩展名，减少无关文件",
+        "autoRefreshDirectoryHint": "按间隔重新扫描本地目录，发现新增或移除的文件",
+        "autoDownloadHint": "按间隔与关键词从已选下载源保存图片到下载目录",
+        "dynamicPerformanceModeHint": "降低视频解码与渲染负载；播放卡顿时可尝试节电档"
       },
       "privacyPasswordForm": {
         "old": {
@@ -395,8 +443,14 @@
           "placeholder": "请输入新密码",
           "tooltip": "密码由数字组成，最少3位，最多6位数字"
         },
+        "hint": {
+          "label": "密码提示",
+          "placeholder": "例如：生日后四位、常用数字组合（可选）",
+          "tooltip": "仅用于帮助您回忆密码，与密码一并保存；验证时会显示，请勿填写密码本身"
+        },
         "confirm": "更新密码"
       },
+      "privacyPasswordHintLabel": "密码提示",
       "shortcutSetting": {
         "conflict": "冲突",
         "function": "功能",
@@ -442,8 +496,8 @@
           "sources": "插件源"
         },
         "sources": {
-          "addSource": "添加插件源",
-          "refreshSources": "刷新插件源",
+          "addSource": "添加源",
+          "refreshSources": "刷新",
           "official": "官方",
           "renameSource": "修改源名",
           "deleteSource": "删除源",
@@ -613,10 +667,10 @@
   },
   "ai": {
     "prompts": {
-      "imageAnalysis": "你是壁纸图像分析助手。请仅输出一个 JSON 对象，不要 markdown 代码块，不要额外说明。\n字段要求：\n- score: 1-100 整数，美学综合分\n- tags: 字符串数组，3-8 个标签，语言与当前界面一致\n- title: 简短标题，不超过 30 字\n- desc: 描述，不超过 80 字\n- summary: 一句话摘要，不超过 50 字\n- nsfwLevel: 0-3 整数，0 安全\n- safeForWork: 布尔值\n\n示例：{\"score\":82,\"tags\":[\"夜景\",\"城市\"],\"title\":\"雨夜都市\",\"desc\":\"蓝调城市夜景\",\"summary\":\"适合深色桌面的雨夜城市\",\"nsfwLevel\":0,\"safeForWork\":true}",
-      "searchParse": "将用户的壁纸搜索描述解析为 JSON，不要 markdown。\n用户描述：{query}\n输出字段：\n- filterKeywords: 字符串，核心关键词\n- tags: 字符串数组，可选标签\n- orientation: 数组，可选 landscape 或 portrait\n- quality: 数组，可选 4k,2k,1080p,720p\n- scoreMin: 0-100 整数或 null\n- scoreMax: 0-100 整数或 null\n- fileType: image 或 video 或空字符串\n\n示例：{\"filterKeywords\":\"海洋\",\"tags\":[\"海洋\",\"蓝色\"],\"orientation\":[\"landscape\"],\"quality\":[\"4k\"],\"scoreMin\":70,\"scoreMax\":null,\"fileType\":\"image\"}",
-      "collectionQuery": "用户想创建壁纸智能合集。将描述解析为 queryJson，仅输出 JSON。\n用户描述：{prompt}\n字段：\n- filterKeywords: string\n- tags: string[]\n- tagsMode: any|all\n- orientation: string[]\n- quality: string[]\n- scoreMin: number|null\n- scoreMax: number|null\n- resourceName: resources|favorites|local\n- isRandom: boolean\n- sortField: score|created_at|views\n- sortType: -1|1\n- semanticQuery: string\n- useSemantic: boolean\n- limitCount: 5-50 整数\n\n若描述为具体实体/主题词（如「汽车」「猫」），请在 tags 中补充同义中英文标签，便于匹配资源库 AI 标签。",
-      "collectionTagExpand": "为壁纸合集检索扩展标签同义词。主题词：{keyword}\n输出 JSON：{\"tags\":[\"标签1\",\"标签2\"]}，8 个以内，含中英文及常见同义表达，用于匹配资源 tags 字段，不要解释。",
+      "imageAnalysis": "你是壁纸图像分析助手。请仅输出一个 JSON 对象，不要 markdown 代码块，不要额外说明。\n\n【字段职责（勿混用）】\n- title：简短标题，≤40 字，点出主体与场景\n- summary：检索用一句话，≤80 字，概括画面主题与关键元素（不写用途、不写「适合桌面」）\n- desc：给人看的详细描述，120–220 字，按顺序写清：主体/人物、动作与姿态、服饰与身体暴露程度、场景与环境、构图与景别、色调与光线、风格与氛围；只描述可见内容，不臆测故事，不评价用途\n- tags：3–10 个检索标签，与界面语言一致，含主体、场景、风格、色调等\n- score：1–100 整数，美学综合分\n- nsfwLevel：0–3 整数（敏感分级，见下表）\n- safeForWork：布尔，是否与下表联动规则一致\n\n【敏感分级 nsfwLevel（中英对照）】\n0 安全 Safe：普通风景/静物/日常人像，无性暗示或敏感主体。反例：不宜标 0——画面以情色或隐私部位清晰呈现、明显不适合办公场所\n1 轻微 Mild：泳装/运动装/时尚摄影感、肌肤较多但无露点、姿态略暧昧。反例：不宜标 1——明显全裸、以情色行为为主体、隐私部位清晰可见（应 ≥2）\n2 中度 Moderate：露点或大面积裸露、强性暗示、血腥特写、明显成人向构图。反例：不宜标 2——情色行为为画面中心、隐私部位特写（应 3）\n3 重度 Explicit：以情色或性行为为主体、隐私部位清晰可辨、极端血腥暴力。反例：不宜标 3——仅泳装/比基尼且无露点（应 1）\n\n【safeForWork 与 nsfwLevel 联动（必须遵守）】\n- nsfwLevel≥2 ⇒ safeForWork 必须为 false\n- safeForWork 为 false ⇒ nsfwLevel 必须 ≥2\n- nsfwLevel=0 ⇒ safeForWork 必须为 true\n- 不得出现 nsfwLevel=0 且 safeForWork=false\n\n示例（安全）：{\"score\":82,\"tags\":[\"夜景\",\"城市\",\"霓虹\",\"雨\",\"蓝调\"],\"title\":\"雨夜都市天际线\",\"summary\":\"雨后城市夜景，高楼灯火与湿润路面反光\",\"desc\":\"远景城市天际线占据画面上部，暖黄与冷蓝霓虹交织；中景街道被雨水打湿形成镜面反光，可见车灯拖影；构图偏横屏全景，景深清晰；整体氛围潮湿而宁静，写实摄影风格。\",\"nsfwLevel\":0,\"safeForWork\":true}",
+      "searchParse": "将用户的壁纸搜索描述解析为 JSON，不要 markdown。\n用户描述：{query}\n输出字段：\n- filterKeywords: 字符串，核心关键词\n- tags: 字符串数组，未提及时 []\n- orientation: 数组，未提及时 []；元素为 1（横屏）或 0（竖屏），或 landscape/portrait\n- quality: 数组，未提及时 []；仅 8K、5K、4K、2K（与资源 quality 字段一致，禁止 1080p/720p 及小写 4k）\n- filterType: images | videos | \"\"（未提类型时空字符串；禁止输出 fileType）\n- scoreMin: 0-100 整数，用户未提评分门槛时为 null\n- scoreMax: 0-100 整数或 null\n\n示例：{\"filterKeywords\":\"海洋\",\"tags\":[\"海洋\",\"蓝色\"],\"orientation\":[1],\"quality\":[\"4K\"],\"filterType\":\"images\",\"scoreMin\":null,\"scoreMax\":null}",
+      "collectionQuery": "用户想创建壁纸智能合集。将描述解析为 queryJson，仅输出 JSON。\n用户描述：{prompt}\n字段：\n- filterKeywords: string（核心检索词，与描述一致）\n- tags: string[]\n- tagsMode: any|all\n- quality: string[]（未提分辨率时必须是 []；仅允许 8K、5K、4K、2K，禁止 1080p/720p/high/best 等）\n（不要输出 orientation、scoreMin、scoreMax；最低分由应用 AI 设置统一）\n- resourceName: 固定 \"resources\"（全库，禁止 favorites/local/history）\n- isRandom: boolean\n- sortField: score|created_at|views\n- sortType: -1|1\n- semanticQuery: string\n- useSemantic: boolean（有主题/氛围描述时 true）\n- limitCount: 5-50 整数\n\n规则：tags 以中文为主、与资源 AI 标签语言一致，可少量英文同义词；勿臆造 orientation/quality/scoreMin/scoreMax；具体实体词（如「汽车」）filterKeywords 填该词并在 tags 写中文同义标签。",
+      "collectionTagExpand": "为壁纸合集检索扩展标签同义词。主题词：{keyword}\n输出 JSON：{\"tags\":[\"标签1\",\"标签2\"]}，8 个以内，优先中文标签（与资源 AI 分析 tags 一致），英文同义最多 2 个，不要解释。",
       "keywordExpand": "为壁纸自动下载扩展搜索关键词。输入：{keywords}\n输出 JSON：{\"keywords\":[\"词1\",\"词2\"]}，10 个以内，语言与当前界面一致，不要解释。",
       "collectionMerge": "你是壁纸库策展助手。下面是一批「候选分组」（标签分组 + 向量氛围分组），请合并语义相近的分组，并为每个最终合集起名。\n\n要求：\n1. 仅输出 JSON，不要 markdown\n2. 最终合集数量不超过 {targetCount} 个\n3. 允许一张壁纸出现在多个合集中（通过合并多个候选 id 实现）\n4. 合并相近主题（如「夜景」「城市」「霓虹」→「赛博雨夜都市」）\n5. 名称 2-12 个字，有氛围感，不要直接用单个泛词，语言与当前界面一致\n6. mergeIds 必须是输入候选里存在的 id\n\n输入候选：\n{candidates}\n\n输出格式：\n{\n  \"collections\": [\n    {\n      \"name\": \"合集名称\",\n      \"prompt\": \"一句话描述氛围\",\n      \"semanticQuery\": \"用于语义搜索的短语\",\n      \"mergeIds\": [\"tag:夜景\", \"vec:0\"]\n    }\n  ]\n}"
     }
@@ -633,6 +687,7 @@
     "confirmMessageDanger": "危险操作，此操作不可逆，确认执行吗?",
     "inputPrivacySpacePassword": "请输入隐私空间密码！",
     "inputPrivacySpacePasswordErrorMessage": "最少3位，最多6位数字！",
+    "dialogOk": "确定",
     "enterPrivacySpaceSuccess": "已进入隐私空间！",
     "exitedPrivacySpaceSuccess": "已退出隐私空间！",
     "noMoreData": "没有更多数据了！",
@@ -662,7 +717,7 @@
     "operationTooFrequent": "操作太频繁，请稍后再试！",
     "privacyPasswordNotSet": "隐私密码未设置，请先设置隐私密码！",
     "verifyPrivacyPasswordSuccess": "验证通过！",
-    "verifyPrivacyPasswordFail": "验证失败！",
+    "verifyPrivacyPasswordFail": "隐私密码验证失败！",
     "operationFailWithDataDuplication": "操作失败，数据重复！",
     "querySuccess": "查询成功！",
     "queryFail": "查询失败！",
@@ -855,6 +910,7 @@
     "ThreeStageWall": "霓虹墙",
     "ThreeStageGrid": "地柱网格",
     "ThreeStageTexturedSphere": "纹理球",
+    "ThreeStageRoomMeshGrid": "脉动空间",
     "ThreeStage": "演唱会舞台"
   },
   "rhythmAnimationOptions": {
@@ -1014,12 +1070,20 @@
     "openAbout": "打开关于",
     "checkUpdate": "检查更新"
   },
+  "privacyNsfwMask": {
+    "tapToUnlock": "点击输入隐私密码以查看",
+    "actionBlocked": "请先点击隐藏层验证隐私密码"
+  },
   "comingSoon": "敬请期待",
   "viewInfo": {
     "title": "查看信息",
     "row": {
       "title": "标题",
       "desc": "描述",
+      "summary": "摘要",
+      "tags": "标签",
+      "nsfwLevel": "敏感等级",
+      "aiAnalysisStatus": "AI 分析",
       "author": "作者",
       "link": "链接",
       "resourceName": "资源名称",
@@ -1038,13 +1102,29 @@
       "updated_at": "记录更新时间",
       "ctimeMs": "资源创建时间",
       "mtimeMs": "资源更新时间"
+    },
+    "nsfwLevel": {
+      "0": "安全 (0)",
+      "1": "轻微 (1)",
+      "2": "中等 (2)",
+      "3": "较高 (3)"
+    },
+    "aiAnalysisStatus": {
+      "pending": "待分析",
+      "done": "已完成",
+      "failed": "分析失败",
+      "skipped": "已跳过"
     }
   },
   "h5": {
     "tabbar": {
       "home": "首页",
       "search": "搜索",
+      "browse": "浏览",
       "setting": "设置"
+    },
+    "drawer": {
+      "title": "浏览"
     },
     "pages": {
       "home": {
@@ -1063,6 +1143,10 @@
         "imageInfo": {
           "title": "标题",
           "desc": "描述",
+          "summary": "摘要",
+          "tags": "标签",
+          "nsfwLevel": "敏感等级",
+          "aiAnalysisStatus": "AI 分析",
           "author": "作者",
           "link": "链接",
           "resourceName": "资源名称",

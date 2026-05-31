@@ -18,7 +18,9 @@
     "checkUpdate": "Check for updates",
     "menu": "Menu",
     "wordDrawer": "Word Library",
-    "qrCode": "QR Code"
+    "qrCode": "QR Code",
+    "expandSideMenu": "Expand sidebar",
+    "collapseSideMenu": "Collapse sidebar"
   },
   "qrCode": {
     "notice": "Scan QR code to access mobile version",
@@ -38,10 +40,12 @@
       "listSearchPlaceholder": "Search collections",
       "selectPlaceholder": "Select or search collections",
       "actionsMenu": "Actions",
+      "actionsSectionCreate": "Collections",
+      "actionsSectionCurrent": "Selected collection",
       "listNoMatch": "No matching collections",
       "collapseList": "Collapse list",
       "expandList": "Expand list",
-      "createNew": "New collection",
+      "createNew": "New custom collection",
       "createDialogTitle": "Generate from description",
       "dialogCancel": "Cancel",
       "autoCurateShort": "Auto-curate",
@@ -53,9 +57,9 @@
       "itemCount": "{count} images",
       "promptPlaceholder": "Describe a wallpaper collection, e.g. 20 landscape high-score night scenes",
       "create": "Create collection",
-      "refresh": "Refresh",
+      "refresh": "Refresh now",
       "refreshMode": "Auto refresh",
-      "refreshModeManual": "Manual",
+      "refreshModeManual": "Off",
       "refreshMode1h": "Every hour",
       "refreshMode6h": "Every 6 hours",
       "refreshMode12h": "Every 12 hours",
@@ -64,22 +68,37 @@
       "refreshModeHint": "Auto refresh re-fetches wallpapers using saved filters without re-parsing the prompt",
       "refreshModeUpdated": "Refresh schedule updated",
       "autoRefreshTag": "Scheduled",
-      "autoCollectionHint": "Auto-curated via tag clusters, vector mood grouping, and LLM naming. Updates after analysis/embedding. Deletable.",
-      "autoCollectionRefreshHint": "System collections refresh automatically after AI analysis; no schedule to set",
+      "autoCollectionHint": "Auto-curated via tag clusters, vector mood grouping, and LLM naming. Settles when the analysis/embedding pipeline is stable; new images are added incrementally by tag.",
+      "autoCollectionRefreshHint": "System collections settle after AI analysis completes; new images are added incrementally — no refresh schedule needed",
       "curatorStats": "Analyzed {analyzed} · {embeddings} vectors · {auto} system collections (target ~{target})",
       "curatorStatsShort": "Analyzed {analyzed} · Vectors {embeddings} · Picks {auto}/{target}",
+      "curatorStatsShortSettled": "Settled · Analyzed {analyzed} · {auto} picks (new images added incrementally)",
+      "curatorFooterLine": "AI Analysis · {status} · Progress {done}/{total} · {percent}% · Collections {auto}/{target}",
+      "curatorFooterLabel": "AI Analysis",
+      "curatorFooterProgress": "Progress {done}/{total}",
+      "curatorFooterCollections": "Collections {auto}/{target}",
+      "curatorFooterStatus": {
+        "disabled": "Off",
+        "settled": "Settled",
+        "running": "Running",
+        "queued": "Queued",
+        "complete": "Complete",
+        "idle": "Idle",
+        "onDemand": "On demand"
+      },
       "footerGridRange": "{start}–{end} / {total}",
       "footerPage": "Page {page} / {pages}",
       "footerPrevPage": "Previous",
       "footerNextPage": "Next",
-      "curateNow": "Curate now",
+      "curateNow": "Curate system collections",
+      "curateManualConfirmSettled": "System collections are settled. Manual curation will run a full LLM rebuild and remove collections not in the new plan. Continue?",
       "similarModeBanner": "Showing similar images",
       "similarBack": "Back to collection",
       "autoCollectionsUpdated": "Auto-curate setting saved",
       "autoCollectionsDisabledHint": "Enable AI under Settings → AI first",
       "curateSuccess": "Done — {count} system collections",
       "addFavorites": "Add all to favorites",
-      "delete": "Delete collection",
+      "delete": "Delete current collection",
       "empty": "No collections yet",
       "noItems": "Collection is empty, refresh to generate",
       "selectHint": "Select a collection to browse wallpapers",
@@ -95,17 +114,20 @@
       },
       "aiSetting": {
         "enabled": "Enable AI",
+        "enabledHint": "Master switch: when off, auto analysis, semantic search, and AI collections stop; settings are kept",
         "analysisMode": "Analysis mode",
-        "analysisModeHint": "When images are auto-analyzed (tags, score, embedding, etc.). Off: none. On demand: manual “AI analyze” in Explore only. Background slow: idle processing of pending/failed queue. New images only: background runs only on never-analyzed images",
+        "analysisModeHint": "When vision AI runs (tags, score, description). Off: none. On demand: manual “AI analyze” in Explore only. Background continuous: processes the queue while backlog exists (concurrency configurable). New images only: never-analyzed images only. Text/visual vectors are written after analysis or via separate backfill",
         "analysisModeOff": "Off",
         "analysisModeOnDemand": "On demand",
-        "analysisModeBackground": "Background slow",
+        "analysisModeBackground": "Background continuous",
         "analysisModeNewOnly": "New images only",
         "analysisMaxRetries": "Background retry limit",
         "analysisMaxRetriesHint": "In background analysis modes, after this many consecutive failures per image it is marked skipped and no longer auto-retried. Manual \"AI analyze\" in Explore is not limited",
+        "analysisConcurrency": "Background concurrency",
+        "analysisConcurrencyHint": "In background continuous / new-images-only modes, how many images call the vision model at once (1–10). Takes effect after save; lower if VRAM is tight. Text embeddings run async per image and do not use this slot",
         "analysisProgress": "Analysis progress",
         "analysisProgressCardTitle": "AI analysis",
-        "analysisProgressCardDesc": "Generates tags, scores, and descriptions for local images. Embeddings power similar search and smart collections. Images are processed one by one in the background.",
+        "analysisProgressCardDesc": "Vision analysis generates tags, scores, and descriptions. Text embeddings are written async after each success; visual vectors are backfilled by built-in MobileCLIP or a remote model. The queue runs continuously while backlog exists—speed depends on model, concurrency, and timeout.",
         "analysisProgressSummary": "{done} / {total} images done ({percent}%)",
         "analysisProgressCount": "{done} / {total} images",
         "analysisDurationSec": "{sec} sec",
@@ -119,7 +141,7 @@
         "runStatusLoading": "Loading status…",
         "runStatusRunning": "Running",
         "runStatusQueued": "Waiting",
-        "runStatusQueuedHint": "Images still need analysis, but the model is idle; the background task will resume when conditions allow",
+        "runStatusQueuedHint": "Images still need analysis but the model is idle; enable background continuous or new-images-only, check battery power-save, then save settings to resume",
         "runStatusComplete": "All done",
         "runStatusIdle": "Idle",
         "runStatusOnDemand": "On demand (no auto-run)",
@@ -130,8 +152,8 @@
         "statFailedLabel": "Failed",
         "statFailedHint": "Retry later or check the model",
         "statSkippedLabel": "Skipped",
-        "statEmbeddingLabel": "Embedded",
-        "statEmbeddingHint": "Text vectors: semantic search & text-based similar; see Visual vectors chip below",
+        "statEmbeddingLabel": "Text vectors",
+        "statEmbeddingHint": "From the text embedding model for semantic search; separate from vision analysis and visual vectors",
         "statsDone": "Done",
         "statsPending": "Pending",
         "statsFailed": "Failed",
@@ -176,23 +198,24 @@
           "moonshot": "Moonshot",
           "custom": "Custom OpenAI-compatible"
         },
-        "visionSection": "Vision model",
-        "textSection": "Text / embedding model",
+        "visionSection": "Vision analysis model",
+        "textSection": "Text & text embeddings",
         "visionModel": "Vision model",
         "visionBaseUrl": "Service URL",
         "textModel": "Text model",
         "textBaseUrl": "Service URL",
-        "embeddingModel": "Embedding model",
+        "embeddingModel": "Text embedding model",
+        "textEmbedModelHint": "Text-only embeddings for semantic search (e.g. nomic-embed-text)—not visual vectors or vision analysis",
         "apiKey": "API Key",
         "copyApiKey": "Copy",
+        "copyModelName": "Copy model name",
         "apiKeyPlaceholder": "Enter remote API key",
         "customBaseUrlPlaceholder": "https://your-api.example.com",
         "remoteReferer": "OpenRouter Referer",
         "remoteRefererPlaceholder": "Optional, for OpenRouter analytics",
         "remoteAppTitle": "OpenRouter app name",
         "modelPlaceholder": "Select or enter model name",
-        "refreshModels": "Refresh models",
-        "ollamaModelHint": "List is fetched from local Ollama; you can also type a model name",
+        "ollamaModelHint": "Opening the dropdown refreshes the model list from the service; you can also type a model name",
         "presetHints": {
           "lmstudio": "Enable Local Server in LM Studio (default http://127.0.0.1:1234). Use a vision-capable model for image analysis.",
           "localai": "LocalAI default is http://127.0.0.1:8080. Vision and embeddings depend on loaded models.",
@@ -203,7 +226,7 @@
         "listEmptyVision": "No vision models with image support found. You can type a model name manually (e.g. qwen2.5vl:7b)",
         "listEmptyText": "No text models found. Check your service settings or enter a model name manually",
         "listEmptyEmbed": "No embedding models found. For OpenRouter, enter the model ID manually (e.g. nvidia/llama-nemotron-embed-vl-1b-v2:free)",
-        "listEmptyVisualEmbed": "No visual embedding models found. Enter manually (e.g. batiai/qwen3-vl-embed-2b). Text-only embed models cannot embed images.",
+        "listEmptyVisualEmbed": "No visual embedding models found. Enter manually (e.g. batiai/qwen2-vl-embed-2b:q8). Text-only embed models (e.g. nomic-embed-text) cannot embed images.",
         "purposeVision": "vision",
         "purposeText": "text",
         "purposeEmbed": "embedding",
@@ -212,6 +235,7 @@
         "testOk": "Connection successful",
         "errors": {
           "apiKeyMissing": "Please enter your API key first",
+          "modelNameMissing": "Select or enter a model name first",
           "ollamaUnreachable": "Cannot reach Ollama. Make sure the local service is running (default http://127.0.0.1:11434)",
           "networkError": "Network request failed. Check the service URL and your connection",
           "timeout": "Request timed out. Try increasing the request timeout above",
@@ -235,10 +259,10 @@
         "visualEmbedSourceHint": "Built-in: offline, bundled, best for visual similarity. Remote: experimental image embedding via Ollama or compatible APIs; falls back to built-in on failure.",
         "visualEmbedSourceBuiltin": "Built-in MobileCLIP",
         "visualEmbedSourceRemote": "Remote embedding model",
-        "visualEmbedSection": "Visual vector service",
+        "visualEmbedSection": "Visual vectors",
         "visualEmbedBaseUrl": "Service URL",
-        "visualEmbedModel": "Visual embedding model",
-        "visualEmbedModelHint": "Must support image embeddings—not the vision analysis model. Falls back to built-in MobileCLIP on failure.",
+        "visualEmbedModel": "Visual vector model",
+        "visualEmbedModelHint": "Image embeddings for find-similar; built-in MobileCLIP recommended. Remote models must support image vectors—not vision or text embed models. Falls back to built-in on failure.",
         "visualEmbedRemoteSectionHint": "Configure provider, URL, API key, and model in the Visual vector service section below.",
         "visualEmbedModelPlaceholder": "e.g. batiai/qwen3-vl-embed-2b",
         "statImageEmbeddingLabel": "Visual vectors",
@@ -276,7 +300,12 @@
         "dynamicWallpaper": "Dynamic wallpaper",
         "rhythmWallpaper": "Rhythm wallpaper",
         "remoteResource": "Remote resources",
-        "privacyPassword": "Privacy password"
+        "privacyPassword": "Privacy password",
+        "privacySpaceOptions": "Privacy space options"
+      },
+      "privacySpace": {
+        "enableNsfwContentMask": "Hide sensitive content",
+        "enableNsfwContentMaskHint": "Requires a privacy password: cannot turn on without one; turning off requires verification. When on, sensitivity level ≥ 2 is masked on browse pages (search and collections unchanged—display only). Previous/next wallpaper skip those images (manual Set as wallpaper is not affected). Tap the mask and enter your password to view on the current page; masking returns when you switch menus or the app goes to background. Not masked in Privacy Space."
       },
       "settingDataForm": {
         "locale": "Language",
@@ -382,7 +411,26 @@
         "showTag": "Show tag",
         "confirmOnDeleteFile": "Confirm on delete",
         "enableSegmentationTask": "Enable segmentation task",
-        "powerSaveMode": "Power save mode"
+        "powerSaveMode": "Power save mode",
+        "enableExpandSideMenuHint": "When on, hover the left edge of the main window to expand/collapse the narrow sidebar for quick navigation",
+        "showSideMenuLabelHint": "Off: icons only to save width; On: show menu text under icons",
+        "suspensionBallVisibleHint": "Shows a small floating ball on the desktop; hover for prev/next/play/close shortcuts",
+        "startH5ServerOnStartupHint": "Starts the local H5 web server on launch; scan the sidebar QR code to browse wallpapers on your phone",
+        "enableSegmentationTaskHint": "Shows the word-cloud drawer on Search; segments the current list (may pause in power-save mode)",
+        "powerSaveModeHint": "Reduces background wallpaper switching, folder refresh, and AI analysis—good for battery saving",
+        "showTagHint": "Shows source/quality badges on cards; some tags are clickable filters",
+        "confirmOnDeleteFileHint": "Ask for confirmation before deleting local files from browse pages",
+        "viewImageIntervalTimeHint": "How long each image stays visible during autoplay in the built-in viewer",
+        "autoSwitchWallpaperHint": "Automatically change the desktop wallpaper at the interval below; off = manual or suspension ball only",
+        "switchTypeHint": "Sequential: in list order; Random: pick a random image each time",
+        "allScreenHint": "Apply the same wallpaper to all monitors when on",
+        "scaleTypeHint": "How the image is cropped or stretched to fill the screen",
+        "filterKeywordsHint": "Only images whose path/name contains a keyword are used for rotation (empty = no filter)",
+        "localResourceFoldersHint": "Local folders used as wallpaper libraries; scanning respects allowed file types",
+        "allowedFileExtHint": "Only these extensions are indexed when scanning local folders",
+        "autoRefreshDirectoryHint": "Rescan local folders on a schedule to pick up new or removed files",
+        "autoDownloadHint": "Periodically download images from selected sources using your keywords into the download folder",
+        "dynamicPerformanceModeHint": "Lowers video decode/render load; try a lighter mode if playback stutters"
       },
       "privacyPasswordForm": {
         "old": {
@@ -395,8 +443,14 @@
           "placeholder": "Please enter your new password",
           "tooltip": "The password consists of numbers, at least 3 digits and at most 6 digits"
         },
+        "hint": {
+          "label": "Password hint",
+          "placeholder": "e.g. last four digits of a date (optional)",
+          "tooltip": "Saved with your password to help you remember it; shown when verifying. Do not enter the password itself"
+        },
         "confirm": "Update password"
       },
+      "privacyPasswordHintLabel": "Password hint",
       "shortcutSetting": {
         "conflict": "Conflict",
         "function": "Function",
@@ -613,10 +667,10 @@
   },
   "ai": {
     "prompts": {
-      "imageAnalysis": "You are a wallpaper image analysis assistant. Output only one JSON object, no markdown fences, no extra commentary.\nField requirements:\n- score: integer 1-100, overall aesthetic score\n- tags: string array, 3-8 tags in the same language as this prompt\n- title: short title, max 30 characters\n- desc: description, max 80 characters\n- summary: one-line summary, max 50 characters\n- nsfwLevel: integer 0-3, 0 means safe\n- safeForWork: boolean\n\nExample: {\"score\":82,\"tags\":[\"night\",\"city\"],\"title\":\"Rainy City Night\",\"desc\":\"Blue-toned urban nightscape\",\"summary\":\"Rainy cityscape for dark desktops\",\"nsfwLevel\":0,\"safeForWork\":true}",
-      "searchParse": "Parse the user's wallpaper search description into JSON. No markdown.\nUser input: {query}\nOutput fields:\n- filterKeywords: string, core keywords\n- tags: string array, optional tags\n- orientation: array, optional landscape or portrait\n- quality: array, optional 4k,2k,1080p,720p\n- scoreMin: integer 0-100 or null\n- scoreMax: integer 0-100 or null\n- fileType: image or video or empty string\n\nExample: {\"filterKeywords\":\"ocean\",\"tags\":[\"ocean\",\"blue\"],\"orientation\":[\"landscape\"],\"quality\":[\"4k\"],\"scoreMin\":70,\"scoreMax\":null,\"fileType\":\"image\"}",
-      "collectionQuery": "The user wants to create a smart wallpaper collection. Parse the description into queryJson. Output JSON only.\nUser description: {prompt}\nFields:\n- filterKeywords: string\n- tags: string[]\n- tagsMode: any|all\n- orientation: string[]\n- quality: string[]\n- scoreMin: number|null\n- scoreMax: number|null\n- resourceName: resources|favorites|local\n- isRandom: boolean\n- sortField: score|created_at|views\n- sortType: -1|1\n- semanticQuery: string\n- useSemantic: boolean\n- limitCount: integer 5-50\n\nFor concrete entity/theme words (e.g. car, cat), include synonymous tags in multiple languages in tags.",
-      "collectionTagExpand": "Expand wallpaper collection search tags for synonyms. Theme: {keyword}\nOutput JSON: {\"tags\":[\"tag1\",\"tag2\"]}, up to 8 items, include multilingual and common synonyms for matching resource tags, no explanation.",
+      "imageAnalysis": "You are a wallpaper image analysis assistant. Output only one JSON object, no markdown fences, no extra commentary.\n\n[Field roles — do not mix]\n- title: short headline, ≤40 chars, subject + scene\n- summary: one line for search, ≤80 chars, theme and key visible elements (no use-case, no \"good for desktop\")\n- desc: detailed visible description for humans, 120–220 chars (same language as UI). Cover: subject(s), pose/action, clothing and body exposure level, environment, framing/composition, color and lighting, style/mood. Visible facts only; no invented story; no suitability advice\n- tags: 3–10 search tags (same language as UI)\n- score: integer 1–100, overall aesthetic score\n- nsfwLevel: integer 0–3 (sensitivity rubric below)\n- safeForWork: boolean, must follow linkage rules below\n\n[Sensitivity rubric nsfwLevel — EN + 中文]\n0 Safe 安全: landscapes, still life, everyday portraits, no sexual or sensitive focus. Counter-example: do NOT use 0 when erotic focus or clearly visible intimate body parts, not workplace-appropriate\n1 Mild 轻微: swimwear/sportswear/fashion look, much skin but no nipples/genitals, mildly suggestive pose. Counter-example: do NOT use 1 for full nudity, sex acts as main subject, visible intimate parts (use ≥2)\n2 Moderate 中度: visible nipples/partial nudity, strong sexual suggestion, graphic gore, obvious adult-oriented framing. Counter-example: do NOT use 2 when intercourse is central or intimate close-ups (use 3)\n3 Explicit 重度: erotic or sexual acts as main subject, clearly visible genitals, extreme gore. Counter-example: do NOT use 3 for bikini/swimwear with no nudity (use 1)\n\n[safeForWork ↔ nsfwLevel linkage — mandatory]\n- nsfwLevel≥2 ⇒ safeForWork must be false\n- safeForWork false ⇒ nsfwLevel must be ≥2\n- nsfwLevel=0 ⇒ safeForWork must be true\n- Never output nsfwLevel=0 with safeForWork=false\n\nExample (safe): {\"score\":82,\"tags\":[\"night\",\"city\",\"neon\",\"rain\",\"blue\"],\"title\":\"Rainy city skyline\",\"summary\":\"Night cityscape after rain, towers and wet reflections\",\"desc\":\"Wide skyline in the upper frame with warm and cool neon; wet mid-ground pavement mirrors lights and car streaks; sharp deep focus, cinematic calm mood.\",\"nsfwLevel\":0,\"safeForWork\":true}",
+      "searchParse": "Parse the user's wallpaper search description into JSON. No markdown.\nUser input: {query}\nOutput fields:\n- filterKeywords: string, core keywords\n- tags: string array, [] if omitted\n- orientation: array, [] if omitted; elements 1 (landscape) or 0 (portrait), or landscape/portrait\n- quality: array, [] if omitted; only 8K, 5K, 4K, 2K (must match DB field; no 1080p/720p/lowercase 4k)\n- filterType: images | videos | \"\" (empty if type not specified; do not output fileType)\n- scoreMin: integer 0-100 or null unless user asks for a minimum score\n- scoreMax: integer 0-100 or null\n\nExample: {\"filterKeywords\":\"ocean\",\"tags\":[\"ocean\",\"blue\"],\"orientation\":[1],\"quality\":[\"4K\"],\"filterType\":\"images\",\"scoreMin\":null,\"scoreMax\":null}",
+      "collectionQuery": "The user wants to create a smart wallpaper collection. Parse the description into queryJson. Output JSON only.\nUser description: {prompt}\nFields:\n- filterKeywords: string (core search term)\n- tags: string[]\n- tagsMode: any|all\n- quality: string[] (must be [] unless user asks resolution; only 8K, 5K, 4K, 2K; no 1080p/720p)\n(Do not output orientation, scoreMin, or scoreMax; minimum score comes from app AI settings.)\n- resourceName: always \"resources\" (full library; never favorites/local/history)\n- isRandom: boolean\n- sortField: score|created_at|views\n- sortType: -1|1\n- semanticQuery: string\n- useSemantic: boolean (true when theme/mood is described)\n- limitCount: integer 5-50\n\nRules: tags should match resource AI tag language (prefer same as UI); do not invent orientation/quality/scoreMin/scoreMax; for entity words put the word in filterKeywords and Chinese-style synonyms in tags.",
+      "collectionTagExpand": "Expand wallpaper collection search tags for synonyms. Theme: {keyword}\nOutput JSON: {\"tags\":[\"tag1\",\"tag2\"]}, up to 8 items, prefer tags in the same language as resource AI analysis, at most 2 English synonyms, no explanation.",
       "keywordExpand": "Expand search keywords for automatic wallpaper download. Input: {keywords}\nOutput JSON: {\"keywords\":[\"word1\",\"word2\"]}, at most 10 items, same language as this prompt, no explanation.",
       "collectionMerge": "You are a wallpaper library curator. Below are candidate groups (tag groups + vector mood groups). Merge semantically similar groups and name each final collection.\n\nRules:\n1. Output JSON only, no markdown\n2. At most {targetCount} final collections\n3. One wallpaper may appear in multiple collections (by merging candidate ids)\n4. Merge related themes (e.g. night + city + neon → one evocative title)\n5. Names: 2-12 words, evocative, not a single generic word, same language as this prompt\n6. mergeIds must exist in the input candidates\n\nInput candidates:\n{candidates}\n\nOutput format:\n{\n  \"collections\": [\n    {\n      \"name\": \"Collection name\",\n      \"prompt\": \"One-line mood description\",\n      \"semanticQuery\": \"Phrase for semantic search\",\n      \"mergeIds\": [\"tag:night\", \"vec:0\"]\n    }\n  ]\n}"
     }
@@ -633,6 +687,7 @@
     "confirmMessageDanger": "Dangerous operation, this operation is irreversible, do you confirm to execute it?",
     "inputPrivacySpacePassword": "Please enter the privacy space password!",
     "inputPrivacySpacePasswordErrorMessage": "Minimum 3 digits, maximum 6 digits!",
+    "dialogOk": "OK",
     "enterPrivacySpaceSuccess": "Entered the privacy space!",
     "exitedPrivacySpaceSuccess": "Exited the privacy space!",
     "noMoreData": "No more data!",
@@ -661,7 +716,7 @@
     "operationTooFrequent": "Operation is too frequent, please try again later!",
     "privacyPasswordNotSet": "Privacy password is not set, please set privacy password first!",
     "verifyPrivacyPasswordSuccess": "Verification passed!",
-    "verifyPrivacyPasswordFail": "Verification failed!",
+    "verifyPrivacyPasswordFail": "Privacy password verification failed.",
     "operationFailWithDataDuplication": "Operation failed, data is duplicated!",
     "querySuccess": "Query successful!",
     "queryFail": "Query failed!",
@@ -718,8 +773,6 @@
     "indexOutOfRange": "Index out of range",
     "indexTooLarge": "Index too large",
     "autoRefreshDirectoryTask": "Refresh directory task",
-    "autoRefreshDirectoryTaskSuccess": "Refresh directory task successful!",
-    "autoRefreshDirectoryTaskFailed": "Refresh directory task failed!",
     "downloadTask": "Download task",
     "downloadTaskCompleted": "Download task completed!",
     "downloadTaskFailed": "Download task failed!",
@@ -857,6 +910,7 @@
     "ThreeStageWall": "Neon wall",
     "ThreeStageGrid": "Floor pillar grid",
     "ThreeStageTexturedSphere": "Textured sphere",
+    "ThreeStageRoomMeshGrid": "Pulsing space",
     "ThreeStage": "Concert stage (legacy)"
   },
   "rhythmAnimationOptions": {
@@ -1016,12 +1070,20 @@
     "openAbout": "Open about",
     "checkUpdate": "Check for updates"
   },
+  "privacyNsfwMask": {
+    "tapToUnlock": "Tap to enter privacy password",
+    "actionBlocked": "Verify privacy password via the hide overlay first"
+  },
   "comingSoon": "Coming soon",
   "viewInfo": {
     "title": "View information",
     "row": {
       "title": "Title",
       "desc": "Description",
+      "summary": "Summary",
+      "tags": "Tags",
+      "nsfwLevel": "NSFW level",
+      "aiAnalysisStatus": "AI analysis",
       "author": "Author",
       "link": "Link",
       "resourceName": "Resource Name",
@@ -1040,13 +1102,29 @@
       "updated_at": "Record updated at",
       "ctimeMs": "Resource created at",
       "mtimeMs": "Resource updated at"
+    },
+    "nsfwLevel": {
+      "0": "Safe (0)",
+      "1": "Mild (1)",
+      "2": "Moderate (2)",
+      "3": "High (3)"
+    },
+    "aiAnalysisStatus": {
+      "pending": "Pending",
+      "done": "Done",
+      "failed": "Failed",
+      "skipped": "Skipped"
     }
   },
   "h5": {
     "tabbar": {
       "home": "Home",
       "search": "Search",
+      "browse": "Browse",
       "setting": "Settings"
+    },
+    "drawer": {
+      "title": "Browse"
     },
     "pages": {
       "home": {
@@ -1065,6 +1143,10 @@
         "imageInfo": {
           "title": "Title",
           "desc": "Description",
+          "summary": "Summary",
+          "tags": "Tags",
+          "nsfwLevel": "NSFW level",
+          "aiAnalysisStatus": "AI analysis",
           "author": "Author",
           "link": "Link",
           "resourceName": "Resource Name",
