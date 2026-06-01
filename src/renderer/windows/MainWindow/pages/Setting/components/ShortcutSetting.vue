@@ -12,7 +12,20 @@ const shortcutsConflicts = ref([])
 const editingShortcut = ref('')
 const editingShortcutName = ref(null)
 const isShortcutRecording = ref(false)
+const shortcutsSuspended = ref(false)
 const inputRefs = ref({})
+
+const suspendShortcuts = async () => {
+  if (shortcutsSuspended.value) return
+  await window.FBW.disableShortcuts()
+  shortcutsSuspended.value = true
+}
+
+const resumeShortcuts = async () => {
+  if (!shortcutsSuspended.value) return
+  await window.FBW.enableShortcuts()
+  shortcutsSuspended.value = false
+}
 
 const shortcutCategories = computed(() => {
   const cats = new Set()
@@ -51,7 +64,7 @@ const startEdit = async (name) => {
   editingShortcutName.value = name
   editingShortcut.value = ''
 
-  await window.FBW.disableShortcuts()
+  await suspendShortcuts()
 
   setTimeout(() => {
     if (inputRefs.value[name]) {
@@ -61,10 +74,11 @@ const startEdit = async (name) => {
 }
 
 const stopEditing = async () => {
+  isShortcutRecording.value = false
   editingShortcutName.value = null
   editingShortcut.value = ''
 
-  await window.FBW.enableShortcuts()
+  await resumeShortcuts()
 }
 
 const startRecording = async (name) => {
@@ -73,7 +87,11 @@ const startRecording = async (name) => {
     return
   }
 
-  await window.FBW.disableShortcuts()
+  if (isShortcutRecording.value && editingShortcutName.value === name) {
+    return
+  }
+
+  await suspendShortcuts()
 
   isShortcutRecording.value = true
   editingShortcutName.value = name
@@ -81,11 +99,15 @@ const startRecording = async (name) => {
 }
 
 const stopRecording = async () => {
+  if (!isShortcutRecording.value && !shortcutsSuspended.value) {
+    return
+  }
+
   isShortcutRecording.value = false
   editingShortcutName.value = null
   editingShortcut.value = ''
 
-  await window.FBW.enableShortcuts()
+  await resumeShortcuts()
 }
 
 const handleBlur = async (name) => {
@@ -338,12 +360,16 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
-  stopEditing()
+  if (shortcutsSuspended.value) {
+    resumeShortcuts()
+  }
 })
 
 defineExpose({
   resetForm: () => {
-    stopEditing()
+    if (isShortcutRecording.value || shortcutsSuspended.value) {
+      stopEditing()
+    }
   }
 })
 </script>

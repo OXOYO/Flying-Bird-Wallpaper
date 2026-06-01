@@ -27,6 +27,8 @@ class ShortcutManager {
     this._initPromise = this._init()
     // 用于增量更新的缓存
     this._currentShortcuts = new Map()
+    // 录键时暂停快捷键的引用计数（避免重复注销/注册）
+    this._recordingSuspendCount = 0
 
     ShortcutManager._instance = this
   }
@@ -224,6 +226,28 @@ class ShortcutManager {
 
     this.registeredShortcuts.clear()
     this.logger.info('所有快捷键已注销')
+  }
+
+  /** 录键开始时暂停快捷键（引用计数，仅首次真正注销） */
+  suspendShortcutsForRecording() {
+    this._recordingSuspendCount += 1
+    if (this._recordingSuspendCount === 1) {
+      this.unregisterAllShortcuts()
+    }
+  }
+
+  /** 录键结束时恢复快捷键（引用计数归零后才重注册） */
+  resumeShortcutsAfterRecording() {
+    if (this._recordingSuspendCount <= 0) {
+      this._recordingSuspendCount = 0
+      return
+    }
+    this._recordingSuspendCount -= 1
+    if (this._recordingSuspendCount === 0) {
+      this.registerGlobalShortcuts()
+      this.registerAllLocalShortcuts()
+      this._updateCurrentShortcutsCache()
+    }
   }
 
   // 注册全局快捷键

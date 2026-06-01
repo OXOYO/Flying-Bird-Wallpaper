@@ -37,6 +37,11 @@ export const AI_VISION_JPEG_QUALITY_MIN = 75
 export const AI_VISION_JPEG_QUALITY_MAX = 95
 export const AI_VISION_JPEG_QUALITY_DEFAULT = 88
 
+/** 远程 embed-image 常见 input 字符串上限（如 NVIDIA NIM 16MB） */
+export const EMBED_IMAGE_MAX_INPUT_CHARS = 16 * 1024 * 1024
+/** 预留给 data URI 前缀与 JSON 包装 */
+export const EMBED_IMAGE_INPUT_CHARS_MARGIN = 8192
+
 /**
  * 视觉分析有效超时 = min(基础超时 + 按文件体积加成, 全局上限)
  * @param {object} ai
@@ -164,8 +169,10 @@ export const VISUAL_EMBED_REMOTE_BATCH_PAUSE_MS = 1500
 
 /** 后台分析看门狗（队列空转时偶尔复核；主路径为连续 pump） */
 export const AI_ANALYSIS_WATCHDOG_MS = 3 * 60 * 1000
-export const AI_ANALYSIS_PUMP_START_DELAY_MS = 2000
-export const VISUAL_EMBED_PUMP_START_DELAY_MS = 3000
+/** 主窗口首屏就绪后再延迟启动后台分析，避免与启动/渲染抢资源 */
+export const AI_ANALYSIS_PUMP_START_DELAY_MS = 60 * 1000
+/** 主窗口首屏就绪后再延迟启动画面向量补算（晚于分析 pump） */
+export const VISUAL_EMBED_PUMP_START_DELAY_MS = 90 * 1000
 export const VISUAL_EMBED_WATCHDOG_MS = 5 * 60 * 1000
 
 export const AI_ANALYSIS_STATUS = {

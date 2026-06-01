@@ -1,7 +1,12 @@
 import {
   normalizeOrientationToIsLandscape,
-  normalizeCollectionQuality
+  normalizeCollectionQuality,
+  normalizeAutoCollectionTitleForLocale,
+  resolveAtmosphereFallbackName,
+  validateCollectionTitleAgainstHints,
+  titleMatchesAppLocale
 } from '../store/collectionConstants.mjs'
+import { buildAutoCollectionStoragePrompt } from './AiPrompts.mjs'
 
 const clamp = (n, min, max) => Math.min(max, Math.max(min, n))
 
@@ -100,38 +105,65 @@ export const normalizeCollectionQueryJson = (raw) => {
   }
 }
 
-export const normalizeCollectionMergePlan = (raw, candidates, targetCount, minItems = 3) => {
+const resolvePlanName = (llmName, hints, locale, candidateId) => {
+  const fromLlm = normalizeAutoCollectionTitleForLocale(llmName, locale, '', candidateId)
+  if (fromLlm && validateCollectionTitleAgainstHints(fromLlm, hints)) return fromLlm
+  return resolveAtmosphereFallbackName(hints, locale)
+}
+
+/** 按簇 id 单独命名，resourceIds 严格来自对应候选（禁止跨簇合并） */
+export const normalizeCollectionNamingPlan = (
+  raw,
+  candidates,
+  targetCount,
+  minItems = 3,
+  locale = 'enUS'
+) => {
   const candidateMap = new Map(candidates.map((c) => [c.id, c]))
   const list = Array.isArray(raw?.collections) ? raw.collections : []
+  const usedIds = new Set()
   const plans = []
 
   for (const item of list) {
     if (plans.length >= targetCount) break
-    const mergeIds = Array.isArray(item.mergeIds)
-      ? item.mergeIds.map(String).filter((id) => candidateMap.has(id))
-      : []
-    if (!mergeIds.length) continue
+    const candidateId = String(item.id || '').trim()
+    const candidate = candidateMap.get(candidateId)
+    if (!candidate || usedIds.has(candidateId)) continue
+    if (candidate.resourceIds.length < minItems) continue
 
-    const resourceIdSet = new Set()
-    const tagSet = new Set()
-    for (const mid of mergeIds) {
-      const candidate = candidateMap.get(mid)
-      candidate.resourceIds.forEach((id) => resourceIdSet.add(id))
-      candidate.hints?.tags?.forEach((tag) => tagSet.add(tag))
-    }
-    if (resourceIdSet.size < minItems) continue
-
-    const autoKey = `merged:${mergeIds.slice().sort().join('+')}`
+    usedIds.add(candidateId)
+    const name = resolvePlanName(item.name, candidate.hints, locale, candidateId)
+    if (!name || !titleMatchesAppLocale(name, locale)) continue
     plans.push({
-      autoKey,
-      name: String(item.name || '').trim().slice(0, 40) || '推荐合集',
-      prompt: String(item.prompt || item.name || '').trim().slice(0, 200),
-      semanticQuery: String(item.semanticQuery || item.prompt || item.name || '').trim(),
-      tags: Array.from(tagSet).slice(0, 10),
-      mergeIds,
-      resourceIds: Array.from(resourceIdSet)
+      autoKey: candidateId,
+      name,
+      prompt: String(item.prompt || item.name || name).trim().slice(0, 200),
+      semanticQuery: String(
+        item.semanticQuery || item.prompt || item.name || candidate.hints?.themeHint || name
+      ).trim(),
+      tags: candidate.hints?.tags || [],
+      mergeIds: [candidateId],
+      resourceIds: candidate.resourceIds
     })
   }
 
-  return plans
+  for (const candidate of candidates) {
+    if (plans.length >= targetCount) break
+    if (usedIds.has(candidate.id)) continue
+    if (candidate.resourceIds.length < minItems) continue
+    usedIds.add(candidate.id)
+    const fallbackName = resolveAtmosphereFallbackName(candidate.hints, locale)
+    if (!fallbackName || !titleMatchesAppLocale(fallbackName, locale)) continue
+    plans.push({
+      autoKey: candidate.id,
+      name: fallbackName,
+      prompt: buildAutoCollectionStoragePrompt(fallbackName, candidate.hints?.themeHint),
+      semanticQuery: String(candidate.hints?.themeHint || fallbackName).trim(),
+      tags: candidate.hints?.tags || [],
+      mergeIds: [candidate.id],
+      resourceIds: candidate.resourceIds
+    })
+  }
+
+  return plans.slice(0, targetCount)
 }

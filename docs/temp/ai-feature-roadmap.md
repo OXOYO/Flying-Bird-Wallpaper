@@ -1,8 +1,8 @@
 # 飞鸟壁纸 AI 能力完整功能清单
 
-> 文档版本：**v2.0**  
-> 整理日期：2026-05-27  
-> 状态：**2.0.0 核心已落地**；找相似方案 C + 远程画面向量 + **合集画面向量**已落地；用户合集 **regenPrompt/标签扩展**已落地；部分 P3/P4 仍为规划  
+> 文档版本：**v2.2**  
+> 整理日期：2026-06-01  
+> 状态：**2.0.0 核心已落地**；系统合集 **v1.6 合并去重**已落地；部分 P3/P4 仍为规划  
 > 关联：[data-model-resources-and-ai.md](./data-model-resources-and-ai.md) · [ai-dev-plan.md](./ai-dev-plan.md) · [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) · [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) · [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) · [README.md](./README.md)
 
 **图例：** ✅ 已实现 · 🟡 部分实现 · ⬜ 未开始
@@ -31,7 +31,7 @@
 | 向量 | sqlite-vec，失败 BLOB 降级 |
 | 分析策略 | 按需 / 后台慢速 / 仅新图 |
 | 智能合集 | 独立 `Collections` 菜单；`source=user` 自定义 + `source=auto` 系统 |
-| 系统策展 | 标签聚类 + **画面** K-Means + LLM 合并命名 |
+| 系统策展 | **画面** K-Means → **按簇** LLM 命名 + UI locale 对齐 + 语义剔图 |
 
 ---
 
@@ -118,7 +118,7 @@
 | AI-206a | 合集壁纸分页加载 | ✅ | `collectionsGet` + `VirtualList` close-bottom |
 | AI-206b | 合集缩略图/主色 | ✅ | `resourceImageUrl.js`、`dominantColor` 与探索一致 |
 | AI-207 | 合集作自动切换源 | ⬜ | |
-| AI-208a | 氛围型合集（系统策展） | ✅ | **画面** K-Means + LLM 合并命名，`CollectionCurator` |
+| AI-208a | 氛围型合集（系统策展） | ✅ | 画面 K-Means + 按簇 LLM 命名 + locale + 剔图 + **同名/高重叠合并 dedupe** |
 | AI-208c | 分析完成后暂停自动整理 | ✅ | `collectionCurateGate`；至少一轮后锁存；手动 `curate` 不限 |
 | AI-208b | 用户 NL 合集画面语义扩召回 | 🟡 | 氛围描述靠画面；实体词走 SQL + **LLM 标签扩展**；`regenPrompt` 默认 false |
 
@@ -126,14 +126,17 @@
 
 | 能力 | 说明 |
 |------|------|
-| 标签候选 | 高频 AI 标签 → `tag:{标签}` |
-| 向量候选 | **画面** K-Means → `vec:{n}`（`fbw_resource_image_vec_blob`） |
-| LLM 合并 | 相近组合并命名；失败降级 |
-| 重叠 | 多合集可含同一张图 |
+| 向量候选 | **画面** K-Means → `vec:{n}`（`fbw_resource_image_vec_blob`）；簇内离群剔除 minSim **0.77** |
+| LLM 命名 | **每簇独立** `buildCollectionNamingPrompt`；禁止跨簇 merge；失败 → `resolveAtmosphereFallbackName` |
+| 语言 | `titleMatchesAppLocale`；标题须与 UI locale 一致 |
+| 语义剔图 | 命名后 `refinePlanMembersByTitle`（n-gram 重叠 ≥ **0.35**） |
+| **重复合并** | `mergeCollectionPlans` + 库内 reconcile + `dedupeExistingAutoCollections`（Jaccard≥**0.85** 或同名） |
+| 重叠 | 多合集可含同一张图（合并后同名同成员只保留一行） |
 | 可删 | 系统合集 `source=auto` 允许删除 |
 | 数量 | `computeAutoCollectionCount(已分析, ai)`，封顶 `ai.autoCollectionsMaxCount`（默认 20，3～50） |
 | 入选 | `ai.scoreMinFilter`（默认 **70**，0～100）；**无**每合集固定条数顶 |
 | 稳定暂停 | 分析队列稳定 + 至少一轮自动整理 → 停 30min/防抖；手动 `curate` 不限 |
+| 遗留清理 | 旧 `tag:*` / `merged:*` 系统合集在手动整理时移除 |
 
 **数据表：**
 
@@ -150,9 +153,8 @@ fbw_collections (
 
 ```json
 {
-  "autoKey": "merged:tag:夜景+vec:0",
-  "autoType": "merged",
-  "mergeIds": ["tag:夜景", "vec:0"],
+  "autoKey": "vec:0",
+  "mergeIds": ["vec:0"],
   "tags": ["夜景", "城市"],
   "semanticQuery": "赛博雨夜都市",
   "useSemantic": true,
@@ -248,7 +250,7 @@ AI 助手、AIGC 工具
 |----|------|------|
 | 隐私 | 远程上传须明示 | 视觉区选用云端服务商时显示静态说明（`remoteVisionPrivacyNote`） |
 | 性能 | 扫描不阻塞；VLM 并发 1；大图缩图 | ✅ |
-| 容错 | AI 失败不阻断入库 | ✅；LLM 合并失败降级 |
+| 容错 | AI 失败不阻断入库 | ✅；LLM 命名失败 → 规则降级；语义剔图过严时可能 0 合集 |
 | 可观测 | pino 日志 | ✅ |
 | i18n | 错误友好化 | ✅ `aiErrorUtils` |
 
@@ -305,3 +307,5 @@ AI 助手、AIGC 工具
 | **v1.8** | 2026-05-29 | 合集画面向量：策展 K-Means、AI-208b 部分、`VisualCollectionSearch`、关键词优先 |
 | **v1.9** | 2026-05-29 | `regenPrompt` 默认 false；`expandCollectionKeywordTags`；实体词禁用画面补充 |
 | **v2.0** | 2026-05-27 | AI-013～016：附表拆分、清空 AI、失败重试、进度卡常显；AI-001/012 字段路径更新 |
+| **v2.1** | 2026-06-01 | 系统策展 v1.5：按簇命名、locale 对齐、语义剔图；更新 AI-208a 与 queryJson 示例 |
+| **v2.2** | 2026-06-01 | AI-208a 增补 v1.6：同名/高重叠合并 dedupe；progressive 不再累积重复系统合集 |

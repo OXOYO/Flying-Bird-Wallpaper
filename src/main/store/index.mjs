@@ -64,6 +64,8 @@ export default class Store {
     }
 
     this.collectionCuratorTimer = null
+    this._mainUiReady = false
+    this._backgroundAiScheduled = false
 
     // 添加电源状态标志
     this.powerState = {
@@ -231,11 +233,6 @@ export default class Store {
 
       // 开启定时任务
       this.startScheduledTasks()
-      if (this.settingData?.ai?.enabled) {
-        setTimeout(() => {
-          this.triggerVisualEmbedPump()
-        }, VISUAL_EMBED_PUMP_START_DELAY_MS)
-      }
       this.ensurePostAnalysisCurateScheduled()
       this.syncAutoCurateGateFromAnalysis()
 
@@ -435,14 +432,32 @@ export default class Store {
     this.initRefreshDirectoryTask()
     this.initHandleQualityTask()
     this.initHandleWordsTask()
-    this.initAiAnalysisTask()
-    this.initVisualEmbedTask()
     this.initCollectionsRefreshTask()
     this.initCollectionCuratorTask()
     this.initSwitchWallpaperTask()
     this.initRefreshWebWallpaperTask()
     this.initDownloadTask()
     this.initClearDownloadedTask()
+    if (this._mainUiReady) {
+      this.ensureBackgroundAiTasks()
+    }
+  }
+
+  /** 主窗口首屏加载完成后再调度后台 AI，避免拖慢启动 */
+  onMainUiReady() {
+    if (this._mainUiReady) return
+    this._mainUiReady = true
+    global.logger.info(
+      `[Store] 主窗口已就绪，${Math.round(AI_ANALYSIS_PUMP_START_DELAY_MS / 1000)}s 后启动后台分析、${Math.round(VISUAL_EMBED_PUMP_START_DELAY_MS / 1000)}s 后启动画面向量补算`
+    )
+    this.ensureBackgroundAiTasks()
+  }
+
+  ensureBackgroundAiTasks() {
+    if (!this._mainUiReady || this._backgroundAiScheduled) return
+    this._backgroundAiScheduled = true
+    this.initAiAnalysisTask()
+    this.initVisualEmbedTask()
   }
 
   // 图片质量处理任务
@@ -539,7 +554,6 @@ export default class Store {
       },
       AI_ANALYSIS_PUMP_START_DELAY_MS
     )
-    setImmediate(() => this.triggerBackgroundAnalysisPump())
   }
 
   stopAiAnalysisTask() {
@@ -564,7 +578,6 @@ export default class Store {
       },
       VISUAL_EMBED_PUMP_START_DELAY_MS
     )
-    setImmediate(() => this.triggerVisualEmbedPump())
   }
 
   stopVisualEmbedTask() {
@@ -1397,12 +1410,12 @@ export default class Store {
     })
 
     ipcMain.handle('main:disableShortcuts', () => {
-      this.shortcutManager.unregisterAllShortcuts()
+      this.shortcutManager.suspendShortcutsForRecording()
       return { success: true }
     })
 
     ipcMain.handle('main:enableShortcuts', () => {
-      this.shortcutManager.registerAllShortcuts()
+      this.shortcutManager.resumeShortcutsAfterRecording()
       return { success: true }
     })
 

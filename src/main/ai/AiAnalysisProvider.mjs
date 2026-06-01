@@ -2,8 +2,8 @@ import { OllamaProvider, OpenAiCompatibleProvider } from './providers/HttpAiProv
 import { buildImageAnalysisPrompt } from './AiPrompts.mjs'
 import { extractJsonObject, normalizeAnalysisResult } from './AiResponseParser.mjs'
 import { calculateImageScore } from '../utils/utils.mjs'
-import { AI_PROVIDER_TYPES, DEFAULT_AI_TIMEOUT_MS, AI_TEST_CONNECTION_TIMEOUT_MS, resolveEffectiveVisionTimeout } from './aiConstants.mjs'
-import { prepareVisionImageForAnalysis, formatVisionPrepLog } from './AiVisionImagePrep.mjs'
+import { AI_PROVIDER_TYPES, DEFAULT_AI_TIMEOUT_MS, AI_TEST_CONNECTION_TIMEOUT_MS, resolveEffectiveVisionTimeout, AI_VISION_LONG_EDGE_MIN } from './aiConstants.mjs'
+import { prepareVisionImageForAnalysis, prepareVisionImageForEmbed, shrinkBufferToEmbedLimit, formatVisionPrepLog } from './AiVisionImagePrep.mjs'
 import fs from 'node:fs'
 import {
   filterModelsByPurpose,
@@ -13,6 +13,7 @@ import {
   validateModelForPurpose
 } from './AiModelUtils.mjs'
 import { buildRemoteExtraHeaders, presetRequiresApiKey } from '../../common/aiProviders.js'
+import { t } from '../../i18n/server.js'
 
 const PURPOSE_LABEL = {
   vision: 'vision',
@@ -157,7 +158,7 @@ export default class AiAnalysisProvider {
       this.logger?.warn(
         `[AiAnalysisProvider] JSON parse failed rawLen=${raw.length} truncated=${truncated} visionMs=${visionMs}ms model=${ai.visionModel} file=${filePath} raw=${preview}`
       )
-      throw new Error('AI 返回无法解析为 JSON')
+      throw new Error(t('messages.aiJsonParseFailed'))
     }
     if (this.logger) {
       this.logger.info(
@@ -170,7 +171,7 @@ export default class AiAnalysisProvider {
   async chatText(prompt, useTextProvider = true) {
     const ai = this.ai
     if (!ai.enabled && !useTextProvider) {
-      throw new Error('AI 未启用')
+      throw new Error(t('messages.aiNotEnabled'))
     }
     const provider = this.createProvider('text')
     const content = await provider.chat({
@@ -195,9 +196,40 @@ export default class AiAnalysisProvider {
     const ai = this.resolveAi(aiOverrides)
     const model = String(ai.visualEmbedModel || '').trim()
     if (!model) return []
+    const prepared = await prepareVisionImageForEmbed(filePath, ai, this.logger)
     const provider = this.createProvider('visualEmbed', ai)
     if (typeof provider.embedImage !== 'function') return []
-    return await provider.embedImage(filePath, model, options)
+    const embedInput = prepared.buffer
+      ? { buffer: prepared.buffer, mime: 'image/jpeg' }
+      : { filePath }
+    if (this.logger) {
+      this.logger.info(
+        `[AiAnalysisProvider] visual-embed prep ${formatVisionPrepLog(prepared.meta)} file=${filePath}`
+      )
+    }
+    try {
+      return await provider.embedImage(embedInput, model, options)
+    } catch (err) {
+      const msg = String(err?.message || err)
+      if (!/string_too_long/i.test(msg) || !prepared.buffer) throw err
+      if (this.logger) {
+        this.logger.warn(
+          `[AiAnalysisProvider] visual-embed payload still too large, retry with aggressive shrink file=${filePath}`
+        )
+      }
+      const retried = await shrinkBufferToEmbedLimit(
+        prepared.buffer,
+        { ...ai, visionMaxLongEdge: AI_VISION_LONG_EDGE_MIN },
+        this.logger,
+        filePath,
+        prepared.meta
+      )
+      return await provider.embedImage(
+        { buffer: retried.buffer, mime: 'image/jpeg' },
+        model,
+        options
+      )
+    }
   }
 
   assertModelPurpose(modelId, purpose) {

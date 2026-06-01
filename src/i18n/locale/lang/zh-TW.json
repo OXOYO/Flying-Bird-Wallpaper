@@ -502,7 +502,7 @@
           "modelNameMissing": "Select or enter a model name first"
         },
         "autoCollectionsEnabled": "AI 自動整理合集",
-        "autoCollectionsEnabledHint": "按標籤與向量氛圍自動聚類，並用 LLM 命名合併系統推薦合集（可重疊、可刪除）",
+        "autoCollectionsEnabledHint": "依畫面向量聚類，LLM 為每個簇單獨命名系統推薦合集（可重疊、可刪除）",
         "findSimilarHintTitle": "找相似",
         "findSimilarHint": "自動融合畫面向量（內建 MobileCLIP）與文案向量（embedding 模型），使用 RRF 排序，無需手動設定相似度閾值。開啟 AI 後文案路會自動參與。",
         "findSimilarHintShort": "預設使用內建 MobileCLIP 做畫面相似；若已配置 embedding 模型，會同時參考標題與描述。",
@@ -592,7 +592,7 @@
     },
     "Collections": {
       "title": "智慧合集",
-      "subtitle": "AI 分析資源庫後，透過標籤 + 向量氛圍 + LLM 命名合併，自動產生推薦合集",
+      "subtitle": "AI 分析資源庫後，透過畫面向量聚類 + LLM 按簇命名，自動產生推薦合集",
       "listTitle": "合集列表",
       "listTabAll": "全部",
       "listTabAuto": "AI 推薦",
@@ -628,8 +628,8 @@
       "refreshModeHint": "自動重新整理將按已儲存的篩選條件重新拉取壁紙，不會重新解析描述",
       "refreshModeUpdated": "重新整理策略已更新",
       "autoRefreshTag": "定時",
-      "autoCollectionHint": "由 AI 根據標籤聚類、向量氛圍與 LLM 合併命名自動產生；新圖分析/向量化後會更新，可刪除",
-      "autoCollectionRefreshHint": "系統合集隨 AI 分析自動更新，無需設定重新整理策略",
+      "autoCollectionHint": "由 AI 依畫面向量聚類與 LLM 命名自動產生；分析/向量管道穩定後定格，新圖按畫面相似度增量加入",
+      "autoCollectionRefreshHint": "系統合集在 AI 分析完成後自動定格；定格後新圖按畫面相似度增量加入，無需設定刷新策略",
       "curatorStats": "已分析 {analyzed} 張 · 向量 {embeddings} 條 · 系統推薦 {auto} 個（目標約 {target} 個）",
       "curatorStatsShort": "已分析 {analyzed} · 向量 {embeddings} · 推薦 {auto}/{target}",
       "footerGridRange": "{start}–{end} / {total}",
@@ -662,7 +662,10 @@
         "idle": "空闲",
         "onDemand": "按需"
       },
-      "curateManualConfirmSettled": "系统合集已定格，手動整理将用 LLM 全量重建，并移除未入选的系统合集。是否繼續？"
+      "curateManualConfirmSettled": "系统合集已定格，手動整理将用 LLM 全量重建，并移除未入选的系统合集。是否繼續？",
+      "auto": {
+        "storagePrompt": "{detail}"
+      }
     }
   },
   "messages": {
@@ -796,7 +799,9 @@
     "h5ServerStartFailDetail": "H5 伺服器啟動失敗：{error}",
     "conflictWindowShortcut": "視窗「{window}」內與「{name}」快速鍵衝突",
     "invalidShortcutOnlyModifiers": "快速鍵不能只包含修飾鍵，請再按一個一般鍵",
-    "dialogOk": "確定"
+    "dialogOk": "確定",
+    "aiJsonParseFailed": "AI 回傳無法解析為 JSON",
+    "aiNotEnabled": "AI 未啟用"
   },
   "resourceTypeList": {
     "localResource": "本地資源",
@@ -1277,10 +1282,10 @@
     "prompts": {
       "imageAnalysis": "你是壁紙圖像分析助手。請僅輸出一個 JSON 物件，不要 markdown 程式碼塊，不要額外說明。\n\n【欄位職責（勿混用）】\n- title：簡短標題，≤40 字，點出主體與場景\n- summary：檢索用一句話，≤80 字，概括畫面主題與關鍵元素（不寫用途、不寫「適合桌面」）\n- desc：給人看的詳細描述，120–220 字，按順序寫清：主體/人物、動作與姿態、服飾與身體暴露程度、場景與環境、構圖與景別、色調與光線、風格與氛圍；只描述可見內容，不臆測故事，不評價用途\n- tags：3–10 個檢索標籤，與介面語言一致，含主體、場景、風格、色調等\n- score：1–100 整數，美學綜合分\n- nsfwLevel：0–3 整數（敏感分級，見下表）\n- safeForWork：布林，是否與下表聯動規則一致\n\n【敏感分級 nsfwLevel（中英對照）】\n0 安全 Safe：普通風景/靜物/日常人像，無性暗示或敏感主體。反例：不宜標 0——畫面以情色或隱私部位清晰呈現、明顯不適合辦公場所\n1 輕微 Mild：泳裝/運動裝/時尚攝影感、肌膚較多但無露點、姿態略曖昧。反例：不宜標 1——明顯全裸、以情色行為為主體、隱私部位清晰可見（應 ≥2）\n2 中度 Moderate：露點或大面積裸露、強性暗示、血腥特寫、明顯成人向構圖。反例：不宜標 2——情色行為為畫面中心、隱私部位特寫（應 3）\n3 重度 Explicit：以情色或性行為為主體、隱私部位清晰可辨、極端血腥暴力。反例：不宜標 3——僅泳裝/比基尼且無露點（應 1）\n\n【safeForWork 與 nsfwLevel 聯動（必須遵守）】\n- nsfwLevel≥2 ⇒ safeForWork 必須為 false\n- safeForWork 為 false ⇒ nsfwLevel 必須 ≥2\n- nsfwLevel=0 ⇒ safeForWork 必須為 true\n- 不得出現 nsfwLevel=0 且 safeForWork=false\n\n示例（安全）：{\"score\":82,\"tags\":[\"夜景\",\"城市\",\"霓虹\",\"雨\",\"藍調\"],\"title\":\"雨夜都市天際線\",\"summary\":\"雨後城市夜景，高樓燈火與濕潤路面反光\",\"desc\":\"遠景城市天際線佔據畫面上部，暖黃與冷藍霓虹交織；中景街道被雨水打濕形成鏡面反光，可見車燈拖影；構圖偏橫屏全景，景深清晰；整體氛圍潮濕而寧靜，寫實攝影風格。\",\"nsfwLevel\":0,\"safeForWork\":true}",
       "searchParse": "將用戶的壁紙搜尋描述解析為 JSON，不要 markdown。\n用戶描述：{query}\n輸出欄位：\n- filterKeywords: 字串，核心關鍵詞\n- tags: 字串陣列，未提時 []\n- orientation: 陣列，未提時 []；元素為 1（橫屏）或 0（豎屏），或 landscape/portrait\n- quality: 陣列，未提時 []；僅 8K、5K、4K、2K（與資源 quality 欄位一致，禁止 1080p/720p 及小寫 4k）\n- filterType: images | videos | \"\"（未提類型時空字串；禁止輸出 fileType）\n- scoreMin: 0-100 整數，用戶未提評分門檻時為 null\n- scoreMax: 0-100 整數或 null\n\n範例：{\"filterKeywords\":\"海洋\",\"tags\":[\"海洋\",\"藍色\"],\"orientation\":[1],\"quality\":[\"4K\"],\"filterType\":\"images\",\"scoreMin\":null,\"scoreMax\":null}",
-      "collectionQuery": "用戶想建立壁紙智慧合集。將描述解析為 queryJson，僅輸出 JSON。\n用戶描述：{prompt}\n欄位：\n- filterKeywords: string（核心檢索詞，與描述一致）\n- tags: string[]\n- tagsMode: any|all\n- quality: string[]（未提解析度時必須是 []；僅允許 8K、5K、4K、2K，禁止 1080p/720p/high/best 等）\n（不要輸出 orientation、scoreMin、scoreMax；最低分由應用 AI 設定統一）\n- resourceName: 固定 \"resources\"（全庫，禁止 favorites/local/history）\n- isRandom: boolean\n- sortField: score|created_at|views\n- sortType: -1|1\n- semanticQuery: string\n- useSemantic: boolean（有主題/氛圍描述時 true）\n- limitCount: 5-50 整數\n\n規則：tags 以中文為主、與資源 AI 標籤語言一致，可少量英文同義詞；勿臆造 orientation/quality/scoreMin/scoreMax；具體實體詞（如「汽車」）filterKeywords 填該詞並在 tags 寫中文同義標籤。",
+      "collectionQuery": "用戶想建立壁紙智慧合集。將描述解析為 queryJson，僅輸出 JSON。\n用戶描述：{prompt}\n欄位：\n- filterKeywords: string（核心檢索詞，與描述一致）\n- tags: string[]\n- tagsMode: any|all\n- quality: string[]（未提解析度時必須是 []；僅允許 8K、5K、4K、2K，禁止 1080p/720p/high/best 等）\n（不要輸出 orientation、scoreMin、scoreMax；最低分由應用 AI 設定統一）\n- resourceName: 固定 \"resources\"（全庫，禁止 favorites/local/history）\n- isRandom: boolean\n- sortField: score|created_at|views\n- sortType: -1|1\n- semanticQuery: string\n- useSemantic: boolean（有主題/氛圍描述時 true）\n- limitCount: 5-50 整數\n\n規則：tags 語言與資源 AI 標籤及當前介面語言一致；勿臆造 orientation/quality/scoreMin/scoreMax；具體實體詞 filterKeywords 填該詞並在 tags 寫同語言同義標籤。",
       "keywordExpand": "為壁紙自動下載擴展搜尋關鍵詞。輸入：{keywords}\n輸出 JSON：{\"keywords\":[\"詞1\",\"詞2\"]}，10 個以內，語言與當前介面一致，不要解釋。",
-      "collectionMerge": "你是壁紙庫策展助手。下面是一批「候選分組」（標籤分組 + 向量氛圍分組），請合併語意相近的分組，並為每個最終合集起名。\n\n要求：\n1. 僅輸出 JSON，不要 markdown\n2. 最終合集數量不超過 {targetCount} 個\n3. 允許一張壁紙出現在多個合集中（透過合併多個候選 id 實現）\n4. 合併相近主題（如「夜景」「城市」「霓虹」→「賽博雨夜都市」）\n5. 名稱 2-12 個字，有氛圍感，不要直接用單個泛詞，語言與當前介面一致\n6. mergeIds 必須是輸入候選裡存在的 id\n\n輸入候選：\n{candidates}\n\n輸出格式：\n{\n  \"collections\": [\n    {\n      \"name\": \"合集名稱\",\n      \"prompt\": \"一句話描述氛圍\",\n      \"semanticQuery\": \"用於語意搜尋的短語\",\n      \"mergeIds\": [\"tag:夜景\", \"vec:0\"]\n    }\n  ]\n}",
-      "collectionTagExpand": "為壁紙合集檢索擴展標籤同義詞。主題詞：{keyword}\n輸出 JSON：{\"tags\":[\"標籤1\",\"標籤2\"]}，8 個以內，優先中文標籤（與資源 AI 分析 tags 一致），英文同義最多 2 個，不要解釋。"
+      "collectionTagExpand": "為壁紙合集檢索擴展標籤同義詞。主題詞：{keyword}\n輸出 JSON：{\"tags\":[\"標籤1\",\"標籤2\"]}，8 個以內，標籤語言與資源 AI 分析 tags 及當前介面語言一致，不要解釋。",
+      "collectionNaming": "你是壁紙庫策展助手。下面每個 id 對應一組「畫面向量聚類」結果，組內壁紙視覺風格相近。請為每個 id 單獨起名，禁止合併多個 id，禁止把 A 組的語料寫到 B 組。\n\n要求：\n1. 僅輸出 JSON，不要 markdown\n2. 輸出條數不超過 {targetCount}，且每條 id 必須來自輸入\n3. 只能依據該 id 的 titleSamples（AI 短標題）、samples 與 tags 起名；name 優先參考 titleSamples；不得添加語料中未出現的詞\n4. name 是簡短氛圍標題（不是完整句子、不是編號占位），總長度 {nameMinLen}-{nameMaxLen} 字符\n5. samples 分散時用更泛化但仍能在 titleSamples/samples/tags 中找到依據的表述\n6. prompt / semanticQuery 可以稍長，但 name 必須獨立且簡短\n\n輸入候選：\n{candidates}\n\n輸出格式：\n{\n  \"collections\": [\n    {\n      \"id\": \"vec:0\",\n      \"name\": \"山湖靜景\",\n      \"prompt\": \"一句話描述該組畫面氛圍\",\n      \"semanticQuery\": \"用於語義搜索的短語\"\n    }\n  ]\n}\n7. name 語言必須與當前應用介面語言（{uiLocale}）一致，並與 samples/tags 同語言；禁止中英混用"
     }
   },
   "privacyNsfwMask": {

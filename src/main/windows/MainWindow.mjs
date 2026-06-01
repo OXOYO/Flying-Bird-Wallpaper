@@ -82,6 +82,7 @@ export default class MainWindow {
     this.win.on('did-finish-load', () => {
       // 发送公共信息
       global.FBW.sendCommonData(this.win)
+      global.FBW.store?.onMainUiReady?.()
       isFunc(callback) && callback()
     })
 

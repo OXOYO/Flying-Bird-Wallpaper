@@ -18,6 +18,7 @@ const { settingData } = storeToRefs(settingStore)
 const { wordDrawerVisible } = storeToRefs(wordsStore)
 const { toggleWordDrawerVisible } = wordsStore
 const { commonData } = storeToRefs(commonStore)
+const h5ServerUrl = computed(() => commonData.value?.h5ServerUrl || '')
 
 const { t } = useTranslation()
 
@@ -116,9 +117,9 @@ const toggleQrPopover = () => {
 }
 
 const onCopyH5ServerUrl = () => {
-  const { h5ServerUrl } = commonData.value
-  if (h5ServerUrl) {
-    clipboard
+  const h5ServerUrl = commonData.value?.h5ServerUrl
+  if (!h5ServerUrl) return
+  clipboard
       .write(h5ServerUrl)
       .then(() => {
         ElMessage({
@@ -132,7 +133,6 @@ const onCopyH5ServerUrl = () => {
           message: t('messages.copyFail')
         })
       })
-  }
 }
 </script>
 
@@ -229,7 +229,7 @@ const onCopyH5ServerUrl = () => {
               <span class="side-footer-btn__hit">
                 <IconifyIcon
                   class="footer-btn-icon"
-                  :class="{ active: commonData?.h5ServerUrl }"
+                  :class="{ active: h5ServerUrl }"
                   icon="custom:qrcode"
                 />
               </span>
@@ -253,12 +253,11 @@ const onCopyH5ServerUrl = () => {
               </div>
             </template>
           </el-image>
-          <div class="qr-code-link">
-            <el-link :href="commonData.h5ServerUrl" target="_blank" class="qr-code-url">
-              {{ commonData.h5ServerUrl }}
+          <div v-if="h5ServerUrl" class="qr-code-link">
+            <el-link :href="h5ServerUrl" target="_blank" class="qr-code-url">
+              {{ h5ServerUrl }}
             </el-link>
             <IconifyIcon
-              v-if="commonData.h5ServerUrl"
               class="qr-code-copy"
               icon="custom:copy"
               @click="onCopyH5ServerUrl"
@@ -266,7 +265,7 @@ const onCopyH5ServerUrl = () => {
           </div>
           <div class="qr-code-title">{{ $t('qrCode.notice') }}</div>
           <el-button
-            v-if="commonData.h5ServerUrl"
+            v-if="h5ServerUrl"
             class="qr-code-btn"
             type="danger"
             plain

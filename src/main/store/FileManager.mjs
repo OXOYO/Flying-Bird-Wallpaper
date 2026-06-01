@@ -4,6 +4,7 @@ import axios from 'axios'
 import cache from '../cache.mjs'
 import { t } from '../../i18n/server.js'
 import { transFilePath } from '../utils/file.mjs'
+import { cleanupResourceRelatedData } from './resourceDeleteCleanup.mjs'
 
 export default class FileManager {
   // 单例实例
@@ -372,6 +373,8 @@ export default class FileManager {
         // 使用事务删除数据库记录
         this.db.exec('BEGIN TRANSACTION')
 
+        cleanupResourceRelatedData(this.db, [id])
+
         // 删除数据库记录
         const delete_stmt = this.db.prepare(`DELETE FROM fbw_resources WHERE id = ?`)
         delete_stmt.run(id)
@@ -402,22 +405,6 @@ export default class FileManager {
           success: true,
           message: t('messages.operationSuccess')
         }
-
-        // 分词更新（jieba 等）较慢，延后到下一轮事件循环，先让 HTTP 响应返回，减轻 H5 侧长时间等待与并发请求失败
-        const wm = this.wordsManager
-        const resourceSnapshot = {
-          id: item.id,
-          title: item.title,
-          desc: item.desc,
-          fileName: item.fileName
-        }
-        setImmediate(() => {
-          try {
-            wm?.handleDeletedResource(resourceSnapshot)
-          } catch (err) {
-            this.logger.error(`异步清理删除资源分词失败: ${err}`)
-          }
-        })
 
         return ret
       } catch (err) {

@@ -106,7 +106,11 @@ export default class CollectionsManager {
     )
     const total =
       this.db
-        .prepare(`SELECT COUNT(*) AS c FROM fbw_collection_items WHERE collectionId = ?`)
+        .prepare(
+          `SELECT COUNT(*) AS c FROM fbw_collection_items ci
+           JOIN fbw_resources r ON r.id = ci.resourceId
+           WHERE ci.collectionId = ?`
+        )
         .get(id)?.c || 0
     const offset = (startPage - 1) * pageSize
     const rows = this.db
@@ -337,7 +341,6 @@ export default class CollectionsManager {
         filterKeywords: ''
       })
       const tagList = tagRet.data?.list || []
-      tagCount = tagList.length
       list = this._mergeResourceLists(list, tagList, pageSize)
     }
 

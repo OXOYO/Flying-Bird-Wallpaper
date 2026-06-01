@@ -1,10 +1,10 @@
 # 飞鸟壁纸 AI 能力开发方案
 
-> 文档版本：**v2.9**  
-> 整理日期：2026-05-27  
-> 状态：Sprint 0–4 **已落地**；2.0.0 **后续增量已落地**（含找相似、AI 附表拆分、工具页清空 AI）；Sprint 5 **未开发**  
+> 文档版本：**v3.1**  
+> 整理日期：2026-06-01  
+> 状态：Sprint 0–4 **已落地**；2.0.0 **后续增量已落地**（含系统合集按簇命名、合并去重、快捷键 suspend/resume）；Sprint 5 **未开发**  
 > 应用版本：**1.3.8 → 2.0.0**  
-> 关联：[data-model-resources-and-ai.md](./data-model-resources-and-ai.md) · [ai-feature-roadmap.md](./ai-feature-roadmap.md) · [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) · [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) · [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) · [README.md](./README.md)
+> 关联：[data-model-resources-and-ai.md](./data-model-resources-and-ai.md) · [ai-feature-roadmap.md](./ai-feature-roadmap.md) · [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) · [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md)（**v1.6**）· [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) · [main-window-ux-and-infrastructure.md](./main-window-ux-and-infrastructure.md) · [README.md](./README.md)
 
 ---
 
@@ -144,20 +144,22 @@ flowchart TB
 
 | 组件 | 说明 |
 |------|------|
-| `CollectionCurator.mjs` | 三阶段策展主逻辑 |
+| `CollectionCurator.mjs` | 画面 K-Means → 按簇 LLM 命名 → 语义剔图 |
 | `VectorCluster.mjs` | K-Means 向量聚类（余弦距离） |
-| `collectionConstants.mjs` | 数量公式、刷新策略、阈值 |
-| `buildCollectionMergePrompt` | LLM 合并命名 Prompt |
+| `collectionConstants.mjs` | 数量公式、locale 校验、剔图阈值 |
+| `buildCollectionNamingPrompt` | 每簇独立命名 Prompt（含 `{uiLocale}`） |
 
 **流水线：**
 
 ```mermaid
 flowchart LR
-  A[已分析 done] --> B[标签候选 tag:*]
-  A --> C[画面向量候选 vec:* K-Means]
-  B --> D[LLM 合并命名]
-  C --> D
-  D --> E[系统推荐合集<br/>允许重叠、可删除]
+  A[已分析 done] --> B[画面 K-Means vec:*]
+  B --> C[簇内离群剔除 0.77]
+  C --> D[LLM 按簇命名 + locale]
+  D --> E[语义剔图]
+  E --> F[合并重复 plan]
+  F --> G[upsert + dedupe]
+  G --> H[系统推荐合集]
 ```
 
 **合集数量公式：** `clamp(3, round(√已分析数 × 1.2), cap)`，`cap = ai.autoCollectionsMaxCount`（默认 **20**，可调 **3～50**）；至少 8 张 `done` 才开始。
@@ -355,13 +357,48 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 
 ---
 
+## §16 后续增量（系统合集按簇命名 + 语言对齐）— 已落地
+
+> 详述：[ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) v1.5
+
+| 项 | 说明 |
+|----|------|
+| 候选 | **仅**画面 K-Means `vec:*`；移除标签候选 + LLM 跨簇合并 |
+| 命名 | `buildCollectionNamingPrompt` + `normalizeCollectionNamingPlan`；每簇独立，禁止 merge |
+| 语言 | `titleMatchesAppLocale`；Prompt 要求 `name` 与 UI locale 一致 |
+| 降级 | `resolveAtmosphereFallbackName`（同语言 aiTitle → tags）；删硬编码「氛围 N」 |
+| 剔图 | `refinePlanMembersByTitle`；簇阈值 **0.77**；成员标题重叠 **0.35** |
+| 入库 prompt | `buildAutoCollectionStoragePrompt` + 12 语言 `pages.Collections.auto.storagePrompt` |
+| 清理 | 手动整理时移除遗留 `tag:*` 系统合集 |
+
+**已知：** 语义剔图过严时手动整理可能写入 0 个计划（日志「剔图后不足 3 张」），待调参。
+
+---
+
+## §17 后续增量（系统合集同名/高重叠合并）— 已落地
+
+> 详述：[ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) v1.6
+
+| 项 | 说明 |
+|----|------|
+| 阈值 | `AUTO_COLLECTION_PLAN_MERGE_MIN_JACCARD = 0.85` |
+| 判定 | 同名 **或** 成员 Jaccard≥0.85 **或** 较小集≥85% 被包含 |
+| 本轮合并 | `mergeCollectionPlans` / `mergeDuplicatePlans` |
+| 库内对齐 | `reconcilePlansWithExistingAutoCollections`：复用已有 `autoKey` |
+| 全库 dedupe | `dedupeExistingAutoCollections`：保留 **id 最小** |
+| 适用范围 | **progressive / manual / finalize** 均执行 dedupe |
+
+**动机：** 剔图后多簇同名同成员、progressive 不删旧 `autoKey` 导致 UI 出现两个「草原风景」。
+
+---
+
 ## 数据库补充（2.0.0 增量）
 
 | 变更 | 说明 |
 |------|------|
 | `fbw_collections.source` | `user`（默认）\| `auto` |
 | `fbw_collections.refreshMode` | 含 `on_analysis`（系统合集） |
-| `queryJson.autoKey` | 系统合集稳定键（`tag:*` / `vec:*` / `merged:*`） |
+| `queryJson.autoKey` | 系统合集稳定键（**v1.5 以 `vec:{n}` 为主**；遗留 `tag:*` / `merged:*` 逐步清理） |
 | `fbw_resource_ai.aiAnalysisFailCount` | 连续分析失败次数（成功归零） |
 | `fbw_resources.qualityScore` | 本地质量任务分（与 `aiScore` 分离） |
 | VecStore | vec0 **不支持 UPSERT** → DELETE+INSERT；维数变更 DROP 重建 |
@@ -389,13 +426,15 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | Sprint 2 | ✅ | Embedding、语义/相似、ExploreCommon |
 | Sprint 3 | ✅ | CollectionsManager、Collections.vue、IPC |
 | Sprint 4 | ✅ | Recommend、H5 API、NSFW/score、扩词 |
-| **增量** | ✅ | CollectionCurator、VectorCluster、LLM 合并、定时刷新、分析进度、VecStore 修复 |
+| **增量** | ✅ | CollectionCurator、VectorCluster、LLM 按簇命名、定时刷新、分析进度、VecStore 修复 |
 | **增量²** | ✅ | 视觉缩图、动态超时、语义搜索迁移、ExploreSearchHeader、AiSetting UX |
 | **增量³** | ✅ | 合集评分门槛、可配上限、items 分页、缩略图/主色、AiSetting 合集子项 |
 | **增量⁴** | ✅ | MobileCLIP2-S0 视觉向量、画面找相似、双表存储、视觉补算任务 |
 | **增量⁶** | ✅ | 合集画面向量：策展 K-Means、用户合集关键词优先 + `VisualCollectionSearch` |
 | **增量⁷** | ✅ | 刷新 `regenPrompt` 默认 false；LLM 标签扩展；实体词禁用画面补充 |
 | **增量⁸** | ✅ | AI 附表拆分、插件复合 ID、工具页清空 AI、失败重试入队、进度卡常显 |
+| **增量⁹** | ✅ | 系统合集按簇命名、UI locale 对齐、语义剔图、i18n 降级；快捷键录键 suspend/resume |
+| **增量¹⁰** | ✅ | 系统合集同名/高重叠合并 dedupe（`mergeCollectionPlans`、全库保留最小 id） |
 | Sprint 5 | ⏸ | OpenClaw/Agent — 仅文档 |
 
 ---
@@ -416,12 +455,13 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 
 ### 智能合集
 
-5. **系统策展**：≥8 张 `done` + ≥8 条 **画面** embedding → 设 `scoreMinFilter` 与 `autoCollectionsMaxCount` →「立即整理」→「AI 推荐」分区 → 后台分析完成后自动整理至少一轮 → 暂停定时  
+5. **系统策展**：≥8 张 `done` + ≥8 条 **画面** embedding → 设 `scoreMinFilter` 与 `autoCollectionsMaxCount` →「立即整理」→ 标题语言与 UI 一致 →「AI 推荐」分区  
 6. **自定义合集**：实体词（如「汽车」）→ 刷新后仅 SQL/tags，日志 `visual=no`；氛围描述 → 画面语义补充；可选定时刷新  
 6a. **标签扩展**：AI 开启时短实体词首次生成/刷新会调 LLM 扩 tags；`keywordTagsExpandedFor` 命中则跳过  
 7. **分页**：大合集滚到底加载；指示器 `current/total` 正确
 8. **缩略图**：网络/日志中 `imageSrc` 含 `w=1080`（本地 `fbwtp://`）
-9. 删除系统合集、关闭 `autoCollectionsEnabled` 验证行为
+9. 删除系统合集、关闭 `autoCollectionsEnabled` 验证行为  
+9a. **重复合并**：曾有两个同名同成员系统合集 → 整理后仅一条；日志「合并重复系统合集」
 
 ### 其他
 
@@ -449,7 +489,7 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | 合集关键词为空 | 中英文标签不一致时可用 **LLM 标签扩展**（需 AI 开启）；否则 SQL 0 条、合集可为空 |
 | 远程画面向量 | 维数与内置不同，按 `model` 分桶；远程失败回退 512 维内置 |
 | NVIDIA 504 | 视觉分析网关超时属服务端问题，非请求格式错误 |
-| LLM 合并 | 失败时降级为规则命名，不阻断策展；**锁存前**定时重跑可能因模型非确定性漂移 |
+| LLM 命名 | 失败时规则降级（`resolveAtmosphereFallbackName`）；**锁存前**定时重跑可能漂移；v1.5 语义剔图过严可能导致 0 合集 |
 | 分析失败 | 后台达 `analysisMaxRetries` 后 skipped；需手动分析或改模型 |
 | build | 渲染端 Vite/Node 版本偶发不兼容（与 AI 无关） |
 | legacy | ONNX/jieba 仍可通过开关启用 |
@@ -474,3 +514,5 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | **v2.7** | 2026-05-29 | §14 增补：`regenPrompt`、动态标签扩展、实体词禁用画面补充、风景顶替修复 |
 | **v2.9** | 2026-05-27 | §15 AI 附表拆分、`qualityScore`、工具页清空/重试；`data-model-resources-and-ai.md`；Sprint 0/架构图/库表补充同步 |
 | **v2.8** | 2026-05-27 | 移除 `enableNsfwCheck`；`privacy-and-sensitive-content.md`；AI 设置隐藏 `analysisMaxRetries`/`concurrency`（默认 1） |
+| **v3.0** | 2026-06-01 | §16 系统合集按簇命名、locale 对齐、语义剔图；Sprint 3.2 流水线更新 |
+| **v3.1** | 2026-06-01 | §17 同名/高重叠 plan 合并与全库 dedupe；链至 ai-collections v1.6 |

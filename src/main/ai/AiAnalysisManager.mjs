@@ -16,6 +16,10 @@ import {
   buildClearAutoCurateLatchFields,
   isAutoCurateSettled
 } from '../store/collectionCurateGate.mjs'
+import {
+  decrementWordCountsForResourceIds,
+  deleteEmbeddingsForResourceIds
+} from '../store/resourceDeleteCleanup.mjs'
 
 export default class AiAnalysisManager {
   static _instance = null
@@ -508,42 +512,11 @@ export default class AiAnalysisManager {
   }
 
   _decrementWordCountsForResourceIds(resourceIds = []) {
-    if (!resourceIds.length) return
-    const ph = resourceIds.map(() => '?').join(',')
-    const wordRows = this.db
-      .prepare(
-        `SELECT DISTINCT wordId FROM fbw_resource_words WHERE resourceId IN (${ph})`
-      )
-      .all(...resourceIds)
-    const wordIds = wordRows.map((r) => r.wordId).filter((id) => id != null)
-    this.db
-      .prepare(`DELETE FROM fbw_resource_words WHERE resourceId IN (${ph})`)
-      .run(...resourceIds)
-    if (!wordIds.length) return
-    const wph = wordIds.map(() => '?').join(',')
-    this.db
-      .prepare(
-        `UPDATE fbw_words SET count = MAX(count - 1, 0), updated_at = datetime('now', 'localtime') WHERE id IN (${wph})`
-      )
-      .run(...wordIds)
-    this.db.prepare(`DELETE FROM fbw_words WHERE count <= 0`).run()
+    decrementWordCountsForResourceIds(this.db, resourceIds)
   }
 
   _deleteEmbeddingsForResourceIds(resourceIds = []) {
-    if (!resourceIds.length) return
-    const ph = resourceIds.map(() => '?').join(',')
-    this.db.prepare(`DELETE FROM fbw_resource_vec_blob WHERE resourceId IN (${ph})`).run(...resourceIds)
-    this.db
-      .prepare(`DELETE FROM fbw_resource_embeddings WHERE resourceId IN (${ph})`)
-      .run(...resourceIds)
-    this.db
-      .prepare(`DELETE FROM fbw_resource_image_vec_blob WHERE resourceId IN (${ph})`)
-      .run(...resourceIds)
-    try {
-      this.db.prepare(`DELETE FROM fbw_vec_index WHERE resourceId IN (${ph})`).run(...resourceIds)
-    } catch {
-      // sqlite-vec 表可能不存在
-    }
+    deleteEmbeddingsForResourceIds(this.db, resourceIds)
   }
 
   /**

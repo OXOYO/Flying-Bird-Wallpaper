@@ -2,25 +2,31 @@ import { AI_ANALYSIS_STATUS } from '../ai/aiConstants.mjs'
 import AiAnalysisProvider from '../ai/AiAnalysisProvider.mjs'
 import EmbeddingManager from '../ai/EmbeddingManager.mjs'
 import VecStore from '../ai/VecStore.mjs'
-import { kMeansCluster } from '../ai/VectorCluster.mjs'
-import { buildCollectionMergePrompt } from '../ai/AiPrompts.mjs'
-import { extractJsonObject, normalizeCollectionMergePlan } from '../ai/AiResponseParser.mjs'
+import { kMeansCluster, cosineSimilarity } from '../ai/VectorCluster.mjs'
+import { buildAutoCollectionStoragePrompt, buildCollectionNamingPrompt } from '../ai/AiPrompts.mjs'
+import { extractJsonObject, normalizeCollectionNamingPlan } from '../ai/AiResponseParser.mjs'
 import { t } from '../../i18n/server.js'
 import {
   AUTO_COLLECTION_MIN_EMBEDDINGS,
   AUTO_COLLECTION_MIN_ITEMS,
-  AUTO_COLLECTION_MIN_TAG_RESOURCES,
+  AUTO_COLLECTION_INCREMENTAL_MIN_SIMILARITY,
+  AUTO_COLLECTION_CLUSTER_MIN_SIMILARITY,
   COLLECTION_SOURCE,
+  resolveAtmosphereFallbackName,
   computeAutoCollectionCount,
   isValidAutoCollectionTag,
   resolveAutoCollectionCountMax,
   resolveAutoCollectionScoreMin,
-  COLLECTION_PRIVACY_EXCLUDE_SQL
+  COLLECTION_PRIVACY_EXCLUDE_SQL,
+  resourceMatchesCollectionTitle,
+  titleMatchesAppLocale,
+  mergeCollectionPlans,
+  shouldMergeCollectionPlans
 } from './collectionConstants.mjs'
 import { isAutoCurateSettled } from './collectionCurateGate.mjs'
 
 /**
- * 自动策展：标签候选 + 向量聚类 + LLM 命名合并
+ * 自动策展：画面向量聚类 + LLM 氛围命名
  */
 export default class CollectionCurator {
   static _instance = null
@@ -45,6 +51,41 @@ export default class CollectionCurator {
 
   get ai() {
     return this.settingManager.settingData?.ai || {}
+  }
+
+  getUiLocale() {
+    return this.settingManager.settingData?.locale || 'enUS'
+  }
+
+  getResourceHintsForTitleCheck(resourceId) {
+    const rows = this._loadResourceTextRows([resourceId])
+    const row = rows[0]
+    if (!row) return { tags: [] }
+    return {
+      aiTitle: row.aiTitle || '',
+      title: row.title || '',
+      summary: row.summary || '',
+      tags: this.getTagsForResources([resourceId])
+    }
+  }
+
+  refinePlanMembersByTitle(plan) {
+    if (!plan?.name || !plan.resourceIds?.length) return null
+    const filtered = plan.resourceIds.filter((id) =>
+      resourceMatchesCollectionTitle(plan.name, this.getResourceHintsForTitleCheck(id))
+    )
+    if (filtered.length < AUTO_COLLECTION_MIN_ITEMS) {
+      this.logger.info(
+        `[CollectionCurator] 剔图后不足 ${AUTO_COLLECTION_MIN_ITEMS} 张，跳过合集「${plan.name}」(${plan.resourceIds.length}→${filtered.length})`
+      )
+      return null
+    }
+    if (filtered.length < plan.resourceIds.length) {
+      this.logger.info(
+        `[CollectionCurator] 合集「${plan.name}」语义剔图 ${plan.resourceIds.length - filtered.length} 张，保留 ${filtered.length} 张`
+      )
+    }
+    return { ...plan, resourceIds: filtered }
   }
 
   isEnabled() {
@@ -90,51 +131,6 @@ export default class CollectionCurator {
     )
   }
 
-  getTopTags(limit) {
-    const rows = this.db
-      .prepare(
-        `SELECT w.word AS tag, COUNT(DISTINCT rw.resourceId) AS cnt
-         FROM fbw_words w
-         JOIN fbw_resource_words rw ON rw.wordId = w.id
-         JOIN fbw_resources r ON r.id = rw.resourceId
-         INNER JOIN fbw_resource_ai ai ON ai.resourceId = r.id
-         WHERE r.fileType = 'image'
-           AND ai.aiAnalysisStatus = ?
-           AND ${COLLECTION_PRIVACY_EXCLUDE_SQL}
-         GROUP BY w.word
-         HAVING cnt >= ?
-         ORDER BY cnt DESC, w.word ASC`
-      )
-      .all(AI_ANALYSIS_STATUS.DONE, AUTO_COLLECTION_MIN_TAG_RESOURCES)
-
-    return rows.filter((row) => isValidAutoCollectionTag(row.tag)).slice(0, limit)
-  }
-
-  getResourceIdsForTag(tag) {
-    const scoreMin = this.getScoreMin()
-    const params = [AI_ANALYSIS_STATUS.DONE, tag]
-    let scoreClause = ''
-    if (scoreMin != null) {
-      scoreClause = ' AND COALESCE(ai.aiScore, 0) >= ?'
-      params.push(scoreMin)
-    }
-    return this.db
-      .prepare(
-        `SELECT r.id
-         FROM fbw_resources r
-         INNER JOIN fbw_resource_ai ai ON ai.resourceId = r.id
-         JOIN fbw_resource_words rw ON rw.resourceId = r.id
-         JOIN fbw_words w ON w.id = rw.wordId
-         WHERE r.fileType = 'image'
-           AND ai.aiAnalysisStatus = ?
-           AND ${COLLECTION_PRIVACY_EXCLUDE_SQL}
-           AND w.word = ?${scoreClause}
-         ORDER BY COALESCE(ai.aiScore, 0) DESC, r.id DESC`
-      )
-      .all(...params)
-      .map((row) => row.id)
-  }
-
   getTagsForResources(resourceIds = []) {
     if (!resourceIds.length) return []
     const ph = resourceIds.map(() => '?').join(',')
@@ -148,6 +144,130 @@ export default class CollectionCurator {
       )
       .all(...resourceIds)
     return rows.map((r) => r.tag).filter(isValidAutoCollectionTag).slice(0, 12)
+  }
+
+  _loadResourceTextRows(resourceIds = []) {
+    if (!resourceIds.length) return []
+    const ph = resourceIds.map(() => '?').join(',')
+    return this.db
+      .prepare(
+        `SELECT r.id, r.title, COALESCE(ai.summary, '') AS summary, r.desc,
+                COALESCE(ai.aiTitle, '') AS aiTitle, COALESCE(ai.aiDesc, '') AS aiDesc
+         FROM fbw_resources r
+         LEFT JOIN fbw_resource_ai ai ON ai.resourceId = r.id
+         WHERE r.id IN (${ph})`
+      )
+      .all(...resourceIds)
+  }
+
+  /** LLM 命名语境：summary / 描述（非标题） */
+  getContextTextMap(resourceIds = []) {
+    const map = new Map()
+    for (const row of this._loadResourceTextRows(resourceIds)) {
+      const text =
+        row.summary || row.aiDesc || row.aiTitle || row.title || row.desc || ''
+      if (text) map.set(row.id, String(text).trim())
+    }
+    return map
+  }
+
+  /** 降级标题：aiTitle / 资源 title */
+  getTitleTextMap(resourceIds = []) {
+    const map = new Map()
+    for (const row of this._loadResourceTextRows(resourceIds)) {
+      const text = row.aiTitle || row.title || ''
+      if (text) map.set(row.id, String(text).trim())
+    }
+    return map
+  }
+
+  pickTextSampleIds(resourceIds = [], items = [], limit = 6) {
+    if (!resourceIds.length) return []
+    const idToVec = new Map(items.map((item) => [item.id, item.vector]))
+    const textMap = this.getContextTextMap(resourceIds)
+    const scored = []
+
+    for (const id of resourceIds) {
+      const vec = idToVec.get(id)
+      const text = textMap.get(id)
+      if (!vec || !text) continue
+      scored.push({ id, vec, text })
+    }
+    if (!scored.length) return resourceIds.slice(0, limit)
+
+    const centroid = this.computeCentroid(scored.map((s) => s.vec))
+    if (!centroid) return resourceIds.slice(0, limit)
+
+    for (const item of scored) {
+      item.sim = cosineSimilarity(item.vec, centroid)
+    }
+    scored.sort((a, b) => b.sim - a.sim)
+
+    const picked = []
+    const seen = new Set()
+    const add = (entry) => {
+      if (!entry || seen.has(entry.id)) return
+      seen.add(entry.id)
+      picked.push(entry.id)
+    }
+
+    add(scored[0])
+    if (scored.length > 1) add(scored[1])
+    if (scored.length > 2) add(scored[scored.length - 1])
+    if (scored.length > 3) add(scored[scored.length - 2])
+    if (scored.length > 4) add(scored[Math.floor(scored.length / 2)])
+
+    for (const entry of scored) {
+      if (picked.length >= limit) break
+      add(entry)
+    }
+    for (const id of resourceIds) {
+      if (picked.length >= limit) break
+      if (!seen.has(id) && textMap.has(id)) {
+        seen.add(id)
+        picked.push(id)
+      }
+    }
+    return picked.slice(0, limit)
+  }
+
+  getDiverseSamplesForResources(resourceIds = [], items = [], limit = 6) {
+    const ids = this.pickTextSampleIds(resourceIds, items, limit)
+    const textMap = this.getContextTextMap(ids)
+    return ids.map((id) => textMap.get(id)).filter(Boolean)
+  }
+
+  getTitleSamplesForResources(resourceIds = [], items = [], limit = 6) {
+    const ids = this.pickTextSampleIds(resourceIds, items, limit)
+    const textMap = this.getTitleTextMap(ids)
+    return ids.map((id) => textMap.get(id)).filter(Boolean)
+  }
+
+  /** 命名专用：仅取靠近簇质心的描述，避免离群 sample 误导 LLM */
+  getCoreSamplesForResources(resourceIds = [], items = [], limit = 6) {
+    if (!resourceIds.length) return []
+    const idToVec = new Map(items.map((item) => [item.id, item.vector]))
+    const textMap = this.getContextTextMap(resourceIds)
+    const scored = []
+
+    for (const id of resourceIds) {
+      const vec = idToVec.get(id)
+      const text = textMap.get(id)
+      if (!vec || !text) continue
+      scored.push({ id, vec, text })
+    }
+    if (!scored.length) return this.getSamplesForResources(resourceIds, limit)
+
+    const centroid = this.computeCentroid(scored.map((s) => s.vec))
+    if (!centroid) return this.getSamplesForResources(resourceIds, limit)
+
+    scored.sort(
+      (a, b) => cosineSimilarity(b.vec, centroid) - cosineSimilarity(a.vec, centroid)
+    )
+    return scored
+      .slice(0, limit)
+      .map((s) => s.text)
+      .filter(Boolean)
   }
 
   getSamplesForResources(resourceIds = [], limit = 4) {
@@ -165,7 +285,7 @@ export default class CollectionCurator {
       )
       .all(...resourceIds.slice(0, 8), limit)
     return rows
-      .map((row) => row.summary || row.aiTitle || row.title || row.aiDesc || row.desc)
+      .map((row) => row.summary || row.aiDesc || row.aiTitle || row.title || row.desc)
       .filter(Boolean)
       .slice(0, limit)
   }
@@ -191,24 +311,33 @@ export default class CollectionCurator {
       .map((row) => row.id)
   }
 
-  buildTagCandidates(targetCount) {
-    const tagRows = this.getTopTags(targetCount * 2)
-    const candidates = []
-    for (const row of tagRows) {
-      const resourceIds = this.getResourceIdsForTag(row.tag)
-      if (resourceIds.length < AUTO_COLLECTION_MIN_ITEMS) continue
-      candidates.push({
-        id: `tag:${row.tag}`,
-        type: 'tag',
-        resourceIds,
-        hints: {
-          label: row.tag,
-          tags: [row.tag, ...this.getTagsForResources(resourceIds).slice(0, 6)],
-          samples: this.getSamplesForResources(resourceIds)
-        }
-      })
+  buildThemeHint(resourceIds = [], items = []) {
+    const titles =
+      items.length > 0
+        ? this.getTitleSamplesForResources(resourceIds, items, 3)
+        : [...this.getTitleTextMap(resourceIds.slice(0, 8)).values()]
+    if (titles.length) {
+      return titles[0]
     }
-    return candidates
+    const samples =
+      items.length > 0
+        ? this.getDiverseSamplesForResources(resourceIds, items, 1)
+        : this.getSamplesForResources(resourceIds, 1)
+    return samples[0] || ''
+  }
+
+  filterClusterMembers(items, memberIds = []) {
+    if (!memberIds.length) return []
+    const idToVec = new Map(items.map((item) => [item.id, item.vector]))
+    const vectors = memberIds.map((id) => idToVec.get(id)).filter(Boolean)
+    const centroid = this.computeCentroid(vectors)
+    if (!centroid) return []
+
+    const minSim = AUTO_COLLECTION_CLUSTER_MIN_SIMILARITY
+    return memberIds.filter((id) => {
+      const vec = idToVec.get(id)
+      return vec && cosineSimilarity(vec, centroid) >= minSim
+    })
   }
 
   buildVectorCandidates(targetCount) {
@@ -252,26 +381,31 @@ export default class CollectionCurator {
     if (bestItems.length < AUTO_COLLECTION_MIN_EMBEDDINGS) return []
 
     const k = Math.min(
-      Math.max(2, Math.ceil(targetCount / 2)),
-      Math.floor(bestItems.length / AUTO_COLLECTION_MIN_ITEMS),
-      8
+      Math.max(2, targetCount),
+      Math.floor(bestItems.length / AUTO_COLLECTION_MIN_ITEMS)
     )
     const clusters = kMeansCluster(bestItems, k)
     const candidates = []
 
-    clusters.forEach((cluster, index) => {
-      const resourceIds = this.sortResourceIdsByScore(cluster.memberIds)
+    clusters.forEach((cluster) => {
+      const filteredMemberIds = this.filterClusterMembers(bestItems, cluster.memberIds)
+      const resourceIds = this.sortResourceIdsByScore(filteredMemberIds)
       if (resourceIds.length < AUTO_COLLECTION_MIN_ITEMS) return
       const tags = this.getTagsForResources(resourceIds)
+      const themeHint = this.buildThemeHint(resourceIds, bestItems)
+      const clusterIndex = candidates.length
+      const clusterId = `vec:${clusterIndex}`
       candidates.push({
-        id: `vec:${index}`,
+        id: clusterId,
         type: 'vector',
         resourceIds,
         hints: {
-          label: `氛围 ${index + 1}`,
+          clusterId,
           tags,
-          samples: this.getSamplesForResources(resourceIds),
-          themeHint: tags.slice(0, 3).join('、') || '画面视觉相近的壁纸'
+          samples: this.getDiverseSamplesForResources(resourceIds, bestItems, 6),
+          namingSamples: this.getCoreSamplesForResources(resourceIds, bestItems, 6),
+          titleSamples: this.getTitleSamplesForResources(resourceIds, bestItems, 6),
+          themeHint
         }
       })
     })
@@ -280,47 +414,57 @@ export default class CollectionCurator {
   }
 
   buildFallbackPlans(candidates, targetCount) {
+    const locale = this.getUiLocale()
     return candidates
       .slice()
       .sort((a, b) => b.resourceIds.length - a.resourceIds.length)
       .slice(0, targetCount)
       .map((candidate) => {
-        const name =
-          candidate.type === 'tag'
-            ? candidate.hints.label
-            : candidate.hints.themeHint
-              ? `${candidate.hints.themeHint}`
-              : `氛围合集 ${candidate.hints.label}`
+        const name = resolveAtmosphereFallbackName(candidate.hints, locale)
+        if (!name || !titleMatchesAppLocale(name, locale)) return null
         return {
           autoKey: candidate.id,
-          name: String(name).slice(0, 40),
-          prompt:
-            candidate.type === 'tag'
-              ? `系统推荐：${candidate.hints.label}`
-              : `氛围推荐：${candidate.hints.themeHint || '画面相近壁纸'}`,
-          semanticQuery: candidate.hints.themeHint || candidate.hints.label || '',
+          name,
+          prompt: buildAutoCollectionStoragePrompt(name, candidate.hints.themeHint),
+          semanticQuery: candidate.hints.themeHint || name,
           tags: candidate.hints.tags || [],
           mergeIds: [candidate.id],
           resourceIds: candidate.resourceIds
         }
       })
+      .filter(Boolean)
   }
 
-  async mergeWithLlm(candidates, targetCount) {
-    if (!candidates.length) return []
+  async callLlmPlans(buildPrompt, normalizePlan, candidates, targetCount, locale) {
+    const raw = await this.provider.chatText(buildPrompt(candidates, targetCount))
+    const json = extractJsonObject(raw)
+    return normalizePlan(json, candidates, targetCount, AUTO_COLLECTION_MIN_ITEMS, locale)
+  }
 
-    if (this.ai.enabled && candidates.length >= 2) {
-      try {
-        const raw = await this.provider.chatText(buildCollectionMergePrompt(candidates, targetCount))
-        const json = extractJsonObject(raw)
-        const plans = normalizeCollectionMergePlan(json, candidates, targetCount, AUTO_COLLECTION_MIN_ITEMS)
-        if (plans.length) return plans
-      } catch (err) {
-        this.logger.warn(`[CollectionCurator] LLM 合并失败，使用降级策略: ${err.message}`)
+  async nameWithLlm(candidates, targetCount, locale = this.getUiLocale()) {
+    const eligible = candidates.filter((c) => c.resourceIds.length >= AUTO_COLLECTION_MIN_ITEMS)
+    if (!eligible.length) return { plans: [], usedLlm: false }
+
+    if (this.ai.enabled) {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const plans = await this.callLlmPlans(
+            buildCollectionNamingPrompt,
+            normalizeCollectionNamingPlan,
+            eligible,
+            targetCount,
+            locale
+          )
+          if (plans.length) return { plans, usedLlm: true }
+        } catch (err) {
+          this.logger.warn(
+            `[CollectionCurator] LLM 氛围命名失败${attempt ? '（重试）' : ''}: ${err.message}`
+          )
+        }
       }
     }
 
-    return this.buildFallbackPlans(candidates, targetCount)
+    return { plans: this.buildFallbackPlans(eligible, targetCount), usedLlm: false }
   }
 
   listAutoCollections() {
@@ -347,7 +491,12 @@ export default class CollectionCurator {
     const scoreMin = this.getScoreMin()
     const queryJson = {
       autoKey,
-      autoType: mergeIds.length > 1 || autoKey.startsWith('merged:') ? 'merged' : autoKey.split(':')[0],
+      autoType:
+        mergeIds.length > 1 || autoKey.startsWith('merged:')
+          ? 'merged'
+          : autoKey.startsWith('vec:')
+            ? 'vector'
+            : autoKey.split(':')[0],
       mergeIds,
       tags,
       tagsMode: 'any',
@@ -398,22 +547,162 @@ export default class CollectionCurator {
     return collectionId
   }
 
+  removeLegacyTagAutoCollections() {
+    let removed = 0
+    for (const col of this.listAutoCollections()) {
+      const key = this.parseAutoKey(col)
+      let isLegacyTag = key?.startsWith('tag:')
+      if (!isLegacyTag) {
+        try {
+          const qj = JSON.parse(col.queryJson || '{}')
+          if (qj.autoType === 'tag' || qj.autoTag) isLegacyTag = true
+        } catch {
+          /* ignore */
+        }
+      }
+      if (!isLegacyTag) continue
+      this.db.prepare(`DELETE FROM fbw_collection_items WHERE collectionId = ?`).run(col.id)
+      this.db.prepare(`DELETE FROM fbw_collections WHERE id = ?`).run(col.id)
+      this.logger.info(`[CollectionCurator] 移除旧版标签系统合集: ${col.name}`)
+      removed++
+    }
+    return removed
+  }
+
   removeStaleAutoCollections(activeKeys) {
     const activeSet = new Set(activeKeys)
     for (const col of this.listAutoCollections()) {
       const key = this.parseAutoKey(col)
       if (!key || !activeSet.has(key)) {
-        this.db.prepare(`DELETE FROM fbw_collection_items WHERE collectionId = ?`).run(col.id)
-        this.db.prepare(`DELETE FROM fbw_collections WHERE id = ?`).run(col.id)
-        this.logger.info(`[CollectionCurator] 移除未入选系统合集: ${col.name}`)
+        this.deleteAutoCollection(col, '移除未入选系统合集')
       }
     }
+  }
+
+  deleteAutoCollection(col, reason = '移除系统合集') {
+    this.db.prepare(`DELETE FROM fbw_collection_items WHERE collectionId = ?`).run(col.id)
+    this.db.prepare(`DELETE FROM fbw_collections WHERE id = ?`).run(col.id)
+    const key = this.parseAutoKey(col)
+    this.logger.info(
+      `[CollectionCurator] ${reason}: ${col.name}${key ? ` (${key})` : ''}`
+    )
+  }
+
+  getAutoCollectionMemberIds(collectionId) {
+    return this.db
+      .prepare(
+        `SELECT ci.resourceId FROM fbw_collection_items ci
+         JOIN fbw_resources r ON r.id = ci.resourceId
+         WHERE ci.collectionId = ?
+         ORDER BY ci.rank ASC`
+      )
+      .all(collectionId)
+      .map((row) => row.resourceId)
+  }
+
+  mergeDuplicatePlans(plans = []) {
+    const before = plans.length
+    const merged = mergeCollectionPlans(plans)
+    if (merged.length < before) {
+      this.logger.info(`[CollectionCurator] 合并重复 plan：${before} → ${merged.length}`)
+    }
+    return merged
+  }
+
+  /** 将 plan 对齐到库内已有同名/高重叠合集，避免 progressive 叠加重复行 */
+  reconcilePlansWithExistingAutoCollections(plans = []) {
+    const autoKeysToRemove = new Set()
+    const existing = this.listAutoCollections()
+
+    for (const plan of plans) {
+      const matches = existing.filter((col) => {
+        const key = this.parseAutoKey(col)
+        if (key === plan.autoKey) return false
+        const memberIds = this.getAutoCollectionMemberIds(col.id)
+        return shouldMergeCollectionPlans({ name: col.name, resourceIds: memberIds }, plan)
+      })
+      if (!matches.length) continue
+
+      matches.sort((a, b) => a.id - b.id)
+      const keeper = matches[0]
+      const keeperKey = this.parseAutoKey(keeper)
+      if (!keeperKey) continue
+
+      if (plan.autoKey !== keeperKey) {
+        this.logger.info(
+          `[CollectionCurator] plan「${plan.name}」${plan.autoKey} 合并至已有 id=${keeper.id} (${keeperKey})`
+        )
+        if (plan.autoKey) autoKeysToRemove.add(plan.autoKey)
+        plan.autoKey = keeperKey
+        plan.mergeIds = [keeperKey]
+      }
+
+      for (let i = 1; i < matches.length; i++) {
+        const key = this.parseAutoKey(matches[i])
+        if (key) autoKeysToRemove.add(key)
+      }
+    }
+
+    return autoKeysToRemove
+  }
+
+  removeAutoCollectionsByAutoKeys(autoKeys = []) {
+    const keySet = new Set(autoKeys.filter(Boolean))
+    if (!keySet.size) return 0
+    let removed = 0
+    for (const col of this.listAutoCollections()) {
+      const key = this.parseAutoKey(col)
+      if (key && keySet.has(key)) {
+        this.deleteAutoCollection(col, '移除重复系统合集')
+        removed++
+      }
+    }
+    return removed
+  }
+
+  /** 扫描库内系统合集，合并同名或成员高重叠的重复项（保留 id 最小者） */
+  dedupeExistingAutoCollections() {
+    const cols = this.listAutoCollections()
+    const toRemove = new Set()
+
+    for (let i = 0; i < cols.length; i++) {
+      if (toRemove.has(cols[i].id)) continue
+      const idsI = this.getAutoCollectionMemberIds(cols[i].id)
+      for (let j = i + 1; j < cols.length; j++) {
+        if (toRemove.has(cols[j].id)) continue
+        const idsJ = this.getAutoCollectionMemberIds(cols[j].id)
+        if (
+          !shouldMergeCollectionPlans(
+            { name: cols[i].name, resourceIds: idsI },
+            { name: cols[j].name, resourceIds: idsJ }
+          )
+        ) {
+          continue
+        }
+        const removeCol = cols[i].id < cols[j].id ? cols[j] : cols[i]
+        const keepCol = cols[i].id < cols[j].id ? cols[i] : cols[j]
+        toRemove.add(removeCol.id)
+        this.logger.info(
+          `[CollectionCurator] 合并重复系统合集：移除 id=${removeCol.id}「${removeCol.name}」，保留 id=${keepCol.id}`
+        )
+      }
+    }
+
+    for (const col of cols) {
+      if (!toRemove.has(col.id)) continue
+      this.deleteAutoCollection(col, '移除重复系统合集')
+    }
+    return toRemove.size
   }
 
   countCollectionItems(collectionId) {
     return (
       this.db
-        .prepare(`SELECT COUNT(*) as c FROM fbw_collection_items WHERE collectionId = ?`)
+        .prepare(
+          `SELECT COUNT(*) as c FROM fbw_collection_items ci
+           JOIN fbw_resources r ON r.id = ci.resourceId
+           WHERE ci.collectionId = ?`
+        )
         .get(collectionId)?.c || 0
     )
   }
@@ -434,21 +723,46 @@ export default class CollectionCurator {
     return removed
   }
 
-  getResourceTags(resourceId) {
+
+  getResourceImageVector(resourceId) {
+    const model = this.getActiveVisualModelId()
+    const row = this.db
+      .prepare(
+        `SELECT embedding, dim FROM fbw_resource_image_vec_blob WHERE resourceId = ? AND model = ?`
+      )
+      .get(resourceId, model)
+    if (!row) return null
+    return this.vecStore.blobToFloat32(row.embedding, row.dim)
+  }
+
+  getCollectionMemberVectors(resourceIds = []) {
+    if (!resourceIds.length) return []
+    const model = this.getActiveVisualModelId()
+    const ph = resourceIds.map(() => '?').join(',')
     const rows = this.db
       .prepare(
-        `SELECT DISTINCT w.word AS tag
-         FROM fbw_resource_words rw
-         JOIN fbw_words w ON w.id = rw.wordId
-         WHERE rw.resourceId = ?
-         ORDER BY w.word ASC`
+        `SELECT embedding, dim FROM fbw_resource_image_vec_blob
+         WHERE resourceId IN (${ph}) AND model = ?`
       )
-      .all(resourceId)
-    return rows.map((r) => r.tag).filter(isValidAutoCollectionTag)
+      .all(...resourceIds, model)
+    return rows.map((row) => this.vecStore.blobToFloat32(row.embedding, row.dim))
+  }
+
+  computeCentroid(vectors = []) {
+    if (!vectors.length) return null
+    const dim = vectors[0].length
+    const sum = new Array(dim).fill(0)
+    for (const vec of vectors) {
+      for (let i = 0; i < dim; i++) sum[i] += vec[i]
+    }
+    const n = vectors.length
+    for (let i = 0; i < dim; i++) sum[i] /= n
+    const norm = Math.sqrt(sum.reduce((acc, v) => acc + v * v, 0)) || 1
+    return sum.map((v) => v / norm)
   }
 
   /**
-   * 锁存后：新分析完成的图按标签增量加入已有系统合集（不删组、不 LLM）
+   * 锁存后：新分析完成的图按画面向量相似度增量加入已有氛围合集
    */
   incrementalAddResource(resourceId) {
     if (!this.isEnabled() || !isAutoCurateSettled(this.ai)) {
@@ -472,65 +786,75 @@ export default class CollectionCurator {
       return { success: true, data: { added: 0 } }
     }
 
-    const resourceTags = this.getResourceTags(resourceId)
-    if (!resourceTags.length) {
+    const resourceVec = this.getResourceImageVector(resourceId)
+    if (!resourceVec) {
       return { success: true, data: { added: 0 } }
     }
 
-    const resourceTagSet = new Set(resourceTags.map((tag) => tag.toLowerCase()))
-    let added = 0
+    let bestCollection = null
+    let bestSimilarity = AUTO_COLLECTION_INCREMENTAL_MIN_SIMILARITY
 
     for (const col of this.listAutoCollections()) {
-      let queryJson = {}
-      try {
-        queryJson = JSON.parse(col.queryJson || '{}')
-      } catch {
-        queryJson = {}
-      }
-
-      const colTags = []
-      if (Array.isArray(queryJson.tags)) {
-        queryJson.tags.forEach((tag) => {
-          if (tag) colTags.push(String(tag))
-        })
-      }
       const autoKey = this.parseAutoKey(col)
-      if (autoKey?.startsWith('tag:')) {
-        colTags.push(autoKey.slice(4))
+      if (autoKey?.startsWith('tag:')) continue
+
+      const memberRows = this.db
+        .prepare(
+          `SELECT ci.resourceId FROM fbw_collection_items ci
+           JOIN fbw_resources r ON r.id = ci.resourceId
+           WHERE ci.collectionId = ?`
+        )
+        .all(col.id)
+      const memberIds = memberRows.map((r) => r.resourceId)
+      if (!memberIds.length) continue
+
+      const memberVectors = this.getCollectionMemberVectors(memberIds)
+      const centroid = this.computeCentroid(memberVectors)
+      if (!centroid) continue
+
+      const similarity = cosineSimilarity(resourceVec, centroid)
+      if (similarity >= bestSimilarity) {
+        bestSimilarity = similarity
+        bestCollection = col
       }
-
-      const matches = colTags.some((tag) => resourceTagSet.has(String(tag).toLowerCase()))
-      if (!matches) continue
-
-      const exists = this.db
-        .prepare(
-          `SELECT 1 FROM fbw_collection_items WHERE collectionId = ? AND resourceId = ? LIMIT 1`
-        )
-        .get(col.id, resourceId)
-      if (exists) continue
-
-      const maxRank =
-        this.db
-          .prepare(`SELECT MAX(rank) as m FROM fbw_collection_items WHERE collectionId = ?`)
-          .get(col.id)?.m ?? 0
-      this.db
-        .prepare(
-          `INSERT INTO fbw_collection_items (collectionId, resourceId, rank) VALUES (?, ?, ?)`
-        )
-        .run(col.id, resourceId, maxRank + 1)
-      this.db
-        .prepare(
-          `UPDATE fbw_collections SET updated_at = datetime('now', 'localtime') WHERE id = ?`
-        )
-        .run(col.id)
-      added++
     }
 
-    if (added > 0) {
-      this.logger.info(`[CollectionCurator] 增量加入资源 ${resourceId} → ${added} 个系统合集`)
+    if (!bestCollection) {
+      return { success: true, data: { added: 0 } }
     }
 
-    return { success: true, data: { added } }
+    if (
+      !resourceMatchesCollectionTitle(
+        bestCollection.name,
+        this.getResourceHintsForTitleCheck(resourceId)
+      )
+    ) {
+      return { success: true, data: { added: 0, skipped: true, reason: 'title_mismatch' } }
+    }
+
+    const exists = this.db
+      .prepare(`SELECT 1 FROM fbw_collection_items WHERE collectionId = ? AND resourceId = ? LIMIT 1`)
+      .get(bestCollection.id, resourceId)
+    if (exists) {
+      return { success: true, data: { added: 0 } }
+    }
+
+    const maxRank =
+      this.db
+        .prepare(`SELECT MAX(rank) as m FROM fbw_collection_items WHERE collectionId = ?`)
+        .get(bestCollection.id)?.m ?? 0
+    this.db
+      .prepare(`INSERT INTO fbw_collection_items (collectionId, resourceId, rank) VALUES (?, ?, ?)`)
+      .run(bestCollection.id, resourceId, maxRank + 1)
+    this.db
+      .prepare(`UPDATE fbw_collections SET updated_at = datetime('now', 'localtime') WHERE id = ?`)
+      .run(bestCollection.id)
+
+    this.logger.info(
+      `[CollectionCurator] 增量加入资源 ${resourceId} → 氛围合集「${bestCollection.name}」(sim=${bestSimilarity.toFixed(3)})`
+    )
+
+    return { success: true, data: { added: 1 } }
   }
 
   getStats() {
@@ -589,9 +913,9 @@ export default class CollectionCurator {
         ? targetCount
         : resolveAutoCollectionCountMax(this.ai)
 
-      const tagCandidates = this.buildTagCandidates(candidateLimit)
+      const legacyRemoved = this.removeLegacyTagAutoCollections()
       const vectorCandidates = this.buildVectorCandidates(candidateLimit)
-      const candidates = [...tagCandidates, ...vectorCandidates]
+      const candidates = vectorCandidates
 
       if (!candidates.length) {
         return {
@@ -602,7 +926,7 @@ export default class CollectionCurator {
             phase: manual ? 'manual' : isFinalize ? 'finalize' : 'progressive',
             created: 0,
             updated: 0,
-            removed: 0,
+            removed: legacyRemoved,
             autoCollections: this.listAutoCollections().length
           },
           message: t('messages.operationSuccess')
@@ -616,12 +940,19 @@ export default class CollectionCurator {
 
       let plans
       let usedLlm = false
-      if (manual || isFinalize) {
-        plans = await this.mergeWithLlm(candidates, targetCount)
-        usedLlm = plans.some((p) => p.autoKey.startsWith('merged:'))
+      const planLimit = manual || isFinalize ? targetCount : planCap
+      const locale = this.getUiLocale()
+      if (this.ai.enabled) {
+        const named = await this.nameWithLlm(candidates, planLimit, locale)
+        plans = named.plans
+        usedLlm = named.usedLlm
       } else {
-        plans = this.buildFallbackPlans(candidates, planCap)
+        plans = this.buildFallbackPlans(candidates, planLimit)
       }
+
+      plans = plans.map((p) => this.refinePlanMembersByTitle(p)).filter(Boolean)
+      plans = this.mergeDuplicatePlans(plans)
+      const duplicateAutoKeys = this.reconcilePlansWithExistingAutoCollections(plans)
 
       const beforeAuto = this.listAutoCollections().length
 
@@ -629,12 +960,16 @@ export default class CollectionCurator {
         this.upsertAutoCollection(plan)
       }
 
-      let removed = 0
-      if (manual) {
+      let removed = legacyRemoved
+      removed += this.removeAutoCollectionsByAutoKeys([...duplicateAutoKeys])
+      removed += this.dedupeExistingAutoCollections()
+
+      if (manual || isFinalize) {
+        const beforeStale = this.listAutoCollections().length
         this.removeStaleAutoCollections(plans.map((p) => p.autoKey))
-        removed = Math.max(0, beforeAuto - this.listAutoCollections().length)
+        removed += Math.max(0, beforeStale - this.listAutoCollections().length)
       } else {
-        removed = this.pruneInvalidAutoCollections()
+        removed += this.pruneInvalidAutoCollections()
       }
 
       const afterAuto = this.listAutoCollections().length
@@ -642,7 +977,7 @@ export default class CollectionCurator {
       const phase = manual ? 'manual' : isFinalize ? 'finalize' : 'progressive'
 
       this.logger.info(
-        `[CollectionCurator] 完成${manual ? '（手动）' : ''} [${phase}]：候选 标签${tagCandidates.length}+向量${vectorCandidates.length} → 写入${plans.length} 个计划，当前共 ${afterAuto} 个系统合集`
+        `[CollectionCurator] 完成${manual ? '（手动）' : ''} [${phase}]：氛围候选 ${vectorCandidates.length} → 写入 ${plans.length} 个计划，当前共 ${afterAuto} 个系统合集`
       )
 
       return {
@@ -652,7 +987,6 @@ export default class CollectionCurator {
           embeddings,
           targetCount,
           phase,
-          tagCandidates: tagCandidates.length,
           vectorCandidates: vectorCandidates.length,
           finalCollections: plans.length,
           created,

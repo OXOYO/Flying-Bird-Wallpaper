@@ -1,6 +1,6 @@
 # 主窗口侧栏 UX 与基础设施修订
 
-> 整理日期：2026-05-31（§7 同步 2026-05-27）  
+> 整理日期：2026-06-01（§3.5 快捷键 suspend/resume）  
 > 说明：记录主窗口侧栏、快捷键管理器、检查更新通知、工具页等实现约定与代码锚点。正式文档 `docs/renderer_process.md`、`docs/shortcut_guide.md` 部分片段仍偏旧，以本文与源码为准。敏感内容遮罩与壁纸过滤见 [privacy-and-sensitive-content.md](./privacy-and-sensitive-content.md)。
 
 ---
@@ -92,10 +92,29 @@ local:{name}:{winName}
 - `checkShortcutConflict`：先应用内冲突，再系统冲突；排除本应用已占用的 global。
 - `before-quit`：`unregisterAllShortcuts()`（`src/main/index.mjs`）。
 
-### 3.5 设置页录制
+### 3.5 设置页录制（2026-06-01）
 
-- `main:disableShortcuts` / `main:enableShortcuts` → 全量注销/重注册。
-- 录制时全局键卸载，`isRegistered` 检测更准确。
+**目的：** 录制快捷键时卸载全局/本地键，避免与系统键冲突、让 `isRegistered` 检测更准确。
+
+**IPC 与主进程：**
+
+| IPC | 主进程方法 | 行为 |
+|-----|------------|------|
+| `main:disableShortcuts` | `suspendShortcutsForRecording()` | 引用计数 +1；**仅首次** `unregisterAllShortcuts()` |
+| `main:enableShortcuts` | `resumeShortcutsAfterRecording()` | 引用计数 -1；**归零后**重注册全局 + 各窗口 local（不再先全量注销） |
+
+**渲染进程（`ShortcutSetting.vue`）：**
+
+| 时机 | 行为 |
+|------|------|
+| 输入框 `@focus` | `suspendShortcuts()`（本地 `shortcutsSuspended` 守卫，避免重复 IPC） |
+| 输入框 `@blur` / 录键结束 | 仅当曾 suspend 时 `resumeShortcuts()` |
+| `resetForm` / `onBeforeUnmount` | **仅**正在录键或已 suspend 时恢复 |
+| 切换设置 tab / 进出设置页（未录键） | **不**触发 disable/enable |
+
+**修复前问题：** 切 tab、离开设置页、`resetForm` 无条件调用 `enableShortcuts()` → 主进程 `registerAllShortcuts()` 先全量注销再注册，日志反复出现「所有快捷键已注销」。
+
+**注意：** 应用退出时仍由 `before-quit` → `unregisterAllShortcuts()`（与录键 suspend 无关）。
 
 ### 3.6 代码锚点
 
@@ -150,6 +169,8 @@ local:{name}:{winName}
 
 - [ ] 主窗 + 看图窗分别注销后无幽灵 `quitApp`
 - [ ] 设置页冲突检测不把本应用 global 误报为系统占用
+- [ ] **进出设置页、切换设置 tab（未录键）**：日志无「所有快捷键已注销」
+- [ ] **仅 focus 快捷键输入框录键时**：注销一次；blur 后恢复一次
 - [ ] `Ctrl+Shift+R` 检查更新：dev 可失败但有通知，无 `reading 'send'` 异常
 
 ---
@@ -158,6 +179,7 @@ local:{name}:{winName}
 
 | 日期 | 说明 |
 |------|------|
+| **2026-06-01** | §3.5 录键 suspend/resume 引用计数；渲染端 `shortcutsSuspended` 守卫；修复切设置 tab/进出设置页误触发全量重注册 |
 | 2026-05-27 | §5 工具页「清空 AI 分析数据」；链至数据模型与分析 UX 文档 |
 | 2026-05-31 | 初版：侧栏折叠钮样式、SideMenu hover 主题色、ShortcutManager 复合键与冲突检测、Updater 通知修复 |
 | 2026-05-27 | 索引：链至 `privacy-and-sensitive-content.md`（敏感遮罩与壁纸上/下一张过滤） |

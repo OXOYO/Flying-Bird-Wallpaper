@@ -1,7 +1,7 @@
 # 智能合集：策展规则与合集页体验（2.0.0+ 增量）
 
-> 文档版本：**v1.4**  
-> 整理日期：2026-05-29  
+> 文档版本：**v1.6**  
+> 整理日期：2026-06-01  
 > 状态：**已实现**  
 > 关联：[ai-dev-plan.md](./ai-dev-plan.md) · [ai-feature-roadmap.md](./ai-feature-roadmap.md) · [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) · [README.md](./README.md)
 
@@ -19,18 +19,43 @@
 
 ## 2. 系统自动策展规则
 
-### 2.1 流水线（不变）
+### 2.1 流水线（v1.6：按簇命名 + 剔图 + 同名/高重叠合并）
 
 ```mermaid
 flowchart LR
-  A[已分析 done] --> B[标签候选 tag:*]
-  A --> C[画面向量候选 vec:* K-Means]
-  B --> D[LLM 合并命名]
-  C --> D
-  D --> E[写入 fbw_collection_items 快照]
+  A[已分析 done + 画面向量] --> B[K-Means 聚类 vec:*]
+  B --> C[簇内离群剔除<br/>minSim=0.77]
+  C --> D[LLM 按簇单独命名]
+  D --> E[标题语言校验]
+  E --> F[命名后语义剔图]
+  F --> G[合并重复 plan<br/>同名或 Jaccard≥0.85]
+  G --> H[对齐库内已有 autoKey]
+  H --> I[upsert 快照]
+  I --> J[dedupe 全库重复行<br/>保留最小 id]
 ```
 
-实现：`CollectionCurator.mjs`、`VectorCluster.mjs`、`collectionConstants.mjs`。
+实现：`CollectionCurator.mjs`、`VectorCluster.mjs`、`collectionConstants.mjs`、`AiPrompts.mjs`、`AiResponseParser.mjs`。
+
+**v1.5 相对 v1.4 的变化：**
+
+| 项 | v1.4 | v1.5 |
+|----|------|------|
+| 候选来源 | 标签 `tag:*` + 画面 `vec:*` → LLM **合并** | **仅**画面 K-Means `vec:*` |
+| 命名 Prompt | `buildCollectionMergePrompt`（已删） | `buildCollectionNamingPrompt`（每簇独立，禁止跨簇合并） |
+| 解析 | `normalizeCollectionMergePlan`（已删） | `normalizeCollectionNamingPlan` |
+| 标题语言 | 无强制 | 须与 **UI locale** 一致（script 检测） |
+| 成员过滤 | 簇级余弦阈值 | 命名后再按 **标题 n-gram** 剔图 |
+| 规则降级 | 硬编码「氛围 N」等 | `resolveAtmosphereFallbackName`（同语言 aiTitle → tags） |
+| 入库 prompt | 硬编码中文 | `buildAutoCollectionStoragePrompt` + i18n `pages.Collections.auto.storagePrompt` |
+
+遗留：`tag:*` / `merged:*` 旧系统合集在手动整理时会被 `removeLegacyTagAutoCollections` 清理。
+
+**版本摘要：**
+
+| 版本 | 要点 |
+|------|------|
+| v1.5 | 仅画面 K-Means；按簇 LLM 命名；UI locale 对齐；语义剔图 |
+| **v1.6** | 同名 / 成员 Jaccard≥0.85 合并；progressive 不再累积重复系统合集 |
 
 ### 2.2 合集数量
 
@@ -57,9 +82,58 @@ flowchart LR
 
 | 常量 | 值 | 含义 |
 |------|-----|------|
-| `AUTO_COLLECTION_MIN_TAG_RESOURCES` | 3 | 单标签至少 3 张图才成候选 |
-| `AUTO_COLLECTION_MIN_ITEMS` | 3 | 合并后合集至少 3 张 |
+| `AUTO_COLLECTION_MIN_TAG_RESOURCES` | 3 | （遗留）单标签候选门槛；v1.5 主路径不再建 `tag:*` |
+| `AUTO_COLLECTION_MIN_ITEMS` | 3 | 合并/剔图后合集至少 3 张 |
 | `AUTO_COLLECTION_MIN_EMBEDDINGS` | 8 | 画面向量聚类至少 8 条（`fbw_resource_image_vec_blob`，按 active visual model） |
+| `AUTO_COLLECTION_CLUSTER_MIN_SIMILARITY` | **0.77** | 簇成员与质心最低余弦（剔离群图） |
+| `AUTO_COLLECTION_MEMBER_TITLE_MIN_OVERLAP` | **0.35** | 命名后单图与标题 n-gram 重叠下限（语义剔图） |
+| `AUTO_COLLECTION_PLAN_MERGE_MIN_JACCARD` | **0.85** | 同名或成员 Jaccard / 较小集包含比例 ≥ 此值则合并 |
+| `AUTO_COLLECTION_INCREMENTAL_MIN_SIMILARITY` | 0.7 | 稳定后增量入集与质心相似度 |
+
+### 2.4.1 标题语言与降级（v1.5）
+
+| 函数 | 说明 |
+|------|------|
+| `titleMatchesAppLocale(text, locale)` | 粗粒度 script 检测（zh / en / ja / ko / ru / ar 等） |
+| `normalizeAutoCollectionTitleForLocale` | 规范化 + 语言校验；不符则回退 |
+| `resolveAtmosphereFallbackName(hints, locale)` | 优先同语言 `titleSamples`（aiTitle），其次同语言 tags |
+| `validateCollectionTitleAgainstHints` | LLM 标题与簇内语料 n-gram 一致性 |
+| `resourceMatchesCollectionTitle` | 命名后剔图：单图 tags/aiTitle 与合集标题重叠 |
+
+**语言三链：**
+
+1. **UI locale** → `buildCollectionNamingPrompt` 的 `{uiLocale}`、降级/校验  
+2. **资源 aiTitle/tags** → 分析时写入，**不**随切换 locale 改变  
+3. **展示** → 系统合集 `name` 须与当前 UI 语言一致；切换语言后需重新整理才刷新标题
+
+Prompt 约束见各语言包 `ai.prompts.collectionNaming` 第 7 条：`name` 须与 `{uiLocale}` 一致。
+
+### 2.4.2 同名 / 高重叠合并（v1.6）
+
+**背景：** 剔图后不同 `vec:*` 可能同名、成员完全相同（如两个「草原风景」）；progressive 只 upsert 不删旧 `autoKey`，会叠加重复行。
+
+**合并条件（满足任一）：**
+
+1. `normalizeCollectionPlanName(name)` 完全相同  
+2. 成员 **Jaccard ≥ 0.85**  
+3. 较小成员集 **≥85%** 被较大集包含（成员完全一致会命中）
+
+**三层时机（manual / progressive / finalize 均执行 dedupe；manual/finalize 另保留 `removeStaleAutoCollections`）：**
+
+| 步骤 | 函数 | 行为 |
+|------|------|------|
+| 1 剔图后 | `mergeDuplicatePlans` → `mergeCollectionPlans` | 本轮 plans 间合并；保留**先出现**的 `autoKey` |
+| 2 upsert 前 | `reconcilePlansWithExistingAutoCollections` | 与库内系统合集比对；复用已有 `autoKey` upsert；标记多余 key 待删 |
+| 3 upsert 后 | `removeAutoCollectionsByAutoKeys` + `dedupeExistingAutoCollections` | 删标记 key；全库扫描重复项，**保留 id 最小** 的一条 |
+
+**与 manual 全量替换的关系：**
+
+| 模式 | 合并 dedupe | 未入选清理 |
+|------|-------------|------------|
+| **progressive** | ✅ | 仅 `pruneInvalidAutoCollections`（&lt;3 张） |
+| **manual / finalize** | ✅ | `removeStaleAutoCollections`（autoKey 不在本轮 plans） |
+
+日志示例：`合并重复 plan：2 → 1`、`plan「草原风景」vec:4 合并至已有 id=817 (vec:4)`、`合并重复系统合集：移除 id=818…，保留 id=817`。
 
 ### 2.5 触发与刷新
 
@@ -76,7 +150,7 @@ flowchart LR
 
 #### 分析完成后暂停自动整理（v1.1+）
 
-**问题背景：** 数据不变时若每 30min 仍调 LLM 合并，合集名称/分组可能漂移（模型非确定性）。
+**问题背景：** 数据不变时若每 30min 仍调 LLM 命名/整理，合集名称/成员可能漂移（模型非确定性 + 剔图阈值变化）。
 
 **策略（`collectionCurateGate.mjs` + `store/index.mjs`）：**
 
@@ -98,8 +172,8 @@ flowchart LR
 
 ```json
 {
-  "autoKey": "merged:tag:夜景+vec:0",
-  "mergeIds": ["tag:夜景", "vec:0"],
+  "autoKey": "vec:0",
+  "mergeIds": ["vec:0"],
   "tags": ["夜景", "城市"],
   "semanticQuery": "赛博雨夜都市",
   "useSemantic": true,
@@ -109,7 +183,7 @@ flowchart LR
 }
 ```
 
-（无 `limitCount`；条数由评分门槛 + 快照全量决定。）
+（无 `limitCount`；条数由评分门槛 + 快照全量决定。v1.5 新写入以 `vec:{n}` 为主；旧 `tag:*` / `merged:*` 逐步清理。）
 
 ---
 
@@ -188,7 +262,7 @@ flowchart LR
 |------|------------------------|-------------------------|
 | 创建 | NL → `queryJson` → `generate()` 搜索快照 | `CollectionCurator` 策展 |
 | 条数上限 | `queryJson.limitCount` 5～50（默认 20） | **仅评分门槛**，无固定条数顶 |
-| 向量 | **关键词 SQL 优先** + 画面向量补充（`VisualCollectionSearch`） | 标签 + **画面** K-Means + LLM 合并 |
+| 向量 | **关键词 SQL 优先** + 画面向量补充（`VisualCollectionSearch`） | **画面** K-Means + **按簇** LLM 命名 |
 | 刷新 | 用户可选定时 | `on_analysis` + 策展任务（稳定锁存后 **仅手动** 再整理） |
 | 展示 | 同一套分页 `collectionsGet` | 同左 |
 
@@ -248,9 +322,18 @@ flowchart TD
 | `CollectionsManager` | 画面池 **120～800** | 氛围型合集 KNN 候选规模 |
 | `TextQueryParser` | 扩展 tags 上限 **16** | LLM 返回合并去重（i18n prompt 建议 ≤8） |
 | `aiConstants.mjs` | `COLLECTION_VISUAL_*`、`SIMILAR_*` | 画面补充门槛、找相似内部阈值 |
-| `CollectionCurator` | 中文兜底标题/描述 | LLM 合并失败时的规则命名 |
+| `CollectionCurator` | 规则降级命名 | `resolveAtmosphereFallbackName` + i18n storagePrompt；**已删除**硬编码「氛围 N」 |
 
 **已删除：** `_keywordTagAliases` 等写死「汽车/car/猫」映射，改为运行时 LLM 扩展。
+
+### 6.6 已知注意点（系统策展）
+
+| 现象 | 说明 |
+|------|------|
+| 手动整理写入 0 个合集 | 语义剔图 + 0.77 簇阈值可能过严；日志「剔图后不足 3 张」；可调低 `AUTO_COLLECTION_MEMBER_TITLE_MIN_OVERLAP` |
+| 中英混标题 | v1.5 locale 校验；旧库需重新整理 |
+| 「Chinese Temple」类误命名 | 中文 UI 下应输出中文；剔图按标题 n-gram 剔除不相关成员 |
+| ~~两个同名「草原风景」、成员相同~~ | **v1.6 已修复**：合并 dedupe；触发任意整理或重启后策展即可清理历史重复行 |
 
 ---
 
@@ -263,7 +346,10 @@ flowchart TD
 5. **性能**：合集卡片加载为缩略图（非原图）；占位色随壁纸主色变化。  
 6. **列表**：下拉合集名称旁张数与 `collectionsList.itemCount` 一致，切换前无需 N 次 `get`。  
 7. **用户合集关键词**：建「汽车」→ 刷新后 `regenPrompt=false`、日志 `visual=no`；有匹配车图则入选，无则空集而非风景  
-8. **标签扩展**：首次生成/刷新短实体词时调 LLM 扩展 tags，二次刷新不重复（看 `keywordTagsExpandedFor`）
+8. **标签扩展**：首次生成/刷新短实体词时调 LLM 扩展 tags，二次刷新不重复（看 `keywordTagsExpandedFor`）  
+9. **系统合集语言**：中文 UI 下「立即整理」→ 标题均为中文（无 `Chinese Temple` 等英文混入）  
+10. **语义剔图**：日志可见「语义剔图 N 张」；明显不符标题的图不应出现在合集内  
+11. **重复合并（v1.6）**：库内若曾有两个同名且成员相同的系统合集 → 整理后只留一条；日志含「合并重复 plan / 合并重复系统合集」
 
 ---
 
@@ -272,7 +358,10 @@ flowchart TD
 | 模块 | 路径 |
 |------|------|
 | 策展常量/公式 | `src/main/store/collectionConstants.mjs` |
-| 策展逻辑 | `src/main/store/CollectionCurator.mjs` |
+| 策展逻辑 | `src/main/store/CollectionCurator.mjs`（`refinePlanMembersByTitle`、`mergeDuplicatePlans`、`reconcilePlansWithExistingAutoCollections`、`dedupeExistingAutoCollections`） |
+| 语言/剔图/合并 | `collectionConstants.mjs`（`titleMatchesAppLocale`、`resourceMatchesCollectionTitle`、`mergeCollectionPlans`、`shouldMergeCollectionPlans`） |
+| 命名 Prompt | `src/main/ai/AiPrompts.mjs`（`buildCollectionNamingPrompt`、`buildAutoCollectionStoragePrompt`） |
+| 命名解析 | `src/main/ai/AiResponseParser.mjs`（`normalizeCollectionNamingPlan`） |
 | **稳定后暂停门控** | `src/main/store/collectionCurateGate.mjs`、`store/index.mjs`（`runCollectionCurator`） |
 | 合集 CRUD/分页/生成 | `src/main/store/CollectionsManager.mjs` |
 | 标签扩展 LLM | `src/main/ai/TextQueryParser.mjs`（`expandCollectionKeywordTags`） |
@@ -296,3 +385,5 @@ flowchart TD
 | v1.2 | 2026-05-28 | 明确向量聚类/防抖使用 **文本** embedding（已废弃，见 v1.3） |
 | **v1.3** | 2026-05-29 | 系统策展与用户合集改用 **画面向量**；关键词优先 + 画面补充；`VisualCollectionSearch` |
 | **v1.4** | 2026-05-29 | 刷新 `regenPrompt` 默认 false；LLM 动态标签扩展；实体词禁用画面补充；修复风景顶替 |
+| **v1.5** | 2026-06-01 | 仅画面 K-Means；**按簇** LLM 命名（删 merge）；UI locale 对齐；命名后语义剔图；簇阈值 0.77；i18n 降级与 storagePrompt |
+| **v1.6** | 2026-06-01 | 同名/成员 Jaccard≥0.85 合并 plan；与库内 reconcile；upsert 后 dedupe（保留最小 id） |

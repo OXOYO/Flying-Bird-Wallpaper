@@ -86,8 +86,9 @@ const readImageSource = (provider, input) => {
   const tag = provider.logTag || 'ai'
   if (provider.logger) {
     const sizeMB = (buf.length / (1024 * 1024)).toFixed(2)
+    const estB64MB = ((Math.ceil(buf.length / 3) * 4) / (1024 * 1024)).toFixed(2)
     provider.logger.info(
-      `[HttpAi/${tag}] vision-read done readMs=${readMs}ms b64Size=${sizeMB}MB source=${label}`
+      `[HttpAi/${tag}] vision-read done readMs=${readMs}ms rawMB=${sizeMB} estB64MB=${estB64MB} source=${label}`
     )
   }
   return { buf, b64: buf.toString('base64'), mime }
