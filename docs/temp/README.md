@@ -1,6 +1,6 @@
 # docs/temp 文档索引
 
-> 整理日期：2026-06-01（v1.6 合并去重同步）  
+> 整理日期：2026-06-01（v1.6 合并去重 + 省电恢复 AI 同步）  
 > 说明：本目录为**开发过程临时文档**，与正式用户文档（`docs/` 根目录）区分；内容随实现迭代更新。  
 > **占位符约定**：i18n 使用单花括号 `{count}`（见 `src/i18n/i18next.js`），勿写 `{{count}}`。
 
@@ -10,10 +10,10 @@
 
 | 文档 | 用途 | 状态 |
 |------|------|------|
-| [ai-dev-plan.md](./ai-dev-plan.md) | **开发方案 + 实施清单 + 验收**（Sprint 0–4 及后续增量 §8–§17） | v3.1 |
+| [ai-dev-plan.md](./ai-dev-plan.md) | **开发方案 + 实施清单 + 验收**（Sprint 0–4 及后续增量 §8–§18） | v3.2 |
 | [data-model-resources-and-ai.md](./data-model-resources-and-ai.md) | **主表 / AI 附表拆分**、`qualityScore`、JOIN 投影、迁移与清空 AI 语义 | v1.0 |
-| [ai-feature-roadmap.md](./ai-feature-roadmap.md) | **完整功能清单**（48+ 项 AI 能力，含优先级与实现状态） | v2.2 |
-| [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) | **分析缩图、动态超时、失败重试、进度卡常显、清空/重试 AI、测试连接、语义搜索迁移、探索顶栏、设置 UX** | v1.8 |
+| [ai-feature-roadmap.md](./ai-feature-roadmap.md) | **完整功能清单**（48+ 项 AI 能力，含优先级与实现状态） | v2.3 |
+| [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) | **分析缩图、动态超时、失败重试、进度卡常显、清空/重试 AI、省电恢复、测试连接、语义搜索迁移、探索顶栏、设置 UX** | v1.9 |
 | [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) | **找相似方案 C、画面向量、EmbedRequestBuilder、合集画面向量、设置项** | 2026-05-29 v2.2 |
 | [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) | **系统策展（按簇命名、locale、剔图、同名/高重叠合并）、用户合集、分页** | **v1.6** |
 | [openclaw-agent-integration.md](./openclaw-agent-integration.md) | 外部 Agent / OpenClaw / MCP 集成规划 | **未编码**（Sprint 5 跳过） |
@@ -34,7 +34,7 @@
 
 | 文档 | 用途 | 状态 |
 |------|------|------|
-| [main-window-ux-and-infrastructure.md](./main-window-ux-and-infrastructure.md) | **侧栏、快捷键 suspend/resume、检查更新、工具页清空 AI** | 2026-06-01 |
+| [main-window-ux-and-infrastructure.md](./main-window-ux-and-infrastructure.md) | **侧栏、快捷键 suspend/resume、省电与后台 AI、检查更新、工具页清空 AI** | 2026-05-27 |
 | [privacy-and-sensitive-content.md](./privacy-and-sensitive-content.md) | **敏感内容隐藏、壁纸过滤、密码规则；`nsfwLevel` 在 AI 附表** | v1.1 |
 
 **阅读顺序建议：**
@@ -60,6 +60,7 @@
 | 模块 | 路径 |
 |------|------|
 | AI 分析 | `src/main/ai/AiAnalysisManager.mjs` |
+| 省电 / AI 任务恢复 | `src/main/store/index.mjs` → `resumeBackgroundAiTasksIfAllowed`、`restartPowerSaveDependentTasks` |
 | AI 附表 / JOIN | `src/main/store/resourceAiSql.mjs`、`schemaUpgrade.mjs` |
 | 自动策展 | `src/main/store/CollectionCurator.mjs` |
 | 策展合并 dedupe | `mergeDuplicatePlans`、`reconcilePlansWithExistingAutoCollections`、`dedupeExistingAutoCollections` |
@@ -91,10 +92,11 @@
 
 | 主题 | 文档 | 要点 |
 |------|------|------|
+| 省电恢复 AI | `ai-analysis-ux-and-performance.md` §4.2 · `ai-dev-plan.md` §18 | 关省电/插 AC 自动恢复 pump；修复长期「等待中」 |
 | 系统合集 v1.6 | `ai-collections-ux-and-curate.md` §2.4.2 | 同名或 Jaccard≥0.85 合并；progressive 不再叠 duplicate |
 | 系统合集 v1.5 | 同上 §2.1、§2.4.1 | 按簇命名、locale、语义剔图 |
 | 快捷键 | `main-window-ux-and-infrastructure.md` §3.5 | 录键 suspend/resume；切 tab 不再全量重注册 |
-| 开发清单 | `ai-dev-plan.md` §16–§17 | 增量⁹、增量¹⁰ |
+| 开发清单 | `ai-dev-plan.md` §16–§18 | 增量⁹–¹¹ |
 
 ---
 
@@ -102,6 +104,7 @@
 
 | 日期 | 说明 |
 |------|------|
+| **2026-05-27** | **省电恢复 AI**：`ai-analysis` v1.9 §4.2、`ai-dev-plan` v3.2 §18、`ai-feature-roadmap` v2.3 AI-017 |
 | **2026-06-01** | **v1.6**：系统合集同名/高重叠合并；`ai-collections` v1.6、`ai-dev-plan` v3.1 §17、`ai-feature-roadmap` v2.2；索引与锚点整理 |
 | **2026-06-01** | v1.5 按簇命名、locale、剔图；快捷键 suspend/resume；`ai-dev-plan` v3.0 |
 | **2026-05-31** | 新增 `main-window-ux-and-infrastructure.md` |

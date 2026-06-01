@@ -1,8 +1,8 @@
 # 飞鸟壁纸 AI 能力完整功能清单
 
-> 文档版本：**v2.2**  
-> 整理日期：2026-06-01  
-> 状态：**2.0.0 核心已落地**；系统合集 **v1.6 合并去重**已落地；部分 P3/P4 仍为规划  
+> 文档版本：**v2.3**  
+> 整理日期：2026-06-01（AI-017 省电恢复 2026-05-27）  
+> 状态：**2.0.0 核心已落地**；系统合集 **v1.6 合并去重**已落地；**省电恢复 AI** 已落地；部分 P3/P4 仍为规划  
 > 关联：[data-model-resources-and-ai.md](./data-model-resources-and-ai.md) · [ai-dev-plan.md](./ai-dev-plan.md) · [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) · [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) · [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) · [README.md](./README.md)
 
 **图例：** ✅ 已实现 · 🟡 部分实现 · ⬜ 未开始
@@ -57,7 +57,7 @@
 
 ### 设置项 `settingData.ai`（已实现字段）
 
-`enabled`、`visionPreset`/`textPreset`、`visionModel`/`textModel`/`embeddingModel`（**仅文本 embed**）、`visualEmbedSource`（默认 `builtin`）、`visualEmbedPreset`/`visualEmbedProvider`/`visualEmbedBaseUrl`/`visualEmbedApiKey`/`visualEmbedModel`（**远程画面向量**，独立第三套）、`timeout`（默认 **300s**，视觉分析动态加成；测试连接 **60s** 上限）、`visionPreprocess`/`visionMaxLongEdge`/`visionPreprocessMinSizeMB`/`visionJpegQuality`、`analysisMode`、`analysisMaxRetries`（默认 **1**，**设置页不展示**）、`concurrency`（默认 **1**，**设置页不展示**）、`autoCollectionsEnabled`、`scoreMinFilter`（默认 70）、`autoCollectionsMaxCount`（默认 20，3～50）、`autoCurateSettled`/`autoCurateSettledAnalyzed`（内部锁存）、`expandDownloadKeywords`、`legacyOnnxScore`、`legacyJiebaTags` 等。**已移除** `enableNsfwCheck`（改由 `privacy.enableNsfwContentMask`，见 [privacy-and-sensitive-content.md](./privacy-and-sensitive-content.md)）。分析成功后：**文本向量**需 `ai.enabled`；**画面向量**默认内置（`visualEmbedSource=builtin`），remote 时走独立服务、失败回退内置。找相似阈值 **不暴露**（`SIMILAR_*` 内部常量）。电池下后台分析/视觉补算受「省电模式」约束。`scoreMinFilter` / `autoCollectionsMaxCount` 在 **AiSetting → 功能选项 → AI 自动整理合集** 下方；**内置画面向量**在 **兼容选项**；远程时显示 **画面向量服务** 卡片。
+`enabled`、`visionPreset`/`textPreset`、`visionModel`/`textModel`/`embeddingModel`（**仅文本 embed**）、`visualEmbedSource`（默认 `builtin`）、`visualEmbedPreset`/`visualEmbedProvider`/`visualEmbedBaseUrl`/`visualEmbedApiKey`/`visualEmbedModel`（**远程画面向量**，独立第三套）、`timeout`（默认 **300s**，视觉分析动态加成；测试连接 **60s** 上限）、`visionPreprocess`/`visionMaxLongEdge`/`visionPreprocessMinSizeMB`/`visionJpegQuality`、`analysisMode`、`analysisMaxRetries`（默认 **1**，**设置页不展示**）、`concurrency`（默认 **1**，**设置页不展示**）、`autoCollectionsEnabled`、`scoreMinFilter`（默认 70）、`autoCollectionsMaxCount`（默认 20，3～50）、`autoCurateSettled`/`autoCurateSettledAnalyzed`（内部锁存）、`expandDownloadKeywords`、`legacyOnnxScore`、`legacyJiebaTags` 等。**已移除** `enableNsfwCheck`（改由 `privacy.enableNsfwContentMask`，见 [privacy-and-sensitive-content.md](./privacy-and-sensitive-content.md)）。分析成功后：**文本向量**需 `ai.enabled`；**画面向量**默认内置（`visualEmbedSource=builtin`），remote 时走独立服务、失败回退内置。找相似阈值 **不暴露**（`SIMILAR_*` 内部常量）。电池下后台分析/视觉补算受「省电模式」约束（**仅电池 + 省电**）；关省电或插 AC 后 **`resumeBackgroundAiTasksIfAllowed`** 自动恢复 pump（见 [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) §4.2）。`scoreMinFilter` / `autoCollectionsMaxCount` 在 **AiSetting → 功能选项 → AI 自动整理合集** 下方；**内置画面向量**在 **兼容选项**；远程时显示 **画面向量服务** 卡片。
 
 **`settingData.search`：** `useSemanticSearch`（智能语义搜索，探索/H5 筛选；原 `ai.smartSearch` 已迁移）。
 
@@ -75,10 +75,11 @@
 | AI-004 | summary | ✅ | 预览/搜索 |
 | AI-005 | AiAnalysisProvider | ✅ | Ollama + OpenAI 兼容 |
 | AI-006 | AI 设置页 | ✅ | `AiSetting.vue`：进度卡、模型测试、ⓘ Tooltip |
-| AI-007 | 分析任务队列 | ✅ | `background_slow` / `new_only`；仅 **image** |
+| AI-007 | 分析任务队列 | ✅ | `background_slow` / `new_only`；仅 **image**；看门狗 60s 首启 + 3min；省电暂停后可自动恢复 |
 | AI-008 | 文本 embedding 入库 | ✅ | `fbw_resource_vec_blob`；分析后 + 语义搜索 |
 | AI-008a | **视觉 embedding 入库** | ✅ | 内置 MobileCLIP + 可选远程；`fbw_resource_image_vec_blob` |
-| AI-008b | 视觉向量后台补算 | ✅ | 定时任务 `visualEmbed`；每轮 4 张 |
+| AI-008b | 视觉向量后台补算 | ✅ | 定时任务 `visualEmbed`；每轮批量补算；省电暂停后可自动恢复 |
+| AI-017 | 省电恢复后台 AI | ✅ | `restartPowerSaveDependentTasks` + `resumeBackgroundAiTasksIfAllowed`；插 AC 同步恢复 |
 | AI-008c | **远程画面向量服务** | ✅ | 独立 `visualEmbed*` 配置；`EmbedRequestBuilder`；NVIDIA/OpenRouter 等 |
 | AI-009 | 分析前缩图 | ✅ | `AiVisionImagePrep.mjs` |
 | AI-010 | 视觉动态超时 | ✅ | `resolveEffectiveVisionTimeout` |
@@ -309,3 +310,4 @@ AI 助手、AIGC 工具
 | **v2.0** | 2026-05-27 | AI-013～016：附表拆分、清空 AI、失败重试、进度卡常显；AI-001/012 字段路径更新 |
 | **v2.1** | 2026-06-01 | 系统策展 v1.5：按簇命名、locale 对齐、语义剔图；更新 AI-208a 与 queryJson 示例 |
 | **v2.2** | 2026-06-01 | AI-208a 增补 v1.6：同名/高重叠合并 dedupe；progressive 不再累积重复系统合集 |
+| **v2.3** | 2026-05-27 | AI-017 省电恢复后台 AI；AI-007/008b 说明看门狗与恢复路径；链至 ai-analysis §4.2 |

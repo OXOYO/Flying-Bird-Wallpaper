@@ -1,6 +1,6 @@
 # 主窗口侧栏 UX 与基础设施修订
 
-> 整理日期：2026-06-01（§3.5 快捷键 suspend/resume）  
+> 整理日期：2026-06-01（§3.5 快捷键 suspend/resume；§7 省电恢复 AI 2026-05-27）  
 > 说明：记录主窗口侧栏、快捷键管理器、检查更新通知、工具页等实现约定与代码锚点。正式文档 `docs/renderer_process.md`、`docs/shortcut_guide.md` 部分片段仍偏旧，以本文与源码为准。敏感内容遮罩与壁纸过滤见 [privacy-and-sensitive-content.md](./privacy-and-sensitive-content.md)。
 
 ---
@@ -175,10 +175,36 @@ local:{name}:{winName}
 
 ---
 
-## 7. 修订记录
+## 7. 省电模式与后台 AI（基础设置）
+
+| 项 | 说明 |
+|----|------|
+| 设置入口 | **设置 → 基础设置** →「省电模式」（`BaseSetting.vue` → `settingData.powerSaveMode`） |
+| 生效条件 | **仅**「省电模式开启 **且** 当前用电池」时暂停后台任务（`isPowerSaveOnBattery()`） |
+| 暂停范围 | `taskScheduler.clearAllTasks()`：含 AI 分析、画面向量、壁纸切换、目录刷新、系统策展等 |
+| 恢复 | 关闭省电开关 → `restartPowerSaveDependentTasks`；插 AC（曾暂停）→ `resumeBackgroundAiTasksIfAllowed` |
+| 详细行为 | 见 [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) **§4.2** · [ai-dev-plan.md](./ai-dev-plan.md) **§18** |
+
+### 7.1 验收
+
+- [ ] 电池 + 省电：AI 进度卡「等待中」或 pump 停止  
+- [ ] **仅关省电**（不改 AI 设置）：自动恢复「运行中」  
+- [ ] 插 AC 后定时任务恢复（若曾因电池省电暂停）
+
+### 7.2 代码锚点
+
+| 模块 | 路径 |
+|------|------|
+| 省电开关 UI | `src/renderer/.../Setting/components/BaseSetting.vue` |
+| 电源与恢复 | `src/main/store/index.mjs` → `setupPowerMonitor`、`restartPowerSaveDependentTasks`、`resumeBackgroundAiTasksIfAllowed` |
+
+---
+
+## 8. 修订记录
 
 | 日期 | 说明 |
 |------|------|
+| **2026-05-27** | §7 省电模式与后台 AI 恢复；链至 ai-analysis §4.2、ai-dev-plan §18 |
 | **2026-06-01** | §3.5 录键 suspend/resume 引用计数；渲染端 `shortcutsSuspended` 守卫；修复切设置 tab/进出设置页误触发全量重注册 |
 | 2026-05-27 | §5 工具页「清空 AI 分析数据」；链至数据模型与分析 UX 文档 |
 | 2026-05-31 | 初版：侧栏折叠钮样式、SideMenu hover 主题色、ShortcutManager 复合键与冲突检测、Updater 通知修复 |

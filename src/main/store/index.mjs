@@ -760,6 +760,37 @@ export default class Store {
     }
   }
 
+  /** 省电限制解除后恢复后台 AI 调度（不依赖 _backgroundAiScheduled 一次性标记） */
+  resumeBackgroundAiTasksIfAllowed() {
+    if (!this._mainUiReady) return
+    if (this.isPowerSaveOnBattery()) return
+    this.initAiAnalysisTask()
+    this.initVisualEmbedTask()
+    setImmediate(() => {
+      this.triggerBackgroundAnalysisPump()
+      this.triggerVisualEmbedPump()
+    })
+  }
+
+  /** 省电模式开关变更：关闭且可运行时恢复后台 AI；开启且用电池时暂停定时任务 */
+  restartPowerSaveDependentTasks(oldData, newData) {
+    if (oldData?.powerSaveMode === newData?.powerSaveMode) return
+
+    if (this.isPowerSaveOnBattery()) {
+      if (this.powerState?.isOnBattery && newData?.powerSaveMode) {
+        global.logger.info('[Store] 省电模式已开启（电池），暂停定时任务')
+        this.taskScheduler.clearAllTasks()
+        this.powerState.wasPausedByBattery = true
+      }
+      return
+    }
+
+    global.logger.info('[Store] 省电限制已解除，恢复后台 AI 与相关定时任务')
+    this.powerState.wasPausedByBattery = false
+    this.startScheduledTasks()
+    this.resumeBackgroundAiTasksIfAllowed()
+  }
+
   // 设置电源监控
   setupPowerMonitor() {
     // 监听系统挂起事件
@@ -814,12 +845,14 @@ export default class Store {
     })
     powerMonitor.on('on-ac', () => {
       global.logger.info('恢复交流电')
-      if (this.powerState.isOnBattery && this.powerState.wasPausedByBattery) {
-        global.logger.info('恢复所有定时任务')
-        this.startScheduledTasks()
-        this.powerState.wasPausedByBattery = false
-      }
+      const wasPausedByBattery = this.powerState.wasPausedByBattery
       this.powerState.isOnBattery = false
+      if (wasPausedByBattery) {
+        global.logger.info('恢复所有定时任务')
+        this.powerState.wasPausedByBattery = false
+        this.startScheduledTasks()
+        this.resumeBackgroundAiTasksIfAllowed()
+      }
     })
   }
 
@@ -1525,6 +1558,7 @@ export default class Store {
       // 重启相关定时任务，仅当设置项发生变化时触发
       this.restartRefreshDirectoryTask(oldData, newData)
       this.restartHandleWordsTask(oldData, newData)
+      this.restartPowerSaveDependentTasks(oldData, newData)
       this.restartAiAnalysisTask(oldData, newData)
       this.restartCollectionCuratorTask(oldData, newData)
       this.restartSwitchWallpaperTask(oldData, newData)

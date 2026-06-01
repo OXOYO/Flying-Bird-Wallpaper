@@ -1,7 +1,7 @@
 # AI 分析性能与设置体验（2.0.0+ 增量）
 
-> 文档版本：**v1.8**  
-> 整理日期：2026-05-27  
+> 文档版本：**v1.9**  
+> 整理日期：2026-05-27（§4.2 省电恢复同步 2026-05-27）  
 > 状态：**已实现**  
 > 关联：[data-model-resources-and-ai.md](./data-model-resources-and-ai.md) · [ai-dev-plan.md](./ai-dev-plan.md) · [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) · [ai-feature-roadmap.md](./ai-feature-roadmap.md) · [README.md](./README.md)
 
@@ -113,6 +113,54 @@
 
 与合集联动：队列稳定（无 pending/failed）且完成至少一轮自动整理后，系统策展暂停定时任务 — 见 [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) §2.5。
 
+### 4.2 后台调度与省电模式（v1.9）
+
+实现：`src/main/store/index.mjs`（`isPowerSaveOnBattery`、`triggerBackgroundAnalysisPump`、`resumeBackgroundAiTasksIfAllowed`、`restartPowerSaveDependentTasks`）；常量见 `aiConstants.mjs`。
+
+#### 判定与暂停
+
+| 项 | 说明 |
+|----|------|
+| 省电生效条件 | `settingData.powerSaveMode === true` **且** `powerState.isOnBattery`（`isPowerSaveOnBattery()`） |
+| 设置入口 | **基础设置** →「省电模式」（`BaseSetting.vue`） |
+| 电池 + 省电 | `powerMonitor.on('on-battery')` → `taskScheduler.clearAllTasks()`；`wasPausedByBattery = true` |
+| 设置内开启省电（电池） | `restartPowerSaveDependentTasks` 同样 `clearAllTasks` + 标记暂停 |
+| 受影响任务 | AI 分析看门狗 `aiAnalysis`、画面向量 `visualEmbed`、壁纸切换、目录刷新、系统策展等**全部**定时任务 |
+
+#### 看门狗与 pump
+
+| 任务 | 首次延迟 | 周期 | 行为 |
+|------|----------|------|------|
+| `aiAnalysis` | **60s**（`AI_ANALYSIS_PUMP_START_DELAY_MS`） | **3min**（`AI_ANALYSIS_WATCHDOG_MS`） | 回调内 `triggerBackgroundAnalysisPump()`；`background_slow` 为**连续 pump**（非固定间隔轮询） |
+| `visualEmbed` | **90s** | **5min** | `triggerVisualEmbedPump()` |
+
+主窗口就绪后由 `ensureBackgroundAiTasks()` 注册；`_backgroundAiScheduled` 仅防重复 init，**不应**阻止省电/插 AC 后的恢复。
+
+#### 恢复路径（v1.9 修复）
+
+| 触发 | 行为 |
+|------|------|
+| **关闭省电开关**（`updateSettingData`） | `restartPowerSaveDependentTasks` → 若不再 `isPowerSaveOnBattery()`：`startScheduledTasks()` + `resumeBackgroundAiTasksIfAllowed()` |
+| **插交流电**（`on-ac`，且曾因电池省电暂停） | 同上：`startScheduledTasks()` + `resumeBackgroundAiTasksIfAllowed()` |
+| **修改 AI 设置并保存** | 原有 `restartAiAnalysisTask`：`initAiAnalysisTask` / `initVisualEmbedTask` + 立即 pump |
+
+`resumeBackgroundAiTasksIfAllowed()` 前置条件：`_mainUiReady`、非 `isPowerSaveOnBattery()`；内部仍受 `ai.enabled` 与分析模式（非 `off` / `on_demand`）约束。
+
+#### UI「等待中」与根因
+
+进度卡 / 侧边栏：`pending > 0` 且当前无 `running` → **等待中**（`useAiAnalysisDashboard.js`）。
+
+**修复前：** 电池省电 `clearAllTasks()` 后，仅关省电开关**不会**触发 `restartAiAnalysisTask`（仅 `ai` JSON 变更才触发）→ 队列有积压但 pump 未恢复，长期「等待中」。 workaround：关再开「启用 AI」。
+
+**修复后：** 关省电或插 AC 后自动重新注册看门狗并 `setImmediate` pump，无需手动 toggling AI。
+
+#### 验收
+
+1. 电池 + 省电开启 → AI 进度卡倾向「等待中」或暂停 pump  
+2. **仅关闭省电**（不改 AI 设置）→ 数秒内变为「运行中」，pending 下降  
+3. 插 AC（曾 `wasPausedByBattery`）→ 定时任务与 AI pump 恢复  
+4. 日志含 `[Store] 省电限制已解除，恢复后台 AI 与相关定时任务`
+
 ---
 
 ## 5. 智能语义搜索配置迁移
@@ -212,6 +260,7 @@
 9. 三处/四处「测试连接」文案一致；画面向量 remote 时独立卡片可测通  
 10. 工具页清空 AI：成功提示显示数字非 `{count}`；插件 `title`/`desc` 仍在  
 11. 设置页：未开 AI 时进度卡仍可见；失败 chip 重试后 pending 上升  
+12. **省电恢复**：电池 + 省电暂停后，仅关闭省电开关 → AI 自动恢复「运行中」，无需关开「启用 AI」  
 
 ---
 
@@ -222,6 +271,9 @@
 | 缩图 | `src/main/ai/AiVisionImagePrep.mjs` |
 | 超时常量/公式/重试 | `src/main/ai/aiConstants.mjs` |
 | 分析调度 | `src/main/ai/AiAnalysisManager.mjs` |
+| 省电 / 任务恢复 | `src/main/store/index.mjs` → `resumeBackgroundAiTasksIfAllowed`、`restartPowerSaveDependentTasks`、`setupPowerMonitor` |
+| 看门狗常量 | `src/main/ai/aiConstants.mjs` → `AI_ANALYSIS_*`、`VISUAL_EMBED_*` |
+| 进度卡状态 | `useAiAnalysisDashboard.js` |
 | 策展门控 | `src/main/store/collectionCurateGate.mjs` |
 | Provider | `src/main/ai/AiAnalysisProvider.mjs`、`providers/HttpAiProviders.mjs` |
 | Embed 方言 | `src/main/ai/EmbedRequestBuilder.mjs` |
@@ -281,3 +333,4 @@
 | **v1.6** | 2026-05-29 | 合集生成：`regenPrompt`、实体词/氛围分流、LLM 标签扩展；链至 ai-collections §6 |
 | **v1.7** | 2026-05-27 | 后台 `concurrency` 并行说明；`analysisMaxRetries`/`concurrency` 默认 1 且 UI 移除；链至 [privacy-and-sensitive-content.md](./privacy-and-sensitive-content.md) |
 | **v1.8** | 2026-05-27 | 进度卡常显、失败重试入队、工具页清空 AI；附表 `aiAnalysisFailCount`；§12–§15；链至 [data-model-resources-and-ai.md](./data-model-resources-and-ai.md) |
+| **v1.9** | 2026-05-27 | §4.2 省电模式暂停/恢复；`restartPowerSaveDependentTasks` + `resumeBackgroundAiTasksIfAllowed`；修复关省电后长期「等待中」 |

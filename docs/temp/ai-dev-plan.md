@@ -1,8 +1,8 @@
 # 飞鸟壁纸 AI 能力开发方案
 
-> 文档版本：**v3.1**  
-> 整理日期：2026-06-01  
-> 状态：Sprint 0–4 **已落地**；2.0.0 **后续增量已落地**（含系统合集按簇命名、合并去重、快捷键 suspend/resume）；Sprint 5 **未开发**  
+> 文档版本：**v3.2**  
+> 整理日期：2026-06-01（§18 省电恢复 2026-05-27）  
+> 状态：Sprint 0–4 **已落地**；2.0.0 **后续增量已落地**（含系统合集按簇命名、合并去重、快捷键 suspend/resume、**省电恢复 AI**）；Sprint 5 **未开发**  
 > 应用版本：**1.3.8 → 2.0.0**  
 > 关联：[data-model-resources-and-ai.md](./data-model-resources-and-ai.md) · [ai-feature-roadmap.md](./ai-feature-roadmap.md) · [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) · [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md)（**v1.6**）· [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) · [main-window-ux-and-infrastructure.md](./main-window-ux-and-infrastructure.md) · [README.md](./README.md)
 
@@ -392,6 +392,22 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 
 ---
 
+## §18 后续增量（省电模式恢复后台 AI）— 已落地
+
+> 详述：[ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) §4.2
+
+| 项 | 说明 |
+|----|------|
+| 问题 | 电池 + 省电 `clearAllTasks()` 后，仅关省电不触发 `restartAiAnalysisTask` → 长期「等待中」 |
+| 恢复 API | `resumeBackgroundAiTasksIfAllowed()`：重注册 `aiAnalysis` / `visualEmbed` + 立即 pump |
+| 设置变更 | `restartPowerSaveDependentTasks`：`powerSaveMode` 关 → `startScheduledTasks()` + 恢复 AI |
+| 插 AC | `powerMonitor.on('on-ac')` + `wasPausedByBattery` → 同上（修复 `_backgroundAiScheduled` 阻止再 init） |
+| 开启省电（电池） | 设置内开省电 → `clearAllTasks()` + `wasPausedByBattery = true` |
+
+**验收：** 电池省电暂停 → 关省电 → 进度卡「运行中」、pending 下降；无需关开「启用 AI」。
+
+---
+
 ## 数据库补充（2.0.0 增量）
 
 | 变更 | 说明 |
@@ -435,6 +451,7 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | **增量⁸** | ✅ | AI 附表拆分、插件复合 ID、工具页清空 AI、失败重试入队、进度卡常显 |
 | **增量⁹** | ✅ | 系统合集按簇命名、UI locale 对齐、语义剔图、i18n 降级；快捷键录键 suspend/resume |
 | **增量¹⁰** | ✅ | 系统合集同名/高重叠合并 dedupe（`mergeCollectionPlans`、全库保留最小 id） |
+| **增量¹¹** | ✅ | 省电关/插 AC 恢复后台 AI；`restartPowerSaveDependentTasks`、`resumeBackgroundAiTasksIfAllowed` |
 | Sprint 5 | ⏸ | OpenClaw/Agent — 仅文档 |
 
 ---
@@ -475,6 +492,12 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 12. 探索 → 筛选：语义搜索开关生效；AI 设置页无 `smartSearch`  
 13. 功能选项长标签不换行；ⓘ Tooltip 多行可读  
 
+### 省电与后台 AI（增量¹¹）
+
+14. 电池 + 省电：AI 暂停或「等待中」  
+15. **仅关闭省电**（不改 AI 设置）→ 自动「运行中」；日志含「省电限制已解除」  
+16. 插 AC（曾因电池省电暂停）→ 定时任务与 pump 恢复  
+
 ---
 
 ## 已知限制
@@ -495,6 +518,7 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | legacy | ONNX/jieba 仍可通过开关启用 |
 | VLM 耗时 | 后台每轮 5 张串行；大图建议缩图 + 超时 ≥300s |
 | 分析前缩图 | 极小字/边界 NSFW 可略逊于原图；可调 `visionMaxLongEdge` |
+| 省电暂停 | 电池 + 省电会停全部定时任务；关省电或插 AC 后应自动恢复（v3.2 §18） |
 
 ---
 
@@ -516,3 +540,4 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | **v2.8** | 2026-05-27 | 移除 `enableNsfwCheck`；`privacy-and-sensitive-content.md`；AI 设置隐藏 `analysisMaxRetries`/`concurrency`（默认 1） |
 | **v3.0** | 2026-06-01 | §16 系统合集按簇命名、locale 对齐、语义剔图；Sprint 3.2 流水线更新 |
 | **v3.1** | 2026-06-01 | §17 同名/高重叠 plan 合并与全库 dedupe；链至 ai-collections v1.6 |
+| **v3.2** | 2026-05-27 | §18 省电关/插 AC 恢复后台 AI；链至 ai-analysis §4.2 |
