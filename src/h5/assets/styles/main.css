@@ -249,17 +249,18 @@
 
 /** H5 长按操作菜单（搜索 / 收藏 / 回忆等共用） */
 .action-popup-content {
-  display: flex;
-  justify-content: space-around;
-  align-items: flex-start;
-  gap: 4px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px 8px;
+  justify-items: center;
 }
 
 .action-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  flex: 1 1 0;
+  width: 100%;
+  max-width: 80px;
   min-width: 0;
   gap: 6px;
 }

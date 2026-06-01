@@ -147,6 +147,42 @@ export const registerBusinessApi = (router, deps) => {
     sendJson(ctx, await parser.parseSearchQuery(query))
   })
 
+  router.post('/api/find-similar', async (ctx) => {
+    const body = await readJsonBody(ctx)
+    const resourceId = body?.resourceId ?? body?.id
+    if (!resourceId) {
+      sendJson(ctx, { success: false, message: t('messages.operationFail') })
+      return
+    }
+    const limit = Math.max(1, Math.min(Number(body?.limit) || 20, 200))
+    const excludeIds = Array.isArray(body?.excludeIds)
+      ? body.excludeIds.map((id) => Number(id)).filter((id) => Number.isFinite(id))
+      : []
+    try {
+      const EmbeddingManager = (await import('../../../ai/EmbeddingManager.mjs')).default
+      const embeddingManager = EmbeddingManager.getInstance(logger, dbManager.db, settingManager)
+      const candidateIds = Array.isArray(body?.candidateIds)
+        ? body.candidateIds.map((id) => Number(id)).filter((id) => Number.isFinite(id))
+        : body?.scope
+          ? resourcesManager.getSimilarScopeCandidateIds(body.scope)
+          : null
+      const similar = await embeddingManager.findSimilar(
+        Number(resourceId),
+        limit,
+        candidateIds,
+        excludeIds
+      )
+      const list = resourcesManager.getResourcesByIds(similar.resourceIds)
+      sendJson(ctx, {
+        success: true,
+        data: { list, total: similar.total, signals: similar.signals || [] }
+      })
+    } catch (err) {
+      logger.error(`[H5Server] find-similar failed: ${err}`)
+      sendJson(ctx, { success: false, message: String(err?.message || err) })
+    }
+  })
+
   router.post('/api/ai/analyze', async (ctx) => {
     const { id } = await readJsonBody(ctx)
     const AiAnalysisManager = (await import('../../../ai/AiAnalysisManager.mjs')).default

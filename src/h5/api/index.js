@@ -123,6 +123,14 @@ export const searchImages = async (data) => {
   })
 }
 
+/** 找相似（画面 RRF + 文案 boost，与桌面 main:findSimilar 一致） */
+export const findSimilar = async (data) => {
+  return await request('/api/find-similar', {
+    method: 'POST',
+    body: data
+  })
+}
+
 export const toggleFavorite = async (id) => {
   return await request('/api/favorites/toggle', {
     method: 'POST',

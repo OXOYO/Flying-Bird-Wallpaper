@@ -39,6 +39,8 @@ import {
   getBrowseItemKey,
   getBrowseListDedupKey
 } from '@h5/utils/normalizeBrowseItem.mjs'
+import { useH5SimilarResults } from '@h5/composables/useH5SimilarResults.mjs'
+import { buildH5BrowseSimilarScope } from '@h5/utils/h5SimilarScope.mjs'
 
 /** H5 叠层：高于 van-image-preview 默认层级（约 2000） */
 const H5_OVERLAY_Z = {
@@ -215,6 +217,77 @@ export function useH5ResourceBrowse(options) {
   )
 
   const list = ref([])
+
+  const {
+    similarMode,
+    similarSourceItem,
+    similarTotal,
+    similarHasMore,
+    resetSimilar,
+    startSimilar,
+    appendSimilarPage,
+    resolvePageSize: resolveSimilarPageSize
+  } = useH5SimilarResults({
+    normalizeRows: (rows) => rows.map(normalizeBrowseItem),
+    getPageSize: () => resolveBrowsePageSize(),
+    getDedupKey: getBrowseListDedupKey
+  })
+
+  const similarListSnapshot = ref(null)
+
+  const similarSourceImageSrc = computed(() => {
+    const item = similarSourceItem.value
+    return item?.imageSrc || item?.imageRawSrc || ''
+  })
+
+  const buildSimilarScope = () =>
+    buildH5BrowseSimilarScope({
+      browseType,
+      inPrivacySpace: inPrivacySpace.value,
+      collectionId: unref(collectionId)
+    })
+
+  const exitSimilarMode = () => {
+    const snap = similarListSnapshot.value
+    resetSimilar()
+    if (!snap) return
+    list.value = snap.list
+    page.total = snap.total
+    state.finished = snap.finished
+    similarListSnapshot.value = null
+    nextTick(() => {
+      if (displayMode.value === 'fullscreen') {
+        fullscreenVisibleIndex.value = 0
+        fullscreenPagerRef.value?.scrollToIndex?.(0, false)
+      } else if (pageWrapperRef.value) {
+        pageWrapperRef.value.scrollTop = snap.scrollTop ?? 0
+        state.scrollTop = snap.scrollTop ?? 0
+      }
+    })
+  }
+
+  const loadSimilarMore = async () => {
+    if (state.loading || !similarHasMore.value) return
+    state.loading = true
+    try {
+      const hasMore = await appendSimilarPage(
+        () => list.value,
+        (next) => {
+          list.value = next
+        }
+      )
+      state.finished = !hasMore
+      if (!hasMore && list.value.length) {
+        showToast({ message: t('messages.noMoreData') })
+      }
+    } finally {
+      state.loading = false
+      state.refreshing = false
+      nextTick(() => {
+        void syncFullscreenActiveMedia()
+      })
+    }
+  }
 
   const longPress = reactive({
     timer: null,
@@ -683,6 +756,7 @@ export function useH5ResourceBrowse(options) {
   )
 
   const onSearch = async () => {
+    if (similarMode.value) exitSimilarMode()
     state.showFilters = false
     await reload()
   }
@@ -764,6 +838,13 @@ export function useH5ResourceBrowse(options) {
   }
 
   const loadList = async (reset = false) => {
+    if (similarMode.value && !reset) {
+      await loadSimilarMore()
+      return
+    }
+    if (reset && similarMode.value) {
+      exitSimilarMode()
+    }
     if (state.loading) return
     if (browseType === 'collection' && !unref(collectionId)) {
       state.finished = true
@@ -1080,6 +1161,11 @@ export function useH5ResourceBrowse(options) {
   })
 
   const browseResultTotal = computed(() => {
+    if (similarMode.value) {
+      const total = Number(similarTotal.value) || 0
+      if (total > 0) return total
+      return Math.max(1, list.value.length)
+    }
     const server = Number(page.total) || 0
     const loaded = list.value.length
     if (server > 0) return server
@@ -1811,6 +1897,60 @@ export function useH5ResourceBrowse(options) {
     return idx >= 0 ? list.value[idx] ?? null : null
   })
 
+  const canFindSimilarSelected = computed(
+    () => !!selectedItem.value?.id && selectedItem.value?.fileType !== 'video'
+  )
+
+  const onFindSimilarSelected = async () => {
+    const item = selectedItem.value
+    if (!item?.id || item.fileType === 'video') return
+    if (blockIfNsfwMasked(item)) return
+    state.showActionPopup = false
+
+    const scope = buildSimilarScope()
+    const pageSize = resolveSimilarPageSize()
+    state.loading = true
+    try {
+      const res = await api.findSimilar({
+        resourceId: Number(item.id),
+        limit: pageSize,
+        ...(scope ? { scope } : {})
+      })
+      if (res?.success && res.data?.list?.length) {
+        if (!similarMode.value) {
+          similarListSnapshot.value = {
+            list: list.value.slice(),
+            total: page.total,
+            finished: state.finished,
+            scrollTop: state.scrollTop
+          }
+        }
+        list.value = startSimilar({
+          resourceId: item.id,
+          scope: scope || undefined,
+          sourceItem: normalizeBrowseItem(item),
+          firstRows: res.data.list.map(normalizeBrowseItem),
+          pageSize,
+          total: res.data.total
+        })
+        state.finished = !similarHasMore.value
+        page.total = similarTotal.value
+        fullscreenVisibleIndex.value = 0
+        state.scrollTop = 0
+        nextTick(() => {
+          fullscreenPagerRef.value?.scrollToIndex?.(0, false)
+          if (pageWrapperRef.value) pageWrapperRef.value.scrollTop = 0
+        })
+      } else {
+        showNotify({ type: 'warning', message: t('exploreCommon.findSimilarEmpty') })
+      }
+    } catch (_) {
+      showNotify({ type: 'danger', message: t('messages.operationFail') })
+    } finally {
+      state.loading = false
+    }
+  }
+
   const imageInfoTagWords = ref([])
 
   const imageInfoItem = computed(() => {
@@ -2317,6 +2457,11 @@ export function useH5ResourceBrowse(options) {
     previewImages,
     previewStartPosition,
     selectedItem,
+    canFindSimilarSelected,
+    similarMode,
+    similarSourceImageSrc,
+    exitSimilarMode,
+    onFindSimilarSelected,
     imageInfoItem,
     selectedFavoriteActionLabel,
     imageLoadFailText,

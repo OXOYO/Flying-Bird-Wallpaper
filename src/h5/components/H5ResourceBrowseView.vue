@@ -3,6 +3,7 @@ import { computed, ref, toRef, watch } from 'vue'
 import { showNotify, showToast } from 'vant/es'
 import * as api from '@h5/api/index.js'
 import H5BrowseChrome from '@h5/components/H5BrowseChrome.vue'
+import H5SimilarModeBanner from '@h5/components/H5SimilarModeBanner.vue'
 import H5FullscreenPager from '@h5/components/H5FullscreenPager.vue'
 import H5FloatingButtons from '@h5/components/H5FloatingButtons.vue'
 import H5ListEmpty from '@h5/components/H5ListEmpty.vue'
@@ -106,6 +107,11 @@ const {
   previewImages,
   previewStartPosition,
   selectedItem,
+  canFindSimilarSelected,
+  similarMode,
+  similarSourceImageSrc,
+  exitSimilarMode,
+  onFindSimilarSelected,
   imageInfoItem,
   selectedFavoriteActionLabel,
   imageLoadFailText,
@@ -339,6 +345,14 @@ defineExpose({
             </van-button>
           </template>
         </H5BrowseChrome>
+        <H5SimilarModeBanner
+          v-if="similarMode"
+          :message="t('exploreCommon.similarModeBanner')"
+          :source-image-src="similarSourceImageSrc"
+          :back-aria-label="t('exploreCommon.similarBack')"
+          :bar-background="isPrivacySpaceUi ? 'rgba(0, 0, 0, 0.88)' : undefined"
+          @back="exitSimilarMode"
+        />
       </div>
 
       <van-pull-refresh v-model="state.refreshing" :disabled="isPullRefreshDisabled" @refresh="onRefresh">
@@ -667,6 +681,16 @@ defineExpose({
             <IconifyIcon class="action-icon-inner" icon="custom:info-line" />
           </div>
           <span class="action-label">{{ t('h5.pages.search.actions.info') }}</span>
+        </div>
+        <div
+          v-if="canFindSimilarSelected"
+          class="action-item"
+          @click="onFindSimilarSelected"
+        >
+          <div class="action-icon-wrapper">
+            <IconifyIcon class="action-icon-inner" icon="custom:find-similar" />
+          </div>
+          <span class="action-label">{{ t('exploreCommon.findSimilar') }}</span>
         </div>
         <div class="action-item" @click="toggleSelectedFavorite">
           <div class="action-icon-wrapper">
