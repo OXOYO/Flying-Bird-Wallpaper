@@ -26,6 +26,8 @@ export default class TaskScheduler {
 
     // 添加定时器管理
     this.timers = {}
+    /** @type {Record<string, ReturnType<typeof setTimeout>|null>} */
+    this.initialTimeouts = {}
 
     // 保存实例
     TaskScheduler._instance = this
@@ -33,14 +35,12 @@ export default class TaskScheduler {
 
   // 调度任务
   scheduleTask(timerKey, interval, callback, initialDelay = 0) {
-    // 清除已存在的定时器
-    if (this.timers[timerKey]) {
-      clearInterval(this.timers[timerKey])
-    }
+    this.clearTask(timerKey)
 
     // 如果有初始延迟
     if (initialDelay > 0) {
-      setTimeout(() => {
+      this.initialTimeouts[timerKey] = setTimeout(() => {
+        this.initialTimeouts[timerKey] = null
         callback()
         this.timers[timerKey] = setInterval(callback, interval)
       }, initialDelay)
@@ -49,8 +49,16 @@ export default class TaskScheduler {
     }
   }
 
+  hasActiveTask(timerKey) {
+    return !!(this.timers[timerKey] || this.initialTimeouts[timerKey])
+  }
+
   // 清除定时器
   clearTask(timerKey) {
+    if (this.initialTimeouts[timerKey]) {
+      clearTimeout(this.initialTimeouts[timerKey])
+      this.initialTimeouts[timerKey] = null
+    }
     if (this.timers[timerKey]) {
       clearInterval(this.timers[timerKey])
       this.timers[timerKey] = null

@@ -544,7 +544,21 @@
         "visualEmbedRemoteSectionHint": "Configure provider, URL, API key, and model in the Visual vector service section below.",
         "visualEmbedModelPlaceholder": "e.g. batiai/qwen3-vl-embed-2b",
         "legacyLocalVisualEmbed": "Built-in visual vectors",
-        "legacyLocalVisualEmbedHint": "When enabled, uses built-in visual vectors for similarity and Find similar. When disabled, uses the remote embedding model in Visual vector service (falls back to built-in on failure)."
+        "legacyLocalVisualEmbedHint": "When enabled, uses built-in visual vectors for similarity and Find similar. When disabled, uses the remote embedding model in Visual vector service (falls back to built-in on failure).",
+        "pumpBlockReason_scheduler_stopped": "백그라운드 분석 타이머가 중지되었습니다(절전 모드로 작업 삭제 후 등). AI 설정을 저장하거나 AC 전원을 연결하세요.",
+        "pumpBlockReason_power_save_battery": "절전 모드이며 배터리 사용 중 — 백그라운드 분석 일시 중지",
+        "pumpBlockReason_maintenance": "리소스 유지보수 중 — 분석 일시 중지",
+        "pumpBlockReason_lock": "분석 대기열이 다른 작업에 사용 중입니다. 잠시 후 다시 시도하세요",
+        "pumpBlockReason_main_ui_not_ready": "메인 창 준비 중 — 곧 자동으로 시작합니다",
+        "pumpBlockReason_mode": "현재 분석 모드는 백그라운드에서 자동 실행되지 않습니다",
+        "pumpBlockReason_disabled": "「AI 사용」이 꺼져 있습니다",
+        "runStatusDisabled": "AI 꺼짐",
+        "runStatusDisabledHint": "「AI 사용」이 꺼져 있어 자동 분석이 실행되지 않습니다. 여기서 진행 상황을 볼 수 있으며, 켜면 대기 큐를 처리합니다.",
+        "requeueFailedConfirm": "분석에 실패한 <strong>{count}</strong>장을 대기 큐에 다시 넣고 실패 횟수를 초기화할까요?<br/><br/>자동 분석에는 「AI 사용」과 분석 모드 「백그라운드 연속」 또는 「새 이미지만」이 필요합니다.",
+        "requeueFailedSuccess": "실패한 {count}장을 대기 큐에 넣었습니다. 백그라운드 처리가 시작됩니다",
+        "requeueFailedSuccessNoAi": "{count}장을 대기 큐에 넣었습니다. 「AI 사용」이 꺼져 있어 자동 분석되지 않습니다",
+        "requeueFailedSuccessNoPump": "{count}장을 대기 큐에 넣었습니다. 현재 분석 모드는 백그라운드에서 실행되지 않습니다",
+        "requeueFailedEmpty": "다시 넣을 실패 이미지가 없습니다"
       },
       "privacySpace": {
         "enableNsfwContentMask": "민감 콘텐츠 숨기기",
@@ -579,7 +593,13 @@
       "setDynamicWallpaper": "동적 배경화면 설정",
       "closeDynamicWallpaper": "동적 배경화면 닫기",
       "setRhythmWallpaper": "리듬 배경화면 열기",
-      "closeRhythmWallpaper": "리듬 배경화면 닫기"
+      "closeRhythmWallpaper": "리듬 배경화면 닫기",
+      "clearAiAnalysisData": "AI 분석 데이터 지우기",
+      "clearAiAnalysisDataConfirm": "데이터베이스 <strong>전체 이미지</strong>의 AI 분석 결과(점수, 요약, 제목, 설명, 민감도, 태그, 벡터 등)를 지우고 <strong>AI 추천(시스템) 컬렉션을 모두 삭제</strong>합니다. 플러그인 제목/설명(메인 테이블)과 사용자 컬렉션은 유지합니다.<br/><br/>자동 처리에는 <strong>AI 사용</strong>과 분석 모드 「백그라운드 연속」 또는 「새 이미지만」이 필요합니다.",
+      "resetAiAnalysisSuccess": "라이브러리 {count}건의 AI 데이터를 지웠고 AI 추천 컬렉션 {autoCollections}개를 삭제했습니다. 백그라운드 처리를 시작합니다",
+      "resetAiAnalysisSuccessNoAi": "{count}건을 대기로 표시하고 AI 추천 컬렉션 {autoCollections}개를 삭제했습니다. 「AI 사용」이 꺼져 있어 자동 분석되지 않습니다",
+      "resetAiAnalysisSuccessNoPump": "{count}건을 대기로 표시하고 AI 추천 컬렉션 {autoCollections}개를 삭제했습니다. 현재 분석 모드는 백그라운드에서 실행되지 않습니다",
+      "resetAiAnalysisEmpty": "지울 이미지가 없습니다"
     },
     "About": {
       "name": "이름",

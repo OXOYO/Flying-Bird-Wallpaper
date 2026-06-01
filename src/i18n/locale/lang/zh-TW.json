@@ -407,9 +407,9 @@
         "statPendingLabel": "待分析",
         "statPendingHint": "等待進入佇列",
         "statFailedLabel": "失敗",
-        "statFailedHint": "可稍後重試或檢查模型",
+        "statFailedHint": "點擊可將失敗項重新加入待分析佇列",
         "statSkippedLabel": "已跳過",
-        "statEmbeddingLabel": "已向量化",
+        "statEmbeddingLabel": "文字向量",
         "statEmbeddingHint": "文字向量：語意搜尋與文字找相似；視覺向量見下方「已向量化(視覺)」",
         "statsDone": "已完成",
         "statsPending": "待分析",
@@ -499,7 +499,7 @@
           "serverError": "AI 服務暫時不可用（HTTP {status}），請稍後重試",
           "providerError": "AI 服務返回錯誤：{detail}",
           "providerErrorGeneric": "AI 服務返回未知錯誤，請稍後重試",
-          "modelNameMissing": "Select or enter a model name first"
+          "modelNameMissing": "請先選擇或輸入模型名稱"
         },
         "autoCollectionsEnabled": "AI 自動整理合集",
         "autoCollectionsEnabledHint": "依畫面向量聚類，LLM 為每個簇單獨命名系統推薦合集（可重疊、可刪除）",
@@ -541,10 +541,24 @@
         "sectionFeaturesSearch": "搜尋與下載",
         "sectionFeaturesLegacy": "相容選項",
         "enabledHint": "總開關：關閉後不再自動分析、語意搜尋與 AI 合集等；子項設定仍保留",
-        "analysisConcurrency": "Background concurrency",
-        "analysisConcurrencyHint": "In background continuous / new-images-only modes, how many images call the vision model at once (1–10). Takes effect after save; lower if VRAM is tight. Text embeddings run async per image and do not use this slot",
+        "analysisConcurrency": "背景分析並發",
+        "analysisConcurrencyHint": "背景連續/僅新圖模式下，同時呼叫視覺模型的張數（1～10）。儲存後立即生效；顯存不足時請降低並發。文字向量在每張分析成功後非同步寫入，不佔用此並發",
         "copyModelName": "複製模型名",
-        "textEmbedModelHint": "Text-only embeddings for semantic search (e.g. nomic-embed-text)—not visual vectors or vision analysis"
+        "textEmbedModelHint": "僅文字 embedding，用於語意搜尋（如 nomic-embed-text）；與畫面向量、視覺分析無關",
+        "pumpBlockReason_scheduler_stopped": "背景分析定時器已停止（常見於省電清任務後未恢復）；請儲存一次 AI 設定或接上交流電後重試",
+        "pumpBlockReason_power_save_battery": "省電模式且目前使用電池，已暫停背景分析",
+        "pumpBlockReason_maintenance": "資源維護中，分析已暫停",
+        "pumpBlockReason_lock": "分析佇列正被其它操作佔用，請稍後",
+        "pumpBlockReason_main_ui_not_ready": "主視窗尚未就緒，稍後將自動開始",
+        "pumpBlockReason_mode": "目前分析模式不會自動背景處理",
+        "pumpBlockReason_disabled": "已關閉「啟用 AI」",
+        "runStatusDisabled": "AI 已關閉",
+        "runStatusDisabledHint": "已關閉「啟用 AI」，不會自動分析；可在此查看進度，開啟後將繼續處理待分析佇列",
+        "requeueFailedConfirm": "將 <strong>{count}</strong> 張分析失敗的圖片重新加入待分析佇列並重置失敗次數？<br/><br/>自動開始分析須已開啟「啟用 AI」，且分析模式為「背景連續」或「僅新圖」。",
+        "requeueFailedSuccess": "已將 {count} 張失敗圖片加入待分析佇列，背景將自動處理",
+        "requeueFailedSuccessNoAi": "已將 {count} 張加入待分析佇列；未開啟「啟用 AI」，不會自動分析",
+        "requeueFailedSuccessNoPump": "已將 {count} 張加入待分析佇列；目前分析模式不會自動背景處理",
+        "requeueFailedEmpty": "目前沒有分析失敗的圖片"
       },
       "privacySpace": {
         "enableNsfwContentMask": "敏感內容隱藏",
@@ -579,7 +593,13 @@
       "setDynamicWallpaper": "設定動態桌布",
       "closeDynamicWallpaper": "關閉動態桌布",
       "setRhythmWallpaper": "打開律動桌布",
-      "closeRhythmWallpaper": "關閉律動桌布"
+      "closeRhythmWallpaper": "關閉律動桌布",
+      "clearAiAnalysisData": "清空 AI 分析資料",
+      "clearAiAnalysisDataConfirm": "將<strong>庫內全部圖片</strong>的 AI 分析附表資料清空（AI 標題/描述/摘要/評分/敏感等級、標籤、向量等），並<strong>刪除全部 AI 推薦（系統）合集</strong>；外掛入庫的標題與描述保留在主表；使用者自建合集保留。<br/><br/>自動開始分析須已開啟<strong>「啟用 AI」</strong>，且分析模式為「背景連續」或「僅新圖」；否則請手動點「AI 分析」或調整設定。",
+      "resetAiAnalysisSuccess": "已清空庫內 {count} 條圖片的 AI 分析資料，已刪除 {autoCollections} 個 AI 推薦合集，背景將自動處理",
+      "resetAiAnalysisSuccessNoAi": "已清空庫內 {count} 條並標為待分析，已刪除 {autoCollections} 個 AI 推薦合集；未開啟「啟用 AI」，不會自動分析",
+      "resetAiAnalysisSuccessNoPump": "已清空庫內 {count} 條並標為待分析，已刪除 {autoCollections} 個 AI 推薦合集；目前分析模式不會自動背景處理，請手動分析或改為「背景連續」/「僅新圖」",
+      "resetAiAnalysisEmpty": "庫中沒有可清空的圖片"
     },
     "About": {
       "name": "名稱",

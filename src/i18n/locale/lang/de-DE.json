@@ -544,7 +544,21 @@
         "visualEmbedRemoteSectionHint": "Configure provider, URL, API key, and model in the Visual vector service section below.",
         "visualEmbedModelPlaceholder": "e.g. batiai/qwen3-vl-embed-2b",
         "legacyLocalVisualEmbed": "Built-in visual vectors",
-        "legacyLocalVisualEmbedHint": "When enabled, uses built-in visual vectors for similarity and Find similar. When disabled, uses the remote embedding model in Visual vector service (falls back to built-in on failure)."
+        "legacyLocalVisualEmbedHint": "When enabled, uses built-in visual vectors for similarity and Find similar. When disabled, uses the remote embedding model in Visual vector service (falls back to built-in on failure).",
+        "pumpBlockReason_scheduler_stopped": "Hintergrund-Analyse-Timer gestoppt (oft nach Akku-Energiesparmodus). AI-Einstellungen speichern oder Netzteil anschließen.",
+        "pumpBlockReason_power_save_battery": "Energiesparmodus bei Akkubetrieb — Hintergrundanalyse pausiert",
+        "pumpBlockReason_maintenance": "Ressourcenwartung läuft — Analyse pausiert",
+        "pumpBlockReason_lock": "Analysequelle belegt — bitte kurz warten",
+        "pumpBlockReason_main_ui_not_ready": "Hauptfenster noch nicht bereit — startet automatisch",
+        "pumpBlockReason_mode": "Aktueller Analysemodus läuft nicht im Hintergrund",
+        "pumpBlockReason_disabled": "„AI aktivieren“ ist aus",
+        "runStatusDisabled": "AI aus",
+        "runStatusDisabledHint": "„AI aktivieren“ ist aus — keine automatische Analyse. Fortschritt bleibt sichtbar; einschalten verarbeitet die Warteschlange.",
+        "requeueFailedConfirm": "<strong>{count}</strong> fehlgeschlagene Bilder erneut in die Warteschlange stellen und Fehlerzähler zurücksetzen?<br/><br/>Automatisch erfordert „AI aktivieren“ und Modus „Hintergrund kontinuierlich“ oder „Nur neue Bilder“.",
+        "requeueFailedSuccess": "{count} fehlgeschlagene Bilder erneut eingereiht; Hintergrundverarbeitung startet",
+        "requeueFailedSuccessNoAi": "{count} eingereiht; „AI aktivieren“ ist aus — keine automatische Analyse",
+        "requeueFailedSuccessNoPump": "{count} eingereiht; aktueller Modus läuft nicht im Hintergrund",
+        "requeueFailedEmpty": "Keine fehlgeschlagenen Bilder zum erneuten Einreihen"
       },
       "privacySpace": {
         "enableNsfwContentMask": "Sensible Inhalte ausblenden",
@@ -579,7 +593,13 @@
       "setDynamicWallpaper": "Dynamischen Hintergrund festlegen",
       "closeDynamicWallpaper": "Dynamischen Hintergrund schließen",
       "setRhythmWallpaper": "Rhythmus-Hintergrund öffnen",
-      "closeRhythmWallpaper": "Rhythmus-Hintergrund schließen"
+      "closeRhythmWallpaper": "Rhythmus-Hintergrund schließen",
+      "clearAiAnalysisData": "AI-Analysedaten löschen",
+      "clearAiAnalysisDataConfirm": "AI-Analyseergebnisse (Scores, Zusammenfassungen, Titel, Beschreibungen, Sensibilität, Tags, Vektoren usw.) für <strong>alle Bilder in der Datenbank</strong> löschen und <strong>alle AI-empfohlenen (System-)Sammlungen</strong> entfernen. Plugin-Titel/-Beschreibungen (Haupttabelle) und benutzerdefinierte Sammlungen bleiben.<br/><br/>Automatisch erfordert <strong>AI aktivieren</strong> und Modus „Hintergrund kontinuierlich“ oder „Nur neue Bilder“.",
+      "resetAiAnalysisSuccess": "AI-Daten für {count} Bild(er) gelöscht; {autoCollections} AI-Sammlung(en) entfernt; Hintergrundverarbeitung startet",
+      "resetAiAnalysisSuccessNoAi": "{count} Bild(er) auf ausstehend gesetzt; {autoCollections} AI-Sammlung(en) entfernt; „AI aktivieren“ ist aus",
+      "resetAiAnalysisSuccessNoPump": "{count} Bild(er) auf ausstehend gesetzt; {autoCollections} AI-Sammlung(en) entfernt; aktueller Modus läuft nicht im Hintergrund",
+      "resetAiAnalysisEmpty": "Keine Bilder in der Bibliothek zum Löschen"
     },
     "About": {
       "name": "Name",

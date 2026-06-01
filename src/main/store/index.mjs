@@ -443,19 +443,53 @@ export default class Store {
     }
   }
 
+  isMainWindowContentLoaded() {
+    const wc = global.FBW?.mainWindow?.win?.webContents
+    return !!(wc && !wc.isDestroyed() && !wc.isLoading())
+  }
+
+  /** 开发环境下 did-finish-load 可能早于 Vue 挂载或未触发，用 webContents / 渲染进程上报兜底 */
+  tryMarkMainUiReady(source = 'probe') {
+    if (this._mainUiReady) return true
+    if (!this.isMainWindowContentLoaded()) return false
+    this.onMainUiReady(source)
+    return true
+  }
+
   /** 主窗口首屏加载完成后再调度后台 AI，避免拖慢启动 */
-  onMainUiReady() {
+  onMainUiReady(source = 'did-finish-load') {
     if (this._mainUiReady) return
     this._mainUiReady = true
     global.logger.info(
-      `[Store] 主窗口已就绪，${Math.round(AI_ANALYSIS_PUMP_START_DELAY_MS / 1000)}s 后启动后台分析、${Math.round(VISUAL_EMBED_PUMP_START_DELAY_MS / 1000)}s 后启动画面向量补算`
+      `[Store] 主窗口已就绪(${source})，${Math.round(AI_ANALYSIS_PUMP_START_DELAY_MS / 1000)}s 后启动后台分析看门狗、${Math.round(VISUAL_EMBED_PUMP_START_DELAY_MS / 1000)}s 后启动画面向量补算；将立即尝试首轮分析`
     )
     this.ensureBackgroundAiTasks()
+    setImmediate(() => {
+      this.triggerBackgroundAnalysisPump()
+      this.triggerVisualEmbedPump()
+    })
+  }
+
+  shouldScheduleBackgroundAi() {
+    const ai = this.settingData?.ai
+    return (
+      !!ai?.enabled &&
+      ai.analysisMode !== 'off' &&
+      ai.analysisMode !== 'on_demand' &&
+      !this.isPowerSaveOnBattery()
+    )
   }
 
   ensureBackgroundAiTasks() {
-    if (!this._mainUiReady || this._backgroundAiScheduled) return
-    this._backgroundAiScheduled = true
+    if (!this._mainUiReady) return
+    if (!this._backgroundAiScheduled) {
+      this._backgroundAiScheduled = true
+    }
+    if (!this.shouldScheduleBackgroundAi()) {
+      this.stopAiAnalysisTask()
+      this.stopVisualEmbedTask()
+      return
+    }
     this.initAiAnalysisTask()
     this.initVisualEmbedTask()
   }
@@ -596,8 +630,26 @@ export default class Store {
     )
   }
 
+  resolveAiPumpBlockReason() {
+    this.tryMarkMainUiReady('stats-probe')
+    const ai = this.settingData?.ai || {}
+    if (!ai.enabled) return 'disabled'
+    if (ai.analysisMode === 'off' || ai.analysisMode === 'on_demand') return 'mode'
+    if (this.aiAnalysisManager?.maintenancePaused) return 'maintenance'
+    if (this.locks?.aiAnalysis) return 'lock'
+    if (this.isPowerSaveOnBattery()) return 'power_save_battery'
+    if (!this._mainUiReady) return 'main_ui_not_ready'
+    if (!this.taskScheduler?.hasActiveTask?.('aiAnalysis')) return 'scheduler_stopped'
+    if (!this.aiAnalysisManager?.shouldRunBackground?.()) return 'config'
+    return null
+  }
+
   getAnalysisStatsData() {
-    return this.aiAnalysisManager.getStats()?.data || {}
+    const data = this.aiAnalysisManager.getStats()?.data || {}
+    return {
+      ...data,
+      pumpBlockReason: this.resolveAiPumpBlockReason()
+    }
   }
 
   shouldAutoCurate() {
@@ -851,8 +903,8 @@ export default class Store {
         global.logger.info('恢复所有定时任务')
         this.powerState.wasPausedByBattery = false
         this.startScheduledTasks()
-        this.resumeBackgroundAiTasksIfAllowed()
       }
+      this.resumeBackgroundAiTasksIfAllowed()
     })
   }
 
@@ -1164,6 +1216,11 @@ export default class Store {
       return this.settingManager.getSettingData()
     })
 
+    ipcMain.handle('main:notifyMainUiReady', () => {
+      this.onMainUiReady('renderer')
+      return { success: true }
+    })
+
     // 合并更新设置数据
     ipcMain.handle('main:updateSettingData', async (event, formData) => {
       return await this.updateSettingData(formData)
@@ -1314,7 +1371,9 @@ export default class Store {
     })
 
     ipcMain.handle('main:getAiAnalysisStats', () => {
-      return this.aiAnalysisManager.getStats()
+      const base = this.aiAnalysisManager.getStats()
+      if (!base?.success) return base
+      return { ...base, data: this.getAnalysisStatsData() }
     })
 
     ipcMain.handle('main:parseSearchQuery', async (event, params) => {

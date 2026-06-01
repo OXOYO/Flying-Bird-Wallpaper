@@ -544,7 +544,21 @@
         "visualEmbedRemoteSectionHint": "Configure provider, URL, API key, and model in the Visual vector service section below.",
         "visualEmbedModelPlaceholder": "e.g. batiai/qwen3-vl-embed-2b",
         "legacyLocalVisualEmbed": "Built-in visual vectors",
-        "legacyLocalVisualEmbedHint": "When enabled, uses built-in visual vectors for similarity and Find similar. When disabled, uses the remote embedding model in Visual vector service (falls back to built-in on failure)."
+        "legacyLocalVisualEmbedHint": "When enabled, uses built-in visual vectors for similarity and Find similar. When disabled, uses the remote embedding model in Visual vector service (falls back to built-in on failure).",
+        "pumpBlockReason_scheduler_stopped": "バックグラウンド分析タイマーが停止しています（省電でタスク削除後など）。AI設定を保存するか、AC電源に接続してください。",
+        "pumpBlockReason_power_save_battery": "省電モードかつバッテリー駆動のため、バックグラウンド分析を一時停止しています",
+        "pumpBlockReason_maintenance": "リソースメンテナンス中のため、分析を一時停止しています",
+        "pumpBlockReason_lock": "分析キューが他の処理で使用中です。しばらくお待ちください",
+        "pumpBlockReason_main_ui_not_ready": "メインウィンドウの準備中です。まもなく自動的に開始します",
+        "pumpBlockReason_mode": "現在の分析モードではバックグラウンドで自動実行されません",
+        "pumpBlockReason_disabled": "「AIを有効化」がオフです",
+        "runStatusDisabled": "AIオフ",
+        "runStatusDisabledHint": "「AIを有効化」がオフのため自動分析は行われません。ここで進捗を確認できます。オンにすると待機キューを処理します。",
+        "requeueFailedConfirm": "分析に失敗した<strong>{count}</strong>枚を待機キューに戻し、失敗回数をリセットしますか？<br/><br/>自動分析には「AIを有効化」と分析モード「バックグラウンド連続」または「新規画像のみ」が必要です。",
+        "requeueFailedSuccess": "失敗した{count}枚を待機キューに戻しました。バックグラウンドで処理を開始します",
+        "requeueFailedSuccessNoAi": "{count}枚を待機キューに戻しました。「AIを有効化」がオフのため自動分析は行われません",
+        "requeueFailedSuccessNoPump": "{count}枚を待機キューに戻しました。現在の分析モードではバックグラウンド実行されません",
+        "requeueFailedEmpty": "再キューできる失敗画像はありません"
       },
       "privacySpace": {
         "enableNsfwContentMask": "センシティブコンテンツを非表示",
@@ -579,7 +593,13 @@
       "setDynamicWallpaper": "動的壁紙を設定",
       "closeDynamicWallpaper": "動的壁紙を閉じる",
       "setRhythmWallpaper": "リズム壁紙を開く",
-      "closeRhythmWallpaper": "リズム壁紙を閉じる"
+      "closeRhythmWallpaper": "リズム壁紙を閉じる",
+      "clearAiAnalysisData": "AI分析データをクリア",
+      "clearAiAnalysisDataConfirm": "データベース内の<strong>全画像</strong>のAI分析結果（スコア、要約、タイトル、説明、敏感レベル、タグ、ベクトルなど）をクリアし、<strong>AI推奨（システム）コレクションをすべて削除</strong>します。プラグインのタイトル/説明（メインテーブル）とユーザー作成コレクションは保持します。<br/><br/>自動処理には<strong>AIを有効化</strong>と分析モード「バックグラウンド連続」または「新規画像のみ」が必要です。それ以外は手動分析または設定変更してください。",
+      "resetAiAnalysisSuccess": "ライブラリ内{count}件のAIデータをクリアし、AI推奨コレクション{autoCollections}件を削除しました。バックグラウンド処理を開始します",
+      "resetAiAnalysisSuccessNoAi": "{count}件を待機に戻し、AI推奨コレクション{autoCollections}件を削除しました。「AIを有効化」がオフのため自動分析は行われません",
+      "resetAiAnalysisSuccessNoPump": "{count}件を待機に戻し、AI推奨コレクション{autoCollections}件を削除しました。現在の分析モードではバックグラウンド実行されません",
+      "resetAiAnalysisEmpty": "クリアできる画像がありません"
     },
     "About": {
       "name": "名前",

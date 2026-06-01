@@ -544,7 +544,21 @@
         "visualEmbedRemoteSectionHint": "Configure provider, URL, API key, and model in the Visual vector service section below.",
         "visualEmbedModelPlaceholder": "e.g. batiai/qwen3-vl-embed-2b",
         "legacyLocalVisualEmbed": "Built-in visual vectors",
-        "legacyLocalVisualEmbedHint": "When enabled, uses built-in visual vectors for similarity and Find similar. When disabled, uses the remote embedding model in Visual vector service (falls back to built-in on failure)."
+        "legacyLocalVisualEmbedHint": "When enabled, uses built-in visual vectors for similarity and Find similar. When disabled, uses the remote embedding model in Visual vector service (falls back to built-in on failure).",
+        "pumpBlockReason_scheduler_stopped": "Il timer di analisi in background è stato arrestato (spesso dopo risparmio energetico a batteria). Salva le impostazioni IA o collega l’alimentazione.",
+        "pumpBlockReason_power_save_battery": "Risparmio energetico a batteria — analisi in background in pausa",
+        "pumpBlockReason_maintenance": "Manutenzione risorse — analisi in pausa",
+        "pumpBlockReason_lock": "La coda di analisi è occupata — riprova tra poco",
+        "pumpBlockReason_main_ui_not_ready": "Finestra principale non ancora pronta — avvio automatico a breve",
+        "pumpBlockReason_mode": "La modalità di analisi attuale non viene eseguita in background",
+        "pumpBlockReason_disabled": "«Abilita IA» è disattivato",
+        "runStatusDisabled": "IA disattivata",
+        "runStatusDisabledHint": "«Abilita IA» è disattivato — nessuna analisi automatica. I progressi restano visibili qui; attivala per elaborare la coda.",
+        "requeueFailedConfirm": "Rimettere in coda <strong>{count}</strong> immagine/i fallite e azzerare i contatori errori?<br/><br/>L’elaborazione automatica richiede «Abilita IA» e la modalità «Background continuo» o «Solo nuove immagini».",
+        "requeueFailedSuccess": "{count} immagine/i rimessa/e in coda; l’elaborazione in background partirà",
+        "requeueFailedSuccessNoAi": "{count} rimessa/e in coda; «Abilita IA» è disattivato",
+        "requeueFailedSuccessNoPump": "{count} rimessa/e in coda; la modalità attuale non viene eseguita in background",
+        "requeueFailedEmpty": "Nessuna immagine fallita da rimettere in coda"
       },
       "privacySpace": {
         "enableNsfwContentMask": "Nascondi contenuti sensibili",
@@ -579,7 +593,13 @@
       "setDynamicWallpaper": "Imposta sfondo dinamico",
       "closeDynamicWallpaper": "Chiudi sfondo dinamico",
       "setRhythmWallpaper": "Apri sfondo ritmico",
-      "closeRhythmWallpaper": "Chiudi sfondo ritmico"
+      "closeRhythmWallpaper": "Chiudi sfondo ritmico",
+      "clearAiAnalysisData": "Cancella dati analisi IA",
+      "clearAiAnalysisDataConfirm": "Cancella i risultati di analisi IA (punteggi, riepiloghi, titoli, descrizioni, sensibilità, tag, vettori ecc.) per <strong>tutte le immagini nel database</strong> e <strong>elimina tutte le raccolte consigliate dall’IA (sistema)</strong>. Titoli/descrizioni plugin (tabella principale) e raccolte utente restano.<br/><br/>L’elaborazione automatica richiede <strong>Abilita IA</strong> e la modalità «Background continuo» o «Solo nuove immagini».",
+      "resetAiAnalysisSuccess": "Dati IA cancellati per {count} immagine/i; rimosse {autoCollections} raccolta/e IA; l’elaborazione in background partirà",
+      "resetAiAnalysisSuccessNoAi": "{count} immagine/i in attesa; rimosse {autoCollections} raccolta/e IA; «Abilita IA» è disattivato",
+      "resetAiAnalysisSuccessNoPump": "{count} immagine/i in attesa; rimosse {autoCollections} raccolta/e IA; la modalità attuale non viene eseguita in background",
+      "resetAiAnalysisEmpty": "Nessuna immagine nella libreria da cancellare"
     },
     "About": {
       "name": "Nome",

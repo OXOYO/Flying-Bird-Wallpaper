@@ -544,7 +544,21 @@
         "visualEmbedRemoteSectionHint": "Configure provider, URL, API key, and model in the Visual vector service section below.",
         "visualEmbedModelPlaceholder": "e.g. batiai/qwen3-vl-embed-2b",
         "legacyLocalVisualEmbed": "Built-in visual vectors",
-        "legacyLocalVisualEmbedHint": "When enabled, uses built-in visual vectors for similarity and Find similar. When disabled, uses the remote embedding model in Visual vector service (falls back to built-in on failure)."
+        "legacyLocalVisualEmbedHint": "When enabled, uses built-in visual vectors for similarity and Find similar. When disabled, uses the remote embedding model in Visual vector service (falls back to built-in on failure).",
+        "pumpBlockReason_scheduler_stopped": "Таймер фонового анализа остановлен (часто после энергосбережения на батарее). Сохраните настройки ИИ или подключите питание от сети.",
+        "pumpBlockReason_power_save_battery": "Энергосбережение на батарее — фоновый анализ приостановлен",
+        "pumpBlockReason_maintenance": "Обслуживание ресурсов — анализ приостановлен",
+        "pumpBlockReason_lock": "Очередь анализа занята — повторите позже",
+        "pumpBlockReason_main_ui_not_ready": "Главное окно ещё не готово — запуск произойдёт автоматически",
+        "pumpBlockReason_mode": "Текущий режим анализа не выполняется в фоне",
+        "pumpBlockReason_disabled": "«Включить ИИ» отключено",
+        "runStatusDisabled": "ИИ выкл.",
+        "runStatusDisabledHint": "«Включить ИИ» отключено — автоматический анализ не выполняется. Прогресс виден здесь; включите для обработки очереди.",
+        "requeueFailedConfirm": "Вернуть <strong>{count}</strong> изображ. с ошибкой в очередь и сбросить счётчики ошибок?<br/><br/>Автоматическая обработка требует «Включить ИИ» и режим «Фон непрерывно» или «Только новые».",
+        "requeueFailedSuccess": "{count} изображ. возвращено в очередь; начнётся фоновая обработка",
+        "requeueFailedSuccessNoAi": "{count} в очереди; «Включить ИИ» отключено — автоматический анализ не выполняется",
+        "requeueFailedSuccessNoPump": "{count} в очереди; текущий режим не выполняется в фоне",
+        "requeueFailedEmpty": "Нет изображений с ошибкой для повторной постановки в очередь"
       },
       "privacySpace": {
         "enableNsfwContentMask": "Скрывать деликатный контент",
@@ -579,7 +593,13 @@
       "setDynamicWallpaper": "Установить динамические обои",
       "closeDynamicWallpaper": "Закрыть динамические обои",
       "setRhythmWallpaper": "Открыть ритмические обои",
-      "closeRhythmWallpaper": "Закрыть ритмические обои"
+      "closeRhythmWallpaper": "Закрыть ритмические обои",
+      "clearAiAnalysisData": "Очистить данные анализа ИИ",
+      "clearAiAnalysisDataConfirm": "Очистить результаты анализа ИИ (оценки, сводки, заголовки, описания, уровень чувствительности, теги, векторы и т.д.) для <strong>всех изображений в базе</strong> и <strong>удалить все рекомендованные ИИ (системные) коллекции</strong>. Заголовки/описания плагинов (основная таблица) и пользовательские коллекции сохраняются.<br/><br/>Автоматическая обработка требует <strong>Включить ИИ</strong> и режим «Фон непрерывно» или «Только новые».",
+      "resetAiAnalysisSuccess": "Данные ИИ очищены для {count} изображ.; удалено {autoCollections} рекоменд. коллекций ИИ; начнётся фоновая обработка",
+      "resetAiAnalysisSuccessNoAi": "{count} изображ. помечены как ожидающие; удалено {autoCollections} коллекций ИИ; «Включить ИИ» отключено",
+      "resetAiAnalysisSuccessNoPump": "{count} изображ. помечены как ожидающие; удалено {autoCollections} коллекций ИИ; текущий режим не выполняется в фоне",
+      "resetAiAnalysisEmpty": "В библиотеке нет изображений для очистки"
     },
     "About": {
       "name": "Название",

@@ -544,7 +544,21 @@
         "visualEmbedRemoteSectionHint": "Configure provider, URL, API key, and model in the Visual vector service section below.",
         "visualEmbedModelPlaceholder": "e.g. batiai/qwen3-vl-embed-2b",
         "legacyLocalVisualEmbed": "Built-in visual vectors",
-        "legacyLocalVisualEmbedHint": "When enabled, uses built-in visual vectors for similarity and Find similar. When disabled, uses the remote embedding model in Visual vector service (falls back to built-in on failure)."
+        "legacyLocalVisualEmbedHint": "When enabled, uses built-in visual vectors for similarity and Find similar. When disabled, uses the remote embedding model in Visual vector service (falls back to built-in on failure).",
+        "pumpBlockReason_scheduler_stopped": "Minuteur d’analyse en arrière-plan arrêté (souvent après économie d’énergie sur batterie). Enregistrez les paramètres IA ou branchez sur secteur.",
+        "pumpBlockReason_power_save_battery": "Économie d’énergie sur batterie — analyse en arrière-plan en pause",
+        "pumpBlockReason_maintenance": "Maintenance des ressources — analyse en pause",
+        "pumpBlockReason_lock": "File d’analyse occupée — réessayez dans un instant",
+        "pumpBlockReason_main_ui_not_ready": "Fenêtre principale pas encore prête — démarrage automatique imminent",
+        "pumpBlockReason_mode": "Le mode d’analyse actuel ne s’exécute pas en arrière-plan",
+        "pumpBlockReason_disabled": "« Activer l’IA » est désactivé",
+        "runStatusDisabled": "IA désactivée",
+        "runStatusDisabledHint": "« Activer l’IA » est désactivé — pas d’analyse automatique. La progression reste visible ici ; activez pour traiter la file d’attente.",
+        "requeueFailedConfirm": "Remettre <strong>{count}</strong> image(s) en échec dans la file d’attente et réinitialiser les échecs ?<br/><br/>Le traitement automatique exige « Activer l’IA » et le mode « Arrière-plan continu » ou « Nouvelles images uniquement ».",
+        "requeueFailedSuccess": "{count} image(s) remise(s) en file ; traitement en arrière-plan va démarrer",
+        "requeueFailedSuccessNoAi": "{count} remise(s) en file ; « Activer l’IA » est désactivé",
+        "requeueFailedSuccessNoPump": "{count} remise(s) en file ; le mode actuel ne s’exécute pas en arrière-plan",
+        "requeueFailedEmpty": "Aucune image en échec à remettre en file"
       },
       "privacySpace": {
         "enableNsfwContentMask": "Masquer le contenu sensible",
@@ -579,7 +593,13 @@
       "setDynamicWallpaper": "Définir le fond d'écran dynamique",
       "closeDynamicWallpaper": "Fermer le fond d'écran dynamique",
       "setRhythmWallpaper": "Ouvrir le fond d'écran rythmique",
-      "closeRhythmWallpaper": "Fermer le fond d'écran rythmique"
+      "closeRhythmWallpaper": "Fermer le fond d'écran rythmique",
+      "clearAiAnalysisData": "Effacer les données d’analyse IA",
+      "clearAiAnalysisDataConfirm": "Effacer les résultats d’analyse IA (scores, résumés, titres, descriptions, sensibilité, tags, vecteurs, etc.) pour <strong>toutes les images de la base</strong> et <strong>supprimer toutes les collections recommandées par l’IA (système)</strong>. Titres/descriptions des plugins (table principale) et collections utilisateur conservés.<br/><br/>Le traitement automatique exige <strong>Activer l’IA</strong> et le mode « Arrière-plan continu » ou « Nouvelles images uniquement ».",
+      "resetAiAnalysisSuccess": "Données IA effacées pour {count} image(s) ; {autoCollections} collection(s) IA supprimée(s) ; traitement en arrière-plan va démarrer",
+      "resetAiAnalysisSuccessNoAi": "{count} image(s) en attente ; {autoCollections} collection(s) IA supprimée(s) ; « Activer l’IA » est désactivé",
+      "resetAiAnalysisSuccessNoPump": "{count} image(s) en attente ; {autoCollections} collection(s) IA supprimée(s) ; le mode actuel ne s’exécute pas en arrière-plan",
+      "resetAiAnalysisEmpty": "Aucune image dans la bibliothèque à effacer"
     },
     "About": {
       "name": "Nom",

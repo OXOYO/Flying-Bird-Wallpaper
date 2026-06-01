@@ -544,7 +544,21 @@
         "visualEmbedRemoteSectionHint": "Configure provider, URL, API key, and model in the Visual vector service section below.",
         "visualEmbedModelPlaceholder": "e.g. batiai/qwen3-vl-embed-2b",
         "legacyLocalVisualEmbed": "Built-in visual vectors",
-        "legacyLocalVisualEmbedHint": "When enabled, uses built-in visual vectors for similarity and Find similar. When disabled, uses the remote embedding model in Visual vector service (falls back to built-in on failure)."
+        "legacyLocalVisualEmbedHint": "When enabled, uses built-in visual vectors for similarity and Find similar. When disabled, uses the remote embedding model in Visual vector service (falls back to built-in on failure).",
+        "pumpBlockReason_scheduler_stopped": "O temporizador de análise em segundo plano parou (muitas vezes após economia de energia na bateria). Salve as configurações de IA ou conecte à tomada.",
+        "pumpBlockReason_power_save_battery": "Economia de energia na bateria — análise em segundo plano pausada",
+        "pumpBlockReason_maintenance": "Manutenção de recursos — análise pausada",
+        "pumpBlockReason_lock": "A fila de análise está ocupada — tente novamente em instantes",
+        "pumpBlockReason_main_ui_not_ready": "A janela principal ainda não está pronta — iniciará automaticamente",
+        "pumpBlockReason_mode": "O modo de análise atual não roda em segundo plano",
+        "pumpBlockReason_disabled": "«Ativar IA» está desligado",
+        "runStatusDisabled": "IA desligada",
+        "runStatusDisabledHint": "«Ativar IA» está desligado — sem análise automática. O progresso continua visível aqui; ative para processar a fila.",
+        "requeueFailedConfirm": "Recolocar <strong>{count}</strong> imagem(ns) com falha na fila e redefinir as falhas?<br/><br/>O processamento automático exige «Ativar IA» e o modo «Segundo plano contínuo» ou «Somente imagens novas».",
+        "requeueFailedSuccess": "{count} imagem(ns) recolocada(s) na fila; o processamento em segundo plano vai iniciar",
+        "requeueFailedSuccessNoAi": "{count} recolocada(s) na fila; «Ativar IA» está desligado",
+        "requeueFailedSuccessNoPump": "{count} recolocada(s) na fila; o modo atual não roda em segundo plano",
+        "requeueFailedEmpty": "Não há imagens com falha para recolocar na fila"
       },
       "privacySpace": {
         "enableNsfwContentMask": "Ocultar conteúdo sensível",
@@ -579,7 +593,13 @@
       "setDynamicWallpaper": "Definir papel de parede dinâmico",
       "closeDynamicWallpaper": "Fechar papel de parede dinâmico",
       "setRhythmWallpaper": "Abrir papel de parede rítmico",
-      "closeRhythmWallpaper": "Fechar papel de parede rítmico"
+      "closeRhythmWallpaper": "Fechar papel de parede rítmico",
+      "clearAiAnalysisData": "Limpar dados de análise de IA",
+      "clearAiAnalysisDataConfirm": "Limpar resultados de análise de IA (notas, resumos, títulos, descrições, sensibilidade, tags, vetores etc.) de <strong>todas as imagens do banco</strong> e <strong>excluir todas as coleções recomendadas por IA (sistema)</strong>. Títulos/descrições de plugins (tabela principal) e coleções do usuário são mantidos.<br/><br/>O processamento automático exige <strong>Ativar IA</strong> e o modo «Segundo plano contínuo» ou «Somente imagens novas».",
+      "resetAiAnalysisSuccess": "Dados de IA limpos para {count} imagem(ns); {autoCollections} coleção(ões) de IA removida(s); o processamento em segundo plano vai iniciar",
+      "resetAiAnalysisSuccessNoAi": "{count} imagem(ns) marcadas como pendentes; {autoCollections} coleção(ões) de IA removida(s); «Ativar IA» está desligado",
+      "resetAiAnalysisSuccessNoPump": "{count} imagem(ns) marcadas como pendentes; {autoCollections} coleção(ões) de IA removida(s); o modo atual não roda em segundo plano",
+      "resetAiAnalysisEmpty": "Não há imagens na biblioteca para limpar"
     },
     "About": {
       "name": "Nome",

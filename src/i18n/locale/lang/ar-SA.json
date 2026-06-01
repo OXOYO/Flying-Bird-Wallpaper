@@ -544,7 +544,21 @@
         "visualEmbedRemoteSectionHint": "Configure provider, URL, API key, and model in the Visual vector service section below.",
         "visualEmbedModelPlaceholder": "e.g. batiai/qwen3-vl-embed-2b",
         "legacyLocalVisualEmbed": "Built-in visual vectors",
-        "legacyLocalVisualEmbedHint": "When enabled, uses built-in visual vectors for similarity and Find similar. When disabled, uses the remote embedding model in Visual vector service (falls back to built-in on failure)."
+        "legacyLocalVisualEmbedHint": "When enabled, uses built-in visual vectors for similarity and Find similar. When disabled, uses the remote embedding model in Visual vector service (falls back to built-in on failure).",
+        "pumpBlockReason_scheduler_stopped": "توقّ مؤقت التحليل في الخلفية (غالباً بعد وضع توفير الطاقة على البطارية). احفظ إعدادات الذكاء الاصطناعي أو وصّل التيار.",
+        "pumpBlockReason_power_save_battery": "وضع توفير الطاقة على البطارية — التحليل في الخلفية متوقف",
+        "pumpBlockReason_maintenance": "صيانة الموارد جارية — التحليل متوقف",
+        "pumpBlockReason_lock": "قائمة التحليل مشغولة — حاول بعد قليل",
+        "pumpBlockReason_main_ui_not_ready": "النافذة الرئيسية غير جاهزة بعد — سيبدأ تلقائياً",
+        "pumpBlockReason_mode": "وضع التحليل الحالي لا يعمل في الخلفية",
+        "pumpBlockReason_disabled": "«تفعيل الذكاء الاصطناعي» متوقف",
+        "runStatusDisabled": "الذكاء الاصطناعي متوقف",
+        "runStatusDisabledHint": "«تفعيل الذكاء الاصطناعي» متوقف — لا تحليل تلقائي. يبقى التقدم ظاهراً هنا؛ فعّله لمعالجة قائمة الانتظار.",
+        "requeueFailedConfirm": "إعادة <strong>{count}</strong> صورة فاشلة إلى قائمة الانتظار وإعادة تعيين عدادات الفشل؟<br/><br/>المعالجة التلقائية تتطلب «تفعيل الذكاء الاصطناعي» ووضع «خلفية مستمرة» أو «صور جديدة فقط».",
+        "requeueFailedSuccess": "أُعيدت {count} صورة إلى قائمة الانتظار؛ ستبدأ المعالجة في الخلفية",
+        "requeueFailedSuccessNoAi": "أُعيدت {count} صورة؛ «تفعيل الذكاء الاصطناعي» متوقف",
+        "requeueFailedSuccessNoPump": "أُعيدت {count} صورة؛ الوضع الحالي لا يعمل في الخلفية",
+        "requeueFailedEmpty": "لا توجد صور فاشلة لإعادة الإدراج"
       },
       "privacySpace": {
         "enableNsfwContentMask": "إخفاء المحتوى الحساس",
@@ -579,7 +593,13 @@
       "setDynamicWallpaper": "تعيين خلفية ديناميكية",
       "closeDynamicWallpaper": "إغلاق الخلفية الديناميكية",
       "setRhythmWallpaper": "فتح خلفية إيقاعية",
-      "closeRhythmWallpaper": "إغلاق خلفية إيقاعية"
+      "closeRhythmWallpaper": "إغلاق خلفية إيقاعية",
+      "clearAiAnalysisData": "مسح بيانات تحليل الذكاء الاصطناعي",
+      "clearAiAnalysisDataConfirm": "مسح نتائج تحليل الذكاء الاصطناعي (الدرجات، الملخصات، العناوين، الأوصاف، مستوى الحساسية، الوسوم، المتجهات، إلخ) لـ<strong>كل الصور في قاعدة البيانات</strong> و<strong>حذف كل المجموعات الموصى بها بالذكاء الاصطناعي (النظامية)</strong>. تبقى عناوين/أوصاف الإضافات (الجدول الرئيسي) ومجموعات المستخدم.<br/><br/>المعالجة التلقائية تتطلب <strong>تفعيل الذكاء الاصطناعي</strong> ووضع «خلفية مستمرة» أو «صور جديدة فقط».",
+      "resetAiAnalysisSuccess": "تم مسح بيانات الذكاء الاصطناعي لـ {count} صورة؛ حُذفت {autoCollections} مجموعة موصى بها؛ ستبدأ المعالجة في الخلفية",
+      "resetAiAnalysisSuccessNoAi": "تم وضع {count} صورة قيد الانتظار؛ حُذفت {autoCollections} مجموعة؛ «تفعيل الذكاء الاصطناعي» متوقف",
+      "resetAiAnalysisSuccessNoPump": "تم وضع {count} صورة قيد الانتظار؛ حُذفت {autoCollections} مجموعة؛ الوضع الحالي لا يعمل في الخلفية",
+      "resetAiAnalysisEmpty": "لا توجد صور في المكتبة للمسح"
     },
     "About": {
       "name": "الاسم",

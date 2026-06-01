@@ -168,6 +168,7 @@ const api = {
 
   // 数据操作
   getSettingData: (...args) => ipcRenderer.invoke('main:getSettingData', ...args),
+  notifyMainUiReady: () => ipcRenderer.invoke('main:notifyMainUiReady'),
   updateSettingData: (patch) => invokeWithObject('main:updateSettingData', ipcRenderer, patch),
   getResourceMap: (...args) => ipcRenderer.invoke('main:getResourceMap', ...args),
   getPostData: (...args) => ipcRenderer.invoke('main:getPostData', ...args),

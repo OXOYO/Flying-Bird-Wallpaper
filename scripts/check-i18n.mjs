@@ -1,144 +1,100 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import { execSync } from 'node:child_process'
 
-const root = path.resolve(import.meta.dirname, '..')
-const langDir = path.join(root, 'src/i18n/locale/lang')
-const locales = fs.readdirSync(langDir).filter((f) => f.endsWith('.json'))
+const dir = path.join(process.cwd(), 'src/i18n/locale/lang')
+const files = fs.readdirSync(dir).filter((f) => f.endsWith('.json'))
 
 function flatten(obj, prefix = '') {
   const out = {}
-  for (const [k, v] of Object.entries(obj || {})) {
+  for (const [k, v] of Object.entries(obj)) {
     const key = prefix ? `${prefix}.${k}` : k
-    if (v && typeof v === 'object' && !Array.isArray(v)) {
-      Object.assign(out, flatten(v, key))
-    } else {
-      out[key] = v
-    }
+    if (v && typeof v === 'object' && !Array.isArray(v)) Object.assign(out, flatten(v, key))
+    else out[key] = v
   }
   return out
 }
 
-const data = {}
-for (const file of locales) {
-  const loc = file.replace('.json', '')
-  data[loc] = flatten(JSON.parse(fs.readFileSync(path.join(langDir, file), 'utf8')))
-}
+const data = Object.fromEntries(
+  files.map((f) => [f, flatten(JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')))])
+)
 
-const base = 'zh-CN'
-const baseKeys = Object.keys(data[base]).sort()
+const zh = 'zh-CN.json'
+const en = 'en-US.json'
+const zhKeys = new Set(Object.keys(data[zh]))
+const enKeys = new Set(Object.keys(data[en]))
 
-console.log('=== Locale key counts ===')
-for (const file of locales) {
-  const loc = file.replace('.json', '')
-  console.log(`${loc}: ${Object.keys(data[loc]).length}`)
-}
+console.log('=== Key counts ===')
+for (const f of files.sort()) console.log(`${f}\t${Object.keys(data[f]).length}`)
 
 console.log('\n=== Missing vs zh-CN ===')
-for (const loc of Object.keys(data)) {
-  if (loc === base) continue
-  const missing = baseKeys.filter((k) => !(k in data[loc]))
-  const extra = Object.keys(data[loc]).filter((k) => !(k in data[base]))
-  if (!missing.length && !extra.length) {
-    console.log(`${loc}: OK`)
-    continue
-  }
-  console.log(`\n${loc}: missing ${missing.length}, extra ${extra.length}`)
-  const show = (arr, tag, max = 25) => {
-    arr.slice(0, max).forEach((k) => console.log(`  ${tag} ${k}`))
-    if (arr.length > max) console.log(`  ... +${arr.length - max} more`)
-  }
-  show(missing, '-M')
-  show(extra, '+E')
-}
-
-const en = data['en-US']
-const chineseInEn = baseKeys.filter((k) => {
-  const v = en[k]
-  return typeof v === 'string' && /[\u4e00-\u9fff]/.test(v)
-})
-console.log(`\n=== en-US still contains Chinese: ${chineseInEn.length} ===`)
-chineseInEn.slice(0, 30).forEach((k) => console.log(`  ${k}`))
-
-// Collect t() keys from source
-const srcDir = path.join(root, 'src')
-const exts = new Set(['.vue', '.js', '.mjs'])
-const used = new Set()
-const tRe = /\bt\s*\(\s*['"]([a-zA-Z][a-zA-Z0-9_.]*)/g
-const i18nKeyRe = /i18nKey\s*\(\s*['"]([a-zA-Z][a-zA-Z0-9_.]*)/g
-const opKeyRe = /opKey\s*\(\s*['"]([a-zA-Z][a-zA-Z0-9_.]*)/g
-
-function walk(dir) {
-  for (const name of fs.readdirSync(dir)) {
-    const p = path.join(dir, name)
-    const st = fs.statSync(p)
-    if (st.isDirectory()) {
-      if (name === 'locale' || name === 'node_modules') continue
-      walk(p)
-      continue
-    }
-    const ext = path.extname(name)
-    if (!exts.has(ext)) continue
-    const text = fs.readFileSync(p, 'utf8')
-    for (const re of [tRe, i18nKeyRe, opKeyRe]) {
-      re.lastIndex = 0
-      let m
-      while ((m = re.exec(text))) used.add(m[1])
-    }
+for (const f of files.sort()) {
+  if (f === zh) continue
+  const missing = [...zhKeys].filter((k) => !(k in data[f]))
+  if (missing.length) {
+    console.log(`\n${f}: ${missing.length} missing`)
+    missing.forEach((k) => console.log(`  - ${k}`))
   }
 }
-walk(srcDir)
 
-console.log(`\n=== Used i18n keys in src: ${used.size} ===`)
-
-const missingInZh = [...used].filter((k) => !(k in data[base])).sort()
-console.log(`Used but NOT in zh-CN: ${missingInZh.length}`)
-missingInZh.forEach((k) => console.log(`  ! ${k}`))
-
-function isKeyUsed(k) {
-  if (used.has(k)) return true
-  for (const u of used) {
-    if (u.startsWith(`${k}.`)) return true
-    if (k.startsWith(`${u}.`)) return true
+console.log('\n=== Missing vs en-US ===')
+for (const f of files.sort()) {
+  if (f === en) continue
+  const missing = [...enKeys].filter((k) => !(k in data[f]))
+  if (missing.length) {
+    console.log(`\n${f}: ${missing.length} missing (vs en-US)`)
+    missing.forEach((k) => console.log(`  - ${k}`))
   }
-  // dynamic suffix patterns
-  const dynPrefixes = [
-    'pages.Setting.aiSetting.presetHints.',
-    'pages.Setting.pluginMarketplace.secretKey.hint.',
-    'main.store.PluginManager.'
-  ]
-  for (const p of dynPrefixes) {
-    if (k.startsWith(p) && used.has(p.slice(0, -1).replace(/\.$/, ''))) return true
-    if (k.startsWith(p)) return true
-  }
-  return false
 }
 
-const unused = baseKeys.filter((k) => !isKeyUsed(k))
-console.log(`\n=== Possibly unused in zh-CN: ${unused.length} ===`)
-unused.forEach((k) => console.log(`  ? ${k}`))
-
-// Recent plugin marketplace keys check
-const pmKeys = baseKeys.filter((k) => k.includes('pluginMarketplace'))
-console.log(`\n=== pluginMarketplace keys: ${pmKeys.length} ===`)
-for (const loc of ['en-US', 'de-DE', 'ja-JP']) {
-  const miss = pmKeys.filter((k) => !(k in data[loc]))
-  if (miss.length) console.log(`${loc} missing PM keys: ${miss.length}`)
+console.log('\n=== zh-CN / en-US key mismatch ===')
+const onlyZh = [...zhKeys].filter((k) => !enKeys.has(k))
+const onlyEn = [...enKeys].filter((k) => !zhKeys.has(k))
+if (onlyZh.length) {
+  console.log('only in zh-CN:', onlyZh.length)
+  onlyZh.forEach((k) => console.log(`  - ${k}`))
+}
+if (onlyEn.length) {
+  console.log('only in en-US:', onlyEn.length)
+  onlyEn.forEach((k) => console.log(`  - ${k}`))
 }
 
-// Full missing list for de-DE
-const deMissing = baseKeys.filter((k) => !(k in data['de-DE']))
-console.log(`\n=== ALL ${deMissing.length} keys in zh-CN missing from de-DE ===`)
-deMissing.forEach((k) => console.log(k))
+console.log('\n=== Empty values ===')
+for (const f of files.sort()) {
+  const empty = Object.entries(data[f]).filter(([, v]) => v === '' || v == null)
+  if (empty.length) console.log(`${f}: ${empty.map(([k]) => k).join(', ')}`)
+}
 
-const deExtra = Object.keys(data['de-DE']).filter((k) => !(k in data[base]))
-console.log(`\n=== ALL ${deExtra.length} obsolete keys in de-DE (not in zh-CN) ===`)
-deExtra.forEach((k) => console.log(k))
+console.log('\n=== Identical to en-US (length>=15, non-en) ===')
+const enFlat = data[en]
+for (const f of files.sort()) {
+  if (f === en) continue
+  const same = Object.keys(enFlat).filter(
+    (k) =>
+      k in data[f] &&
+      data[f][k] === enFlat[k] &&
+      typeof enFlat[k] === 'string' &&
+      enFlat[k].length >= 15
+  )
+  if (same.length) console.log(`${f}: ${same.length} strings still English`)
+}
 
-const twMissing = baseKeys.filter((k) => !(k in data['zh-TW']))
-console.log(`\n=== zh-TW missing ${twMissing.length} vs zh-CN ===`)
-twMissing.forEach((k) => console.log(k))
+console.log('\n=== Placeholder / count issues in zh-CN ===')
+for (const [k, v] of Object.entries(data[zh])) {
+  if (typeof v === 'string' && (v.includes('{{') || /\{count\}/.test(v) !== /\{count\}/.test(v))) {
+    // skip
+  }
+  if (typeof v === 'string' && v.includes('{{')) console.log(`zh-CN mustache: ${k}`)
+}
 
-const twExtra = Object.keys(data['zh-TW']).filter((k) => !(k in data[base]))
-console.log(`\n=== zh-TW extra ${twExtra.length} (not in zh-CN) ===`)
-twExtra.forEach((k) => console.log(k))
+console.log('\n=== Suspect: Chinese locale with ASCII-only long UI strings ===')
+for (const f of ['zh-TW.json']) {
+  const suspects = Object.entries(data[f]).filter(([k, v]) => {
+    if (typeof v !== 'string' || v.length < 30) return false
+    if (k.includes('collectionNaming') || k.includes('prompts.')) return false
+    return /^[\x00-\x7F]+$/.test(v) && data[zh][k] && !/^[\x00-\x7F]+$/.test(data[zh][k])
+  })
+  if (suspects.length) {
+    console.log(`${f}: ${suspects.length} likely untranslated UI strings`)
+    suspects.slice(0, 20).forEach(([k]) => console.log(`  - ${k}`))
+  }
+}

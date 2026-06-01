@@ -79,11 +79,14 @@ export default class MainWindow {
 
     preventContextMenu(this.win)
 
-    this.win.on('did-finish-load', () => {
-      // 发送公共信息
+    const markMainUiReady = (source) => {
       global.FBW.sendCommonData(this.win)
-      global.FBW.store?.onMainUiReady?.()
+      global.FBW.store?.onMainUiReady?.(source)
       isFunc(callback) && callback()
+    }
+    this.win.webContents.on('did-finish-load', () => markMainUiReady('did-finish-load'))
+    this.win.webContents.on('dom-ready', () => {
+      global.FBW.store?.tryMarkMainUiReady?.('dom-ready')
     })
 
     this.win.on('close', (event) => {

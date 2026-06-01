@@ -28,6 +28,7 @@ onBeforeMount(() => {
 })
 
 onMounted(() => {
+  void window.FBW?.notifyMainUiReady?.()
   const menu =
     settingData.value.defaultMenu === 'LastMenu'
       ? settingData.value.selectedMenu

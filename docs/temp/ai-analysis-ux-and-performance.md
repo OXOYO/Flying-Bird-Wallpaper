@@ -316,7 +316,7 @@
 |----|------|
 | 占位符 | `src/i18n/i18next.js`：`prefix: '{'`、`suffix: '}'` → 文案写 `{count}`，**勿**写 `{{count}}` |
 | 主进程消息 | 清空/重试成功类由主进程 `t()` 生成完整句，渲染端直接 `ElMessage({ message: res.message })` |
-| 新键语言 | `clearAiAnalysis*`、`requeueFailed*`、`runStatusDisabled*` 当前 **zh-CN / en-US** 完整；其它语言回退英文 |
+| 新键语言 | `clearAiAnalysis*`、`requeueFailed*`、`pumpBlockReason_*`、`runStatusDisabled*` 等 20 键已在 **12 种语言**补全（`scripts/patch-i18n-missing.mjs`） |
 
 ---
 

@@ -55,6 +55,12 @@ export function useAiAnalysisDashboard(aiSource, options = {}) {
   })
 
   const analysisStatusTooltip = computed(() => {
+    const reason = analysisStats.value?.pumpBlockReason
+    if (analysisRunStatus.value === 'queued' && reason) {
+      const reasonKey = `pumpBlockReason_${reason}`
+      const specific = t(`pages.Setting.aiSetting.${reasonKey}`, { defaultValue: '' })
+      if (specific) return specific
+    }
     const map = {
       queued: 'runStatusQueuedHint',
       running: 'statsRunning',
