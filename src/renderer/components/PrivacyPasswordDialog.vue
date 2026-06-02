@@ -1,9 +1,11 @@
 <script setup>
 import { useTranslation } from 'i18next-vue'
+import { scheduleDialogInputFocus } from '@common/focusDialogInput.mjs'
 
 const { t } = useTranslation()
 
 const visible = ref(false)
+const passwordInputRef = ref(null)
 const password = ref('')
 const passwordHint = ref('')
 const showPassword = ref(false)
@@ -67,6 +69,10 @@ const onClosed = () => {
   }
 }
 
+const onOpened = () => {
+  scheduleDialogInputFocus(() => passwordInputRef.value)
+}
+
 defineExpose({ open })
 </script>
 
@@ -78,6 +84,7 @@ defineExpose({ open })
     draggable
     destroy-on-close
     :close-on-click-modal="false"
+    @opened="onOpened"
     @closed="onClosed"
   >
     <p v-if="passwordHint" class="privacy-password-hint">
@@ -85,11 +92,11 @@ defineExpose({ open })
       {{ passwordHint }}
     </p>
     <el-input
+      ref="passwordInputRef"
       :model-value="password"
       :type="showPassword ? 'text' : 'password'"
       minlength="3"
       maxlength="6"
-      autofocus
       inputmode="numeric"
       autocomplete="off"
       @update:model-value="onInput"

@@ -431,7 +431,7 @@
         "visionPreprocessMinSizeMBHint": "파일 크기가 이 값 미만이고 긴 변이 이미 맞으면 크기 조정 건너뜀",
         "visionJpegQuality": "크기 조정 JPEG 품질",
         "visionJpegQualityHint": "75–95, 기본 88. 높을수록 페이로드 증가. 낮으면 태그 정확도에 영향 가능",
-        "sectionBase": "기본 설정",
+        "sectionBase": "AI 설정",
         "sectionFeatures": "기능 옵션",
         "serviceProvider": "서비스 제공업체",
         "serviceType": "서비스 유형",
@@ -452,7 +452,7 @@
           "custom": "사용자 정의 OpenAI 호환"
         },
         "visionSection": "시각 모델",
-        "textSection": "텍스트 / 임베딩 모델",
+        "textSection": "텍스트 모델",
         "visionModel": "시각 모델",
         "visionBaseUrl": "서비스 URL",
         "textModel": "텍스트 모델",
@@ -504,7 +504,7 @@
         "scoreMinFilter": "최소 점수 필터",
         "scoreMinFilterHint": "시스템 자동 컬렉션에는 AI 점수가 이 값 이상인 이미지만 포함됩니다(기본 70). 변경 후 약 15초 뒤 재정리 실행",
         "autoCollectionsMaxCount": "시스템 컬렉션 최대 수",
-        "autoCollectionsMaxCountHint": "자동 큐레이션 시스템 컬렉션 상한(3–50). 실제 수는 분석된 이미지 수에도 따라 달라짐(√(분석 수)×1.2, 최소 3). 변경 후 약 15초 뒤 재정리 실행",
+        "autoCollectionsMaxCountHint": "자동 큐레이션 시스템 컬렉션 상한(3–100). 실제 수는 분석된 이미지 수에도 따라 달라짐(√(분석 수)×1.2, 최소 3). 변경 후 약 15초 뒤 재정리 실행",
         "enableNsfwCheck": "콘텐츠 안전 필터",
         "enableNsfwCheckHint": "분석 안전 등급에 따라 검색 및 컬렉션 생성 시 고위험 항목 숨김",
         "smartSearch": "스마트 의미 검색",
@@ -537,7 +537,7 @@
         "visualEmbedSourceHint": "Built-in: offline, bundled, best for visual similarity. Remote: experimental image embedding via Ollama or compatible APIs; falls back to built-in on failure.",
         "visualEmbedSourceBuiltin": "Built-in MobileCLIP",
         "visualEmbedSourceRemote": "Remote embedding model",
-        "visualEmbedSection": "Visual vectors",
+        "visualEmbedSection": "화면 모델",
         "visualEmbedBaseUrl": "Service URL",
         "visualEmbedModel": "Visual vector model",
         "visualEmbedModelHint": "Image embeddings for find-similar; built-in MobileCLIP recommended. Remote models must support image vectors—not vision or text embed models. Falls back to built-in on failure.",
@@ -1009,7 +1009,10 @@
         "placeholder": "리소스 유형"
       },
       "resourceName": {
-        "placeholder": "리소스 이름"
+        "placeholder": "리소스 이름",
+        "listSearchPlaceholder": "리소스 이름 검색",
+        "listNoMatch": "일치하는 리소스가 없습니다",
+        "listTabAll": "전체"
       },
       "filterType": {
         "placeholder": "유형"

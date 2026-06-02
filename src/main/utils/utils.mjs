@@ -385,23 +385,7 @@ export const handleTimeByUnit = (time, unit) => {
   return ret
 }
 
-// 生成盐值
-export const generateSalt = () => {
-  return crypto.randomBytes(16).toString('hex')
-}
-
-// 哈希密码
-export const hashPassword = (password, salt) => {
-  const hash = crypto.createHmac('sha256', salt)
-  hash.update(password)
-  return hash.digest('hex')
-}
-
-// 验证密码
-export const verifyPassword = (inputPassword, storedHash, salt) => {
-  const inputHash = hashPassword(inputPassword, salt)
-  return inputHash === storedHash
-}
+export { generateSalt, hashPassword, verifyPassword } from './passwordUtils.mjs'
 
 // 生成自签名SSL证书
 export const generateSelfSignedCert = (hostname) => {

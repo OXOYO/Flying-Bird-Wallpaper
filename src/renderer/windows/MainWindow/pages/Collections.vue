@@ -2,6 +2,13 @@
 import { useTranslation } from 'i18next-vue'
 import { storeToRefs } from 'pinia'
 import { resolveApiUserMessage } from '@common/utils.js'
+import { scheduleDialogInputFocus } from '@common/focusDialogInput.mjs'
+import {
+  buildCollectionPickerGroups,
+  COLLECTION_PICKER_TAB_ALL,
+  COLLECTION_PICKER_TAB_AUTO,
+  COLLECTION_PICKER_TAB_USER
+} from '@common/collectionPickerFilter.mjs'
 import UseSettingStore from '@renderer/stores/settingStore.js'
 import {
   useResourceCardActions,
@@ -25,6 +32,7 @@ const collections = ref([])
 const curatorStatsRef = ref(null)
 const loading = ref(false)
 const prompt = ref('')
+const createPromptInputRef = ref(null)
 const selectedId = ref(null)
 const detail = ref(null)
 
@@ -328,9 +336,6 @@ const onCardDblClick = (item, index) => {
   resourceActions.onDblClickCard(item, index)
 }
 
-const autoCollections = computed(() => collections.value.filter((item) => isAutoCollection(item)))
-const userCollections = computed(() => collections.value.filter((item) => !isAutoCollection(item)))
-
 const createDialogVisible = ref(false)
 const createSubmitting = ref(false)
 
@@ -339,34 +344,45 @@ const onCreateDialogBeforeClose = (done) => {
   done()
 }
 
-const collectionOptionGroups = computed(() => {
-  const groups = []
-  if (autoCollections.value.length) {
-    groups.push({
-      key: 'auto',
-      label: t('pages.Collections.sectionAuto'),
-      children: autoCollections.value
-    })
-  }
-  if (userCollections.value.length) {
-    groups.push({
-      key: 'user',
-      label: t('pages.Collections.sectionUser'),
-      children: userCollections.value
-    })
-  }
-  return groups
+const collectionPickerOpen = ref(false)
+const collectionPickerQuery = ref('')
+const collectionPickerTab = ref(COLLECTION_PICKER_TAB_ALL)
+const collectionPickerSearchRef = ref(null)
+const collectionPickerTriggerRef = ref(null)
+const collectionPickerPopoverWidth = ref(360)
+
+const collectionPickerGroups = computed(() =>
+  buildCollectionPickerGroups(collections.value, {
+    query: collectionPickerQuery.value,
+    tab: collectionPickerTab.value,
+    isAutoCollection,
+    sectionAutoLabel: t('pages.Collections.sectionAuto'),
+    sectionUserLabel: t('pages.Collections.sectionUser')
+  })
+)
+
+const hasCollectionPickerFilter = computed(
+  () =>
+    !!collectionPickerQuery.value.trim() ||
+    collectionPickerTab.value !== COLLECTION_PICKER_TAB_ALL
+)
+
+const collectionSelectTriggerLabel = computed(() => {
+  const item = collections.value.find((c) => c.id === selectedId.value)
+  if (item?.name) return item.name
+  if (loading.value) return t('messages.loading')
+  return t('pages.Collections.selectPlaceholder')
+})
+
+const collectionSelectTriggerMeta = computed(() => {
+  const item = collections.value.find((c) => c.id === selectedId.value)
+  return item ? collectionItemCountText(item) : ''
 })
 
 const collectionItemCount = (item) => Number(item?.itemCount ?? item?.itemcount ?? 0)
 
 const collectionItemCountText = (item) =>
   t('pages.Collections.itemCount', { count: collectionItemCount(item) })
-
-const collectionOptionLabel = (item) => {
-  if (!item) return ''
-  return `${item.name || ''} (${collectionItemCount(item)})`
-}
 
 const refreshModeOptions = computed(() => [
   { value: 'manual', label: t('pages.Collections.refreshModeManual') },
@@ -428,8 +444,29 @@ const refreshCollectionList = async () => {
   await selectFirstDisplayed()
 }
 
-const onCollectionSelectVisibleChange = (visible) => {
-  if (visible) void refreshCollectionList()
+const resetCollectionPickerFilter = () => {
+  collectionPickerQuery.value = ''
+  collectionPickerTab.value = COLLECTION_PICKER_TAB_ALL
+}
+
+const syncCollectionPickerPopoverWidth = () => {
+  const w = collectionPickerTriggerRef.value?.offsetWidth
+  if (w > 0) collectionPickerPopoverWidth.value = Math.round(w)
+}
+
+const onCollectionPickerShow = () => {
+  resetCollectionPickerFilter()
+  syncCollectionPickerPopoverWidth()
+  void refreshCollectionList()
+  nextTick(() => scheduleDialogInputFocus(() => collectionPickerSearchRef.value))
+}
+
+const selectCollectionFromPicker = async (item) => {
+  if (!item?.id) return
+  collectionPickerOpen.value = false
+  if (selectedId.value !== item.id) {
+    await onCollectionChange(item.id)
+  }
 }
 
 const loadList = async () => {
@@ -661,39 +698,114 @@ onBeforeUnmount(() => {
         class="header-block__controls"
         :class="{ 'header-block__controls--under-banner': similarMode }"
       >
-        <el-select
-          v-model="selectedId"
-          class="condition-item collection-select"
-          filterable
-          size="large"
-          :disabled="loading || !collections.length"
-          :placeholder="t('pages.Collections.selectPlaceholder')"
-          @change="onCollectionChange"
-          @visible-change="onCollectionSelectVisibleChange"
-        >
-          <template #label="{ label }">
-            <span class="collection-select__label">{{ label }}</span>
-          </template>
-          <el-option-group
-            v-for="group in collectionOptionGroups"
-            :key="group.key"
-            :label="group.label"
+        <div class="collection-picker-toolbar__row">
+          <el-popover
+            v-model:visible="collectionPickerOpen"
+            trigger="click"
+            placement="bottom-start"
+            :width="collectionPickerPopoverWidth"
+            popper-class="collection-picker-popper"
+            :disabled="loading || !collections.length"
+            @show="onCollectionPickerShow"
           >
-            <el-option
-              v-for="item in group.children"
-              :key="item.id"
-              :label="collectionOptionLabel(item)"
-              :value="item.id"
-            >
-              <div class="collection-option">
-                <span class="collection-option__name">{{ item.name }}</span>
-                <span class="collection-option__count">{{ collectionItemCountText(item) }}</span>
+            <template #reference>
+              <button
+                ref="collectionPickerTriggerRef"
+                type="button"
+                class="collection-select-trigger"
+                :disabled="loading || !collections.length"
+                :aria-label="t('pages.Collections.selectPlaceholder')"
+              >
+                <span class="collection-select-trigger__name">{{
+                  collectionSelectTriggerLabel
+                }}</span>
+                <span
+                  v-if="collectionSelectTriggerMeta"
+                  class="collection-select-trigger__meta"
+                >
+                  {{ collectionSelectTriggerMeta }}
+                </span>
+                <IconifyIcon
+                  icon="custom:arrow-right"
+                  class="collection-select-trigger__arrow"
+                  aria-hidden="true"
+                />
+              </button>
+            </template>
+            <div class="collection-picker-panel">
+              <div class="collection-picker-panel__filter">
+                <el-input
+                  ref="collectionPickerSearchRef"
+                  v-model="collectionPickerQuery"
+                  clearable
+                  :placeholder="t('pages.Collections.listSearchPlaceholder')"
+                >
+                  <template #prefix>
+                    <IconifyIcon icon="custom:search" />
+                  </template>
+                </el-input>
+                <el-tabs v-model="collectionPickerTab" class="collection-picker-panel__tabs">
+                  <el-tab-pane
+                    :label="t('pages.Collections.listTabAll')"
+                    :name="COLLECTION_PICKER_TAB_ALL"
+                  />
+                  <el-tab-pane
+                    :label="t('pages.Collections.listTabAuto')"
+                    :name="COLLECTION_PICKER_TAB_AUTO"
+                  />
+                  <el-tab-pane
+                    :label="t('pages.Collections.listTabUser')"
+                    :name="COLLECTION_PICKER_TAB_USER"
+                  />
+                </el-tabs>
               </div>
-            </el-option>
-          </el-option-group>
-        </el-select>
+              <el-scrollbar :max-height="300" class="collection-picker-panel__list">
+                <template v-if="collectionPickerGroups.length">
+                  <div
+                    v-for="group in collectionPickerGroups"
+                    :key="group.key"
+                    class="collection-picker-panel__group"
+                  >
+                    <div
+                      v-if="group.title && !group.hideTitle"
+                      class="collection-picker-panel__group-title"
+                    >
+                      {{ group.title }}
+                    </div>
+                    <button
+                      v-for="item in group.items"
+                      :key="item.id"
+                      type="button"
+                      class="collection-picker-panel__item"
+                      :class="{ 'collection-picker-panel__item--active': item.id === selectedId }"
+                      @click="selectCollectionFromPicker(item)"
+                    >
+                      <span class="collection-picker-panel__item-name">{{ item.name }}</span>
+                      <span class="collection-picker-panel__item-tail">
+                        <span class="collection-picker-panel__item-count">{{
+                          collectionItemCountText(item)
+                        }}</span>
+                        <span
+                          v-if="item.id === selectedId"
+                          class="collection-picker-panel__item-check"
+                          aria-hidden="true"
+                        >✓</span>
+                      </span>
+                    </button>
+                  </div>
+                </template>
+                <div v-else class="collection-picker-panel__empty">
+                  {{
+                    hasCollectionPickerFilter
+                      ? t('pages.Collections.listNoMatch')
+                      : t('pages.Collections.empty')
+                  }}
+                </div>
+              </el-scrollbar>
+            </div>
+          </el-popover>
 
-        <el-dropdown trigger="click" placement="bottom-end" @command="onHeaderMenuCommand">
+          <el-dropdown trigger="click" placement="bottom-end" @command="onHeaderMenuCommand">
           <el-button
             class="condition-item header-actions-btn"
             circle
@@ -749,7 +861,8 @@ onBeforeUnmount(() => {
               </template>
             </el-dropdown-menu>
           </template>
-        </el-dropdown>
+          </el-dropdown>
+        </div>
       </div>
       <ExploreSimilarModeBanner
         v-if="similarMode"
@@ -844,9 +957,11 @@ onBeforeUnmount(() => {
       :close-on-press-escape="!createSubmitting"
       :show-close="!createSubmitting"
       :before-close="onCreateDialogBeforeClose"
+      @opened="() => scheduleDialogInputFocus(() => createPromptInputRef.value)"
       @closed="prompt = ''"
     >
       <el-input
+        ref="createPromptInputRef"
         v-model="prompt"
         type="textarea"
         :rows="4"
@@ -917,12 +1032,187 @@ onBeforeUnmount(() => {
   }
 }
 
-.collection-select {
-  flex: 1 !important;
+.collection-picker-toolbar__row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+  min-width: 0;
+}
+
+.collection-select-trigger {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  /* 与搜索页 ExploreSearchHeader el-select（large: 8px 16px）左右留白一致 */
+  padding: 0 16px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  box-sizing: border-box;
+  text-align: left;
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  &__name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  &__meta {
+    flex-shrink: 0;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.65);
+    white-space: nowrap;
+  }
+
+  &__arrow {
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.85);
+    transform: rotate(90deg);
+  }
+}
+
+.collection-picker-panel {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
 
-  &__label {
-    color: #ffffff;
+  &__filter {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-bottom: 10px;
+  }
+
+  &__tabs {
+    width: 100%;
+
+    :deep(.el-tabs__header) {
+      margin: 0 0 8px;
+    }
+
+    :deep(.el-tabs__nav-wrap) {
+      &::after {
+        display: none;
+      }
+    }
+
+    :deep(.el-tabs__nav-scroll) {
+      justify-content: flex-start;
+    }
+
+    :deep(.el-tabs__nav) {
+      justify-content: flex-start;
+    }
+
+    :deep(.el-tabs__item) {
+      padding: 0 16px 0 0;
+      height: 28px;
+      line-height: 28px;
+      font-size: 13px;
+
+      &:last-child {
+        padding-right: 0;
+      }
+    }
+
+    :deep(.el-tabs__content) {
+      display: none;
+    }
+  }
+
+  &__list {
+    min-height: 64px;
+    padding-top: 4px;
+  }
+
+  &__group {
+    margin-bottom: 6px;
+  }
+
+  &__group-title {
+    padding: 10px 8px 4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--el-text-color-secondary);
+  }
+
+  &__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--el-text-color-primary);
+    cursor: pointer;
+    text-align: left;
+    box-sizing: border-box;
+
+    &:hover {
+      background: var(--el-fill-color-light);
+    }
+
+    &--active {
+      background: var(--el-color-primary-light-9);
+      color: var(--el-color-primary);
+    }
+  }
+
+  &__item-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 14px;
+  }
+
+  &__item-tail {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  &__item-count {
+    font-size: 12px;
+    color: var(--el-text-color-secondary);
+  }
+
+  &__item-check {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--el-color-primary);
+  }
+
+  &__empty {
+    padding: 24px 12px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--el-text-color-secondary);
   }
 }
 
@@ -944,30 +1234,6 @@ onBeforeUnmount(() => {
   position: relative;
   max-width: 100%;
   overflow-x: hidden;
-}
-
-.collection-option {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  min-width: 0;
-  width: 100%;
-
-  &__name {
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  &__count {
-    flex-shrink: 0;
-    font-size: 12px;
-    color: var(--el-text-color-secondary);
-    white-space: nowrap;
-  }
 }
 
 .collections-actions-menu {
@@ -1105,22 +1371,8 @@ onBeforeUnmount(() => {
 </style>
 
 <style lang="scss">
-.page-collections .header-block {
-  .collection-select .el-select__wrapper {
-    width: 100% !important;
-    border: none !important;
-    border-radius: 0 !important;
-    background-color: transparent !important;
-    box-shadow: none !important;
-
-    .el-select__placeholder,
-    .el-select__selected-item {
-      color: #ffffff;
-    }
-
-    .el-select__caret {
-      color: #ffffff;
-    }
-  }
+.collection-picker-popper.el-popover.el-popper {
+  padding: 10px;
+  box-sizing: border-box;
 }
 </style>

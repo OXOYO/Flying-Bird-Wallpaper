@@ -33,7 +33,7 @@ import {
   applyH5CardImageCompress,
   applyH5ImageCompress
 } from '@h5/utils/imageUrl.js'
-import { getH5NumberIndicatorStyle } from '@h5/utils/indicatorStyle.js'
+import { getH5NumberIndicatorStyle, resolveH5TopIndicatorOffset } from '@h5/utils/indicatorStyle.js'
 import {
   normalizeBrowseItem,
   getBrowseItemKey,
@@ -188,7 +188,7 @@ export function useH5ResourceBrowse(options) {
   const imageInfoPanelHeight = ref(imageInfoPanelAnchors[0])
   const pageWrapperRef = ref(null)
   const browseToolbarRef = ref(null)
-  const browseToolbarHeight = ref(52)
+  const browseToolbarHeight = ref(46)
   let browseToolbarResizeObserver = null
   const inlineVideoRefs = {}
   const inlineVideoPlayingKeys = ref(new Set())
@@ -1311,16 +1311,36 @@ export function useH5ResourceBrowse(options) {
     browseToolbarResizeObserver.observe(el)
   }
 
+  const isTopNumberIndicator = computed(
+    () => settingData.value.h5NumberIndicatorPosition === 'top'
+  )
+
+  const showIndicatorInBrowseChrome = computed(
+    () =>
+      immersiveMode.value &&
+      !similarMode.value &&
+      isTopNumberIndicator.value &&
+      list.value.length > 0
+  )
+
+  /** 迷你顶栏右侧按钮数量不同，预留宽度 */
+  const immersiveIndicatorChromeInsetClass = computed(() => {
+    if (browseType === 'collection') return 'h5-page-indicator--in-chrome-r3'
+    if (browseType === 'favorites') return 'h5-page-indicator--in-chrome-r3'
+    return 'h5-page-indicator--in-chrome-r2'
+  })
+
   const browsePageIndicatorStyle = computed(() => {
     const position = settingData.value.h5NumberIndicatorPosition
-    const compactTopChrome = immersiveMode.value || displayMode.value === 'fullscreen'
-    let topOffset = compactTopChrome
-      ? 'calc(8px + env(safe-area-inset-top, 0px))'
-      : `calc(${browseToolbarHeight.value}px + env(safe-area-inset-top, 0px) + 4px)`
-
-    if (position === 'top' && displayMode.value === 'waterfall' && !immersiveMode.value) {
-      topOffset = `calc(${browseToolbarHeight.value}px + ${BROWSE_WATERFALL_CONTENT_GAP_PX}px + ${BROWSE_INDICATOR_TOP_CARD_GAP_PX}px + env(safe-area-inset-top, 0px))`
-    }
+    const topOffset = resolveH5TopIndicatorOffset({
+      position,
+      immersiveMode: immersiveMode.value,
+      similarMode: similarMode.value,
+      displayMode: displayMode.value,
+      toolbarHeightPx: browseToolbarHeight.value,
+      waterfallContentGapPx: BROWSE_WATERFALL_CONTENT_GAP_PX,
+      indicatorTopCardGapPx: BROWSE_INDICATOR_TOP_CARD_GAP_PX
+    })
 
     return getH5NumberIndicatorStyle(position, { topOffset })
   })
@@ -1661,7 +1681,7 @@ export function useH5ResourceBrowse(options) {
     })
   })
 
-  watch(immersiveMode, () => {
+  watch([immersiveMode, similarMode, displayMode], () => {
     nextTick(() => measureBrowseToolbarHeight())
   })
 
@@ -2454,6 +2474,8 @@ export function useH5ResourceBrowse(options) {
     isFullscreenPullAtTop,
     isImageInfoPanelOpen,
     browsePageIndicatorStyle,
+    showIndicatorInBrowseChrome,
+    immersiveIndicatorChromeInsetClass,
     previewImages,
     previewStartPosition,
     selectedItem,

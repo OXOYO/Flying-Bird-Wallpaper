@@ -431,7 +431,7 @@
         "visionPreprocessMinSizeMBHint": "ファイルサイズがこれ以下で長辺も満たす場合はリサイズをスキップ",
         "visionJpegQuality": "リサイズ JPEG 品質",
         "visionJpegQualityHint": "75〜95、既定 88。高いほどペイロードが大きく、低すぎるとタグ精度に影響する場合があります",
-        "sectionBase": "基本設定",
+        "sectionBase": "AI 設定",
         "sectionFeatures": "機能オプション",
         "serviceProvider": "サービスプロバイダー",
         "serviceType": "サービスタイプ",
@@ -452,7 +452,7 @@
           "custom": "カスタム OpenAI 互換"
         },
         "visionSection": "ビジョンモデル",
-        "textSection": "テキスト / ベクトルモデル",
+        "textSection": "テキストモデル",
         "visionModel": "ビジョンモデル",
         "visionBaseUrl": "サービス URL",
         "textModel": "テキストモデル",
@@ -504,7 +504,7 @@
         "scoreMinFilter": "最低スコアフィルター",
         "scoreMinFilterHint": "システム自動コレクションは AI スコアがこの値以上の画像のみ含めます（既定 70）。変更後約 15 秒で再整理",
         "autoCollectionsMaxCount": "システムコレクション上限",
-        "autoCollectionsMaxCountHint": "自動整理するシステムコレクションの上限（3〜50）。実際の数は分析済み画像数にも依存（√(分析済み)×1.2、最低 3）。変更後約 15 秒で再整理が走ります",
+        "autoCollectionsMaxCountHint": "自動整理するシステムコレクションの上限（3〜100）。実際の数は分析済み画像数にも依存（√(分析済み)×1.2、最低 3）。変更後約 15 秒で再整理が走ります",
         "enableNsfwCheck": "コンテンツ安全フィルター",
         "enableNsfwCheckHint": "検索とコレクション生成時、分析結果の安全レベルに基づき高リスク項目を非表示にします",
         "smartSearch": "スマートセマンティック検索",
@@ -537,7 +537,7 @@
         "visualEmbedSourceHint": "Built-in: offline, bundled, best for visual similarity. Remote: experimental image embedding via Ollama or compatible APIs; falls back to built-in on failure.",
         "visualEmbedSourceBuiltin": "Built-in MobileCLIP",
         "visualEmbedSourceRemote": "Remote embedding model",
-        "visualEmbedSection": "Visual vectors",
+        "visualEmbedSection": "画面モデル",
         "visualEmbedBaseUrl": "Service URL",
         "visualEmbedModel": "Visual vector model",
         "visualEmbedModelHint": "Image embeddings for find-similar; built-in MobileCLIP recommended. Remote models must support image vectors—not vision or text embed models. Falls back to built-in on failure.",
@@ -1009,7 +1009,10 @@
         "placeholder": "リソースタイプ"
       },
       "resourceName": {
-        "placeholder": "リソース名"
+        "placeholder": "リソース名",
+        "listSearchPlaceholder": "リソース名を検索",
+        "listNoMatch": "一致するリソースがありません",
+        "listTabAll": "すべて"
       },
       "filterType": {
         "placeholder": "タイプ"

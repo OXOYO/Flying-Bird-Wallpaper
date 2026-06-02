@@ -431,7 +431,7 @@
         "visionPreprocessMinSizeMBHint": "Skalierung überspringen, wenn Dateigröße darunter liegt und lange Kante bereits passt",
         "visionJpegQuality": "JPEG-Qualität beim Skalieren",
         "visionJpegQualityHint": "75–95, Standard 88. Höher = größere Nutzlast; niedriger kann Tag-Genauigkeit beeinträchtigen",
-        "sectionBase": "Grundeinstellungen",
+        "sectionBase": "KI-Einstellungen",
         "sectionFeatures": "Funktionen",
         "serviceProvider": "Dienstanbieter",
         "serviceType": "Diensttyp",
@@ -452,7 +452,7 @@
           "custom": "Benutzerdefiniert OpenAI-kompatibel"
         },
         "visionSection": "Vision-Modell",
-        "textSection": "Text- / Vektormodell",
+        "textSection": "Textmodell",
         "visionModel": "Vision-Modell",
         "visionBaseUrl": "Service-URL",
         "textModel": "Textmodell",
@@ -504,7 +504,7 @@
         "scoreMinFilter": "Mindestbewertungsfilter",
         "scoreMinFilterHint": "System-Auto-Sammlungen enthalten nur Bilder mit AI-Bewertung ab diesem Wert (Standard 70). Neukuratierung startet ~15 s nach Änderung",
         "autoCollectionsMaxCount": "Max. System-Sammlungen",
-        "autoCollectionsMaxCountHint": "Obergrenze für automatisch kuratierte System-Sammlungen (3–50). Die tatsächliche Anzahl hängt auch von analysierten Bildern ab (√(analysiert)×1,2, mindestens 3). Neukuratierung startet ~15 s nach Änderung",
+        "autoCollectionsMaxCountHint": "Obergrenze für automatisch kuratierte System-Sammlungen (3–100). Die tatsächliche Anzahl hängt auch von analysierten Bildern ab (√(analysiert)×1,2, mindestens 3). Neukuratierung startet ~15 s nach Änderung",
         "enableNsfwCheck": "Inhaltssicherheitsfilter",
         "enableNsfwCheckHint": "Blendet Inhalte mit höherem Risiko bei Suche und Sammlungserstellung basierend auf dem Sicherheitslevel der Analyse aus",
         "smartSearch": "Intelligente semantische Suche",
@@ -537,7 +537,7 @@
         "visualEmbedSourceHint": "Built-in: offline, bundled, best for visual similarity. Remote: experimental image embedding via Ollama or compatible APIs; falls back to built-in on failure.",
         "visualEmbedSourceBuiltin": "Built-in MobileCLIP",
         "visualEmbedSourceRemote": "Remote embedding model",
-        "visualEmbedSection": "Visual vectors",
+        "visualEmbedSection": "Bildmodell",
         "visualEmbedBaseUrl": "Service URL",
         "visualEmbedModel": "Visual vector model",
         "visualEmbedModelHint": "Image embeddings for find-similar; built-in MobileCLIP recommended. Remote models must support image vectors—not vision or text embed models. Falls back to built-in on failure.",
@@ -1009,7 +1009,10 @@
         "placeholder": "Ressourcentyp"
       },
       "resourceName": {
-        "placeholder": "Ressourcenname"
+        "placeholder": "Ressourcenname",
+        "listSearchPlaceholder": "Ressourcennamen suchen",
+        "listNoMatch": "Keine passenden Ressourcen",
+        "listTabAll": "Alle"
       },
       "filterType": {
         "placeholder": "Typ"

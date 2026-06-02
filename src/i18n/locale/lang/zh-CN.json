@@ -191,7 +191,7 @@
         "visionPreprocessMinSizeMBHint": "文件不超过该体积且长边已满足时跳过缩图，避免小图重复处理",
         "visionJpegQuality": "缩图 JPEG 质量",
         "visionJpegQualityHint": "75～95，默认 88；过高体积大、过慢，过低可能影响标签准确度",
-        "sectionBase": "基础设置",
+        "sectionBase": "AI 设置",
         "sectionFeatures": "功能选项",
         "sectionFeaturesCollections": "智能合集",
         "sectionFeaturesFindSimilar": "找相似",
@@ -216,7 +216,7 @@
           "custom": "自定义 OpenAI 兼容"
         },
         "visionSection": "视觉分析模型",
-        "textSection": "文本与文本向量",
+        "textSection": "文本模型",
         "visionModel": "视觉模型",
         "visionBaseUrl": "服务地址",
         "textModel": "文本模型",
@@ -276,7 +276,7 @@
         "visualEmbedSourceHint": "内置：离线、随应用提供，适合画面相似。远程：使用 Ollama 等支持图像 embedding 的模型（实验性），失败时回退内置。",
         "visualEmbedSourceBuiltin": "内置 MobileCLIP",
         "visualEmbedSourceRemote": "远程 embedding 模型",
-        "visualEmbedSection": "画面向量",
+        "visualEmbedSection": "画面模型",
         "visualEmbedBaseUrl": "服务地址",
         "visualEmbedModel": "画面向量模型",
         "visualEmbedModelHint": "用于找相似的画面 embedding；推荐内置 MobileCLIP。远程需支持图像向量，与视觉分析、文本向量模型无关；失败时回退内置。",
@@ -286,7 +286,7 @@
         "scoreMinFilter": "最低评分过滤",
         "scoreMinFilterHint": "系统自动合集仅纳入 AI 美学分不低于该值的图片，默认 70。修改后约 15 秒内会触发合集重新整理",
         "autoCollectionsMaxCount": "系统推荐合集数量上限",
-        "autoCollectionsMaxCountHint": "自动整理时最多保留多少个系统推荐合集（3–50）；实际数量还取决于已分析图片量（公式 √(已分析)×1.2，且不少于 3 个）。修改后约 15 秒内会触发重新整理",
+        "autoCollectionsMaxCountHint": "自动整理时最多保留多少个系统推荐合集（3–100）；实际数量还取决于已分析图片量（公式 √(已分析)×1.2，且不少于 3 个）。修改后约 15 秒内会触发重新整理",
         "enableNsfwCheck": "内容安全筛选",
         "enableNsfwCheckHint": "搜索与合集生成时隐藏高风险内容（依据分析结果中的安全等级）",
         "smartSearch": "智能语义搜索",
@@ -1036,7 +1036,10 @@
         "placeholder": "资源类型"
       },
       "resourceName": {
-        "placeholder": "资源名称"
+        "placeholder": "资源名称",
+        "listSearchPlaceholder": "搜索资源名称",
+        "listNoMatch": "没有匹配的资源",
+        "listTabAll": "全部"
       },
       "filterType": {
         "placeholder": "类型"

@@ -21,8 +21,8 @@ const { settingData, localSetting, isVibrationSupported } = storeToRefs(settingS
 const settingDataForm = reactive(settingData.value)
 const localSettingForm = reactive(localSetting.value)
 
-/** 设置分类折叠，默认展开「应用设置」 */
-const expandedSections = ref(['application', 'privacy'])
+/** 设置分类折叠：默认仅展开「应用设置」，隐私空间默认折叠 */
+const expandedSections = ref(['application'])
 
 const ensurePrivacyForm = () => {
   if (!settingDataForm.privacy || typeof settingDataForm.privacy !== 'object') {

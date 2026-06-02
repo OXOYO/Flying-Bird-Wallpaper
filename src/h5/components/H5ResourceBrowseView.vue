@@ -11,6 +11,7 @@ import H5PrivacyPasswordDialog from '@h5/components/H5PrivacyPasswordDialog.vue'
 import H5NsfwContentMask from '@h5/components/H5NsfwContentMask.vue'
 import { useH5ResourceBrowse } from '@h5/composables/useH5ResourceBrowse.mjs'
 import { resolveApiUserMessage } from '@common/utils.js'
+import { scheduleDialogInputFocus } from '@common/focusDialogInput.mjs'
 
 const H5_SEARCH_FIELD_NAME = 'fbw-h5-browse-keywords'
 
@@ -50,11 +51,12 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['back'])
+const emit = defineEmits(['back', 'similar-change'])
 
 const collectionIdRef = toRef(props, 'collectionId')
 
 const privacyPasswordDialogRef = ref(null)
+const jumpFieldRef = ref(null)
 
 const browse = useH5ResourceBrowse({
   browseType: props.browseType,
@@ -104,6 +106,8 @@ const {
   isFullscreenPullAtTop,
   isImageInfoPanelOpen,
   browsePageIndicatorStyle,
+  showIndicatorInBrowseChrome,
+  immersiveIndicatorChromeInsetClass,
   previewImages,
   previewStartPosition,
   selectedItem,
@@ -189,6 +193,11 @@ const {
   onPageScroll
 } = browse
 
+const onJumpDialogOpened = () => {
+  onJumpDialogViewportChange()
+  scheduleDialogInputFocus(() => jumpFieldRef.value)
+}
+
 const isPrivacySpaceUi = computed(() => enablePrivacySpaceToolbar && inPrivacySpace.value)
 
 const showBrowseListEmpty = computed(
@@ -235,12 +244,24 @@ watch(
   { flush: 'post' }
 )
 
+const emitSimilarState = () => {
+  emit('similar-change', {
+    active: !!similarMode.value,
+    sourceImageSrc: similarSourceImageSrc.value || ''
+  })
+}
+
+watch([similarMode, similarSourceImageSrc], emitSimilarState, { immediate: true })
+
 defineExpose({
   refresh: browse.refresh,
   init: browse.init,
   toggleDisplayMode: browse.toggleDisplayMode,
   displayMode,
-  layoutToggleTitle
+  layoutToggleTitle,
+  similarMode,
+  similarSourceImageSrc,
+  exitSimilarMode
 })
 </script>
 
@@ -265,7 +286,8 @@ defineExpose({
         class="browse-chrome-host"
         :class="{
           'browse-toolbar': !immersiveMode,
-          'browse-toolbar--privacy': isPrivacySpaceUi && !immersiveMode
+          'browse-toolbar--privacy': isPrivacySpaceUi && !immersiveMode,
+          'browse-toolbar--similar': similarMode
         }"
       >
         <H5BrowseChrome :immersive-mode="immersiveMode" :privacy-mode="isPrivacySpaceUi">
@@ -353,7 +375,44 @@ defineExpose({
           :bar-background="isPrivacySpaceUi ? 'rgba(0, 0, 0, 0.88)' : undefined"
           @back="exitSimilarMode"
         />
+        <div
+          v-if="showIndicatorInBrowseChrome && !hideChrome"
+          class="browse-page-indicator h5-page-indicator--in-chrome"
+          :class="[
+            immersiveIndicatorChromeInsetClass,
+            {
+              'browse-page-indicator--clickable': displayMode === 'fullscreen',
+              'h5-page-indicator--clickable': displayMode === 'fullscreen'
+            }
+          ]"
+          @click="openJumpPopup"
+        >
+          <span class="h5-page-indicator__pill">{{
+            displayMode === 'fullscreen' ? fullscreenIndicatorText : waterfallIndicatorText
+          }}</span>
+        </div>
       </div>
+
+      <Teleport
+        v-if="showIndicatorInBrowseChrome && hideChrome && externalToolbarRef"
+        :to="externalToolbarRef"
+      >
+        <div
+          class="browse-page-indicator h5-page-indicator--in-chrome"
+          :class="[
+            immersiveIndicatorChromeInsetClass,
+            {
+              'browse-page-indicator--clickable': displayMode === 'fullscreen',
+              'h5-page-indicator--clickable': displayMode === 'fullscreen'
+            }
+          ]"
+          @click="openJumpPopup"
+        >
+          <span class="h5-page-indicator__pill">{{
+            displayMode === 'fullscreen' ? fullscreenIndicatorText : waterfallIndicatorText
+          }}</span>
+        </div>
+      </Teleport>
 
       <van-pull-refresh v-model="state.refreshing" :disabled="isPullRefreshDisabled" @refresh="onRefresh">
         <div
@@ -763,7 +822,7 @@ defineExpose({
     </van-floating-panel>
 
     <div
-      v-if="list.length"
+      v-if="list.length && !showIndicatorInBrowseChrome"
       class="browse-page-indicator"
       :class="{ 'browse-page-indicator--clickable': displayMode === 'fullscreen' }"
       :style="browsePageIndicatorStyle"
@@ -813,11 +872,12 @@ defineExpose({
       class-name="browse-jump-dialog"
       :title="t('h5.pages.home.actions.jumpToIndex')"
       show-cancel-button
-      @opened="() => onJumpDialogViewportChange()"
+      @opened="onJumpDialogOpened"
       @confirm="jumpToIndex"
       @cancel="jumpIndex = ''"
     >
       <van-field
+        ref="jumpFieldRef"
         v-model="jumpIndex"
         :placeholder="t('h5.pages.home.actions.enterIndex')"
         type="digit"
@@ -953,6 +1013,7 @@ defineExpose({
 
 <style scoped lang="scss">
 .page-browse-inner {
+  position: relative;
   width: 100%;
   max-width: none;
   box-sizing: border-box;
@@ -1070,10 +1131,6 @@ defineExpose({
   opacity: 0.82;
 }
 
-.page-browse--immersive .browse-chrome-host {
-  height: 0;
-  overflow: visible;
-}
 .chrome-mini-btn {
   width: 40px;
   height: 40px;

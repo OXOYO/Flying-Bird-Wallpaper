@@ -380,7 +380,7 @@ export function resolveAutoCollectionFallbackName(hints = {}, locale = 'enUS') {
 export const AUTO_COLLECTION_COUNT_DEFAULT = 20
 
 /** 系统合集数量上限允许的最大值（防止误填过大） */
-export const AUTO_COLLECTION_COUNT_ABSOLUTE_MAX = 50
+export const AUTO_COLLECTION_COUNT_ABSOLUTE_MAX = 100
 
 /** 合集 items 分页默认每页条数（前端未传 pageSize 时） */
 export const COLLECTION_ITEMS_DEFAULT_PAGE_SIZE = 50

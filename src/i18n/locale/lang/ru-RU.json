@@ -431,7 +431,7 @@
         "visionPreprocessMinSizeMBHint": "Пропускать масштабирование, если размер файла меньше порога и длинная сторона уже подходит",
         "visionJpegQuality": "Качество JPEG при масштабировании",
         "visionJpegQualityHint": "75–95, по умолчанию 88. Выше — больше объём; ниже может снизить точность тегов",
-        "sectionBase": "Основные настройки",
+        "sectionBase": "Настройки ИИ",
         "sectionFeatures": "Функции",
         "serviceProvider": "Провайдер",
         "serviceType": "Тип сервиса",
@@ -452,7 +452,7 @@
           "custom": "Свой OpenAI-совместимый"
         },
         "visionSection": "Модель зрения",
-        "textSection": "Текстовая / векторная модель",
+        "textSection": "Текстовая модель",
         "visionModel": "Модель зрения",
         "visionBaseUrl": "Адрес сервиса",
         "textModel": "Текстовая модель",
@@ -504,7 +504,7 @@
         "scoreMinFilter": "Минимальный порог оценки",
         "scoreMinFilterHint": "Системные автоподборки включают только изображения с AI-оценкой не ниже этого значения (по умолчанию 70). Переподборка запускается ~15 с после изменения",
         "autoCollectionsMaxCount": "Макс. системных подборок",
-        "autoCollectionsMaxCountHint": "Верхний предел автоподборок (3–50). Фактическое число также зависит от проанализированных изображений (√(проанализировано)×1,2, минимум 3). Переподборка запускается ~15 с после изменения",
+        "autoCollectionsMaxCountHint": "Верхний предел автоподборок (3–100). Фактическое число также зависит от проанализированных изображений (√(проанализировано)×1,2, минимум 3). Переподборка запускается ~15 с после изменения",
         "enableNsfwCheck": "Фильтр безопасности контента",
         "enableNsfwCheckHint": "Скрывает более рискованный контент при поиске и создании подборок на основе уровня безопасности анализа",
         "smartSearch": "Умный семантический поиск",
@@ -537,7 +537,7 @@
         "visualEmbedSourceHint": "Built-in: offline, bundled, best for visual similarity. Remote: experimental image embedding via Ollama or compatible APIs; falls back to built-in on failure.",
         "visualEmbedSourceBuiltin": "Built-in MobileCLIP",
         "visualEmbedSourceRemote": "Remote embedding model",
-        "visualEmbedSection": "Visual vectors",
+        "visualEmbedSection": "Модель изображения",
         "visualEmbedBaseUrl": "Service URL",
         "visualEmbedModel": "Visual vector model",
         "visualEmbedModelHint": "Image embeddings for find-similar; built-in MobileCLIP recommended. Remote models must support image vectors—not vision or text embed models. Falls back to built-in on failure.",
@@ -1009,7 +1009,10 @@
         "placeholder": "Тип ресурса"
       },
       "resourceName": {
-        "placeholder": "Имя ресурса"
+        "placeholder": "Имя ресурса",
+        "listSearchPlaceholder": "Поиск имени ресурса",
+        "listNoMatch": "Подходящих ресурсов нет",
+        "listTabAll": "Все"
       },
       "filterType": {
         "placeholder": "тип"

@@ -11,6 +11,7 @@ import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 // 图标按需加载
 import Icons from 'unplugin-icons/vite'
+import { fixCjsShimPlacementPlugin } from './scripts/vite-plugin-fix-cjs-shim.mjs'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -36,7 +37,9 @@ const getEntry = () => {
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin()],
+    plugins: [externalizeDepsPlugin(), fixCjsShimPlacementPlugin()],
+    // 避免 Vite 7 esbuild-transpile 与 electron-vite CJS shim（__cjs_mod__）冲突
+    esbuild: false,
     build: {
       rollupOptions: {
         external: ['sharp']

@@ -191,7 +191,7 @@
         "visionPreprocessMinSizeMBHint": "Skip resize when file size is below this and long edge already fits",
         "visionJpegQuality": "Resize JPEG quality",
         "visionJpegQualityHint": "75–95, default 88. Higher = larger payload; lower may hurt tag accuracy",
-        "sectionBase": "Basic settings",
+        "sectionBase": "AI settings",
         "sectionFeatures": "Features",
         "sectionFeaturesCollections": "Smart collections",
         "sectionFeaturesFindSimilar": "Find similar",
@@ -216,7 +216,7 @@
           "custom": "Custom OpenAI-compatible"
         },
         "visionSection": "Vision analysis model",
-        "textSection": "Text & text embeddings",
+        "textSection": "Text model",
         "visionModel": "Vision model",
         "visionBaseUrl": "Service URL",
         "textModel": "Text model",
@@ -276,7 +276,7 @@
         "visualEmbedSourceHint": "Built-in: offline, bundled, best for visual similarity. Remote: experimental image embedding via Ollama or compatible APIs; falls back to built-in on failure.",
         "visualEmbedSourceBuiltin": "Built-in MobileCLIP",
         "visualEmbedSourceRemote": "Remote embedding model",
-        "visualEmbedSection": "Visual vectors",
+        "visualEmbedSection": "Image model",
         "visualEmbedBaseUrl": "Service URL",
         "visualEmbedModel": "Visual vector model",
         "visualEmbedModelHint": "Image embeddings for find-similar; built-in MobileCLIP recommended. Remote models must support image vectors—not vision or text embed models. Falls back to built-in on failure.",
@@ -286,7 +286,7 @@
         "scoreMinFilter": "Minimum score filter",
         "scoreMinFilterHint": "System auto-collections only include images with AI score at or above this value (default 70). Re-curate runs ~15s after change",
         "autoCollectionsMaxCount": "Max system collections",
-        "autoCollectionsMaxCountHint": "Upper limit for auto-curated system collections (3–50). Actual count also depends on analyzed images (√(analyzed)×1.2, at least 3). Re-curate runs ~15s after you change this",
+        "autoCollectionsMaxCountHint": "Upper limit for auto-curated system collections (3–100). Actual count also depends on analyzed images (√(analyzed)×1.2, at least 3). Re-curate runs ~15s after you change this",
         "enableNsfwCheck": "Content safety filter",
         "enableNsfwCheckHint": "Hide higher-risk items in search and collection generation based on analysis safety level",
         "smartSearch": "Smart semantic search",
@@ -1036,7 +1036,10 @@
         "placeholder": "Resource type"
       },
       "resourceName": {
-        "placeholder": "Resource Name"
+        "placeholder": "Resource Name",
+        "listSearchPlaceholder": "Search resource name",
+        "listNoMatch": "No matching resources",
+        "listTabAll": "All"
       },
       "filterType": {
         "placeholder": "type"

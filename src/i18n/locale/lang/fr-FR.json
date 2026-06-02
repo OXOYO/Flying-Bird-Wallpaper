@@ -431,7 +431,7 @@
         "visionPreprocessMinSizeMBHint": "Ignorer le redimensionnement si la taille du fichier est inférieure et que le bord long convient déjà",
         "visionJpegQuality": "Qualité JPEG du redimensionnement",
         "visionJpegQualityHint": "75–95, 88 par défaut. Plus élevé = charge plus lourde ; plus bas peut nuire à la précision des tags",
-        "sectionBase": "Paramètres de base",
+        "sectionBase": "Paramètres IA",
         "sectionFeatures": "Fonctionnalités",
         "serviceProvider": "Fournisseur de service",
         "serviceType": "Type de service",
@@ -452,7 +452,7 @@
           "custom": "OpenAI compatible personnalisé"
         },
         "visionSection": "Modèle de vision",
-        "textSection": "Modèle texte / embedding",
+        "textSection": "Modèle texte",
         "visionModel": "Modèle de vision",
         "visionBaseUrl": "URL du service",
         "textModel": "Modèle texte",
@@ -504,7 +504,7 @@
         "scoreMinFilter": "Filtre de note minimale",
         "scoreMinFilterHint": "Les collections système auto n'incluent que les images dont la note IA est supérieure ou égale à cette valeur (70 par défaut). La re-curation s'exécute ~15 s après modification",
         "autoCollectionsMaxCount": "Nombre max de collections système",
-        "autoCollectionsMaxCountHint": "Limite supérieure pour les collections système auto-curées (3–50). Le nombre réel dépend aussi des images analysées (√(analysées)×1,2, au minimum 3). La re-curation s'exécute ~15 s après modification",
+        "autoCollectionsMaxCountHint": "Limite supérieure pour les collections système auto-curées (3–100). Le nombre réel dépend aussi des images analysées (√(analysées)×1,2, au minimum 3). La re-curation s'exécute ~15 s après modification",
         "enableNsfwCheck": "Filtre de sécurité du contenu",
         "enableNsfwCheckHint": "Masquer les éléments à risque plus élevé dans la recherche et la génération de collections selon le niveau de sécurité de l'analyse",
         "smartSearch": "Recherche sémantique intelligente",
@@ -537,7 +537,7 @@
         "visualEmbedSourceHint": "Built-in: offline, bundled, best for visual similarity. Remote: experimental image embedding via Ollama or compatible APIs; falls back to built-in on failure.",
         "visualEmbedSourceBuiltin": "Built-in MobileCLIP",
         "visualEmbedSourceRemote": "Remote embedding model",
-        "visualEmbedSection": "Visual vectors",
+        "visualEmbedSection": "Modèle image",
         "visualEmbedBaseUrl": "Service URL",
         "visualEmbedModel": "Visual vector model",
         "visualEmbedModelHint": "Image embeddings for find-similar; built-in MobileCLIP recommended. Remote models must support image vectors—not vision or text embed models. Falls back to built-in on failure.",
@@ -1009,7 +1009,10 @@
         "placeholder": "Type de ressource"
       },
       "resourceName": {
-        "placeholder": "Nom de la ressource"
+        "placeholder": "Nom de la ressource",
+        "listSearchPlaceholder": "Rechercher un nom de ressource",
+        "listNoMatch": "Aucune ressource correspondante",
+        "listTabAll": "Tout"
       },
       "filterType": {
         "placeholder": "Type"

@@ -431,7 +431,7 @@
         "visionPreprocessMinSizeMBHint": "تخطّي التصغير إذا كان حجم الملف أدناه من هذا والضلع الطويل مناسباً",
         "visionJpegQuality": "جودة JPEG عند التصغير",
         "visionJpegQualityHint": "75–95، الافتراضي 88. أعلى = حمولة أكبر؛ الأقل قد يضعف دقة الوسوم",
-        "sectionBase": "الإعدادات الأساسية",
+        "sectionBase": "إعدادات الذكاء الاصطناعي",
         "sectionFeatures": "خيارات الميزات",
         "serviceProvider": "مزوّد الخدمة",
         "serviceType": "نوع الخدمة",
@@ -452,7 +452,7 @@
           "custom": "متوافق مع OpenAI (مخصّص)"
         },
         "visionSection": "نموذج الرؤية",
-        "textSection": "نموذج النص / التضمين",
+        "textSection": "نموذج النص",
         "visionModel": "نموذج الرؤية",
         "visionBaseUrl": "عنوان الخدمة",
         "textModel": "نموذج النص",
@@ -504,7 +504,7 @@
         "scoreMinFilter": "حد أدنى للتقييم",
         "scoreMinFilterHint": "مجموعات النظام التلقائية تضمّ صوراً بتقييم AI لا يقل عن هذه القيمة (افتراضي 70). يُعاد التنسيق بعد ~15 ث من التغيير",
         "autoCollectionsMaxCount": "الحد الأقصى لمجموعات النظام",
-        "autoCollectionsMaxCountHint": "الحد الأعلى لمجموعات النظام المُنسَّقة تلقائياً (3–50). العدد الفعلي يعتمد أيضاً على الصور المُحلَّلة (√(مُحلَّل)×1.2، 3 على الأقل). يُعاد التنسيق بعد ~15 ث من التغيير",
+        "autoCollectionsMaxCountHint": "الحد الأعلى لمجموعات النظام المُنسَّقة تلقائياً (3–100). العدد الفعلي يعتمد أيضاً على الصور المُحلَّلة (√(مُحلَّل)×1.2، 3 على الأقل). يُعاد التنسيق بعد ~15 ث من التغيير",
         "enableNsfwCheck": "مرشّح سلامة المحتوى",
         "enableNsfwCheckHint": "إخفاء العناصر عالية المخاطر في البحث وإنشاء المجموعات وفق مستوى السلامة من التحليل",
         "smartSearch": "بحث دلالي ذكي",
@@ -537,7 +537,7 @@
         "visualEmbedSourceHint": "Built-in: offline, bundled, best for visual similarity. Remote: experimental image embedding via Ollama or compatible APIs; falls back to built-in on failure.",
         "visualEmbedSourceBuiltin": "Built-in MobileCLIP",
         "visualEmbedSourceRemote": "Remote embedding model",
-        "visualEmbedSection": "Visual vectors",
+        "visualEmbedSection": "نموذج الصورة",
         "visualEmbedBaseUrl": "Service URL",
         "visualEmbedModel": "Visual vector model",
         "visualEmbedModelHint": "Image embeddings for find-similar; built-in MobileCLIP recommended. Remote models must support image vectors—not vision or text embed models. Falls back to built-in on failure.",
@@ -1009,7 +1009,10 @@
         "placeholder": "نوع المورد"
       },
       "resourceName": {
-        "placeholder": "اسم المورد"
+        "placeholder": "اسم المورد",
+        "listSearchPlaceholder": "البحث عن اسم المورد",
+        "listNoMatch": "لا توجد موارد مطابقة",
+        "listTabAll": "الكل"
       },
       "filterType": {
         "placeholder": "النوع"

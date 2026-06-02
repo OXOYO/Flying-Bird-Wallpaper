@@ -9,6 +9,7 @@ import {
   PLUGIN_APP_VERSION_MIN,
   resolveApiUserMessage
 } from '@common/utils.js'
+import { scheduleDialogInputFocus } from '@common/focusDialogInput.mjs'
 import {
   buildCompositeId,
   SOURCE_NAME_MAX_LEN,
@@ -28,6 +29,7 @@ const installedPlugins = ref([])
 const pluginSources = ref([])
 const showAddSourceDialog = ref(false)
 const sourceFormRef = ref()
+const sourceNameInputRef = ref(null)
 const sourceForm = reactive({
   name: '',
   type: 'github',
@@ -1209,6 +1211,7 @@ defineExpose({
       v-model="showAddSourceDialog"
       :title="t('pages.Setting.pluginMarketplace.sourceForm.title')"
       width="650px"
+      @opened="() => scheduleDialogInputFocus(() => sourceNameInputRef.value)"
     >
       <el-form
         ref="sourceFormRef"
@@ -1219,6 +1222,7 @@ defineExpose({
       >
         <el-form-item :label="t('pages.Setting.pluginMarketplace.sourceForm.name')" prop="name">
           <el-input
+            ref="sourceNameInputRef"
             v-model="sourceForm.name"
             :maxlength="SOURCE_NAME_MAX_LEN"
             show-word-limit

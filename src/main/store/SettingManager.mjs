@@ -1,7 +1,7 @@
 import EventEmitter from 'node:events'
 import { t, changeLanguage } from '../../i18n/server.js'
 import { defaultSettingData, migrateSettingData } from '../../common/publicData.js'
-import { generateSalt, hashPassword, verifyPassword } from '../utils/utils.mjs'
+import { generateSalt, hashPassword, verifyPassword } from '../utils/passwordUtils.mjs'
 
 export default class SettingManager extends EventEmitter {
   // 单例实例

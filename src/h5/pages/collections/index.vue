@@ -1,11 +1,19 @@
 <script setup>
 import * as api from '@h5/api/index.js'
 import H5BrowseChrome from '@h5/components/H5BrowseChrome.vue'
+import H5SimilarModeBanner from '@h5/components/H5SimilarModeBanner.vue'
 import H5ResourceBrowseView from '@h5/components/H5ResourceBrowseView.vue'
 import UseSettingStore from '@h5/stores/settingStore.js'
 import UseCommonStore from '@h5/stores/commonStore.js'
 import { useTranslation } from 'i18next-vue'
 import { resolveApiUserMessage } from '@common/utils.js'
+import { scheduleDialogInputFocus } from '@common/focusDialogInput.mjs'
+import {
+  buildCollectionPickerGroups,
+  COLLECTION_PICKER_TAB_ALL,
+  COLLECTION_PICKER_TAB_AUTO,
+  COLLECTION_PICKER_TAB_USER
+} from '@common/collectionPickerFilter.mjs'
 
 const { t } = useTranslation()
 const settingStore = UseSettingStore()
@@ -16,11 +24,14 @@ const loading = ref(false)
 const collections = ref([])
 const selectedId = ref(null)
 const showPicker = ref(false)
+const pickerQuery = ref('')
+const pickerTab = ref(COLLECTION_PICKER_TAB_ALL)
 const showCreate = ref(false)
 const createSubmitting = ref(false)
 const showHeaderActions = ref(false)
 const showRefreshMode = ref(false)
 const createPrompt = ref('')
+const createPromptFieldRef = ref(null)
 const browseRef = ref(null)
 const headerRef = ref(null)
 
@@ -49,27 +60,19 @@ const currentRefreshModeLabel = computed(() => refreshModeLabel(currentRefreshMo
 
 const canManageRefresh = computed(() => isUserCollection(selectedCollection.value))
 
-const autoCollections = computed(() => collections.value.filter((item) => isAutoCollection(item)))
-const userCollections = computed(() => collections.value.filter((item) => !isAutoCollection(item)))
+const pickerGroups = computed(() =>
+  buildCollectionPickerGroups(collections.value, {
+    query: pickerQuery.value,
+    tab: pickerTab.value,
+    isAutoCollection,
+    sectionAutoLabel: t('pages.Collections.sectionAuto'),
+    sectionUserLabel: t('pages.Collections.sectionUser')
+  })
+)
 
-const pickerGroups = computed(() => {
-  const groups = []
-  if (autoCollections.value.length) {
-    groups.push({
-      key: 'auto',
-      title: t('pages.Collections.sectionAuto'),
-      items: autoCollections.value
-    })
-  }
-  if (userCollections.value.length) {
-    groups.push({
-      key: 'user',
-      title: t('pages.Collections.sectionUser'),
-      items: userCollections.value
-    })
-  }
-  return groups
-})
+const hasPickerFilter = computed(
+  () => !!pickerQuery.value.trim() || pickerTab.value !== COLLECTION_PICKER_TAB_ALL
+)
 
 const selectedCollection = computed(
   () => collections.value.find((item) => item.id === selectedId.value) || null
@@ -101,6 +104,46 @@ const browseDisplayMode = computed(() => {
   const mode = exposed?.value ?? exposed
   return mode === 'waterfall' ? 'waterfall' : 'fullscreen'
 })
+
+const collectionSimilarMode = ref(false)
+const collectionSimilarSourceImageSrc = ref('')
+
+const onBrowseSimilarChange = ({ active, sourceImageSrc } = {}) => {
+  collectionSimilarMode.value = !!active
+  collectionSimilarSourceImageSrc.value = sourceImageSrc || ''
+}
+
+const onCollectionSimilarBack = () => {
+  browseRef.value?.exitSimilarMode?.()
+}
+
+watch(selectedId, (id) => {
+  if (!id) {
+    collectionSimilarMode.value = false
+    collectionSimilarSourceImageSrc.value = ''
+  }
+})
+
+const resetPickerFilter = () => {
+  pickerQuery.value = ''
+  pickerTab.value = COLLECTION_PICKER_TAB_ALL
+}
+
+watch(showPicker, (open) => {
+  if (open) {
+    resetPickerFilter()
+  }
+})
+
+/** 合集选择弹层打开时不自动聚焦搜索框 */
+const onCollectionPickerOpened = () => {
+  nextTick(() => {
+    const active = document.activeElement
+    if (active instanceof HTMLElement && active.closest('.collection-picker-popup')) {
+      active.blur()
+    }
+  })
+}
 
 const selectCollection = (item) => {
   if (!item?.id) return
@@ -359,7 +402,11 @@ onMounted(() => {
     class="page-collections-h5"
     :class="{ 'page-collections-h5--immersive': immersiveMode }"
   >
-    <div ref="headerRef" class="collections-header browse-toolbar">
+    <div
+      ref="headerRef"
+      class="collections-header browse-toolbar"
+      :class="{ 'collections-header--similar': collectionSimilarMode }"
+    >
       <H5BrowseChrome :immersive-mode="immersiveMode">
         <button
           v-if="!immersiveMode"
@@ -369,10 +416,8 @@ onMounted(() => {
           :disabled="!collections.length && !loading"
           @click="showPicker = true"
         >
-          <span class="collection-dropdown__main">
-            <span class="collection-dropdown__name">{{ dropdownLabel }}</span>
-            <span v-if="dropdownMeta" class="collection-dropdown__meta">{{ dropdownMeta }}</span>
-          </span>
+          <span class="collection-dropdown__name">{{ dropdownLabel }}</span>
+          <span v-if="dropdownMeta" class="collection-dropdown__meta">{{ dropdownMeta }}</span>
           <van-icon class="collection-dropdown__arrow" name="arrow-down" />
         </button>
         <template v-if="!immersiveMode" #trailing>
@@ -445,6 +490,13 @@ onMounted(() => {
           />
         </template>
       </H5BrowseChrome>
+      <H5SimilarModeBanner
+        v-if="collectionSimilarMode"
+        :message="t('pages.Collections.similarModeBanner')"
+        :source-image-src="collectionSimilarSourceImageSrc"
+        :back-aria-label="t('pages.Collections.similarBack')"
+        @back="onCollectionSimilarBack"
+      />
     </div>
 
     <H5ResourceBrowseView
@@ -455,6 +507,7 @@ onMounted(() => {
       display-mode-storage-key="fbw_h5_collections_display_mode"
       hide-chrome
       :external-toolbar-ref="headerRef"
+      @similar-change="onBrowseSimilarChange"
     />
 
     <div v-else-if="!loading" class="collections-empty-wrap">
@@ -470,14 +523,30 @@ onMounted(() => {
       position="bottom"
       round
       class="collection-picker-popup"
-      :style="{ maxHeight: '70vh' }"
+      :style="{ maxHeight: '60vh' }"
+      @opened="onCollectionPickerOpened"
     >
       <div class="collection-picker">
-        <div class="collection-picker__title">{{ t('pages.Collections.selectPlaceholder') }}</div>
+        <div class="collection-picker__filter">
+          <van-search
+            v-model="pickerQuery"
+            class="collection-picker__search"
+            :placeholder="t('pages.Collections.listSearchPlaceholder')"
+            shape="round"
+            clearable
+          />
+          <van-tabs v-model:active="pickerTab" shrink class="collection-picker__tabs">
+            <van-tab :name="COLLECTION_PICKER_TAB_ALL" :title="t('pages.Collections.listTabAll')" />
+            <van-tab :name="COLLECTION_PICKER_TAB_AUTO" :title="t('pages.Collections.listTabAuto')" />
+            <van-tab :name="COLLECTION_PICKER_TAB_USER" :title="t('pages.Collections.listTabUser')" />
+          </van-tabs>
+        </div>
         <div class="collection-picker__body">
           <template v-if="pickerGroups.length">
             <div v-for="group in pickerGroups" :key="group.key" class="collection-picker__group">
-              <div class="collection-picker__group-title">{{ group.title }}</div>
+              <div v-if="group.title && !group.hideTitle" class="collection-picker__group-title">
+                {{ group.title }}
+              </div>
               <van-cell-group inset>
                 <van-cell
                   v-for="item in group.items"
@@ -503,7 +572,12 @@ onMounted(() => {
               </van-cell-group>
             </div>
           </template>
-          <van-empty v-else :description="t('pages.Collections.empty')" />
+          <van-empty
+            v-else
+            :description="
+              hasPickerFilter ? t('pages.Collections.listNoMatch') : t('pages.Collections.empty')
+            "
+          />
         </div>
       </div>
     </van-popup>
@@ -517,8 +591,10 @@ onMounted(() => {
       :confirm-button-loading="createSubmitting"
       :confirm-button-disabled="createSubmitting"
       :cancel-button-disabled="createSubmitting"
+      @opened="() => scheduleDialogInputFocus(() => createPromptFieldRef.value)"
     >
       <van-field
+        ref="createPromptFieldRef"
         v-model="createPrompt"
         type="textarea"
         rows="3"
@@ -587,17 +663,11 @@ onMounted(() => {
 
 /* 顶栏基础样式见 h5/assets/styles/main.css */
 
-.page-collections-h5--immersive .collections-header {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 0;
-  overflow: visible;
-  background: transparent;
-  box-shadow: none;
-  z-index: 20;
+.page-collections-h5 {
+  position: relative;
 }
+
+/* 沉浸顶栏悬浮见 h5/assets/styles/main.css */
 
 .page-collections-h5--immersive .chrome-mini-btn {
   width: 40px;
@@ -622,21 +692,40 @@ onMounted(() => {
 .collection-picker {
   display: flex;
   flex-direction: column;
-  max-height: 70vh;
+  max-height: 60vh;
 }
 
-.collection-picker__title {
+.collection-picker :deep(.van-cell) {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.collection-picker__filter {
   flex-shrink: 0;
-  padding: 14px 20px 8px;
-  font-size: 16px;
-  font-weight: 600;
-  text-align: center;
+  padding: 8px 8px 10px;
+}
+
+.collection-picker__search {
+  --van-search-padding: 0;
+  padding: 0 4px 4px;
+}
+
+.collection-picker__tabs {
+  :deep(.van-tabs__wrap) {
+    height: 32px;
+    margin-bottom: 6px;
+  }
+
+  :deep(.van-tab) {
+    font-size: 13px;
+  }
 }
 
 .collection-picker__body {
   flex: 1;
   min-height: 0;
   overflow: auto;
+  padding-top: 4px;
   padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
 }
 
@@ -645,7 +734,7 @@ onMounted(() => {
 }
 
 .collection-picker__group-title {
-  padding: 8px 20px 6px;
+  padding: 12px 20px 6px;
   font-size: 13px;
   color: var(--van-text-color-2);
 }

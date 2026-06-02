@@ -67,6 +67,7 @@ const analysisModeOptions = computed(() => [
 /** AI 功能开关分组 */
 const featureSwitchGroups = [
   {
+    anchorId: 'divider-ai-features-search',
     titleKey: 'pages.Setting.aiSetting.sectionFeaturesSearch',
     items: [
       {
@@ -77,6 +78,7 @@ const featureSwitchGroups = [
     ]
   },
   {
+    anchorId: 'divider-ai-features-legacy',
     titleKey: 'pages.Setting.aiSetting.sectionFeaturesLegacy',
     items: [
       {
@@ -170,7 +172,7 @@ const AI_TIMEOUT_MAX_SEC = 1800
 const AI_TIMEOUT_DEFAULT_SEC = 300
 
 const AUTO_COLLECTION_COUNT_MIN = 3
-const AUTO_COLLECTION_COUNT_ABSOLUTE_MAX = 50
+const AUTO_COLLECTION_COUNT_ABSOLUTE_MAX = 100
 
 const AI_ANALYSIS_MAX_RETRIES_DEFAULT = 1
 const AI_ANALYSIS_CONCURRENCY_DEFAULT = 1
@@ -524,27 +526,53 @@ defineExpose({ resetForm, restoreAnchorScroll })
           class="anchor-link"
           href="#divider-ai-base"
           :title="t('pages.Setting.aiSetting.sectionBase')"
-        />
-        <el-anchor-link
-          class="anchor-link"
-          href="#divider-ai-vision"
-          :title="t('pages.Setting.aiSetting.visionSection')"
-        />
-        <el-anchor-link
-          class="anchor-link"
-          href="#divider-ai-text"
-          :title="t('pages.Setting.aiSetting.textSection')"
-        />
-        <el-anchor-link
-          class="anchor-link"
-          href="#divider-ai-visual-embed"
-          :title="t('pages.Setting.aiSetting.visualEmbedSection')"
-        />
+        >
+          <template #sub-link>
+            <el-anchor-link
+              class="anchor-sub-link"
+              href="#divider-ai-vision-input"
+              :title="t('pages.Setting.aiSetting.visionInputSection')"
+            />
+            <el-anchor-link
+              class="anchor-sub-link"
+              href="#divider-ai-vision"
+              :title="t('pages.Setting.aiSetting.visionSection')"
+            />
+            <el-anchor-link
+              class="anchor-sub-link"
+              href="#divider-ai-text"
+              :title="t('pages.Setting.aiSetting.textSection')"
+            />
+            <el-anchor-link
+              class="anchor-sub-link"
+              href="#divider-ai-visual-embed"
+              :title="t('pages.Setting.aiSetting.visualEmbedSection')"
+            />
+          </template>
+        </el-anchor-link>
         <el-anchor-link
           class="anchor-link"
           href="#divider-ai-features"
           :title="t('pages.Setting.aiSetting.sectionFeatures')"
-        />
+        >
+          <template #sub-link>
+            <el-anchor-link
+              class="anchor-sub-link"
+              href="#divider-ai-features-collections"
+              :title="t('pages.Setting.aiSetting.sectionFeaturesCollections')"
+            />
+            <el-anchor-link
+              class="anchor-sub-link"
+              href="#divider-ai-features-search"
+              :title="t('pages.Setting.aiSetting.sectionFeaturesSearch')"
+            />
+            <el-anchor-link
+              class="anchor-sub-link"
+              href="#divider-ai-features-legacy"
+              :title="t('pages.Setting.aiSetting.sectionFeaturesLegacy')"
+            />
+          </template>
+        </el-anchor-link>
         </el-anchor>
       </el-scrollbar>
       <AiAnalysisDashboardPanel
@@ -653,7 +681,7 @@ defineExpose({ resetForm, restoreAnchorScroll })
               <span class="timeout-unit">{{ t('pages.Setting.aiSetting.requestTimeoutUnit') }}</span>
             </div>
           </el-form-item>
-          <div id="divider-ai-vision-input" class="ai-form-section-divider">
+          <div id="divider-ai-vision-input" class="divider-sub">
             {{ t('pages.Setting.aiSetting.visionInputSection') }}
           </div>
           <el-form-item class="ai-form-item-labeled">
@@ -790,10 +818,8 @@ defineExpose({ resetForm, restoreAnchorScroll })
               />
             </div>
           </el-form-item>
-        </div>
 
-        <div class="form-card">
-          <div id="divider-ai-vision" class="divider">
+          <div id="divider-ai-vision" class="divider-sub">
             {{ t('pages.Setting.aiSetting.visionSection') }}
           </div>
           <el-form-item :label="t('pages.Setting.aiSetting.serviceProvider')">
@@ -874,10 +900,8 @@ defineExpose({ resetForm, restoreAnchorScroll })
               {{ testVisionResult.message }}
             </el-text>
           </el-form-item>
-        </div>
 
-        <div class="form-card">
-          <div id="divider-ai-text" class="divider">
+          <div id="divider-ai-text" class="divider-sub">
             {{ t('pages.Setting.aiSetting.textSection') }}
           </div>
           <el-form-item :label="t('pages.Setting.aiSetting.serviceProvider')">
@@ -999,10 +1023,8 @@ defineExpose({ resetForm, restoreAnchorScroll })
               />
             </el-form-item>
           </template>
-        </div>
 
-        <div class="form-card">
-          <div id="divider-ai-visual-embed" class="divider">
+          <div id="divider-ai-visual-embed" class="divider-sub">
             {{ t('pages.Setting.aiSetting.visualEmbedSection') }}
           </div>
           <el-form-item :label="t('pages.Setting.aiSetting.serviceProvider')">
@@ -1098,7 +1120,7 @@ defineExpose({ resetForm, restoreAnchorScroll })
             {{ t('pages.Setting.aiSetting.sectionFeatures') }}
           </div>
 
-          <div class="ai-form-section-divider ai-form-section-divider--first">
+          <div id="divider-ai-features-collections" class="divider-sub">
             {{ t('pages.Setting.aiSetting.sectionFeaturesCollections') }}
           </div>
 
@@ -1210,7 +1232,7 @@ defineExpose({ resetForm, restoreAnchorScroll })
             </el-form-item>
 
             <template v-for="group in featureSwitchGroups" :key="group.titleKey">
-              <div class="ai-form-section-divider">
+              <div :id="group.anchorId" class="divider-sub">
                 {{ t(group.titleKey) }}
               </div>
               <el-form-item
@@ -1338,20 +1360,6 @@ defineExpose({ resetForm, restoreAnchorScroll })
   color: var(--el-text-color-secondary);
 }
 
-.ai-form-section-divider {
-  margin: 12px 0 14px;
-  padding-top: 10px;
-  border-top: 1px solid var(--el-border-color-lighter);
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.4;
-  color: var(--el-text-color-primary);
-
-  &--first {
-    margin-top: 4px;
-  }
-}
-
 .vision-provider-block {
   display: flex;
   flex-direction: column;
@@ -1396,6 +1404,20 @@ defineExpose({ resetForm, restoreAnchorScroll })
   height: auto;
   overflow: visible;
   box-sizing: border-box;
+
+  .anchor-link {
+    .el-anchor__link {
+      font-size: 14px !important;
+      font-weight: bolder !important;
+    }
+  }
+
+  .anchor-sub-link {
+    .el-anchor__link {
+      font-size: 14px !important;
+      font-weight: normal !important;
+    }
+  }
 }
 
 </style>

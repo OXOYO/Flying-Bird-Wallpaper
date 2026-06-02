@@ -57,7 +57,9 @@ const openDrawer = () => {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px 4px;
+  height: var(--fbw-browse-toolbar-height);
+  min-height: var(--fbw-browse-toolbar-height);
+  padding: 0 var(--fbw-browse-chrome-padding-inline);
   box-sizing: border-box;
   width: 100%;
 }
@@ -87,8 +89,10 @@ const openDrawer = () => {
   right: 0;
   z-index: 20;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
+  height: auto;
+  min-height: 0;
   gap: 12px;
   width: 100%;
   padding: 0 8px;
@@ -110,13 +114,14 @@ const openDrawer = () => {
 }
 
 .chrome-mini-btn {
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
+  width: var(--fbw-chrome-mini-btn-size, 40px);
+  height: var(--fbw-chrome-mini-btn-size, 40px);
+  min-width: var(--fbw-chrome-mini-btn-size, 40px);
   border-radius: 50%;
   padding: 0;
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(8px);
+  background: var(--fbw-chrome-mini-btn-bg, rgba(0, 0, 0, 0.45));
+  backdrop-filter: var(--fbw-chrome-mini-btn-blur, blur(8px));
+  -webkit-backdrop-filter: var(--fbw-chrome-mini-btn-blur, blur(8px));
   border: none;
   color: #fff;
 

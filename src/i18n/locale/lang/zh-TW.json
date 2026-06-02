@@ -431,7 +431,7 @@
         "visionPreprocessMinSizeMBHint": "檔案不超過該體積且長邊已滿足時跳過縮圖，避免小圖重複處理",
         "visionJpegQuality": "縮圖 JPEG 品質",
         "visionJpegQualityHint": "75～95，預設 88；過高體積大、過慢，過低可能影響標籤準確度",
-        "sectionBase": "基礎設定",
+        "sectionBase": "AI 設置",
         "sectionFeatures": "功能選項",
         "serviceProvider": "服務提供商",
         "serviceType": "服務類型",
@@ -452,7 +452,7 @@
           "custom": "自訂 OpenAI 相容"
         },
         "visionSection": "視覺模型",
-        "textSection": "文字 / 向量模型",
+        "textSection": "文字模型",
         "visionModel": "視覺模型",
         "visionBaseUrl": "服務位址",
         "textModel": "文字模型",
@@ -510,7 +510,7 @@
         "visualEmbedSourceHint": "內建：離線、隨應用提供，適合畫面相似。遠端：使用 Ollama 等支援圖像 embedding 的模型（實驗性），失敗時回退內建。",
         "visualEmbedSourceBuiltin": "內建 MobileCLIP",
         "visualEmbedSourceRemote": "遠端 embedding 模型",
-        "visualEmbedSection": "畫面向量",
+        "visualEmbedSection": "畫面模型",
         "visualEmbedBaseUrl": "服務位址",
         "visualEmbedModel": "畫面 embedding 模型",
         "visualEmbedModelHint": "需為支援圖像向量的 embedding 模型；與視覺分析模型無關。失敗時回退內建 MobileCLIP。",
@@ -520,7 +520,7 @@
         "scoreMinFilter": "最低評分過濾",
         "scoreMinFilterHint": "系統自動合集僅納入 AI 美學分不低於該值的圖片，預設 70。修改後約 15 秒內會觸發合集重新整理",
         "autoCollectionsMaxCount": "系統推薦合集數量上限",
-        "autoCollectionsMaxCountHint": "自動整理時最多保留多少個系統推薦合集（3–50）；實際數量還取決於已分析圖片量（公式 √(已分析)×1.2，且不少於 3 個）。修改後約 15 秒內會觸發重新整理",
+        "autoCollectionsMaxCountHint": "自動整理時最多保留多少個系統推薦合集（3–100）；實際數量還取決於已分析圖片量（公式 √(已分析)×1.2，且不少於 3 個）。修改後約 15 秒內會觸發重新整理",
         "enableNsfwCheck": "內容安全篩選",
         "enableNsfwCheckHint": "搜尋與合集產生時隱藏高風險內容（依據分析結果中的安全等級）",
         "smartSearch": "智慧語意搜尋",
@@ -1009,7 +1009,10 @@
         "placeholder": "資源類型"
       },
       "resourceName": {
-        "placeholder": "資源名稱"
+        "placeholder": "資源名稱",
+        "listSearchPlaceholder": "搜尋資源名稱",
+        "listNoMatch": "沒有匹配的資源",
+        "listTabAll": "全部"
       },
       "filterType": {
         "placeholder": "類型"

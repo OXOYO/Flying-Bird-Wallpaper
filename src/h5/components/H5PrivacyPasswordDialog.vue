@@ -2,11 +2,13 @@
 import { ref } from 'vue'
 import { showToast } from 'vant/es'
 import { useTranslation } from 'i18next-vue'
+import { scheduleDialogInputFocus } from '@common/focusDialogInput.mjs'
 import * as api from '@h5/api/index.js'
 
 const { t } = useTranslation()
 
 const visible = ref(false)
+const passwordFieldRef = ref(null)
 const password = ref('')
 const passwordHint = ref('')
 const showPassword = ref(false)
@@ -67,6 +69,10 @@ const onClosed = () => {
   }
 }
 
+const onOpened = () => {
+  scheduleDialogInputFocus(() => passwordFieldRef.value)
+}
+
 defineExpose({ open })
 </script>
 
@@ -85,6 +91,7 @@ defineExpose({ open })
         {{ passwordHint }}
       </p>
       <van-field
+        ref="passwordFieldRef"
         :model-value="password"
         class="privacy-password-field"
         :type="showPassword ? 'text' : 'password'"

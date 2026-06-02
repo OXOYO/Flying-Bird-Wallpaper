@@ -31,7 +31,14 @@ import {
   applyH5ImageCompress,
   buildH5LocalImageUrl
 } from '@h5/utils/imageUrl.js'
-import { getH5NumberIndicatorStyle } from '@h5/utils/indicatorStyle.js'
+import { getH5NumberIndicatorStyle, resolveH5TopIndicatorOffset } from '@h5/utils/indicatorStyle.js'
+import { scheduleDialogInputFocus } from '@common/focusDialogInput.mjs'
+import {
+  buildResourcePickerGroups,
+  RESOURCE_PICKER_TAB_ALL,
+  RESOURCE_PICKER_TAB_LOCAL,
+  RESOURCE_PICKER_TAB_REMOTE
+} from '@common/resourcePickerFilter.mjs'
 
 const { t } = useTranslation()
 const commonStore = UseCommonStore()
@@ -168,7 +175,7 @@ const imageInfoPanelAnchors = [0, Math.round(0.55 * window.innerHeight)]
 const imageInfoPanelHeight = ref(imageInfoPanelAnchors[0])
 const pageWrapperRef = ref(null)
 const searchToolbarRef = ref(null)
-const searchToolbarHeight = ref(52)
+const searchToolbarHeight = ref(46)
 let searchToolbarResizeObserver = null
 const inlineVideoRefs = {}
 const inlineVideoPlayingKeys = ref(new Set())
@@ -325,12 +332,62 @@ const imageLoadedKeys = ref(new Set())
 const previewImageErrorAt = ref(-1)
 const imageLoadFailText = computed(() => t('messages.imageLoadRetryHint'))
 
-const resourceTypeOptions = computed(() => {
-  return resourceTypeList.map((item) => ({
-    text: t(item.locale),
-    value: item.value
-  }))
+const filterResourcePickerQuery = ref('')
+const filterResourcePickerTab = ref(RESOURCE_PICKER_TAB_ALL)
+
+const h5ResourceGroupList = computed(() => {
+  const map = commonStore.resourceMap
+  return resourceTypeList.map((group) => {
+    const resourceType = group.value
+    const sourceList = JSON.parse(
+      JSON.stringify(toRaw(map?.resourceListByResourceType?.[resourceType]) || [])
+    )
+    return {
+      ...group,
+      children: sourceList.map((item) => {
+        const resourceName = item.value
+        return {
+          ...item,
+          optionValue: {
+            key: `${resourceType}_${resourceName}`,
+            resourceType,
+            resourceName
+          }
+        }
+      })
+    }
+  })
 })
+
+const resourcePickerItemLabel = (item) => t(item.locale) || item.label || item.value || ''
+
+const filterResourcePickerGroups = computed(() =>
+  buildResourcePickerGroups(h5ResourceGroupList.value, {
+    query: filterResourcePickerQuery.value,
+    tab: filterResourcePickerTab.value,
+    getLabel: resourcePickerItemLabel,
+    getGroupTitle: (group) => t(group.locale)
+  })
+)
+
+const hasFilterResourcePickerFilter = computed(
+  () =>
+    !!filterResourcePickerQuery.value.trim() ||
+    filterResourcePickerTab.value !== RESOURCE_PICKER_TAB_ALL
+)
+
+const isFilterResourceActive = (item) =>
+  item?.optionValue?.resourceType === form.resourceType &&
+  item?.value === form.resourceName
+
+const selectFilterResource = (item) => {
+  const option = item?.optionValue
+  if (!option) return
+  form.resourceType = option.resourceType
+  form.resourceName = option.resourceName
+  syncFilterType()
+  settingStore.vibrate()
+}
 
 const sourceOptions = computed(() => {
   const rows = commonStore.resourceMap.resourceListByResourceType?.[form.resourceType] || []
@@ -987,8 +1044,14 @@ const onToggleFavorite = async (item) => {
   }
 }
 
+const resetFilterResourcePicker = () => {
+  filterResourcePickerQuery.value = ''
+  filterResourcePickerTab.value = RESOURCE_PICKER_TAB_ALL
+}
+
 const onResetFilters = () => {
   applyDefaultSearchResource()
+  resetFilterResourcePicker()
   form.filterType = 'images'
   form.orientation = ''
   form.quality = ''
@@ -1056,7 +1119,7 @@ const estimateWaterfallPageSize = () => {
     wrap?.clientHeight || 0,
     typeof window !== 'undefined' ? window.innerHeight : 800
   )
-  const toolbarH = immersiveMode.value ? 0 : searchToolbarHeight.value || 52
+  const toolbarH = immersiveMode.value ? 0 : searchToolbarHeight.value || 46
   const availableH = Math.max(280, viewportH - toolbarH - SEARCH_WATERFALL_CONTENT_GAP_PX - 16)
   const avgItemH = FALLBACK_ITEM_HEIGHT + GRID_GAP
   const rowsNeeded = Math.ceil(availableH / avgItemH) + WATERFALL_VIEWPORT_BUFFER_ROWS
@@ -1352,17 +1415,30 @@ const bindSearchToolbarResizeObserver = () => {
   searchToolbarResizeObserver.observe(el)
 }
 
+const isTopNumberIndicator = computed(
+  () => settingData.value.h5NumberIndicatorPosition === 'top'
+)
+
+/** 沉浸搜索：指示器叠在迷你顶栏中间（等同非沉浸时落在搜索框区域） */
+const showIndicatorInSearchChrome = computed(
+  () =>
+    immersiveMode.value &&
+    !similarMode.value &&
+    isTopNumberIndicator.value &&
+    list.value.length > 0
+)
+
 const searchPageIndicatorStyle = computed(() => {
   const position = settingData.value.h5NumberIndicatorPosition
-  const compactTopChrome = immersiveMode.value || displayMode.value === 'fullscreen'
-  let topOffset = compactTopChrome
-    ? 'calc(8px + env(safe-area-inset-top, 0px))'
-    : `calc(${searchToolbarHeight.value}px + env(safe-area-inset-top, 0px) + 4px)`
-
-  // 顶部指示器：搜索栏 + 列表上留白 + 与首行卡片间距（非沉浸瀑布流）
-  if (position === 'top' && displayMode.value === 'waterfall' && !immersiveMode.value) {
-    topOffset = `calc(${searchToolbarHeight.value}px + ${SEARCH_WATERFALL_CONTENT_GAP_PX}px + ${SEARCH_INDICATOR_TOP_CARD_GAP_PX}px + env(safe-area-inset-top, 0px))`
-  }
+  const topOffset = resolveH5TopIndicatorOffset({
+    position,
+    immersiveMode: immersiveMode.value,
+    similarMode: similarMode.value,
+    displayMode: displayMode.value,
+    toolbarHeightPx: searchToolbarHeight.value,
+    waterfallContentGapPx: SEARCH_WATERFALL_CONTENT_GAP_PX,
+    indicatorTopCardGapPx: SEARCH_INDICATOR_TOP_CARD_GAP_PX
+  })
 
   return getH5NumberIndicatorStyle(position, { topOffset })
 })
@@ -1373,6 +1449,7 @@ const openJumpPopup = () => {
 }
 
 const jumpIndex = ref('')
+const jumpFieldRef = ref(null)
 
 const JUMP_DIALOG_TOP_VAR = '--fbw-jump-dialog-top'
 let jumpDialogViewportBound = false
@@ -1393,6 +1470,11 @@ const onJumpDialogViewportChange = (forceTightTop = false) => {
     topPx = Math.round(Math.max(48, layoutH * 0.08))
   }
   document.documentElement.style.setProperty(JUMP_DIALOG_TOP_VAR, `${topPx}px`)
+}
+
+const onJumpDialogOpened = () => {
+  onJumpDialogViewportChange()
+  scheduleDialogInputFocus(() => jumpFieldRef.value)
 }
 
 const bindJumpDialogViewport = () => {
@@ -1718,7 +1800,7 @@ watch(
   }
 )
 
-watch(immersiveMode, () => {
+watch([immersiveMode, similarMode, displayMode], () => {
   nextTick(() => measureSearchToolbarHeight())
 })
 
@@ -2305,11 +2387,23 @@ const onPageResize = () => {
   })
 }
 
-const onFilterResourceTypeChange = () => {
-  const first = sourceOptions.value[0]
-  form.resourceName = first ? first.value : ''
-  syncFilterType()
+/** 过滤弹层打开时不自动聚焦关键词输入框 */
+const onFiltersPopupOpened = () => {
+  resetFilterResourcePicker()
+  nextTick(() => {
+    const active = document.activeElement
+    if (active instanceof HTMLElement && active.closest('.search-filters-popup')) {
+      active.blur()
+    }
+  })
 }
+
+watch(filterResourcePickerTab, () => {
+  const visible = filterResourcePickerGroups.value.flatMap((group) => group.items)
+  if (!visible.some((item) => isFilterResourceActive(item)) && visible.length) {
+    selectFilterResource(visible[0])
+  }
+})
 
 const onApplyFilters = async () => {
   state.showFilters = false
@@ -2462,7 +2556,11 @@ onMounted(async () => {
     @scroll.passive="onPageScroll"
   >
     <div class="page-search-inner">
-      <div ref="searchToolbarRef" class="search-toolbar-wrap">
+      <div
+        ref="searchToolbarRef"
+        class="search-toolbar-wrap"
+        :class="{ 'search-toolbar-wrap--similar': similarMode }"
+      >
       <H5BrowseChrome :immersive-mode="immersiveMode">
         <div class="search-row">
           <form class="search-form" autocomplete="off" @submit.prevent="onSearch">
@@ -2508,6 +2606,19 @@ onMounted(async () => {
           </van-button>
         </template>
       </H5BrowseChrome>
+      <div
+        v-if="showIndicatorInSearchChrome"
+        class="search-page-indicator h5-page-indicator--in-chrome h5-page-indicator--in-chrome-r2"
+        :class="{
+          'search-page-indicator--clickable': displayMode === 'fullscreen',
+          'h5-page-indicator--clickable': displayMode === 'fullscreen'
+        }"
+        @click="openJumpPopup"
+      >
+        <span class="h5-page-indicator__pill">{{
+          displayMode === 'fullscreen' ? fullscreenIndicatorText : waterfallIndicatorText
+        }}</span>
+      </div>
       <H5SimilarModeBanner
         v-if="similarMode"
         :message="t('exploreCommon.similarModeBanner')"
@@ -2808,7 +2919,13 @@ onMounted(async () => {
       </van-pull-refresh>
     </div>
 
-    <van-popup v-model:show="state.showFilters" position="bottom" round class="search-filters-popup">
+    <van-popup
+      v-model:show="state.showFilters"
+      position="bottom"
+      round
+      class="search-filters-popup"
+      @opened="onFiltersPopupOpened"
+    >
       <div class="filter-panel">
         <div class="filter-panel-header">
           <div class="filter-title">{{ t('h5.pages.search.filters.title') }}</div>
@@ -2841,16 +2958,78 @@ onMounted(async () => {
             {{ t('exploreCommon.header.useSemanticSearchHint') }}
           </p>
         </div>
-        <div class="filter-group">
-          <div class="group-title">{{ t('exploreCommon.searchForm.resourceType.placeholder') }}</div>
-          <van-radio-group
-            v-model="form.resourceType"
-            class="filter-options"
-            direction="horizontal"
-            @change="onFilterResourceTypeChange"
-          >
-            <van-radio v-for="o in resourceTypeOptions" :key="o.value" :name="o.value">{{ o.text }}</van-radio>
-          </van-radio-group>
+        <div class="filter-group filter-group--resource-picker">
+          <div class="group-title">{{ t('exploreCommon.searchForm.resourceName.placeholder') }}</div>
+          <div class="search-resource-picker">
+            <van-search
+              v-model="filterResourcePickerQuery"
+              class="search-resource-picker__search"
+              :placeholder="t('exploreCommon.searchForm.resourceName.listSearchPlaceholder')"
+              shape="round"
+              clearable
+            />
+            <van-tabs v-model:active="filterResourcePickerTab" shrink class="search-resource-picker__tabs">
+              <van-tab
+                :name="RESOURCE_PICKER_TAB_ALL"
+                :title="t('exploreCommon.searchForm.resourceName.listTabAll')"
+              />
+              <van-tab
+                :name="RESOURCE_PICKER_TAB_LOCAL"
+                :title="t('resourceTypeList.localResource')"
+              />
+              <van-tab
+                :name="RESOURCE_PICKER_TAB_REMOTE"
+                :title="t('resourceTypeList.remoteResource')"
+              />
+            </van-tabs>
+            <div class="search-resource-picker__body">
+              <template v-if="filterResourcePickerGroups.length">
+                <div
+                  v-for="group in filterResourcePickerGroups"
+                  :key="group.key"
+                  class="search-resource-picker__group"
+                >
+                  <div
+                    v-if="group.title && !group.hideTitle"
+                    class="search-resource-picker__group-title"
+                  >
+                    {{ group.title }}
+                  </div>
+                  <van-cell-group inset>
+                    <van-cell
+                      v-for="item in group.items"
+                      :key="item.optionValue.key"
+                      clickable
+                      :class="{ 'search-resource-picker__item--active': isFilterResourceActive(item) }"
+                      @click="selectFilterResource(item)"
+                    >
+                      <template #title>
+                        <div class="search-resource-picker__row">
+                          <span class="search-resource-picker__name">{{
+                            resourcePickerItemLabel(item)
+                          }}</span>
+                          <van-icon
+                            v-if="isFilterResourceActive(item)"
+                            name="success"
+                            class="search-resource-picker__check"
+                          />
+                        </div>
+                      </template>
+                    </van-cell>
+                  </van-cell-group>
+                </div>
+              </template>
+              <van-empty
+                v-else
+                class="search-resource-picker__empty"
+                :description="
+                  hasFilterResourcePickerFilter
+                    ? t('exploreCommon.searchForm.resourceName.listNoMatch')
+                    : t('messages.noData')
+                "
+              />
+            </div>
+          </div>
         </div>
         <template v-if="form.resourceType === 'localResource'">
           <div class="filter-group">
@@ -2874,12 +3053,6 @@ onMounted(async () => {
             </van-radio-group>
           </div>
         </template>
-        <div class="filter-group">
-          <div class="group-title">{{ t('exploreCommon.searchForm.resourceName.placeholder') }}</div>
-          <van-radio-group v-model="form.resourceName" class="filter-options" direction="horizontal" @change="onChangeSource">
-            <van-radio v-for="o in sourceOptions" :key="o.value" :name="o.value">{{ o.text }}</van-radio>
-          </van-radio-group>
-        </div>
         <div class="filter-group">
           <div class="group-title">{{ t('exploreCommon.searchForm.filterType.placeholder') }}</div>
           <van-radio-group v-model="form.filterType" class="filter-options" direction="horizontal">
@@ -3020,7 +3193,7 @@ onMounted(async () => {
     </van-floating-panel>
 
     <div
-      v-if="list.length"
+      v-if="list.length && !showIndicatorInSearchChrome"
       class="search-page-indicator"
       :class="{ 'search-page-indicator--clickable': displayMode === 'fullscreen' }"
       :style="searchPageIndicatorStyle"
@@ -3070,11 +3243,12 @@ onMounted(async () => {
       class-name="search-jump-dialog"
       :title="t('h5.pages.home.actions.jumpToIndex')"
       show-cancel-button
-      @opened="() => onJumpDialogViewportChange()"
+      @opened="onJumpDialogOpened"
       @confirm="jumpToIndex"
       @cancel="jumpIndex = ''"
     >
       <van-field
+        ref="jumpFieldRef"
         v-model="jumpIndex"
         :placeholder="t('h5.pages.home.actions.enterIndex')"
         type="digit"
@@ -3089,6 +3263,7 @@ onMounted(async () => {
 
 <style scoped lang="scss">
 .page-search-inner {
+  position: relative;
   width: 100%;
   max-width: none;
   box-sizing: border-box;
@@ -3206,9 +3381,6 @@ onMounted(async () => {
   opacity: 0.82;
 }
 
-.page-search--immersive .search-toolbar {
-  display: none;
-}
 .search-chrome-mini {
   position: fixed;
   top: calc(8px + env(safe-area-inset-top, 0px));
@@ -3255,6 +3427,8 @@ onMounted(async () => {
   background: rgba(0, 0, 0, 0.45);
   pointer-events: none;
 }
+
+/* 沉浸顶栏内指示器见 h5/assets/styles/main.css (.h5-page-indicator--in-chrome) */
 /* 顶栏基础样式见 h5/assets/styles/main.css */
 
 .search-toolbar-wrap .search-row {
@@ -3294,7 +3468,29 @@ onMounted(async () => {
 }
 
 .filter-keyword-input :deep(.van-search__content) {
+  display: flex;
   align-items: center;
+  box-sizing: border-box;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.filter-keyword-input :deep(.van-cell) {
+  align-items: center;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.filter-keyword-input :deep(.van-field__left-icon) {
+  display: flex;
+  align-items: center;
+  margin-right: 4px;
+}
+
+.filter-keyword-input :deep(.van-field__control) {
+  line-height: 22px;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 .result-list {
   padding: 0 12px;
@@ -3581,6 +3777,115 @@ onMounted(async () => {
 .filter-group {
   padding: 10px 0;
   border-bottom: 1px solid var(--van-border-color);
+}
+
+.filter-group--resource-picker {
+  border-bottom: 1px solid var(--van-border-color);
+
+  .group-title {
+    margin-bottom: 6px;
+  }
+}
+
+.search-resource-picker {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.search-resource-picker :deep(.van-cell) {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.search-resource-picker__search {
+  --van-search-padding: 0;
+  padding: 0 0 4px;
+}
+
+.search-resource-picker__search :deep(.van-search__content) {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.search-resource-picker__search :deep(.van-cell) {
+  align-items: center;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.search-resource-picker__search :deep(.van-field__left-icon) {
+  display: flex;
+  align-items: center;
+  margin-right: 4px;
+}
+
+.search-resource-picker__search :deep(.van-field__control) {
+  line-height: 22px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.search-resource-picker__tabs {
+  :deep(.van-tabs__wrap) {
+    height: 32px;
+    margin-bottom: 6px;
+  }
+
+  :deep(.van-tab) {
+    font-size: 13px;
+  }
+}
+
+.search-resource-picker__body {
+  max-height: 200px;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding-top: 2px;
+}
+
+.search-resource-picker__group {
+  margin-bottom: 6px;
+}
+
+.search-resource-picker__group-title {
+  padding: 8px 16px 4px;
+  font-size: 13px;
+  color: var(--van-text-color-2);
+}
+
+.search-resource-picker__item--active .search-resource-picker__name {
+  color: var(--van-primary-color);
+  font-weight: 600;
+}
+
+.search-resource-picker__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.search-resource-picker__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-resource-picker__check {
+  flex-shrink: 0;
+  color: var(--van-primary-color);
+}
+
+.search-resource-picker__empty {
+  padding: 16px 0;
 }
 .group-title {
   margin-bottom: 8px;

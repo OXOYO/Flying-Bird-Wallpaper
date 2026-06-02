@@ -35,24 +35,37 @@ defineEmits(['back'])
 
 <style scoped lang="scss">
 .h5-similar-banner {
-  flex-shrink: 0;
-  width: 100%;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
   box-sizing: border-box;
+  overflow: hidden;
+  pointer-events: none;
 }
 
 .h5-similar-banner__bar {
+  pointer-events: auto;
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 40px;
-  padding: 4px 8px 4px 0;
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  padding: 0 8px 0 0;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .h5-similar-banner__thumb-wrap {
   flex-shrink: 0;
+  align-self: stretch;
   width: 40px;
-  height: 40px;
+  min-width: 40px;
+  max-width: 40px;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
   overflow: hidden;
   background: rgba(0, 0, 0, 0.25);
 }
@@ -61,6 +74,8 @@ defineEmits(['back'])
   display: block;
   width: 100%;
   height: 100%;
+  min-height: 0;
+  min-width: 0;
   object-fit: cover;
 }
 

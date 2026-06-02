@@ -1,7 +1,7 @@
 <script setup>
 import { useTranslation } from 'i18next-vue'
+import ExploreResourcePicker from './ExploreResourcePicker.vue'
 import {
-  resourceTypeIcons,
   filterTypeOptions,
   orientationOptions,
   qualityList,
@@ -35,8 +35,28 @@ const emit = defineEmits([
 const { t } = useTranslation()
 
 const filterPopoverVisible = ref(false)
-const resourceFilterQuery = ref('')
-const panelResourceFilterQuery = ref('')
+
+/** 筛选面板可滚动区域高度（Popover 挂到 body，需配合全局样式） */
+const filterBodyMaxHeight = ref(420)
+
+const updateFilterBodyMaxHeight = () => {
+  if (typeof window === 'undefined') {
+    return
+  }
+  filterBodyMaxHeight.value = Math.max(
+    220,
+    Math.min(Math.floor(window.innerHeight * 0.52), window.innerHeight - 180)
+  )
+}
+
+onMounted(() => {
+  updateFilterBodyMaxHeight()
+  window.addEventListener('resize', updateFilterBodyMaxHeight)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateFilterBodyMaxHeight)
+})
 
 const isSearchMenu = computed(() => props.menu === 'Search')
 const isFavoritesMenu = computed(() => props.menu === 'Favorites')
@@ -61,53 +81,6 @@ const showQualityField = computed(() => isQualityFilterVisible(draft.filterType)
 const keywordsPlaceholder = computed(() =>
   t('exploreCommon.searchForm.filterKeywords.placeholder')
 )
-
-const resourceOptionLabel = (item) => t(item.locale) || item.value || ''
-
-const filterResourceGroups = (list, queryRaw) => {
-  const query = queryRaw.trim().toLowerCase()
-  if (!query) {
-    return list
-  }
-  return list
-    .map((group) => {
-      const children = (group.children || []).filter((item) => {
-        const label = resourceOptionLabel(item).toLowerCase()
-        const value = String(item.value || '').toLowerCase()
-        return label.includes(query) || value.includes(query)
-      })
-      return { ...group, children }
-    })
-    .filter((group) => group.children?.length)
-}
-
-const filteredResourceGroupList = computed(() =>
-  filterResourceGroups(props.resourceGroupList, resourceFilterQuery.value)
-)
-
-const filteredPanelResourceGroupList = computed(() =>
-  filterResourceGroups(props.resourceGroupList, panelResourceFilterQuery.value)
-)
-
-const onResourceFilter = (query) => {
-  resourceFilterQuery.value = query || ''
-}
-
-const onResourceVisibleChange = (visible) => {
-  if (!visible) {
-    resourceFilterQuery.value = ''
-  }
-}
-
-const onPanelResourceFilter = (query) => {
-  panelResourceFilterQuery.value = query || ''
-}
-
-const onPanelResourceVisibleChange = (visible) => {
-  if (!visible) {
-    panelResourceFilterQuery.value = ''
-  }
-}
 
 const draft = reactive({
   resource: null,
@@ -139,6 +112,7 @@ const getDefaultDraftResource = () => {
 
 watch(filterPopoverVisible, (visible) => {
   if (visible) {
+    updateFilterBodyMaxHeight()
     syncDraftFromForm()
   }
 })
@@ -274,42 +248,15 @@ const onExtraCommand = (command) => {
 
 <template>
   <div class="explore-search-header header-block">
-    <el-select
+    <ExploreResourcePicker
       v-if="isSearchMenu"
-      :model-value="selectedResource"
-      value-key="key"
       class="condition-item explore-search-header__primary"
-      filterable
-      :filter-method="onResourceFilter"
+      :model-value="selectedResource"
+      :resource-group-list="resourceGroupList"
+      :loading="loading"
       :disabled="loading"
-      :placeholder="t('exploreCommon.searchForm.resourceName.placeholder')"
-      size="large"
       @change="(val) => emit('resource-change', val)"
-      @visible-change="onResourceVisibleChange"
-    >
-      <template #label="{ label, value }">
-        <IconifyIcon
-          :icon="resourceTypeIcons[value.resourceType]"
-          class="explore-search-header__resource-icon"
-        />
-        <span class="explore-search-header__resource-label">{{ label }}</span>
-      </template>
-      <el-option-group
-        v-for="group in filteredResourceGroupList"
-        :key="group.value"
-        :label="t(group.locale)"
-      >
-        <el-option
-          v-for="item in group.children"
-          :key="item.optionValue.key"
-          :label="resourceOptionLabel(item)"
-          :value="item.optionValue"
-        >
-          <IconifyIcon :icon="group.icon" class="explore-search-header__option-icon" />
-          <span>{{ resourceOptionLabel(item) }}</span>
-        </el-option>
-      </el-option-group>
-    </el-select>
+    />
 
     <el-mention
       v-if="useMentionInput"
@@ -367,146 +314,133 @@ const onExtraCommand = (command) => {
         </template>
 
         <div class="explore-filter-panel" @mousedown.stop @click.stop>
-        <div class="explore-filter-panel__title">{{ t('exploreCommon.header.filterTitle') }}</div>
-
-        <div v-if="isSearchMenu" class="explore-filter-panel__field">
-          <div class="explore-filter-panel__label">
-            {{ t('exploreCommon.searchForm.resourceName.placeholder') }}
-          </div>
-          <el-select
-            v-model="draft.resource"
-            value-key="key"
-            filterable
-            :filter-method="onPanelResourceFilter"
-            :disabled="loading"
-            :placeholder="t('exploreCommon.searchForm.resourceName.placeholder')"
-            :teleported="false"
-            popper-class="explore-filter-select-popper"
-            style="width: 100%"
-            @visible-change="onPanelResourceVisibleChange"
+          <div class="explore-filter-panel__title">{{ t('exploreCommon.header.filterTitle') }}</div>
+          <el-scrollbar
+            :height="filterBodyMaxHeight"
+            always
+            class="explore-filter-panel__scroll"
           >
-            <el-option-group
-              v-for="group in filteredPanelResourceGroupList"
-              :key="group.value"
-              :label="t(group.locale)"
-            >
-              <el-option
-                v-for="item in group.children"
-                :key="item.optionValue.key"
-                :label="resourceOptionLabel(item)"
-                :value="item.optionValue"
-              >
-                <IconifyIcon :icon="group.icon" style="vertical-align: middle; margin-right: 8px" />
-                <span>{{ resourceOptionLabel(item) }}</span>
-              </el-option>
-            </el-option-group>
-          </el-select>
-        </div>
-
-        <div class="explore-filter-panel__field">
-          <div class="explore-filter-panel__label">
-            {{ t('exploreCommon.header.filterKeywords') }}
-          </div>
-          <el-input
-            v-model="draft.filterKeywords"
-            :disabled="loading"
-            :placeholder="keywordsPlaceholder"
-            clearable
-            @keydown.enter.prevent="onApplyFilters"
-          />
-        </div>
-
-        <div v-if="isSearchMenu" class="explore-filter-panel__field explore-filter-panel__field--switch">
-          <div class="explore-filter-panel__switch-row">
-            <span class="explore-filter-panel__label explore-filter-panel__label--inline">
-              {{ t('exploreCommon.header.useSemanticSearch') }}
-            </span>
-            <el-tooltip
-              v-if="!semanticSearchAvailable"
-              :content="t('exploreCommon.header.useSemanticSearchHint')"
-              placement="top"
-            >
-              <el-switch
-                :model-value="useSemanticSearch"
-                disabled
-                @change="(val) => emit('update-use-semantic-search', val)"
+            <div v-if="isSearchMenu" class="explore-filter-panel__field">
+              <div class="explore-filter-panel__label">
+                {{ t('exploreCommon.searchForm.resourceName.placeholder') }}
+              </div>
+              <ExploreResourcePicker
+                embedded
+                v-model="draft.resource"
+                :resource-group-list="resourceGroupList"
+                :loading="loading"
+                :embedded-max-list-height="200"
               />
-            </el-tooltip>
-            <el-switch
-              v-else
-              :model-value="useSemanticSearch"
-              :disabled="loading"
-              @change="(val) => emit('update-use-semantic-search', val)"
-            />
-          </div>
-        </div>
+            </div>
 
-        <div v-if="showFilterTypeField" class="explore-filter-panel__field">
-          <div class="explore-filter-panel__label">
-            {{ t('exploreCommon.searchForm.filterType.placeholder') }}
-          </div>
-          <el-radio-group v-model="draft.filterType" size="small">
-            <el-radio-button
-              v-for="item in visibleFilterTypes"
-              :key="item.value"
-              :value="item.value"
+            <div class="explore-filter-panel__field">
+              <div class="explore-filter-panel__label">
+                {{ t('exploreCommon.header.filterKeywords') }}
+              </div>
+              <el-input
+                v-model="draft.filterKeywords"
+                :disabled="loading"
+                :placeholder="keywordsPlaceholder"
+                clearable
+                @keydown.enter.prevent="onApplyFilters"
+              />
+            </div>
+
+            <div
+              v-if="isSearchMenu"
+              class="explore-filter-panel__field explore-filter-panel__field--switch"
             >
-              <IconifyIcon :icon="item.icon" />
-              {{ t(item.locale) }}
-            </el-radio-button>
-          </el-radio-group>
-        </div>
+              <div class="explore-filter-panel__switch-row">
+                <span class="explore-filter-panel__label explore-filter-panel__label--inline">
+                  {{ t('exploreCommon.header.useSemanticSearch') }}
+                </span>
+                <el-tooltip
+                  v-if="!semanticSearchAvailable"
+                  :content="t('exploreCommon.header.useSemanticSearchHint')"
+                  placement="top"
+                >
+                  <el-switch
+                    :model-value="useSemanticSearch"
+                    disabled
+                    @change="(val) => emit('update-use-semantic-search', val)"
+                  />
+                </el-tooltip>
+                <el-switch
+                  v-else
+                  :model-value="useSemanticSearch"
+                  :disabled="loading"
+                  @change="(val) => emit('update-use-semantic-search', val)"
+                />
+              </div>
+            </div>
 
-        <div class="explore-filter-panel__field">
-          <div class="explore-filter-panel__label">
-            {{ t('exploreCommon.searchForm.orientation.placeholder') }}
+            <div v-if="showFilterTypeField" class="explore-filter-panel__field">
+              <div class="explore-filter-panel__label">
+                {{ t('exploreCommon.searchForm.filterType.placeholder') }}
+              </div>
+              <el-radio-group v-model="draft.filterType" size="small">
+                <el-radio-button
+                  v-for="item in visibleFilterTypes"
+                  :key="item.value"
+                  :value="item.value"
+                >
+                  <IconifyIcon :icon="item.icon" />
+                  {{ t(item.locale) }}
+                </el-radio-button>
+              </el-radio-group>
+            </div>
+
+            <div class="explore-filter-panel__field">
+              <div class="explore-filter-panel__label">
+                {{ t('exploreCommon.searchForm.orientation.placeholder') }}
+              </div>
+              <el-select
+                v-model="draft.orientation"
+                multiple
+                collapse-tags
+                :teleported="false"
+                :placeholder="t('exploreCommon.searchForm.orientation.placeholder')"
+                popper-class="explore-filter-select-popper"
+                style="width: 100%"
+              >
+                <el-option
+                  v-for="item in orientationOptions"
+                  :key="item.value"
+                  :label="t(item.locale)"
+                  :value="item.value"
+                >
+                  <IconifyIcon :icon="item.icon" style="vertical-align: middle; margin-right: 8px" />
+                  {{ t(item.locale) }}
+                </el-option>
+              </el-select>
+            </div>
+
+            <div v-if="showQualityField" class="explore-filter-panel__field">
+              <div class="explore-filter-panel__label">
+                {{ t('exploreCommon.searchForm.quality.placeholder') }}
+              </div>
+              <el-select
+                v-model="draft.quality"
+                multiple
+                collapse-tags
+                :teleported="false"
+                :placeholder="t('exploreCommon.searchForm.quality.placeholder')"
+                popper-class="explore-filter-select-popper"
+                style="width: 100%"
+              >
+                <el-option v-for="text in qualityList" :key="text" :label="text" :value="text" />
+              </el-select>
+            </div>
+          </el-scrollbar>
+
+          <div class="explore-filter-panel__actions">
+            <el-button size="small" @click="onResetDraft">
+              {{ t('exploreCommon.header.reset') }}
+            </el-button>
+            <el-button type="primary" size="small" @click="onApplyFilters">
+              {{ t('exploreCommon.header.apply') }}
+            </el-button>
           </div>
-          <el-select
-            v-model="draft.orientation"
-            multiple
-            collapse-tags
-            :teleported="false"
-            :placeholder="t('exploreCommon.searchForm.orientation.placeholder')"
-            popper-class="explore-filter-select-popper"
-            style="width: 100%"
-          >
-            <el-option
-              v-for="item in orientationOptions"
-              :key="item.value"
-              :label="t(item.locale)"
-              :value="item.value"
-            >
-              <IconifyIcon :icon="item.icon" style="vertical-align: middle; margin-right: 8px" />
-              {{ t(item.locale) }}
-            </el-option>
-          </el-select>
-        </div>
-
-        <div v-if="showQualityField" class="explore-filter-panel__field">
-          <div class="explore-filter-panel__label">
-            {{ t('exploreCommon.searchForm.quality.placeholder') }}
-          </div>
-          <el-select
-            v-model="draft.quality"
-            multiple
-            collapse-tags
-            :teleported="false"
-            :placeholder="t('exploreCommon.searchForm.quality.placeholder')"
-            popper-class="explore-filter-select-popper"
-            style="width: 100%"
-          >
-            <el-option v-for="text in qualityList" :key="text" :label="text" :value="text" />
-          </el-select>
-        </div>
-
-        <div class="explore-filter-panel__actions">
-          <el-button size="small" @click="onResetDraft">
-            {{ t('exploreCommon.header.reset') }}
-          </el-button>
-          <el-button type="primary" size="small" @click="onApplyFilters">
-            {{ t('exploreCommon.header.apply') }}
-          </el-button>
-        </div>
         </div>
       </el-popover>
 
@@ -572,7 +506,7 @@ const onExtraCommand = (command) => {
   grid-template-columns: minmax(0, 1fr) auto;
 
   &:has(.explore-search-header__primary) {
-    grid-template-columns: minmax(0, min(200px, 36vw)) minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 260px) minmax(0, 1fr) auto;
   }
 
   .condition-item {
@@ -582,7 +516,7 @@ const onExtraCommand = (command) => {
   &__primary {
     grid-column: 1;
     width: 100%;
-    max-width: min(200px, 36vw);
+    max-width: 260px;
     min-width: 0;
   }
 
@@ -636,16 +570,6 @@ const onExtraCommand = (command) => {
     box-sizing: border-box;
   }
 
-  &__resource-icon,
-  &__option-icon {
-    vertical-align: middle;
-    margin-right: 8px;
-  }
-
-  &__resource-label {
-    vertical-align: middle;
-  }
-
   &--under-similar-banner {
     visibility: hidden;
     pointer-events: none;
@@ -680,11 +604,11 @@ const onExtraCommand = (command) => {
   &__title {
     font-size: 14px;
     font-weight: 600;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
   }
 
   &__field {
-    margin-bottom: 14px;
+    margin-bottom: 10px;
   }
 
   &__label {
@@ -712,8 +636,8 @@ const onExtraCommand = (command) => {
     display: flex;
     justify-content: flex-end;
     gap: 8px;
-    margin-top: 4px;
-    padding-top: 8px;
+    margin-top: 0;
+    padding-top: 10px;
     border-top: 1px solid var(--el-border-color-lighter);
   }
 }
@@ -742,25 +666,40 @@ const onExtraCommand = (command) => {
   }
 }
 
-:deep(.explore-search-header__primary) {
-  min-width: 0 !important;
-  max-width: 100%;
-
-  .el-select__wrapper {
-    min-width: 0 !important;
-  }
-
-  .el-select__input {
-    color: #ffffff !important;
-    caret-color: #ffffff;
-  }
-}
 </style>
 
 <style lang="scss">
 /* 筛选 Popover 内 Select 不挂到 body，避免选选项时误判为点击外部而关闭 Popover */
-.explore-filter-popover {
+.explore-filter-popover.el-popover.el-popper {
   overflow: visible !important;
+  box-sizing: border-box;
+
+  .explore-filter-panel {
+    display: flex;
+    flex-direction: column;
+    max-height: min(72vh, calc(100vh - 100px));
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+
+  .explore-filter-panel__scroll.el-scrollbar {
+    flex: 1;
+    min-height: 0;
+    align-self: stretch;
+
+    .el-scrollbar__wrap {
+      overflow-x: hidden;
+      overflow-y: scroll;
+    }
+
+    .el-scrollbar__view {
+      padding-right: 2px;
+    }
+  }
+
+  .resource-picker-panel__list--embedded.el-scrollbar .el-scrollbar__wrap {
+    overflow-x: hidden;
+  }
 }
 
 .explore-filter-select-popper {
@@ -768,7 +707,6 @@ const onExtraCommand = (command) => {
 }
 
 .explore-search-header.header-block {
-  .explore-search-header__primary .el-select__wrapper,
   .condition-keywords .el-input__wrapper,
   .condition-keywords .el-textarea__inner {
     width: 100% !important;
@@ -778,16 +716,9 @@ const onExtraCommand = (command) => {
     background-color: transparent !important;
     box-shadow: none !important;
 
-    .el-select__placeholder,
-    .el-select__selected-item,
-    .el-select__input,
     .el-input__inner {
       color: #ffffff !important;
       caret-color: #ffffff;
-    }
-
-    .el-select__caret {
-      color: #ffffff;
     }
   }
 
