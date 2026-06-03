@@ -24,9 +24,13 @@ export const normalizeBrowseItem = (item) => {
 
     if (row.srcType === 'file') {
       videoSrc = `/api/videos/get?filePath=${encodeURIComponent(row.filePath)}`
-      const iu = row.imageUrl || ''
-      if (iu) {
-        posterRaw = /^https?:\/\//i.test(iu) ? iu : buildH5LocalImageUrl(iu)
+      if (row.posterPath) {
+        posterRaw = buildH5LocalImageUrl(row.posterPath)
+      } else {
+        const iu = row.imageUrl || ''
+        if (iu) {
+          posterRaw = /^https?:\/\//i.test(iu) ? iu : buildH5LocalImageUrl(iu)
+        }
       }
     } else {
       videoSrc = row.videoUrl || ''

@@ -1,5 +1,5 @@
 import { OllamaProvider, OpenAiCompatibleProvider } from './providers/HttpAiProviders.mjs'
-import { buildImageAnalysisPrompt } from './AiPrompts.mjs'
+import { buildImageAnalysisPrompt, buildVideoPosterAnalysisPrompt } from './AiPrompts.mjs'
 import { extractJsonObject, normalizeAnalysisResult } from './AiResponseParser.mjs'
 import { calculateImageScore } from '../utils/utils.mjs'
 import { AI_PROVIDER_TYPES, DEFAULT_AI_TIMEOUT_MS, AI_TEST_CONNECTION_TIMEOUT_MS, resolveEffectiveVisionTimeout, AI_VISION_LONG_EDGE_MIN } from './aiConstants.mjs'
@@ -113,7 +113,7 @@ export default class AiAnalysisProvider {
     return new OllamaProvider(config)
   }
 
-  async analyzeImage(filePath) {
+  async analyzeImage(filePath, options = {}) {
     const ai = this.ai
     if (ai.legacyOnnxScore && !ai.enabled) {
       const score = await calculateImageScore(filePath)
@@ -142,11 +142,10 @@ export default class AiAnalysisProvider {
       : { filePath }
 
     const visionStartedAt = Date.now()
-    const rawText = await provider.analyzeImage(
-      visionInput,
-      buildImageAnalysisPrompt(),
-      ai.visionModel
-    )
+    const prompt = options.videoPoster
+      ? buildVideoPosterAnalysisPrompt()
+      : buildImageAnalysisPrompt()
+    const rawText = await provider.analyzeImage(visionInput, prompt, ai.visionModel)
     const visionMs = Date.now() - visionStartedAt
     const parseStartedAt = Date.now()
     let parsed = extractJsonObject(rawText)

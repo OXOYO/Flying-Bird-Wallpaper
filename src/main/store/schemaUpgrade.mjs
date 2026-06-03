@@ -18,6 +18,269 @@ const addColumnIfMissing = (db, table, column, definition, logger) => {
 /** 旧库升级：CREATE TABLE IF NOT EXISTS 不会补列，须在 createIndexes 之前执行 */
 export function upgradeResourcesSchema(db, logger) {
   migrateResourceAiSplitV1(db, logger)
+  addColumnIfMissing(db, 'fbw_resources', 'posterPath', "TEXT NOT NULL DEFAULT ''", logger)
+  migrateImageVecBlobCompositePk(db, logger)
+  upgradeResourceForeignKeys(db, logger)
+  migrateResourceVecTablesFk(db, logger)
+}
+
+const tableHasResourceFk = (db, table) => {
+  try {
+    return db
+      .prepare(`PRAGMA foreign_key_list(${table})`)
+      .all()
+      .some((fk) => fk.table === 'fbw_resources' && fk.from === 'resourceId')
+  } catch {
+    return false
+  }
+}
+
+const rebuildTableFromSelect = (db, table, createSql, insertSql) => {
+  db.exec(`DROP TABLE IF EXISTS ${table}_fk_new`)
+  db.exec(createSql.replace(`CREATE TABLE IF NOT EXISTS ${table}`, `CREATE TABLE ${table}_fk_new`))
+  db.exec(insertSql.replace(`INTO ${table}`, `INTO ${table}_fk_new`))
+  db.exec(`DROP TABLE ${table}`)
+  db.exec(`ALTER TABLE ${table}_fk_new RENAME TO ${table}`)
+}
+
+/** 旧库 junction 表补 FK CASCADE */
+export function upgradeResourceForeignKeys(db, logger) {
+  const tx = db.transaction(() => {
+    db.exec('PRAGMA foreign_keys=OFF')
+
+    if (!tableHasResourceFk(db, 'fbw_favorites')) {
+      rebuildTableFromSelect(
+        db,
+        'fbw_favorites',
+        `CREATE TABLE IF NOT EXISTS fbw_favorites (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          resourceId INTEGER NOT NULL REFERENCES fbw_resources(id) ON DELETE CASCADE,
+          created_at DATETIME DEFAULT (datetime('now', 'localtime')),
+          updated_at DATETIME DEFAULT (datetime('now', 'localtime')),
+          UNIQUE (resourceId)
+        )`,
+        `INSERT INTO fbw_favorites (id, resourceId, created_at, updated_at)
+         SELECT id, resourceId, created_at, updated_at FROM fbw_favorites
+         WHERE resourceId IN (SELECT id FROM fbw_resources)`
+      )
+      logger?.info?.('[schema] fbw_favorites FK upgraded')
+    }
+
+    if (!tableHasResourceFk(db, 'fbw_history')) {
+      rebuildTableFromSelect(
+        db,
+        'fbw_history',
+        `CREATE TABLE IF NOT EXISTS fbw_history (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          resourceId INTEGER NOT NULL REFERENCES fbw_resources(id) ON DELETE CASCADE,
+          created_at DATETIME DEFAULT (datetime('now', 'localtime')),
+          updated_at DATETIME DEFAULT (datetime('now', 'localtime')),
+          UNIQUE (id)
+        )`,
+        `INSERT INTO fbw_history (id, resourceId, created_at, updated_at)
+         SELECT id, resourceId, created_at, updated_at FROM fbw_history
+         WHERE resourceId IN (SELECT id FROM fbw_resources)`
+      )
+      logger?.info?.('[schema] fbw_history FK upgraded')
+    }
+
+    if (!tableHasResourceFk(db, 'fbw_privacy_space')) {
+      rebuildTableFromSelect(
+        db,
+        'fbw_privacy_space',
+        `CREATE TABLE IF NOT EXISTS fbw_privacy_space (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          resourceId INTEGER NOT NULL REFERENCES fbw_resources(id) ON DELETE CASCADE,
+          created_at DATETIME DEFAULT (datetime('now', 'localtime')),
+          updated_at DATETIME DEFAULT (datetime('now', 'localtime')),
+          UNIQUE (resourceId)
+        )`,
+        `INSERT INTO fbw_privacy_space (id, resourceId, created_at, updated_at)
+         SELECT id, resourceId, created_at, updated_at FROM fbw_privacy_space
+         WHERE resourceId IN (SELECT id FROM fbw_resources)`
+      )
+      logger?.info?.('[schema] fbw_privacy_space FK upgraded')
+    }
+
+    if (!tableHasResourceFk(db, 'fbw_statistics')) {
+      rebuildTableFromSelect(
+        db,
+        'fbw_statistics',
+        `CREATE TABLE IF NOT EXISTS fbw_statistics (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          resourceId INTEGER NOT NULL REFERENCES fbw_resources(id) ON DELETE CASCADE,
+          views INTEGER NOT NULL DEFAULT 0,
+          downloads INTEGER NOT NULL DEFAULT 0,
+          favorites INTEGER NOT NULL DEFAULT 0,
+          wallpapers INTEGER NOT NULL DEFAULT 0,
+          created_at DATETIME DEFAULT (datetime('now', 'localtime')),
+          updated_at DATETIME DEFAULT (datetime('now', 'localtime')),
+          UNIQUE (resourceId)
+        )`,
+        `INSERT INTO fbw_statistics (id, resourceId, views, downloads, favorites, wallpapers, created_at, updated_at)
+         SELECT id, resourceId, views, downloads, favorites, wallpapers, created_at, updated_at FROM fbw_statistics
+         WHERE resourceId IN (SELECT id FROM fbw_resources)`
+      )
+      logger?.info?.('[schema] fbw_statistics FK upgraded')
+    }
+
+    if (!tableHasResourceFk(db, 'fbw_resource_words')) {
+      rebuildTableFromSelect(
+        db,
+        'fbw_resource_words',
+        `CREATE TABLE IF NOT EXISTS fbw_resource_words (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          resourceId INTEGER NOT NULL REFERENCES fbw_resources(id) ON DELETE CASCADE,
+          wordId INTEGER NOT NULL REFERENCES fbw_words(id) ON DELETE CASCADE,
+          created_at DATETIME DEFAULT (datetime('now', 'localtime')),
+          updated_at DATETIME DEFAULT (datetime('now', 'localtime')),
+          UNIQUE (resourceId, wordId)
+        )`,
+        `INSERT INTO fbw_resource_words (id, resourceId, wordId, created_at, updated_at)
+         SELECT rw.id, rw.resourceId, rw.wordId, rw.created_at, rw.updated_at
+         FROM fbw_resource_words rw
+         WHERE rw.resourceId IN (SELECT id FROM fbw_resources)
+           AND rw.wordId IN (SELECT id FROM fbw_words)`
+      )
+      logger?.info?.('[schema] fbw_resource_words FK upgraded')
+    }
+
+    const collectionItemFks = db.prepare(`PRAGMA foreign_key_list(fbw_collection_items)`).all()
+    const hasCollectionItemResourceFk = collectionItemFks.some(
+      (fk) => fk.table === 'fbw_resources' && fk.from === 'resourceId'
+    )
+    if (!hasCollectionItemResourceFk) {
+      rebuildTableFromSelect(
+        db,
+        'fbw_collection_items',
+        `CREATE TABLE IF NOT EXISTS fbw_collection_items (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          collectionId INTEGER NOT NULL REFERENCES fbw_collections(id) ON DELETE CASCADE,
+          resourceId INTEGER NOT NULL REFERENCES fbw_resources(id) ON DELETE CASCADE,
+          rank INTEGER NOT NULL DEFAULT 0,
+          generated_at DATETIME DEFAULT (datetime('now', 'localtime')),
+          UNIQUE (collectionId, resourceId)
+        )`,
+        `INSERT INTO fbw_collection_items (id, collectionId, resourceId, rank, generated_at)
+         SELECT ci.id, ci.collectionId, ci.resourceId, ci.rank, ci.generated_at
+         FROM fbw_collection_items ci
+         WHERE ci.collectionId IN (SELECT id FROM fbw_collections)
+           AND ci.resourceId IN (SELECT id FROM fbw_resources)`
+      )
+      logger?.info?.('[schema] fbw_collection_items FK upgraded')
+    }
+
+    db.exec('PRAGMA foreign_keys=ON')
+  })
+  try {
+    tx()
+  } catch (err) {
+    logger?.warn?.(`[schema] upgradeResourceForeignKeys: ${err}`)
+    try {
+      db.exec('PRAGMA foreign_keys=ON')
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
+/** 画面向量表主键 (resourceId, model) */
+export function migrateImageVecBlobCompositePk(db, logger) {
+  let cols = []
+  try {
+    cols = db.prepare(`PRAGMA table_info(fbw_resource_image_vec_blob)`).all()
+  } catch {
+    return
+  }
+  if (!cols.length) return
+
+  const pkCols = cols.filter((c) => c.pk > 0).sort((a, b) => a.pk - b.pk)
+  if (pkCols.length === 2 && pkCols[0].name === 'resourceId' && pkCols[1].name === 'model') {
+    return
+  }
+  if (pkCols.length !== 1 || pkCols[0].name !== 'resourceId') {
+    return
+  }
+
+  logger?.info?.('[schema] migrateImageVecBlobCompositePk start')
+  const tx = db.transaction(() => {
+    db.exec('PRAGMA foreign_keys=OFF')
+    db.exec(`CREATE TABLE fbw_resource_image_vec_blob_new (
+      resourceId INTEGER NOT NULL REFERENCES fbw_resources(id) ON DELETE CASCADE,
+      embedding BLOB NOT NULL,
+      dim INTEGER NOT NULL,
+      model TEXT NOT NULL DEFAULT 'mobileclip2-s0',
+      updated_at DATETIME DEFAULT (datetime('now', 'localtime')),
+      PRIMARY KEY (resourceId, model)
+    )`)
+    db.exec(`INSERT OR IGNORE INTO fbw_resource_image_vec_blob_new
+      (resourceId, embedding, dim, model, updated_at)
+      SELECT resourceId, embedding, dim, model, updated_at FROM fbw_resource_image_vec_blob`)
+    db.exec('DROP TABLE fbw_resource_image_vec_blob')
+    db.exec('ALTER TABLE fbw_resource_image_vec_blob_new RENAME TO fbw_resource_image_vec_blob')
+    db.exec('PRAGMA foreign_keys=ON')
+  })
+  tx()
+  logger?.info?.('[schema] migrateImageVecBlobCompositePk done')
+}
+
+/** 文本向量 BLOB / embeddings 元数据表补 FK */
+export function migrateResourceVecTablesFk(db, logger) {
+  const tx = db.transaction(() => {
+    db.exec('PRAGMA foreign_keys=OFF')
+
+    const vecExists = db
+      .prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='fbw_resource_vec_blob'`)
+      .get()
+    if (vecExists && !tableHasResourceFk(db, 'fbw_resource_vec_blob')) {
+      rebuildTableFromSelect(
+        db,
+        'fbw_resource_vec_blob',
+        `CREATE TABLE IF NOT EXISTS fbw_resource_vec_blob (
+          resourceId INTEGER PRIMARY KEY REFERENCES fbw_resources(id) ON DELETE CASCADE,
+          embedding BLOB NOT NULL,
+          dim INTEGER NOT NULL,
+          updated_at DATETIME DEFAULT (datetime('now', 'localtime'))
+        )`,
+        `INSERT INTO fbw_resource_vec_blob (resourceId, embedding, dim, updated_at)
+         SELECT resourceId, embedding, dim, updated_at FROM fbw_resource_vec_blob
+         WHERE resourceId IN (SELECT id FROM fbw_resources)`
+      )
+      logger?.info?.('[schema] fbw_resource_vec_blob FK upgraded')
+    }
+
+    const embExists = db
+      .prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='fbw_resource_embeddings'`)
+      .get()
+    if (embExists && !tableHasResourceFk(db, 'fbw_resource_embeddings')) {
+      rebuildTableFromSelect(
+        db,
+        'fbw_resource_embeddings',
+        `CREATE TABLE IF NOT EXISTS fbw_resource_embeddings (
+          resourceId INTEGER PRIMARY KEY REFERENCES fbw_resources(id) ON DELETE CASCADE,
+          model TEXT NOT NULL DEFAULT '',
+          dim INTEGER NOT NULL DEFAULT 0,
+          updated_at DATETIME DEFAULT (datetime('now', 'localtime'))
+        )`,
+        `INSERT INTO fbw_resource_embeddings (resourceId, model, dim, updated_at)
+         SELECT resourceId, model, dim, updated_at FROM fbw_resource_embeddings
+         WHERE resourceId IN (SELECT id FROM fbw_resources)`
+      )
+      logger?.info?.('[schema] fbw_resource_embeddings FK upgraded')
+    }
+
+    db.exec('PRAGMA foreign_keys=ON')
+  })
+  try {
+    tx()
+  } catch (err) {
+    logger?.warn?.(`[schema] migrateResourceVecTablesFk: ${err}`)
+    try {
+      db.exec('PRAGMA foreign_keys=ON')
+    } catch {
+      /* ignore */
+    }
+  }
 }
 
 export function upgradeCollectionsSchema(db, logger) {
@@ -55,6 +318,8 @@ export function migrateResourceAiSplitV1(db, logger) {
   logger?.info?.('[schema] migrateResourceAiSplitV1 start')
 
   const migrate = db.transaction(() => {
+    db.exec('PRAGMA foreign_keys=OFF')
+
     db.exec(`INSERT OR REPLACE INTO fbw_resource_ai (
       resourceId, aiTitle, aiDesc, summary, aiScore, nsfwLevel, safeForWork,
       aiAnalysisStatus, aiAnalyzedAt, aiAnalysisFailCount, updated_at
@@ -72,7 +337,7 @@ export function migrateResourceAiSplitV1(db, logger) {
       COALESCE(aiAnalysisFailCount, 0),
       datetime('now', 'localtime')
     FROM fbw_resources
-    WHERE fileType = 'image'`)
+    WHERE fileType IN ('image', 'video')`)
 
     db.exec(`CREATE TABLE fbw_resources_new (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -84,6 +349,7 @@ export function migrateResourceAiSplitV1(db, logger) {
       fileSize INTEGER NOT NULL DEFAULT 0,
       imageUrl TEXT NOT NULL DEFAULT '',
       videoUrl TEXT NOT NULL DEFAULT '',
+      posterPath TEXT NOT NULL DEFAULT '',
       author TEXT NOT NULL DEFAULT '',
       link TEXT NOT NULL DEFAULT '',
       title TEXT NOT NULL DEFAULT '',
@@ -123,6 +389,8 @@ export function migrateResourceAiSplitV1(db, logger) {
     } catch {
       /* ignore */
     }
+
+    db.exec('PRAGMA foreign_keys=ON')
   })
 
   migrate()

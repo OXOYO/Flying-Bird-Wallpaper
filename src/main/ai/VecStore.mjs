@@ -54,7 +54,7 @@ export default class VecStore {
   _ensureBlobTable() {
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS fbw_resource_vec_blob (
-        resourceId INTEGER PRIMARY KEY,
+        resourceId INTEGER PRIMARY KEY REFERENCES fbw_resources(id) ON DELETE CASCADE,
         embedding BLOB NOT NULL,
         dim INTEGER NOT NULL,
         updated_at DATETIME DEFAULT (datetime('now', 'localtime'))
@@ -65,11 +65,12 @@ export default class VecStore {
   _ensureImageBlobTable() {
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS fbw_resource_image_vec_blob (
-        resourceId INTEGER PRIMARY KEY,
+        resourceId INTEGER NOT NULL REFERENCES fbw_resources(id) ON DELETE CASCADE,
         embedding BLOB NOT NULL,
         dim INTEGER NOT NULL,
         model TEXT NOT NULL DEFAULT 'mobileclip2-s0',
-        updated_at DATETIME DEFAULT (datetime('now', 'localtime'))
+        updated_at DATETIME DEFAULT (datetime('now', 'localtime')),
+        PRIMARY KEY (resourceId, model)
       )
     `)
   }
@@ -202,7 +203,7 @@ export default class VecStore {
           )
           .all(JSON.stringify(queryVec), k + 5)
         return rows
-          .filter((r) => excludeId == null || r.resourceId !== excludeId)
+          .filter((r) => excludeId == null || Number(r.resourceId) !== Number(excludeId))
           .slice(0, k)
           .map((r) => ({ resourceId: r.resourceId, distance: r.distance }))
       } catch {
@@ -293,10 +294,9 @@ export default class VecStore {
       .prepare(
         `INSERT INTO fbw_resource_image_vec_blob (resourceId, embedding, dim, model, updated_at)
          VALUES (?, ?, ?, ?, datetime('now', 'localtime'))
-         ON CONFLICT(resourceId) DO UPDATE SET
+         ON CONFLICT(resourceId, model) DO UPDATE SET
            embedding=excluded.embedding,
            dim=excluded.dim,
-           model=excluded.model,
            updated_at=excluded.updated_at`
       )
       .run(resourceId, blob, d, model || VISUAL_EMBED_MODEL_ID)

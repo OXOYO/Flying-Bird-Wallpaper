@@ -306,6 +306,8 @@ export const defaultSettingData = {
   remoteResourceSecretKeys: {},
   autoDownload: false,
   downloadSources: [],
+  /** 自动下载媒体类型多选：images | videos */
+  downloadMediaTypes: ['images'],
   downloadOrientation: [],
   downloadKeywords: [],
   downloadIntervalTime: 15,
@@ -563,6 +565,23 @@ export const qualityList = ['2K', '4K', '5K', '8K']
 /** 分辨率质量筛选仅适用于图片（视频资源不使用 2K/4K 等等级） */
 export function isQualityFilterApplicable(filterType) {
   return filterType !== 'videos'
+}
+
+/** 设置页自动下载媒体类型（至少保留 images） */
+export function normalizeDownloadMediaTypes(types) {
+  const allowed = new Set(['images', 'videos'])
+  const list = Array.isArray(types) ? types : types ? [types] : ['images']
+  const normalized = [...new Set(list.filter((v) => allowed.has(v)))]
+  return normalized.length ? normalized : ['images']
+}
+
+/** 插件是否支持指定搜索/下载类型 */
+export function resourceSupportsSearchType(resourceInfo, filterType) {
+  const types = resourceInfo?.supportSearchTypes
+  if (!Array.isArray(types) || !types.length) {
+    return filterType === 'images'
+  }
+  return types.includes(filterType)
 }
 
 export const filterTypeIcons = {

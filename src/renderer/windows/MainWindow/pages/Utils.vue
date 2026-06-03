@@ -1,13 +1,9 @@
 <script setup>
 import { resolveApiUserMessage } from '@common/utils.js'
-import UseSettingStore from '@renderer/stores/settingStore.js'
 import { useTranslation } from 'i18next-vue'
 import { computed } from 'vue'
 
 const { t } = useTranslation()
-
-const settingStore = UseSettingStore()
-const { settingData } = storeToRefs(settingStore)
 
 const onSetDynamicWallpaper = async () => {
   const selectFileRes = await window.FBW.selectFile('video')
@@ -76,9 +72,10 @@ const utilGroups = ref([
     locale: 'pages.Utils.dataUtils',
     children: [
       {
-        name: 'clearCurrentResourceDB',
-        text: '清空当前资源数据',
-        locale: 'pages.Utils.clearCurrentResourceDB',
+        name: 'clearResourcesLibraryDB',
+        text: '清空资源库数据',
+        locale: 'pages.Utils.clearResourcesLibraryDB',
+        confirmLocale: 'pages.Utils.clearResourcesLibraryConfirm',
         confirm: true
       },
       {
@@ -188,16 +185,10 @@ const onExec = (name) => {
   let args = []
   const util = utilList.value.find((item) => item.name === name)
   switch (name) {
-    case 'clearCurrentResourceDB': {
-      funcName = 'clearDB'
-      const resourceName = settingData.value.resourceName
-      if (['resources', 'favorites'].includes(resourceName)) {
-        args = [resourceName]
-      } else {
-        args = ['resources', resourceName]
-      }
+    case 'clearResourcesLibraryDB':
+      funcName = 'clearResourcesLibrary'
+      args = []
       break
-    }
     case 'clearAiAnalysisData':
       funcName = 'resetAiAnalysis'
       args = []

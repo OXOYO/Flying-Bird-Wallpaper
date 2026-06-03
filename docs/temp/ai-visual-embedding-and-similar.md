@@ -1,9 +1,9 @@
 # 视觉向量与找相似
 
-> 文档版本：**v2.2**  
-> 整理日期：2026-05-29  
+> 文档版本：**v2.3**  
+> 整理日期：**2026-06-03**  
 > 状态：**已实现**  
-> 关联：[ai-dev-plan.md](./ai-dev-plan.md) · [ai-feature-roadmap.md](./ai-feature-roadmap.md) · [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) · [README.md](./README.md)
+> 关联：[ai-dev-plan.md](./ai-dev-plan.md) · [resource-lifecycle-and-cleanup.md](./resource-lifecycle-and-cleanup.md) · [ai-feature-roadmap.md](./ai-feature-roadmap.md) · [README.md](./README.md)
 
 ---
 
@@ -61,7 +61,7 @@
 
 **生效条件：** `visualEmbedSource === 'remote'` **且** `visualEmbedModel` 非空（`usesRemoteVisualEmbed()`）。
 
-**失败策略：** 远程 embed 失败 → 日志 warn → **回退内置 MobileCLIP**。
+**失败策略：** 远程 embed 失败 → 日志 warn → **回退内置 MobileCLIP**，并以 **当前 active visual model id** 写入 BLOB（查询侧支持 model 回退）。
 
 ---
 
@@ -127,9 +127,9 @@
 | 表 | 用途 |
 |----|------|
 | `fbw_resource_vec_blob` | 文本向量（语义搜索、找相似文案 boost） |
-| `fbw_resource_image_vec_blob` | 画面向量（找相似、**系统策展 K-Means**、**用户合集画面补充**）；列 `model` 分桶 |
+| `fbw_resource_image_vec_blob` | 画面向量（找相似、**系统策展 K-Means**、**用户合集画面补充**）；**主键 `(resourceId, model)`** |
 
-内置 512 维可走 sqlite-vec `fbw_image_vec_index`；远程模型维数不同，按 `model` 分桶检索。
+内置 512 维可走 sqlite-vec `fbw_image_vec_index`（仅 **builtin model** 行）；远程 model 维数不同，按 `model` 分桶 BLOB 检索。
 
 ---
 
@@ -140,7 +140,7 @@
 | AI 分析成功 | ✅（需 `ai.enabled`） | ✅（需 `ai.enabled`；builtin 或 remote） |
 | 找相似（源图无向量） | 按需 `upsertForResource` | 优先 `upsertImageForResource` |
 | 后台 `visualEmbed` | — | 须 **`ai.enabled`**；每轮批量补算（内置约 40 张/批），按 **当前 active visual model** |
-| 找相似（用户点击） | 按需 | 源图无向量时可 **单张** `upsertImageForResource`（**不要求** `ai.enabled`） |
+| 找相似（用户点击） | 按需 | 源图无向量时可 **单张** `upsertImageForResource`（**不要求** `ai.enabled`）；**视频**用 `posterPath` |
 
 入库：远程非对称模型用 `input_type: passage`；语义搜索 query 用 `input_type: query`。
 
@@ -175,7 +175,7 @@
 
 | 通道 | 说明 |
 |------|------|
-| `main:findSimilar` | `{ resourceIds, total, signals? }`；`signals` 如 `visual`、`visual+text_boost` |
+| `main:findSimilar` | `{ resourceIds, total, signals? }`；**须有效 `resourceId`**；`signals` 如 `visual`、`visual+text_boost` |
 | `main:testAiConnection` | `type`: `vision` \| `text` \| `embed` \| `visual-embed` |
 | `main:listAiModels` | `kind`: `visualEmbed` + `purpose`: `visual-embed` |
 | `main:getAiAnalysisStats` | `imageEmbedding` 按当前 visual model 计数 |
@@ -265,3 +265,4 @@
 | **v2.0** | 2026-05-29 | 方案 C：RRF 画面为主；独立画面向量服务；EmbedRequestBuilder；兼容选项开关；移除用户阈值；测试连接统一 |
 | **v2.1** | 2026-05-29 | 合集改用画面向量：策展 K-Means、用户合集关键词优先 + `VisualCollectionSearch`；§13 |
 | **v2.2** | 2026-05-29 | `regenPrompt` 默认 false；LLM 动态标签扩展；实体词禁用画面补充；风景顶替根因与修复 |
+| **v2.3** | **2026-06-03** | 复合主键 `(resourceId,model)`；远程 fallback 写 active model；视频 `posterPath`；findSimilar IPC 校验；链至 cleanup 文档 |

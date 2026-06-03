@@ -243,6 +243,7 @@ const api = {
 
   // 数据库操作
   clearDB: (...args) => ipcRenderer.invoke('main:clearDB', ...args),
+  clearResourcesLibrary: () => ipcRenderer.invoke('main:clearResourcesLibrary'),
   clearCache: (...args) => ipcRenderer.invoke('main:clearCache', ...args),
   clearDownloadedAll: (...args) => ipcRenderer.invoke('main:clearDownloadedAll', ...args),
   clearDownloadedExpired: (...args) => ipcRenderer.invoke('main:clearDownloadedExpired', ...args),

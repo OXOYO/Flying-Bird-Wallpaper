@@ -76,7 +76,9 @@ export const API_ERROR_CODE = {
   API_PLUGIN_METHOD_MISSING: 'API_PLUGIN_METHOD_MISSING',
   OPEN_DIR_INVALID_PATH: 'OPEN_DIR_INVALID_PATH',
   OPEN_DIR_NOT_FOUND: 'OPEN_DIR_NOT_FOUND',
-  ENTER_KEYWORDS: 'ENTER_KEYWORDS'
+  ENTER_KEYWORDS: 'ENTER_KEYWORDS',
+  RESOURCE_NOT_FOUND: 'RESOURCE_NOT_FOUND',
+  DOWNLOAD_FAILED: 'DOWNLOAD_FAILED'
 }
 
 /** 插件源加载错误码（主进程分类用，与用户可见文案解耦） */
@@ -178,6 +180,12 @@ export const resolveApiUserMessage = (input, t) => {
   }
   if (code === API_ERROR_CODE.ENTER_KEYWORDS) {
     return t('messages.enterKeywords')
+  }
+  if (code === API_ERROR_CODE.RESOURCE_NOT_FOUND) {
+    return t('messages.resourceNotExist')
+  }
+  if (code === API_ERROR_CODE.DOWNLOAD_FAILED) {
+    return raw || t('messages.downloadFileFail')
   }
 
   if (!raw) return t('messages.getDataFail')

@@ -4,7 +4,7 @@ import { useTranslation } from 'i18next-vue'
 import { storeToRefs } from 'pinia'
 import { ElCheckbox } from 'element-plus'
 import UseSettingStore from '@renderer/stores/settingStore.js'
-import { applyExploreImageSrc } from '@renderer/utils/resourceImageUrl.js'
+import { applyExploreImageSrc, supportsAiVisionActions } from '@renderer/utils/resourceImageUrl.js'
 import { hex2RGB } from '@renderer/utils/gen-color.js'
 import { cloneForIpc } from '@renderer/utils/cloneForIpc.js'
 
@@ -51,7 +51,11 @@ export function buildResourceCardButtons(item, context, t) {
   ]
   if (item.fileType === 'image') {
     ret.push(
-      { title: t('exploreCommon.doViewImage'), action: 'doViewImage', icon: 'custom:preview' },
+      { title: t('exploreCommon.doViewImage'), action: 'doViewImage', icon: 'custom:preview' }
+    )
+  }
+  if (supportsAiVisionActions(item)) {
+    ret.push(
       {
         title: t('exploreCommon.aiAnalyze'),
         action: 'aiAnalyze',
@@ -311,9 +315,13 @@ export function useResourceCardActions(options = {}) {
   }
 
   const addToFavorites = async (item, index, isPrivacySpace = false) => {
-    const res = await window.FBW.addToFavorites(item.id, isPrivacySpace)
+    const res = await window.FBW.addToFavorites(cloneForIpc(item), isPrivacySpace)
     if (res?.success) {
-      patchListItem(item, index, { isFavorite: 1 })
+      if (res.data?.resource) {
+        patchListItem(item, index, { ...res.data.resource, isFavorite: 1 })
+      } else {
+        patchListItem(item, index, { isFavorite: 1 })
+      }
     }
     setCardItemStatus(index, res?.success ? 'success' : 'error')
   }

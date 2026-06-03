@@ -94,6 +94,7 @@ process.parentPort.on('message', (e) => {
           settingManager,
           apiManager
         )
+        resourcesManager.setFileManager(fileManager)
         const serverRes = await server({
           dbManager,
           settingManager,

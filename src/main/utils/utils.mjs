@@ -205,6 +205,23 @@ export const readDirRecursive = async (
   return validRows
 }
 
+/** 列出目录下符合扩展名的全部文件绝对路径（刷新目录 prune 用） */
+export async function listDirectoryFilePaths(dirPath, allowedFileExt = []) {
+  if (!dirPath || !allowedFileExt.length) return []
+  const patterns = allowedFileExt.map((ext) => `**/*${ext}`)
+  try {
+    return await fg(patterns, {
+      cwd: dirPath,
+      absolute: true,
+      onlyFiles: true,
+      stats: false,
+      followSymbolicLinks: false
+    })
+  } catch {
+    return []
+  }
+}
+
 export const formatFileSize = (bytes = 0) => {
   if (bytes === 0) return '0 B'
   const k = 1024

@@ -1,7 +1,7 @@
 /**
  * 文件服务子进程
  * */
-import { readDirRecursive, calculateImageByPath } from '../../utils/utils.mjs'
+import { readDirRecursive, listDirectoryFilePaths, calculateImageByPath } from '../../utils/utils.mjs'
 
 process.parentPort.on('message', (e) => {
   const [port] = e.ports
@@ -65,7 +65,21 @@ process.parentPort.on('message', (e) => {
         const dirPromises = data.folderPaths.map((folderPath) =>
           readDirRecursive(data.resourceName, folderPath, data.allowedFileExt, existingFiles)
         )
-        // 等待所有目录处理完成
+        const scanResults = await Promise.all(
+          data.folderPaths.map(async (folderPath) => {
+            try {
+              const paths = await listDirectoryFilePaths(folderPath, data.allowedFileExt)
+              return { ok: true, paths }
+            } catch (scanErr) {
+              logger.warn(`[FileServer] 扫描目录失败: ${folderPath} => ${scanErr}`)
+              return { ok: false, paths: [] }
+            }
+          })
+        )
+        const scanComplete = scanResults.every((item) => item.ok)
+        const scannedFilePaths = scanComplete
+          ? [...new Set(scanResults.flatMap((item) => item.paths))]
+          : undefined
         const results = await Promise.all(dirPromises)
 
         // 合并结果
@@ -107,6 +121,8 @@ process.parentPort.on('message', (e) => {
             isManual: data.isManual,
             resourceName: data.resourceName,
             list: batchedList,
+            scannedFilePaths,
+            scanComplete,
             stats,
             refreshDirStartTime: data.refreshDirStartTime,
             readDirTime
@@ -118,6 +134,8 @@ process.parentPort.on('message', (e) => {
             isManual: data.isManual,
             resourceName: data.resourceName,
             list: [...fileMap.values()],
+            scannedFilePaths,
+            scanComplete,
             stats,
             refreshDirStartTime: data.refreshDirStartTime,
             readDirTime

@@ -14,6 +14,7 @@ import {
   VISUAL_EMBED_REMOTE_BATCH_PAUSE_MS
 } from './aiConstants.mjs'
 import { EMBED_INPUT_TYPE, isAsymmetricEmbedModel, supportsImageAsQuery } from './AsymmetricEmbedUtils.mjs'
+import { buildAnalyzableResourceWhere, resolveVisionImagePath } from './AiVisionResourcePath.mjs'
 
 export default class EmbeddingManager {
   static _instance = null
@@ -137,11 +138,12 @@ export default class EmbeddingManager {
     }
   }
 
-  async _upsertBuiltinVisual(resourceId, filePath) {
+  async _upsertBuiltinVisual(resourceId, filePath, modelOverride = null) {
     const vector = await this.visualEmbedder.embedImageFile(filePath)
     if (!vector?.length) return { success: false, message: 'empty visual embedding' }
-    this.vecStore.upsertImage(resourceId, vector, vector.length, VISUAL_EMBED_MODEL_ID)
-    return { success: true, dim: vector.length, kind: 'visual', model: VISUAL_EMBED_MODEL_ID }
+    const model = modelOverride || VISUAL_EMBED_MODEL_ID
+    this.vecStore.upsertImage(resourceId, vector, vector.length, model)
+    return { success: true, dim: vector.length, kind: 'visual', model }
   }
 
   async _upsertRemoteVisual(resourceId, filePath) {
@@ -156,11 +158,14 @@ export default class EmbeddingManager {
 
   async upsertImageForResource(resourceId) {
     const row = this.db
-      .prepare(`SELECT id, filePath, fileType FROM fbw_resources WHERE id = ?`)
+      .prepare(`SELECT id, filePath, posterPath, fileType FROM fbw_resources WHERE id = ?`)
       .get(resourceId)
     if (!row) return { success: false, message: 'resource not found' }
-    if (row.fileType !== 'image') return { success: false, message: 'not image' }
-    if (!row.filePath || !fs.existsSync(row.filePath)) {
+    const visionPath = resolveVisionImagePath(row)
+    if (!visionPath) {
+      return { success: false, message: row.fileType === 'video' ? 'no poster' : 'not image' }
+    }
+    if (!fs.existsSync(visionPath)) {
       return { success: false, message: 'file missing' }
     }
 
@@ -170,15 +175,19 @@ export default class EmbeddingManager {
       let result
       if (useRemote) {
         try {
-          result = await this._upsertRemoteVisual(resourceId, row.filePath)
+          result = await this._upsertRemoteVisual(resourceId, visionPath)
         } catch (remoteErr) {
           this.logger.warn(
             `[EmbeddingManager] remote visual embed failed id=${resourceId}, fallback builtin: ${remoteErr}`
           )
-          result = await this._upsertBuiltinVisual(resourceId, row.filePath)
+          result = await this._upsertBuiltinVisual(
+            resourceId,
+            visionPath,
+            this.getActiveVisualModelId()
+          )
         }
       } else {
-        result = await this._upsertBuiltinVisual(resourceId, row.filePath)
+        result = await this._upsertBuiltinVisual(resourceId, visionPath)
       }
 
       if (!result.success) return result
@@ -202,15 +211,22 @@ export default class EmbeddingManager {
 
   _getVisualQueryVector(resourceId) {
     const model = this.getActiveVisualModelId()
-    const row = this.db
+    let row = this.db
       .prepare(
         `SELECT embedding, dim, model FROM fbw_resource_image_vec_blob WHERE resourceId = ? AND model = ?`
       )
       .get(resourceId, model)
+    if (!row) {
+      row = this.db
+        .prepare(
+          `SELECT embedding, dim, model FROM fbw_resource_image_vec_blob WHERE resourceId = ? ORDER BY updated_at DESC LIMIT 1`
+        )
+        .get(resourceId)
+    }
     if (!row) return null
     return {
       vec: this.vecStore.blobToFloat32(row.embedding, row.dim),
-      model
+      model: row.model || model
     }
   }
 
@@ -224,10 +240,13 @@ export default class EmbeddingManager {
 
   async _embedAsymmetricVisualQuery(resourceId) {
     const model = this.getActiveVisualModelId()
-    const row = this.db.prepare(`SELECT filePath FROM fbw_resources WHERE id = ?`).get(resourceId)
-    if (!row?.filePath || !fs.existsSync(row.filePath)) return null
+    const row = this.db
+      .prepare(`SELECT filePath, posterPath, fileType FROM fbw_resources WHERE id = ?`)
+      .get(resourceId)
+    const visionPath = resolveVisionImagePath(row)
+    if (!visionPath || !fs.existsSync(visionPath)) return null
     try {
-      const vec = await this.provider.embedImageFile(row.filePath, undefined, {
+      const vec = await this.provider.embedImageFile(visionPath, undefined, {
         inputType: EMBED_INPUT_TYPE.QUERY
       })
       if (!vec?.length) return null
@@ -320,7 +339,7 @@ export default class EmbeddingManager {
              FROM fbw_resource_image_vec_blob v
              JOIN fbw_resources r ON r.id = v.resourceId
              INNER JOIN fbw_resource_ai ai ON ai.resourceId = r.id
-             WHERE r.fileType='image' AND ai.aiAnalysisStatus = 'done' AND v.model = ?`
+             WHERE r.fileType IN ('image', 'video') AND ai.aiAnalysisStatus = 'done' AND v.model = ?`
           )
           .get(model)?.c || 0
       )
@@ -380,12 +399,12 @@ export default class EmbeddingManager {
    * 后台补算尚未生成视觉向量的图片（按当前 active visual model）
    */
   _fetchVisualBackfillBatch(activeModel, limit) {
+    const analyzable = buildAnalyzableResourceWhere('r')
     return this.db
       .prepare(
         `SELECT r.id
          FROM fbw_resources r
-         WHERE r.fileType = 'image'
-           AND r.filePath IS NOT NULL AND r.filePath != ''
+         WHERE ${analyzable}
            AND NOT EXISTS (
              SELECT 1 FROM fbw_resource_image_vec_blob v
              WHERE v.resourceId = r.id AND v.model = ?

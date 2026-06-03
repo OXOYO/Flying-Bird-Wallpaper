@@ -1,8 +1,11 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { setWallpaper } from 'wallpaper'
-import axios from 'axios'
 import { t } from '../../i18n/server.js'
+import {
+  normalizeDownloadMediaTypes,
+  resourceSupportsSearchType
+} from '../../common/publicData.js'
 import {
   buildDownloadParamStoreKey,
   parseDownloadParamStoreKey,
@@ -19,6 +22,11 @@ import {
   isNsfwMaskableItem,
   shouldFilterSensitiveForWallpaper
 } from '../../common/privacyNsfwMask.js'
+
+/** 自动清理下载时保留：已收藏、隐私空间中的资源（工具页手动清理不受此限制） */
+const CLEAR_DOWNLOAD_PROTECTED_SQL = `
+  AND NOT EXISTS (SELECT 1 FROM fbw_favorites f WHERE f.resourceId = r.id)
+  AND NOT EXISTS (SELECT 1 FROM fbw_privacy_space p WHERE p.resourceId = r.id)`
 
 export default class WallpaperManager {
   // 单例实例
@@ -707,9 +715,16 @@ export default class WallpaperManager {
     }
   }
 
-  // 搜索并下载壁纸
+  // 搜索并下载壁纸（统一走 FileManager.downloadFile）
   async searchWallpaperWithDownload(params) {
-    const { resourceName, keywords, orientation, startPage, pageSize } = params
+    const {
+      resourceName,
+      keywords,
+      orientation,
+      startPage,
+      pageSize,
+      filterType = 'images'
+    } = params
     const { downloadFolder, remoteResourceSecretKeys } = this.settingData
 
     let ret = {
@@ -723,7 +738,6 @@ export default class WallpaperManager {
       return ret
     }
 
-    // 先获取资源数据
     const resourceMapRes = await this.dbManager.getResourceMap()
     if (!resourceMapRes.success) {
       ret.message = resourceMapRes.message
@@ -751,6 +765,7 @@ export default class WallpaperManager {
     try {
       const res = await this.apiManager.call(resourceName, 'search', {
         keywords,
+        filterType,
         orientation,
         startPage,
         pageSize,
@@ -758,88 +773,25 @@ export default class WallpaperManager {
       })
       if (res) {
         ret.list = res.list || []
+        let downloadedCount = 0
+        let skippedCount = 0
         if (res.list.length) {
-          const docs = []
-          const inserted_ids = []
-          const duplicate_filePaths = []
-          // 存储到本地
           for (let i = 0; i < res.list.length; i++) {
             const item = res.list[i]
-            const filePath = path.join(downloadFolder, `${item.fileName}.${item.fileExt}`)
             try {
-              if (fs.existsSync(filePath)) {
-                // 文件已存在，取消写入
-                this.logger.warn(`搜索并下载壁纸文件 ${filePath} 已存在，跳过写入`)
+              const downloadRes = await this.fileManager.downloadFile({ ...item, srcType: 'url' })
+              if (downloadRes.success && downloadRes.data) {
+                downloadedCount += 1
               } else {
-                // 方式一：同步写入
-                const fileRes = await axios.get(item.imageUrl, { responseType: 'arraybuffer' })
-                fs.writeFileSync(filePath, fileRes.data)
+                skippedCount += 1
               }
-              const stats = fs.statSync(filePath)
-              docs.push({
-                ...item,
-                filePath,
-                fileSize: stats.size,
-                atimeMs: stats.atimeMs,
-                mtimeMs: stats.mtimeMs,
-                ctimeMs: stats.ctimeMs
-              })
             } catch (err) {
-              this.logger.error(`searchWallpaperWithDownload writeFileSync ERROR:: ${err}`)
+              skippedCount += 1
+              this.logger.error(`searchWallpaperWithDownload downloadFile ERROR:: ${err}`)
             }
           }
-          if (docs.length) {
-            try {
-              const insert_stmt = this.db.prepare(
-                `INSERT OR IGNORE INTO fbw_resources
-                 (resourceName, fileName, filePath, fileExt, fileSize, imageUrl, author, link, title, desc, quality, width, height, isLandscape, atimeMs, mtimeMs, ctimeMs) VALUES
-                 (@resourceName, @fileName, @filePath, @fileExt, @fileSize, @imageUrl, @author, @link, @title, @desc, @quality, @width, @height, @isLandscape, @atimeMs, @mtimeMs, @ctimeMs)`
-              )
-              const transaction = this.db.transaction((docs) => {
-                for (let i = 0; i < docs.length; i++) {
-                  const item = docs[i]
-                  try {
-                    const insert_result = insert_stmt.run({
-                      resourceName: item.resourceName,
-                      fileName: item.fileName,
-                      filePath: item.filePath,
-                      fileExt: item.fileExt,
-                      fileSize: item.fileSize,
-                      imageUrl: item.imageUrl,
-                      author: item.author,
-                      link: item.link,
-                      title: item.title,
-                      desc: item.desc,
-                      quality: item.quality,
-                      width: item.width,
-                      height: item.height,
-                      isLandscape: item.isLandscape,
-                      atimeMs: item.atimeMs,
-                      mtimeMs: item.mtimeMs,
-                      ctimeMs: item.ctimeMs
-                    })
-                    const lastInsertedId = insert_result.lastInsertRowid
-                    if (lastInsertedId) {
-                      inserted_ids.push(lastInsertedId)
-                    }
-                  } catch (err) {
-                    if (err.message.includes('UNIQUE constraint failed')) {
-                      // 处理唯一约束失败错误
-                      this.logger.warn(`跳过重复数据: ${item.filePath}`)
-                      duplicate_filePaths.push(item.filePath)
-                    } else {
-                      throw err // 抛出其他类型的错误
-                    }
-                  }
-                }
-              })
-              transaction(docs)
-            } catch (err) {
-              this.logger.error(`searchWallpaperWithDownload insert ERROR:: ${err}`)
-            }
-          }
-          this.logger.warn(
-            `搜索并下载壁纸成功，总计 ${res.list.length} 条数据，有效 ${docs.length} 条数据，插入 ${inserted_ids.length} 条数据，跳过 ${duplicate_filePaths.length} 条重复数据`
+          this.logger.info(
+            `搜索并下载完成：源=${resourceName} 类型=${filterType} 关键词=${keywords} 共 ${res.list.length} 条，成功 ${downloadedCount}，跳过/失败 ${skippedCount}`
           )
         } else {
           this.logger.info('搜索并下载壁纸无可用数据')
@@ -882,6 +834,7 @@ export default class WallpaperManager {
     this.downloadParams.downloadOrientation = settingData.downloadOrientation
 
     const { downloadFolder, autoDownload } = settingData
+    const downloadMediaTypes = normalizeDownloadMediaTypes(settingData.downloadMediaTypes)
     const {
       downloadSources,
       downloadKeywords: currentKeywords,
@@ -896,7 +849,8 @@ export default class WallpaperManager {
       !downloadSources.length ||
       !currentKeywords ||
       !currentKeywords.length ||
-      !downloadFolder
+      !downloadFolder ||
+      !downloadMediaTypes.length
     ) {
       // 条件不满足，停止下载任务
       if (typeof stopDownloadTask === 'function') {
@@ -921,19 +875,28 @@ export default class WallpaperManager {
         fs.mkdirSync(downloadFolder, { recursive: true })
       }
 
-      // 为每个资源-关键词组合创建独立的下载任务
+      // 为每个资源-关键词-媒体类型组合创建独立的下载任务
+      const resourceMapRes = await this.dbManager.getResourceMap()
+      const remoteResourceMap = resourceMapRes.success ? resourceMapRes.data?.remoteResourceMap : {}
+
       const downloadTasks = []
       for (let i = 0; i < downloadSources.length; i++) {
         const source = downloadSources[i]
+        const resourceInfo = remoteResourceMap?.[source]
         for (let j = 0; j < currentKeywords.length; j++) {
           const keyword = currentKeywords[j]
-          // 为每个组合创建独立的任务
-          downloadTasks.push({
-            source,
-            keyword,
-            // 获取该组合的独立参数
-            params: await this.getResourceKeywordParams(source, keyword)
-          })
+          for (let k = 0; k < downloadMediaTypes.length; k++) {
+            const filterType = downloadMediaTypes[k]
+            if (resourceInfo && !resourceSupportsSearchType(resourceInfo, filterType)) {
+              continue
+            }
+            downloadTasks.push({
+              source,
+              keyword,
+              filterType,
+              params: await this.getResourceKeywordParams(source, keyword, filterType)
+            })
+          }
         }
       }
 
@@ -973,7 +936,8 @@ export default class WallpaperManager {
             task.source,
             task.keyword,
             task.params,
-            downloadOrientation
+            downloadOrientation,
+            task.filterType
           )
         )
 
@@ -998,7 +962,7 @@ export default class WallpaperManager {
       for (const { index } of successfulTasks) {
         const task = pendingTasks[index]
         task.params.startPage += 1
-        await this.saveResourceKeywordParams(task.source, task.keyword, task.params)
+        await this.saveResourceKeywordParams(task.source, task.keyword, task.params, task.filterType)
         hasUpdates = true
       }
 
@@ -1017,7 +981,8 @@ export default class WallpaperManager {
             keywords: task.keyword,
             orientation: downloadOrientation,
             startPage: task.params.startPage,
-            pageSize: task.params.pageSize
+            pageSize: task.params.pageSize,
+            filterType: task.filterType || 'images'
           })
 
           if (testRes && testRes.success && testRes.list?.length > 0) {
@@ -1026,7 +991,7 @@ export default class WallpaperManager {
           } else {
             // 标记该任务已完成
             task.params.isCompleted = true
-            await this.saveResourceKeywordParams(task.source, task.keyword, task.params)
+            await this.saveResourceKeywordParams(task.source, task.keyword, task.params, task.filterType)
             this.logger.info(`任务 ${task.source}-${task.keyword} 已完成`)
           }
         } catch (err) {
@@ -1072,9 +1037,9 @@ export default class WallpaperManager {
   }
 
   // 获取特定资源-关键词组合的参数
-  async getResourceKeywordParams(source, keyword) {
+  async getResourceKeywordParams(source, keyword, filterType = 'images') {
     try {
-      const key = buildDownloadParamStoreKey(source, keyword)
+      const key = buildDownloadParamStoreKey(source, keyword, filterType)
       const res = await this.dbManager.getSysRecord(key)
       if (res.success && res.data?.storeData) {
         return res.data.storeData
@@ -1092,9 +1057,9 @@ export default class WallpaperManager {
   }
 
   // 保存特定资源-关键词组合的参数
-  async saveResourceKeywordParams(source, keyword, params) {
+  async saveResourceKeywordParams(source, keyword, params, filterType = 'images') {
     try {
-      const key = buildDownloadParamStoreKey(source, keyword)
+      const key = buildDownloadParamStoreKey(source, keyword, filterType)
       await this.dbManager.setSysRecord(key, params, 'object')
       this.logger.info(`保存资源: ${source} 关键词: ${keyword} 参数成功: ${JSON.stringify(params)}`)
       return true
@@ -1139,14 +1104,15 @@ export default class WallpaperManager {
   }
 
   // 下载特定资源-关键词组合的批次
-  async downloadResourceKeywordBatch(source, keyword, params, orientation) {
+  async downloadResourceKeywordBatch(source, keyword, params, orientation, filterType = 'images') {
     try {
       const res = await this.searchWallpaperWithDownload({
         resourceName: source,
         keywords: keyword,
         orientation: orientation,
         startPage: params.startPage,
-        pageSize: params.pageSize
+        pageSize: params.pageSize,
+        filterType
       })
 
       return res && res.success
@@ -1162,15 +1128,15 @@ export default class WallpaperManager {
   }
 
   // 清理所有下载的壁纸
-  async clearDownloadedAll() {
+  async clearDownloadedAll({ excludeProtected = false } = {}) {
     let ret = {
       success: false,
       message: t('messages.operationFail')
     }
     try {
-      // 直接从数据库中查询所有非local的资源
       const query_stmt = this.db.prepare(
-        `SELECT * FROM fbw_resources WHERE resourceName != 'local'`
+        `SELECT r.* FROM fbw_resources r
+         WHERE r.resourceName != 'local'${excludeProtected ? CLEAR_DOWNLOAD_PROTECTED_SQL : ''}`
       )
       const query_result = query_stmt.all()
 
@@ -1211,7 +1177,7 @@ export default class WallpaperManager {
   }
 
   // 清理过期下载的壁纸
-  async clearDownloadedExpired() {
+  async clearDownloadedExpired({ excludeProtected = false } = {}) {
     let ret = {
       success: false,
       message: t('messages.operationFail')
@@ -1222,9 +1188,10 @@ export default class WallpaperManager {
       const expiredTimeMs = handleTimeByUnit(clearDownloadedExpiredTime, clearDownloadedExpiredUnit)
       const expiredTimestamp = Date.now() - expiredTimeMs
 
-      // 直接从数据库中查询过期的非local资源，使用unixepoch修饰符将时间戳转换为SQLite日期时间格式
       const query_stmt = this.db.prepare(
-        `SELECT * FROM fbw_resources WHERE resourceName != 'local' AND created_at < datetime(?, 'unixepoch', 'localtime')`
+        `SELECT r.* FROM fbw_resources r
+         WHERE r.resourceName != 'local'
+           AND r.created_at < datetime(?, 'unixepoch', 'localtime')${excludeProtected ? CLEAR_DOWNLOAD_PROTECTED_SQL : ''}`
       )
       const query_result = query_stmt.all(expiredTimestamp / 1000)
 

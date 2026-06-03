@@ -1,10 +1,10 @@
 # 飞鸟壁纸 AI 能力开发方案
 
-> 文档版本：**v3.2**  
-> 整理日期：2026-06-01（§18 省电恢复 2026-05-27）  
-> 状态：Sprint 0–4 **已落地**；2.0.0 **后续增量已落地**（含系统合集按簇命名、合并去重、快捷键 suspend/resume、**省电恢复 AI**）；Sprint 5 **未开发**  
+> 文档版本：**v3.3**  
+> 整理日期：**2026-06-03**（§19 资源生命周期 / 视频 AI）  
+> 状态：Sprint 0–4 **已落地**；2.0.0 **后续增量已落地**（含系统合集、省电恢复、**关联清理与视频 AI**）；Sprint 5 **未开发**  
 > 应用版本：**1.3.8 → 2.0.0**  
-> 关联：[data-model-resources-and-ai.md](./data-model-resources-and-ai.md) · [ai-feature-roadmap.md](./ai-feature-roadmap.md) · [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) · [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md)（**v1.6**）· [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) · [main-window-ux-and-infrastructure.md](./main-window-ux-and-infrastructure.md) · [README.md](./README.md)
+> 关联：[resource-lifecycle-and-cleanup.md](./resource-lifecycle-and-cleanup.md) · [data-model-resources-and-ai.md](./data-model-resources-and-ai.md)（**v1.3**）· [ai-feature-roadmap.md](./ai-feature-roadmap.md) · [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md)（**v2.3**）· [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md)（**v1.7**）· [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md)（**v2.0**）· [main-window-ux-and-infrastructure.md](./main-window-ux-and-infrastructure.md) · [README.md](./README.md)
 
 ---
 
@@ -408,6 +408,23 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 
 ---
 
+## §19 后续增量（资源生命周期 / 视频 AI / 关联清理）— 已落地
+
+> 详述：[resource-lifecycle-and-cleanup.md](./resource-lifecycle-and-cleanup.md)
+
+| 项 | 说明 |
+|----|------|
+| 统一 cleanup | `resourceDeleteCleanup.mjs`：`purgeResourceRecords`、`clearResourcesLibraryData`、`clearAiAnalysisDataForResourceIds` |
+| Schema | FK CASCADE；`fbw_resource_image_vec_blob` 复合主键 `(resourceId, model)`；启动迁移 |
+| 清空资源库 | 工具页 `clearResourcesLibrary`；`clearDB(fbw_resources)` 全量委托同一逻辑 |
+| 目录刷新 | 全量 scan + `scanComplete` 才 prune；`ON CONFLICT(filePath) DO UPDATE` |
+| 视频 AI | 方案 A：`posterPath` 封面帧 analyze/embed；策展/找相似/清空 AI 含视频 |
+| 其它 | Recommend 后端对齐 search；语义过滤 `skipStatistics`；IPC id 校验；动态壁纸性能 IPC 修复 |
+
+**验收：** 删本地文件后 DB 无残留；刷新目录 mtime 变更会更新；清空 AI 文案含视频；远程 embed fallback 后找相似仍可用。
+
+---
+
 ## 数据库补充（2.0.0 增量）
 
 | 变更 | 说明 |
@@ -418,7 +435,8 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | `fbw_resource_ai.aiAnalysisFailCount` | 连续分析失败次数（成功归零） |
 | `fbw_resources.qualityScore` | 本地质量任务分（与 `aiScore` 分离） |
 | VecStore | vec0 **不支持 UPSERT** → DELETE+INSERT；维数变更 DROP 重建 |
-| `fbw_resource_image_vec_blob` | 画面向量表（找相似、系统策展、用户合集补充） |
+| `fbw_resource_image_vec_blob` | 画面向量表；**PK (resourceId, model)** |
+| Junction FK | `favorites` / `history` / `privacy` / `statistics` / `resource_words` / `collection_items` → CASCADE |
 
 ---
 
@@ -452,6 +470,7 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | **增量⁹** | ✅ | 系统合集按簇命名、UI locale 对齐、语义剔图、i18n 降级；快捷键录键 suspend/resume |
 | **增量¹⁰** | ✅ | 系统合集同名/高重叠合并 dedupe（`mergeCollectionPlans`、全库保留最小 id） |
 | **增量¹¹** | ✅ | 省电关/插 AC 恢复后台 AI；`restartPowerSaveDependentTasks`、`resumeBackgroundAiTasksIfAllowed` |
+| **增量¹²** | ✅ | 关联清理统一、FK/复合 PK 迁移、清空资源库、刷新 UPSERT+prune、视频封面 AI |
 | Sprint 5 | ⏸ | OpenClaw/Agent — 仅文档 |
 
 ---
@@ -541,3 +560,4 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | **v3.0** | 2026-06-01 | §16 系统合集按簇命名、locale 对齐、语义剔图；Sprint 3.2 流水线更新 |
 | **v3.1** | 2026-06-01 | §17 同名/高重叠 plan 合并与全库 dedupe；链至 ai-collections v1.6 |
 | **v3.2** | 2026-05-27 | §18 省电关/插 AC 恢复后台 AI；链至 ai-analysis §4.2 |
+| **v3.3** | **2026-06-03** | §19 资源生命周期 / 视频 AI / 关联清理；`resource-lifecycle-and-cleanup.md`；增量¹² |

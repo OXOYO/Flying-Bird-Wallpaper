@@ -24,6 +24,7 @@ import {
   shouldMergeCollectionPlans
 } from './collectionConstants.mjs'
 import { isAutoCurateSettled } from './collectionCurateGate.mjs'
+import { buildAnalyzableResourceWhere } from '../ai/AiVisionResourcePath.mjs'
 
 /**
  * 自动策展：画面向量聚类 + LLM 氛围命名
@@ -96,13 +97,15 @@ export default class CollectionCurator {
     return resolveAutoCollectionScoreMin(this.ai)
   }
 
+  /** 已完成 AI 分析的可策展资源数（图片 + 有封面的视频） */
   countAnalyzedImages() {
+    const analyzable = buildAnalyzableResourceWhere('r')
     return (
       this.db
         .prepare(
           `SELECT COUNT(*) as c FROM fbw_resource_ai ai
            JOIN fbw_resources r ON r.id = ai.resourceId
-           WHERE r.fileType='image' AND ai.aiAnalysisStatus = ?`
+           WHERE ${analyzable} AND ai.aiAnalysisStatus = ?`
         )
         .get(AI_ANALYSIS_STATUS.DONE)?.c || 0
     )
@@ -118,6 +121,7 @@ export default class CollectionCurator {
 
   countImageEmbeddings() {
     const model = this.getActiveVisualModelId()
+    const analyzable = buildAnalyzableResourceWhere('r')
     return (
       this.db
         .prepare(
@@ -125,7 +129,7 @@ export default class CollectionCurator {
            FROM fbw_resource_image_vec_blob v
            JOIN fbw_resources r ON r.id = v.resourceId
            INNER JOIN fbw_resource_ai ai ON ai.resourceId = r.id
-           WHERE r.fileType='image' AND ai.aiAnalysisStatus = ? AND v.model = ?`
+           WHERE ${analyzable} AND ai.aiAnalysisStatus = ? AND v.model = ?`
         )
         .get(AI_ANALYSIS_STATUS.DONE, model)?.c || 0
     )
@@ -346,6 +350,7 @@ export default class CollectionCurator {
 
     const scoreMin = this.getScoreMin()
     const activeModel = this.getActiveVisualModelId()
+    const analyzable = buildAnalyzableResourceWhere('r')
     const vecParams = [activeModel, AI_ANALYSIS_STATUS.DONE]
     let vecScoreClause = ''
     if (scoreMin != null) {
@@ -358,7 +363,7 @@ export default class CollectionCurator {
          FROM fbw_resources r
          JOIN fbw_resource_image_vec_blob v ON v.resourceId = r.id AND v.model = ?
          INNER JOIN fbw_resource_ai ai ON ai.resourceId = r.id
-         WHERE r.fileType = 'image'
+         WHERE ${analyzable}
            AND ai.aiAnalysisStatus = ?
            AND ${COLLECTION_PRIVACY_EXCLUDE_SQL}${vecScoreClause}`
       )
@@ -762,19 +767,20 @@ export default class CollectionCurator {
   }
 
   /**
-   * 锁存后：新分析完成的图按画面向量相似度增量加入已有氛围合集
+   * 锁存后：新分析完成的资源（图片 / 有封面视频）按画面向量相似度增量加入已有氛围合集
    */
   incrementalAddResource(resourceId) {
     if (!this.isEnabled() || !isAutoCurateSettled(this.ai)) {
       return { success: true, data: { added: 0, skipped: true } }
     }
 
+    const analyzable = buildAnalyzableResourceWhere('r')
     const row = this.db
       .prepare(
         `SELECT r.id, COALESCE(ai.aiScore, 0) AS score, ai.aiAnalysisStatus
          FROM fbw_resources r
          LEFT JOIN fbw_resource_ai ai ON ai.resourceId = r.id
-         WHERE r.id = ? AND r.fileType = 'image'`
+         WHERE r.id = ? AND ${analyzable} AND ${COLLECTION_PRIVACY_EXCLUDE_SQL}`
       )
       .get(resourceId)
     if (!row || row.aiAnalysisStatus !== AI_ANALYSIS_STATUS.DONE) {

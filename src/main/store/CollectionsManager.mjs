@@ -15,6 +15,7 @@ import {
   COLLECTION_VISUAL_SEARCH_MIN_COSINE,
   COLLECTION_VISUAL_MIN_EMBEDDINGS
 } from '../ai/aiConstants.mjs'
+import { buildAnalyzableResourceWhere } from '../ai/AiVisionResourcePath.mjs'
 
 export default class CollectionsManager {
   static _instance = null
@@ -67,9 +68,10 @@ export default class CollectionsManager {
   _itemCountMap() {
     const countRows = this.db
       .prepare(
-        `SELECT collectionId, COUNT(*) AS itemCount
-         FROM fbw_collection_items
-         GROUP BY collectionId`
+        `SELECT ci.collectionId, COUNT(*) AS itemCount
+         FROM fbw_collection_items ci
+         INNER JOIN fbw_resources r ON r.id = ci.resourceId
+         GROUP BY ci.collectionId`
       )
       .all()
     const map = {}
@@ -115,7 +117,8 @@ export default class CollectionsManager {
     const offset = (startPage - 1) * pageSize
     const rows = this.db
       .prepare(
-        `SELECT ci.*, r.* FROM fbw_collection_items ci
+        `SELECT ci.id AS collectionItemId, ci.collectionId, ci.resourceId, ci.rank, r.*
+         FROM fbw_collection_items ci
          JOIN fbw_resources r ON r.id = ci.resourceId
          WHERE ci.collectionId = ?
          ORDER BY ci.rank ASC
@@ -125,7 +128,7 @@ export default class CollectionsManager {
 
     const items = rows.map((row) => ({
       ...row,
-      id: row.resourceId ?? row.id,
+      id: row.resourceId,
       srcType: row.filePath ? 'file' : row.link || row.videoUrl || row.imageUrl ? 'url' : 'file'
     }))
 
@@ -199,9 +202,8 @@ export default class CollectionsManager {
 
     if (collection?.source === 'user') {
       const ai = this.settingManager.settingData?.ai
-      if (ai?.enabled) {
-        if (queryJson.useSemantic == null) queryJson.useSemantic = true
-        else if (queryJson.useSemantic === false) queryJson.useSemantic = true
+      if (ai?.enabled && queryJson.useSemantic == null) {
+        queryJson.useSemantic = true
       }
     }
     return queryJson
@@ -245,6 +247,7 @@ export default class CollectionsManager {
       scoreClause = ' AND COALESCE(ai.aiScore, 0) >= ?'
       params.push(scoreMin)
     }
+    const analyzable = buildAnalyzableResourceWhere('r')
     return this.db
       .prepare(
         `SELECT r.id
@@ -252,7 +255,7 @@ export default class CollectionsManager {
          INNER JOIN fbw_resource_ai ai ON ai.resourceId = r.id
          JOIN fbw_resource_words rw ON rw.resourceId = r.id
          JOIN fbw_words w ON w.id = rw.wordId
-         WHERE r.fileType = 'image'
+         WHERE ${analyzable}
            AND ai.aiAnalysisStatus = ?
            AND ${COLLECTION_PRIVACY_EXCLUDE_SQL}
            AND w.word = ?${scoreClause}

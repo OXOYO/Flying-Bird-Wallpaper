@@ -1,6 +1,14 @@
 /** 探索/合集列表缩略图长边宽度，与 ExploreCommon 一致 */
 export const EXPLORE_LIST_IMAGE_WIDTH = 1080
 
+/** 是否可执行 AI 分析 / 找相似（视频需已下载且有 posterPath） */
+export function supportsAiVisionActions(item) {
+  if (!item) return false
+  if (item.fileType === 'image') return true
+  if (item.fileType === 'video') return !!item.posterPath
+  return false
+}
+
 /**
  * @param {'localResource'|'remoteResource'} resourceType
  * @param {number} gridHWRatio
@@ -34,7 +42,12 @@ export function buildResourceRawImageUrl(item) {
   const isVideo = item.fileType === 'video'
   const srcType = item.srcType || (item.filePath ? 'file' : item.link ? 'url' : 'file')
   if (srcType === 'file') {
-    if (isVideo) return item.imageUrl || ''
+    if (isVideo) {
+      if (item.posterPath) {
+        return `fbwtp://fbw/api/images/get?filePath=${encodeURIComponent(item.posterPath)}`
+      }
+      return item.imageUrl || ''
+    }
     if (item.filePath) {
       return `fbwtp://fbw/api/images/get?filePath=${encodeURIComponent(item.filePath)}`
     }

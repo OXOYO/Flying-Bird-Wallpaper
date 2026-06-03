@@ -1,9 +1,9 @@
 # 飞鸟壁纸 AI 能力完整功能清单
 
-> 文档版本：**v2.3**  
-> 整理日期：2026-06-01（AI-017 省电恢复 2026-05-27）  
-> 状态：**2.0.0 核心已落地**；系统合集 **v1.6 合并去重**已落地；**省电恢复 AI** 已落地；部分 P3/P4 仍为规划  
-> 关联：[data-model-resources-and-ai.md](./data-model-resources-and-ai.md) · [ai-dev-plan.md](./ai-dev-plan.md) · [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) · [ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) · [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) · [README.md](./README.md)
+> 文档版本：**v2.4**  
+> 整理日期：**2026-06-03**  
+> 状态：**2.0.0 核心已落地**；系统合集 **v1.7**；**资源生命周期 / 视频 AI** 已落地；部分 P3/P4 仍为规划  
+> 关联：[resource-lifecycle-and-cleanup.md](./resource-lifecycle-and-cleanup.md) · [data-model-resources-and-ai.md](./data-model-resources-and-ai.md) · [ai-dev-plan.md](./ai-dev-plan.md) · [README.md](./README.md)
 
 **图例：** ✅ 已实现 · 🟡 部分实现 · ⬜ 未开始
 
@@ -51,7 +51,7 @@
 | VectorCluster | ✅ | K-Means 氛围聚类 |
 | CollectionCurator | ✅ | 自动策展三阶段 |
 | TaskScheduler | ✅ | `aiAnalysis`、`collectionCurator`、`collectionsRefresh` |
-| schemaUpgrade | ✅ | 旧库补列；**`migrateResourceAiSplitV1`**（AI 附表） |
+| schemaUpgrade | ✅ | 旧库补列；**`migrateResourceAiSplitV1`**（AI 附表）；**FK CASCADE**、画面向量复合 PK、video 迁移 |
 | resourceAiSql | ✅ | `fbw_resource_ai`、JOIN、列表投影 |
 | pluginResourceId | ✅ | 本地 `resourceName` = `源名_插件名` |
 
@@ -75,7 +75,7 @@
 | AI-004 | summary | ✅ | 预览/搜索 |
 | AI-005 | AiAnalysisProvider | ✅ | Ollama + OpenAI 兼容 |
 | AI-006 | AI 设置页 | ✅ | `AiSetting.vue`：进度卡、模型测试、ⓘ Tooltip |
-| AI-007 | 分析任务队列 | ✅ | `background_slow` / `new_only`；仅 **image**；看门狗 60s 首启 + 3min；省电暂停后可自动恢复 |
+| AI-007 | 分析任务队列 | ✅ | `background_slow` / `new_only`；**image + 有封面 video**；看门狗 60s 首启 + 3min；省电暂停后可自动恢复 |
 | AI-008 | 文本 embedding 入库 | ✅ | `fbw_resource_vec_blob`；分析后 + 语义搜索 |
 | AI-008a | **视觉 embedding 入库** | ✅ | 内置 MobileCLIP + 可选远程；`fbw_resource_image_vec_blob` |
 | AI-008b | 视觉向量后台补算 | ✅ | 定时任务 `visualEmbed`；每轮批量补算；省电暂停后可自动恢复 |
@@ -85,10 +85,14 @@
 | AI-010 | 视觉动态超时 | ✅ | `resolveEffectiveVisionTimeout` |
 | AI-011 | 分析耗时日志 | ✅ | `[AiVisionPrep]`、`vision-http modelMs` |
 | AI-012 | 后台失败重试上限 | ✅ | `analysisMaxRetries`（默认 1，UI 隐藏）+ **`fbw_resource_ai.aiAnalysisFailCount`**；达上限 → `skipped`；手动分析不限 |
-| AI-013 | 清空库内 AI 分析数据 | ✅ | 工具页 → `resetAiAnalysis`；删附表+标签+向量+**系统推荐合集**；保留主表插件 `title`/`desc` 与用户合集 |
+| AI-013 | 清空库内 AI 分析数据 | ✅ | 工具页 → `resetAiAnalysis`；**图片 + 有封面视频**；删附表+标签+向量+**系统推荐合集** |
 | AI-014 | 失败项重新入队 | ✅ | 设置进度卡失败 chip → `requeueFailedAiAnalysis` |
-| AI-015 | AI 字段附表拆分 | ✅ | `fbw_resource_ai`；主表 `qualityScore`；启动迁移 |
+| AI-015 | AI 字段附表拆分 | ✅ | `fbw_resource_ai`；主表 `qualityScore`；启动迁移（含 video） |
 | AI-016 | 分析进度卡常显 | ✅ | 与 `ai.enabled` 解耦；`BaseSetting` / `AiSetting` 均挂载 |
+| AI-018 | **视频封面 AI 分析** | ✅ | 方案 A：`posterPath` 单帧；`AiVisionResourcePath`；菜单/向量/策展纳入 |
+| AI-019 | **资源关联清理 / Schema** | ✅ | `resourceDeleteCleanup`；FK CASCADE；复合 PK；刷新 prune — 见 lifecycle 文档 |
+| INF-001 | 清空资源库（工具页） | ✅ | `clearResourcesLibrary`；不删磁盘、不清收藏整表 |
+| INF-002 | 猜你喜欢 `recommend` | 🟡 | 后端 IPC 就绪；**前端未接入** |
 
 ### 4.2 发现与搜索（P1）
 
@@ -311,3 +315,4 @@ AI 助手、AIGC 工具
 | **v2.1** | 2026-06-01 | 系统策展 v1.5：按簇命名、locale 对齐、语义剔图；更新 AI-208a 与 queryJson 示例 |
 | **v2.2** | 2026-06-01 | AI-208a 增补 v1.6：同名/高重叠合并 dedupe；progressive 不再累积重复系统合集 |
 | **v2.3** | 2026-05-27 | AI-017 省电恢复后台 AI；AI-007/008b 说明看门狗与恢复路径；链至 ai-analysis §4.2 |
+| **v2.4** | **2026-06-03** | AI-018 视频封面 AI；AI-019/INF-001 关联清理与清空资源库；INF-002 recommend 后端就绪 |

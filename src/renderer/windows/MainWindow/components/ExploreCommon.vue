@@ -20,6 +20,7 @@ import { usePrivacyNsfwMask } from '@common/composables/usePrivacyNsfwMask.mjs'
 import { resolveNsfwMaskVerifyFailMessage } from '@common/privacyNsfwMask.js'
 import CuratorStatsIndicator from '@renderer/components/CuratorStatsIndicator.vue'
 import { normalizeResourceItem } from '@renderer/composables/useResourceCardActions.js'
+import { supportsAiVisionActions } from '@renderer/utils/resourceImageUrl.js'
 import { cloneForIpc } from '@renderer/utils/cloneForIpc.js'
 import { useHorizontalWheelScroll } from '@renderer/composables/useHorizontalWheelScroll.mjs'
 import { useSimilarResultsLoadMore } from '@renderer/composables/useSimilarResultsLoadMore.mjs'
@@ -78,6 +79,8 @@ watch(selectedMenu, () => {
 const { onHorizontalWheel } = useHorizontalWheelScroll()
 
 const videoRefs = ref([])
+/** 切换菜单卸载时忽略 video @error，避免清空 src 触发误报 */
+let isUnmountingVideos = false
 
 const cardItemStatus = reactive({
   index: -1,
@@ -490,6 +493,8 @@ const cardItemBtns = computed(() => {
       action: 'doViewImage',
       icon: 'custom:preview'
     })
+  }
+  if (supportsAiVisionActions(item)) {
     ret.push({
       title: t('exploreCommon.aiAnalyze'),
       action: 'aiAnalyze',
@@ -1595,11 +1600,23 @@ const resolveCardListIndex = (slotItem, slotIndex) => {
 }
 
 // 加入收藏夹或隐私空间
+const applyFavoriteResourcePatch = (item, index, res) => {
+  const patch = res?.data?.resource
+  if (!patch) return
+  const rowIndex = resolveCardListIndex(item, index)
+  const target = rowIndex >= 0 ? cardList.value[rowIndex] : item
+  Object.assign(target, patch)
+  if (patch.fileType === 'video' && patch.filePath && !target.videoSrc) {
+    target.videoSrc = `fbwtp://fbw/api/videos/get?filePath=${encodeURIComponent(patch.filePath)}`
+  }
+}
+
 const addToFavorites = async (item, index, isPrivacySpace = false) => {
-  const res = await window.FBW.addToFavorites(item.id, isPrivacySpace)
+  const res = await window.FBW.addToFavorites(cloneForIpc(item), isPrivacySpace)
   // 在加入隐私空间后需要将该条记录从收藏夹移除
   let callback
   if (res.success) {
+    applyFavoriteResourcePatch(item, index, res)
     const rowIndex = resolveCardListIndex(item, index)
     if (rowIndex >= 0) {
       cardList.value[rowIndex].isFavorite = 1
@@ -1918,39 +1935,38 @@ const onVideoEnded = (item, index) => {
   }
 }
 
-const onVideoError = (item, index) => {
-  const video = videoRefs.value[index]
-  if (video) {
-    const errorCode = video.error?.code
-    const errorMessage = getVideoErrorMessage(errorCode)
-    console.error('Video Error Details:', {
-      errorCode,
-      errorMessage,
-      videoSrc: video.src,
-      videoElement: video,
-      item: item,
-      index: index
-    })
-    ElMessage({
-      type: 'error',
-      message: errorMessage
-    })
+const onVideoError = (item, index, event) => {
+  if (isUnmountingVideos) return
 
-    // 重置视频状态
-    video.currentTime = 0
+  const video = event?.target ?? videoRefs.value[index]
+  if (!video) return
 
-    // 检查播放状态并更新
-    if (cardList.value[index].isPlaying) {
-      cardList.value[index].isPlaying = false
-    }
+  const errorCode = video.error?.code
+  // 卸载/清空 src 时的 aborted 不提示用户
+  if (errorCode === 1) return
 
-    // 移除播放来源记录
-    const playSource = videoPlayState.playSources.get(item.uniqueKey)
-    if (playSource) {
-      videoPlayState.playSources.delete(item.uniqueKey)
-    }
-  } else {
-    console.error('Video Error - Cannot access video element', { item, index })
+  const errorMessage = getVideoErrorMessage(errorCode)
+  console.error('Video Error Details:', {
+    errorCode,
+    errorMessage,
+    videoSrc: video.src,
+    item,
+    index
+  })
+  ElMessage({
+    type: 'error',
+    message: errorMessage
+  })
+
+  video.currentTime = 0
+
+  if (cardList.value[index]?.isPlaying) {
+    cardList.value[index].isPlaying = false
+  }
+
+  const playSource = videoPlayState.playSources.get(item.uniqueKey)
+  if (playSource) {
+    videoPlayState.playSources.delete(item.uniqueKey)
   }
 }
 
@@ -2001,6 +2017,7 @@ onMounted(() => {
   })
 })
 onBeforeUnmount(() => {
+  isUnmountingVideos = true
   // 取消主进程事件监听
   window.FBW.offTriggerAction()
   // 清理ResizeObserver
@@ -2010,11 +2027,12 @@ onBeforeUnmount(() => {
   }
   resizeObserver.disconnect()
 
-  // 清理视频元素引用
+  // 清理视频元素引用（先解绑 onerror，避免清空 src 时批量误报）
   videoRefs.value.forEach((video) => {
     if (video) {
+      video.onerror = null
       video.pause()
-      video.src = ''
+      video.removeAttribute('src')
       video.load()
     }
   })
@@ -2287,7 +2305,7 @@ onBeforeUnmount(() => {
                   muted
                   loop
                   @ended="onVideoEnded(item, index)"
-                  @error="onVideoError(item, index)"
+                  @error="onVideoError(item, index, $event)"
                 ></video>
                 <IconifyIcon
                   v-if="!shouldMaskItem(item)"

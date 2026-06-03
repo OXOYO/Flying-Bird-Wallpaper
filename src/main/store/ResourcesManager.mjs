@@ -7,6 +7,24 @@ import {
 } from '../../common/utils.js'
 import { normalizeOrientationToIsLandscape } from './collectionConstants.mjs'
 import { RESOURCE_AI_JOIN, RESOURCE_AI_SELECT_SQL } from './resourceAiSql.mjs'
+import { buildAnalyzableResourceWhere } from '../ai/AiVisionResourcePath.mjs'
+
+const isRemoteResourceItem = (item) => {
+  if (!item || typeof item !== 'object') return false
+  if (item.id != null && item.id !== '') return false
+  if (item.srcType === 'url') return true
+  return !item.filePath && !!(item.videoUrl || item.imageUrl)
+}
+
+const resolveResourceIdFromInput = (input) => {
+  if (input == null || input === '') return null
+  if (typeof input === 'object') {
+    if (input.id != null && input.id !== '') return Number(input.id)
+    return null
+  }
+  const id = Number(input)
+  return Number.isFinite(id) && id > 0 ? id : null
+}
 
 /** 列表去重/分页用稳定键（勿每次请求生成 uuid） */
 const buildStableResourceUniqueKey = (item) => {
@@ -16,6 +34,16 @@ const buildStableResourceUniqueKey = (item) => {
   const url = item?.imageUrl || item?.videoUrl || ''
   if (url) return url
   return uuidv4()
+}
+
+/** 本地库行 → 客户端可展示结构（补全 srcType / uniqueKey） */
+const enrichResourceRowForClient = (row) => {
+  if (!row) return row
+  return {
+    ...row,
+    srcType: row.filePath ? 'file' : row.link || row.videoUrl || row.imageUrl ? 'url' : 'file',
+    uniqueKey: buildStableResourceUniqueKey(row)
+  }
 }
 
 export default class ResourcesManager {
@@ -46,8 +74,52 @@ export default class ResourcesManager {
     this.db = dbManager.db
     this.settingManager = settingManager
     this.apiManager = apiManager
+    this.fileManager = null
 
     ResourcesManager._instance = this
+  }
+
+  setFileManager(fileManager) {
+    this.fileManager = fileManager
+  }
+
+  _getResourceRowById(resourceId) {
+    return this.db.prepare(`SELECT * FROM fbw_resources WHERE id = ?`).get(resourceId)
+  }
+
+  async _resolveResourceIdForFavorite(input) {
+    let resourceId = resolveResourceIdFromInput(input)
+    let resourceRow = resourceId ? this._getResourceRowById(resourceId) : null
+
+    if (!resourceRow && typeof input === 'object' && input && isRemoteResourceItem(input)) {
+      if (!this.fileManager) {
+        return {
+          ok: false,
+          errorCode: API_ERROR_CODE.DOWNLOAD_FAILED,
+          message: t('messages.downloadFileFail')
+        }
+      }
+      const downloadRes = await this.fileManager.downloadFile({ ...input, srcType: 'url' })
+      if (!downloadRes.success || !downloadRes.data?.id) {
+        return {
+          ok: false,
+          errorCode: API_ERROR_CODE.DOWNLOAD_FAILED,
+          message: downloadRes.message || t('messages.downloadFileFail')
+        }
+      }
+      resourceRow = downloadRes.data
+      resourceId = resourceRow.id
+    }
+
+    if (!resourceId || !resourceRow) {
+      return {
+        ok: false,
+        errorCode: API_ERROR_CODE.RESOURCE_NOT_FOUND,
+        message: ''
+      }
+    }
+
+    return { ok: true, resourceId, resourceRow }
   }
 
   // 使用 settingManager 获取设置
@@ -75,7 +147,8 @@ export default class ResourcesManager {
       tagsMode = 'any',
       hideUnsafe = false,
       resourceIds,
-      includePrivacySpace = false
+      includePrivacySpace = false,
+      skipStatistics = false
     } = params
 
     let ret = {
@@ -265,21 +338,16 @@ export default class ResourcesManager {
         const query_result = query_stmt.all(...query_params, size, (page - 1) * size)
         ret.data.list = []
         if (Array.isArray(query_result) && query_result.length) {
-          ret.data.list = query_result.map((item) => {
-            return {
-              ...item,
-              srcType: 'file',
-              uniqueKey: buildStableResourceUniqueKey(item)
-            }
-          })
-          // 浏览量+1（批量）
-          const updateParams = ret.data.list.map((item) => {
-            return {
-              resourceId: item.id,
-              views: 1
-            }
-          })
-          await this.batchUpdateStatistics(updateParams)
+          ret.data.list = query_result.map((item) => enrichResourceRowForClient(item))
+          if (!skipStatistics) {
+            const updateParams = ret.data.list.map((item) => {
+              return {
+                resourceId: item.id,
+                views: 1
+              }
+            })
+            await this.batchUpdateStatistics(updateParams)
+          }
         }
         // 无论当前页是否有数据都要统计总数，否则分页后续页 total 为 0 会导致前端误判「已结束」或错乱
         if (count_sql) {
@@ -416,36 +484,45 @@ export default class ResourcesManager {
     }
   }
 
-  // 加入收藏夹
-  async addToFavorites(resourceId, isPrivacySpace = false) {
+  // 加入收藏夹（resourceId 或远程资源 item；远程项会先隐式下载入库）
+  async addToFavorites(resourceIdOrItem, isPrivacySpace = false) {
     let ret = {
       success: false,
       message: t('messages.operationFail')
     }
 
     try {
-      if (isPrivacySpace) {
-        const insert_stmt = this.db.prepare(
-          `INSERT OR IGNORE INTO fbw_privacy_space (resourceId) VALUES (?)`
-        )
-        const insert_result = insert_stmt.run(resourceId)
+      const resolved = await this._resolveResourceIdForFavorite(resourceIdOrItem)
+      if (!resolved.ok) {
+        ret.errorCode = resolved.errorCode
+        ret.message = resolved.message
+        return ret
+      }
 
-        if (insert_result.changes > 0) {
-          ret = {
-            success: true,
-            message: t('messages.operationSuccess')
-          }
+      const { resourceId, resourceRow } = resolved
+      const tableName = isPrivacySpace ? 'fbw_privacy_space' : 'fbw_favorites'
+      const insert_stmt = this.db.prepare(`INSERT OR IGNORE INTO ${tableName} (resourceId) VALUES (?)`)
+      const insert_result = insert_stmt.run(resourceId)
+
+      if (insert_result.changes > 0) {
+        if (!isPrivacySpace) {
+          await this.updateStatistics({ resourceId, favorites: 1 })
         }
       } else {
-        const insert_stmt = this.db.prepare(
-          `INSERT OR IGNORE INTO fbw_favorites (resourceId) VALUES (?)`
-        )
-        insert_stmt.run(resourceId)
-        // 更新统计表
-        await this.updateStatistics({ resourceId, favorites: 1 })
-        ret = {
-          success: true,
-          message: t('messages.operationSuccess')
+        const already = await this.checkFavorite(resourceId, isPrivacySpace)
+        if (!already) {
+          ret.errorCode = API_ERROR_CODE.RESOURCE_NOT_FOUND
+          ret.message = ''
+          return ret
+        }
+      }
+
+      ret = {
+        success: true,
+        message: t('messages.operationSuccess'),
+        data: {
+          resourceId,
+          resource: enrichResourceRowForClient(resourceRow)
         }
       }
     } catch (err) {
@@ -456,10 +533,17 @@ export default class ResourcesManager {
   }
 
   // 移出收藏夹
-  async removeFavorites(resourceId, isPrivacySpace = false) {
+  async removeFavorites(resourceIdOrItem, isPrivacySpace = false) {
     let ret = {
       success: false,
       message: t('messages.operationFail')
+    }
+
+    const resourceId = resolveResourceIdFromInput(resourceIdOrItem)
+    if (!resourceId || !this._getResourceRowById(resourceId)) {
+      ret.errorCode = API_ERROR_CODE.RESOURCE_NOT_FOUND
+      ret.message = ''
+      return ret
     }
 
     try {
@@ -636,7 +720,7 @@ export default class ResourcesManager {
     if (!type) return null
 
     if (type === 'collection') {
-      if (!scope.collectionId) return []
+      if (!scope.collectionId) return null
       return this.db
         .prepare(`SELECT resourceId AS id FROM fbw_collection_items WHERE collectionId = ?`)
         .all(scope.collectionId)
@@ -669,9 +753,11 @@ export default class ResourcesManager {
       const resourceName = scope.resourceName || 'resources'
 
       if (resourceType === 'remoteResource') {
+        const analyzable = buildAnalyzableResourceWhere('r')
         return this.db
           .prepare(
-            `SELECT id FROM fbw_resources WHERE fileType = 'image' AND resourceName = ?`
+            `SELECT r.id FROM fbw_resources r
+             WHERE (${analyzable}) AND r.resourceName = ?`
           )
           .all(resourceName)
           .map((r) => r.id)
@@ -696,20 +782,22 @@ export default class ResourcesManager {
           .map((r) => r.id)
       }
       if (resourceName === 'resources') {
+        const analyzable = buildAnalyzableResourceWhere('r')
         return this.db
           .prepare(
             `SELECT r.id FROM fbw_resources r
-             WHERE r.fileType = 'image'
+             WHERE (${analyzable})
                AND NOT EXISTS (SELECT 1 FROM fbw_privacy_space p WHERE p.resourceId = r.id)`
           )
           .all()
           .map((r) => r.id)
       }
 
+      const analyzable = buildAnalyzableResourceWhere('r')
       return this.db
         .prepare(
           `SELECT r.id FROM fbw_resources r
-           WHERE r.fileType = 'image' AND r.resourceName = ?
+           WHERE (${analyzable}) AND r.resourceName = ?
              AND NOT EXISTS (SELECT 1 FROM fbw_privacy_space p WHERE p.resourceId = r.id)`
         )
         .all(resourceName)
@@ -784,7 +872,10 @@ export default class ResourcesManager {
       )
       .all(...orderedIds)
     const byId = new Map(rows.map((row) => [Number(row.id), row]))
-    return orderedIds.map((id) => byId.get(id)).filter(Boolean)
+    return orderedIds
+      .map((id) => byId.get(id))
+      .filter(Boolean)
+      .map((row) => enrichResourceRowForClient(row))
   }
 
   /**
@@ -798,7 +889,8 @@ export default class ResourcesManager {
       filterKeywords: '',
       startPage: 1,
       pageSize: orderedIds.length,
-      isRandom: false
+      isRandom: false,
+      skipStatistics: true
     })
     if (!batch?.success || !Array.isArray(batch.data?.list) || !batch.data.list.length) {
       return []

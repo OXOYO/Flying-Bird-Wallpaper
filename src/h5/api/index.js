@@ -131,17 +131,19 @@ export const findSimilar = async (data) => {
   })
 }
 
-export const toggleFavorite = async (id) => {
+import { buildFavoriteRequestBody } from '@h5/utils/favoriteApiBody.js'
+
+export const toggleFavorite = async (idOrItem) => {
   return await request('/api/favorites/toggle', {
     method: 'POST',
-    body: { id }
+    body: buildFavoriteRequestBody(idOrItem)
   })
 }
 
-export const addToFavorites = async (id, isPrivacySpace = false) => {
+export const addToFavorites = async (idOrItem, isPrivacySpace = false) => {
   return await request('/api/favorites/add', {
     method: 'POST',
-    body: { id, isPrivacySpace: !!isPrivacySpace }
+    body: buildFavoriteRequestBody(idOrItem, isPrivacySpace)
   })
 }
 

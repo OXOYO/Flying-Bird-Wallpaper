@@ -68,8 +68,10 @@ export function replaceSourcePrefix(compositeId, oldSource, newSource) {
   return nextPrefix + id.slice(prefix.length)
 }
 
-export function buildDownloadParamStoreKey(source, keyword) {
-  return `${DOWNLOAD_PARAM_KEY_PREFIX}${source}|${encodeURIComponent(String(keyword ?? ''))}`
+export function buildDownloadParamStoreKey(source, keyword, filterType = 'images') {
+  const base = `${DOWNLOAD_PARAM_KEY_PREFIX}${source}|${encodeURIComponent(String(keyword ?? ''))}`
+  const type = filterType === 'videos' ? 'videos' : 'images'
+  return type === 'images' ? base : `${base}|${type}`
 }
 
 export function parseDownloadParamStoreKey(key) {
@@ -79,9 +81,21 @@ export function parseDownloadParamStoreKey(key) {
   const sep = rest.indexOf('|')
   if (sep < 0) return null
   try {
+    const afterSource = rest.slice(sep + 1)
+    const typeSep = afterSource.lastIndexOf('|')
+    let keyword = afterSource
+    let filterType = 'images'
+    if (typeSep >= 0) {
+      const maybeType = afterSource.slice(typeSep + 1)
+      if (maybeType === 'images' || maybeType === 'videos') {
+        filterType = maybeType
+        keyword = afterSource.slice(0, typeSep)
+      }
+    }
     return {
       source: rest.slice(0, sep),
-      keyword: decodeURIComponent(rest.slice(sep + 1))
+      keyword: decodeURIComponent(keyword),
+      filterType
     }
   } catch {
     return null

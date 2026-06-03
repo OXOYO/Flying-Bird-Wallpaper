@@ -1,6 +1,6 @@
 # 主窗口侧栏 UX 与基础设施修订
 
-> 整理日期：2026-06-01（§3.5 快捷键 suspend/resume；§7 省电恢复 AI 2026-05-27）  
+> 整理日期：2026-06-03（§5.4 清空资源库；动态壁纸性能模式 IPC 修复）  
 > 说明：记录主窗口侧栏、快捷键管理器、检查更新通知、工具页等实现约定与代码锚点。正式文档 `docs/renderer_process.md`、`docs/shortcut_guide.md` 部分片段仍偏旧，以本文与源码为准。敏感内容遮罩与壁纸过滤见 [privacy-and-sensitive-content.md](./privacy-and-sensitive-content.md)。
 
 ---
@@ -148,12 +148,44 @@ local:{name}:{winName}
 
 ## 5. 工具页（`Utils.vue`）
 
+### 5.1 清空 AI 分析数据
+
 | 项 | 说明 |
 |----|------|
-| 清空 AI | 数据工具 →「清空 AI 分析数据」→ IPC `resetAiAnalysis`（全库图片） |
+| 入口 | 数据工具 →「清空 AI 分析数据」 |
+| IPC | `resetAiAnalysis`（**图片 + 有封面视频**） |
 | 确认文案 | `pages.Utils.clearAiAnalysisDataConfirm`（HTML 确认框） |
 | 成功提示 | 展示主进程返回的 `res.message`（已含 `{count}` 插值） |
 | 关联文档 | [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) §14 · [data-model-resources-and-ai.md](./data-model-resources-and-ai.md) |
+
+### 5.2 清空资源库
+
+| 项 | 说明 |
+|----|------|
+| 入口 | 数据工具 →「清空资源库数据」 |
+| IPC | `clearResourcesLibrary` |
+| 范围 | **全部** `fbw_resources` + 关联 cleanup + **auto 合集**；**不**整表清收藏/回忆/隐私 |
+| 磁盘 | **不删**本地文件 |
+| 与 clearDB | `clearDB('resources')` 全量已委托同一实现 — 见 [resource-lifecycle-and-cleanup.md](./resource-lifecycle-and-cleanup.md) |
+
+### 5.3 清理下载（手动）
+
+| 项 | 说明 |
+|----|------|
+| 入口 | 数据工具 →「清空所有下载」/「清理过期下载」 |
+| IPC | `clearDownloadedAll` / `clearDownloadedExpired`（**不传** `excludeProtected`） |
+| 范围 | `resourceName != 'local'` 的全部或过期下载 |
+| **收藏 / 隐私空间** | **会一并删除**（用户主动确认后的强清理） |
+| 删除语义 | `FileManager.deleteFile`：删磁盘 + `purgeResourceRecords`；IPC 包资源维护模式 |
+| 与自动清理对比 | 见 **§8** |
+
+### 5.4 代码锚点
+
+| 模块 | 路径 |
+|------|------|
+| 工具 UI | `src/renderer/windows/MainWindow/pages/Utils.vue` |
+| IPC | `src/main/store/index.mjs` → `clearResourcesLibrary`、`clearDownloadedAll`、`clearDownloadedExpired` |
+| 清理实现 | `WallpaperManager.mjs`、`resourceDeleteCleanup.mjs`、`DatabaseManager.mjs` |
 
 ---
 
@@ -173,6 +205,12 @@ local:{name}:{winName}
 - [ ] **仅 focus 快捷键输入框录键时**：注销一次；blur 后恢复一次
 - [ ] `Ctrl+Shift+R` 检查更新：dev 可失败但有通知，无 `reading 'send'` 异常
 
+### 下载清理
+
+- [ ] **自动清理**：过期下载中，已收藏 / 隐私空间内资源保留  
+- [ ] **工具页手动**：「清空所有 / 清理过期」可删收藏与隐私空间中的下载  
+- [ ] 手动清理后收藏页、隐私空间列表与资源库一致（无幽灵条目）
+
 ---
 
 ## 7. 省电模式与后台 AI（基础设置）
@@ -183,6 +221,7 @@ local:{name}:{winName}
 | 生效条件 | **仅**「省电模式开启 **且** 当前用电池」时暂停后台任务（`isPowerSaveOnBattery()`） |
 | 暂停范围 | `taskScheduler.clearAllTasks()`：含 AI 分析、画面向量、壁纸切换、目录刷新、系统策展等 |
 | 恢复 | 关闭省电开关 → `restartPowerSaveDependentTasks`；插 AC（曾暂停）→ `resumeBackgroundAiTasksIfAllowed` |
+| 动态壁纸性能 | `BaseSetting` → `window.FBW.setDynamicWallpaperPerformance(mode)`（勿用已废弃的 `*PerformanceMode`） |
 | 详细行为 | 见 [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md) **§4.2** · [ai-dev-plan.md](./ai-dev-plan.md) **§18** |
 
 ### 7.1 验收
@@ -200,12 +239,93 @@ local:{name}:{winName}
 
 ---
 
-## 8. 修订记录
+## 8. 下载清理（自动 vs 手动）
+
+> 实现：`WallpaperManager.mjs` 常量 `CLEAR_DOWNLOAD_PROTECTED_SQL`；方法参数 `excludeProtected`（默认 `false`）。
+
+### 8.1 行为对照
+
+| 场景 | 入口 | `excludeProtected` | 收藏 / 隐私空间 |
+|------|------|-------------------|-----------------|
+| **自动清理** | 基础设置 →「自动清理」+ 过期时间 | **`true`** | **保留** |
+| **手动清理** | 工具页 → 清空所有 / 清理过期 | **`false`** | **可删除** |
+
+共同规则：
+
+- 始终**不**清理 `resourceName = 'local'`（本地目录壁纸）。
+- 过期判定：`created_at < now - clearDownloadedExpiredTime`（单位见 `clearDownloadedExpiredUnit`）。
+- 自动任务：`index.mjs` → `startClearDownloadedTask`，**每小时**调用 `clearDownloadedExpired({ excludeProtected: true })`，完成后系统通知。
+
+### 8.2 SQL 保护条件（仅 `excludeProtected: true` 时追加）
+
+```sql
+AND NOT EXISTS (SELECT 1 FROM fbw_favorites f WHERE f.resourceId = r.id)
+AND NOT EXISTS (SELECT 1 FROM fbw_privacy_space p WHERE p.resourceId = r.id)
+```
+
+### 8.3 动机（2026-06-03）
+
+**修复前：** 自动清理未排除收藏/隐私空间，可能误删用户刻意保留的下载，并导致资源库为空而 AI 向量残留（孤儿数据）。
+
+**产品约定：** 后台自动任务保守（只删「过期且未标记保留」）；工具页为用户显式强清理，可覆盖收藏与隐私空间。
+
+### 8.4 设置项（`BaseSetting.vue`）
+
+| 字段 | 说明 |
+|------|------|
+| `clearDownloadedExpiredTime` / `clearDownloadedExpiredUnit` | 过期阈值（手动「清理过期」与自动任务共用） |
+| `autoClearDownloaded` | 是否启用定时自动清理（需已配置 `downloadFolder`） |
+
+### 8.5 代码锚点
+
+| 模块 | 路径 |
+|------|------|
+| 自动清理开关 | `src/renderer/.../Setting/components/BaseSetting.vue` |
+| 定时任务 | `src/main/store/index.mjs` → `initClearDownloadedTask`、`startClearDownloadedTask` |
+| 清理逻辑 | `src/main/store/WallpaperManager.mjs` |
+
+---
+
+## 9. 自动下载与收藏入库
+
+### 9.1 自动下载
+
+| 项 | 说明 |
+|----|------|
+| 设置 | `downloadMediaTypes` 多选：`images` / `videos`（至少一项，默认仅 `images`） |
+| 任务粒度 | 每个 **下载源 × 关键词 × 媒体类型** 独立分页（`download_params\|source\|keyword\|videos`） |
+| 插件能力 | 不支持 `videos` 的源（如 Unsplash）在选视频时自动跳过 |
+| 入库 | **`FileManager.downloadFile` 统一路径**（含视频 `posterPath`） |
+
+### 9.2 远程收藏（桌面 + H5）
+
+| 项 | 说明 |
+|----|------|
+| 行为 | 远程项（无 `id`）收藏时 **隐式 `downloadFile` 入库**，再写 `fbw_favorites` |
+| 校验 | `addToFavorites` 插入前 `SELECT id FROM fbw_resources`；失败返回 `RESOURCE_NOT_FOUND` / `DOWNLOAD_FAILED` |
+| 响应 | `data.resource` 返回入库行，前端合并 `id` / `filePath` 等 |
+| 冲突补封面 | 唯一键冲突且 `posterPath` 为空时补下 poster（F7） |
+
+### 9.3 代码锚点
+
+| 模块 | 路径 |
+|------|------|
+| 自动下载 | `WallpaperManager.searchWallpaperWithDownload` |
+| 手动/收藏下载 | `FileManager.downloadFile` |
+| 收藏 | `ResourcesManager.addToFavorites` |
+| H5 API | `h5_server/api/business.mjs` → `/api/favorites/*` |
+
+---
+
+## 10. 修订记录
 
 | 日期 | 说明 |
 |------|------|
+| **2026-05-27** | §9 自动下载多类型 + 远程收藏隐式入库；统一下载实现 |
+| **2026-06-03** | §5.2 / §8 下载清理：`excludeProtected` 区分自动（保留收藏/隐私）与工具页手动（可删） |
 | **2026-05-27** | §7 省电模式与后台 AI 恢复；链至 ai-analysis §4.2、ai-dev-plan §18 |
 | **2026-06-01** | §3.5 录键 suspend/resume 引用计数；渲染端 `shortcutsSuspended` 守卫；修复切设置 tab/进出设置页误触发全量重注册 |
+| 2026-06-03 | §5.4 清空资源库；`clearDB` 全量对齐；动态壁纸 `setDynamicWallpaperPerformance`；链至 `resource-lifecycle-and-cleanup.md` |
 | 2026-05-27 | §5 工具页「清空 AI 分析数据」；链至数据模型与分析 UX 文档 |
 | 2026-05-31 | 初版：侧栏折叠钮样式、SideMenu hover 主题色、ShortcutManager 复合键与冲突检测、Updater 通知修复 |
 | 2026-05-27 | 索引：链至 `privacy-and-sensitive-content.md`（敏感遮罩与壁纸上/下一张过滤） |

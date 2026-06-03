@@ -27,6 +27,7 @@ import {
   isQualityFilterApplicable
 } from '@common/publicData.js'
 import { handleInfoVal, resolveApiUserMessage, isTransientSearchFailure } from '@common/utils.js'
+import { applyFavoriteResourceToItem } from '@h5/utils/favoriteApiBody.js'
 import { usePrivacyNsfwMask } from '@common/composables/usePrivacyNsfwMask.mjs'
 import { useH5FullscreenAutoPlay } from '@h5/composables/useH5FullscreenAutoPlay.js'
 import {
@@ -951,11 +952,15 @@ export function useH5ResourceBrowse(options) {
   const onToggleFavorite = async (item) => {
     if (blockIfNsfwMasked(item)) return
     const isPrivacy = enablePrivacySpaceToolbar && inPrivacySpace.value
-    const res = item.isFavorite
-      ? await api.removeFavorites(item.id, isPrivacy)
-      : await api.addToFavorites(item.id, isPrivacy)
+    const wasFavorite = !!item.isFavorite
+    const res = wasFavorite
+      ? await api.removeFavorites(item.id ?? item, isPrivacy)
+      : await api.addToFavorites(item, isPrivacy)
     if (res?.success) {
-      item.isFavorite = !item.isFavorite
+      if (!wasFavorite) {
+        applyFavoriteResourceToItem(item, res)
+      }
+      item.isFavorite = wasFavorite ? 0 : 1
       if (!item.isFavorite) {
         removeItemAfterUnfavorite(item)
       }
@@ -1500,8 +1505,10 @@ export function useH5ResourceBrowse(options) {
 
     if (state.isFavoriteHolding && favoriteHold.count > 0) {
       if (!currentImage.isFavorite) {
-        await api.addToFavorites(currentImage.id)
+        const addRes = await api.addToFavorites(currentImage)
+        applyFavoriteResourceToItem(currentImage, addRes)
       }
+      if (!currentImage.id) return
       const res = await api.updateFavoriteCount(currentImage.id, favoriteHold.count)
       if (res?.success) {
         currentImage.favoriteCount = (currentImage.favoriteCount || 0) + favoriteHold.count
@@ -1531,8 +1538,9 @@ export function useH5ResourceBrowse(options) {
       } else {
         favoriteClick.lastClickTime = currentTime
         favoriteClick.timer = setTimeout(async () => {
-          const res = await api.addToFavorites(currentImage.id)
+          const res = await api.addToFavorites(currentImage)
           if (res?.success) {
+            applyFavoriteResourceToItem(currentImage, res)
             currentImage.isFavorite = true
             state.showFavoriteToast = true
             settingStore.vibrate(() => {
@@ -1926,6 +1934,7 @@ export function useH5ResourceBrowse(options) {
     if (!item?.id || item.fileType === 'video') return
     if (blockIfNsfwMasked(item)) return
     state.showActionPopup = false
+    state.showPreview = false
 
     const scope = buildSimilarScope()
     const pageSize = resolveSimilarPageSize()
@@ -2142,7 +2151,7 @@ export function useH5ResourceBrowse(options) {
 
   const toggleSelectedFavorite = async () => {
     const item = selectedItem.value
-    if (!item?.id) {
+    if (!item) {
       showNotify({ type: 'warning', message: t('messages.noData') })
       return
     }
@@ -2152,12 +2161,12 @@ export function useH5ResourceBrowse(options) {
 
   const addSelectedToPrivacySpace = async () => {
     const item = selectedItem.value
-    if (!item?.id) {
+    if (!item) {
       showNotify({ type: 'warning', message: t('messages.noData') })
       return
     }
     try {
-      const res = await api.addToFavorites(item.id, true)
+      const res = await api.addToFavorites(item, true)
       if (!res?.success) {
         showNotify({
           type: 'danger',
@@ -2165,6 +2174,7 @@ export function useH5ResourceBrowse(options) {
         })
         return
       }
+      applyFavoriteResourceToItem(item, res)
       if (item.isFavorite) {
         await api.removeFavorites(item.id, false)
         item.isFavorite = 0

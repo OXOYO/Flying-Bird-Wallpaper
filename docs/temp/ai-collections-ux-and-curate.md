@@ -1,9 +1,9 @@
 # 智能合集：策展规则与合集页体验（2.0.0+ 增量）
 
-> 文档版本：**v1.6**  
-> 整理日期：2026-06-01  
+> 文档版本：**v1.7**  
+> 整理日期：**2026-06-03**  
 > 状态：**已实现**  
-> 关联：[ai-dev-plan.md](./ai-dev-plan.md) · [ai-feature-roadmap.md](./ai-feature-roadmap.md) · [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) · [README.md](./README.md)
+> 关联：[ai-dev-plan.md](./ai-dev-plan.md) · [resource-lifecycle-and-cleanup.md](./resource-lifecycle-and-cleanup.md) · [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) · [README.md](./README.md)
 
 ---
 
@@ -209,7 +209,7 @@ Prompt 约束见各语言包 `ai.prompts.collectionNaming` 第 7 条：`name` �
 
 | 请求 | 说明 |
 |------|------|
-| `collectionsList` | 一次返回全部合集元数据 + **`itemCount`**（`GROUP BY` 统计，无壁纸行） |
+| `collectionsList` | 一次返回全部合集元数据 + **`itemCount`**（`JOIN fbw_resources` 统计，不含孤儿成员） |
 | `collectionsGet` | **按当前选中合集** 分页拉壁纸 |
 
 **不会**在进入页面时拉取所有合集的全部图片。
@@ -387,3 +387,4 @@ flowchart TD
 | **v1.4** | 2026-05-29 | 刷新 `regenPrompt` 默认 false；LLM 动态标签扩展；实体词禁用画面补充；修复风景顶替 |
 | **v1.5** | 2026-06-01 | 仅画面 K-Means；**按簇** LLM 命名（删 merge）；UI locale 对齐；命名后语义剔图；簇阈值 0.77；i18n 降级与 storagePrompt |
 | **v1.6** | 2026-06-01 | 同名/成员 Jaccard≥0.85 合并 plan；与库内 reconcile；upsert 后 dedupe（保留最小 id） |
+| **v1.7** | **2026-06-03** | 策展/增量入集含**有封面视频**；`incrementalAddResource` 排除隐私；`itemCount` JOIN 主表；用户合集 `useSemantic=false` 尊重用户选择 |

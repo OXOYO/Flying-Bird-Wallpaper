@@ -18,6 +18,8 @@ import {
   rhythmAnimationOptions,
   rhythmDensityOptions,
   positionOptions,
+  filterTypeOptions,
+  normalizeDownloadMediaTypes,
   defaultMenuList,
   menuList,
   notificationsOptions
@@ -298,7 +300,7 @@ const onDynamicSettingChange = (field, value) => {
       window.FBW.setDynamicWallpaperContrast(value)
       break
     case 'dynamicPerformanceMode':
-      window.FBW.setDynamicWallpaperPerformanceMode(value)
+      window.FBW.setDynamicWallpaperPerformance(value)
       break
     case 'dynamicScaleMode':
       window.FBW.setDynamicWallpaperScaleMode(value)
@@ -360,6 +362,11 @@ const onDownloadKeywordsChange = (val) => {
   onSettingDataFormChange()
 }
 
+const onDownloadMediaTypesChange = (val) => {
+  settingDataForm.downloadMediaTypes = normalizeDownloadMediaTypes(val)
+  onSettingDataFormChange()
+}
+
 onMounted(() => {
   initMinTimes()
 })
@@ -374,6 +381,9 @@ const syncFormFromSettingData = () => {
   Object.keys(data).forEach((key) => {
     settingDataForm[key] = data[key]
   })
+  settingDataForm.downloadMediaTypes = normalizeDownloadMediaTypes(
+    settingDataForm.downloadMediaTypes
+  )
   initMinTimes()
 }
 
@@ -1043,6 +1053,28 @@ defineExpose({
               @change="onSettingDataFormChange"
             >
               <el-checkbox v-for="item in orientationOptions" :key="item.value" :label="item.value">
+                <span class="setting-checkbox__content">
+                  <IconifyIcon :icon="item.icon" class="setting-checkbox__icon" />
+                  <span class="checkbox-label">{{ t(item.locale) }}</span>
+                </span>
+              </el-checkbox>
+            </el-checkbox-group>
+          </el-form-item>
+          <el-form-item
+            :label="t('pages.Setting.settingDataForm.downloadMediaTypes')"
+            prop="downloadMediaTypes"
+          >
+            <el-checkbox-group
+              v-model="settingDataForm.downloadMediaTypes"
+              class="setting-checkbox-group--2"
+              :disabled="!settingDataForm.downloadSources.length"
+              @change="onDownloadMediaTypesChange"
+            >
+              <el-checkbox
+                v-for="item in filterTypeOptions"
+                :key="item.value"
+                :label="item.value"
+              >
                 <span class="setting-checkbox__content">
                   <IconifyIcon :icon="item.icon" class="setting-checkbox__icon" />
                   <span class="checkbox-label">{{ t(item.locale) }}</span>

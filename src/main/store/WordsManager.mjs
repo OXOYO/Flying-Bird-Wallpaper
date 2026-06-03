@@ -171,65 +171,6 @@ export default class WordsManager {
   }
 
   /**
-   * 处理删除资源时的分词计数更新
-   * @param {Object} resource - 被删除的资源
-   */
-  handleDeletedResource(resource) {
-    if (!resource) {
-      return
-    }
-
-    try {
-      // 处理标题和描述
-      const content = resource.title
-        ? `${resource.title} ${resource.desc}`.trim()
-        : resource.fileName
-      if (!content) return
-
-      // 获取分词
-      const words = this.cutWords(content)
-
-      // 更新分词计数
-      const update_word_stmt = this.db.prepare(
-        `UPDATE fbw_words SET count = MAX(count - 1, 0), updated_at = datetime('now', 'localtime') WHERE word = ?`
-      )
-
-      // 删除计数为0的分词
-      const delete_word_stmt = this.db.prepare(
-        `DELETE FROM fbw_words WHERE word = ? AND count <= 0`
-      )
-
-      // 删除资源与分词的关联
-      const delete_resource_word_stmt = this.db.prepare(
-        `DELETE FROM fbw_resource_words WHERE resourceId = ?`
-      )
-
-      const transaction = this.db.transaction(() => {
-        // 删除资源与分词的关联
-        delete_resource_word_stmt.run(resource.id)
-
-        for (const word of words) {
-          if (!word.trim()) continue
-
-          // 减少计数
-          update_word_stmt.run(word)
-
-          // 删除计数为0的分词
-          delete_word_stmt.run(word)
-        }
-      })
-
-      // 执行事务
-      transaction()
-      this.logger.info(
-        `更新删除资源的分词计数成功: 资源ID => ${resource.id}，分词 => ${words.join(',')}`
-      )
-    } catch (err) {
-      this.logger.error(`更新删除资源的分词计数失败: error => ${err}`)
-    }
-  }
-
-  /**
    * 应用 AI 标签到词库
    */
   applyTagsFromAnalysis(item, tags = []) {

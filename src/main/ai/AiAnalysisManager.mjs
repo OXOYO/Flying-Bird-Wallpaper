@@ -17,9 +17,14 @@ import {
   isAutoCurateSettled
 } from '../store/collectionCurateGate.mjs'
 import {
-  decrementWordCountsForResourceIds,
-  deleteEmbeddingsForResourceIds
+  clearAiAnalysisDataForResourceIds,
+  deleteAutoCollections
 } from '../store/resourceDeleteCleanup.mjs'
+import {
+  AI_ANALYZABLE_FILE_TYPES_WHERE,
+  buildAnalyzableResourceWhere,
+  resolveVisionImagePath
+} from './AiVisionResourcePath.mjs'
 
 export default class AiAnalysisManager {
   static _instance = null
@@ -136,10 +141,13 @@ export default class AiAnalysisManager {
   /** @returns {string|null} 跳过原因；null 表示可继续分析 */
   getSkipReason(row) {
     if (!row) return 'no_row'
-    if (row.fileType !== 'image') return 'not_image'
-    if (!row.filePath) return 'no_path'
-    if (!this.isImageFile(row.filePath)) return 'unsupported_ext'
-    if (!fs.existsSync(row.filePath)) return 'missing_file'
+    if (row.fileType !== 'image' && row.fileType !== 'video') return 'unsupported_type'
+    const visionPath = resolveVisionImagePath(row)
+    if (!visionPath) {
+      return row.fileType === 'video' ? 'no_poster' : 'no_path'
+    }
+    if (!this.isImageFile(visionPath)) return 'unsupported_ext'
+    if (!fs.existsSync(visionPath)) return 'missing_file'
     return null
   }
 
@@ -158,21 +166,24 @@ export default class AiAnalysisManager {
 
   markAnalysisSkipped(row, reason) {
     this._upsertAiStatus(row.id, AI_ANALYSIS_STATUS.SKIPPED, Number(row.aiAnalysisFailCount) || 0)
+    const visionPath = resolveVisionImagePath(row) || row.filePath || row.posterPath || ''
     this.logger.warn(
-      `[AiAnalysisManager] skip analyze id=${row.id} reason=${reason} file=${row.filePath || ''}`
+      `[AiAnalysisManager] skip analyze id=${row.id} reason=${reason} fileType=${row.fileType || ''} vision=${visionPath}`
     )
+    let message = t('messages.operationFail')
+    if (reason === 'missing_file') message = t('messages.fileNotExist')
+    else if (reason === 'no_poster') message = t('messages.noVideoPoster')
     return {
       success: false,
       skipped: true,
-      message:
-        reason === 'missing_file' ? t('messages.fileNotExist') : t('messages.operationFail')
+      message
     }
   }
 
   async analyzeResourceById(resourceId, options = {}) {
     const row = this.db
       .prepare(
-        `SELECT r.id, r.filePath, r.fileType, r.resourceName, r.title, r.desc, r.fileName,
+        `SELECT r.id, r.filePath, r.posterPath, r.fileType, r.resourceName, r.title, r.desc, r.fileName,
                 COALESCE(ai.aiAnalysisFailCount, 0) AS aiAnalysisFailCount
          FROM fbw_resources r
          LEFT JOIN fbw_resource_ai ai ON ai.resourceId = r.id
@@ -221,16 +232,19 @@ export default class AiAnalysisManager {
       return this.markAnalysisSkipped(row, skipReason)
     }
 
+    const visionPath = resolveVisionImagePath(row)
     const startedAt = Date.now()
-    const ctx = this.getAnalysisRequestContext(row.filePath)
+    const ctx = this.getAnalysisRequestContext(visionPath)
     this.logger.info(
-      `[AiAnalysisManager] analyze start id=${row.id} timeout=${ctx.timeoutSec}s (base=${ctx.baseTimeoutSec}s) provider=${ctx.visionProvider} model=${ctx.visionModel} size=${ctx.fileSizeMB}MB file=${ctx.filePath}`
+      `[AiAnalysisManager] analyze start id=${row.id} fileType=${row.fileType} timeout=${ctx.timeoutSec}s (base=${ctx.baseTimeoutSec}s) provider=${ctx.visionProvider} model=${ctx.visionModel} size=${ctx.fileSizeMB}MB vision=${ctx.filePath}`
     )
     const modelStartedAt = Date.now()
     this._currentAnalysisStartedAt = modelStartedAt
     let modelMs = 0
     try {
-      const result = await this.provider.analyzeImage(row.filePath)
+      const result = await this.provider.analyzeImage(visionPath, {
+        videoPoster: row.fileType === 'video'
+      })
       modelMs = Date.now() - modelStartedAt
       const safeForWork = result.safeForWork === false ? 0 : 1
       this.db
@@ -315,12 +329,13 @@ export default class AiAnalysisManager {
 
   _buildPendingQuerySql() {
     const mode = this.ai.analysisMode
+    const analyzable = buildAnalyzableResourceWhere('r')
     let query_sql = `
-      SELECT r.id, r.filePath, r.fileType, r.resourceName, r.title, r.desc, r.fileName,
+      SELECT r.id, r.filePath, r.posterPath, r.fileType, r.resourceName, r.title, r.desc, r.fileName,
              COALESCE(ai.aiAnalysisFailCount, 0) AS aiAnalysisFailCount
       FROM fbw_resources r
       LEFT JOIN fbw_resource_ai ai ON ai.resourceId = r.id
-      WHERE r.fileType = 'image'
+      WHERE ${analyzable}
         AND (ai.resourceId IS NULL OR ai.aiAnalysisStatus IN ('pending', 'failed'))
     `
     if (mode === 'new_only') {
@@ -336,11 +351,12 @@ export default class AiAnalysisManager {
   }
 
   countPendingInQueue() {
+    const analyzable = buildAnalyzableResourceWhere('r')
     const row = this.db
       .prepare(
         `SELECT COUNT(*) as c FROM fbw_resources r
          LEFT JOIN fbw_resource_ai ai ON ai.resourceId = r.id
-         WHERE r.fileType='image'
+         WHERE ${analyzable}
            AND (ai.resourceId IS NULL OR ai.aiAnalysisStatus IN ('pending','failed'))${
           this.ai.analysisMode === 'new_only' ? ' AND (ai.resourceId IS NULL OR ai.aiAnalyzedAt IS NULL)' : ''
         }`
@@ -440,7 +456,7 @@ export default class AiAnalysisManager {
         `SELECT COALESCE(ai.aiAnalysisStatus, 'pending') AS status, COUNT(*) AS count
          FROM fbw_resources r
          LEFT JOIN fbw_resource_ai ai ON ai.resourceId = r.id
-         WHERE r.fileType='image'
+         WHERE ${AI_ANALYZABLE_FILE_TYPES_WHERE}
          GROUP BY status`
       )
       .all()
@@ -452,7 +468,7 @@ export default class AiAnalysisManager {
     const done = map.done || 0
     const failed = map.failed || 0
     const skipped = map.skipped || 0
-    const total = pending + done + failed
+    const total = pending + done + failed + skipped
     let embedding = 0
     let imageEmbedding = 0
     let imageEmbedPending = 0
@@ -468,7 +484,7 @@ export default class AiAnalysisManager {
               `SELECT COUNT(*) as c
                FROM fbw_resources r
                INNER JOIN fbw_resource_ai ai ON ai.resourceId = r.id
-               WHERE r.fileType = 'image'
+               WHERE r.fileType IN ('image', 'video')
                  AND ai.aiAnalysisStatus = ?
                  AND NOT EXISTS (
                    SELECT 1 FROM fbw_resource_image_vec_blob v
@@ -511,22 +527,14 @@ export default class AiAnalysisManager {
     tx()
   }
 
-  _decrementWordCountsForResourceIds(resourceIds = []) {
-    decrementWordCountsForResourceIds(this.db, resourceIds)
-  }
-
-  _deleteEmbeddingsForResourceIds(resourceIds = []) {
-    deleteEmbeddingsForResourceIds(this.db, resourceIds)
-  }
-
   /**
-   * 清空库内全部图片的 AI 分析数据（评分、摘要、标题、描述、敏感等级、标签、向量等），并标为待分析。
+   * 清空库内全部可分析资源（图片与有封面视频）的 AI 分析数据（评分、摘要、标题、描述、敏感等级、标签、向量等），并标为待分析。
    * @returns {{ success: boolean, message: string, data?: { affected: number, autoPump: boolean } }}
    */
   clearAllAiAnalysisData() {
-    const imageWhere = `fileType = 'image'`
+    const analyzableWhere = AI_ANALYZABLE_FILE_TYPES_WHERE
     const count =
-      this.db.prepare(`SELECT COUNT(*) as c FROM fbw_resources WHERE ${imageWhere}`).get()?.c || 0
+      this.db.prepare(`SELECT COUNT(*) as c FROM fbw_resources WHERE ${analyzableWhere}`).get()?.c || 0
     const autoCollectionCount =
       this.db.prepare(`SELECT COUNT(*) as c FROM fbw_collections WHERE source = 'auto'`).get()?.c || 0
     if (!count) {
@@ -537,53 +545,16 @@ export default class AiAnalysisManager {
       }
     }
 
+    const resourceIds = this.db
+      .prepare(`SELECT id FROM fbw_resources WHERE ${analyzableWhere}`)
+      .all()
+      .map((r) => r.id)
+
     const tx = this.db.transaction(() => {
-      this.db
-        .prepare(
-          `DELETE FROM fbw_resource_words WHERE resourceId IN (SELECT id FROM fbw_resources WHERE ${imageWhere})`
-        )
-        .run()
-      this.db
-        .prepare(
-          `DELETE FROM fbw_words WHERE id NOT IN (SELECT DISTINCT wordId FROM fbw_resource_words WHERE wordId IS NOT NULL)`
-        )
-        .run()
-
-      this.db
-        .prepare(
-          `DELETE FROM fbw_resource_vec_blob WHERE resourceId IN (SELECT id FROM fbw_resources WHERE ${imageWhere})`
-        )
-        .run()
-      this.db
-        .prepare(
-          `DELETE FROM fbw_resource_embeddings WHERE resourceId IN (SELECT id FROM fbw_resources WHERE ${imageWhere})`
-        )
-        .run()
-      this.db
-        .prepare(
-          `DELETE FROM fbw_resource_image_vec_blob WHERE resourceId IN (SELECT id FROM fbw_resources WHERE ${imageWhere})`
-        )
-        .run()
-      try {
-        this.db
-          .prepare(
-            `DELETE FROM fbw_vec_index WHERE resourceId IN (SELECT id FROM fbw_resources WHERE ${imageWhere})`
-          )
-          .run()
-      } catch {
-        // sqlite-vec 表可能不存在
+      if (resourceIds.length) {
+        clearAiAnalysisDataForResourceIds(this.db, resourceIds)
       }
-
-      this.db
-        .prepare(`DELETE FROM fbw_resource_ai WHERE resourceId IN (SELECT id FROM fbw_resources WHERE ${imageWhere})`)
-        .run()
-
-      this.db
-        .prepare(
-          `DELETE FROM fbw_collection_items WHERE collectionId IN (SELECT id FROM fbw_collections WHERE source = 'auto')`
-        )
-        .run()
-      this.db.prepare(`DELETE FROM fbw_collections WHERE source = 'auto'`).run()
+      deleteAutoCollections(this.db)
     })
     tx()
 
@@ -630,7 +601,7 @@ export default class AiAnalysisManager {
       .prepare(
         `SELECT COUNT(*) as c FROM fbw_resource_ai ai
          JOIN fbw_resources r ON r.id = ai.resourceId
-         WHERE r.fileType = 'image' AND ai.aiAnalysisStatus = ?`
+         WHERE r.fileType IN ('image', 'video') AND ai.aiAnalysisStatus = ?`
       )
       .get(AI_ANALYSIS_STATUS.FAILED)
     const count = row?.c || 0
@@ -642,7 +613,7 @@ export default class AiAnalysisManager {
       .prepare(
         `UPDATE fbw_resource_ai SET aiAnalysisStatus = ?, aiAnalysisFailCount = 0, updated_at = datetime('now', 'localtime')
          WHERE aiAnalysisStatus = ?
-           AND resourceId IN (SELECT id FROM fbw_resources WHERE fileType = 'image')`
+           AND resourceId IN (SELECT id FROM fbw_resources WHERE fileType IN ('image', 'video'))`
       )
       .run(AI_ANALYSIS_STATUS.PENDING, AI_ANALYSIS_STATUS.FAILED)
 

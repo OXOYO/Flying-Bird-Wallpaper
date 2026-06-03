@@ -7,6 +7,7 @@ import {
 } from '../../common/publicData.js'
 import { createTables, createIndexes } from './sql.mjs'
 import { upgradeResourcesSchema, upgradeCollectionsSchema } from './schemaUpgrade.mjs'
+import { clearResourcesLibraryData, cleanupResourceRelatedData } from './resourceDeleteCleanup.mjs'
 
 // 删除指定表
 const dropTables = []
@@ -117,7 +118,32 @@ export default class DatabaseManager {
       success: false,
       message: t('messages.operationFail')
     }
+    if (!tableName || typeof tableName !== 'string') {
+      return ret
+    }
     tableName = tableName.startsWith('fbw_') ? tableName : `fbw_${tableName}`
+
+    // 全量清资源与「清空资源库」语义对齐
+    if (tableName === 'fbw_resources' && !resourceName) {
+      try {
+        const result = clearResourcesLibraryData(this.db)
+        if (result.affected > 0) {
+          try {
+            this.db.prepare(`UPDATE sqlite_sequence SET seq = 0 WHERE name = 'fbw_resources'`).run()
+          } catch {
+            /* ignore */
+          }
+        }
+        return {
+          success: true,
+          message: t('messages.clearTableSuccess'),
+          data: result
+        }
+      } catch (err) {
+        this.logger.error(`[DatabaseManager] clearDB resources failed: ${err}`)
+        return ret
+      }
+    }
 
     try {
       // 开始事务
@@ -127,82 +153,17 @@ export default class DatabaseManager {
       // 检查是否为有效的表名
       if (tableName === 'fbw_resources') {
         if (resourceName) {
-          // 获取要删除的资源ID
-          const get_ids_stmt = this.db.prepare(`SELECT id FROM ${tableName} WHERE resourceName = ?`)
-          const resources = get_ids_stmt.all(resourceName)
+          const resources = this.db
+            .prepare(`SELECT id FROM ${tableName} WHERE resourceName = ?`)
+            .all(resourceName)
+          const resourceIds = resources.map((r) => r.id)
 
-          if (resources && resources.length > 0) {
-            const resourceIds = resources.map((r) => r.id)
-
-            // 清除关联表中的数据
-            for (const id of resourceIds) {
-              // 清除收藏表中的关联数据
-              const delete_favorites_stmt = this.db.prepare(
-                `DELETE FROM fbw_favorites WHERE resourceId = ?`
-              )
-              delete_favorites_stmt.run(id)
-
-              // 清除历史表中的关联数据
-              const delete_history_stmt = this.db.prepare(
-                `DELETE FROM fbw_history WHERE resourceId = ?`
-              )
-              delete_history_stmt.run(id)
-
-              // 清除隐私空间表中的关联数据
-              const delete_privacy_stmt = this.db.prepare(
-                `DELETE FROM fbw_privacy_space WHERE resourceId = ?`
-              )
-              delete_privacy_stmt.run(id)
-
-              // 清除统计表中的关联数据
-              const delete_statistics_stmt = this.db.prepare(
-                `DELETE FROM fbw_statistics WHERE resourceId = ?`
-              )
-              delete_statistics_stmt.run(id)
-
-              // 清除资源分词关联表中的数据
-              const delete_resource_words_stmt = this.db.prepare(
-                `DELETE FROM fbw_resource_words WHERE resourceId = ?`
-              )
-              delete_resource_words_stmt.run(id)
-            }
-
-            // 更新词库中的计数
-            // 获取要删除的资源关联的词条ID
-            const get_word_ids_stmt = this.db.prepare(`
-              SELECT DISTINCT wordId FROM fbw_resource_words
-              WHERE resourceId IN (${resourceIds.map(() => '?').join(',')})
-            `)
-            const wordIds = get_word_ids_stmt.all(...resourceIds).map((w) => w.wordId)
-
-            if (wordIds.length > 0) {
-              // 更新词条计数
-              const update_word_count_stmt = this.db.prepare(`
-                UPDATE fbw_words SET count = MAX(count - 1, 0), updated_at = datetime('now', 'localtime')
-                WHERE id IN (${wordIds.map(() => '?').join(',')})
-              `)
-              update_word_count_stmt.run(...wordIds)
-
-              // 删除计数为0或小于0的词条
-              this.db.prepare(`DELETE FROM fbw_words WHERE count <= 0`).run()
-            }
+          if (resourceIds.length > 0) {
+            cleanupResourceRelatedData(this.db, resourceIds)
           }
 
-          // 清空资源表下指定资源
           const delete_stmt = this.db.prepare(`DELETE FROM ${tableName} WHERE resourceName = ?`)
           delete_res = delete_stmt.run(resourceName)
-        } else {
-          // 清空所有关联表
-          this.db.prepare(`DELETE FROM fbw_favorites`).run()
-          this.db.prepare(`DELETE FROM fbw_history`).run()
-          this.db.prepare(`DELETE FROM fbw_privacy_space`).run()
-          this.db.prepare(`DELETE FROM fbw_statistics`).run()
-          this.db.prepare(`DELETE FROM fbw_resource_words`).run()
-          this.db.prepare(`DELETE FROM fbw_words`).run()
-
-          // 清空资源表下所有资源
-          const delete_stmt = this.db.prepare(`DELETE FROM ${tableName}`)
-          delete_res = delete_stmt.run()
         }
       } else if (tableName === 'fbw_words') {
         // 清空资源分词关联表
@@ -220,51 +181,44 @@ export default class DatabaseManager {
           'fbw_resource_words'
         ].includes(tableName)
       ) {
-        // 清空指定表下所有记录
         const delete_stmt = this.db.prepare(`DELETE FROM ${tableName}`)
         delete_res = delete_stmt.run()
+        if (tableName === 'fbw_resource_words') {
+          this.db.prepare(`DELETE FROM fbw_words`).run()
+        }
       }
 
-      if (delete_res && delete_res.changes > 0) {
-        // 更新sqlite_sequence
-        const update_sequence_stmt = this.db.prepare(
-          `UPDATE sqlite_sequence SET seq = 0 WHERE name = ?`
-        )
-        const update_sequence_res = update_sequence_stmt.run(tableName)
+      if (delete_res !== undefined) {
+        if (delete_res.changes > 0) {
+          const update_sequence_stmt = this.db.prepare(
+            `UPDATE sqlite_sequence SET seq = 0 WHERE name = ?`
+          )
+          update_sequence_stmt.run(tableName)
 
-        // 如果清除了fbw_resources或fbw_words，也需要重置关联表的自增ID
-        if (tableName === 'fbw_resources' && !resourceName) {
-          // 只有在清空整个资源表时才重置关联表的自增ID
-          this.db.prepare(`UPDATE sqlite_sequence SET seq = 0 WHERE name = 'fbw_favorites'`).run()
-          this.db.prepare(`UPDATE sqlite_sequence SET seq = 0 WHERE name = 'fbw_history'`).run()
-          this.db
-            .prepare(`UPDATE sqlite_sequence SET seq = 0 WHERE name = 'fbw_privacy_space'`)
-            .run()
-          this.db.prepare(`UPDATE sqlite_sequence SET seq = 0 WHERE name = 'fbw_statistics'`).run()
-          this.db
-            .prepare(`UPDATE sqlite_sequence SET seq = 0 WHERE name = 'fbw_resource_words'`)
-            .run()
-        } else if (tableName === 'fbw_words') {
-          this.db
-            .prepare(`UPDATE sqlite_sequence SET seq = 0 WHERE name = 'fbw_resource_words'`)
-            .run()
+          if (tableName === 'fbw_resources' && !resourceName) {
+            this.db.prepare(`UPDATE sqlite_sequence SET seq = 0 WHERE name = 'fbw_favorites'`).run()
+            this.db.prepare(`UPDATE sqlite_sequence SET seq = 0 WHERE name = 'fbw_history'`).run()
+            this.db
+              .prepare(`UPDATE sqlite_sequence SET seq = 0 WHERE name = 'fbw_privacy_space'`)
+              .run()
+            this.db.prepare(`UPDATE sqlite_sequence SET seq = 0 WHERE name = 'fbw_statistics'`).run()
+            this.db
+              .prepare(`UPDATE sqlite_sequence SET seq = 0 WHERE name = 'fbw_resource_words'`)
+              .run()
+          } else if (tableName === 'fbw_words') {
+            this.db
+              .prepare(`UPDATE sqlite_sequence SET seq = 0 WHERE name = 'fbw_resource_words'`)
+              .run()
+          }
         }
 
-        // 提交事务
         this.db.exec('COMMIT')
-
-        if (update_sequence_res.changes > 0) {
-          ret = {
-            success: true,
-            message: t('messages.clearTableSuccess')
-          }
-        } else {
-          ret = {
-            success: false,
-            message: t('messages.clearTableAutoincrementFail')
-          }
+        ret = {
+          success: true,
+          message: t('messages.clearTableSuccess')
         }
       } else {
+        this.db.exec('ROLLBACK')
         ret = {
           success: false,
           message: t('messages.clearTableFail')
@@ -284,6 +238,44 @@ export default class DatabaseManager {
       this.logger.error(
         `CLEAR DB FAIL:: tableName => ${tableName} resourceName => ${resourceName}, error: ${err}`
       )
+    }
+    return ret
+  }
+
+  /**
+   * 清空资源库（fbw_resources 全部记录 + 关联附表；不删磁盘文件、不清收藏/回忆整表）
+   */
+  async clearResourcesLibrary() {
+    let ret = {
+      success: false,
+      message: t('messages.operationFail'),
+      data: { affected: 0, autoCollectionsRemoved: 0 }
+    }
+    try {
+      const result = clearResourcesLibraryData(this.db)
+      if (result.affected > 0) {
+        try {
+          this.db.prepare(`UPDATE sqlite_sequence SET seq = 0 WHERE name = 'fbw_resources'`).run()
+        } catch {
+          // ignore
+        }
+      }
+      ret = {
+        success: true,
+        message:
+          result.affected > 0
+            ? t('pages.Utils.clearResourcesLibrarySuccess', {
+                count: result.affected,
+                autoCollections: result.autoCollectionsRemoved
+              })
+            : t('pages.Utils.clearResourcesLibraryEmpty'),
+        data: result
+      }
+      this.logger.info(
+        `[DatabaseManager] clearResourcesLibrary affected=${result.affected} autoCollections=${result.autoCollectionsRemoved}`
+      )
+    } catch (err) {
+      this.logger.error(`[DatabaseManager] clearResourcesLibrary failed: ${err}`)
     }
     return ret
   }

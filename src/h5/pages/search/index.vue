@@ -15,6 +15,7 @@ import {
 import { useTranslation } from 'i18next-vue'
 import { infoKeys } from '@common/publicData.js'
 import { handleInfoVal, resolveApiUserMessage, isTransientSearchFailure } from '@common/utils.js'
+import { applyFavoriteResourceToItem } from '@h5/utils/favoriteApiBody.js'
 import { usePrivacyNsfwMask } from '@common/composables/usePrivacyNsfwMask.mjs'
 import H5PrivacyPasswordDialog from '@h5/components/H5PrivacyPasswordDialog.vue'
 import H5NsfwContentMask from '@h5/components/H5NsfwContentMask.vue'
@@ -28,9 +29,9 @@ import { buildH5SearchSimilarScope } from '@h5/utils/h5SimilarScope.mjs'
 import { useH5FullscreenAutoPlay } from '@h5/composables/useH5FullscreenAutoPlay.js'
 import {
   applyH5CardImageCompress,
-  applyH5ImageCompress,
-  buildH5LocalImageUrl
+  applyH5ImageCompress
 } from '@h5/utils/imageUrl.js'
+import { normalizeBrowseItem, getBrowseItemKey } from '@h5/utils/normalizeBrowseItem.mjs'
 import { getH5NumberIndicatorStyle, resolveH5TopIndicatorOffset } from '@h5/utils/indicatorStyle.js'
 import { scheduleDialogInputFocus } from '@common/focusDialogInput.mjs'
 import {
@@ -464,60 +465,9 @@ const displaySizeRadioOptions = computed(() =>
   }))
 )
 
-const normalizeItem = (item) => {
-  const isVideo = item.fileType === 'video'
+const normalizeItem = normalizeBrowseItem
 
-  if (isVideo) {
-    let posterRaw = ''
-    let videoSrc = ''
-
-    if (item.srcType === 'file') {
-      videoSrc = `/api/videos/get?filePath=${encodeURIComponent(item.filePath)}`
-      const iu = item.imageUrl || ''
-      if (iu) {
-        posterRaw = /^https?:\/\//i.test(iu) ? iu : buildH5LocalImageUrl(iu)
-      }
-    } else {
-      videoSrc = item.videoUrl || ''
-      posterRaw = item.imageUrl || ''
-    }
-
-    return {
-      ...item,
-      isVideo: true,
-      posterSrc: posterRaw,
-      posterRawSrc: posterRaw,
-      videoSrc,
-      imageSrc: posterRaw,
-      imageRawSrc: posterRaw
-    }
-  }
-
-  if (item.srcType === 'file') {
-    const rawUrl = buildH5LocalImageUrl(item.filePath)
-    return {
-      ...item,
-      isVideo: false,
-      posterSrc: '',
-      posterRawSrc: '',
-      videoSrc: '',
-      imageSrc: rawUrl,
-      imageRawSrc: rawUrl
-    }
-  }
-  return {
-    ...item,
-    isVideo: false,
-    posterSrc: '',
-    posterRawSrc: '',
-    videoSrc: '',
-    imageSrc: item.imageUrl || '',
-    imageRawSrc: item.imageUrl || ''
-  }
-}
-
-const getItemKey = (item) =>
-  String(item?.id || item?.uniqueKey || item?.filePath || item?.videoSrc || item?.imageSrc || '')
+const getItemKey = getBrowseItemKey
 const resolveImageCompressWidth = (options = {}) => {
   if (options.width) return Math.max(1, Math.round(options.width))
   if (displayMode.value === 'fullscreen') {
@@ -1035,9 +985,15 @@ const onChangeSource = () => {
 }
 
 const onToggleFavorite = async (item) => {
-  const res = item.isFavorite ? await api.removeFavorites(item.id) : await api.addToFavorites(item.id)
+  const wasFavorite = !!item.isFavorite
+  const res = wasFavorite
+    ? await api.removeFavorites(item.id ?? item)
+    : await api.addToFavorites(item)
   if (res?.success) {
-    item.isFavorite = !item.isFavorite
+    if (!wasFavorite) {
+      applyFavoriteResourceToItem(item, res)
+    }
+    item.isFavorite = wasFavorite ? 0 : 1
     showNotify({ type: 'success', message: t('messages.operationSuccess') })
   } else {
     showNotify({ type: 'danger', message: resolveApiUserMessage(res, t) || t('messages.operationFail') })
@@ -1605,8 +1561,10 @@ const handleFavoriteTouchEnd = async () => {
 
   if (state.isFavoriteHolding && favoriteHold.count > 0) {
     if (!currentImage.isFavorite) {
-      await api.addToFavorites(currentImage.id)
+      const addRes = await api.addToFavorites(currentImage)
+      applyFavoriteResourceToItem(currentImage, addRes)
     }
+    if (!currentImage.id) return
     const res = await api.updateFavoriteCount(currentImage.id, favoriteHold.count)
     if (res?.success) {
       currentImage.favoriteCount = (currentImage.favoriteCount || 0) + favoriteHold.count
@@ -1635,8 +1593,9 @@ const handleFavoriteTouchEnd = async () => {
     } else {
       favoriteClick.lastClickTime = currentTime
       favoriteClick.timer = setTimeout(async () => {
-        const res = await api.addToFavorites(currentImage.id)
+        const res = await api.addToFavorites(currentImage)
         if (res?.success) {
+          applyFavoriteResourceToItem(currentImage, res)
           currentImage.isFavorite = true
           state.showFavoriteToast = true
           settingStore.vibrate(() => {
@@ -2037,6 +1996,7 @@ const onFindSimilarSelected = async () => {
   if (!item?.id || item.fileType === 'video') return
   if (blockIfNsfwMasked(item)) return
   state.showActionPopup = false
+  state.showPreview = false
 
   const scope = buildSimilarScope()
   const pageSize = resolveSimilarPageSize()
@@ -2253,7 +2213,7 @@ const deleteSelectedMedia = async () => {
 
 const toggleSelectedFavorite = async () => {
   const item = selectedItem.value
-  if (!item?.id) {
+  if (!item) {
     showNotify({ type: 'warning', message: t('messages.noData') })
     return
   }
@@ -2263,12 +2223,12 @@ const toggleSelectedFavorite = async () => {
 
 const addSelectedToPrivacySpace = async () => {
   const item = selectedItem.value
-  if (!item?.id) {
+  if (!item) {
     showNotify({ type: 'warning', message: t('messages.noData') })
     return
   }
   try {
-    const res = await api.addToFavorites(item.id, true)
+    const res = await api.addToFavorites(item, true)
     if (!res?.success) {
       showNotify({
         type: 'danger',
@@ -2276,6 +2236,7 @@ const addSelectedToPrivacySpace = async () => {
       })
       return
     }
+    applyFavoriteResourceToItem(item, res)
     if (item.isFavorite) {
       await api.removeFavorites(item.id, false)
       item.isFavorite = 0

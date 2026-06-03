@@ -4,7 +4,7 @@ import axios from 'axios'
 import cache from '../cache.mjs'
 import { t } from '../../i18n/server.js'
 import { transFilePath } from '../utils/file.mjs'
-import { cleanupResourceRelatedData } from './resourceDeleteCleanup.mjs'
+import { purgeResourceRecords, pruneOrphanCollectionItems } from './resourceDeleteCleanup.mjs'
 
 export default class FileManager {
   // 单例实例
@@ -149,7 +149,7 @@ export default class FileManager {
    * @returns {Object} 处理结果
    */
   processDirectoryData(data) {
-    const { list } = data
+    const { list, scannedFilePaths, resourceName, scanComplete } = data
 
     const ret = {
       success: true,
@@ -159,29 +159,76 @@ export default class FileManager {
       }),
       data: {
         insertedCount: 0,
-        total: 0
+        total: 0,
+        prunedCount: 0,
+        updatedCount: 0
       }
     }
+
+    let prunedCount = 0
+    if (Array.isArray(scannedFilePaths) && resourceName && scanComplete !== false) {
+      try {
+        const scanned = new Set(scannedFilePaths)
+        const rows = this.db
+          .prepare(`SELECT id, filePath FROM fbw_resources WHERE resourceName = ?`)
+          .all(resourceName)
+        const removeIds = rows
+          .filter((row) => !row.filePath || !scanned.has(row.filePath))
+          .map((row) => row.id)
+        if (removeIds.length) {
+          prunedCount = purgeResourceRecords(this.db, removeIds)
+          this.logger.info(
+            `刷新目录 prune：移除 ${prunedCount} 条已不在磁盘上的本地资源记录`
+          )
+        }
+      } catch (err) {
+        this.logger.error(`刷新目录 prune 失败: ${err}`)
+      }
+    }
+    ret.data.prunedCount = prunedCount
+    try {
+      pruneOrphanCollectionItems(this.db)
+    } catch (err) {
+      this.logger.warn(`刷新目录后清理孤儿合集成员失败: ${err}`)
+    }
+
     if (Array.isArray(list) && list.length) {
       try {
         // 使用预编译语句
-        const insert_stmt =
-          this.preparedStatements?.insertResource ||
+        const upsert_stmt =
+          this.preparedStatements?.upsertResource ||
           this.db.prepare(
-            `INSERT OR IGNORE INTO fbw_resources
+            `INSERT INTO fbw_resources
               (resourceName, fileName, filePath, fileExt, fileType, fileSize, atimeMs, mtimeMs, ctimeMs) VALUES
-              (@resourceName, @fileName, @filePath, @fileExt, @fileType, @fileSize, @atimeMs, @mtimeMs, @ctimeMs)`
+              (@resourceName, @fileName, @filePath, @fileExt, @fileType, @fileSize, @atimeMs, @mtimeMs, @ctimeMs)
+             ON CONFLICT(filePath) DO UPDATE SET
+              fileName=excluded.fileName,
+              fileExt=excluded.fileExt,
+              fileType=excluded.fileType,
+              fileSize=excluded.fileSize,
+              atimeMs=excluded.atimeMs,
+              mtimeMs=excluded.mtimeMs,
+              ctimeMs=excluded.ctimeMs,
+              updated_at=datetime('now', 'localtime')
+             WHERE excluded.mtimeMs > fbw_resources.mtimeMs
+                OR fbw_resources.fileSize != excluded.fileSize
+                OR fbw_resources.fileType != excluded.fileType`
           )
 
-        // 记录插入成功的数量
         let insertedCount = 0
+        let updatedCount = 0
 
         const transaction = this.db.transaction((list) => {
           for (let i = 0; i < list.length; i++) {
-            const insert_result = insert_stmt.run(list[i])
-            if (insert_result.changes) {
-              // 记录本次插入成功的数量
-              insertedCount += insert_result.changes
+            const row = list[i]
+            const existed = this.db
+              .prepare(`SELECT id FROM fbw_resources WHERE filePath = ?`)
+              .get(row.filePath)
+            const result = upsert_stmt.run(row)
+            if (!existed && result.changes > 0) {
+              insertedCount += 1
+            } else if (existed && result.changes > 0) {
+              updatedCount += 1
             }
           }
         })
@@ -212,7 +259,9 @@ export default class FileManager {
         })
         ret.data = {
           insertedCount,
-          total: list.length
+          updatedCount,
+          total: list.length,
+          prunedCount
         }
       } catch (err) {
         this.logger.error(
@@ -338,68 +387,71 @@ export default class FileManager {
       return ret
     }
 
-    const id = item.id
+    const id = item.id != null ? Number(item.id) : null
+    let resourceId = Number.isFinite(id) && id > 0 ? id : null
     let filePath = item.filePath
+    let posterPath = item.posterPath || ''
 
     let retryCount = 0
     const maxRetries = 3
 
     while (retryCount < maxRetries) {
       try {
-        if (!filePath) {
-          // 查询文件信息
-          const query_stmt = this.db.prepare(`SELECT * FROM fbw_resources WHERE id =?`)
-          const query_result = query_stmt.get(id)
+        if (resourceId) {
+          const query_stmt = this.db.prepare(
+            `SELECT filePath, posterPath FROM fbw_resources WHERE id = ?`
+          )
+          const query_result = query_stmt.get(resourceId)
           if (!query_result) {
             ret.message = t('messages.resourceNotExist')
             return ret
           }
-          filePath = query_result.filePath
+          filePath = filePath || query_result.filePath
+          posterPath = posterPath || query_result.posterPath || ''
+        } else if (filePath) {
+          const query_result = this.db
+            .prepare(`SELECT id, filePath, posterPath FROM fbw_resources WHERE filePath = ?`)
+            .get(filePath)
+          if (query_result) {
+            resourceId = query_result.id
+            filePath = filePath || query_result.filePath
+            posterPath = posterPath || query_result.posterPath || ''
+          }
+        } else {
+          ret.message = t('messages.resourceNotExist')
+          return ret
         }
-        // 删除文件
+        // 删除主文件
         if (filePath && fs.existsSync(filePath)) {
           fs.unlinkSync(filePath)
-          // 删除缓存
           const cacheKeys = cache.keys()
           const newFilePath = transFilePath(filePath)
           for (const key of cacheKeys) {
             if (key.startsWith(`filePath=${newFilePath}`)) {
               cache.delete(key)
-              global.logger.info(`删除缓存成功: id => ${id}, cacheKey => ${key}`)
+              global.logger.info(`删除缓存成功: id => ${resourceId}, cacheKey => ${key}`)
+            }
+          }
+        }
+        // 删除视频封面
+        if (posterPath && fs.existsSync(posterPath)) {
+          fs.unlinkSync(posterPath)
+          const cacheKeys = cache.keys()
+          const newPosterPath = transFilePath(posterPath)
+          for (const key of cacheKeys) {
+            if (key.startsWith(`filePath=${newPosterPath}`)) {
+              cache.delete(key)
+              global.logger.info(`删除封面缓存成功: id => ${resourceId}, cacheKey => ${key}`)
             }
           }
         }
 
-        // 使用事务删除数据库记录
-        this.db.exec('BEGIN TRANSACTION')
-
-        cleanupResourceRelatedData(this.db, [id])
-
-        // 删除数据库记录
-        const delete_stmt = this.db.prepare(`DELETE FROM fbw_resources WHERE id = ?`)
-        delete_stmt.run(id)
-
-        // 删除关联记录
-        const delete_favorites_stmt = this.db.prepare(
-          `DELETE FROM fbw_favorites WHERE resourceId = ?`
-        )
-        delete_favorites_stmt.run(id)
-
-        const delete_history_stmt = this.db.prepare(`DELETE FROM fbw_history WHERE resourceId = ?`)
-        delete_history_stmt.run(id)
-
-        const delete_privacy_stmt = this.db.prepare(
-          `DELETE FROM fbw_privacy_space WHERE resourceId = ?`
-        )
-        delete_privacy_stmt.run(id)
-
-        const delete_statistics_stmt = this.db.prepare(
-          `DELETE FROM fbw_statistics WHERE resourceId = ?`
-        )
-        delete_statistics_stmt.run(id)
-
-        // 提交事务
-        this.db.exec('COMMIT')
+        if (resourceId) {
+          this.db.exec('BEGIN TRANSACTION')
+          purgeResourceRecords(this.db, [resourceId])
+          pruneOrphanCollectionItems(this.db)
+          this.db.exec('COMMIT')
+        }
 
         ret = {
           success: true,
@@ -428,6 +480,57 @@ export default class FileManager {
     return ret
   }
 
+  async _downloadUrlToFile(url, destPath) {
+    const response = await axios({
+      method: 'GET',
+      url,
+      responseType: 'stream'
+    })
+    const writer = fs.createWriteStream(destPath)
+    response.data.pipe(writer)
+    await new Promise((resolve, reject) => {
+      writer.on('finish', resolve)
+      writer.on('error', reject)
+    })
+  }
+
+  async _patchResourcePosterIfNeeded(existingRow, item, downloadFolder) {
+    if (!existingRow || existingRow.fileType !== 'video') {
+      return existingRow
+    }
+    if (existingRow.posterPath && fs.existsSync(existingRow.posterPath)) {
+      return existingRow
+    }
+
+    const posterUrl = item?.imageUrl || existingRow.imageUrl
+    if (!posterUrl || !/^https?:\/\//i.test(posterUrl)) {
+      return existingRow
+    }
+
+    const posterPath = path.join(downloadFolder, `${existingRow.fileName}.poster.jpg`)
+    if (!fs.existsSync(posterPath)) {
+      try {
+        await this._downloadUrlToFile(posterUrl, posterPath)
+      } catch (err) {
+        this.logger.warn(`补下载视频封面失败: ${posterUrl} => ${err}`)
+        return existingRow
+      }
+    }
+
+    this.db
+      .prepare(
+        `UPDATE fbw_resources SET posterPath = ?, updated_at = datetime('now', 'localtime') WHERE id = ?`
+      )
+      .run(posterPath, existingRow.id)
+
+    return { ...existingRow, posterPath }
+  }
+
+  _getResourceByFilePath(filePath) {
+    if (!filePath) return null
+    return this.db.prepare(`SELECT * FROM fbw_resources WHERE filePath = ?`).get(filePath)
+  }
+
   // 下载文件
   async downloadFile(item) {
     if (!item) {
@@ -454,25 +557,35 @@ export default class FileManager {
       // 生成文件名
       const fileName = `${item.fileName}.${item.fileExt}`
       const filePath = path.join(downloadFolder, fileName)
+      let posterPath = ''
 
       if (fs.existsSync(filePath)) {
-        // 文件已存在，取消写入
         this.logger.warn(`文件 ${filePath} 已存在，跳过写入`)
+        const existingRow = this._getResourceByFilePath(filePath)
+        if (existingRow) {
+          const patched = await this._patchResourcePosterIfNeeded(existingRow, item, downloadFolder)
+          return {
+            success: true,
+            message: t('messages.downloadFileExist'),
+            data: patched
+          }
+        }
       } else {
-        // 下载文件
-        const response = await axios({
-          method: 'GET',
-          url: downloadUrl,
-          responseType: 'stream'
-        })
+        await this._downloadUrlToFile(downloadUrl, filePath)
+      }
 
-        const writer = fs.createWriteStream(filePath)
-        response.data.pipe(writer)
-
-        await new Promise((resolve, reject) => {
-          writer.on('finish', resolve)
-          writer.on('error', reject)
-        })
+      if (isVideo && posterUrl && /^https?:\/\//i.test(posterUrl)) {
+        posterPath = path.join(downloadFolder, `${item.fileName}.poster.jpg`)
+        if (fs.existsSync(posterPath)) {
+          this.logger.warn(`封面 ${posterPath} 已存在，跳过写入`)
+        } else {
+          try {
+            await this._downloadUrlToFile(posterUrl, posterPath)
+          } catch (err) {
+            this.logger.warn(`下载视频封面失败: ${posterUrl} => ${err}`)
+            posterPath = ''
+          }
+        }
       }
 
       // 获取文件信息
@@ -482,8 +595,8 @@ export default class FileManager {
       try {
         const insert_stmt = this.db.prepare(
           `INSERT INTO fbw_resources
-                (resourceName, fileName, filePath, fileExt, fileType, fileSize, imageUrl, videoUrl, author, link, title, desc, quality, width, height, isLandscape, atimeMs, mtimeMs, ctimeMs) VALUES
-                (@resourceName, @fileName, @filePath, @fileExt, @fileType, @fileSize, @imageUrl, @videoUrl, @author, @link, @title, @desc, @quality, @width, @height, @isLandscape, @atimeMs, @mtimeMs, @ctimeMs)`
+                (resourceName, fileName, filePath, fileExt, fileType, fileSize, imageUrl, videoUrl, posterPath, author, link, title, desc, quality, width, height, isLandscape, atimeMs, mtimeMs, ctimeMs) VALUES
+                (@resourceName, @fileName, @filePath, @fileExt, @fileType, @fileSize, @imageUrl, @videoUrl, @posterPath, @author, @link, @title, @desc, @quality, @width, @height, @isLandscape, @atimeMs, @mtimeMs, @ctimeMs)`
         )
         const insert_result = insert_stmt.run({
           resourceName: item.resourceName,
@@ -494,6 +607,7 @@ export default class FileManager {
           fileSize: stats.size,
           imageUrl: posterUrl || '',
           videoUrl: isVideo ? downloadUrl : '',
+          posterPath,
           author: item.author || '',
           link: item.link || '',
           title: item.title || '',
@@ -529,10 +643,15 @@ export default class FileManager {
           const query_result = query_stmt.get(filePath)
 
           if (query_result) {
+            const patched = await this._patchResourcePosterIfNeeded(
+              query_result,
+              item,
+              downloadFolder
+            )
             return {
               success: true,
               message: t('messages.downloadFileExist'),
-              data: query_result
+              data: patched
             }
           }
         } else {

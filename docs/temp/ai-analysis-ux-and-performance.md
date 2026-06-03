@@ -1,9 +1,9 @@
 # AI 分析性能与设置体验（2.0.0+ 增量）
 
-> 文档版本：**v1.9**  
-> 整理日期：2026-05-27（§4.2 省电恢复同步 2026-05-27）  
+> 文档版本：**v2.0**  
+> 整理日期：**2026-06-03**  
 > 状态：**已实现**  
-> 关联：[data-model-resources-and-ai.md](./data-model-resources-and-ai.md) · [ai-dev-plan.md](./ai-dev-plan.md) · [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) · [ai-feature-roadmap.md](./ai-feature-roadmap.md) · [README.md](./README.md)
+> 关联：[data-model-resources-and-ai.md](./data-model-resources-and-ai.md) · [resource-lifecycle-and-cleanup.md](./resource-lifecycle-and-cleanup.md) · [ai-dev-plan.md](./ai-dev-plan.md) · [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) · [README.md](./README.md)
 
 ---
 
@@ -92,13 +92,14 @@
 
 | 项 | 说明 |
 |----|------|
-| 文件类型 | **仅 `fileType=image`**；视频等标 `skipped` |
+| 文件类型 | **`image`** 与 **`video`（有 `posterPath`）** 可分析/入队；无封面视频等标 `skipped` |
+| 视频视觉 | 方案 A：用 **封面帧**（`posterPath`）走与图片相同的 analyze/embed 路径（`AiVisionResourcePath.mjs`） |
 | 分析模式 | `off` / `on_demand` / `background_slow` / `new_only`（设置页 ⓘ 说明） |
 | 后台批次 | 每轮 `fetchPendingBatch(concurrency)` 张，**并行**（`Promise.all`）；`ai.concurrency` 默认 **1** |
 | 失败重试上限 | **`ai.analysisMaxRetries`**（默认 **1**，1～20）；后台连续失败达上限 → `skipped`，不再自动重试 |
 | 手动分析 | 探索页「AI 分析」**不受**重试上限（仍可一直试；成功则 `aiAnalysisFailCount` 归零） |
 | 失败计数 | 附表列 **`fbw_resource_ai.aiAnalysisFailCount`**；`markPendingForResources` 时归零 |
-| 状态「等待中」 | `pending>0` 且当前未 `running`；侧边栏 Tooltip 多行展示原因 |
+| 语义搜索过滤 | `_filterOrderedResourceIdsBySearchParams` 调用 `search({ skipStatistics: true })`，**不**污染浏览量 |
 
 ### 4.1 后台失败重试（v1.2+）
 
@@ -299,9 +300,9 @@
 | 项 | 说明 |
 |----|------|
 | 入口 | **工具** → 数据工具 →「清空 AI 分析数据」 |
-| IPC | `resetAiAnalysis`（无参数，全库图片） |
-| 范围 | `DELETE fbw_resource_ai` + 标签 + 文本/画面向量；**删除** `fbw_collections.source='auto'` 及成员；**不**改主表 `title`/`desc` |
-| 语义 | 库内全部图片 AI 附表清空，视为待分析；**不**保留任何 AI 字段；用户自建合集保留 |
+| IPC | `resetAiAnalysis`（无参数；**图片 + 有封面视频**） |
+| 范围 | `clearAiAnalysisDataForResourceIds`：附表 + 标签/向量；**删除** `source='auto'` 合集；**不**改主表插件 `title`/`desc` |
+| 语义 | 库内全部**可分析**资源 AI 附表清空；用户自建合集保留（成员可能因 auto 合集删除而变） |
 | 策展锁存 | 清除 `autoCurateSettled`，分析完成后可重新生成系统合集 |
 | 提示 | 主进程 `t('pages.Utils.resetAiAnalysis*', { count })`；须用 **`{count}`** 单花括号 |
 | 自动分析 | 须 **启用 AI** 且模式为 **后台连续** / **仅新图**，否则仅入队不 pump |
@@ -334,3 +335,4 @@
 | **v1.7** | 2026-05-27 | 后台 `concurrency` 并行说明；`analysisMaxRetries`/`concurrency` 默认 1 且 UI 移除；链至 [privacy-and-sensitive-content.md](./privacy-and-sensitive-content.md) |
 | **v1.8** | 2026-05-27 | 进度卡常显、失败重试入队、工具页清空 AI；附表 `aiAnalysisFailCount`；§12–§15；链至 [data-model-resources-and-ai.md](./data-model-resources-and-ai.md) |
 | **v1.9** | 2026-05-27 | §4.2 省电模式暂停/恢复；`restartPowerSaveDependentTasks` + `resumeBackgroundAiTasksIfAllowed`；修复关省电后长期「等待中」 |
+| **v2.0** | **2026-06-03** | 视频封面 AI（方案 A）；清空 AI 含视频；`skipStatistics`；词库清理走 `resourceDeleteCleanup`；链至 `resource-lifecycle-and-cleanup.md` |

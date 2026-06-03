@@ -46,6 +46,12 @@ import {
   VISUAL_EMBED_PUMP_START_DELAY_MS,
   VISUAL_EMBED_WATCHDOG_MS
 } from '../ai/aiConstants.mjs'
+import { normalizeDownloadMediaTypes } from '../../common/publicData.js'
+
+const parsePositiveId = (value) => {
+  const id = Number(value)
+  return Number.isFinite(id) && id > 0 ? id : null
+}
 
 export default class Store {
   constructor() {
@@ -158,6 +164,7 @@ export default class Store {
         this.settingManager,
         this.apiManager
       )
+      this.resourcesManager.setFileManager(this.fileManager)
       this.wallpaperManager = WallpaperManager.getInstance(
         global.logger,
         this.dbManager,
@@ -335,6 +342,29 @@ export default class Store {
       return this.aiAnalysisManager.clearAllAiAnalysisData()
     } catch (err) {
       global.logger.error(`resetAiAnalysis: ${err}`)
+      return { success: false, message: t('messages.operationFail') }
+    } finally {
+      await this.exitResourceMaintenance()
+    }
+  }
+
+  async clearResourcesLibrary() {
+    await this.enterResourceMaintenance()
+    try {
+      const res = await this.dbManager.clearResourcesLibrary()
+      if (res.success) {
+        const ai = this.settingData?.ai || {}
+        if (isAutoCurateSettled(ai)) {
+          const cleared = buildClearAutoCurateLatchFields(ai)
+          this.settingManager.settingData.ai = cleared
+          await this.settingManager.updateSettingData({ ai: cleared }).catch((err) => {
+            global.logger.warn(`[clearResourcesLibrary] clear autoCurate latch failed: ${err}`)
+          })
+        }
+      }
+      return res
+    } catch (err) {
+      global.logger.error(`clearResourcesLibrary: ${err}`)
       return { success: false, message: t('messages.operationFail') }
     } finally {
       await this.exitResourceMaintenance()
@@ -1032,10 +1062,17 @@ export default class Store {
     // 手动刷新完成后发送消息
     if (data.isManual) {
       global.FBW.sendMsg(global.FBW.mainWindow.win, {
-        type: res.success ? (res.data.insertedCount > 0 ? 'success' : 'info') : 'error',
+        type: res.success
+          ? res.data.insertedCount > 0 || res.data.updatedCount > 0 || res.data.prunedCount > 0
+            ? 'success'
+            : 'info'
+          : 'error',
         message: res.message
       })
-      if (res.success && res.data.insertedCount > 0) {
+      if (
+        res.success &&
+        (res.data.insertedCount > 0 || res.data.updatedCount > 0 || res.data.prunedCount > 0)
+      ) {
         // 触发刷新动作
         this.triggerAction('refreshSearchList')
       }
@@ -1261,7 +1298,12 @@ export default class Store {
 
     // 删除文件
     ipcMain.handle('main:deleteFile', async (event, item) => {
-      return await this.fileManager.deleteFile(item)
+      await this.enterResourceMaintenance()
+      try {
+        return await this.fileManager.deleteFile(item)
+      } finally {
+        await this.exitResourceMaintenance()
+      }
     })
 
     // 下载文件
@@ -1316,7 +1358,14 @@ export default class Store {
 
     // 清空当前资源DB
     ipcMain.handle('main:clearDB', async (event, tableName, resourceName) => {
+      if (!tableName || typeof tableName !== 'string') {
+        return { success: false, message: t('messages.operationFail') }
+      }
       return await this.dbManager.clearDB(tableName, resourceName)
+    })
+
+    ipcMain.handle('main:clearResourcesLibrary', async () => {
+      return await this.clearResourcesLibrary()
     })
 
     // 刷新当前资源目录
@@ -1334,7 +1383,11 @@ export default class Store {
     })
 
     ipcMain.handle('main:analyzeResource', async (event, params) => {
-      return await this.aiAnalysisManager.analyzeResourceById(params?.id ?? params?.resourceId)
+      const id = parsePositiveId(params?.id ?? params?.resourceId)
+      if (!id) {
+        return { success: false, message: t('messages.operationFail') }
+      }
+      return await this.aiAnalysisManager.analyzeResourceById(id, params?.options)
     })
 
     ipcMain.handle('main:resetAiAnalysis', async (event, params) => {
@@ -1381,7 +1434,10 @@ export default class Store {
     })
 
     ipcMain.handle('main:findSimilar', async (event, params) => {
-      const resourceId = params?.resourceId ?? params?.id
+      const resourceId = Number(params?.resourceId ?? params?.id)
+      if (!Number.isFinite(resourceId) || resourceId <= 0) {
+        return { success: false, message: t('messages.operationFail') }
+      }
       const limit = params?.limit || 20
       try {
         const candidateIds = Array.isArray(params?.candidateIds)
@@ -1419,12 +1475,16 @@ export default class Store {
 
     ipcMain.handle('main:collections:list', () => this.collectionsManager.list())
 
-    ipcMain.handle('main:collections:get', (event, params) =>
-      this.collectionsManager.get(params?.id, {
+    ipcMain.handle('main:collections:get', (event, params) => {
+      const id = parsePositiveId(params?.id)
+      if (!id) {
+        return { success: false, message: t('messages.operationFail') }
+      }
+      return this.collectionsManager.get(id, {
         startPage: params?.startPage,
         pageSize: params?.pageSize
       })
-    )
+    })
 
     ipcMain.handle('main:collections:create', async (event, params) => {
       if (params?.prompt && !params?.queryJson) {
@@ -1433,21 +1493,37 @@ export default class Store {
       return this.collectionsManager.create(params)
     })
 
-    ipcMain.handle('main:collections:update', (event, params) =>
-      this.collectionsManager.update(params?.id, params)
-    )
+    ipcMain.handle('main:collections:update', (event, params) => {
+      const id = parsePositiveId(params?.id)
+      if (!id) {
+        return { success: false, message: t('messages.operationFail') }
+      }
+      return this.collectionsManager.update(id, params)
+    })
 
-    ipcMain.handle('main:collections:delete', (event, params) =>
-      this.collectionsManager.delete(params?.id)
-    )
+    ipcMain.handle('main:collections:delete', (event, params) => {
+      const id = parsePositiveId(params?.id)
+      if (!id) {
+        return { success: false, message: t('messages.operationFail') }
+      }
+      return this.collectionsManager.delete(id)
+    })
 
-    ipcMain.handle('main:collections:generate', async (event, params) =>
-      this.collectionsManager.generate(params?.id, params?.queryJson)
-    )
+    ipcMain.handle('main:collections:generate', async (event, params) => {
+      const id = parsePositiveId(params?.id)
+      if (!id) {
+        return { success: false, message: t('messages.operationFail') }
+      }
+      return this.collectionsManager.generate(id, params?.queryJson)
+    })
 
-    ipcMain.handle('main:collections:addAllToFavorites', (event, params) =>
-      this.collectionsManager.addAllToFavorites(params?.id)
-    )
+    ipcMain.handle('main:collections:addAllToFavorites', (event, params) => {
+      const id = parsePositiveId(params?.id)
+      if (!id) {
+        return { success: false, message: t('messages.operationFail') }
+      }
+      return this.collectionsManager.addAllToFavorites(id)
+    })
 
     ipcMain.handle('main:collections:curate', async () => {
       return await this.runCollectionCurator({ manual: true })
@@ -1938,16 +2014,18 @@ export default class Store {
   }
 
   restartDownloadTask(oldData, newData) {
+    const normalizeMediaTypes = (data) =>
+      JSON.stringify(normalizeDownloadMediaTypes(data?.downloadMediaTypes))
     // 检查是否需要重启下载任务
     const shouldRestart =
       oldData.autoDownload !== newData.autoDownload ||
       oldData.downloadIntervalUnit !== newData.downloadIntervalUnit ||
       oldData.downloadIntervalTime !== newData.downloadIntervalTime ||
-      // 当下载源或关键词发生变化时，重置任务完成状态
       JSON.stringify(oldData.downloadSources || []) !==
         JSON.stringify(newData.downloadSources || []) ||
       JSON.stringify(oldData.downloadKeywords || []) !==
-        JSON.stringify(newData.downloadKeywords || [])
+        JSON.stringify(newData.downloadKeywords || []) ||
+      normalizeMediaTypes(oldData) !== normalizeMediaTypes(newData)
 
     if (shouldRestart) {
       this.stopDownloadTask()
@@ -1956,7 +2034,8 @@ export default class Store {
         JSON.stringify(oldData.downloadSources || []) !==
           JSON.stringify(newData.downloadSources || []) ||
         JSON.stringify(oldData.downloadKeywords || []) !==
-          JSON.stringify(newData.downloadKeywords || [])
+          JSON.stringify(newData.downloadKeywords || []) ||
+        normalizeMediaTypes(oldData) !== normalizeMediaTypes(newData)
       ) {
         // 通知WallpaperManager重置下载参数
         if (this.wallpaperManager) {
@@ -1981,7 +2060,7 @@ export default class Store {
     if (this.settingData[key]) {
       // 设置定时清理过期的下载的壁纸，每小时执行一次
       this.taskScheduler.scheduleTask(key, 60 * 60 * 1000, async () => {
-        const res = await this.wallpaperManager.clearDownloadedExpired()
+        const res = await this.wallpaperManager.clearDownloadedExpired({ excludeProtected: true })
         // 发送系统通知
         const notice = this.notificationManager.send(
           {

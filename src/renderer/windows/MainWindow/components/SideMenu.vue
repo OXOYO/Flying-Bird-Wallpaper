@@ -142,7 +142,7 @@ const onCopyH5ServerUrl = () => {
     <div class="side-logo">
       <img :src="iconLogo" alt="logo" />
     </div>
-    <el-scrollbar style="height: auto; flex: 1">
+    <el-scrollbar class="side-menu-scroll">
       <InstantTooltip
         v-for="item in enabledMenus"
         :key="item.name"
@@ -389,7 +389,7 @@ const onCopyH5ServerUrl = () => {
 .side-menu {
   display: flex;
   justify-content: flex-start;
-  align-items: center;
+  align-items: stretch;
   flex-direction: column;
   height: 100%;
   background-color: #f6f7f9;
@@ -398,6 +398,22 @@ const onCopyH5ServerUrl = () => {
     display: flex;
     width: 100%;
     justify-content: center;
+  }
+}
+
+.side-menu-scroll {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+
+  :deep(.el-scrollbar__view) {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  :deep(.el-scrollbar__bar.is-vertical) {
+    right: 2px;
   }
 }
 .side-logo {

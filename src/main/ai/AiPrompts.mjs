@@ -7,6 +7,9 @@ import {
 
 export const buildImageAnalysisPrompt = () => t('ai.prompts.imageAnalysis')
 
+/** 视频封面帧分析（方案 A） */
+export const buildVideoPosterAnalysisPrompt = () => t('ai.prompts.videoPosterAnalysis')
+
 export const buildSearchParsePrompt = (query) => t('ai.prompts.searchParse', { query })
 
 export const buildCollectionQueryPrompt = (prompt) => t('ai.prompts.collectionQuery', { prompt })

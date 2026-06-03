@@ -17,12 +17,57 @@ export default class RecommendManager {
     RecommendManager._instance = this
   }
 
+  _buildScopeFilter(resourceName) {
+    const isResources = resourceName === 'resources'
+    const isFavorites = resourceName === 'favorites'
+    const isHistory = resourceName === 'history'
+    const isPrivacySpace = resourceName === 'privacy_space'
+
+    let sql = ''
+    const params = []
+
+    if (isPrivacySpace) {
+      sql += ` AND EXISTS (SELECT 1 FROM fbw_privacy_space p WHERE p.resourceId = r.id)`
+    } else {
+      sql += ` AND NOT EXISTS (SELECT 1 FROM fbw_privacy_space p WHERE p.resourceId = r.id)`
+      if (isFavorites) {
+        sql += ` AND EXISTS (SELECT 1 FROM fbw_favorites f WHERE f.resourceId = r.id)`
+      } else if (isHistory) {
+        sql += ` AND EXISTS (SELECT 1 FROM fbw_history h WHERE h.resourceId = r.id)`
+      } else if (!isResources) {
+        sql += ` AND r.resourceName = ?`
+        params.push(resourceName)
+      }
+    }
+
+    return { sql, params, isPrivacySpace }
+  }
+
   /**
    * 轻量推荐：最近设壁纸/收藏的资源 tags + score 加权
    */
   recommend(params = {}) {
     const limit = Math.min(Math.max(Number(params.limit) || 20, 1), 100)
     const resourceName = params.resourceName || 'resources'
+    const scope = this._buildScopeFilter(resourceName)
+
+    const prefTagScopeSql = scope.isPrivacySpace
+      ? ` AND EXISTS (SELECT 1 FROM fbw_privacy_space p WHERE p.resourceId = r.id)`
+      : ` AND NOT EXISTS (SELECT 1 FROM fbw_privacy_space p WHERE p.resourceId = r.id)${
+          resourceName === 'resources' ||
+          resourceName === 'favorites' ||
+          resourceName === 'history' ||
+          resourceName === 'privacy_space'
+            ? ''
+            : ' AND r.resourceName = ?'
+        }`
+    const prefTagParams =
+      resourceName === 'resources' ||
+      resourceName === 'favorites' ||
+      resourceName === 'history' ||
+      resourceName === 'privacy_space'
+        ? []
+        : [resourceName]
 
     const prefTags = this.db
       .prepare(
@@ -30,22 +75,23 @@ export default class RecommendManager {
          FROM fbw_words w
          JOIN fbw_resource_words rw ON rw.wordId = w.id
          JOIN fbw_statistics s ON s.resourceId = rw.resourceId
-         WHERE s.wallpapers > 0 OR s.favorites > 0
+         JOIN fbw_resources r ON r.id = rw.resourceId
+         WHERE (s.wallpapers > 0 OR s.favorites > 0)${prefTagScopeSql}
          GROUP BY w.id
          ORDER BY cnt DESC
          LIMIT 15`
       )
-      .all()
+      .all(...prefTagParams)
     const tagList = prefTags.map((x) => x.word)
 
     let query = `
       SELECT r.*, COALESCE(s.views,0) as views, COALESCE(s.wallpapers,0) as wallpapers
       FROM fbw_resources r
       LEFT JOIN fbw_statistics s ON s.resourceId = r.id
-      WHERE r.resourceName = ?
-        AND r.fileType = 'image'
+      LEFT JOIN fbw_resource_ai ai ON ai.resourceId = r.id
+      WHERE 1=1${scope.sql}
     `
-    const qParams = [resourceName]
+    const qParams = [...scope.params]
 
     if (tagList.length) {
       const placeholders = tagList.map(() => '?').join(',')
@@ -57,11 +103,23 @@ export default class RecommendManager {
       qParams.push(...tagList)
     }
 
-    query += ` LEFT JOIN fbw_resource_ai ai ON ai.resourceId = r.id
-      ORDER BY COALESCE(ai.aiScore, 0) DESC, s.wallpapers DESC, r.updated_at DESC LIMIT ?`
+    query += ` ORDER BY COALESCE(ai.aiScore, 0) DESC, s.wallpapers DESC, r.updated_at DESC LIMIT ?`
     qParams.push(limit)
 
-    const list = this.db.prepare(query).all(...qParams)
+    let list = this.db.prepare(query).all(...qParams)
+
+    if (!list.length && tagList.length) {
+      let fallbackQuery = `
+        SELECT r.*, COALESCE(s.views,0) as views, COALESCE(s.wallpapers,0) as wallpapers
+        FROM fbw_resources r
+        LEFT JOIN fbw_statistics s ON s.resourceId = r.id
+        LEFT JOIN fbw_resource_ai ai ON ai.resourceId = r.id
+        WHERE 1=1${scope.sql}
+        ORDER BY COALESCE(ai.aiScore, 0) DESC, s.wallpapers DESC, r.updated_at DESC LIMIT ?
+      `
+      list = this.db.prepare(fallbackQuery).all(...scope.params, limit)
+    }
+
     return {
       success: true,
       message: t(list.length ? 'messages.querySuccess' : 'messages.queryEmpty'),

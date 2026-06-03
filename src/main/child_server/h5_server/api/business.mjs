@@ -1,3 +1,5 @@
+import { API_ERROR_CODE } from '../../../../common/utils.js'
+
 const readJsonBody = async (ctx) => {
   const req = ctx.req
   return await new Promise((resolve) => {
@@ -289,21 +291,26 @@ export const registerBusinessApi = (router, deps) => {
   })
 
   router.post('/api/favorites/toggle', async (ctx) => {
-    const { id } = await readJsonBody(ctx)
-    if (!id) {
-      sendJson(ctx, { success: false, message: t('messages.operationFail') })
+    const { id, item } = await readJsonBody(ctx)
+    const targetId = id ?? item?.id
+    if (!targetId && !item) {
+      sendJson(ctx, {
+        success: false,
+        errorCode: API_ERROR_CODE.RESOURCE_NOT_FOUND,
+        message: ''
+      })
       return
     }
-    const isFavorite = await resourcesManager.checkFavorite(id)
+    const isFavorite = targetId ? await resourcesManager.checkFavorite(targetId) : false
     const ret = isFavorite
-      ? await resourcesManager.removeFavorites(id)
-      : await resourcesManager.addToFavorites(id)
+      ? await resourcesManager.removeFavorites(targetId)
+      : await resourcesManager.addToFavorites(item || targetId)
     sendJson(ctx, ret)
   })
 
   router.post('/api/favorites/add', async (ctx) => {
-    const { id, isPrivacySpace } = await readJsonBody(ctx)
-    const ret = await resourcesManager.addToFavorites(id, !!isPrivacySpace)
+    const { id, item, isPrivacySpace } = await readJsonBody(ctx)
+    const ret = await resourcesManager.addToFavorites(item || id, !!isPrivacySpace)
     sendJson(ctx, ret)
   })
 

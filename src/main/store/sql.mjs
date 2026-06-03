@@ -12,7 +12,7 @@ export const createTables = [
   // 数据表: fbw_favorites 用于存储收藏夹数据
   `CREATE TABLE IF NOT EXISTS fbw_favorites (
     id INTEGER PRIMARY KEY AUTOINCREMENT, -- 收藏记录自增ID
-    resourceId INTEGER NOT NULL, -- 资源记录ID
+    resourceId INTEGER NOT NULL REFERENCES fbw_resources(id) ON DELETE CASCADE, -- 资源记录ID
     created_at DATETIME DEFAULT (datetime('now', 'localtime')), -- 记录创建时间
     updated_at DATETIME DEFAULT (datetime('now', 'localtime')), -- 记录修改时间
     UNIQUE (resourceId) -- 唯一键
@@ -20,7 +20,7 @@ export const createTables = [
   // 数据表: fbw_history 用于存储已设置的壁纸记录数据
   `CREATE TABLE IF NOT EXISTS fbw_history (
     id INTEGER PRIMARY KEY AUTOINCREMENT, -- 壁纸记录自增ID
-    resourceId INTEGER NOT NULL, -- 资源记录ID
+    resourceId INTEGER NOT NULL REFERENCES fbw_resources(id) ON DELETE CASCADE, -- 资源记录ID
     created_at DATETIME DEFAULT (datetime('now', 'localtime')), -- 记录创建时间
     updated_at DATETIME DEFAULT (datetime('now', 'localtime')), -- 记录修改时间
     UNIQUE (id) -- 唯一键
@@ -28,7 +28,7 @@ export const createTables = [
   // 数据表: fbw_privacy_space 用于存储隐私空间数据
   `CREATE TABLE IF NOT EXISTS fbw_privacy_space (
     id INTEGER PRIMARY KEY AUTOINCREMENT, -- 隐私空间记录自增ID
-    resourceId INTEGER NOT NULL, -- 资源记录ID
+    resourceId INTEGER NOT NULL REFERENCES fbw_resources(id) ON DELETE CASCADE, -- 资源记录ID
     created_at DATETIME DEFAULT (datetime('now', 'localtime')), -- 记录创建时间
     updated_at DATETIME DEFAULT (datetime('now', 'localtime')), -- 记录修改时间
     UNIQUE (resourceId) -- 唯一键
@@ -36,7 +36,7 @@ export const createTables = [
   // 数据表: fbw_statistics 用于存储资源统计数据
   `CREATE TABLE IF NOT EXISTS fbw_statistics (
     id INTEGER PRIMARY KEY AUTOINCREMENT, -- 统计记录自增ID
-    resourceId INTEGER NOT NULL, -- 资源记录ID
+    resourceId INTEGER NOT NULL REFERENCES fbw_resources(id) ON DELETE CASCADE, -- 资源记录ID
     views INTEGER NOT NULL DEFAULT 0, -- 曝光次数
     downloads INTEGER NOT NULL DEFAULT 0, -- 下载次数
     favorites INTEGER NOT NULL DEFAULT 0, -- 收藏次数
@@ -56,6 +56,7 @@ export const createTables = [
     fileSize INTEGER NOT NULL DEFAULT 0, -- 文件大小
     imageUrl TEXT NOT NULl DEFAULT '', -- 远程资源图片网址
     videoUrl TEXT NOT NULl DEFAULT '', -- 远程资源视频网址
+    posterPath TEXT NOT NULL DEFAULT '', -- 视频封面本地路径（下载后）
     author TEXT NOT NULL DEFAULT '', -- 作者
     link TEXT NOT NULL DEFAULT '', -- 页面链接
     title TEXT NOT NULL DEFAULT '', -- 标题
@@ -76,8 +77,8 @@ export const createTables = [
   // 数据表：资源分词关联表
   `CREATE TABLE IF NOT EXISTS fbw_resource_words (
     id INTEGER PRIMARY KEY AUTOINCREMENT, -- 记录自增ID
-    resourceId INTEGER NOT NULL, -- 资源ID
-    wordId INTEGER NOT NULL, -- 分词ID
+    resourceId INTEGER NOT NULL REFERENCES fbw_resources(id) ON DELETE CASCADE, -- 资源ID
+    wordId INTEGER NOT NULL REFERENCES fbw_words(id) ON DELETE CASCADE, -- 分词ID
     created_at DATETIME DEFAULT (datetime('now', 'localtime')), -- 记录创建时间
     updated_at DATETIME DEFAULT (datetime('now', 'localtime')), -- 记录修改时间
     UNIQUE (resourceId, wordId) -- 确保资源和分词的组合唯一
@@ -112,15 +113,15 @@ export const createTables = [
   // 数据表：智能合集成员快照
   `CREATE TABLE IF NOT EXISTS fbw_collection_items (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    collectionId INTEGER NOT NULL,
-    resourceId INTEGER NOT NULL,
+    collectionId INTEGER NOT NULL REFERENCES fbw_collections(id) ON DELETE CASCADE,
+    resourceId INTEGER NOT NULL REFERENCES fbw_resources(id) ON DELETE CASCADE,
     rank INTEGER NOT NULL DEFAULT 0,
     generated_at DATETIME DEFAULT (datetime('now', 'localtime')),
     UNIQUE (collectionId, resourceId)
   )`,
   // 数据表：资源向量元数据
   `CREATE TABLE IF NOT EXISTS fbw_resource_embeddings (
-    resourceId INTEGER PRIMARY KEY,
+    resourceId INTEGER PRIMARY KEY REFERENCES fbw_resources(id) ON DELETE CASCADE,
     model TEXT NOT NULL DEFAULT '',
     dim INTEGER NOT NULL DEFAULT 0,
     updated_at DATETIME DEFAULT (datetime('now', 'localtime'))
@@ -142,11 +143,12 @@ export const createTables = [
   )`,
   // 数据表：资源视觉向量（找相似 · MobileCLIP2-S0 等）
   `CREATE TABLE IF NOT EXISTS fbw_resource_image_vec_blob (
-    resourceId INTEGER PRIMARY KEY,
+    resourceId INTEGER NOT NULL REFERENCES fbw_resources(id) ON DELETE CASCADE,
     embedding BLOB NOT NULL,
     dim INTEGER NOT NULL,
     model TEXT NOT NULL DEFAULT 'mobileclip2-s0',
-    updated_at DATETIME DEFAULT (datetime('now', 'localtime'))
+    updated_at DATETIME DEFAULT (datetime('now', 'localtime')),
+    PRIMARY KEY (resourceId, model)
   )`,
   // 系统表：版本管理
   `CREATE TABLE IF NOT EXISTS fbw_version (
@@ -192,5 +194,6 @@ export const createIndexes = [
   'CREATE INDEX IF NOT EXISTS idx_resource_ai_nsfw ON fbw_resource_ai(nsfwLevel)',
   'CREATE INDEX IF NOT EXISTS idx_resource_ai_score ON fbw_resource_ai(aiScore)',
   'CREATE INDEX IF NOT EXISTS idx_collections_pinned ON fbw_collections(isPinned, updated_at)',
-  'CREATE INDEX IF NOT EXISTS idx_collection_items_collection ON fbw_collection_items(collectionId, rank)'
+  'CREATE INDEX IF NOT EXISTS idx_collection_items_collection ON fbw_collection_items(collectionId, rank)',
+  'CREATE INDEX IF NOT EXISTS idx_image_vec_model ON fbw_resource_image_vec_blob(model)'
 ]
