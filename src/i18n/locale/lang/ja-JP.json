@@ -1298,7 +1298,8 @@
       }
     },
     "drawer": {
-      "title": "Browse"
+      "title": "Browse",
+      "openBrowseMenu": "閲覧メニューを開く"
     }
   },
   "ai": {

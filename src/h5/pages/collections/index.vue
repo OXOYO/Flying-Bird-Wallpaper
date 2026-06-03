@@ -445,10 +445,11 @@ onMounted(() => {
           <van-button
             class="h5-chrome-icon-btn"
             plain
-            icon="ellipsis"
             :aria-label="t('pages.Collections.actionsMenu')"
             @click="showHeaderActions = true"
-          />
+          >
+            <IconifyIcon icon="custom:more-vertical" />
+          </van-button>
         </template>
         <template #mini-trailing>
           <van-button
@@ -484,10 +485,11 @@ onMounted(() => {
           <van-button
             class="chrome-mini-btn"
             plain
-            icon="ellipsis"
             :aria-label="t('pages.Collections.actionsMenu')"
             @click="showHeaderActions = true"
-          />
+          >
+            <IconifyIcon icon="custom:more-vertical" />
+          </van-button>
         </template>
       </H5BrowseChrome>
       <H5SimilarModeBanner

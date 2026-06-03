@@ -90,9 +90,8 @@ const resolveIndexFromScroll = (payload) => {
   if (!len) return 0
   const ih = Math.max(1, itemHeight.value)
   const scrollTop = Math.max(0, Number(payload.scrollTop) || 0)
-  const clientH = Math.max(ih, Number(payload.clientHeight) || ih)
-  const center = scrollTop + clientH / 2
-  return Math.min(Math.max(0, Math.floor(center / ih)), len - 1)
+  // 按页顶对齐计算当前张，避免在两张之间过早判为 index 0 导致下拉刷新误触
+  return Math.min(Math.max(0, Math.floor((scrollTop + ih * 0.35) / ih)), len - 1)
 }
 
 const onListScroll = (payload) => {

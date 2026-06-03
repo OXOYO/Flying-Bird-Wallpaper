@@ -1159,7 +1159,8 @@
       "setting": "Settings"
     },
     "drawer": {
-      "title": "Browse"
+      "title": "Browse",
+      "openBrowseMenu": "Open browse menu"
     },
     "pages": {
       "home": {

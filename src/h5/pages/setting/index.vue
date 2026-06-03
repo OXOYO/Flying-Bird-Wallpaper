@@ -7,6 +7,7 @@ import {
 import { localeOptions } from '@i18n/locale/index.js'
 import { appInfo } from '@common/config.js'
 import UseSettingStore from '@h5/stores/settingStore.js'
+import UseCommonStore from '@h5/stores/commonStore.js'
 import * as api from '@h5/api/index.js'
 import { resolveApiUserMessage } from '@common/utils.js'
 import { useTranslation } from 'i18next-vue'
@@ -16,6 +17,7 @@ import { useNsfwMaskSettingToggle } from '@common/composables/useNsfwMaskSetting
 const { t } = useTranslation()
 
 const settingStore = UseSettingStore()
+const commonStore = UseCommonStore()
 const { settingData, localSetting, isVibrationSupported } = storeToRefs(settingStore)
 
 const settingDataForm = reactive(settingData.value)
@@ -254,7 +256,19 @@ onMounted(() => {
 
 <template>
   <div class="page-wrapper page-setting">
-    <van-nav-bar :title="t('h5.pages.setting.title')" fixed safe-area-inset-top />
+    <van-nav-bar fixed safe-area-inset-top>
+      <template #title>{{ t('h5.pages.setting.title') }}</template>
+      <template #left>
+        <button
+          type="button"
+          class="page-setting__drawer-btn"
+          :aria-label="t('h5.drawer.openBrowseMenu')"
+          @click="commonStore.openDrawer()"
+        >
+          <van-icon name="wap-nav" size="22" />
+        </button>
+      </template>
+    </van-nav-bar>
 
     <div class="page-setting-inner">
       <van-collapse v-model="expandedSections" class="setting-collapse" :border="false">
@@ -481,6 +495,25 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
+.page-setting__drawer-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--van-nav-bar-icon-color, var(--van-text-color));
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.page-setting__drawer-btn:active {
+  opacity: 0.65;
+}
+
 .page-setting {
   .page-setting-inner {
     width: 100%;

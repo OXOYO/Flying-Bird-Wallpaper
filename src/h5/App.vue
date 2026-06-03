@@ -209,6 +209,8 @@ onUnmounted(() => {
       <van-tabbar
         v-if="tabbarVisible"
         v-model="activeTabbar"
+        class="h5-tabbar"
+        :border="false"
         safe-area-inset-bottom
         @change="onTabbarChange"
       >

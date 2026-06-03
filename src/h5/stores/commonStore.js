@@ -1,5 +1,8 @@
 import { defaultResourceMap } from '@common/publicData.js'
 import * as api from '@h5/api/index.js'
+import { readH5ImmersiveMode, writeH5ImmersiveMode } from '@h5/utils/h5BrowsePreferences.mjs'
+
+const initialImmersiveMode = readH5ImmersiveMode()
 
 const UseCommonStore = defineStore('common', {
   state: () => {
@@ -9,9 +12,9 @@ const UseCommonStore = defineStore('common', {
       /** 浏览子页：search | collections | favorites | history */
       activeBrowsePage: 'search',
       drawerVisible: false,
-      tabbarVisible: true,
-      /** 沉浸模式：隐藏顶栏与底部 TabBar */
-      immersiveMode: false,
+      tabbarVisible: !initialImmersiveMode,
+      /** 沉浸模式：隐藏顶栏与底部 TabBar（浏览各子页共享） */
+      immersiveMode: initialImmersiveMode,
       resourceMap: JSON.parse(JSON.stringify(defaultResourceMap))
     }
   },
@@ -56,6 +59,7 @@ const UseCommonStore = defineStore('common', {
     setImmersiveMode(enabled) {
       this.immersiveMode = Boolean(enabled)
       this.tabbarVisible = !this.immersiveMode
+      writeH5ImmersiveMode(this.immersiveMode)
       this.syncTabbarHeightCss()
     },
     toggleImmersiveMode() {

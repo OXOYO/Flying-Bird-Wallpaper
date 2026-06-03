@@ -1159,7 +1159,8 @@
       "setting": "设置"
     },
     "drawer": {
-      "title": "浏览"
+      "title": "浏览",
+      "openBrowseMenu": "打开浏览菜单"
     },
     "pages": {
       "home": {

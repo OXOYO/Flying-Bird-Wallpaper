@@ -93,10 +93,37 @@
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06);
 }
 
-/** H5 合集顶栏：下拉区无底色/描边，与桌面透明选择器一致 */
-.page-collections-h5 .collections-header.browse-toolbar {
-  background: transparent;
-  box-shadow: none;
+/** H5 底部导航 — 顶部分割线与浏览顶栏底边一致（方向镜像） */
+.van-tabbar.h5-tabbar {
+  box-shadow: 0 -1px 0 rgba(0, 0, 0, 0.06);
+}
+
+html.van-theme-dark .van-tabbar.h5-tabbar {
+  box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/** 沉浸顶栏圆形按钮：尺寸与悬浮钮一致的点击反馈 */
+.van-button.chrome-mini-btn {
+  transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.van-button.chrome-mini-btn:active {
+  transform: scale(0.8);
+}
+
+.van-button.chrome-mini-btn:not(.chrome-mini-btn--active):active {
+  background: rgba(0, 0, 0, 0.8) !important;
+}
+
+.page-wrapper.page-browse--privacy-space .van-button.chrome-mini-btn:active {
+  background: rgba(255, 255, 255, 0.22) !important;
+}
+
+.page-wrapper.page-browse--privacy-space .van-button.chrome-mini-btn--active:active {
+  background: rgba(149, 212, 117, 0.4) !important;
 }
 
 /** 找相似：信息栏覆盖在搜索/浏览顶栏上（与桌面 explore-header-host 一致） */
@@ -117,9 +144,24 @@
 
 /**
  * 沉浸模式：搜索/浏览顶栏悬浮，不占文档流一行；找相似时信息栏 fixed 叠在顶部
+ * 搜索/收藏/回忆：顶栏在 page-wrapper 内，瀑布流时 wrapper 会滚动，须 fixed 才不随列表滚走
  */
 .page-search--immersive .search-toolbar-wrap:not(.search-toolbar-wrap--similar),
-.page-browse--immersive .browse-chrome-host:not(.browse-toolbar--similar),
+.page-browse--immersive .browse-chrome-host:not(.browse-toolbar--similar) {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  height: 0;
+  min-height: 0;
+  padding: 0;
+  overflow: visible;
+  background: transparent;
+  box-shadow: none;
+  pointer-events: none;
+}
+
 .page-collections-h5--immersive .collections-header:not(.collections-header--similar) {
   position: absolute;
   top: 0;

@@ -24,6 +24,8 @@ import {
   qualityList,
   sortFieldOptions,
   sortTypeOptions,
+  DEFAULT_BROWSE_SORT_FIELD,
+  DEFAULT_BROWSE_SORT_TYPE,
   isQualityFilterApplicable
 } from '@common/publicData.js'
 import { handleInfoVal, resolveApiUserMessage, isTransientSearchFailure } from '@common/utils.js'
@@ -42,6 +44,18 @@ import {
 } from '@h5/utils/normalizeBrowseItem.mjs'
 import { useH5SimilarResults } from '@h5/composables/useH5SimilarResults.mjs'
 import { buildH5BrowseSimilarScope } from '@h5/utils/h5SimilarScope.mjs'
+import {
+  computeH5FullscreenPullAtTop,
+  computeH5PullRefreshDisabled,
+  createH5ScrollIdleGuard
+} from '@h5/utils/h5PullRefresh.mjs'
+import {
+  readH5DisplayMode,
+  readH5DisplaySize,
+  syncH5BrowsePreferencesFromStorage,
+  writeH5DisplayMode,
+  writeH5DisplaySize
+} from '@h5/utils/h5BrowsePreferences.mjs'
 
 /** H5 叠层：高于 van-image-preview 默认层级（约 2000） */
 const H5_OVERLAY_Z = {
@@ -102,7 +116,7 @@ export function useH5ResourceBrowse(options) {
   const { immersiveMode } = storeToRefs(commonStore)
 
   const form = reactive({
-    displaySize: 'cover'
+    displaySize: readH5DisplaySize()
   })
 
   const showBrowseSearch = browseType === 'favorites' || browseType === 'history'
@@ -112,8 +126,8 @@ export function useH5ResourceBrowse(options) {
   const showPrivacySpaceActions = true
 
   const getBrowseSortDefaults = () => ({
-    sortField: settingData.value?.sortField || 'created_at',
-    sortType: Number(settingData.value?.sortType) || -1,
+    sortField: DEFAULT_BROWSE_SORT_FIELD,
+    sortType: DEFAULT_BROWSE_SORT_TYPE,
     isRandom: false
   })
 
@@ -197,17 +211,10 @@ export function useH5ResourceBrowse(options) {
   const fullscreenPagerRef = ref(null)
   const fullscreenVisibleIndex = ref(0)
   const fullscreenScrollTop = ref(0)
+  const fullscreenScrollIdle = createH5ScrollIdleGuard()
+  const waterfallScrollIdle = createH5ScrollIdleGuard()
 
-  const readStoredDisplayMode = () => {
-    try {
-      const stored = localStorage.getItem(displayModeStorageKey)
-      if (stored === 'waterfall') return 'waterfall'
-      return 'fullscreen'
-    } catch {
-      return 'fullscreen'
-    }
-  }
-  const displayMode = ref(readStoredDisplayMode())
+  const displayMode = ref(readH5DisplayMode())
 
   const waterfallLoadMoreLatch = ref(false)
   watch(
@@ -1231,6 +1238,7 @@ export function useH5ResourceBrowse(options) {
       fullscreenAutoPlay.stop()
     }
     form.displaySize = form.displaySize === 'cover' ? 'contain' : 'cover'
+    writeH5DisplaySize(form.displaySize)
   }
 
   const layoutToggleTitle = computed(() =>
@@ -1245,11 +1253,7 @@ export function useH5ResourceBrowse(options) {
       fullscreenVisibleIndex.value = getFirstVisibleWaterfallListIndex()
     }
     displayMode.value = displayMode.value === 'waterfall' ? 'fullscreen' : 'waterfall'
-    try {
-      localStorage.setItem(displayModeStorageKey, displayMode.value)
-    } catch (_) {
-      /* noop */
-    }
+    writeH5DisplayMode(displayMode.value)
     if (displayMode.value === 'waterfall') {
       nextTick(() => {
         syncWaterfallViewportMetrics()
@@ -1260,6 +1264,7 @@ export function useH5ResourceBrowse(options) {
 
   const onFullscreenPagerScroll = (payload) => {
     fullscreenScrollTop.value = Math.max(0, Number(payload.scrollTop) || 0)
+    fullscreenScrollIdle.ping()
   }
 
   const onFullscreenPagerIndexChange = (idx) => {
@@ -1284,15 +1289,22 @@ export function useH5ResourceBrowse(options) {
     return t('h5.pages.search.displayMode.indicator', { current: cur, total })
   })
 
-  const isPullRefreshDisabled = computed(() => {
-    if (state.loading) return true
-    if (displayMode.value !== 'fullscreen') return false
-    if (fullscreenVisibleIndex.value > 0) return true
-    return fullscreenScrollTop.value > 2
-  })
+  const isPullRefreshDisabled = computed(() =>
+    computeH5PullRefreshDisabled({
+      loading: state.loading,
+      displayMode: displayMode.value,
+      waterfallScrollTop: state.scrollTop,
+      fullscreenScrollTop: fullscreenScrollTop.value,
+      fullscreenVisibleIndex: fullscreenVisibleIndex.value,
+      scrollIdleActive:
+        displayMode.value === 'fullscreen'
+          ? fullscreenScrollIdle.active.value
+          : waterfallScrollIdle.active.value
+    })
+  )
 
-  const isFullscreenPullAtTop = computed(
-    () => displayMode.value === 'fullscreen' && !isPullRefreshDisabled.value
+  const isFullscreenPullAtTop = computed(() =>
+    computeH5FullscreenPullAtTop(displayMode.value, isPullRefreshDisabled.value)
   )
 
   const isImageInfoPanelOpen = computed(() => imageInfoPanelHeight.value > imageInfoPanelAnchors[0])
@@ -2268,6 +2280,7 @@ export function useH5ResourceBrowse(options) {
     if (!container) return
     const scrollTop = container.scrollTop || 0
     state.scrollTop = scrollTop
+    waterfallScrollIdle.ping()
     const clientHeight = container.clientHeight || state.viewportHeight
     if (clientHeight > 0) {
       state.viewportHeight = clientHeight
@@ -2332,6 +2345,8 @@ export function useH5ResourceBrowse(options) {
   )
 
   onActivated(() => {
+    syncH5BrowsePreferencesFromStorage({ displayModeRef: displayMode, displaySizeTarget: form })
+    void refreshNsfwMaskHasPassword()
     nextTick(() => {
       measureBrowseToolbarHeight()
       if (displayMode.value === 'fullscreen') {
@@ -2340,25 +2355,6 @@ export function useH5ResourceBrowse(options) {
         void restoreWaterfallScrollPosition()
       }
     })
-  })
-
-  onDeactivated(() => {
-    persistWaterfallScrollPosition()
-    clearCardPress()
-    fullscreenAutoPlay.stop()
-    commonStore.setImmersiveMode(false)
-    if (favoriteHold.timer) {
-      clearTimeout(favoriteHold.timer)
-      favoriteHold.timer = null
-    }
-    if (favoriteHold.interval) {
-      clearInterval(favoriteHold.interval)
-      favoriteHold.interval = null
-    }
-    if (favoriteClick.timer) {
-      clearTimeout(favoriteClick.timer)
-      favoriteClick.timer = null
-    }
   })
 
   const cleanup = () => {
@@ -2397,6 +2393,8 @@ export function useH5ResourceBrowse(options) {
     browseToolbarResizeObserver?.disconnect()
     browseToolbarResizeObserver = null
     window.removeEventListener('resize', onPageResize)
+    fullscreenScrollIdle.dispose()
+    waterfallScrollIdle.dispose()
   }
 
   onDeactivated(() => {
@@ -2404,10 +2402,21 @@ export function useH5ResourceBrowse(options) {
     if (browseType === 'favorites' && inPrivacySpace.value) {
       void exitPrivacySpace()
     }
-  })
-
-  onActivated(() => {
-    void refreshNsfwMaskHasPassword()
+    persistWaterfallScrollPosition()
+    clearCardPress()
+    fullscreenAutoPlay.stop()
+    if (favoriteHold.timer) {
+      clearTimeout(favoriteHold.timer)
+      favoriteHold.timer = null
+    }
+    if (favoriteHold.interval) {
+      clearInterval(favoriteHold.interval)
+      favoriteHold.interval = null
+    }
+    if (favoriteClick.timer) {
+      clearTimeout(favoriteClick.timer)
+      favoriteClick.timer = null
+    }
   })
 
   onUnmounted(() => {

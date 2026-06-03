@@ -1298,7 +1298,8 @@
       }
     },
     "drawer": {
-      "title": "瀏覽"
+      "title": "瀏覽",
+      "openBrowseMenu": "開啟瀏覽選單"
     }
   },
   "ai": {

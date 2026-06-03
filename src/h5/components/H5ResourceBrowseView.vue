@@ -312,6 +312,15 @@ defineExpose({
           </div>
           <template v-if="!immersiveMode" #trailing>
             <van-button
+              class="h5-chrome-icon-btn"
+              plain
+              :title="layoutToggleTitle"
+              :aria-label="layoutToggleTitle"
+              @click="toggleDisplayMode"
+            >
+              <van-icon :name="displayMode === 'waterfall' ? 'expand-o' : 'apps-o'" />
+            </van-button>
+            <van-button
               v-if="enablePrivacySpaceToolbar"
               class="h5-chrome-icon-btn"
               :class="{ 'h5-chrome-icon-btn--active': inPrivacySpace }"
@@ -324,15 +333,6 @@ defineExpose({
                 :icon="inPrivacySpace ? 'custom:door-open-outline' : 'custom:door-front-outline'"
               />
             </van-button>
-            <van-button
-              class="h5-chrome-icon-btn"
-              plain
-              :title="layoutToggleTitle"
-              :aria-label="layoutToggleTitle"
-              @click="toggleDisplayMode"
-            >
-              <van-icon :name="displayMode === 'waterfall' ? 'expand-o' : 'apps-o'" />
-            </van-button>
           </template>
           <template v-else #mini-trailing>
             <van-button
@@ -342,6 +342,15 @@ defineExpose({
               @click="state.showFilters = true"
             >
               <van-icon name="arrow-down" />
+            </van-button>
+            <van-button
+              class="chrome-mini-btn"
+              plain
+              :title="layoutToggleTitle"
+              :aria-label="layoutToggleTitle"
+              @click="toggleDisplayMode"
+            >
+              <van-icon :name="displayMode === 'waterfall' ? 'expand-o' : 'apps-o'" />
             </van-button>
             <van-button
               v-if="enablePrivacySpaceToolbar"
@@ -355,15 +364,6 @@ defineExpose({
               <IconifyIcon
                 :icon="inPrivacySpace ? 'custom:door-open-outline' : 'custom:door-front-outline'"
               />
-            </van-button>
-            <van-button
-              class="chrome-mini-btn"
-              plain
-              :title="layoutToggleTitle"
-              :aria-label="layoutToggleTitle"
-              @click="toggleDisplayMode"
-            >
-              <van-icon :name="displayMode === 'waterfall' ? 'expand-o' : 'apps-o'" />
             </van-button>
           </template>
         </H5BrowseChrome>

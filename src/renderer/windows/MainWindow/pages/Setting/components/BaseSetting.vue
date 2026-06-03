@@ -8,8 +8,6 @@ import {
   qualityList,
   orientationOptions,
   switchTypeOptions,
-  sortFieldOptions,
-  sortTypeOptions,
   allowedFileExtList,
   colorList,
   dynamicPerformanceModeOptions,
@@ -681,34 +679,6 @@ defineExpose({
           <div id="divider-explore" class="divider-sub">
             {{ t('pages.Setting.divider.explore') }}
           </div>
-          <el-form-item :label="t('pages.Setting.settingDataForm.sortField')" prop="sortField">
-            <el-select
-              v-model="settingDataForm.sortField"
-              style="width: 290px"
-              @change="onSettingDataFormChange"
-            >
-              <el-option
-                v-for="item in sortFieldOptions"
-                :key="item.value"
-                :label="t(item.locale)"
-                :value="item.value"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item :label="t('pages.Setting.settingDataForm.sortType')" prop="sortType">
-            <el-select
-              v-model="settingDataForm.sortType"
-              style="width: 140px"
-              @change="onSettingDataFormChange"
-            >
-              <el-option
-                v-for="item in sortTypeOptions"
-                :key="item.value"
-                :label="t(item.locale)"
-                :value="item.value"
-              />
-            </el-select>
-          </el-form-item>
           <el-form-item prop="showTag" class="ai-form-item-labeled">
             <template #label>
               <SettingFormLabelTip

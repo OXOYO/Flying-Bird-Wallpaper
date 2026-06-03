@@ -648,6 +648,10 @@ export const sortTypeOptions = [
   { label: '降序', value: -1, locale: 'sortTypeOptions.desc' }
 ]
 
+/** 浏览列表（搜索/收藏/回忆）排序默认值 */
+export const DEFAULT_BROWSE_SORT_FIELD = 'created_at'
+export const DEFAULT_BROWSE_SORT_TYPE = -1
+
 export const imageDisplaySizeOptions = [
   { label: '适应', value: 'contain', locale: 'imageDisplaySizeOptions.contain' },
   { label: '填充', value: 'cover', locale: 'imageDisplaySizeOptions.cover' }

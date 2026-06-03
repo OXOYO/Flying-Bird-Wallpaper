@@ -6,7 +6,11 @@ import {
   orientationOptions,
   qualityList,
   autoRefreshListOptions,
-  isQualityFilterApplicable
+  isQualityFilterApplicable,
+  sortFieldOptions,
+  sortTypeOptions,
+  DEFAULT_BROWSE_SORT_FIELD,
+  DEFAULT_BROWSE_SORT_TYPE
 } from '@common/publicData.js'
 
 const props = defineProps({
@@ -73,6 +77,16 @@ const isLocalBrowseMenu = computed(
     (isSearchMenu.value || isFavoritesMenu.value || isHistoryMenu.value) && props.isLocalResource
 )
 
+/** 收藏/回忆/本地搜索：列表模式与排序（远程搜索与悬浮钮一致，不展示） */
+const showListBrowseOptions = computed(
+  () => isFavoritesMenu.value || isHistoryMenu.value || (isSearchMenu.value && props.isLocalResource)
+)
+
+/** 搜索/收藏/回忆：语义搜索开关 */
+const showSemanticSearchField = computed(
+  () => isSearchMenu.value || isFavoritesMenu.value || isHistoryMenu.value
+)
+
 const isQualityFilterVisible = (filterType) =>
   isLocalBrowseMenu.value && isQualityFilterApplicable(filterType)
 
@@ -87,8 +101,16 @@ const draft = reactive({
   filterKeywords: '',
   filterType: 'images',
   orientation: [],
-  quality: []
+  quality: [],
+  isRandom: false,
+  sortField: DEFAULT_BROWSE_SORT_FIELD,
+  sortType: DEFAULT_BROWSE_SORT_TYPE
 })
+
+const listModeRadioOptions = computed(() => [
+  { value: false, label: t('h5.pages.search.filters.listModeOrder') },
+  { value: true, label: t('h5.pages.search.filters.listModeRandom') }
+])
 
 const syncDraftFromForm = () => {
   draft.resource = props.selectedResource ? { ...props.selectedResource } : null
@@ -98,6 +120,9 @@ const syncDraftFromForm = () => {
     ? [...props.searchForm.orientation]
     : []
   draft.quality = Array.isArray(props.searchForm.quality) ? [...props.searchForm.quality] : []
+  draft.isRandom = !!props.searchForm.isRandom
+  draft.sortField = props.searchForm.sortField ?? DEFAULT_BROWSE_SORT_FIELD
+  draft.sortType = props.searchForm.sortType ?? DEFAULT_BROWSE_SORT_TYPE
 }
 
 const getDefaultDraftResource = () => {
@@ -116,6 +141,21 @@ watch(filterPopoverVisible, (visible) => {
     syncDraftFromForm()
   }
 })
+
+watch(
+  () => [
+    props.searchForm.isRandom,
+    props.searchForm.sortField,
+    props.searchForm.sortType
+  ],
+  () => {
+    if (filterPopoverVisible.value) {
+      draft.isRandom = !!props.searchForm.isRandom
+      draft.sortField = props.searchForm.sortField ?? DEFAULT_BROWSE_SORT_FIELD
+      draft.sortType = props.searchForm.sortType ?? DEFAULT_BROWSE_SORT_TYPE
+    }
+  }
+)
 
 watch(
   () => draft.filterType,
@@ -165,6 +205,11 @@ const onApplyFilters = () => {
   if (isSearchMenu.value && draft.resource) {
     payload.resource = { ...draft.resource }
   }
+  if (showListBrowseOptions.value) {
+    payload.isRandom = draft.isRandom
+    payload.sortField = draft.sortField
+    payload.sortType = draft.sortType
+  }
   emit('apply-filters', payload)
   filterPopoverVisible.value = false
 }
@@ -175,6 +220,9 @@ const onResetDraft = () => {
   draft.filterType = defaultType
   draft.orientation = []
   draft.quality = []
+  draft.isRandom = false
+  draft.sortField = DEFAULT_BROWSE_SORT_FIELD
+  draft.sortType = DEFAULT_BROWSE_SORT_TYPE
   if (isSearchMenu.value) {
     draft.resource = getDefaultDraftResource()
   }
@@ -347,7 +395,7 @@ const onExtraCommand = (command) => {
             </div>
 
             <div
-              v-if="isSearchMenu"
+              v-if="showSemanticSearchField"
               class="explore-filter-panel__field explore-filter-panel__field--switch"
             >
               <div class="explore-filter-panel__switch-row">
@@ -373,6 +421,59 @@ const onExtraCommand = (command) => {
                 />
               </div>
             </div>
+
+            <template v-if="showListBrowseOptions">
+              <div class="explore-filter-panel__field">
+                <div class="explore-filter-panel__label">
+                  {{ t('h5.pages.search.filters.listMode') }}
+                </div>
+                <el-radio-group v-model="draft.isRandom" size="small">
+                  <el-radio-button
+                    v-for="item in listModeRadioOptions"
+                    :key="String(item.value)"
+                    :value="item.value"
+                  >
+                    {{ item.label }}
+                  </el-radio-button>
+                </el-radio-group>
+              </div>
+
+              <template v-if="!draft.isRandom">
+                <div class="explore-filter-panel__field">
+                  <div class="explore-filter-panel__label">
+                    {{ t('pages.Setting.settingDataForm.sortField') }}
+                  </div>
+                  <el-select
+                    v-model="draft.sortField"
+                    :teleported="false"
+                    popper-class="explore-filter-select-popper"
+                    style="width: 100%"
+                  >
+                    <el-option
+                      v-for="item in sortFieldOptions"
+                      :key="item.value"
+                      :label="t(item.locale)"
+                      :value="item.value"
+                    />
+                  </el-select>
+                </div>
+
+                <div class="explore-filter-panel__field">
+                  <div class="explore-filter-panel__label">
+                    {{ t('pages.Setting.settingDataForm.sortType') }}
+                  </div>
+                  <el-radio-group v-model="draft.sortType" size="small">
+                    <el-radio-button
+                      v-for="item in sortTypeOptions"
+                      :key="item.value"
+                      :value="item.value"
+                    >
+                      {{ t(item.locale) }}
+                    </el-radio-button>
+                  </el-radio-group>
+                </div>
+              </template>
+            </template>
 
             <div v-if="showFilterTypeField" class="explore-filter-panel__field">
               <div class="explore-filter-panel__label">

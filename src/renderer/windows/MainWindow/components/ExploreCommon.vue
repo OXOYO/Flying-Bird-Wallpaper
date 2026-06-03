@@ -8,7 +8,9 @@ import UseWordsStore from '@renderer/stores/wordsStore.js'
 import { useTranslation } from 'i18next-vue'
 import {
   resourceTypeList,
-  orientationOptions
+  orientationOptions,
+  DEFAULT_BROWSE_SORT_FIELD,
+  DEFAULT_BROWSE_SORT_TYPE
 } from '@common/publicData.js'
 import { debounce } from '@common/utils.js'
 import ExploreSearchHeader from './ExploreSearchHeader.vue'
@@ -307,8 +309,8 @@ const searchForm = reactive({
   startPage: 1,
   pageSize: 50,
   isRandom: false,
-  sortField: settingData.value.sortField || 'created_at',
-  sortType: settingData.value.sortType || -1,
+  sortField: DEFAULT_BROWSE_SORT_FIELD,
+  sortType: DEFAULT_BROWSE_SORT_TYPE,
   total: 0
 })
 
@@ -914,13 +916,6 @@ const doCompleteList = async () => {
 const onSwitchSortType = async () => {
   searchForm.sortType = 0 - searchForm.sortType
   await onRefresh(false)
-
-  const res = await window.FBW.updateSettingData({
-    sortType: searchForm.sortType
-  })
-  if (res && res.success) {
-    settingStore.updateSettingData(res.data)
-  }
 }
 
 const isRandom = async () => {
@@ -978,7 +973,16 @@ const onResourceChange = (value) => {
   onSearch()
 }
 
-const onApplyFilters = ({ filterType, orientation, quality, filterKeywords, resource }) => {
+const onApplyFilters = ({
+  filterType,
+  orientation,
+  quality,
+  filterKeywords,
+  resource,
+  isRandom,
+  sortField,
+  sortType
+}) => {
   let resourceChanged = false
   if (resource && isSearchMenu.value) {
     const prevKey = `${searchForm.resourceType}_${searchForm.resourceName}`
@@ -992,6 +996,15 @@ const onApplyFilters = ({ filterType, orientation, quality, filterKeywords, reso
   searchForm.filterType = filterType
   searchForm.orientation = orientation
   searchForm.quality = filterType === 'videos' ? [] : quality
+  if (isRandom !== undefined) {
+    searchForm.isRandom = isRandom
+  }
+  if (sortField !== undefined) {
+    searchForm.sortField = sortField
+  }
+  if (sortType !== undefined) {
+    searchForm.sortType = sortType
+  }
   if (resourceChanged) {
     const types = supportSearchTypes.value
     const isArray = Array.isArray(types)
@@ -1003,6 +1016,7 @@ const onApplyFilters = ({ filterType, orientation, quality, filterKeywords, reso
     }
     fetchHotTags()
   }
+
   onSearch()
 }
 
@@ -1166,15 +1180,10 @@ const getNextList = async () => {
   const keywordText = String(filterKeywords ?? '')
     .trim()
     .replace(/^#+/, '')
-  // 收藏/回忆/隐私空间用语义向量易漏结果，统一走关键词 SQL
   const useSemanticSearch =
     !!settingData.value?.search?.useSemanticSearch &&
     !!keywordText &&
-    !isFavoritesMenu.value &&
-    !isHistoryMenu.value &&
-    resourceName !== 'favorites' &&
-    resourceName !== 'history' &&
-    resourceName !== 'privacy_space'
+    !(isSearchMenu.value && resourceType === 'remoteResource')
   let payload = {
     resourceType,
     resourceName,

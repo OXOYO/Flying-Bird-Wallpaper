@@ -10,7 +10,9 @@ import {
   sortFieldOptions,
   sortTypeOptions,
   imageDisplaySizeOptions,
-  isQualityFilterApplicable
+  isQualityFilterApplicable,
+  DEFAULT_BROWSE_SORT_FIELD,
+  DEFAULT_BROWSE_SORT_TYPE
 } from '@common/publicData.js'
 import { useTranslation } from 'i18next-vue'
 import { infoKeys } from '@common/publicData.js'
@@ -40,6 +42,18 @@ import {
   RESOURCE_PICKER_TAB_LOCAL,
   RESOURCE_PICKER_TAB_REMOTE
 } from '@common/resourcePickerFilter.mjs'
+import {
+  computeH5FullscreenPullAtTop,
+  computeH5PullRefreshDisabled,
+  createH5ScrollIdleGuard
+} from '@h5/utils/h5PullRefresh.mjs'
+import {
+  readH5DisplayMode,
+  readH5DisplaySize,
+  syncH5BrowsePreferencesFromStorage,
+  writeH5DisplayMode,
+  writeH5DisplaySize
+} from '@h5/utils/h5BrowsePreferences.mjs'
 
 const { t } = useTranslation()
 const commonStore = UseCommonStore()
@@ -96,10 +110,10 @@ const onSemanticSearchChange = async (val) => {
   })
 }
 
-/** 搜索页本地资源排序默认值（与首页设置 h5Sort* 独立） */
+/** 搜索页本地资源排序默认值 */
 const SEARCH_LOCAL_SORT_DEFAULT = {
-  sortField: 'created_at',
-  sortType: -1
+  sortField: DEFAULT_BROWSE_SORT_FIELD,
+  sortType: DEFAULT_BROWSE_SORT_TYPE
 }
 
 /** 进入搜索页默认本地资源库（与旧 h5Resource 一致） */
@@ -123,7 +137,7 @@ const form = reactive({
   sortField: SEARCH_LOCAL_SORT_DEFAULT.sortField,
   sortType: SEARCH_LOCAL_SORT_DEFAULT.sortType,
   isRandom: false,
-  displaySize: 'cover'
+  displaySize: readH5DisplaySize()
 })
 
 const resetSearchLocalSort = () => {
@@ -185,20 +199,13 @@ const INLINE_VIDEO_MIN_VISIBLE_RATIO = 0.15
 const fullscreenPagerRef = ref(null)
 const fullscreenVisibleIndex = ref(0)
 const fullscreenScrollTop = ref(0)
+const fullscreenScrollIdle = createH5ScrollIdleGuard()
+const waterfallScrollIdle = createH5ScrollIdleGuard()
 
-const DISPLAY_MODE_STORAGE_KEY = 'fbw_h5_search_display_mode'
 /** 非通用 name，降低浏览器把历史搜索词当作自动填充的概率 */
 const H5_SEARCH_FIELD_NAME = 'fbw-h5-search-keywords'
-const readStoredDisplayMode = () => {
-  try {
-    const stored = localStorage.getItem(DISPLAY_MODE_STORAGE_KEY)
-    if (stored === 'waterfall') return 'waterfall'
-    return 'fullscreen'
-  } catch {
-    return 'fullscreen'
-  }
-}
-const displayMode = ref(readStoredDisplayMode())
+
+const displayMode = ref(readH5DisplayMode())
 
 // 瀑布流模式下防止触底滚动在短时间内多次触发加载（与 VirtualList 侧 latch 同理）
 const waterfallLoadMoreLatch = ref(false)
@@ -1280,6 +1287,7 @@ const toggleDisplaySize = () => {
     fullscreenAutoPlay.stop()
   }
   form.displaySize = form.displaySize === 'cover' ? 'contain' : 'cover'
+  writeH5DisplaySize(form.displaySize)
 }
 
 const layoutToggleTitle = computed(() =>
@@ -1298,11 +1306,7 @@ const toggleDisplayMode = () => {
     fullscreenVisibleIndex.value = getFirstVisibleWaterfallListIndex()
   }
   displayMode.value = displayMode.value === 'waterfall' ? 'fullscreen' : 'waterfall'
-  try {
-    localStorage.setItem(DISPLAY_MODE_STORAGE_KEY, displayMode.value)
-  } catch (_) {
-    /* noop */
-  }
+  writeH5DisplayMode(displayMode.value)
   if (displayMode.value === 'waterfall') {
     nextTick(() => {
       syncWaterfallViewportMetrics()
@@ -1313,6 +1317,7 @@ const toggleDisplayMode = () => {
 
 const onFullscreenPagerScroll = (payload) => {
   fullscreenScrollTop.value = Math.max(0, Number(payload.scrollTop) || 0)
+  fullscreenScrollIdle.ping()
 }
 
 const onFullscreenPagerIndexChange = (idx) => {
@@ -1338,16 +1343,22 @@ const fullscreenIndicatorText = computed(() => {
   return t('h5.pages.search.displayMode.indicator', { current: cur, total })
 })
 
-/** 铺满模式滚动在 VirtualList 内，外层 pull-refresh 无法感知 scrollTop，需手动限制 */
-const isPullRefreshDisabled = computed(() => {
-  if (state.loading) return true
-  if (displayMode.value !== 'fullscreen') return false
-  if (fullscreenVisibleIndex.value > 0) return true
-  return fullscreenScrollTop.value > 2
-})
+const isPullRefreshDisabled = computed(() =>
+  computeH5PullRefreshDisabled({
+    loading: state.loading,
+    displayMode: displayMode.value,
+    waterfallScrollTop: state.scrollTop,
+    fullscreenScrollTop: fullscreenScrollTop.value,
+    fullscreenVisibleIndex: fullscreenVisibleIndex.value,
+    scrollIdleActive:
+      displayMode.value === 'fullscreen'
+        ? fullscreenScrollIdle.active.value
+        : waterfallScrollIdle.active.value
+  })
+)
 
-const isFullscreenPullAtTop = computed(
-  () => displayMode.value === 'fullscreen' && !isPullRefreshDisabled.value
+const isFullscreenPullAtTop = computed(() =>
+  computeH5FullscreenPullAtTop(displayMode.value, isPullRefreshDisabled.value)
 )
 
 const isImageInfoPanelOpen = computed(() => imageInfoPanelHeight.value > imageInfoPanelAnchors[0])
@@ -2317,6 +2328,7 @@ const onPageScroll = (event) => {
   if (!container) return
   const scrollTop = container.scrollTop || 0
   state.scrollTop = scrollTop
+  waterfallScrollIdle.ping()
   const clientHeight = container.clientHeight || state.viewportHeight
   if (clientHeight > 0) {
     state.viewportHeight = clientHeight
@@ -2405,6 +2417,7 @@ watch(
 )
 
 onActivated(() => {
+  syncH5BrowsePreferencesFromStorage({ displayModeRef: displayMode, displaySizeTarget: form })
   void refreshNsfwMaskHasPassword()
   nextTick(() => {
     measureSearchToolbarHeight()
@@ -2421,7 +2434,6 @@ onDeactivated(() => {
   persistWaterfallScrollPosition()
   clearCardPress()
   fullscreenAutoPlay.stop()
-  commonStore.setImmersiveMode(false)
   if (favoriteHold.timer) {
     clearTimeout(favoriteHold.timer)
     favoriteHold.timer = null
@@ -2472,6 +2484,8 @@ onUnmounted(() => {
   searchToolbarResizeObserver?.disconnect()
   searchToolbarResizeObserver = null
   window.removeEventListener('resize', onPageResize)
+  fullscreenScrollIdle.dispose()
+  waterfallScrollIdle.dispose()
 })
 
 const init = async () => {

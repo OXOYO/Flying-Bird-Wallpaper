@@ -269,13 +269,16 @@ export default class ResourcesManager {
         }
 
         if (isFavorites || isHistory || isPrivacySpace) {
-          // 统计字段走 stats；资源字段（score、title 等）走 r；s 仅为关联表，无 score 等列
+          // 统计字段走 stats；资源字段（score、title 等）走 r；加入/更新时间走关联表 s
           const statsFields = ['views', 'downloads', 'favorites', 'wallpapers']
-          const sortFieldForOrder = statsFields.includes(sortField)
-            ? `stats.${sortField}`
-            : sortField === 'score'
-              ? 'COALESCE(ai.aiScore, 0)'
-              : `r.${sortField}`
+          const membershipFields = ['created_at', 'updated_at']
+          const sortFieldForOrder = membershipFields.includes(sortField)
+            ? `s.${sortField}`
+            : statsFields.includes(sortField)
+              ? `stats.${sortField}`
+              : sortField === 'score'
+                ? 'COALESCE(ai.aiScore, 0)'
+                : `r.${sortField}`
           const order_by_str = isRandom
             ? `ORDER BY RANDOM(), ${sortFieldForOrder} ${sortOrder}`
             : `ORDER BY ${sortFieldForOrder} ${sortOrder}`
@@ -515,6 +518,11 @@ export default class ResourcesManager {
           ret.message = ''
           return ret
         }
+        this.db
+          .prepare(
+            `UPDATE ${tableName} SET updated_at = datetime('now', 'localtime') WHERE resourceId = ?`
+          )
+          .run(resourceId)
       }
 
       ret = {
