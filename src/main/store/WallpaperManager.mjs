@@ -22,6 +22,7 @@ import {
   isNsfwMaskableItem,
   shouldFilterSensitiveForWallpaper
 } from '../../common/privacyNsfwMask.js'
+import ResourcesManager from './ResourcesManager.mjs'
 
 /** 自动清理下载时保留：已收藏、隐私空间中的资源（工具页手动清理不受此限制） */
 const CLEAR_DOWNLOAD_PROTECTED_SQL = `
@@ -545,6 +546,8 @@ export default class WallpaperManager {
         }
       }
 
+      await this._incrementWallpaperStatistics(item.id)
+
       // 记录到历史记录
       if (isAddToHistory) {
         const insert_stmt = this.db.prepare(`INSERT INTO fbw_history (resourceId) VALUES (?)`)
@@ -566,6 +569,21 @@ export default class WallpaperManager {
         success: false,
         message: t('messages.setWallpaperFail')
       }
+    }
+  }
+
+  async _incrementWallpaperStatistics(resourceId) {
+    const id = Number(resourceId)
+    if (!Number.isFinite(id) || id <= 0) return
+    try {
+      const resourcesManager = ResourcesManager.getInstance(
+        this.logger,
+        this.dbManager,
+        this.settingManager
+      )
+      await resourcesManager.updateStatistics({ resourceId: id, wallpapers: 1 })
+    } catch (err) {
+      this.logger.warn(`[WallpaperManager] 更新设壁纸统计失败: ${err.message}`)
     }
   }
 
@@ -687,7 +705,8 @@ export default class WallpaperManager {
         const query_result = query_stmt.get(filePath)
 
         if (query_result) {
-          return await this.setAsWallpaper(query_result, true, true)
+          const ret = await this.setAsWallpaper(query_result, true, true)
+          return ret.success ? { ...ret, data: query_result } : ret
         } else {
           return {
             success: false,
@@ -698,7 +717,8 @@ export default class WallpaperManager {
         // 远程资源下载后再设置壁纸
         const downloadRes = await this.fileManager.downloadFile(item)
         if (downloadRes.success && downloadRes.data) {
-          return await this.setAsWallpaper(downloadRes.data, true, true)
+          const ret = await this.setAsWallpaper(downloadRes.data, true, true)
+          return ret.success ? { ...ret, data: downloadRes.data } : ret
         }
       }
     } catch (err) {

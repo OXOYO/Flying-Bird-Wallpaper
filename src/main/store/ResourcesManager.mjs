@@ -11,9 +11,9 @@ import { buildAnalyzableResourceWhere } from '../ai/AiVisionResourcePath.mjs'
 
 const isRemoteResourceItem = (item) => {
   if (!item || typeof item !== 'object') return false
-  if (item.id != null && item.id !== '') return false
-  if (item.srcType === 'url') return true
-  return !item.filePath && !!(item.videoUrl || item.imageUrl)
+  if (item.filePath) return false
+  if (item.srcType === 'url') return !!(item.imageUrl || item.videoUrl || item.link)
+  return !!(item.imageUrl || item.videoUrl || item.link)
 }
 
 const resolveResourceIdFromInput = (input) => {
@@ -83,13 +83,135 @@ export default class ResourcesManager {
     this.fileManager = fileManager
   }
 
+  getResourceRowById(resourceId) {
+    return this._getResourceRowById(resourceId)
+  }
+
+  enrichResourceForClient(row) {
+    return enrichResourceRowForClient(row)
+  }
+
+  /** 解析本地 resourceId；远程 item 在 downloadIfRemote 时隐式下载入库 */
+  async resolveResourceIdForClient(input, { downloadIfRemote = false } = {}) {
+    const local = this._resolveResourceIdForRemove(input)
+    if (local.resourceId && local.resourceRow) {
+      return { ok: true, resourceId: local.resourceId, resourceRow: local.resourceRow }
+    }
+
+    if (downloadIfRemote && typeof input === 'object' && input && isRemoteResourceItem(input)) {
+      return await this._resolveResourceIdForFavorite(input)
+    }
+
+    const resourceId = resolveResourceIdFromInput(input)
+    if (resourceId) {
+      const resourceRow = this._getResourceRowById(resourceId)
+      if (resourceRow) {
+        return { ok: true, resourceId, resourceRow }
+      }
+    }
+
+    return {
+      ok: false,
+      errorCode: API_ERROR_CODE.RESOURCE_NOT_FOUND,
+      message: ''
+    }
+  }
+
+  resolveResourceIdForTags(input) {
+    return this._resolveResourceIdForRemove(input)
+  }
+
   _getResourceRowById(resourceId) {
     return this.db.prepare(`SELECT * FROM fbw_resources WHERE id = ?`).get(resourceId)
+  }
+
+  /** 远程列表项按 fileName / link / URL 匹配已入库本地行（取消收藏等，不触发下载） */
+  _findLocalRowByRemoteItem(item) {
+    if (!item || typeof item !== 'object') return null
+    if (item.filePath) {
+      const byPath = this.db
+        .prepare(`SELECT * FROM fbw_resources WHERE filePath = ? LIMIT 1`)
+        .get(item.filePath)
+      if (byPath) return byPath
+    }
+
+    const fileName = item.fileName
+    const resourceName = item.resourceName
+    if (fileName && resourceName) {
+      const byName = this.db
+        .prepare(`SELECT * FROM fbw_resources WHERE fileName = ? AND resourceName = ? LIMIT 1`)
+        .get(fileName, resourceName)
+      if (byName) return byName
+    }
+    if (fileName) {
+      const byFileName = this.db
+        .prepare(`SELECT * FROM fbw_resources WHERE fileName = ? LIMIT 1`)
+        .get(fileName)
+      if (byFileName) return byFileName
+    }
+
+    const link = item.link
+    if (link) {
+      const byLink = this.db
+        .prepare(`SELECT * FROM fbw_resources WHERE link = ? LIMIT 1`)
+        .get(link)
+      if (byLink) return byLink
+    }
+
+    const imageUrl = item.imageUrl
+    if (imageUrl) {
+      const byImage = this.db
+        .prepare(`SELECT * FROM fbw_resources WHERE imageUrl = ? LIMIT 1`)
+        .get(imageUrl)
+      if (byImage) return byImage
+    }
+
+    const videoUrl = item.videoUrl
+    if (videoUrl) {
+      const byVideo = this.db
+        .prepare(`SELECT * FROM fbw_resources WHERE videoUrl = ? LIMIT 1`)
+        .get(videoUrl)
+      if (byVideo) return byVideo
+    }
+
+    return null
+  }
+
+  _resolveResourceIdForRemove(input) {
+    let resourceId = resolveResourceIdFromInput(input)
+    let resourceRow = resourceId ? this._getResourceRowById(resourceId) : null
+
+    if (
+      resourceRow &&
+      typeof input === 'object' &&
+      input?.filePath &&
+      input.filePath !== resourceRow.filePath
+    ) {
+      resourceRow = null
+      resourceId = null
+    }
+
+    if (!resourceRow && typeof input === 'object' && input) {
+      resourceRow = this._findLocalRowByRemoteItem(input)
+      resourceId = resourceRow?.id ?? null
+    }
+
+    return { resourceId, resourceRow }
   }
 
   async _resolveResourceIdForFavorite(input) {
     let resourceId = resolveResourceIdFromInput(input)
     let resourceRow = resourceId ? this._getResourceRowById(resourceId) : null
+
+    if (
+      resourceRow &&
+      typeof input === 'object' &&
+      input?.filePath &&
+      input.filePath !== resourceRow.filePath
+    ) {
+      resourceRow = null
+      resourceId = null
+    }
 
     if (!resourceRow && typeof input === 'object' && input && isRemoteResourceItem(input)) {
       if (!this.fileManager) {
@@ -99,7 +221,10 @@ export default class ResourcesManager {
           message: t('messages.downloadFileFail')
         }
       }
-      const downloadRes = await this.fileManager.downloadFile({ ...input, srcType: 'url' })
+      const downloadRes = await this.fileManager.downloadFile({
+        ...input,
+        srcType: input.srcType || 'url'
+      })
       if (!downloadRes.success || !downloadRes.data?.id) {
         return {
           ok: false,
@@ -120,6 +245,13 @@ export default class ResourcesManager {
     }
 
     return { ok: true, resourceId, resourceRow }
+  }
+
+  /** 判断资源是否已收藏（支持远程 item 匹配已入库本地行，不触发下载） */
+  isFavoritedFromInput(resourceIdOrItem, isPrivacySpace = false) {
+    const { resourceId } = this._resolveResourceIdForRemove(resourceIdOrItem)
+    if (!resourceId) return false
+    return this.checkFavorite(resourceId, isPrivacySpace)
   }
 
   // 使用 settingManager 获取设置
@@ -147,8 +279,7 @@ export default class ResourcesManager {
       tagsMode = 'any',
       hideUnsafe = false,
       resourceIds,
-      includePrivacySpace = false,
-      skipStatistics = false
+      includePrivacySpace = false
     } = params
 
     let ret = {
@@ -342,15 +473,6 @@ export default class ResourcesManager {
         ret.data.list = []
         if (Array.isArray(query_result) && query_result.length) {
           ret.data.list = query_result.map((item) => enrichResourceRowForClient(item))
-          if (!skipStatistics) {
-            const updateParams = ret.data.list.map((item) => {
-              return {
-                resourceId: item.id,
-                views: 1
-              }
-            })
-            await this.batchUpdateStatistics(updateParams)
-          }
         }
         // 无论当前页是否有数据都要统计总数，否则分页后续页 total 为 0 会导致前端误判「已结束」或错乱
         if (count_sql) {
@@ -525,12 +647,18 @@ export default class ResourcesManager {
           .run(resourceId)
       }
 
+      const statistics = this._getStatisticsSnapshot(resourceId)
       ret = {
         success: true,
         message: t('messages.operationSuccess'),
         data: {
           resourceId,
-          resource: enrichResourceRowForClient(resourceRow)
+          statistics,
+          resource: {
+            ...enrichResourceRowForClient(resourceRow),
+            ...statistics,
+            isFavorite: 1
+          }
         }
       }
     } catch (err) {
@@ -540,15 +668,27 @@ export default class ResourcesManager {
     return ret
   }
 
-  // 移出收藏夹
+  // 移出收藏夹（resourceId 或完整 item；远程项会尝试匹配已入库本地行）
   async removeFavorites(resourceIdOrItem, isPrivacySpace = false) {
     let ret = {
       success: false,
       message: t('messages.operationFail')
     }
 
-    const resourceId = resolveResourceIdFromInput(resourceIdOrItem)
-    if (!resourceId || !this._getResourceRowById(resourceId)) {
+    const { resourceId, resourceRow } = this._resolveResourceIdForRemove(resourceIdOrItem)
+
+    if (
+      !resourceId &&
+      typeof resourceIdOrItem === 'object' &&
+      resourceIdOrItem &&
+      isRemoteResourceItem(resourceIdOrItem)
+    ) {
+      ret.errorCode = API_ERROR_CODE.RESOURCE_NOT_FOUND
+      ret.message = ''
+      return ret
+    }
+
+    if (!resourceId || !resourceRow) {
       ret.errorCode = API_ERROR_CODE.RESOURCE_NOT_FOUND
       ret.message = ''
       return ret
@@ -561,12 +701,13 @@ export default class ResourcesManager {
 
       if (delete_result.changes > 0) {
         if (!isPrivacySpace) {
-          // 更新统计表
           await this.updateStatistics({ resourceId, favorites: 0 })
         }
+        const statistics = this._getStatisticsSnapshot(resourceId)
         ret = {
           success: true,
-          message: t('messages.operationSuccess')
+          message: t('messages.operationSuccess'),
+          data: { statistics }
         }
       }
     } catch (err) {
@@ -574,6 +715,39 @@ export default class ResourcesManager {
     }
 
     return ret
+  }
+
+  /** preview 打开时记录真实浏览次数 */
+  async recordResourceView(resourceIdOrItem) {
+    const { resourceId, resourceRow } = this._resolveResourceIdForRemove(resourceIdOrItem)
+    if (!resourceId || !resourceRow) {
+      return {
+        success: false,
+        skipped: true,
+        message: t('messages.paramsError')
+      }
+    }
+    return await this.updateStatistics({ resourceId, views: 1 })
+  }
+
+  _getStatisticsSnapshot(resourceId) {
+    const id = Number(resourceId)
+    if (!Number.isFinite(id) || id <= 0) {
+      return { views: 0, downloads: 0, favorites: 0, wallpapers: 0 }
+    }
+    const row = this.db
+      .prepare(
+        'SELECT views, downloads, favorites, wallpapers FROM fbw_statistics WHERE resourceId = ?'
+      )
+      .get(id)
+    return row
+      ? {
+          views: row.views ?? 0,
+          downloads: row.downloads ?? 0,
+          favorites: row.favorites ?? 0,
+          wallpapers: row.wallpapers ?? 0
+        }
+      : { views: 0, downloads: 0, favorites: 0, wallpapers: 0 }
   }
 
   // 更新统计数据
@@ -622,12 +796,11 @@ export default class ResourcesManager {
         const update_stmt = this.db.prepare(
           `UPDATE fbw_statistics SET ${setStr} WHERE resourceId = ?`
         )
-        const update_result = update_stmt.run(...updateValues)
-        if (update_result.changes > 0) {
-          ret = {
-            success: true,
-            message: t('messages.operationSuccess')
-          }
+        update_stmt.run(...updateValues)
+        ret = {
+          success: true,
+          message: t('messages.operationSuccess'),
+          data: this._getStatisticsSnapshot(resourceId)
         }
       } else {
         // 插入新记录，未提供的字段用默认值
@@ -643,7 +816,8 @@ export default class ResourcesManager {
         if (insert_result.changes > 0) {
           ret = {
             success: true,
-            message: t('messages.operationSuccess')
+            message: t('messages.operationSuccess'),
+            data: this._getStatisticsSnapshot(resourceId)
           }
         }
       }
@@ -815,6 +989,39 @@ export default class ResourcesManager {
     return null
   }
 
+  /** 找相似 scope 预检：无候选 / 候选均无向量 */
+  evaluateFindSimilarScope(candidateIds, excludeResourceId = null) {
+    if (!Array.isArray(candidateIds)) return null
+    if (candidateIds.length === 0) return 'no_scope_candidates'
+    if (this.countSimilarEmbeddableCandidates(candidateIds, excludeResourceId) === 0) {
+      return 'scope_no_embeddings'
+    }
+    return null
+  }
+
+  async runFindSimilar(embeddingManager, params = {}) {
+    const resourceId = Number(params.resourceId)
+    const limit = params.limit || 20
+    const candidateIds = params.candidateIds ?? null
+    const excludeIds = Array.isArray(params.excludeIds) ? params.excludeIds : []
+
+    const scopeReason = this.evaluateFindSimilarScope(candidateIds, resourceId)
+    if (scopeReason) {
+      return { resourceIds: [], total: 0, signals: [], emptyReason: scopeReason }
+    }
+
+    const similar = await embeddingManager.findSimilar(
+      resourceId,
+      limit,
+      candidateIds,
+      excludeIds
+    )
+    if (!similar.emptyReason && (similar.total ?? 0) === 0) {
+      similar.emptyReason = 'no_matches'
+    }
+    return similar
+  }
+
   /**
    * 找相似：范围内已有向量的候选数量（不含源图）
    * @param {number[]} candidateIds
@@ -897,8 +1104,7 @@ export default class ResourcesManager {
       filterKeywords: '',
       startPage: 1,
       pageSize: orderedIds.length,
-      isRandom: false,
-      skipStatistics: true
+      isRandom: false
     })
     if (!batch?.success || !Array.isArray(batch.data?.list) || !batch.data.list.length) {
       return []

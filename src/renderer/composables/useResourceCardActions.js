@@ -7,14 +7,26 @@ import UseSettingStore from '@renderer/stores/settingStore.js'
 import { applyExploreImageSrc, supportsAiVisionActions } from '@renderer/utils/resourceImageUrl.js'
 import { hex2RGB } from '@renderer/utils/gen-color.js'
 import { cloneForIpc } from '@renderer/utils/cloneForIpc.js'
+import {
+  applyFavoriteResourceToItem,
+  applyResourceRowToItem,
+  applyResolvedResourceFromResult,
+  applyUnfavoriteToItem,
+  resolveResourceSrcType
+} from '@common/favoriteResourceUtils.js'
+import { resolveFindSimilarEmptyMessage } from '@common/findSimilarUtils.js'
 
 export function normalizeResourceItem(item, options = {}) {
   if (!item) return item
   const row = { ...item }
   const id = row.id ?? row.resourceId
   if (!row.uniqueKey && id != null) row.uniqueKey = String(id)
-  if (!row.srcType) {
-    row.srcType = row.filePath ? 'file' : row.link ? 'url' : 'file'
+  row.srcType = resolveResourceSrcType(row)
+  if (options.resourceType === 'remoteResource' && options.resourceName) {
+    row.resourceName = options.resourceName
+  }
+  if (options.resourceType) {
+    row.resourceType = options.resourceType
   }
   const { rawImageUrl, imageSrc } = applyExploreImageSrc(row, {
     resourceType: options.resourceType ?? 'localResource',
@@ -269,6 +281,10 @@ export function useResourceCardActions(options = {}) {
 
   const setAsWallpaperWithDownload = async (item, index) => {
     const res = await window.FBW.setAsWallpaperWithDownload(cloneForIpc(item))
+    if (res?.success && res.data) {
+      applyResourceRowToItem(item, res.data)
+      patchListItem(item, index, { ...item })
+    }
     ElMessage({
       type: res?.success ? 'success' : 'error',
       message: res?.message || (res?.success ? t('messages.operationSuccess') : t('messages.operationFail'))
@@ -277,16 +293,18 @@ export function useResourceCardActions(options = {}) {
   }
 
   const onAiAnalyze = async (item, index) => {
-    if (!item?.id) return
-    const res = await window.FBW.analyzeResource({ id: item.id })
+    if (!item) return
+    const res = await window.FBW.analyzeResource({ id: item.id, item: cloneForIpc(item) })
     ElMessage({
       type: res?.success ? 'success' : 'error',
       message: res?.message || (res?.success ? t('messages.operationSuccess') : t('messages.operationFail'))
     })
-    if (res?.success && res.data) {
+    if (res?.success) {
+      applyResolvedResourceFromResult(item, res)
       patchListItem(item, index, {
-        ...res.data,
-        score: res.data.score ?? item.score,
+        ...item,
+        ...(res.data && typeof res.data === 'object' ? res.data : {}),
+        score: res.data?.score ?? item.score,
         aiAnalysisStatus: 'done'
       })
     }
@@ -300,36 +318,45 @@ export function useResourceCardActions(options = {}) {
     const plainScope = scope && typeof scope === 'object' ? cloneForIpc(scope) : null
     const res = await window.FBW.findSimilar({
       resourceId: Number(item.id),
+      item: cloneForIpc(item),
       limit: pageSize,
       excludeIds: [],
       ...(plainScope ? { scope: plainScope } : {})
     })
+    if (res?.success) {
+      applyResolvedResourceFromResult(item, res)
+    }
     if (res?.success && res.data?.list?.length) {
       const list = res.data.list.map((row) => normalizeResourceItem(row))
       options.onFindSimilarResult?.(list, item, {
         total: res.data?.total
       })
-    } else {
-      ElMessage({ type: 'info', message: t('exploreCommon.findSimilarEmpty') })
+    } else if (res?.success) {
+      ElMessage({
+        type: 'info',
+        message: resolveFindSimilarEmptyMessage(t, res.data?.emptyReason)
+      })
     }
   }
 
   const addToFavorites = async (item, index, isPrivacySpace = false) => {
     const res = await window.FBW.addToFavorites(cloneForIpc(item), isPrivacySpace)
     if (res?.success) {
-      if (res.data?.resource) {
-        patchListItem(item, index, { ...res.data.resource, isFavorite: 1 })
-      } else {
-        patchListItem(item, index, { isFavorite: 1 })
+      applyFavoriteResourceToItem(item, res)
+      const patch = { ...item, isFavorite: item.isFavorite ?? 1 }
+      if (patch.fileType === 'video' && patch.filePath && !patch.videoSrc) {
+        patch.videoSrc = `fbwtp://fbw/api/videos/get?filePath=${encodeURIComponent(patch.filePath)}`
       }
+      patchListItem(item, index, patch)
     }
     setCardItemStatus(index, res?.success ? 'success' : 'error')
   }
 
   const removeFavorites = async (item, index, isPrivacySpace = false) => {
-    const res = await window.FBW.removeFavorites(item.id, isPrivacySpace)
+    const res = await window.FBW.removeFavorites(cloneForIpc(item), isPrivacySpace)
     if (res?.success) {
-      patchListItem(item, index, { isFavorite: 0 })
+      applyUnfavoriteToItem(item, res)
+      patchListItem(item, index, { isFavorite: 0, favorites: item.favorites ?? 0 })
     }
     setCardItemStatus(index, res?.success ? 'success' : 'error')
   }
@@ -373,6 +400,10 @@ export function useResourceCardActions(options = {}) {
 
   const onDownloadFile = async (item, index) => {
     const res = await window.FBW.downloadFile(cloneForIpc(item))
+    if (res?.success && res.data) {
+      applyResourceRowToItem(item, res.data)
+      patchListItem(item, index, { ...item })
+    }
     ElMessage({
       type: res?.success ? 'success' : 'error',
       message: res?.message || (res?.success ? t('messages.operationSuccess') : t('messages.operationFail'))

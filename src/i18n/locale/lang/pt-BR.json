@@ -1040,6 +1040,9 @@
     "aiAnalyze": "Análise IA",
     "findSimilar": "Encontrar similares",
     "findSimilarEmpty": "Nenhum papel de parede similar encontrado",
+    "findSimilarEmptyNoScope": "Não há recursos locais comparáveis neste escopo. Baixe ou mude a fonte.",
+    "findSimilarEmptyNoEmbeddings": "Os papéis neste escopo ainda não têm embeddings. Aguarde análise IA ou preenchimento de vetores.",
+    "findSimilarEmptyNoVectors": "Este papel ainda não tem embedding. Tente mais tarde ou execute a análise IA.",
     "similarModeBanner": "Exibindo imagens similares",
     "similarBack": "Voltar à busca",
     "header": {

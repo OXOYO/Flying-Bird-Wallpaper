@@ -293,7 +293,7 @@ export default class EmbeddingManager {
    */
   async findSimilar(resourceId, limit = 20, candidateIds = null, excludeIds = []) {
     if (Array.isArray(candidateIds) && candidateIds.length === 0) {
-      return { resourceIds: [], total: 0, signals: [] }
+      return { resourceIds: [], total: 0, signals: [], emptyReason: 'no_scope_candidates' }
     }
 
     const visualModel = this.getActiveVisualModelId()

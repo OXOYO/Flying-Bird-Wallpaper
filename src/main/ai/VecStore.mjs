@@ -1,5 +1,6 @@
 import * as sqliteVec from 'sqlite-vec'
 import { VISUAL_EMBED_DIM, VISUAL_EMBED_MODEL_ID, SIMILAR_RECALL_K } from './aiConstants.mjs'
+import { migrateImageVecBlobCompositePk } from '../store/schemaUpgrade.mjs'
 
 /**
  * sqlite-vec 封装；加载失败时降级为 BLOB 存储 + 内存余弦检索
@@ -73,6 +74,31 @@ export default class VecStore {
         PRIMARY KEY (resourceId, model)
       )
     `)
+    this._ensureImageVecBlobCompositePk()
+  }
+
+  _ensureImageVecBlobCompositePk() {
+    try {
+      migrateImageVecBlobCompositePk(this.db, this.logger)
+    } catch (err) {
+      this.logger.warn(`[VecStore] image vec PK migrate: ${err.message}`)
+    }
+  }
+
+  _imageVecConflictClause() {
+    const pkCols = this.db
+      .prepare(`PRAGMA table_info(fbw_resource_image_vec_blob)`)
+      .all()
+      .filter((c) => c.pk > 0)
+      .sort((a, b) => a.pk - b.pk)
+    if (
+      pkCols.length === 2 &&
+      pkCols[0].name === 'resourceId' &&
+      pkCols[1].name === 'model'
+    ) {
+      return '(resourceId, model)'
+    }
+    return '(resourceId)'
   }
 
   _ensureVecTable(dim) {
@@ -288,15 +314,18 @@ export default class VecStore {
 
   upsertImage(resourceId, vector, dim, model = VISUAL_EMBED_MODEL_ID) {
     if (!Array.isArray(vector) || !vector.length) return false
+    this._ensureImageVecBlobCompositePk()
     const d = dim || vector.length
     const blob = this.float32ToBlob(vector)
+    const conflict = this._imageVecConflictClause()
     this.db
       .prepare(
         `INSERT INTO fbw_resource_image_vec_blob (resourceId, embedding, dim, model, updated_at)
          VALUES (?, ?, ?, ?, datetime('now', 'localtime'))
-         ON CONFLICT(resourceId, model) DO UPDATE SET
+         ON CONFLICT${conflict} DO UPDATE SET
            embedding=excluded.embedding,
            dim=excluded.dim,
+           model=excluded.model,
            updated_at=excluded.updated_at`
       )
       .run(resourceId, blob, d, model || VISUAL_EMBED_MODEL_ID)

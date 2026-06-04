@@ -1040,6 +1040,9 @@
     "aiAnalyze": "تحليل AI",
     "findSimilar": "إيجاد مشابه",
     "findSimilarEmpty": "لم يُعثر على خلفيات مشابهة",
+    "findSimilarEmptyNoScope": "لا توجد موارد محلية للمقارنة في هذا النطاق. قم بالتنزيل أو غيّر المصدر.",
+    "findSimilarEmptyNoEmbeddings": "الخلفيات في هذا النطاق لا تملك تضمينات بعد. انتظر تحليل الذكاء الاصطناعي أو ملء المتجهات.",
+    "findSimilarEmptyNoVectors": "هذه الخلفية لا تملك تضميناً بعد. أعد المحاولة لاحقاً أو نفّذ تحليل الذكاء الاصطناعي.",
     "similarModeBanner": "عرض صور مشابهة",
     "similarBack": "العودة إلى البحث",
     "header": {

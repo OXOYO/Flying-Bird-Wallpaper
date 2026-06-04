@@ -1040,6 +1040,9 @@
     "aiAnalyze": "AI-Analyse",
     "findSimilar": "Ähnliche finden",
     "findSimilarEmpty": "Keine ähnlichen Wallpapers gefunden",
+    "findSimilarEmptyNoScope": "In diesem Bereich gibt es keine lokalen Ressourcen zum Vergleich. Bitte herunterladen oder Quelle wechseln.",
+    "findSimilarEmptyNoEmbeddings": "Ressourcen in diesem Bereich haben noch keine Embeddings. Warten Sie auf KI-Analyse oder Vektor-Backfill.",
+    "findSimilarEmptyNoVectors": "Dieses Wallpaper hat noch kein Embedding. Später erneut versuchen oder KI-Analyse ausführen.",
     "similarModeBanner": "Ähnliche Bilder werden angezeigt",
     "similarBack": "Zurück zur Suche",
     "header": {

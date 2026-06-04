@@ -1040,6 +1040,9 @@
     "aiAnalyze": "Análisis con IA",
     "findSimilar": "Buscar similares",
     "findSimilarEmpty": "No se encontraron fondos de pantalla similares",
+    "findSimilarEmptyNoScope": "No hay recursos locales comparables en este ámbito. Descargue o cambie la fuente.",
+    "findSimilarEmptyNoEmbeddings": "Los fondos en este ámbito aún no tienen embeddings. Espere el análisis IA o el relleno de vectores.",
+    "findSimilarEmptyNoVectors": "Este fondo aún no tiene embedding. Inténtelo más tarde o ejecute el análisis IA.",
     "similarModeBanner": "Mostrando imágenes similares",
     "similarBack": "Volver a la búsqueda",
     "header": {

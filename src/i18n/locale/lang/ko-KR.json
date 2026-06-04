@@ -1040,6 +1040,9 @@
     "aiAnalyze": "AI 분석",
     "findSimilar": "유사 찾기",
     "findSimilarEmpty": "유사한 배경화면을 찾지 못했습니다",
+    "findSimilarEmptyNoScope": "현재 범위에 비교할 로컬 리소스가 없습니다. 다운로드하거나 소스를 변경하세요.",
+    "findSimilarEmptyNoEmbeddings": "범위 내 배경화면에 아직 벡터가 없습니다. AI 분석 또는 벡터 생성을 기다려 주세요.",
+    "findSimilarEmptyNoVectors": "이 배경화면에 아직 벡터가 없습니다. 잠시 후 다시 시도하거나 AI 분석을 실행하세요.",
     "similarModeBanner": "유사 이미지 표시 중",
     "similarBack": "검색으로 돌아가기",
     "header": {

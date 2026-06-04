@@ -29,7 +29,11 @@ import {
   isQualityFilterApplicable
 } from '@common/publicData.js'
 import { handleInfoVal, resolveApiUserMessage, isTransientSearchFailure } from '@common/utils.js'
-import { applyFavoriteResourceToItem } from '@h5/utils/favoriteApiBody.js'
+import { applyFavoriteResourceToItem, shouldRecordDownloadStat, applyResolvedResourceFromResult } from '@h5/utils/favoriteApiBody.js'
+import { applyUnfavoriteToItem } from '@common/favoriteResourceUtils.js'
+import { resolveFindSimilarEmptyMessage } from '@common/findSimilarUtils.js'
+import { runLongPressFavoriteBatch } from '@h5/utils/h5FavoriteGesture.mjs'
+import { usePreviewViewStat } from '@h5/composables/usePreviewViewStat.mjs'
 import { usePrivacyNsfwMask } from '@common/composables/usePrivacyNsfwMask.mjs'
 import { useH5FullscreenAutoPlay } from '@h5/composables/useH5FullscreenAutoPlay.js'
 import {
@@ -961,13 +965,14 @@ export function useH5ResourceBrowse(options) {
     const isPrivacy = enablePrivacySpaceToolbar && inPrivacySpace.value
     const wasFavorite = !!item.isFavorite
     const res = wasFavorite
-      ? await api.removeFavorites(item.id ?? item, isPrivacy)
+      ? await api.removeFavorites(item, isPrivacy)
       : await api.addToFavorites(item, isPrivacy)
     if (res?.success) {
       if (!wasFavorite) {
         applyFavoriteResourceToItem(item, res)
+      } else {
+        applyUnfavoriteToItem(item, res)
       }
-      item.isFavorite = wasFavorite ? 0 : 1
       if (!item.isFavorite) {
         removeItemAfterUnfavorite(item)
       }
@@ -1016,6 +1021,12 @@ export function useH5ResourceBrowse(options) {
     }
     return pos
   }
+
+  const { resetPreviewViewStat, recordViewForPreviewIndex } = usePreviewViewStat({
+    list,
+    resolveListIndexFromPreviewIndex,
+    recordViewApi: (item) => api.recordResourceView(item)
+  })
 
   const gridColumns = computed(() => {
     const contentWidth = Math.max(0, state.viewportWidth - GRID_HORIZONTAL_PADDING)
@@ -1516,16 +1527,13 @@ export function useH5ResourceBrowse(options) {
     if (!currentImage) return
 
     if (state.isFavoriteHolding && favoriteHold.count > 0) {
-      if (!currentImage.isFavorite) {
-        const addRes = await api.addToFavorites(currentImage)
-        applyFavoriteResourceToItem(currentImage, addRes)
-      }
-      if (!currentImage.id) return
-      const res = await api.updateFavoriteCount(currentImage.id, favoriteHold.count)
-      if (res?.success) {
-        currentImage.favoriteCount = (currentImage.favoriteCount || 0) + favoriteHold.count
-        currentImage.isFavorite = true
-      }
+      await runLongPressFavoriteBatch({
+        api,
+        item: currentImage,
+        count: favoriteHold.count,
+        t,
+        showNotify
+      })
       state.isFavoriteHolding = false
       state.showFavoriteToast = false
       favoriteHold.count = 0
@@ -1540,11 +1548,16 @@ export function useH5ResourceBrowse(options) {
         favoriteClick.timer = null
       }
       if (timeDiff < 300) {
-        const res = await api.removeFavorites(currentImage.id)
+        const res = await api.removeFavorites(currentImage)
         if (res?.success) {
           currentImage.isFavorite = false
           settingStore.vibrate(20)
           removeItemAfterUnfavorite(currentImage)
+        } else {
+          showNotify({
+            type: 'danger',
+            message: resolveApiUserMessage(res, t) || t('messages.operationFail')
+          })
         }
         favoriteClick.lastClickTime = 0
       } else {
@@ -1557,6 +1570,11 @@ export function useH5ResourceBrowse(options) {
             state.showFavoriteToast = true
             settingStore.vibrate(() => {
               state.showFavoriteToast = false
+            })
+          } else {
+            showNotify({
+              type: 'danger',
+              message: resolveApiUserMessage(res, t) || t('messages.operationFail')
             })
           }
           favoriteClick.timer = null
@@ -1759,12 +1777,14 @@ export function useH5ResourceBrowse(options) {
     if (!row.imageSrc) return
     previewCurrentIndex.value = getPreviewIndexForListIndex(index)
     state.showPreview = true
+    void recordViewForPreviewIndex(previewCurrentIndex.value)
   }
 
   const onPreviewIndexChange = (payload) => {
     const raw = typeof payload === 'number' ? payload : payload?.index
     previewCurrentIndex.value = Math.max(0, Number(raw) || 0)
     previewImageErrorAt.value = -1
+    void recordViewForPreviewIndex(previewCurrentIndex.value)
   }
 
   let previewImageErrorCaptureEl = null
@@ -1954,9 +1974,13 @@ export function useH5ResourceBrowse(options) {
     try {
       const res = await api.findSimilar({
         resourceId: Number(item.id),
+        item,
         limit: pageSize,
         ...(scope ? { scope } : {})
       })
+      if (res?.success) {
+        applyResolvedResourceFromResult(item, res)
+      }
       if (res?.success && res.data?.list?.length) {
         if (!similarMode.value) {
           similarListSnapshot.value = {
@@ -1982,8 +2006,16 @@ export function useH5ResourceBrowse(options) {
           fullscreenPagerRef.value?.scrollToIndex?.(0, false)
           if (pageWrapperRef.value) pageWrapperRef.value.scrollTop = 0
         })
-      } else {
-        showNotify({ type: 'warning', message: t('exploreCommon.findSimilarEmpty') })
+      } else if (res?.success) {
+        showNotify({
+          type: 'warning',
+          message: resolveFindSimilarEmptyMessage(t, res.data?.emptyReason)
+        })
+      } else if (res) {
+        showNotify({
+          type: 'danger',
+          message: resolveApiUserMessage(res, t) || t('messages.operationFail')
+        })
       }
     } catch (_) {
       showNotify({ type: 'danger', message: t('messages.operationFail') })
@@ -2045,9 +2077,9 @@ export function useH5ResourceBrowse(options) {
     state.showActionPopup = false
     imageInfoPanelHeight.value = imageInfoPanelAnchors[1]
     imageInfoTagWords.value = []
-    const id = selectedItem.value.id
-    if (id) {
-      const res = await api.getResourceTags(id)
+    const item = selectedItem.value
+    if (item) {
+      const res = await api.getResourceTags(item)
       if (res?.success && Array.isArray(res.data)) {
         imageInfoTagWords.value = res.data
       }
@@ -2077,8 +2109,12 @@ export function useH5ResourceBrowse(options) {
       } finally {
         if (blobUrl) URL.revokeObjectURL(blobUrl)
       }
-      if (item.id) {
-        await api.updateDownloadCount(item.id, 1)
+      if (shouldRecordDownloadStat(item)) {
+        try {
+          await api.updateDownloadCount(item.id, 1)
+        } catch (_) {
+          /* 统计失败不影响保存结果 */
+        }
       }
       showNotify({ type: 'success', message: t('messages.saveSuccess') })
     } catch (_) {
@@ -2178,6 +2214,7 @@ export function useH5ResourceBrowse(options) {
       return
     }
     try {
+      const wasPublicFavorite = !!item.isFavorite
       const res = await api.addToFavorites(item, true)
       if (!res?.success) {
         showNotify({
@@ -2187,8 +2224,8 @@ export function useH5ResourceBrowse(options) {
         return
       }
       applyFavoriteResourceToItem(item, res)
-      if (item.isFavorite) {
-        await api.removeFavorites(item.id, false)
+      if (wasPublicFavorite) {
+        await api.removeFavorites(item, false)
         item.isFavorite = 0
       }
       removeItemAfterUnfavorite(item)
@@ -2206,7 +2243,7 @@ export function useH5ResourceBrowse(options) {
       showNotify({ type: 'warning', message: t('messages.noData') })
       return
     }
-    const res = await api.removeFavorites(item.id, true)
+    const res = await api.removeFavorites(item, true)
     if (res?.success) {
       removeItemAfterUnfavorite(item)
       showNotify({ type: 'success', message: t('messages.operationSuccess') })
@@ -2331,6 +2368,7 @@ export function useH5ResourceBrowse(options) {
         document.addEventListener('touchcancel', onPreviewLayerTouchEnd, true)
       } else {
         previewImageErrorAt.value = -1
+        resetPreviewViewStat()
         unbindPreviewImageErrorCapture()
         document.removeEventListener('touchstart', onPreviewLayerTouchStart, true)
         document.removeEventListener('touchmove', onPreviewLayerTouchMove, true)

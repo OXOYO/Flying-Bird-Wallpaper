@@ -16,12 +16,24 @@ const addColumnIfMissing = (db, table, column, definition, logger) => {
 }
 
 /** 旧库升级：CREATE TABLE IF NOT EXISTS 不会补列，须在 createIndexes 之前执行 */
+const runSchemaStep = (logger, name, fn) => {
+  try {
+    fn()
+  } catch (err) {
+    logger?.error?.(`[schema] ${name} failed: ${err}`)
+  }
+}
+
 export function upgradeResourcesSchema(db, logger) {
-  migrateResourceAiSplitV1(db, logger)
-  addColumnIfMissing(db, 'fbw_resources', 'posterPath', "TEXT NOT NULL DEFAULT ''", logger)
-  migrateImageVecBlobCompositePk(db, logger)
-  upgradeResourceForeignKeys(db, logger)
-  migrateResourceVecTablesFk(db, logger)
+  runSchemaStep(logger, 'migrateResourceAiSplitV1', () => migrateResourceAiSplitV1(db, logger))
+  runSchemaStep(logger, 'add posterPath', () =>
+    addColumnIfMissing(db, 'fbw_resources', 'posterPath', "TEXT NOT NULL DEFAULT ''", logger)
+  )
+  runSchemaStep(logger, 'migrateImageVecBlobCompositePk', () =>
+    migrateImageVecBlobCompositePk(db, logger)
+  )
+  runSchemaStep(logger, 'upgradeResourceForeignKeys', () => upgradeResourceForeignKeys(db, logger))
+  runSchemaStep(logger, 'migrateResourceVecTablesFk', () => migrateResourceVecTablesFk(db, logger))
 }
 
 const tableHasResourceFk = (db, table) => {
@@ -202,6 +214,9 @@ export function migrateImageVecBlobCompositePk(db, logger) {
     return
   }
 
+  const hasModelCol = cols.some((c) => c.name === 'model')
+  const modelSelect = hasModelCol ? "COALESCE(NULLIF(model, ''), 'mobileclip2-s0')" : "'mobileclip2-s0'"
+
   logger?.info?.('[schema] migrateImageVecBlobCompositePk start')
   const tx = db.transaction(() => {
     db.exec('PRAGMA foreign_keys=OFF')
@@ -215,7 +230,7 @@ export function migrateImageVecBlobCompositePk(db, logger) {
     )`)
     db.exec(`INSERT OR IGNORE INTO fbw_resource_image_vec_blob_new
       (resourceId, embedding, dim, model, updated_at)
-      SELECT resourceId, embedding, dim, model, updated_at FROM fbw_resource_image_vec_blob`)
+      SELECT resourceId, embedding, dim, ${modelSelect}, updated_at FROM fbw_resource_image_vec_blob`)
     db.exec('DROP TABLE fbw_resource_image_vec_blob')
     db.exec('ALTER TABLE fbw_resource_image_vec_blob_new RENAME TO fbw_resource_image_vec_blob')
     db.exec('PRAGMA foreign_keys=ON')

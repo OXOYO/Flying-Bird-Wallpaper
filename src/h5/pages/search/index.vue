@@ -17,7 +17,11 @@ import {
 import { useTranslation } from 'i18next-vue'
 import { infoKeys } from '@common/publicData.js'
 import { handleInfoVal, resolveApiUserMessage, isTransientSearchFailure } from '@common/utils.js'
-import { applyFavoriteResourceToItem } from '@h5/utils/favoriteApiBody.js'
+import { applyFavoriteResourceToItem, shouldRecordDownloadStat, applyResolvedResourceFromResult } from '@h5/utils/favoriteApiBody.js'
+import { applyUnfavoriteToItem } from '@common/favoriteResourceUtils.js'
+import { resolveFindSimilarEmptyMessage } from '@common/findSimilarUtils.js'
+import { runLongPressFavoriteBatch } from '@h5/utils/h5FavoriteGesture.mjs'
+import { usePreviewViewStat } from '@h5/composables/usePreviewViewStat.mjs'
 import { usePrivacyNsfwMask } from '@common/composables/usePrivacyNsfwMask.mjs'
 import H5PrivacyPasswordDialog from '@h5/components/H5PrivacyPasswordDialog.vue'
 import H5NsfwContentMask from '@h5/components/H5NsfwContentMask.vue'
@@ -472,7 +476,17 @@ const displaySizeRadioOptions = computed(() =>
   }))
 )
 
-const normalizeItem = normalizeBrowseItem
+const normalizeItem = (item) => {
+  const row = normalizeBrowseItem(item)
+  if (!row) return row
+  if (form.resourceType === 'remoteResource' && form.resourceName) {
+    row.resourceName = form.resourceName
+  }
+  if (form.resourceType) {
+    row.resourceType = form.resourceType
+  }
+  return row
+}
 
 const getItemKey = getBrowseItemKey
 const resolveImageCompressWidth = (options = {}) => {
@@ -994,13 +1008,14 @@ const onChangeSource = () => {
 const onToggleFavorite = async (item) => {
   const wasFavorite = !!item.isFavorite
   const res = wasFavorite
-    ? await api.removeFavorites(item.id ?? item)
+    ? await api.removeFavorites(item)
     : await api.addToFavorites(item)
   if (res?.success) {
     if (!wasFavorite) {
       applyFavoriteResourceToItem(item, res)
+    } else {
+      applyUnfavoriteToItem(item, res)
     }
-    item.isFavorite = wasFavorite ? 0 : 1
     showNotify({ type: 'success', message: t('messages.operationSuccess') })
   } else {
     showNotify({ type: 'danger', message: resolveApiUserMessage(res, t) || t('messages.operationFail') })
@@ -1062,6 +1077,12 @@ const getPreviewIndexForListIndex = (listIndex) => {
   }
   return pos
 }
+
+const { resetPreviewViewStat, recordViewForPreviewIndex } = usePreviewViewStat({
+  list,
+  resolveListIndexFromPreviewIndex,
+  recordViewApi: (item) => api.recordResourceView(item)
+})
 
 const gridColumns = computed(() => {
   const contentWidth = Math.max(0, state.viewportWidth - GRID_HORIZONTAL_PADDING)
@@ -1571,16 +1592,13 @@ const handleFavoriteTouchEnd = async () => {
   if (!currentImage) return
 
   if (state.isFavoriteHolding && favoriteHold.count > 0) {
-    if (!currentImage.isFavorite) {
-      const addRes = await api.addToFavorites(currentImage)
-      applyFavoriteResourceToItem(currentImage, addRes)
-    }
-    if (!currentImage.id) return
-    const res = await api.updateFavoriteCount(currentImage.id, favoriteHold.count)
-    if (res?.success) {
-      currentImage.favoriteCount = (currentImage.favoriteCount || 0) + favoriteHold.count
-      currentImage.isFavorite = true
-    }
+    await runLongPressFavoriteBatch({
+      api,
+      item: currentImage,
+      count: favoriteHold.count,
+      t,
+      showNotify
+    })
     state.isFavoriteHolding = false
     state.showFavoriteToast = false
     favoriteHold.count = 0
@@ -1595,10 +1613,15 @@ const handleFavoriteTouchEnd = async () => {
       favoriteClick.timer = null
     }
     if (timeDiff < 300) {
-      const res = await api.removeFavorites(currentImage.id)
+      const res = await api.removeFavorites(currentImage)
       if (res?.success) {
         currentImage.isFavorite = false
         settingStore.vibrate(20)
+      } else {
+        showNotify({
+          type: 'danger',
+          message: resolveApiUserMessage(res, t) || t('messages.operationFail')
+        })
       }
       favoriteClick.lastClickTime = 0
     } else {
@@ -1611,6 +1634,11 @@ const handleFavoriteTouchEnd = async () => {
           state.showFavoriteToast = true
           settingStore.vibrate(() => {
             state.showFavoriteToast = false
+          })
+        } else {
+          showNotify({
+            type: 'danger',
+            message: resolveApiUserMessage(res, t) || t('messages.operationFail')
           })
         }
         favoriteClick.timer = null
@@ -1820,12 +1848,14 @@ const openPreview = (index) => {
   if (!row.imageSrc) return
   previewCurrentIndex.value = getPreviewIndexForListIndex(index)
   state.showPreview = true
+  void recordViewForPreviewIndex(previewCurrentIndex.value)
 }
 
 const onPreviewIndexChange = (payload) => {
   const raw = typeof payload === 'number' ? payload : payload?.index
   previewCurrentIndex.value = Math.max(0, Number(raw) || 0)
   previewImageErrorAt.value = -1
+  void recordViewForPreviewIndex(previewCurrentIndex.value)
 }
 
 let previewImageErrorCaptureEl = null
@@ -2015,9 +2045,13 @@ const onFindSimilarSelected = async () => {
   try {
     const res = await api.findSimilar({
       resourceId: Number(item.id),
+      item,
       limit: pageSize,
       scope
     })
+    if (res?.success) {
+      applyResolvedResourceFromResult(item, res)
+    }
     if (res?.success && res.data?.list?.length) {
       if (!similarMode.value) {
         similarListSnapshot.value = {
@@ -2043,8 +2077,16 @@ const onFindSimilarSelected = async () => {
         fullscreenPagerRef.value?.scrollToIndex?.(0, false)
         if (pageWrapperRef.value) pageWrapperRef.value.scrollTop = 0
       })
-    } else {
-        showNotify({ type: 'warning', message: t('exploreCommon.findSimilarEmpty') })
+    } else if (res?.success) {
+      showNotify({
+        type: 'warning',
+        message: resolveFindSimilarEmptyMessage(t, res.data?.emptyReason)
+      })
+    } else if (res) {
+      showNotify({
+        type: 'danger',
+        message: resolveApiUserMessage(res, t) || t('messages.operationFail')
+      })
     }
   } catch (_) {
     showNotify({ type: 'danger', message: t('messages.operationFail') })
@@ -2106,9 +2148,9 @@ const showImageInfo = async () => {
   state.showActionPopup = false
   imageInfoPanelHeight.value = imageInfoPanelAnchors[1]
   imageInfoTagWords.value = []
-  const id = selectedItem.value.id
-  if (id) {
-    const res = await api.getResourceTags(id)
+  const item = selectedItem.value
+  if (item) {
+    const res = await api.getResourceTags(item)
     if (res?.success && Array.isArray(res.data)) {
       imageInfoTagWords.value = res.data
     }
@@ -2138,8 +2180,12 @@ const saveSelectedMedia = async () => {
     } finally {
       if (blobUrl) URL.revokeObjectURL(blobUrl)
     }
-    if (item.id) {
-      await api.updateDownloadCount(item.id, 1)
+    if (shouldRecordDownloadStat(item)) {
+      try {
+        await api.updateDownloadCount(item.id, 1)
+      } catch (_) {
+        /* 统计失败不影响保存结果 */
+      }
     }
     showNotify({ type: 'success', message: t('messages.saveSuccess') })
   } catch (_) {
@@ -2239,6 +2285,7 @@ const addSelectedToPrivacySpace = async () => {
     return
   }
   try {
+    const wasPublicFavorite = !!item.isFavorite
     const res = await api.addToFavorites(item, true)
     if (!res?.success) {
       showNotify({
@@ -2248,8 +2295,8 @@ const addSelectedToPrivacySpace = async () => {
       return
     }
     applyFavoriteResourceToItem(item, res)
-    if (item.isFavorite) {
-      await api.removeFavorites(item.id, false)
+    if (wasPublicFavorite) {
+      await api.removeFavorites(item, false)
       item.isFavorite = 0
     }
     showNotify({ type: 'success', message: t('messages.operationSuccess') })
@@ -2403,6 +2450,7 @@ watch(
       document.addEventListener('touchcancel', onPreviewLayerTouchEnd, true)
     } else {
       previewImageErrorAt.value = -1
+      resetPreviewViewStat()
       unbindPreviewImageErrorCapture()
       document.removeEventListener('touchstart', onPreviewLayerTouchStart, true)
       document.removeEventListener('touchmove', onPreviewLayerTouchMove, true)

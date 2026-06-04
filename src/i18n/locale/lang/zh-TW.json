@@ -1040,6 +1040,9 @@
     "aiAnalyze": "AI 分析",
     "findSimilar": "找相似",
     "findSimilarEmpty": "未找到相似壁紙",
+    "findSimilarEmptyNoScope": "目前範圍內沒有可比較的本地資源，請先下載入庫或切換資料來源",
+    "findSimilarEmptyNoEmbeddings": "範圍內壁紙尚未生成向量，請等待 AI 分析或向量回填後再試",
+    "findSimilarEmptyNoVectors": "目前壁紙尚未生成向量，請稍後重試或先執行 AI 分析",
     "similarModeBanner": "正在顯示相似圖片",
     "similarBack": "返回搜尋",
     "header": {

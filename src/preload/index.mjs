@@ -178,8 +178,9 @@ const api = {
   updatePrivacyPassword: (...args) => ipcRenderer.invoke('main:updatePrivacyPassword', ...args),
   addToFavorites: (...args) => ipcRenderer.invoke('main:addToFavorites', ...args),
   removeFavorites: (...args) => ipcRenderer.invoke('main:removeFavorites', ...args),
+  recordResourceView: (idOrItem) => invokeWithObject('main:recordResourceView', ipcRenderer, idOrItem),
   getWords: (...args) => ipcRenderer.invoke('main:getWords', ...args),
-  getResourceTags: (resourceId) => ipcRenderer.invoke('main:getResourceTags', resourceId),
+  getResourceTags: (idOrItem) => invokeWithObject('main:getResourceTags', ipcRenderer, idOrItem),
 
   // 窗口操作
   resizeWindow: (...args) => ipcRenderer.invoke('main:resizeWindow', ...args),

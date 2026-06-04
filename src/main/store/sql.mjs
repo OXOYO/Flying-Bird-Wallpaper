@@ -37,7 +37,7 @@ export const createTables = [
   `CREATE TABLE IF NOT EXISTS fbw_statistics (
     id INTEGER PRIMARY KEY AUTOINCREMENT, -- 统计记录自增ID
     resourceId INTEGER NOT NULL REFERENCES fbw_resources(id) ON DELETE CASCADE, -- 资源记录ID
-    views INTEGER NOT NULL DEFAULT 0, -- 曝光次数
+    views INTEGER NOT NULL DEFAULT 0, -- 预览查看次数
     downloads INTEGER NOT NULL DEFAULT 0, -- 下载次数
     favorites INTEGER NOT NULL DEFAULT 0, -- 收藏次数
     wallpapers INTEGER NOT NULL DEFAULT 0, -- 设置为壁纸次数

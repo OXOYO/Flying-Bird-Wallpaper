@@ -53,6 +53,43 @@ const parsePositiveId = (value) => {
   return Number.isFinite(id) && id > 0 ? id : null
 }
 
+const buildResolveResourceError = (resolved) => ({
+  success: false,
+  message: resolved.message || t('messages.operationFail'),
+  errorCode: resolved.errorCode
+})
+
+const attachResolvedResourceToResult = (resourcesManager, ret, resourceId, resourceRow) => {
+  if (!ret?.success || !resourceRow) return ret
+  const resource = resourcesManager.enrichResourceForClient(resourceRow)
+  if (ret.data && typeof ret.data === 'object' && !Array.isArray(ret.data)) {
+    ret.data = { ...ret.data, resourceId, resource }
+  } else {
+    ret.data = { ...(ret.data != null ? { result: ret.data } : {}), resourceId, resource }
+  }
+  return ret
+}
+
+async function resolveResourceFromParams(store, params, { downloadIfRemote = false } = {}) {
+  if (params?.item) {
+    const resolved = await store.resourcesManager.resolveResourceIdForClient(params.item, {
+      downloadIfRemote
+    })
+    if (!resolved.ok) {
+      return { error: buildResolveResourceError(resolved) }
+    }
+    return { resourceId: resolved.resourceId, resourceRow: resolved.resourceRow }
+  }
+  const resourceId = parsePositiveId(params?.id ?? params?.resourceId)
+  if (!resourceId) {
+    return { error: { success: false, message: t('messages.operationFail') } }
+  }
+  return {
+    resourceId,
+    resourceRow: store.resourcesManager.getResourceRowById(resourceId)
+  }
+}
+
 export default class Store {
   constructor() {
     // 初始化完成标志
@@ -1286,14 +1323,18 @@ export default class Store {
       return await this.settingManager.updatePrivacyPassword(formData)
     })
 
-    // 加入收藏夹
-    ipcMain.handle('main:addToFavorites', async (event, resourceId, isPrivacySpace = false) => {
-      return await this.resourcesManager.addToFavorites(resourceId, isPrivacySpace)
+    // 加入收藏夹（id 或完整 item）
+    ipcMain.handle('main:addToFavorites', async (event, resourceIdOrItem, isPrivacySpace = false) => {
+      return await this.resourcesManager.addToFavorites(resourceIdOrItem, isPrivacySpace)
     })
 
-    // 移出收藏夹
-    ipcMain.handle('main:removeFavorites', async (event, resourceId, isPrivacySpace = false) => {
-      return await this.resourcesManager.removeFavorites(resourceId, isPrivacySpace)
+    // 移出收藏夹（id 或完整 item）
+    ipcMain.handle('main:removeFavorites', async (event, resourceIdOrItem, isPrivacySpace = false) => {
+      return await this.resourcesManager.removeFavorites(resourceIdOrItem, isPrivacySpace)
+    })
+
+    ipcMain.handle('main:recordResourceView', async (event, resourceIdOrItem) => {
+      return await this.resourcesManager.recordResourceView(resourceIdOrItem)
     })
 
     // 删除文件
@@ -1378,16 +1419,24 @@ export default class Store {
       return this.wordsManager.getWords(params)
     })
 
-    ipcMain.handle('main:getResourceTags', async (event, resourceId) => {
+    ipcMain.handle('main:getResourceTags', async (event, resourceIdOrItem) => {
+      let resourceId = parsePositiveId(resourceIdOrItem)
+      if (resourceIdOrItem && typeof resourceIdOrItem === 'object') {
+        resourceId = this.resourcesManager.resolveResourceIdForTags(resourceIdOrItem).resourceId
+      }
+      if (!resourceId) {
+        return { success: true, message: t('messages.queryEmpty'), data: [] }
+      }
       return this.wordsManager.getResourceTags(resourceId)
     })
 
     ipcMain.handle('main:analyzeResource', async (event, params) => {
-      const id = parsePositiveId(params?.id ?? params?.resourceId)
-      if (!id) {
-        return { success: false, message: t('messages.operationFail') }
-      }
-      return await this.aiAnalysisManager.analyzeResourceById(id, params?.options)
+      const resolved = await resolveResourceFromParams(this, params, { downloadIfRemote: true })
+      if (resolved.error) return resolved.error
+      const { resourceId, resourceRow } = resolved
+      const ret = await this.aiAnalysisManager.analyzeResourceById(resourceId, params?.options)
+      const rowAfter = this.resourcesManager.getResourceRowById(resourceId) || resourceRow
+      return attachResolvedResourceToResult(this.resourcesManager, ret, resourceId, rowAfter)
     })
 
     ipcMain.handle('main:resetAiAnalysis', async (event, params) => {
@@ -1434,10 +1483,9 @@ export default class Store {
     })
 
     ipcMain.handle('main:findSimilar', async (event, params) => {
-      const resourceId = Number(params?.resourceId ?? params?.id)
-      if (!Number.isFinite(resourceId) || resourceId <= 0) {
-        return { success: false, message: t('messages.operationFail') }
-      }
+      const resolved = await resolveResourceFromParams(this, params, { downloadIfRemote: true })
+      if (resolved.error) return resolved.error
+      const { resourceId, resourceRow } = resolved
       const limit = params?.limit || 20
       try {
         const candidateIds = Array.isArray(params?.candidateIds)
@@ -1446,17 +1494,23 @@ export default class Store {
             ? this.resourcesManager.getSimilarScopeCandidateIds(params.scope)
             : null
         const excludeIds = Array.isArray(params?.excludeIds) ? params.excludeIds : []
-        const similar = await this.embeddingManager.findSimilar(
+        const similar = await this.resourcesManager.runFindSimilar(this.embeddingManager, {
           resourceId,
           limit,
           candidateIds,
           excludeIds
-        )
+        })
         const list = this.resourcesManager.getResourcesByIds(similar.resourceIds)
-        return {
+        const ret = {
           success: true,
-          data: { list, total: similar.total, signals: similar.signals || [] }
+          data: {
+            list,
+            total: similar.total,
+            signals: similar.signals || [],
+            emptyReason: similar.emptyReason || null
+          }
         }
+        return attachResolvedResourceToResult(this.resourcesManager, ret, resourceId, resourceRow)
       } catch (err) {
         return { success: false, message: String(err.message || err) }
       }

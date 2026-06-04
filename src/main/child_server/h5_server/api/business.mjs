@@ -151,11 +151,28 @@ export const registerBusinessApi = (router, deps) => {
 
   router.post('/api/find-similar', async (ctx) => {
     const body = await readJsonBody(ctx)
-    const resourceId = body?.resourceId ?? body?.id
-    if (!resourceId) {
-      sendJson(ctx, { success: false, message: t('messages.operationFail') })
+    const resolved = body?.item
+      ? await resourcesManager.resolveResourceIdForClient(body.item, { downloadIfRemote: true })
+      : await (async () => {
+          const resourceId = Number(body?.resourceId ?? body?.id)
+          if (!Number.isFinite(resourceId) || resourceId <= 0) {
+            return { ok: false, message: t('messages.operationFail') }
+          }
+          return {
+            ok: true,
+            resourceId,
+            resourceRow: resourcesManager.getResourceRowById(resourceId)
+          }
+        })()
+    if (!resolved.ok) {
+      sendJson(ctx, {
+        success: false,
+        message: resolved.message || t('messages.operationFail'),
+        errorCode: resolved.errorCode
+      })
       return
     }
+    const { resourceId, resourceRow } = resolved
     const limit = Math.max(1, Math.min(Number(body?.limit) || 20, 200))
     const excludeIds = Array.isArray(body?.excludeIds)
       ? body.excludeIds.map((id) => Number(id)).filter((id) => Number.isFinite(id))
@@ -168,16 +185,23 @@ export const registerBusinessApi = (router, deps) => {
         : body?.scope
           ? resourcesManager.getSimilarScopeCandidateIds(body.scope)
           : null
-      const similar = await embeddingManager.findSimilar(
-        Number(resourceId),
+      const similar = await resourcesManager.runFindSimilar(embeddingManager, {
+        resourceId: Number(resourceId),
         limit,
         candidateIds,
         excludeIds
-      )
+      })
       const list = resourcesManager.getResourcesByIds(similar.resourceIds)
       sendJson(ctx, {
         success: true,
-        data: { list, total: similar.total, signals: similar.signals || [] }
+        data: {
+          list,
+          total: similar.total,
+          signals: similar.signals || [],
+          emptyReason: similar.emptyReason || null,
+          resourceId,
+          resource: resourceRow ? resourcesManager.enrichResourceForClient(resourceRow) : undefined
+        }
       })
     } catch (err) {
       logger.error(`[H5Server] find-similar failed: ${err}`)
@@ -186,7 +210,28 @@ export const registerBusinessApi = (router, deps) => {
   })
 
   router.post('/api/ai/analyze', async (ctx) => {
-    const { id } = await readJsonBody(ctx)
+    const body = await readJsonBody(ctx)
+    const resolved = body?.item
+      ? await resourcesManager.resolveResourceIdForClient(body.item, { downloadIfRemote: true })
+      : await (async () => {
+          const id = Number(body?.id)
+          if (!Number.isFinite(id) || id <= 0) {
+            return { ok: false, message: t('messages.operationFail') }
+          }
+          return {
+            ok: true,
+            resourceId: id,
+            resourceRow: resourcesManager.getResourceRowById(id)
+          }
+        })()
+    if (!resolved.ok) {
+      sendJson(ctx, {
+        success: false,
+        message: resolved.message || t('messages.operationFail'),
+        errorCode: resolved.errorCode
+      })
+      return
+    }
     const AiAnalysisManager = (await import('../../../ai/AiAnalysisManager.mjs')).default
     const WordsManager = (await import('../../../store/WordsManager.mjs')).default
     const EmbeddingManager = (await import('../../../ai/EmbeddingManager.mjs')).default
@@ -199,7 +244,17 @@ export const registerBusinessApi = (router, deps) => {
       wordsManager,
       embeddingManager
     )
-    sendJson(ctx, await aiMgr.analyzeResourceById(id))
+    const ret = await aiMgr.analyzeResourceById(resolved.resourceId)
+    const rowAfter =
+      resourcesManager.getResourceRowById(resolved.resourceId) || resolved.resourceRow
+    if (ret?.success && rowAfter) {
+      ret.data = {
+        ...(ret.data && typeof ret.data === 'object' ? ret.data : {}),
+        resourceId: resolved.resourceId,
+        resource: resourcesManager.enrichResourceForClient(rowAfter)
+      }
+    }
+    sendJson(ctx, ret)
   })
 
   router.get('/api/collections/list', async (ctx) => {
@@ -305,9 +360,12 @@ export const registerBusinessApi = (router, deps) => {
       })
       return
     }
-    const isFavorite = targetId ? await resourcesManager.checkFavorite(targetId) : false
+    const isFavorite =
+      item || targetId
+        ? resourcesManager.isFavoritedFromInput(item || { id: targetId })
+        : false
     const ret = isFavorite
-      ? await resourcesManager.removeFavorites(targetId)
+      ? await resourcesManager.removeFavorites(item || targetId)
       : await resourcesManager.addToFavorites(item || targetId)
     sendJson(ctx, ret)
   })
@@ -319,8 +377,8 @@ export const registerBusinessApi = (router, deps) => {
   })
 
   router.post('/api/favorites/remove', async (ctx) => {
-    const { id, isPrivacySpace } = await readJsonBody(ctx)
-    const ret = await resourcesManager.removeFavorites(id, !!isPrivacySpace)
+    const { id, item, isPrivacySpace } = await readJsonBody(ctx)
+    const ret = await resourcesManager.removeFavorites(item || id, !!isPrivacySpace)
     sendJson(ctx, ret)
   })
 
@@ -343,6 +401,13 @@ export const registerBusinessApi = (router, deps) => {
   router.post('/api/statistics/favorite', async (ctx) => {
     const { id, count = 1 } = await readJsonBody(ctx)
     const ret = await resourcesManager.updateStatistics({ resourceId: id, favorites: count })
+    sendJson(ctx, ret)
+  })
+
+  router.post('/api/statistics/view', async (ctx) => {
+    const body = await readJsonBody(ctx)
+    const target = body?.item && typeof body.item === 'object' ? body.item : body?.id
+    const ret = await resourcesManager.recordResourceView(target)
     sendJson(ctx, ret)
   })
 
@@ -374,6 +439,27 @@ export const registerBusinessApi = (router, deps) => {
     try {
       const WordsManager = (await import('../../../store/WordsManager.mjs')).default
       const wm = WordsManager.getInstance(logger, dbManager, settingManager)
+      if (!Number.isFinite(resourceId) || resourceId <= 0) {
+        sendJson(ctx, { success: true, message: t('messages.queryEmpty'), data: [] })
+        return
+      }
+      sendJson(ctx, wm.getResourceTags(resourceId))
+    } catch (err) {
+      logger.error(`[H5Server] ERROR => 获取资源标签失败: ${err}`)
+      sendJson(ctx, { success: false, data: [] })
+    }
+  })
+
+  router.post('/api/resources/tags', async (ctx) => {
+    const body = await readJsonBody(ctx)
+    try {
+      const WordsManager = (await import('../../../store/WordsManager.mjs')).default
+      const wm = WordsManager.getInstance(logger, dbManager, settingManager)
+      const { resourceId } = resourcesManager.resolveResourceIdForTags(body?.item || { id: body?.id })
+      if (!resourceId) {
+        sendJson(ctx, { success: true, message: t('messages.queryEmpty'), data: [] })
+        return
+      }
       sendJson(ctx, wm.getResourceTags(resourceId))
     } catch (err) {
       logger.error(`[H5Server] ERROR => 获取资源标签失败: ${err}`)

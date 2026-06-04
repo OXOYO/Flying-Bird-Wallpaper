@@ -124,14 +124,18 @@ export const searchImages = async (data) => {
 }
 
 /** 找相似（画面 RRF + 文案 boost，与桌面 main:findSimilar 一致） */
-export const findSimilar = async (data) => {
+export const findSimilar = async (data = {}) => {
+  const body =
+    data.item && typeof data.item === 'object'
+      ? { ...data, ...buildResourceActionBody(data.item) }
+      : data
   return await request('/api/find-similar', {
     method: 'POST',
-    body: data
+    body
   })
 }
 
-import { buildFavoriteRequestBody } from '@h5/utils/favoriteApiBody.js'
+import { buildFavoriteRequestBody, buildResourceActionBody } from '@h5/utils/favoriteApiBody.js'
 
 export const toggleFavorite = async (idOrItem) => {
   return await request('/api/favorites/toggle', {
@@ -154,10 +158,17 @@ export const updateFavoriteCount = async (id, count) => {
   })
 }
 
-export const removeFavorites = async (id, isPrivacySpace = false) => {
+export const recordResourceView = async (idOrItem) => {
+  return await request('/api/statistics/view', {
+    method: 'POST',
+    body: buildResourceActionBody(idOrItem)
+  })
+}
+
+export const removeFavorites = async (idOrItem, isPrivacySpace = false) => {
   return await request('/api/favorites/remove', {
     method: 'POST',
-    body: { id, isPrivacySpace: !!isPrivacySpace }
+    body: buildFavoriteRequestBody(idOrItem, isPrivacySpace)
   })
 }
 
@@ -211,8 +222,14 @@ export const getResourceMap = async () => {
   return await request('/api/resources/map')
 }
 
-export const getResourceTags = async (resourceId) => {
-  const id = Number(resourceId)
+export const getResourceTags = async (idOrItem) => {
+  if (idOrItem && typeof idOrItem === 'object') {
+    return request('/api/resources/tags', {
+      method: 'POST',
+      body: buildResourceActionBody(idOrItem)
+    })
+  }
+  const id = Number(idOrItem)
   if (!Number.isFinite(id) || id <= 0) return { success: false, data: [] }
   return request(`/api/resources/tags?resourceId=${id}`)
 }

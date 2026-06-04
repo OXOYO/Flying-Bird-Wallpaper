@@ -22,6 +22,8 @@ import { usePrivacyNsfwMask } from '@common/composables/usePrivacyNsfwMask.mjs'
 import { resolveNsfwMaskVerifyFailMessage } from '@common/privacyNsfwMask.js'
 import CuratorStatsIndicator from '@renderer/components/CuratorStatsIndicator.vue'
 import { normalizeResourceItem } from '@renderer/composables/useResourceCardActions.js'
+import { applyFavoriteResourceToItem, applyResourceRowToItem, applyResolvedResourceFromResult, applyUnfavoriteToItem } from '@common/favoriteResourceUtils.js'
+import { resolveFindSimilarEmptyMessage } from '@common/findSimilarUtils.js'
 import { supportsAiVisionActions } from '@renderer/utils/resourceImageUrl.js'
 import { cloneForIpc } from '@renderer/utils/cloneForIpc.js'
 import { useHorizontalWheelScroll } from '@renderer/composables/useHorizontalWheelScroll.mjs'
@@ -215,9 +217,16 @@ const mapSimilarListRows = (rows = []) =>
   rows.map((row) =>
     normalizeResourceItem(row, {
       resourceType: isLocalResource.value ? 'localResource' : 'remoteResource',
+      resourceName: isLocalResource.value ? undefined : searchForm.resourceName,
       gridHWRatio: settingData.value?.gridHWRatio ?? 0.618
     })
   )
+
+const getBrowseNormalizeOptions = () => ({
+  resourceType: searchForm.resourceType,
+  resourceName: searchForm.resourceName,
+  gridHWRatio: gridForm.gridHWRatio
+})
 
 const flags = reactive({
   loading: false,
@@ -1230,10 +1239,7 @@ const getNextList = async () => {
         const newItems = res.data.list
           .filter((item) => !ids.includes(item.uniqueKey))
           .map((item) => {
-            const row = normalizeResourceItem(item, {
-              resourceType: searchForm.resourceType,
-              gridHWRatio: gridForm.gridHWRatio
-            })
+            const row = normalizeResourceItem(item, getBrowseNormalizeOptions())
             if (row.fileType === 'video') {
               if (typeof row.isPlaying === 'undefined') row.isPlaying = false
               if (!row.videoSrc) {
@@ -1337,6 +1343,13 @@ const setAsWallpaperWithDownload = async (item, index) => {
 
   let options = {}
   if (res && res.success) {
+    if (res.data) {
+      applyResourceRowToItem(item, res.data)
+      const rowIndex = resolveCardListIndex(item, index)
+      if (rowIndex >= 0) {
+        cardList.value[rowIndex] = { ...cardList.value[rowIndex], ...item }
+      }
+    }
     options.type = 'success'
     options.message = res.message
     setCardItemStatus(index, 'success')
@@ -1400,18 +1413,23 @@ const doViewImage = async (item, index, inner = false) => {
 }
 
 const onAiAnalyze = async (item, index) => {
-  if (!item?.id) return
-  const res = await window.FBW.analyzeResource({ id: item.id })
+  if (!item) return
+  const res = await window.FBW.analyzeResource({ id: item.id, item: cloneForIpc(item) })
   ElMessage({
     type: res.success ? 'success' : 'error',
     message: res.message || (res.success ? t('messages.operationSuccess') : t('messages.operationFail'))
   })
-  if (res.success && res.data) {
-    cardList.value[index] = {
+  if (res.success) {
+    applyResolvedResourceFromResult(item, res)
+    const rowIndex = resolveCardListIndex(item, index)
+    const patch = {
       ...item,
-      ...res.data,
-      score: res.data.score ?? item.score,
+      ...(res.data && typeof res.data === 'object' ? res.data : {}),
       aiAnalysisStatus: 'done'
+    }
+    if (res.data?.score != null) patch.score = res.data.score
+    if (rowIndex >= 0) {
+      cardList.value[rowIndex] = { ...cardList.value[rowIndex], ...patch }
     }
   }
 }
@@ -1466,9 +1484,13 @@ const onFindSimilar = async (item) => {
     const pageSize = Math.max(1, searchForm.pageSize || 50)
     const res = await window.FBW.findSimilar({
       resourceId: item.id,
+      item: cloneForIpc(item),
       limit: pageSize,
       scope: cloneForIpc(scope)
     })
+    if (res?.success) {
+      applyResolvedResourceFromResult(item, res)
+    }
     if (res?.success && res.data?.list?.length) {
       // 已在相似列表内再次找相似时勿覆盖快照，否则返回会落到上一层相似结果而非最初列表
       if (!similarMode.value) {
@@ -1481,6 +1503,7 @@ const onFindSimilar = async (item) => {
       }
       const sourceItem = normalizeResourceItem(item, {
         resourceType: isLocalResource.value ? 'localResource' : 'remoteResource',
+        resourceName: isLocalResource.value ? undefined : searchForm.resourceName,
         gridHWRatio: settingData.value?.gridHWRatio ?? 0.618
       })
       const firstRows = mapSimilarListRows(res.data.list)
@@ -1497,8 +1520,13 @@ const onFindSimilar = async (item) => {
       flags.hasMore = similarHasMore.value
       flags.empty = false
       shouldFillSimilar = true
-    } else {
-      ElMessage({ type: 'info', message: t('exploreCommon.findSimilarEmpty') })
+    } else if (res?.success) {
+      ElMessage({
+        type: 'info',
+        message: resolveFindSimilarEmptyMessage(t, res.data?.emptyReason)
+      })
+    } else if (res) {
+      ElMessage({ type: 'error', message: res.message || t('messages.operationFail') })
     }
   } finally {
     flags.loading = false
@@ -1610,13 +1638,11 @@ const resolveCardListIndex = (slotItem, slotIndex) => {
 
 // 加入收藏夹或隐私空间
 const applyFavoriteResourcePatch = (item, index, res) => {
-  const patch = res?.data?.resource
-  if (!patch) return
   const rowIndex = resolveCardListIndex(item, index)
   const target = rowIndex >= 0 ? cardList.value[rowIndex] : item
-  Object.assign(target, patch)
-  if (patch.fileType === 'video' && patch.filePath && !target.videoSrc) {
-    target.videoSrc = `fbwtp://fbw/api/videos/get?filePath=${encodeURIComponent(patch.filePath)}`
+  applyFavoriteResourceToItem(target, res)
+  if (target.fileType === 'video' && target.filePath && !target.videoSrc) {
+    target.videoSrc = `fbwtp://fbw/api/videos/get?filePath=${encodeURIComponent(target.filePath)}`
   }
 }
 
@@ -1648,14 +1674,15 @@ const addToFavorites = async (item, index, isPrivacySpace = false) => {
 }
 // 移出收藏或隐私空间
 const removeFavorites = async (item, index, isPrivacySpace = false) => {
-  const res = await window.FBW.removeFavorites(item.id, isPrivacySpace)
+  const res = await window.FBW.removeFavorites(cloneForIpc(item), isPrivacySpace)
   let callback
   if (res.success) {
     const rowIndex = resolveCardListIndex(item, index)
+    const target = rowIndex >= 0 ? cardList.value[rowIndex] : item
+    applyUnfavoriteToItem(target, res)
     if (rowIndex >= 0) {
       cardList.value[rowIndex].isFavorite = 0
-    } else {
-      item.isFavorite = 0
+      cardList.value[rowIndex].favorites = target.favorites ?? 0
     }
     if (isFavoritesMenu.value || isPrivacySpace) {
       callback = async () => {
@@ -1747,6 +1774,13 @@ const onDownloadFile = async (item, index) => {
 
   let options = {}
   if (res && res.success) {
+    if (res.data) {
+      applyResourceRowToItem(item, res.data)
+      const rowIndex = resolveCardListIndex(item, index)
+      if (rowIndex >= 0) {
+        cardList.value[rowIndex] = { ...cardList.value[rowIndex], ...item }
+      }
+    }
     options.type = 'success'
     options.message = res.message
     setCardItemStatus(index, 'success')

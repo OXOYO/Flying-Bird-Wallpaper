@@ -1,6 +1,7 @@
 <script setup>
 import Viewer from 'viewerjs'
 import UseSettingStore from '@renderer/stores/settingStore.js'
+import { fireRecordPreviewView } from '@common/favoriteResourceUtils.js'
 
 const settingStore = UseSettingStore()
 const { settingData } = storeToRefs(settingStore)
@@ -22,6 +23,13 @@ const flags = reactive({
 })
 const imageList = ref([])
 let viewedIndex = -1
+let lastRecordedViewIndex = -1
+
+const recordViewAtIndex = async (index) => {
+  const item = imageList.value[index]
+  if (!item) return
+  await fireRecordPreviewView((it) => window.FBW.recordResourceView(it), item)
+}
 
 const emit = defineEmits(['prevMore', 'nextMore', 'close'])
 
@@ -103,6 +111,10 @@ const createGallery = () => {
     },
     viewed: ({ detail }) => {
       viewedIndex = detail.index
+      if (detail.index !== lastRecordedViewIndex) {
+        lastRecordedViewIndex = detail.index
+        void recordViewAtIndex(detail.index)
+      }
 
       // 获取图片和容器尺寸
       const image = detail.image
@@ -127,6 +139,7 @@ const createGallery = () => {
     hidden: () => {
       flags.visible = false
       flags.loading = false
+      lastRecordedViewIndex = -1
       destroyGallery()
       emit('close')
     }
@@ -137,6 +150,7 @@ const createGallery = () => {
 // 显示激活项
 const view = (activeIndex = -1, list = []) => {
   if (typeof activeIndex === 'number' && activeIndex > -1 && Array.isArray(list) && list.length) {
+    lastRecordedViewIndex = -1
     flags.visible = true
     imageList.value = list
     nextTick(() => {

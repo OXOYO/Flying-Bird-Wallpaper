@@ -2,6 +2,7 @@
 import { useTranslation } from 'i18next-vue'
 import { infoKeys } from '@common/publicData.js'
 import { handleInfoVal } from '@common/utils.js'
+import { cloneForIpc } from '@renderer/utils/cloneForIpc.js'
 
 const { t } = useTranslation()
 
@@ -18,10 +19,9 @@ const transform = reactive({
 const showResetBtn = ref(false)
 
 const loadResourceTags = async (row) => {
-  const id = row?.id
-  if (!id || !window.FBW?.getResourceTags) return row
+  if (!row || !window.FBW?.getResourceTags) return row
   try {
-    const res = await window.FBW.getResourceTags(id)
+    const res = await window.FBW.getResourceTags(cloneForIpc(row))
     if (res?.success && Array.isArray(res.data) && res.data.length) {
       return { ...row, _tagWords: res.data }
     }
@@ -37,7 +37,7 @@ const view = async (item) => {
   transform.scale = 1
   transform.originX = '50%'
   transform.originY = '50%'
-  if (item?.id) {
+  if (item) {
     info.value = await loadResourceTags(info.value)
   }
 }

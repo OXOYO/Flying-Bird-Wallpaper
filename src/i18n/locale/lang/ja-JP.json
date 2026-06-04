@@ -1040,6 +1040,9 @@
     "aiAnalyze": "AI 分析",
     "findSimilar": "類似を探す",
     "findSimilarEmpty": "類似の壁紙が見つかりませんでした",
+    "findSimilarEmptyNoScope": "この範囲に比較できるローカルリソースがありません。ダウンロードするかソースを切り替えてください。",
+    "findSimilarEmptyNoEmbeddings": "範囲内の壁紙にベクトルがまだありません。AI 分析またはベクトル生成をお待ちください。",
+    "findSimilarEmptyNoVectors": "この壁紙にはまだベクトルがありません。しばらく待つか AI 分析を実行してください。",
     "similarModeBanner": "類似画像を表示中",
     "similarBack": "検索に戻る",
     "header": {
