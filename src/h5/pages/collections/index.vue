@@ -28,6 +28,7 @@ const pickerQuery = ref('')
 const pickerTab = ref(COLLECTION_PICKER_TAB_ALL)
 const showCreate = ref(false)
 const createSubmitting = ref(false)
+const promptDialogMode = ref('create')
 const showHeaderActions = ref(false)
 const showRefreshMode = ref(false)
 const createPrompt = ref('')
@@ -58,7 +59,17 @@ const refreshModeLabel = (mode) => {
 
 const currentRefreshModeLabel = computed(() => refreshModeLabel(currentRefreshMode.value))
 
-const canManageRefresh = computed(() => isUserCollection(selectedCollection.value))
+const promptDialogTitle = computed(() =>
+  promptDialogMode.value === 'edit'
+    ? t('pages.Collections.editDialogTitle')
+    : t('pages.Collections.createDialogTitle')
+)
+
+const promptSubmitLabel = computed(() =>
+  promptDialogMode.value === 'edit'
+    ? t('pages.Collections.saveAndRegenerate')
+    : t('pages.Collections.create')
+)
 
 const pickerGroups = computed(() =>
   buildCollectionPickerGroups(collections.value, {
@@ -181,10 +192,32 @@ const fetchList = async () => {
 const onCreateDialogBeforeClose = (action) => {
   if (createSubmitting.value) return false
   if (action === 'confirm') {
-    void submitCreate()
+    void submitPromptDialog()
     return false
   }
   return true
+}
+
+const submitPromptDialog = async () => {
+  if (promptDialogMode.value === 'edit') {
+    await submitEdit()
+  } else {
+    await submitCreate()
+  }
+}
+
+const openCreateDialog = () => {
+  promptDialogMode.value = 'create'
+  createPrompt.value = ''
+  showCreate.value = true
+}
+
+const openEditDialog = () => {
+  const item = selectedCollection.value
+  if (!item?.id || !isUserCollection(item)) return
+  promptDialogMode.value = 'edit'
+  createPrompt.value = item.prompt || item.name || ''
+  showCreate.value = true
 }
 
 const submitCreate = async () => {
@@ -203,6 +236,32 @@ const submitCreate = async () => {
         const id = res.data?.id
         const created = collections.value.find((c) => c.id === id)
         if (created) selectCollection(created)
+      } finally {
+        loading.value = false
+      }
+    } else {
+      showNotify({ type: 'danger', message: resolveApiUserMessage(res, t) })
+    }
+  } finally {
+    createSubmitting.value = false
+  }
+}
+
+const submitEdit = async () => {
+  const item = selectedCollection.value
+  const prompt = createPrompt.value.trim()
+  if (!item?.id || !isUserCollection(item) || !prompt || createSubmitting.value) return
+  createSubmitting.value = true
+  try {
+    const res = await api.collectionsUpdate({ id: item.id, prompt, fromPrompt: true })
+    if (res?.success) {
+      showNotify({ type: 'success', message: t('messages.operationSuccess') })
+      showCreate.value = false
+      createPrompt.value = ''
+      loading.value = true
+      try {
+        await fetchList()
+        await browseRef.value?.refresh?.()
       } finally {
         loading.value = false
       }
@@ -327,6 +386,7 @@ const headerActionSheetActions = computed(() => {
     { name: t('pages.Collections.curateNow'), actionKey: 'curate' }
   ]
   if (item && isUserCollection(item)) {
+    actions.push({ name: t('pages.Collections.editCollection'), actionKey: 'edit' })
     actions.push({ name: t('pages.Collections.refresh'), actionKey: 'refresh' })
     actions.push({
       name: t('pages.Collections.refreshMode'),
@@ -353,7 +413,10 @@ const onHeaderActionSelect = async (action) => {
   if (!action?.actionKey) return
   switch (action.actionKey) {
     case 'create':
-      showCreate.value = true
+      openCreateDialog()
+      break
+    case 'edit':
+      openEditDialog()
       break
     case 'curate':
       await onCurate()
@@ -422,17 +485,6 @@ onMounted(() => {
         </button>
         <template v-if="!immersiveMode" #trailing>
           <van-button
-            v-if="canManageRefresh"
-            class="h5-chrome-icon-btn"
-            plain
-            :disabled="loading"
-            :title="t('pages.Collections.refresh')"
-            :aria-label="t('pages.Collections.refresh')"
-            @click="onRefreshCollection"
-          >
-            <van-icon name="replay" />
-          </van-button>
-          <van-button
             v-if="selectedId"
             class="h5-chrome-icon-btn"
             plain
@@ -452,17 +504,6 @@ onMounted(() => {
           </van-button>
         </template>
         <template #mini-trailing>
-          <van-button
-            v-if="canManageRefresh"
-            class="chrome-mini-btn"
-            plain
-            :disabled="loading"
-            :title="t('pages.Collections.refresh')"
-            :aria-label="t('pages.Collections.refresh')"
-            @click="onRefreshCollection"
-          >
-            <van-icon name="replay" />
-          </van-button>
           <van-button
             class="chrome-mini-btn"
             plain
@@ -514,7 +555,7 @@ onMounted(() => {
 
     <div v-else-if="!loading" class="collections-empty-wrap">
       <van-empty :description="t('pages.Collections.empty')">
-        <van-button type="primary" size="small" @click="showCreate = true">
+        <van-button type="primary" size="small" @click="openCreateDialog">
           {{ t('pages.Collections.createNew') }}
         </van-button>
       </van-empty>
@@ -586,13 +627,14 @@ onMounted(() => {
 
     <van-dialog
       v-model:show="showCreate"
-      :title="t('pages.Collections.createDialogTitle')"
+      :title="promptDialogTitle"
       show-cancel-button
       :close-on-click-overlay="!createSubmitting"
       :before-close="onCreateDialogBeforeClose"
       :confirm-button-loading="createSubmitting"
       :confirm-button-disabled="createSubmitting"
       :cancel-button-disabled="createSubmitting"
+      :confirm-button-text="promptSubmitLabel"
       @opened="() => scheduleDialogInputFocus(() => createPromptFieldRef.value)"
     >
       <van-field

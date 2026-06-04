@@ -1493,10 +1493,13 @@ export default class Store {
       return this.collectionsManager.create(params)
     })
 
-    ipcMain.handle('main:collections:update', (event, params) => {
+    ipcMain.handle('main:collections:update', async (event, params) => {
       const id = parsePositiveId(params?.id)
       if (!id) {
         return { success: false, message: t('messages.operationFail') }
+      }
+      if (params?.fromPrompt && params?.prompt) {
+        return await this.collectionsManager.updateFromPrompt(id, params.prompt)
       }
       return this.collectionsManager.update(id, params)
     })

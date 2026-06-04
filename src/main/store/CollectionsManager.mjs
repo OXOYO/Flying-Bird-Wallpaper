@@ -189,6 +189,24 @@ export default class CollectionsManager {
     return { success: gen.success, data: { id: created.data.id, ...gen.data }, message: gen.message }
   }
 
+  async updateFromPrompt(id, prompt) {
+    const collection = this.db.prepare(`SELECT * FROM fbw_collections WHERE id = ?`).get(id)
+    if (!collection) return { success: false, message: t('messages.operationFail') }
+    if (collection.source === 'auto') {
+      return { success: false, message: t('messages.operationFail') }
+    }
+    const trimmed = String(prompt || '').trim()
+    if (!trimmed) return { success: false, message: t('messages.operationFail') }
+
+    const parsed = await this.textQueryParser.parseCollectionPrompt(trimmed)
+    if (!parsed.success) return parsed
+    const queryJson = this._normalizeCollectionQueryJson(parsed.data, { source: 'user' })
+    const updated = this.update(id, { name: trimmed.slice(0, 40), prompt: trimmed, queryJson })
+    if (!updated.success) return updated
+    const gen = await this.generate(id, queryJson)
+    return { success: gen.success, data: { id, ...gen.data }, message: gen.message }
+  }
+
   /**
    * 短实体词合集：AI 动态扩展 tags（结果写入 queryJson 缓存，同关键词不重复调 LLM）
    */

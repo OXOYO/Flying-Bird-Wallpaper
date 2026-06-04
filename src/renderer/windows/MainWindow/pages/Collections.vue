@@ -70,6 +70,8 @@ const notifyNsfwMaskBlocked = () => {
 
 const isAutoCollection = (item) => item?.source === 'auto'
 
+const isUserCollection = (item) => item && !isAutoCollection(item)
+
 const showResourceTags = computed(() => !!settingData.value?.showTag)
 
 const {
@@ -338,6 +340,19 @@ const onCardDblClick = (item, index) => {
 
 const createDialogVisible = ref(false)
 const createSubmitting = ref(false)
+const promptDialogMode = ref('create')
+
+const promptDialogTitle = computed(() =>
+  promptDialogMode.value === 'edit'
+    ? t('pages.Collections.editDialogTitle')
+    : t('pages.Collections.createDialogTitle')
+)
+
+const promptSubmitLabel = computed(() =>
+  promptDialogMode.value === 'edit'
+    ? t('pages.Collections.saveAndRegenerate')
+    : t('pages.Collections.create')
+)
 
 const onCreateDialogBeforeClose = (done) => {
   if (createSubmitting.value) return
@@ -525,6 +540,45 @@ const onCreate = async () => {
   }
 }
 
+const onEdit = async () => {
+  const id = selectedCollection.value?.id
+  if (!id || !isUserCollection(selectedCollection.value) || !prompt.value.trim() || createSubmitting.value) {
+    return
+  }
+  createSubmitting.value = true
+  try {
+    const res = await window.FBW.collectionsUpdate({
+      id,
+      prompt: prompt.value.trim(),
+      fromPrompt: true
+    })
+    ElMessage({
+      type: res.success ? 'success' : 'error',
+      message: resolveApiUserMessage(res, t)
+    })
+    if (res.success) {
+      createDialogVisible.value = false
+      loading.value = true
+      try {
+        await loadList()
+        await loadDetail(id)
+      } finally {
+        loading.value = false
+      }
+    }
+  } finally {
+    createSubmitting.value = false
+  }
+}
+
+const onPromptSubmit = async () => {
+  if (promptDialogMode.value === 'edit') {
+    await onEdit()
+  } else {
+    await onCreate()
+  }
+}
+
 const onRefresh = async (id) => {
   loading.value = true
   try {
@@ -603,12 +657,26 @@ const onRefreshModeChange = async (mode) => {
 }
 
 const openCreateDialog = () => {
+  promptDialogMode.value = 'create'
+  prompt.value = ''
+  createDialogVisible.value = true
+}
+
+const openEditDialog = () => {
+  const item = selectedCollection.value
+  if (!item?.id || !isUserCollection(item)) return
+  promptDialogMode.value = 'edit'
+  prompt.value = item.prompt || item.name || ''
   createDialogVisible.value = true
 }
 
 const onHeaderMenuCommand = async (command) => {
   if (command === 'create') {
     openCreateDialog()
+    return
+  }
+  if (command === 'edit') {
+    openEditDialog()
     return
   }
   if (command === 'curate') {
@@ -832,6 +900,9 @@ onBeforeUnmount(() => {
                   {{ t('pages.Collections.actionsSectionCurrent') }}
                 </li>
                 <template v-if="!isAutoCollection(selectedCollection)">
+                  <el-dropdown-item command="edit" :disabled="loading">
+                    {{ t('pages.Collections.editCollection') }}
+                  </el-dropdown-item>
                   <li class="dropdown-group-caption" role="presentation">
                     {{ t('pages.Collections.refreshMode') }}
                   </li>
@@ -855,7 +926,11 @@ onBeforeUnmount(() => {
                 >
                   {{ t('pages.Collections.addFavorites') }}
                 </el-dropdown-item>
-                <el-dropdown-item command="delete" divided>
+                <el-dropdown-item
+                  v-if="!isAutoCollection(selectedCollection)"
+                  command="delete"
+                  divided
+                >
                   <span class="dropdown-danger">{{ t('pages.Collections.delete') }}</span>
                 </el-dropdown-item>
               </template>
@@ -950,7 +1025,7 @@ onBeforeUnmount(() => {
 
     <el-dialog
       v-model="createDialogVisible"
-      :title="t('pages.Collections.createDialogTitle')"
+      :title="promptDialogTitle"
       width="520px"
       destroy-on-close
       :close-on-click-modal="!createSubmitting"
@@ -967,14 +1042,14 @@ onBeforeUnmount(() => {
         :rows="4"
         :disabled="createSubmitting"
         :placeholder="t('pages.Collections.promptPlaceholder')"
-        @keyup.enter.ctrl="onCreate"
+        @keyup.enter.ctrl="onPromptSubmit"
       />
       <template #footer>
         <el-button :disabled="createSubmitting" @click="createDialogVisible = false">{{
           t('pages.Collections.dialogCancel')
         }}</el-button>
-        <el-button type="primary" :loading="createSubmitting" :disabled="createSubmitting" @click="onCreate">
-          {{ t('pages.Collections.create') }}
+        <el-button type="primary" :loading="createSubmitting" :disabled="createSubmitting" @click="onPromptSubmit">
+          {{ promptSubmitLabel }}
         </el-button>
       </template>
     </el-dialog>

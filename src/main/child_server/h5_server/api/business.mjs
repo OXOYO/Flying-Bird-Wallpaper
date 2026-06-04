@@ -236,6 +236,10 @@ export const registerBusinessApi = (router, deps) => {
   router.post('/api/collections/update', async (ctx) => {
     const body = await readJsonBody(ctx)
     const { cm } = await createCollectionsManager({ logger, dbManager, settingManager, resourcesManager })
+    if (body?.fromPrompt && body?.prompt && body?.id) {
+      sendJson(ctx, await cm.updateFromPrompt(body.id, body.prompt))
+      return
+    }
     sendJson(ctx, cm.update(body?.id, body))
   })
 
