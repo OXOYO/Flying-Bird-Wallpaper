@@ -82,7 +82,6 @@ export function useAiAnalysisDashboard(aiSource, options = {}) {
     })
   })
 
-  /** 状态说明已由右上角状态标签 + Tooltip 承担，底部不再重复提示 */
   const analysisFooterHint = computed(() => '')
 
   const nowTick = ref(Date.now())
@@ -168,21 +167,39 @@ export function useAiAnalysisDashboard(aiSource, options = {}) {
     }
   }
 
+  const resolveStatsPollIntervalMs = () => {
+    const s = analysisStats.value
+    const ai = unref(aiSource) || {}
+    if (s?.running) return 5000
+    if (ai.enabled && (s?.pending ?? 0) > 0) return 10000
+    const fast = ai.analysisMode === 'background_slow' || ai.analysisMode === 'new_only'
+    return fast ? 10000 : 30000
+  }
+
+  const scheduleStatsPoll = () => {
+    if (statsTimer) {
+      clearTimeout(statsTimer)
+      statsTimer = null
+    }
+    if (!unref(tabActive)) return
+    statsTimer = setTimeout(async () => {
+      await fetchAnalysisStats()
+      scheduleStatsPoll()
+    }, resolveStatsPollIntervalMs())
+  }
+
   const startStatsPolling = () => {
     stopStatsPolling()
     if (!unref(tabActive)) {
       analysisStats.value = null
       return
     }
-    fetchAnalysisStats()
-    const ai = unref(aiSource) || {}
-    const fast = ai.analysisMode === 'background_slow' || ai.analysisMode === 'new_only'
-    statsTimer = setInterval(fetchAnalysisStats, fast ? 10000 : 30000)
+    fetchAnalysisStats().then(() => scheduleStatsPoll())
   }
 
   const stopStatsPolling = () => {
     if (statsTimer) {
-      clearInterval(statsTimer)
+      clearTimeout(statsTimer)
       statsTimer = null
     }
   }

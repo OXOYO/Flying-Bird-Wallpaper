@@ -32,6 +32,7 @@ export function upgradeResourcesSchema(db, logger) {
   runSchemaStep(logger, 'migrateImageVecBlobCompositePk', () =>
     migrateImageVecBlobCompositePk(db, logger)
   )
+  runSchemaStep(logger, 'ensure visual embed state table', () => ensureVisualEmbedStateTable(db, logger))
   runSchemaStep(logger, 'upgradeResourceForeignKeys', () => upgradeResourceForeignKeys(db, logger))
   runSchemaStep(logger, 'migrateResourceVecTablesFk', () => migrateResourceVecTablesFk(db, logger))
 }
@@ -300,6 +301,25 @@ export function migrateResourceVecTablesFk(db, logger) {
 
 export function upgradeCollectionsSchema(db, logger) {
   addColumnIfMissing(db, 'fbw_collections', 'source', "TEXT NOT NULL DEFAULT 'user'", logger)
+}
+
+export function ensureVisualEmbedStateTable(db, logger) {
+  db.exec(`CREATE TABLE IF NOT EXISTS fbw_resource_visual_embed_state (
+    resourceId INTEGER NOT NULL REFERENCES fbw_resources(id) ON DELETE CASCADE,
+    model TEXT NOT NULL,
+    failCount INTEGER NOT NULL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'failed',
+    lastError TEXT NOT NULL DEFAULT '',
+    updated_at DATETIME DEFAULT (datetime('now', 'localtime')),
+    PRIMARY KEY (resourceId, model)
+  )`)
+  try {
+    db.exec(
+      'CREATE INDEX IF NOT EXISTS idx_visual_embed_state_model_status ON fbw_resource_visual_embed_state(model, status)'
+    )
+  } catch (err) {
+    logger?.warn?.(`[schema] visual embed state index: ${err}`)
+  }
 }
 
 /**

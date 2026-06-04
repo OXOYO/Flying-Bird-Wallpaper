@@ -15,6 +15,8 @@ import {
 } from './aiConstants.mjs'
 import { EMBED_INPUT_TYPE, isAsymmetricEmbedModel, supportsImageAsQuery } from './AsymmetricEmbedUtils.mjs'
 import { buildAnalyzableResourceWhere, resolveVisionImagePath } from './AiVisionResourcePath.mjs'
+import { probeVisionImageReadable } from './AiVisionImagePrep.mjs'
+import VisualEmbedState from './VisualEmbedState.mjs'
 
 export default class EmbeddingManager {
   static _instance = null
@@ -46,6 +48,7 @@ export default class EmbeddingManager {
     this.onEmbeddingDone = null
     this.onVisualEmbeddingDone = null
     this._visualBackfillRunning = false
+    this.visualEmbedState = new VisualEmbedState(db, logger)
     EmbeddingManager._instance = this
   }
 
@@ -156,7 +159,8 @@ export default class EmbeddingManager {
     return { success: true, dim: vector.length, kind: 'visual', model }
   }
 
-  async upsertImageForResource(resourceId) {
+  async upsertImageForResource(resourceId, options = {}) {
+    const { fromBackfill = false } = options
     const row = this.db
       .prepare(`SELECT id, filePath, posterPath, fileType FROM fbw_resources WHERE id = ?`)
       .get(resourceId)
@@ -169,9 +173,16 @@ export default class EmbeddingManager {
       return { success: false, message: 'file missing' }
     }
 
+    const activeModel = this.getActiveVisualModelId()
+    if (fromBackfill && this.visualEmbedState.isSkipped(resourceId, activeModel)) {
+      return { success: false, skipped: true, message: 'visual embed skipped' }
+    }
+
     const modelStartedAt = Date.now()
     const useRemote = this.usesRemoteVisualEmbed()
     try {
+      await probeVisionImageReadable(visionPath)
+
       let result
       if (useRemote) {
         try {
@@ -180,17 +191,26 @@ export default class EmbeddingManager {
           this.logger.warn(
             `[EmbeddingManager] remote visual embed failed id=${resourceId}, fallback builtin: ${remoteErr}`
           )
-          result = await this._upsertBuiltinVisual(
-            resourceId,
-            visionPath,
-            this.getActiveVisualModelId()
-          )
+          result = await this._upsertBuiltinVisual(resourceId, visionPath, activeModel)
         }
       } else {
         result = await this._upsertBuiltinVisual(resourceId, visionPath)
       }
 
-      if (!result.success) return result
+      if (!result.success) {
+        if (fromBackfill) {
+          const { skipped } = this.visualEmbedState.recordFailure(
+            resourceId,
+            activeModel,
+            new Error(result.message || 'empty visual embedding'),
+            this.ai
+          )
+          return { ...result, skipped }
+        }
+        return result
+      }
+
+      this.visualEmbedState.clear(resourceId, activeModel)
 
       const modelMs = Date.now() - modelStartedAt
       this.logger.info(
@@ -202,6 +222,17 @@ export default class EmbeddingManager {
       return result
     } catch (err) {
       const modelMs = Date.now() - modelStartedAt
+      if (fromBackfill) {
+        const { skipped } = this.visualEmbedState.recordFailure(resourceId, activeModel, err, this.ai)
+        this.logger.error(
+          `[EmbeddingManager] visual embed failed id=${resourceId} modelMs=${modelMs}ms: ${err}`
+        )
+        return {
+          success: false,
+          skipped,
+          message: String(err.message || err)
+        }
+      }
       this.logger.error(
         `[EmbeddingManager] visual embed failed id=${resourceId} modelMs=${modelMs}ms: ${err}`
       )
@@ -398,21 +429,64 @@ export default class EmbeddingManager {
   /**
    * 后台补算尚未生成视觉向量的图片（按当前 active visual model）
    */
+  _visualBackfillPendingWhere(analyzable = buildAnalyzableResourceWhere('r')) {
+    return `${analyzable}
+           AND NOT EXISTS (
+             SELECT 1 FROM fbw_resource_image_vec_blob v
+             WHERE v.resourceId = r.id AND v.model = ?
+           )
+           AND NOT EXISTS (
+             SELECT 1 FROM fbw_resource_visual_embed_state s
+             WHERE s.resourceId = r.id AND s.model = ? AND s.status = 'skipped'
+           )`
+  }
+
+  countVisualBackfillPending(activeModel = this.getActiveVisualModelId()) {
+    const analyzable = buildAnalyzableResourceWhere('r')
+    return (
+      this.db
+        .prepare(
+          `SELECT COUNT(*) as c
+           FROM fbw_resources r
+           WHERE ${this._visualBackfillPendingWhere(analyzable)}`
+        )
+        .get(activeModel, activeModel)?.c || 0
+    )
+  }
+
+  countVisualEmbedSkipped(activeModel = this.getActiveVisualModelId()) {
+    return (
+      this.db
+        .prepare(
+          `SELECT COUNT(*) as c
+           FROM fbw_resource_visual_embed_state
+           WHERE model = ? AND status = 'skipped'`
+        )
+        .get(activeModel)?.c || 0
+    )
+  }
+
+  getVisualBackfillStats() {
+    const activeModel = this.getActiveVisualModelId()
+    return {
+      activeModel,
+      pending: this.countVisualBackfillPending(activeModel),
+      skipped: this.countVisualEmbedSkipped(activeModel),
+      running: this._visualBackfillRunning
+    }
+  }
+
   _fetchVisualBackfillBatch(activeModel, limit) {
     const analyzable = buildAnalyzableResourceWhere('r')
     return this.db
       .prepare(
         `SELECT r.id
          FROM fbw_resources r
-         WHERE ${analyzable}
-           AND NOT EXISTS (
-             SELECT 1 FROM fbw_resource_image_vec_blob v
-             WHERE v.resourceId = r.id AND v.model = ?
-           )
+         WHERE ${this._visualBackfillPendingWhere(analyzable)}
          ORDER BY r.id ASC
          LIMIT ?`
       )
-      .all(activeModel, limit)
+      .all(activeModel, activeModel, limit)
   }
 
   _scheduleVisualPumpContinue(locks) {
@@ -446,14 +520,29 @@ export default class EmbeddingManager {
         while (true) {
           if (!this.ai.enabled) break
           const list = this._fetchVisualBackfillBatch(activeModel, batchSize)
-          if (!list.length) break
+          if (!list.length) {
+            const pending = this.countVisualBackfillPending(activeModel)
+            if (pending === 0) {
+              const skipped = this.countVisualEmbedSkipped(activeModel)
+              this.logger.info(
+                `[EmbeddingManager] visual backfill queue empty pending=0 skipped=${skipped} model=${activeModel}`
+              )
+            }
+            break
+          }
 
           const startedAt = Date.now()
+          let okCount = 0
+          let skipCount = 0
+          let failCount = 0
           for (const row of list) {
-            await this.upsertImageForResource(row.id)
+            const res = await this.upsertImageForResource(row.id, { fromBackfill: true })
+            if (res?.success) okCount += 1
+            else if (res?.skipped) skipCount += 1
+            else failCount += 1
           }
           this.logger.info(
-            `[EmbeddingManager] visual backfill batch=${list.length} remote=${remote} model=${activeModel} ms=${Date.now() - startedAt}`
+            `[EmbeddingManager] visual backfill batch=${list.length} ok=${okCount} fail=${failCount} skip=${skipCount} remote=${remote} model=${activeModel} ms=${Date.now() - startedAt}`
           )
 
           if (remote) {

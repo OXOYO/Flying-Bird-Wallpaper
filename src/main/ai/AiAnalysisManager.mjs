@@ -56,7 +56,8 @@ export default class AiAnalysisManager {
     this.onAnalysisBatchDone = null
     this._recentAnalysisMs = []
     this._lastAnalysisMs = 0
-    this._currentAnalysisStartedAt = 0
+    /** @type {Map<number, { startedAt: number, phase: string }>} */
+    this._activeAnalyses = new Map()
     AiAnalysisManager._instance = this
   }
 
@@ -81,12 +82,22 @@ export default class AiAnalysisManager {
       sampleCount >= AI_ANALYSIS_SPEED_MIN_SAMPLES && avgAnalysisMs > 0 && pending > 0
         ? pending * avgAnalysisMs
         : 0
+    const currentAnalyses = [...this._activeAnalyses.entries()]
+      .map(([id, meta]) => ({
+        id,
+        startedAt: meta?.startedAt ?? meta,
+        phase: meta?.phase || 'vision'
+      }))
+      .sort((a, b) => a.startedAt - b.startedAt)
+    const primary = currentAnalyses[0]
     return {
       lastAnalysisMs: this._lastAnalysisMs || 0,
       avgAnalysisMs,
       sampleCount,
       etaAnalysisMs,
-      currentAnalysisStartedAt: this._currentAnalysisStartedAt || 0
+      currentAnalyses,
+      currentAnalysisResourceId: primary?.id || 0,
+      currentAnalysisStartedAt: primary?.startedAt || 0
     }
   }
 
@@ -239,7 +250,7 @@ export default class AiAnalysisManager {
       `[AiAnalysisManager] analyze start id=${row.id} fileType=${row.fileType} timeout=${ctx.timeoutSec}s (base=${ctx.baseTimeoutSec}s) provider=${ctx.visionProvider} model=${ctx.visionModel} size=${ctx.fileSizeMB}MB vision=${ctx.filePath}`
     )
     const modelStartedAt = Date.now()
-    this._currentAnalysisStartedAt = modelStartedAt
+    this._activeAnalyses.set(row.id, { startedAt: modelStartedAt, phase: 'vision' })
     let modelMs = 0
     try {
       const result = await this.provider.analyzeImage(visionPath, {
@@ -323,7 +334,7 @@ export default class AiAnalysisManager {
       }
       return this.handleAnalysisFailure(row, err, ctx, startedAt, modelMs, { respectRetryLimit })
     } finally {
-      this._currentAnalysisStartedAt = 0
+      this._activeAnalyses.delete(row.id)
     }
   }
 
@@ -496,6 +507,21 @@ export default class AiAnalysisManager {
     } catch {
       // ignore
     }
+    let visualEmbedBackfillPending = 0
+    let visualEmbedBackfillRunning = false
+    let visualEmbedSkipped = 0
+    let visualEmbedActiveModel = ''
+    try {
+      const visualStats = this.embeddingManager?.getVisualBackfillStats?.()
+      if (visualStats) {
+        visualEmbedBackfillPending = visualStats.pending ?? 0
+        visualEmbedBackfillRunning = !!visualStats.running
+        visualEmbedSkipped = visualStats.skipped ?? 0
+        visualEmbedActiveModel = visualStats.activeModel || ''
+      }
+    } catch {
+      // ignore
+    }
     return {
       success: true,
       data: {
@@ -508,6 +534,10 @@ export default class AiAnalysisManager {
         embedding,
         imageEmbedding,
         imageEmbedPending,
+        visualEmbedBackfillPending,
+        visualEmbedBackfillRunning,
+        visualEmbedSkipped,
+        visualEmbedActiveModel,
         running: this.isRunning,
         concurrency: resolveAnalysisConcurrency(this.ai),
         ...this.getAnalysisSpeedStats(pending)

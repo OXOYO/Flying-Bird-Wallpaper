@@ -150,6 +150,16 @@ export const createTables = [
     updated_at DATETIME DEFAULT (datetime('now', 'localtime')),
     PRIMARY KEY (resourceId, model)
   )`,
+  // 数据表：画面向量补算失败/跳过（按 model，避免坏图无限重试）
+  `CREATE TABLE IF NOT EXISTS fbw_resource_visual_embed_state (
+    resourceId INTEGER NOT NULL REFERENCES fbw_resources(id) ON DELETE CASCADE,
+    model TEXT NOT NULL,
+    failCount INTEGER NOT NULL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'failed',
+    lastError TEXT NOT NULL DEFAULT '',
+    updated_at DATETIME DEFAULT (datetime('now', 'localtime')),
+    PRIMARY KEY (resourceId, model)
+  )`,
   // 系统表：版本管理
   `CREATE TABLE IF NOT EXISTS fbw_version (
     id INTEGER PRIMARY KEY AUTOINCREMENT, -- 记录自增ID
@@ -195,5 +205,6 @@ export const createIndexes = [
   'CREATE INDEX IF NOT EXISTS idx_resource_ai_score ON fbw_resource_ai(aiScore)',
   'CREATE INDEX IF NOT EXISTS idx_collections_pinned ON fbw_collections(isPinned, updated_at)',
   'CREATE INDEX IF NOT EXISTS idx_collection_items_collection ON fbw_collection_items(collectionId, rank)',
-  'CREATE INDEX IF NOT EXISTS idx_image_vec_model ON fbw_resource_image_vec_blob(model)'
+  'CREATE INDEX IF NOT EXISTS idx_image_vec_model ON fbw_resource_image_vec_blob(model)',
+  'CREATE INDEX IF NOT EXISTS idx_visual_embed_state_model_status ON fbw_resource_visual_embed_state(model, status)'
 ]

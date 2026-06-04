@@ -182,6 +182,30 @@ export const AI_ANALYSIS_STATUS = {
   SKIPPED: 'skipped'
 }
 
+/** 画面向量补算状态（按 resourceId + model） */
+export const VISUAL_EMBED_STATUS = {
+  FAILED: 'failed',
+  SKIPPED: 'skipped'
+}
+
+/** 不可恢复的画面向量错误（坏图/截断 JPEG 等），首次失败即 skip */
+export function isIrrecoverableVisualEmbedError(err) {
+  const msg = String(err?.message || err).toLowerCase()
+  return (
+    msg.includes('premature end') ||
+    msg.includes('truncated') ||
+    msg.includes('vipsjpeg') ||
+    msg.includes('invalid jpeg') ||
+    msg.includes('corrupt') ||
+    msg.includes('not an image') ||
+    msg.includes('empty image') ||
+    msg.includes('file missing') ||
+    msg.includes('empty visual') ||
+    msg.includes('input file is missing') ||
+    msg.includes('unsupported image')
+  )
+}
+
 export const AI_ANALYSIS_MODES = ['off', 'on_demand', 'background_slow', 'new_only']
 
 /** 分析速度统计：内存滑动窗口（仅成功样本的 vision pipelineMs） */

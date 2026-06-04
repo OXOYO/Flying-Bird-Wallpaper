@@ -125,13 +125,6 @@ const titleTooltipPopperOptions = {
           {{ t('pages.Setting.aiSetting.statFailedLabel') }} {{ stats?.failed ?? 0 }}
         </span>
       </el-tooltip>
-      <span class="stat-chip stat-chip--embedding">
-        {{ t('pages.Setting.aiSetting.statEmbeddingLabel') }} {{ stats?.embedding ?? 0 }}
-      </span>
-      <span class="stat-chip stat-chip--embedding">
-        {{ t('pages.Setting.aiSetting.statImageEmbeddingLabel') }}
-        {{ stats?.imageEmbedding ?? 0 }}
-      </span>
       <span v-if="(stats?.skipped ?? 0) > 0" class="stat-chip stat-chip--skipped">
         {{ t('pages.Setting.aiSetting.statSkippedLabel') }} {{ stats?.skipped ?? 0 }}
       </span>
@@ -249,7 +242,7 @@ const titleTooltipPopperOptions = {
   cursor: help;
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 1;
+  -webkit-line-clamp: 2;
   overflow: hidden;
 }
 
@@ -287,10 +280,6 @@ const titleTooltipPopperOptions = {
       background: var(--el-color-danger-light-9);
       border-color: var(--el-color-danger-light-5);
     }
-  }
-
-  &--embedding {
-    color: var(--el-color-primary);
   }
 }
 

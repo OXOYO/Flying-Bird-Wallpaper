@@ -326,3 +326,15 @@ export async function prepareVisionImageForEmbed(filePath, ai = {}, logger = nul
     }
   }
 }
+
+const SHARP_TRUNCATE_OPTS = { failOn: 'truncated', limitInputPixels: false }
+
+/** 解码探测：坏图/截断 JPEG 在 embed 前失败，避免远程 API 与无限 backfill */
+export async function probeVisionImageReadable(filePath) {
+  if (!filePath) throw new Error('file missing')
+  if (!fs.existsSync(filePath)) throw new Error('file missing')
+  const stat = fs.statSync(filePath)
+  if (!stat.isFile() || stat.size <= 0) throw new Error('empty image file')
+  await sharp(filePath, SHARP_TRUNCATE_OPTS).metadata()
+  await sharp(filePath, SHARP_TRUNCATE_OPTS).resize(16, 16, { fit: 'inside' }).raw().toBuffer()
+}
