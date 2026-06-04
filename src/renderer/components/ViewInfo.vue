@@ -11,12 +11,44 @@ const flags = reactive({
 })
 
 const info = ref({})
+const previewStageRef = ref(null)
+const isPanning = ref(false)
+
 const transform = reactive({
   scale: 1,
+  rotate: 0,
+  scaleX: 1,
+  scaleY: 1,
+  x: 0,
+  y: 0,
   originX: '50%',
   originY: '50%'
 })
-const showResetBtn = ref(false)
+
+const previewSrc = computed(() => info.value.rawImageUrl || info.value.imageSrc || '')
+
+const transformStyle = computed(() => ({
+  transform: [
+    `translate(${transform.x}px, ${transform.y}px)`,
+    `rotate(${transform.rotate}deg)`,
+    `scale(${transform.scale * transform.scaleX}, ${transform.scale * transform.scaleY})`
+  ].join(' '),
+  transformOrigin: `${transform.originX} ${transform.originY}`,
+  transition: isPanning.value ? 'none' : 'transform 0.2s ease'
+}))
+
+const clampScale = (value) => Math.max(0.1, Math.min(5, value))
+
+const resetPreviewTransform = () => {
+  transform.scale = 1
+  transform.rotate = 0
+  transform.scaleX = 1
+  transform.scaleY = 1
+  transform.x = 0
+  transform.y = 0
+  transform.originX = '50%'
+  transform.originY = '50%'
+}
 
 const loadResourceTags = async (row) => {
   if (!row || !window.FBW?.getResourceTags) return row
@@ -31,78 +63,101 @@ const loadResourceTags = async (row) => {
   return row
 }
 
-const view = async (item) => {
-  flags.visible = true
-  info.value = item ? { ...item } : {}
+const zoomBy = (factor) => {
+  transform.scale = clampScale(transform.scale * factor)
+}
+
+const toggleOneToOne = () => {
+  if (transform.scale === 1 && transform.x === 0 && transform.y === 0) {
+    transform.scale = 2
+    return
+  }
   transform.scale = 1
+  transform.x = 0
+  transform.y = 0
   transform.originX = '50%'
   transform.originY = '50%'
+}
+
+const rotateLeft = () => {
+  transform.rotate -= 90
+}
+
+const rotateRight = () => {
+  transform.rotate += 90
+}
+
+const flipHorizontal = () => {
+  transform.scaleX *= -1
+}
+
+const flipVertical = () => {
+  transform.scaleY *= -1
+}
+
+const handleWheel = (e) => {
+  e.preventDefault()
+  const rect = e.currentTarget.getBoundingClientRect()
+  const mouseX = e.clientX - rect.left
+  const mouseY = e.clientY - rect.top
+  transform.originX = `${(mouseX / rect.width) * 100}%`
+  transform.originY = `${(mouseY / rect.height) * 100}%`
+  const deltaY = e.deltaY || e.deltaZ || 0
+  const delta = deltaY > 0 ? 0.9 : 1.1
+  transform.scale = clampScale(transform.scale * delta)
+}
+
+let panStart = null
+
+const onPanMouseDown = (e) => {
+  if (e.button !== 0) return
+  e.preventDefault()
+  isPanning.value = true
+  panStart = {
+    x: e.clientX,
+    y: e.clientY,
+    baseX: transform.x,
+    baseY: transform.y
+  }
+  document.addEventListener('mousemove', onPanMouseMove)
+  document.addEventListener('mouseup', onPanMouseUp)
+}
+
+const onPanMouseMove = (e) => {
+  if (!panStart) return
+  transform.x = panStart.baseX + (e.clientX - panStart.x)
+  transform.y = panStart.baseY + (e.clientY - panStart.y)
+}
+
+const onPanMouseUp = () => {
+  isPanning.value = false
+  panStart = null
+  document.removeEventListener('mousemove', onPanMouseMove)
+  document.removeEventListener('mouseup', onPanMouseUp)
+}
+
+const view = async (item) => {
+  resetPreviewTransform()
+  flags.visible = true
+  info.value = item ? { ...item } : {}
   if (item) {
     info.value = await loadResourceTags(info.value)
   }
 }
 
 const handleClose = () => {
+  onPanMouseUp()
   flags.visible = false
-  // 重置变换状态
-  transform.scale = 1
-  transform.originX = '50%'
-  transform.originY = '50%'
+  resetPreviewTransform()
 }
 
 const onContainerClick = (e) => {
   e.stopPropagation()
 }
 
-const handleImageBlockMouseEnter = () => {
-  // 当图片有缩放时显示还原按钮
-  if (transform.scale !== 1) {
-    showResetBtn.value = true
-  }
-}
-
-const handleImageBlockMouseLeave = () => {
-  // 鼠标离开时隐藏还原按钮
-  showResetBtn.value = false
-}
-
-const handleResetZoom = () => {
-  // 还原缩放比例和中心点
-  transform.scale = 1
-  transform.originX = '50%'
-  transform.originY = '50%'
-  showResetBtn.value = false
-}
-
-const handleWheel = (e) => {
-  e.preventDefault()
-
-  // 获取鼠标在图片容器中的位置
-  const rect = e.currentTarget.getBoundingClientRect()
-  const mouseX = e.clientX - rect.left
-  const mouseY = e.clientY - rect.top
-
-  // 计算鼠标在容器中的相对位置（百分比）
-  const originXPercent = (mouseX / rect.width) * 100
-  const originYPercent = (mouseY / rect.height) * 100
-
-  // 更新变换原点为鼠标位置
-  transform.originX = `${originXPercent}%`
-  transform.originY = `${originYPercent}%`
-
-  // 计算缩放因子，向上滚动放大，向下滚动缩小
-  // 对于触摸板，使用 deltaY 或 deltaZ 来判断缩放方向
-  const deltaY = e.deltaY || e.deltaZ || 0
-  const delta = deltaY > 0 ? 0.9 : 1.1
-
-  // 执行缩放
-  const newScale = Math.max(0.1, Math.min(5, transform.scale * delta))
-  transform.scale = newScale
-
-  if (transform.scale !== 1) {
-    showResetBtn.value = true
-  }
-}
+onUnmounted(() => {
+  onPanMouseUp()
+})
 
 defineExpose({
   view
@@ -116,23 +171,37 @@ defineExpose({
       <IconifyIcon class="close-icon" icon="custom:close-rounded" />
     </div>
     <div class="view-info-container" @click="onContainerClick">
-      <div
-        class="image-block"
-        @wheel="handleWheel"
-        @mouseenter="handleImageBlockMouseEnter"
-        @mouseleave="handleImageBlockMouseLeave"
-      >
-        <el-image
-          :src="info.imageSrc"
-          :style="{
-            pointerEvents: 'auto',
-            transform: `scale(${transform.scale})`,
-            transition: 'transform 0.2s ease',
-            transformOrigin: `${transform.originX} ${transform.originY}`
-          }"
-        />
-        <div v-if="showResetBtn" class="reset-zoom-btn" @click="handleResetZoom">
-          <IconifyIcon class="reset-icon" icon="custom:fit" />
+      <div class="image-block">
+        <div
+          ref="previewStageRef"
+          class="image-preview-stage"
+          :class="{ 'image-preview-stage--panning': isPanning }"
+          @wheel="handleWheel"
+          @mousedown="onPanMouseDown"
+        >
+          <div class="image-preview-transform" :style="transformStyle">
+            <el-image
+              v-if="previewSrc"
+              :key="previewSrc"
+              class="image-preview-inner"
+              :src="previewSrc"
+              fit="contain"
+            />
+          </div>
+        </div>
+        <div class="image-preview-toolbar">
+          <div class="viewer-toolbar">
+            <ul>
+              <li role="button" tabindex="0" class="viewer-zoom-in" @click="zoomBy(1.1)" />
+              <li role="button" tabindex="0" class="viewer-zoom-out" @click="zoomBy(0.9)" />
+              <li role="button" tabindex="0" class="viewer-one-to-one" @click="toggleOneToOne" />
+              <li role="button" tabindex="0" class="viewer-reset" @click="resetPreviewTransform" />
+              <li role="button" tabindex="0" class="viewer-rotate-left" @click="rotateLeft" />
+              <li role="button" tabindex="0" class="viewer-rotate-right" @click="rotateRight" />
+              <li role="button" tabindex="0" class="viewer-flip-horizontal" @click="flipHorizontal" />
+              <li role="button" tabindex="0" class="viewer-flip-vertical" @click="flipVertical" />
+            </ul>
+          </div>
         </div>
       </div>
       <el-scrollbar class="info-block">
@@ -199,6 +268,7 @@ defineExpose({
     color: #fff;
   }
 }
+
 .view-info-container {
   position: relative;
   width: calc(100% - 200px);
@@ -206,56 +276,102 @@ defineExpose({
   overflow: hidden;
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
+  align-items: stretch;
 }
 
 .image-block {
+  flex: 0 0 60%;
   width: 60%;
   height: 100%;
-  overflow: hidden;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  min-width: 0;
   position: relative;
+  overflow: hidden;
+  pointer-events: auto;
+}
 
-  .reset-zoom-btn {
+.image-preview-stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: grab;
+  user-select: none;
+
+  &::after {
+    content: '';
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(10px);
-    border: none;
-    border-radius: 20px;
-    padding: 8px;
-    pointer-events: auto;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    transition: all 0.3s ease;
-    z-index: 10;
-
-    &:hover {
-      background-color: rgba(0, 0, 0, 0.8);
-
-      .reset-icon {
-        transform: scale(1.05);
-      }
-    }
-
-    .reset-icon {
-      cursor: pointer;
-      font-size: 30px;
-      color: #fff;
-      transition: all 0.3s ease;
-    }
+    inset: 0;
+    z-index: 1;
+    background: rgba(0, 0, 0, 0.22);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
   }
 }
+
+.image-block:hover .image-preview-stage::after {
+  opacity: 1;
+}
+
+.image-preview-stage--panning {
+  cursor: grabbing;
+}
+
+.image-preview-transform {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image-preview-inner {
+  width: 100%;
+  height: 100%;
+
+  :deep(.el-image__inner) {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+  }
+}
+
+.image-preview-toolbar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  padding: 10px 0 12px;
+  background: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.image-block:hover .image-preview-toolbar,
+.image-preview-toolbar:focus-within {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.image-preview-toolbar :deep(.viewer-toolbar > ul) {
+  margin: 0 auto;
+}
+
 .info-block {
+  flex: 0 0 40%;
   width: 40%;
   height: 100%;
+  min-width: 0;
   overflow: hidden;
   pointer-events: auto;
 }
@@ -267,6 +383,7 @@ defineExpose({
   align-items: flex-start;
   gap: 10px;
   margin-bottom: 10px;
+
   .info-key {
     width: 100px;
     font-size: 14px;
@@ -276,6 +393,7 @@ defineExpose({
     word-break: break-all;
     text-align: right;
   }
+
   .info-value {
     flex: 1;
     font-size: 14px;
