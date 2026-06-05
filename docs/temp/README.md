@@ -52,6 +52,7 @@
 |------|------|
 | [api-integration-suggestions.md](./api-integration-suggestions.md) | 壁纸资源 API 插件扩展建议 |
 | [rhythm-audio-processing-analysis.md](./rhythm-audio-processing-analysis.md) | 律动壁纸音频/节拍算法分析（正式 doc：`docs/rhythm_wallpaper.md`） |
+| [rhythm-threejs-dancer-analysis.md](./rhythm-threejs-dancer-analysis.md) | **Three.js 中央舞者**：可行性、真实感、BeatGrid/Foot IK/分层动画；§15 DanceChat 启发 Phase 2.5（DanceScript + 动作包） |
 
 ---
 
@@ -137,6 +138,8 @@
 
 | 日期 | 说明 |
 |------|------|
+| **2026-06-05** | **律动舞者**：`rhythm-threejs-dancer-analysis.md` 增补 §15（DanceChat / DanceScript / 动作包 Phase 2.5） |
+| **2026-06-05** | **律动舞者**：新增 `rhythm-threejs-dancer-analysis.md`（Three.js 中央舞者可行性 + ★★★★ 技术清单） |
 | **2026-06-05** | **猜你喜欢**：合集页/H5 接入 `RecommendManager`；**Schema**：画面向量复合 PK 迁移过滤孤儿行；迁移脚本仅保留 `1.3.8_to_2.0.0.mjs`；**i18n**：12 语言键对齐与英文残留清理，维护脚本收敛 |
 | **2026-06-03** | **资源生命周期**：新增 `resource-lifecycle-and-cleanup.md`；FK/复合 PK、cleanup 统一、视频 AI、清空资源库；各专题文档 v1.3/v2.0/v2.3 同步 |
 | **2026-06-03** | **下载清理**：自动 `excludeProtected` 保留收藏/隐私；工具页手动可删；`main-window` §5.2、§8 |
