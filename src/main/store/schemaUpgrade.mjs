@@ -218,9 +218,23 @@ export function migrateImageVecBlobCompositePk(db, logger) {
   const hasModelCol = cols.some((c) => c.name === 'model')
   const modelSelect = hasModelCol ? "COALESCE(NULLIF(model, ''), 'mobileclip2-s0')" : "'mobileclip2-s0'"
 
+  const orphanCount =
+    db
+      .prepare(
+        `SELECT COUNT(*) AS c FROM fbw_resource_image_vec_blob v
+         WHERE NOT EXISTS (SELECT 1 FROM fbw_resources r WHERE r.id = v.resourceId)`
+      )
+      .get()?.c || 0
+  if (orphanCount > 0) {
+    logger?.info?.(
+      `[schema] migrateImageVecBlobCompositePk skip ${orphanCount} orphan image vec row(s)`
+    )
+  }
+
   logger?.info?.('[schema] migrateImageVecBlobCompositePk start')
   const tx = db.transaction(() => {
     db.exec('PRAGMA foreign_keys=OFF')
+    db.exec('DROP TABLE IF EXISTS fbw_resource_image_vec_blob_new')
     db.exec(`CREATE TABLE fbw_resource_image_vec_blob_new (
       resourceId INTEGER NOT NULL REFERENCES fbw_resources(id) ON DELETE CASCADE,
       embedding BLOB NOT NULL,
@@ -231,13 +245,25 @@ export function migrateImageVecBlobCompositePk(db, logger) {
     )`)
     db.exec(`INSERT OR IGNORE INTO fbw_resource_image_vec_blob_new
       (resourceId, embedding, dim, model, updated_at)
-      SELECT resourceId, embedding, dim, ${modelSelect}, updated_at FROM fbw_resource_image_vec_blob`)
+      SELECT resourceId, embedding, dim, ${modelSelect}, updated_at
+      FROM fbw_resource_image_vec_blob
+      WHERE resourceId IN (SELECT id FROM fbw_resources)`)
     db.exec('DROP TABLE fbw_resource_image_vec_blob')
     db.exec('ALTER TABLE fbw_resource_image_vec_blob_new RENAME TO fbw_resource_image_vec_blob')
     db.exec('PRAGMA foreign_keys=ON')
   })
-  tx()
-  logger?.info?.('[schema] migrateImageVecBlobCompositePk done')
+  try {
+    tx()
+    logger?.info?.('[schema] migrateImageVecBlobCompositePk done')
+  } catch (err) {
+    logger?.warn?.(`[schema] migrateImageVecBlobCompositePk: ${err}`)
+    try {
+      db.exec('DROP TABLE IF EXISTS fbw_resource_image_vec_blob_new')
+      db.exec('PRAGMA foreign_keys=ON')
+    } catch {
+      /* ignore */
+    }
+  }
 }
 
 /** 文本向量 BLOB / embeddings 元数据表补 FK */

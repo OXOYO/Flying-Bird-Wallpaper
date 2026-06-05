@@ -96,7 +96,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 /**
  * 收藏 / 回忆 / 合集详情共用浏览逻辑（从 search 页抽取）
  * @param {{
- *   browseType: 'favorites' | 'history' | 'collection',
+ *   browseType: 'favorites' | 'history' | 'collection' | 'recommend',
  *   collectionId?: import('vue').Ref|null,
  *   displayModeStorageKey: string,
  *   removeOnUnfavorite?: boolean,
@@ -700,7 +700,25 @@ export function useH5ResourceBrowse(options) {
     return lastRes
   }
 
+  const fetchRecommendPageWithRetry = async (payload) => {
+    const maxAttempts = 3
+    let lastRes = null
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      lastRes = await api.recommend(payload)
+      if (lastRes?.success && Array.isArray(lastRes?.data?.list)) {
+        return lastRes
+      }
+      const retryable = isTransientSearchFailure(lastRes)
+      if (!retryable || attempt === maxAttempts - 1) break
+      await sleep(320 * (attempt + 1))
+    }
+    return lastRes
+  }
+
   const fetchBrowsePage = async (startPage, pageSize) => {
+    if (browseType === 'recommend') {
+      return fetchRecommendPageWithRetry({ startPage, pageSize, resourceName: 'resources' })
+    }
     if (browseType === 'collection') {
       const id = unref(collectionId)
       return fetchCollectionPageWithRetry({ id, startPage, pageSize })
@@ -800,6 +818,9 @@ export function useH5ResourceBrowse(options) {
     if (browseType === 'collection') {
       return Array.isArray(res?.data?.items) ? res.data.items : []
     }
+    if (browseType === 'recommend') {
+      return Array.isArray(res?.data?.list) ? res.data.list : []
+    }
     return Array.isArray(res?.data?.list) ? res.data.list : []
   }
 
@@ -807,6 +828,9 @@ export function useH5ResourceBrowse(options) {
     if (!res?.success) return false
     if (browseType === 'collection') {
       return Array.isArray(res?.data?.items)
+    }
+    if (browseType === 'recommend') {
+      return Array.isArray(res?.data?.list)
     }
     return Array.isArray(res?.data?.list)
   }

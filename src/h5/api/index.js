@@ -279,3 +279,16 @@ export const collectionsCurate = async () => {
 export const collectionsCuratorStats = async () => {
   return await request('/api/collections/curator-stats')
 }
+
+export const recommend = async ({ startPage = 1, pageSize = 20, resourceName = 'resources' } = {}) => {
+  const query = new URLSearchParams({
+    startPage: String(startPage),
+    pageSize: String(pageSize),
+    resourceName: String(resourceName || 'resources')
+  })
+  return await request(`/api/recommend?${query}`)
+}
+
+export const recommendAddAllToFavorites = async (body = {}) => {
+  return await request('/api/recommend/add-all-favorites', { method: 'POST', body })
+}

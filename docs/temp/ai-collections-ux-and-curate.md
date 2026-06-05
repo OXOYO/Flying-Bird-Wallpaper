@@ -1,8 +1,8 @@
 # 智能合集：策展规则与合集页体验（2.0.0+ 增量）
 
-> 文档版本：**v1.7**  
-> 整理日期：**2026-06-03**  
-> 状态：**已实现**  
+> 文档版本：**v1.8**  
+> 整理日期：**2026-06-05**  
+> 状态：**已实现**（含 **猜你喜欢** 桌面 + H5）  
 > 关联：[ai-dev-plan.md](./ai-dev-plan.md) · [resource-lifecycle-and-cleanup.md](./resource-lifecycle-and-cleanup.md) · [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) · [README.md](./README.md)
 
 ---
@@ -13,7 +13,8 @@
 
 1. **系统自动策展**：入选壁纸改为 **最低评分门槛**（不再用固定 40 条上限）；合集数量上限可在 AI 设置配置；**分析队列稳定并完成至少一轮自动整理后暂停定时/防抖**（手动整理不受限）。  
 2. **合集页**：壁纸列表 **分页加载**；缩略图与搜索页一致（`w=1080`）；卡片 **主色占位** 与探索页一致。  
-3. **AI 设置**：`scoreMinFilter`、`autoCollectionsMaxCount` 置于「AI 自动整理合集」开关下方；后台 `analysisMaxRetries` 默认 1（**无 UI**，见 [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md)）。
+3. **猜你喜欢**：Picker 独立 Tab + 虚拟项，**不入库**；与「AI 推荐」系统合集分区命名分离。  
+4. **AI 设置**：`scoreMinFilter`、`autoCollectionsMaxCount` 置于「AI 自动整理合集」开关下方；后台 `analysisMaxRetries` 默认 1（**无 UI**，见 [ai-analysis-ux-and-performance.md](./ai-analysis-ux-and-performance.md)）。
 
 ---
 
@@ -203,16 +204,48 @@ Prompt 约束见各语言包 `ai.prompts.collectionNaming` 第 7 条：`name` �
 
 ---
 
+## 3.5 猜你喜欢（For You）
+
+与 **系统推荐合集**（`source=auto`，Picker 分区「AI 推荐」）区分命名与数据路径，避免用户混淆。
+
+| 维度 | 猜你喜欢 | 系统合集 `source=auto` |
+|------|----------|-------------------------|
+| 存储 | Picker **虚拟项** `FOR_YOU_VIRTUAL_ID = __for_you__`，**不写** `fbw_collections` | 数据库行 + `fbw_collection_items` 快照 |
+| Picker | Tab「猜你喜欢」；「全部」Tab 置顶虚拟项 | Tab「AI 推荐」列出 `source=auto` |
+| 数据 API | `main:recommend` / H5 `GET /api/recommend` | `collectionsGet` |
+| 分页响应 | `{ list, total, startPage, pageSize, prefTags, degraded }` | `{ items, total, ... }` |
+| 默认进入 | **无用户/系统合集可选时**默认猜你喜欢；有合集时仍默认第一个合集 | 用户手动选择 |
+| 浏览模式 | `recommend` / `collection` / `similar` **三态互斥** | `collection` |
+| 找相似 scope | `{ type: 'search', resourceType: 'localResource', resourceName: 'resources' }` | `{ type: 'collection', collectionId }` |
+| 操作 | 刷新推荐、`recommendAddAllToFavorites`（最多 500） | 刷新/generate、`collectionsAddAllToFavorites` |
+| 降级 | 无偏好 tag 时 `degraded=true`，按 AI 分 + 设壁纸数排序 | — |
+
+**推荐逻辑（`RecommendManager`）：** 最近设壁纸/收藏资源的 tags 加权；对齐 `ai.scoreMinFilter`；tag 零命中则 fallback 全库高分排序。
+
+**代码锚点：**
+
+| 模块 | 路径 |
+|------|------|
+| Picker 过滤/分组 | `src/common/collectionPickerFilter.mjs` |
+| 桌面合集页 | `src/renderer/.../pages/Collections.vue` |
+| 悬浮按钮 | `src/renderer/composables/useCollectionFloatingButtons.mjs` |
+| H5 合集页 | `src/h5/pages/collections/index.vue` |
+| H5 浏览 | `useH5ResourceBrowse.mjs`（`browseType=recommend`） |
+| 后端 | `RecommendManager.mjs`；IPC / H5 API |
+
+---
+
 ## 4. 合集页数据加载
 
-### 4.1 两层请求
+### 4.1 两层/三路请求
 
 | 请求 | 说明 |
 |------|------|
 | `collectionsList` | 一次返回全部合集元数据 + **`itemCount`**（`JOIN fbw_resources` 统计，不含孤儿成员） |
 | `collectionsGet` | **按当前选中合集** 分页拉壁纸 |
+| `recommend` | **猜你喜欢** 分页；虚拟项选中时走此路，不经 `collectionsGet` |
 
-**不会**在进入页面时拉取所有合集的全部图片。
+**不会**在进入页面时拉取所有合集的全部图片；猜你喜欢与选中合集互斥加载。
 
 ### 4.2 `collectionsGet` 分页契约
 
@@ -236,10 +269,12 @@ Prompt 约束见各语言包 `ai.prompts.collectionNaming` 第 7 条：`name` �
 
 | 行为 | 说明 |
 |------|------|
-| 进入/切换合集 | `startPage=1`，替换 `gridItems` |
-| 滚到底 | `VirtualList` `@close-bottom` → 追加下一页 |
+| 进入/切换合集 | `startPage=1`，替换 `gridItems`；退出 `recommendMode` |
+| 进入猜你喜欢 | `recommendMode=true`，`selectedId=null`；`fetchRecommendItems` |
+| 滚到底 | `VirtualList` `@close-bottom` → 追加下一页（合集或推荐） |
 | 首屏不足一屏 | `useExploreCardGrid` 计算的 `pageSize` 触发自动补拉一页 |
-| 计数 | `ListCountIndicator`：`current / total` |
+| 计数 | `ListCountIndicator`：`current / total`（合集与猜你喜欢共用） |
+| 找相似返回 | `similarListSnapshot.mode` 区分回到合集或猜你喜欢 |
 
 ---
 
@@ -349,7 +384,8 @@ flowchart TD
 8. **标签扩展**：首次生成/刷新短实体词时调 LLM 扩展 tags，二次刷新不重复（看 `keywordTagsExpandedFor`）  
 9. **系统合集语言**：中文 UI 下「立即整理」→ 标题均为中文（无 `Chinese Temple` 等英文混入）  
 10. **语义剔图**：日志可见「语义剔图 N 张」；明显不符标题的图不应出现在合集内  
-11. **重复合并（v1.6）**：库内若曾有两个同名且成员相同的系统合集 → 整理后只留一条；日志含「合并重复 plan / 合并重复系统合集」
+11. **重复合并（v1.6）**：库内若曾有两个同名且成员相同的系统合集 → 整理后只留一条；日志含「合并重复 plan / 合并重复系统合集」  
+12. **猜你喜欢（v1.8）**：Picker「猜你喜欢」Tab；无合集默认进入；分页、刷新、全部收藏；找相似后返回猜你喜欢；H5 同路径
 
 ---
 
@@ -370,6 +406,9 @@ flowchart TD
 | 缩略 URL | `src/renderer/utils/resourceImageUrl.js` |
 | 条目规范化 | `src/renderer/composables/useResourceCardActions.js` |
 | 合集页 | `src/renderer/.../pages/Collections.vue` |
+| Picker / 猜你喜欢 | `src/common/collectionPickerFilter.mjs` |
+| 推荐 | `src/main/store/RecommendManager.mjs` |
+| H5 合集 | `src/h5/pages/collections/index.vue` |
 | 卡片 | `src/renderer/components/ResourceExploreCard.vue` |
 | 网格分页量 | `src/renderer/composables/useExploreCardGrid.mjs`（`pageSize`） |
 | AI 设置 | `AiSetting.vue` |
@@ -388,3 +427,4 @@ flowchart TD
 | **v1.5** | 2026-06-01 | 仅画面 K-Means；**按簇** LLM 命名（删 merge）；UI locale 对齐；命名后语义剔图；簇阈值 0.77；i18n 降级与 storagePrompt |
 | **v1.6** | 2026-06-01 | 同名/成员 Jaccard≥0.85 合并 plan；与库内 reconcile；upsert 后 dedupe（保留最小 id） |
 | **v1.7** | **2026-06-03** | 策展/增量入集含**有封面视频**；`incrementalAddResource` 排除隐私；`itemCount` JOIN 主表；用户合集 `useSemantic=false` 尊重用户选择 |
+| **v1.8** | **2026-06-05** | **猜你喜欢**：Picker 虚拟项 + Tab；桌面/H5 分页；与 `source=auto` 命名分离；`recommendAddAllToFavorites` |

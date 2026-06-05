@@ -5,9 +5,13 @@ import { resolveApiUserMessage } from '@common/utils.js'
 import { scheduleDialogInputFocus } from '@common/focusDialogInput.mjs'
 import {
   buildCollectionPickerGroups,
+  buildForYouPickerItem,
   COLLECTION_PICKER_TAB_ALL,
   COLLECTION_PICKER_TAB_AUTO,
-  COLLECTION_PICKER_TAB_USER
+  COLLECTION_PICKER_TAB_USER,
+  COLLECTION_PICKER_TAB_FOR_YOU,
+  FOR_YOU_VIRTUAL_ID,
+  isForYouVirtualItem
 } from '@common/collectionPickerFilter.mjs'
 import UseSettingStore from '@renderer/stores/settingStore.js'
 import {
@@ -42,6 +46,9 @@ const itemsTotal = ref(0)
 const itemsStartPage = ref(1)
 const itemsHasMore = ref(false)
 const itemsLoading = ref(false)
+const recommendMode = ref(false)
+const forYouTotal = ref(0)
+const recommendDegraded = ref(false)
 const viewImageRef = ref(null)
 const viewInfoRef = ref(null)
 const privacyPasswordDialogRef = ref(null)
@@ -134,8 +141,14 @@ const { fixedBtns, backtopBtnBottom, toggleFixedBtns, showFixedBtns } =
     gridSizeList,
     gridRatioList,
     selectedCollection,
+    recommendMode,
     similarMode,
-    isAutoCollection
+    isAutoCollection,
+    similarBackTitle: computed(() =>
+      recommendMode.value
+        ? t('pages.Collections.similarBackToForYou')
+        : t('pages.Collections.similarBack')
+    )
   })
 
 const syncGridItems = (items, append = false) => {
@@ -148,6 +161,24 @@ const syncGridItems = (items, append = false) => {
     gridItems.value.push(...list.filter((row) => !ids.has(row.uniqueKey)))
   } else {
     gridItems.value = list
+  }
+}
+
+const fetchRecommendItems = async (startPage, append = false) => {
+  itemsLoading.value = true
+  try {
+    const pageSize = getItemsPageSize()
+    const res = await window.FBW.recommend({ startPage, pageSize, resourceName: 'resources' })
+    if (!res?.success) return
+    syncGridItems(res.data?.list, append)
+    const total = Number(res.data?.total) || 0
+    itemsTotal.value = total
+    forYouTotal.value = total
+    itemsStartPage.value = res.data?.startPage ?? startPage
+    itemsHasMore.value = gridItems.value.length < total
+    recommendDegraded.value = !!res.data?.degraded
+  } finally {
+    itemsLoading.value = false
   }
 }
 
@@ -202,7 +233,7 @@ const loadMoreSimilarItems = async (opts = {}) => {
 
 const ensureItemsFillViewport = async () => {
   if (similarMode.value) {
-    if (itemsLoading.value || !itemsHasMore.value || !selectedId.value) return
+    if (itemsLoading.value || !itemsHasMore.value || (!selectedId.value && !recommendMode.value)) return
     const pageSize = getItemsPageSize()
     let guard = 0
     while (
@@ -217,6 +248,16 @@ const ensureItemsFillViewport = async () => {
     }
     return
   }
+  if (recommendMode.value) {
+    if (itemsLoading.value || !itemsHasMore.value) return
+    const pageSize = getItemsPageSize()
+    if (gridItems.value.length && pageSize > gridItems.value.length) {
+      await fetchRecommendItems(itemsStartPage.value + 1, true)
+      await nextTick()
+      scrollRef.value?.updateVisibleItems?.(false)
+    }
+    return
+  }
   if (itemsLoading.value || !itemsHasMore.value || !selectedId.value) return
   if (gridItems.value.length && getItemsPageSize() > gridItems.value.length) {
     await fetchCollectionItems(selectedId.value, itemsStartPage.value + 1, true)
@@ -228,6 +269,13 @@ const ensureItemsFillViewport = async () => {
 const loadMoreItems = async () => {
   if (similarMode.value) {
     await loadMoreSimilarItems()
+    return
+  }
+  if (recommendMode.value) {
+    if (itemsLoading.value || !itemsHasMore.value) return
+    await fetchRecommendItems(itemsStartPage.value + 1, true)
+    await nextTick()
+    scrollRef.value?.updateVisibleItems?.(false)
     return
   }
   if (itemsLoading.value || !itemsHasMore.value || !selectedId.value) return
@@ -247,10 +295,13 @@ const resourceActions = useResourceCardActions({
   },
   viewImageRef,
   viewInfoRef,
-  getSimilarScope: () =>
-    selectedId.value
-      ? { type: 'collection', collectionId: selectedId.value }
-      : { type: 'collection', collectionId: null },
+  getSimilarScope: () => {
+    if (recommendMode.value) {
+      return { type: 'search', resourceType: 'localResource', resourceName: 'resources' }
+    }
+    if (selectedId.value) return { type: 'collection', collectionId: selectedId.value }
+    return { type: 'collection', collectionId: null }
+  },
   getSimilarPageSize: getItemsPageSize,
   cardContext: () => ({
     inPrivacySpace: false,
@@ -262,15 +313,18 @@ const resourceActions = useResourceCardActions({
     if (selectedId.value) await loadDetail(selectedId.value)
   },
   onFindSimilarResult: (list, item, meta) => {
-    if (!item?.id || !selectedId.value) return
+    if (!item?.id || (!selectedId.value && !recommendMode.value)) return
     const gridHWRatio = settingData.value?.gridHWRatio ?? 0.618
-    const scope = { type: 'collection', collectionId: selectedId.value }
+    const scope = recommendMode.value
+      ? { type: 'search', resourceType: 'localResource', resourceName: 'resources' }
+      : { type: 'collection', collectionId: selectedId.value }
     const sourceItem = normalizeResourceItem(item, {
       resourceType: 'localResource',
       gridHWRatio
     })
     if (!similarMode.value) {
       similarListSnapshot.value = {
+        mode: recommendMode.value ? 'recommend' : 'collection',
         collectionId: selectedId.value,
         items: gridItems.value.slice(),
         itemsHasMore: itemsHasMore.value,
@@ -307,10 +361,19 @@ const similarSourceImageSrc = computed(() => similarSourceItem.value?.imageSrc |
 const exitSimilarMode = () => {
   const snap = similarListSnapshot.value
   resetSimilar()
-  if (snap?.collectionId && snap.collectionId === selectedId.value) {
+  if (snap?.mode === 'recommend') {
+    recommendMode.value = true
+    selectedId.value = null
+    detail.value = null
     gridItems.value = snap.items || []
     itemsHasMore.value = !!snap.itemsHasMore
     itemsTotal.value = snap.itemsTotal ?? gridItems.value.length
+  } else if (snap?.collectionId && snap.collectionId === selectedId.value) {
+    gridItems.value = snap.items || []
+    itemsHasMore.value = !!snap.itemsHasMore
+    itemsTotal.value = snap.itemsTotal ?? gridItems.value.length
+  } else if (recommendMode.value) {
+    void enterRecommendMode()
   } else if (selectedId.value) {
     void loadDetail(selectedId.value)
   } else {
@@ -366,14 +429,27 @@ const collectionPickerSearchRef = ref(null)
 const collectionPickerTriggerRef = ref(null)
 const collectionPickerPopoverWidth = ref(360)
 
+const forYouPickerItem = computed(() =>
+  buildForYouPickerItem({
+    title: t('pages.Collections.forYouTitle'),
+    count: forYouTotal.value
+  })
+)
+
 const collectionPickerGroups = computed(() =>
   buildCollectionPickerGroups(collections.value, {
     query: collectionPickerQuery.value,
     tab: collectionPickerTab.value,
     isAutoCollection,
     sectionAutoLabel: t('pages.Collections.sectionAuto'),
-    sectionUserLabel: t('pages.Collections.sectionUser')
+    sectionUserLabel: t('pages.Collections.sectionUser'),
+    forYouItem: forYouPickerItem.value,
+    forYouSectionLabel: t('pages.Collections.sectionForYou')
   })
+)
+
+const pickerActiveId = computed(() =>
+  recommendMode.value ? FOR_YOU_VIRTUAL_ID : selectedId.value
 )
 
 const hasCollectionPickerFilter = computed(
@@ -383,6 +459,7 @@ const hasCollectionPickerFilter = computed(
 )
 
 const collectionSelectTriggerLabel = computed(() => {
+  if (recommendMode.value) return t('pages.Collections.forYouTitle')
   const item = collections.value.find((c) => c.id === selectedId.value)
   if (item?.name) return item.name
   if (loading.value) return t('messages.loading')
@@ -390,6 +467,9 @@ const collectionSelectTriggerLabel = computed(() => {
 })
 
 const collectionSelectTriggerMeta = computed(() => {
+  if (recommendMode.value) {
+    return t('pages.Collections.itemCount', { count: forYouTotal.value })
+  }
   const item = collections.value.find((c) => c.id === selectedId.value)
   return item ? collectionItemCountText(item) : ''
 })
@@ -417,16 +497,32 @@ const resetGridScroll = () => {
 }
 
 const selectFirstDisplayed = async () => {
+  if (recommendMode.value) return
   const list = collections.value
   if (!list.length) {
-    selectedId.value = null
-    detail.value = null
-    gridItems.value = []
+    if (!recommendMode.value) await enterRecommendMode()
     return
   }
   if (!list.some((item) => item.id === selectedId.value)) {
     await loadDetail(list[0].id)
   }
+}
+
+const enterRecommendMode = async () => {
+  selectedId.value = null
+  detail.value = null
+  recommendMode.value = true
+  resetSimilar()
+  similarListSnapshot.value = null
+  gridItems.value = []
+  itemsTotal.value = 0
+  itemsHasMore.value = false
+  itemsStartPage.value = 1
+  recommendDegraded.value = false
+  await fetchRecommendItems(1, false)
+  resetGridScroll()
+  await measureBlock()
+  await ensureItemsFillViewport()
 }
 
 const onCollectionChange = async (id) => {
@@ -436,6 +532,7 @@ const onCollectionChange = async (id) => {
     gridItems.value = []
     return
   }
+  recommendMode.value = false
   await loadDetail(id)
 }
 
@@ -479,6 +576,11 @@ const onCollectionPickerShow = () => {
 const selectCollectionFromPicker = async (item) => {
   if (!item?.id) return
   collectionPickerOpen.value = false
+  if (isForYouVirtualItem(item)) {
+    if (!recommendMode.value) await enterRecommendMode()
+    return
+  }
+  recommendMode.value = false
   if (selectedId.value !== item.id) {
     await onCollectionChange(item.id)
   }
@@ -491,8 +593,12 @@ const loadList = async () => {
     applyCollectionListResponse(listRes)
     await curatorStatsRef.value?.refresh()
     await nextTick()
-    if (!selectedId.value && collections.value.length) {
+    if (recommendMode.value) {
+      await fetchRecommendItems(1, false)
+    } else if (!selectedId.value && collections.value.length) {
       await loadDetail(collections.value[0].id)
+    } else if (!selectedId.value) {
+      await enterRecommendMode()
     } else {
       await selectFirstDisplayed()
     }
@@ -502,6 +608,7 @@ const loadList = async () => {
 }
 
 const loadDetail = async (id) => {
+  recommendMode.value = false
   selectedId.value = id
   resetSimilar()
   similarListSnapshot.value = null
@@ -615,6 +722,30 @@ const onAddFavorites = async (id) => {
   })
 }
 
+const onRecommendRefresh = async () => {
+  if (!recommendMode.value || itemsLoading.value) return
+  loading.value = true
+  try {
+    gridItems.value = []
+    itemsStartPage.value = 1
+    itemsHasMore.value = false
+    await fetchRecommendItems(1, false)
+    resetGridScroll()
+    await measureBlock()
+    await ensureItemsFillViewport()
+  } finally {
+    loading.value = false
+  }
+}
+
+const onRecommendAddAllFavorites = async () => {
+  const res = await window.FBW.recommendAddAllToFavorites({ resourceName: 'resources' })
+  ElMessage({
+    type: res.success ? 'success' : 'error',
+    message: resolveApiUserMessage(res, t)
+  })
+}
+
 const onFixedBtnAction = async (action, _actionParams, childVal) => {
   switch (action) {
     case 'toggleFixedBtns':
@@ -624,10 +755,18 @@ const onFixedBtnAction = async (action, _actionParams, childVal) => {
       exitSimilarMode()
       break
     case 'onRefresh':
-      if (selectedCollection.value?.id) await onRefresh(selectedCollection.value.id)
+      if (recommendMode.value) {
+        await onRecommendRefresh()
+      } else if (selectedCollection.value?.id) {
+        await onRefresh(selectedCollection.value.id)
+      }
       break
     case 'addAllFavorites':
-      if (selectedCollection.value?.id) await onAddFavorites(selectedCollection.value.id)
+      if (recommendMode.value) {
+        await onRecommendAddAllFavorites()
+      } else if (selectedCollection.value?.id) {
+        await onAddFavorites(selectedCollection.value.id)
+      }
       break
     case 'onSwitchGridSize':
       await onSwitchGridSize(childVal)
@@ -683,6 +822,14 @@ const onHeaderMenuCommand = async (command) => {
     await onCurateNow()
     return
   }
+  if (recommendMode.value) {
+    if (command === 'forYouRefresh') {
+      await onRecommendRefresh()
+    } else if (command === 'forYouFavorites') {
+      await onRecommendAddAllFavorites()
+    }
+    return
+  }
   const id = selectedCollection.value?.id
   if (!id) return
   if (command === 'refresh') {
@@ -732,9 +879,9 @@ const onCurateNow = async () => {
   }
 }
 
-watch(selectedId, async (id) => {
+watch([selectedId, recommendMode], async ([id, inRecommend]) => {
   unbindResizeObserver()
-  if (!id) return
+  if (!id && !inRecommend) return
   await nextTick()
   bindResizeObserver()
   await measureBlock()
@@ -773,7 +920,7 @@ onBeforeUnmount(() => {
             placement="bottom-start"
             :width="collectionPickerPopoverWidth"
             popper-class="collection-picker-popper"
-            :disabled="loading || !collections.length"
+            :disabled="loading"
             @show="onCollectionPickerShow"
           >
             <template #reference>
@@ -781,7 +928,7 @@ onBeforeUnmount(() => {
                 ref="collectionPickerTriggerRef"
                 type="button"
                 class="collection-select-trigger"
-                :disabled="loading || !collections.length"
+                :disabled="loading"
                 :aria-label="t('pages.Collections.selectPlaceholder')"
               >
                 <span class="collection-select-trigger__name">{{
@@ -825,6 +972,10 @@ onBeforeUnmount(() => {
                     :label="t('pages.Collections.listTabUser')"
                     :name="COLLECTION_PICKER_TAB_USER"
                   />
+                  <el-tab-pane
+                    :label="t('pages.Collections.listTabForYou')"
+                    :name="COLLECTION_PICKER_TAB_FOR_YOU"
+                  />
                 </el-tabs>
               </div>
               <el-scrollbar :max-height="300" class="collection-picker-panel__list">
@@ -845,7 +996,7 @@ onBeforeUnmount(() => {
                       :key="item.id"
                       type="button"
                       class="collection-picker-panel__item"
-                      :class="{ 'collection-picker-panel__item--active': item.id === selectedId }"
+                      :class="{ 'collection-picker-panel__item--active': item.id === pickerActiveId }"
                       @click="selectCollectionFromPicker(item)"
                     >
                       <span class="collection-picker-panel__item-name">{{ item.name }}</span>
@@ -854,7 +1005,7 @@ onBeforeUnmount(() => {
                           collectionItemCountText(item)
                         }}</span>
                         <span
-                          v-if="item.id === selectedId"
+                          v-if="item.id === pickerActiveId"
                           class="collection-picker-panel__item-check"
                           aria-hidden="true"
                         >✓</span>
@@ -895,7 +1046,19 @@ onBeforeUnmount(() => {
                 {{ t('pages.Collections.curateNow') }}
               </el-dropdown-item>
 
-              <template v-if="selectedCollection">
+              <template v-if="recommendMode">
+                <li class="dropdown-group-header" role="presentation">
+                  {{ t('pages.Collections.actionsSectionCurrent') }}
+                </li>
+                <el-dropdown-item command="forYouRefresh" :disabled="loading">
+                  {{ t('pages.Collections.forYouRefresh') }}
+                </el-dropdown-item>
+                <el-dropdown-item command="forYouFavorites">
+                  {{ t('pages.Collections.addFavorites') }}
+                </el-dropdown-item>
+              </template>
+
+              <template v-else-if="selectedCollection">
                 <li class="dropdown-group-header" role="presentation">
                   {{ t('pages.Collections.actionsSectionCurrent') }}
                 </li>
@@ -938,12 +1101,19 @@ onBeforeUnmount(() => {
           </template>
           </el-dropdown>
         </div>
+        <p v-if="recommendMode && recommendDegraded && !similarMode" class="for-you-degraded-hint">
+          {{ t('pages.Collections.forYouDegraded') }}
+        </p>
       </div>
       <ExploreSimilarModeBanner
         v-if="similarMode"
         :message="t('pages.Collections.similarModeBanner')"
         :source-image-src="similarSourceImageSrc"
-        :back-aria-label="t('pages.Collections.similarBack')"
+        :back-aria-label="
+          recommendMode
+            ? t('pages.Collections.similarBackToForYou')
+            : t('pages.Collections.similarBack')
+        "
         bar-background="rgba(50, 57, 65, 1)"
         @back="exitSimilarMode"
       />
@@ -953,7 +1123,7 @@ onBeforeUnmount(() => {
       <section class="collections-body">
         <div ref="cardBlockRef" class="collection-card-block">
           <VirtualList
-            v-if="selectedCollection && (gridItems.length || itemsLoading)"
+            v-if="(selectedCollection || recommendMode) && (gridItems.length || itemsLoading)"
             ref="scrollRef"
             :items="gridItems"
             :item-height="cardForm.cardHeight"
@@ -988,29 +1158,35 @@ onBeforeUnmount(() => {
               </div>
             </template>
           </VirtualList>
-          <div v-else-if="!collections.length && !loading" class="body-empty">
+          <div v-else-if="!collections.length && !recommendMode && !loading" class="body-empty">
             <EmptyHelp :text="t('pages.Collections.empty')" :enable-jump="false">
               <template #action>
-                <el-button type="primary" @click="openCreateDialog">
+                <el-button type="primary" @click="enterRecommendMode">
+                  {{ t('pages.Collections.forYouTitle') }}
+                </el-button>
+                <el-button @click="openCreateDialog">
                   {{ t('pages.Collections.createNew') }}
                 </el-button>
               </template>
             </EmptyHelp>
           </div>
           <div
-            v-else-if="selectedCollection && !gridItems.length && !loading && !itemsLoading"
+            v-else-if="(selectedCollection || recommendMode) && !gridItems.length && !loading && !itemsLoading"
             class="body-empty"
           >
-            <EmptyHelp :text="t('pages.Collections.noItems')" :enable-jump="false" />
+            <EmptyHelp
+              :text="recommendMode ? t('pages.Collections.forYouEmpty') : t('pages.Collections.noItems')"
+              :enable-jump="false"
+            />
           </div>
-          <div v-else-if="!selectedCollection && !loading" class="body-empty">
+          <div v-else-if="!selectedCollection && !recommendMode && !loading" class="body-empty">
             <EmptyHelp :text="t('pages.Collections.selectHint')" :enable-jump="false" />
           </div>
         </div>
       </section>
 
       <ExploreFixedButtons
-        v-if="selectedCollection"
+        v-if="selectedCollection || recommendMode"
         :buttons="fixedBtns"
         :show="showFixedBtns"
         :loading="loading"
@@ -1021,7 +1197,11 @@ onBeforeUnmount(() => {
     </div>
 
     <CuratorStatsIndicator ref="curatorStatsRef" />
-    <ListCountIndicator v-if="selectedCollection" :current="gridItems.length" :total="itemsTotal" />
+    <ListCountIndicator
+      v-if="selectedCollection || recommendMode"
+      :current="gridItems.length"
+      :total="itemsTotal"
+    />
 
     <el-dialog
       v-model="createDialogVisible"
@@ -1113,6 +1293,13 @@ onBeforeUnmount(() => {
   gap: 0;
   width: 100%;
   min-width: 0;
+}
+
+.for-you-degraded-hint {
+  margin: 0 16px 6px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.65);
 }
 
 .collection-select-trigger {

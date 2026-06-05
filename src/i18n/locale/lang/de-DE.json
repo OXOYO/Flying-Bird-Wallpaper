@@ -1,6 +1,6 @@
 {
   "appInfo": {
-    "appName": "Flying Bird Wallpaper",
+    "appName": "Fliegende Vogel Wallpaper",
     "description": "Flying Bird Wallpaper ist eine funktionsreiche Desktop-Hintergrundanwendung, die mehrere Hintergrundtypen unterstützt, darunter Bilder, Videos, Rhythmus-Hintergründe und Volltonfarben, die Ihren Desktop einzigartig und lebendig machen."
   },
   "actions": {
@@ -53,7 +53,7 @@
         "rhythmWallpaper": "Rhythmus-Hintergründe",
         "remoteResource": "Remote-Ressourcen",
         "privacyPassword": "Datenschutz-Passwort",
-        "privacySpaceOptions": "Privacy space options"
+        "privacySpaceOptions": "Optionen für Privatraum"
       },
       "settingDataForm": {
         "locale": "Sprache",
@@ -160,25 +160,26 @@
         "confirmOnDeleteFile": "Bestätigung vor Löschen",
         "enableSegmentationTask": "Segmentierungsaufgabe aktivieren",
         "powerSaveMode": "Energiesparmodus",
-        "enableExpandSideMenuHint": "When on, hover the left edge of the main window to expand/collapse the narrow sidebar for quick navigation",
-        "showSideMenuLabelHint": "Off: icons only to save width; On: show menu text under icons",
-        "suspensionBallVisibleHint": "Shows a small floating ball on the desktop; hover for prev/next/play/close shortcuts",
-        "startH5ServerOnStartupHint": "Starts the local H5 web server on launch; scan the sidebar QR code to browse wallpapers on your phone",
-        "enableSegmentationTaskHint": "Shows the word-cloud drawer on Search; segments the current list (may pause in power-save mode)",
-        "powerSaveModeHint": "Reduces background wallpaper switching, folder refresh, and AI analysis—good for battery saving",
-        "showTagHint": "Shows source/quality badges on cards; some tags are clickable filters",
-        "confirmOnDeleteFileHint": "Ask for confirmation before deleting local files from browse pages",
-        "viewImageIntervalTimeHint": "How long each image stays visible during autoplay in the built-in viewer",
-        "autoSwitchWallpaperHint": "Automatically change the desktop wallpaper at the interval below; off = manual or suspension ball only",
-        "switchTypeHint": "Sequential: in list order; Random: pick a random image each time",
-        "allScreenHint": "Apply the same wallpaper to all monitors when on",
-        "scaleTypeHint": "How the image is cropped or stretched to fill the screen",
-        "filterKeywordsHint": "Only images whose path/name contains a keyword are used for rotation (empty = no filter)",
-        "localResourceFoldersHint": "Local folders used as wallpaper libraries; scanning respects allowed file types",
-        "allowedFileExtHint": "Only these extensions are indexed when scanning local folders",
-        "autoRefreshDirectoryHint": "Rescan local folders on a schedule to pick up new or removed files",
+        "enableExpandSideMenuHint": "Wenn an, linke Kante des Hauptfensters für Ein-/Ausklappen der schmalen Seitenleiste zum schnellen Navigieren",
+        "showSideMenuLabelHint": "Aus: nur Symbole zur Platzersparnis; An: Menütext unter Symbolen",
+        "suspensionBallVisibleHint": "Zeigt eine kleine schwebende Kugel auf dem Desktop; Hover für Vor/Zurück/Play/Schließen",
+        "startH5ServerOnStartupHint": "Startet den lokalen H5-Webserver beim Start; QR-Code in der Seitenleiste für Handy-Browser",
+        "enableSegmentationTaskHint": "Zeigt Word-Cloud-Schublade in Suche; segmentiert aktuelle Liste (kann im Energiesparmodus pausieren)",
+        "powerSaveModeHint": "Reduziert Hintergrund-Wallpaper-Wechsel, Ordner-Aktualisierung und KI-Analyse—gut für Akkusparen",
+        "showTagHint": "Zeigt Quellen-/Qualitäts-Badges auf Karten; einige Tags sind klickbare Filter",
+        "confirmOnDeleteFileHint": "Vor Löschen lokaler Dateien von Browse-Seiten nach Bestätigung fragen",
+        "viewImageIntervalTimeHint": "Wie lange jedes Bild beim Autoplay im integrierten Viewer sichtbar bleibt",
+        "autoSwitchWallpaperHint": "Desktop-Wallpaper automatisch im Intervall unten wechseln; aus = nur manuell oder Schwebekugel",
+        "switchTypeHint": "Sequenziell: in Listenreihenfolge; Zufall: jedes Mal zufälliges Bild",
+        "allScreenHint": "Gleiches Wallpaper auf alle Monitore anwenden wenn an",
+        "scaleTypeHint": "Wie das Bild zugeschnitten/gestreckt wird, um den Bildschirm zu füllen",
+        "filterKeywordsHint": "Nur Bilder, deren Pfad/Name ein Schlüsselwort enthält, für Rotation (leer = kein Filter)",
+        "localResourceFoldersHint": "Lokale Ordner als Wallpaper-Bibliotheken; Scan respektiert erlaubte Dateitypen",
+        "allowedFileExtHint": "Nur diese Erweiterungen werden beim Scan lokaler Ordner indexiert",
+        "autoRefreshDirectoryHint": "Lokale Ordner planmäßig neu scannen für neue/entfernte Dateien",
         "autoDownloadHint": "Periodically download images from selected sources using your keywords into the download folder",
-        "dynamicPerformanceModeHint": "Lowers video decode/render load; try a lighter mode if playback stutters"
+        "dynamicPerformanceModeHint": "Senkt Video-Decode/Render-Last; bei Ruckeln leichteren Modus versuchen",
+        "downloadMediaTypes": "Automatisch herunterzuladende Medientypen"
       },
       "privacyPasswordForm": {
         "old": {
@@ -193,16 +194,16 @@
         },
         "confirm": "Passwort aktualisieren",
         "hint": {
-          "label": "Password hint",
-          "placeholder": "e.g. last four digits of a date (optional)",
-          "tooltip": "Saved with your password to help you remember it; shown when verifying. Do not enter the password itself"
+          "label": "Passwort-Hinweis",
+          "placeholder": "z. B. letzte vier Ziffern eines Datums (optional)",
+          "tooltip": "Mit Passwort gespeichert zur Erinnerung; bei Verifizierung angezeigt. Nicht das Passwort selbst eingeben"
         }
       },
       "shortcutSetting": {
         "conflict": "Konflikt",
         "function": "Funktion",
         "shortcut": "Tastenkürzel",
-        "operation": "Operation",
+        "operation": "Aktion",
         "reset": "Zurücksetzen",
         "empty": "Leeren",
         "notSet": "Nicht festgelegt",
@@ -448,7 +449,7 @@
           "siliconflow": "SiliconFlow",
           "groq": "Groq",
           "together": "Together AI",
-          "moonshot": "Moonshot",
+          "moonshot": "Moonshot (月之暗面)",
           "custom": "Benutzerdefiniert OpenAI-kompatibel"
         },
         "visionSection": "Vision-Modell",
@@ -458,7 +459,7 @@
         "textModel": "Textmodell",
         "textBaseUrl": "Service-URL",
         "embeddingModel": "Vektormodell",
-        "apiKey": "API Key",
+        "apiKey": "API-Schlüssel",
         "copyApiKey": "Kopieren",
         "apiKeyPlaceholder": "Remote-API-Key eingeben",
         "customBaseUrlPlaceholder": "https://your-api.example.com",
@@ -496,7 +497,7 @@
           "serverError": "AI-Dienst vorübergehend nicht verfügbar (HTTP {status}). Bitte versuchen Sie es später erneut",
           "providerError": "AI-Dienstfehler: {detail}",
           "providerErrorGeneric": "Unbekannter AI-Dienstfehler. Bitte versuchen Sie es später erneut",
-          "modelNameMissing": "Select or enter a model name first"
+          "modelNameMissing": "Zuerst Modellname wählen oder eingeben"
         },
         "autoCollectionsEnabled": "AI-Sammlungen automatisch kuratieren",
         "autoCollectionsEnabledHint": "Nach Tags und Vektor-Stimmung clustern und über LLM zu System-Sammlungen zusammenführen (Überlappung erlaubt, löschbar)",
@@ -522,29 +523,29 @@
         "sectionFeaturesFindSimilar": "Ähnliche finden",
         "sectionFeaturesSearch": "Suche & Download",
         "sectionFeaturesLegacy": "Kompatibilität",
-        "enabledHint": "Master switch: when off, auto analysis, semantic search, and AI collections stop; settings are kept",
-        "analysisConcurrency": "Background concurrency",
-        "analysisConcurrencyHint": "In background continuous / new-images-only modes, how many images call the vision model at once (1–10). Takes effect after save; lower if VRAM is tight. Text embeddings run async per image and do not use this slot",
+        "enabledHint": "Hauptschalter: Wenn aus, stoppen Auto-Analyse, semantische Suche und KI-Sammlungen; Einstellungen bleiben erhalten",
+        "analysisConcurrency": "Hintergrund-Parallelität",
+        "analysisConcurrencyHint": "Im Modus Hintergrund kontinuierlich/nur neue Bilder: wie viele Bilder gleichzeitig das Vision-Modell aufrufen (1–10). Wirksam nach Speichern; bei knappem VRAM reduzieren. Text-Embeddings laufen pro Bild asynchron und nutzen diesen Slot nicht",
         "copyModelName": "Modellname kopieren",
-        "textEmbedModelHint": "Text-only embeddings for semantic search (e.g. nomic-embed-text)—not visual vectors or vision analysis",
-        "listEmptyVisualEmbed": "No visual embedding models found. Enter manually (e.g. batiai/qwen2-vl-embed-2b:q8). Text-only embed models (e.g. nomic-embed-text) cannot embed images.",
-        "purposeVisualEmbed": "visual embedding",
+        "textEmbedModelHint": "Nur Text-Embeddings für semantische Suche (z. B. nomic-embed-text)—keine Bildvektoren oder Vision-Analyse",
+        "listEmptyVisualEmbed": "Keine Visual-Embedding-Modelle gefunden. Manuell eingeben (z. B. batiai/qwen2-vl-embed-2b:q8). Reine Text-Embed-Modelle (z. B. nomic-embed-text) können keine Bilder einbetten.",
+        "purposeVisualEmbed": "Bildvektor",
         "testConnection": "Verbindung testen",
-        "findSimilarHintTitle": "Find similar",
-        "findSimilarHint": "Automatically fuses visual vectors (built-in MobileCLIP) and text vectors (embedding model) with RRF ranking—no similarity threshold to tune. Text channel joins when AI is enabled.",
-        "findSimilarHintShort": "Uses built-in MobileCLIP for visual similarity by default; when an embedding model is configured, title and description are considered too.",
-        "visualEmbedSource": "Visual vector source",
-        "visualEmbedSourceHint": "Built-in: offline, bundled, best for visual similarity. Remote: experimental image embedding via Ollama or compatible APIs; falls back to built-in on failure.",
-        "visualEmbedSourceBuiltin": "Built-in MobileCLIP",
-        "visualEmbedSourceRemote": "Remote embedding model",
+        "findSimilarHintTitle": "Ähnliche finden",
+        "findSimilarHint": "Führt automatisch Bildvektoren (integriertes MobileCLIP) und Textvektoren (Embedding-Modell) mit RRF-Ranking zusammen—kein Similarity-Schwellenwert nötig. Textkanal tritt bei aktivierter KI bei.",
+        "findSimilarHintShort": "Standardmäßig integriertes MobileCLIP für visuelle Ähnlichkeit; bei konfiguriertem Embedding-Modell auch Titel und Beschreibung.",
+        "visualEmbedSource": "Quelle der Bildvektoren",
+        "visualEmbedSourceHint": "Integriert: offline, mit App gebündelt, ideal für visuelle Ähnlichkeit. Remote: experimentelles Bild-Embedding über Ollama oder kompatible APIs; bei Fehler Rückfall auf integriert.",
+        "visualEmbedSourceBuiltin": "Integriertes MobileCLIP",
+        "visualEmbedSourceRemote": "Remote-Embedding-Modell",
         "visualEmbedSection": "Bildmodell",
-        "visualEmbedBaseUrl": "Service URL",
-        "visualEmbedModel": "Visual vector model",
-        "visualEmbedModelHint": "Image embeddings for find-similar; built-in MobileCLIP recommended. Remote models must support image vectors—not vision or text embed models. Falls back to built-in on failure.",
-        "visualEmbedRemoteSectionHint": "Configure provider, URL, API key, and model in the Visual vector service section below.",
-        "visualEmbedModelPlaceholder": "e.g. batiai/qwen3-vl-embed-2b",
-        "legacyLocalVisualEmbed": "Built-in visual vectors",
-        "legacyLocalVisualEmbedHint": "When enabled, uses built-in visual vectors for similarity and Find similar. When disabled, uses the remote embedding model in Visual vector service (falls back to built-in on failure).",
+        "visualEmbedBaseUrl": "Dienst-URL",
+        "visualEmbedModel": "Bildvektor-Modell",
+        "visualEmbedModelHint": "Bild-Embeddings für Ähnliche finden; integriertes MobileCLIP empfohlen. Remote-Modelle müssen Bildvektoren unterstützen—keine Vision- oder Text-Embed-Modelle. Bei Fehler Rückfall auf integriert.",
+        "visualEmbedRemoteSectionHint": "Anbieter, URL, API-Schlüssel und Modell im Abschnitt Bildvektor-Dienst unten konfigurieren.",
+        "visualEmbedModelPlaceholder": "z. B. batiai/qwen3-vl-embed-2b",
+        "legacyLocalVisualEmbed": "Integrierte Bildvektoren",
+        "legacyLocalVisualEmbedHint": "Wenn aktiviert, integrierte Bildvektoren für Ähnlichkeit und Ähnliche finden. Wenn deaktiviert, Remote-Embedding im Bildvektor-Dienst (bei Fehler Rückfall auf integriert).",
         "pumpBlockReason_scheduler_stopped": "Hintergrund-Analyse-Timer gestoppt (oft nach Akku-Energiesparmodus). AI-Einstellungen speichern oder Netzteil anschließen.",
         "pumpBlockReason_power_save_battery": "Energiesparmodus bei Akkubetrieb — Hintergrundanalyse pausiert",
         "pumpBlockReason_maintenance": "Ressourcenwartung läuft — Analyse pausiert",
@@ -558,13 +559,20 @@
         "requeueFailedSuccess": "{count} fehlgeschlagene Bilder erneut eingereiht; Hintergrundverarbeitung startet",
         "requeueFailedSuccessNoAi": "{count} eingereiht; „AI aktivieren“ ist aus — keine automatische Analyse",
         "requeueFailedSuccessNoPump": "{count} eingereiht; aktueller Modus läuft nicht im Hintergrund",
-        "requeueFailedEmpty": "Keine fehlgeschlagenen Bilder zum erneuten Einreihen"
+        "requeueFailedEmpty": "Keine fehlgeschlagenen Bilder zum erneuten Einreihen",
+        "analysisCurrentTask": "Analysiere #{id}, {sec}s gewartet",
+        "analysisCurrentTaskVision": "Analysiere #{id}, warte auf Vision-Modell {sec}s",
+        "analysisCurrentTaskMulti": "Analysiere {ids}, {sec}s gewartet",
+        "visualEmbedBackfillRunning": "Visuelle Vektoren werden nachgefüllt, {pending} übrig",
+        "visualEmbedBackfillPending": "{pending} Bilder warten auf visuelle Vektoren",
+        "visualEmbedBackfillDone": "Visuelle Vektoren vollständig (aktuelles Modell)",
+        "visualEmbedBackfillDoneSkipped": "Visuelle Vektoren vollständig (aktuelles Modell), {skipped} defekte Bilder übersprungen"
       },
       "privacySpace": {
         "enableNsfwContentMask": "Sensible Inhalte ausblenden",
-        "enableNsfwContentMaskHint": "Requires a privacy password: cannot turn on without one; turning off requires verification. When on, sensitivity level ≥ 2 is masked on browse pages (search and collections unchanged—display only). Previous/next wallpaper skip those images (manual Set as wallpaper is not affected). Tap the mask and enter your password to view on the current page; masking returns when you switch menus or the app goes to background. Not masked in Privacy Space."
+        "enableNsfwContentMaskHint": "Erfordert ein Privatpasswort: ohne Passwort nicht aktivierbar; Deaktivierung erfordert Verifizierung. Bei Aktivierung werden Bilder mit Sensibilität ≥2 auf Browse-Seiten maskiert (Suche und Sammlungen unverändert—nur Anzeige). Vor/Zurück-Wallpaper überspringt diese Bilder (manuelles Setzen als Wallpaper unberührt). Tippen auf Maske und Passwort für temporäre Ansicht; Maske kehrt zurück beim Menüwechsel oder App-Hintergrund. Im Privatraum keine Maske."
       },
-      "privacyPasswordHintLabel": "Password hint"
+      "privacyPasswordHintLabel": "Passwort-Hinweis"
     },
     "Utils": {
       "dataUtils": "Datenwerkzeuge",
@@ -599,7 +607,11 @@
       "resetAiAnalysisSuccess": "AI-Daten für {count} Bild(er) gelöscht; {autoCollections} AI-Sammlung(en) entfernt; Hintergrundverarbeitung startet",
       "resetAiAnalysisSuccessNoAi": "{count} Bild(er) auf ausstehend gesetzt; {autoCollections} AI-Sammlung(en) entfernt; „AI aktivieren“ ist aus",
       "resetAiAnalysisSuccessNoPump": "{count} Bild(er) auf ausstehend gesetzt; {autoCollections} AI-Sammlung(en) entfernt; aktueller Modus läuft nicht im Hintergrund",
-      "resetAiAnalysisEmpty": "Keine Bilder in der Bibliothek zum Löschen"
+      "resetAiAnalysisEmpty": "Keine Bilder in der Bibliothek zum Löschen",
+      "clearResourcesLibraryDB": "Ressourcenbibliothek-Daten löschen",
+      "clearResourcesLibraryConfirm": "Dies <strong>löscht alle Wallpaper-Einträge</strong> in der Ressourcenbibliothek (lokale Scans und Downloads aller Quellen) einschließlich zugehöriger KI-Analyse, Tags, Embeddings, Sammlungsmitgliedschaft und Favoriten/Verlauf/Privat/Statistik-Verknüpfungen. <strong>Dateien auf der Festplatte werden nicht gelöscht</strong> (lokale Ordner per Aktualisierung neu importierbar; für Downloads „Alle Downloads löschen“). Es werden <strong>nicht</strong> ganze Favoriten/Verlauf/Wort-Tabellen gelöscht. Alle <strong>KI-empfohlenen (System-)Sammlungen</strong> werden entfernt; Benutzer-Sammlungen bleiben, verlieren aber Mitglieder.<br/><br/>Unwiderruflich. Fortfahren?",
+      "clearResourcesLibrarySuccess": "{count} Ressourcenbibliothek-Einträge gelöscht und {autoCollections} KI-Sammlungen entfernt",
+      "clearResourcesLibraryEmpty": "Die Ressourcenbibliothek ist bereits leer"
     },
     "About": {
       "name": "Name",
@@ -671,24 +683,32 @@
       "noItems": "Sammlung ist leer, bitte aktualisieren zum Generieren",
       "selectHint": "Wählen Sie eine Sammlung, um Wallpapers anzuzeigen",
       "confirmDelete": "Diese Sammlung löschen?",
-      "curatorStatsShortSettled": "Settled · Analyzed {analyzed} · {auto} picks (new images added incrementally)",
-      "curatorFooterLine": "AI Analysis · {status} · Progress {done}/{total} · {percent}% · Collections {auto}/{target}",
-      "curatorFooterLabel": "AI Analysis",
-      "curatorFooterProgress": "Progress {done}/{total}",
-      "curatorFooterCollections": "Collections {auto}/{target}",
+      "curatorStatsShortSettled": "Festgelegt · Analysiert {analyzed} · {auto} Auswahlen (neue Bilder schrittweise hinzugefügt)",
+      "curatorFooterLine": "KI-Analyse · {status} · Fortschritt {done}/{total} · {percent}% · Sammlungen {auto}/{target}",
+      "curatorFooterLabel": "KI-Analyse",
+      "curatorFooterProgress": "Fortschritt {done}/{total}",
+      "curatorFooterCollections": "Sammlungen {auto}/{target}",
       "curatorFooterStatus": {
-        "disabled": "Off",
-        "settled": "Settled",
-        "running": "Running",
-        "queued": "Queued",
-        "complete": "Complete",
-        "idle": "Idle",
-        "onDemand": "On demand"
+        "disabled": "Aus",
+        "settled": "Festgelegt",
+        "running": "Läuft",
+        "queued": "In Warteschlange",
+        "complete": "Abgeschlossen",
+        "idle": "Leerlauf",
+        "onDemand": "Bei Bedarf"
       },
-      "curateManualConfirmSettled": "System collections are settled. Manual curation will run a full LLM rebuild and remove collections not in the new plan. Continue?",
+      "curateManualConfirmSettled": "System-Sammlungen sind festgelegt. Manuelle Kuratierung führt einen vollständigen LLM-Neuaufbau durch und entfernt Sammlungen, die nicht im neuen Plan sind. Fortfahren?",
       "auto": {
         "storagePrompt": "{detail}"
-      }
+      },
+      "similarBackToForYou": "Zurück zu „Für dich“",
+      "listTabForYou": "Für dich",
+      "forYouTitle": "Für dich",
+      "forYouHint": "Empfehlungen basierend auf deinen Wallpaper- und Favoriten-Gewohnheiten",
+      "forYouEmpty": "Noch keine Empfehlungen – setze Wallpapers oder füge Favoriten hinzu",
+      "forYouRefresh": "Empfehlungen aktualisieren",
+      "forYouDegraded": "Zu wenig Präferenzdaten – zeige top-bewertete Wallpapers",
+      "sectionForYou": "Für dich"
     }
   },
   "messages": {
@@ -823,8 +843,9 @@
     "conflictWindowShortcut": "Konflikt mit „{name}“ im Fenster „{window}“",
     "invalidShortcutOnlyModifiers": "Tastenkürzel darf nicht nur aus Modifikatortasten bestehen. Bitte drücken Sie eine weitere Taste.",
     "dialogOk": "OK",
-    "aiJsonParseFailed": "AI response could not be parsed as JSON",
-    "aiNotEnabled": "AI is not enabled"
+    "aiJsonParseFailed": "KI-Antwort konnte nicht als JSON geparst werden",
+    "aiNotEnabled": "KI ist nicht aktiviert",
+    "noVideoPoster": "Video-Poster fehlt. Video zuerst herunterladen, dann analysieren."
   },
   "resourceTypeList": {
     "localResource": "Lokale Ressourcen",
@@ -1118,22 +1139,22 @@
       "updated_at": "Änderungszeit des Datensatzes",
       "ctimeMs": "Erstellungszeit der Ressource",
       "mtimeMs": "Änderungszeit der Ressource",
-      "summary": "Summary",
+      "summary": "Zusammenfassung",
       "tags": "Tags",
-      "nsfwLevel": "NSFW level",
-      "aiAnalysisStatus": "AI analysis"
+      "nsfwLevel": "NSFW-Stufe",
+      "aiAnalysisStatus": "KI-Analyse"
     },
     "nsfwLevel": {
-      "0": "Safe (0)",
-      "1": "Mild (1)",
-      "2": "Moderate (2)",
-      "3": "High (3)"
+      "0": "Sicher (0)",
+      "1": "Leicht (1)",
+      "2": "Mäßig (2)",
+      "3": "Hoch (3)"
     },
     "aiAnalysisStatus": {
-      "pending": "Pending",
-      "done": "Done",
-      "failed": "Failed",
-      "skipped": "Skipped"
+      "pending": "Ausstehend",
+      "done": "Fertig",
+      "failed": "Fehlgeschlagen",
+      "skipped": "Übersprungen"
     }
   },
   "h5": {
@@ -1141,7 +1162,7 @@
       "home": "Startseite",
       "search": "Suche",
       "setting": "Einstellungen",
-      "browse": "Browse"
+      "browse": "Durchsuchen"
     },
     "pages": {
       "home": {
@@ -1178,10 +1199,10 @@
           "updated_at": "Änderungszeit des Datensatzes",
           "ctimeMs": "Erstellungszeit der Ressource",
           "mtimeMs": "Änderungszeit der Ressource",
-          "summary": "Summary",
+          "summary": "Zusammenfassung",
           "tags": "Tags",
-          "nsfwLevel": "NSFW level",
-          "aiAnalysisStatus": "AI analysis"
+          "nsfwLevel": "NSFW-Stufe",
+          "aiAnalysisStatus": "KI-Analyse"
         }
       },
       "search": {
@@ -1207,8 +1228,8 @@
           "close": "Videovorschau schließen",
           "enterLandscape": "Querformat-Wiedergabe",
           "exitLandscape": "Querformat beenden",
-          "play": "Play video",
-          "pause": "Pause video"
+          "play": "Video abspielen",
+          "pause": "Video pausieren"
         },
         "actions": {
           "info": "Info",
@@ -1272,10 +1293,10 @@
             "label": "Anzeigegröße",
             "placeholder": "Bitte Anzeigegröße auswählen"
           },
-          "h5FullscreenImageCompress": "Fullscreen optimized loading",
+          "h5FullscreenImageCompress": "Vollbild optimiertes Laden",
           "h5FullscreenImageCompressHint": "Card mode always uses compressed thumbnails; fullscreen uses compressed images when on, originals when off",
-          "h5ImageCompressStartSize": "Compress threshold (MB)",
-          "h5ImageCompressStartSizeHint": "Skip resize below this size; always applies in card mode",
+          "h5ImageCompressStartSize": "Komprimierungsschwelle (MB)",
+          "h5ImageCompressStartSizeHint": "Keine Skalierung unter dieser Größe; im Kartenmodus immer aktiv",
           "h5FunctionSettings": "Funktionseinstellungen",
           "h5FloatingButtonPosition": {
             "label": "Position der Schwebeschaltfläche",
@@ -1304,22 +1325,23 @@
       }
     },
     "drawer": {
-      "title": "Browse",
-      "openBrowseMenu": "Open browse menu"
+      "title": "Durchsuchen",
+      "openBrowseMenu": "Browse-Menü öffnen"
     }
   },
   "ai": {
     "prompts": {
-      "imageAnalysis": "You are a wallpaper image analysis assistant. Output only one JSON object, no markdown fences, no extra commentary.\n\n[Field roles — do not mix]\n- title: short headline, ≤40 chars, subject + scene\n- summary: one line for search, ≤80 chars, theme and key visible elements (no use-case, no \"good for desktop\")\n- desc: detailed visible description for humans, 120–220 chars (same language as UI). Cover: subject(s), pose/action, clothing and body exposure level, environment, framing/composition, color and lighting, style/mood. Visible facts only; no invented story; no suitability advice\n- tags: 3–10 search tags (same language as UI)\n- score: integer 1–100, overall aesthetic score\n- nsfwLevel: integer 0–3 (sensitivity rubric below)\n- safeForWork: boolean, must follow linkage rules below\n\n[Sensitivity rubric nsfwLevel — EN + 中文]\n0 Safe 安全: landscapes, still life, everyday portraits, no sexual or sensitive focus. Counter-example: do NOT use 0 when erotic focus or clearly visible intimate body parts, not workplace-appropriate\n1 Mild 轻微: swimwear/sportswear/fashion look, much skin but no nipples/genitals, mildly suggestive pose. Counter-example: do NOT use 1 for full nudity, sex acts as main subject, visible intimate parts (use ≥2)\n2 Moderate 中度: visible nipples/partial nudity, strong sexual suggestion, graphic gore, obvious adult-oriented framing. Counter-example: do NOT use 2 when intercourse is central or intimate close-ups (use 3)\n3 Explicit 重度: erotic or sexual acts as main subject, clearly visible genitals, extreme gore. Counter-example: do NOT use 3 for bikini/swimwear with no nudity (use 1)\n\n[safeForWork ↔ nsfwLevel linkage — mandatory]\n- nsfwLevel≥2 ⇒ safeForWork must be false\n- safeForWork false ⇒ nsfwLevel must be ≥2\n- nsfwLevel=0 ⇒ safeForWork must be true\n- Never output nsfwLevel=0 with safeForWork=false\n\nExample (safe): {\"score\":82,\"tags\":[\"night\",\"city\",\"neon\",\"rain\",\"blue\"],\"title\":\"Rainy city skyline\",\"summary\":\"Night cityscape after rain, towers and wet reflections\",\"desc\":\"Wide skyline in the upper frame with warm and cool neon; wet mid-ground pavement mirrors lights and car streaks; sharp deep focus, cinematic calm mood.\",\"nsfwLevel\":0,\"safeForWork\":true}",
-      "searchParse": "Parse the user's wallpaper search description into JSON. No markdown.\nUser input: {query}\nOutput fields:\n- filterKeywords: string, core keywords\n- tags: string array, [] if omitted\n- orientation: array, [] if omitted; elements 1 (landscape) or 0 (portrait), or landscape/portrait\n- quality: array, [] if omitted; only 8K, 5K, 4K, 2K (must match DB field; no 1080p/720p/lowercase 4k)\n- filterType: images | videos | \"\" (empty if type not specified; do not output fileType)\n- scoreMin: integer 0-100 or null unless user asks for a minimum score\n- scoreMax: integer 0-100 or null\n\nExample: {\"filterKeywords\":\"ocean\",\"tags\":[\"ocean\",\"blue\"],\"orientation\":[1],\"quality\":[\"4K\"],\"filterType\":\"images\",\"scoreMin\":null,\"scoreMax\":null}",
-      "collectionQuery": "The user wants to create a smart wallpaper collection. Parse the description into queryJson. Output JSON only.\nUser description: {prompt}\nFields:\n- filterKeywords: string (core search term)\n- tags: string[]\n- tagsMode: any|all\n- quality: string[] (must be [] unless user asks resolution; only 8K, 5K, 4K, 2K; no 1080p/720p)\n(Do not output orientation, scoreMin, or scoreMax; minimum score comes from app AI settings.)\n- resourceName: always \"resources\" (full library; never favorites/local/history)\n- isRandom: boolean\n- sortField: score|created_at|views\n- sortType: -1|1\n- semanticQuery: string\n- useSemantic: boolean (true when theme/mood is described)\n- limitCount: integer 5-50\n\nRules: tags must match resource AI tag language (prefer same as UI); do not invent orientation/quality/scoreMin/scoreMax; for entity words put the word in filterKeywords and add synonymous tags in the same language as resource tags.",
+      "imageAnalysis": "Du bist ein Assistent für Wallpaper-Bildanalyse. Gib nur ein JSON-Objekt aus, keine Markdown-Codeblöcke, keine zusätzlichen Kommentare.\n\n[Feldrollen — nicht vermischen]\n- title: kurze Überschrift, ≤40 Zeichen, Motiv + Szene\n- summary: eine Zeile für die Suche, ≤80 Zeichen, Thema und wichtige sichtbare Elemente (kein Anwendungsfall, kein „gut für Desktop“)\n- desc: detaillierte sichtbare Beschreibung für Menschen, 120–220 Zeichen (gleiche Sprache wie UI). Abdecken: Motiv(e), Pose/Aktion, Kleidung und Körperfreilegung, Umgebung, Bildausschnitt/Komposition, Farbe und Licht, Stil/Stimmung. Nur sichtbare Fakten; keine erfundene Geschichte; keine Eignungsempfehlung\n- tags: 3–10 Such-Tags (gleiche Sprache wie UI)\n- score: Ganzzahl 1–100, Gesamtästhetik\n- nsfwLevel: Ganzzahl 0–3 (Sensibilitätsrubrik unten)\n- safeForWork: Boolean, muss den Verknüpfungsregeln unten folgen\n\n[Sensibilitätsrubrik nsfwLevel — DE + 中文]\n0 Safe 安全: Landschaften, Stillleben, Alltagsporträts, kein sexueller oder sensibler Fokus. Gegenbeispiel: NICHT 0 bei erotischem Fokus oder klar sichtbaren intimen Körperteilen, nicht am Arbeitsplatz geeignet\n1 Mild 轻微: Bade-/Sportbekleidung/Mode-Look, viel Haut aber keine Brustwarzen/Genitalien, leicht suggestive Pose. Gegenbeispiel: NICHT 1 bei vollständiger Nacktheit, Sexualakte als Hauptmotiv, sichtbaren intimen Teilen (≥2)\n2 Moderate 中度: sichtbare Brustwarzen/teilweise Nacktheit, starke sexuelle Andeutung, grafische Gewalt, offensichtlich erwachsenenorientierte Komposition. Gegenbeispiel: NICHT 2 wenn Geschlechtsverkehr zentral oder intime Nahaufnahmen (3)\n3 Explicit 重度: erotische oder sexuelle Handlungen als Hauptmotiv, klar sichtbare Genitalien, extreme Gewalt. Gegenbeispiel: NICHT 3 bei Bikini/Badebekleidung ohne Nacktheit (1)\n\n[safeForWork ↔ nsfwLevel Verknüpfung — verbindlich]\n- nsfwLevel≥2 ⇒ safeForWork muss false sein\n- safeForWork false ⇒ nsfwLevel muss ≥2 sein\n- nsfwLevel=0 ⇒ safeForWork muss true sein\n- Niemals nsfwLevel=0 mit safeForWork=false ausgeben\n\nBeispiel (sicher): {\"score\":82,\"tags\":[\"Nacht\",\"Stadt\",\"Neon\",\"Regen\",\"Blau\"],\"title\":\"Regnerische Stadtsilhouette\",\"summary\":\"Nächtliche Stadt nach Regen, Türme und nasse Reflexionen\",\"desc\":\"Weite Silhouette im oberen Bildbereich mit warmem und kühlem Neon; nasses Mittelgrund-Pflaster spiegelt Lichter und Auto-Spuren; scharfe Tiefenschärfe, ruhige filmische Stimmung.\",\"nsfwLevel\":0,\"safeForWork\":true}",
+      "searchParse": "Parse die Wallpaper-Suchbeschreibung des Nutzers in JSON. Kein Markdown.\nNutzer-Eingabe: {query}\nAusgabefelder:\n- filterKeywords: string, Kernschlüsselwörter\n- tags: string array, [] wenn weggelassen\n- orientation: array, [] wenn weggelassen; Elemente 1 (Querformat) oder 0 (Hochformat), oder landscape/portrait\n- quality: array, [] wenn weggelassen; nur 8K, 5K, 4K, 2K (muss DB-Feld entsprechen; kein 1080p/720p/kleingeschriebenes 4k)\n- filterType: images | videos | \"\" (leer wenn Typ nicht angegeben; kein fileType)\n- scoreMin: Ganzzahl 0-100 oder null, außer Nutzer verlangt Mindestscore\n- scoreMax: Ganzzahl 0-100 oder null\n\nBeispiel: {\"filterKeywords\":\"Ozean\",\"tags\":[\"Ozean\",\"Blau\"],\"orientation\":[1],\"quality\":[\"4K\"],\"filterType\":\"images\",\"scoreMin\":null,\"scoreMax\":null}",
+      "collectionQuery": "Der Nutzer möchte eine intelligente Wallpaper-Sammlung erstellen. Parse die Beschreibung in queryJson. Nur JSON ausgeben.\nNutzer-Beschreibung: {prompt}\nFelder:\n- filterKeywords: string (Kern-Suchbegriff)\n- tags: string[]\n- tagsMode: any|all\n- quality: string[] (muss [] sein, außer Nutzer verlangt Auflösung; nur 8K, 5K, 4K, 2K; kein 1080p/720p)\n(Orientation, scoreMin, scoreMax nicht ausgeben; Mindestscore kommt aus App-AI-Einstellungen.)\n- resourceName: immer \"resources\" (volle Bibliothek; nie favorites/local/history)\n- isRandom: boolean\n- sortField: score|created_at|views\n- sortType: -1|1\n- semanticQuery: string\n- useSemantic: boolean (true bei Thema/Stimmung)\n- limitCount: Ganzzahl 5-50\n\nRegeln: tags müssen zur AI-Tag-Sprache der Ressourcen passen (bevorzugt UI-Sprache); orientation/quality/scoreMin/scoreMax nicht erfinden; Entitätswörter in filterKeywords und synonyme tags in derselben Sprache.",
       "keywordExpand": "Suchbegriffe für automatischen Wallpaper-Download erweitern. Eingabe: {keywords}\nAusgabe JSON: {\"keywords\":[\"Wort1\",\"Wort2\"]}, höchstens 10 Einträge, Sprache wie in dieser Anweisung, keine Erklärung.",
-      "collectionTagExpand": "Expand wallpaper collection search tags for synonyms. Theme: {keyword}\nOutput JSON: {\"tags\":[\"tag1\",\"tag2\"]}, up to 8 items, tags in the same language as resource AI analysis and UI when possible, no explanation.",
-      "collectionNaming": "You are a wallpaper library curator. Each id below is one image-vector cluster. Name each id separately. Do NOT merge ids. Do NOT apply group A's corpus to group B.\n\nRules:\n1. Output JSON only, no markdown\n2. At most {targetCount} entries; each id must come from the input\n3. Base naming ONLY on that id's titleSamples (short AI titles), samples, and tags; prefer titleSamples for name; do not add words absent from the corpus\n4. name MUST be a short mood title (NOT a full sentence, NOT a numbered placeholder), length {nameMinLen}-{nameMaxLen} chars\n5. If samples diverge, use broader wording still supported by titleSamples/samples/tags\n6. prompt / semanticQuery may be longer; name must stay short on its own\n\nInput candidates:\n{candidates}\n\nOutput format:\n{\n  \"collections\": [\n    {\n      \"id\": \"vec:0\",\n      \"name\": \"Alpine Lakes\",\n      \"prompt\": \"One-line mood for this group\",\n      \"semanticQuery\": \"Phrase for semantic search\"\n    }\n  ]\n}\n7. name language MUST match the app UI locale ({uiLocale}) and the language of samples/tags; no mixed-language titles"
+      "collectionTagExpand": "Erweitere Such-Tags für Wallpaper-Sammlungen um Synonyme. Thema: {keyword}\nJSON ausgeben: {\"tags\":[\"Tag1\",\"Tag2\"]}, max. 8 Einträge, Tags möglichst in derselben Sprache wie AI-Analyse und UI, keine Erklärung.",
+      "collectionNaming": "Du bist ein Kurator für Wallpaper-Bibliotheken. Jede id unten ist ein Bildvektor-Cluster. Benenne jede id separat. ids NICHT zusammenführen. Gruppe A nicht auf B anwenden.\n\nRegeln:\n1. Nur JSON, kein markdown\n2. Max. {targetCount} Einträge; jede id aus der Eingabe\n3. Benennung NUR aus titleSamples, samples und tags dieser id; name bevorzugt aus titleSamples; keine Wörter außerhalb des Korpus\n4. name MUSS kurzer Stimmungstitel sein (KEIN Satz, KEIN nummerierter Platzhalter), Länge {nameMinLen}-{nameMaxLen} Zeichen\n5. Bei divergierenden samples breitere Formulierung, aber durch Korpus gestützt\n6. prompt / semanticQuery dürfen länger sein; name bleibt kurz\n\nEingabe-Kandidaten:\n{candidates}\n\nAusgabeformat:\n{\n  \"collections\": [\n    {\n      \"id\": \"vec:0\",\n      \"name\": \"Alpine Seen\",\n      \"prompt\": \"Einzeiler Stimmung für diese Gruppe\",\n      \"semanticQuery\": \"Phrase für semantische Suche\"\n    }\n  ]\n}\n7. name-Sprache MUSS UI-Locale ({uiLocale}) und samples/tags entsprechen; keine gemischten Sprachen",
+      "videoPosterAnalysis": "Du bist ein Assistent für Wallpaper-Videoanalyse. Die Eingabe ist nur das Poster-Frame (nicht das ganze Video). Analysiere nur Sichtbares in diesem Frame; leite keine Bewegung oder Audio ab. Ausgabeformat und Feldregeln entsprechen der Bildanalyse.\n\n[Feldrollen — nicht vermischen]\n- title: kurze Überschrift, ≤40 Zeichen, Motiv + Szene\n- summary: eine Zeile für die Suche, ≤80 Zeichen, Thema und wichtige sichtbare Elemente (kein Anwendungsfall, kein „gut für Desktop“)\n- desc: detaillierte sichtbare Beschreibung für Menschen, 120–220 Zeichen (gleiche Sprache wie UI). Abdecken: Motiv(e), Pose/Aktion, Kleidung und Körperfreilegung, Umgebung, Bildausschnitt/Komposition, Farbe und Licht, Stil/Stimmung. Nur sichtbare Fakten; keine erfundene Geschichte; keine Eignungsempfehlung\n- tags: 3–10 Such-Tags (gleiche Sprache wie UI)\n- score: Ganzzahl 1–100, Gesamtästhetik\n- nsfwLevel: Ganzzahl 0–3 (Sensibilitätsrubrik unten)\n- safeForWork: Boolean, muss den Verknüpfungsregeln unten folgen\n\n[Sensibilitätsrubrik nsfwLevel — DE + 中文]\n0 Safe 安全: Landschaften, Stillleben, Alltagsporträts, kein sexueller oder sensibler Fokus. Gegenbeispiel: NICHT 0 bei erotischem Fokus oder klar sichtbaren intimen Körperteilen, nicht am Arbeitsplatz geeignet\n1 Mild 轻微: Bade-/Sportbekleidung/Mode-Look, viel Haut aber keine Brustwarzen/Genitalien, leicht suggestive Pose. Gegenbeispiel: NICHT 1 bei vollständiger Nacktheit, Sexualakte als Hauptmotiv, sichtbaren intimen Teilen (≥2)\n2 Moderate 中度: sichtbare Brustwarzen/teilweise Nacktheit, starke sexuelle Andeutung, grafische Gewalt, offensichtlich erwachsenenorientierte Komposition. Gegenbeispiel: NICHT 2 wenn Geschlechtsverkehr zentral oder intime Nahaufnahmen (3)\n3 Explicit 重度: erotische oder sexuelle Handlungen als Hauptmotiv, klar sichtbare Genitalien, extreme Gewalt. Gegenbeispiel: NICHT 3 bei Bikini/Badebekleidung ohne Nacktheit (1)\n\n[safeForWork ↔ nsfwLevel Verknüpfung — verbindlich]\n- nsfwLevel≥2 ⇒ safeForWork muss false sein\n- safeForWork false ⇒ nsfwLevel muss ≥2 sein\n- nsfwLevel=0 ⇒ safeForWork muss true sein\n- Niemals nsfwLevel=0 mit safeForWork=false ausgeben\n\nBeispiel (sicher): {\"score\":82,\"tags\":[\"Nacht\",\"Stadt\",\"Neon\",\"Regen\",\"Blau\"],\"title\":\"Regnerische Stadtsilhouette\",\"summary\":\"Nächtliche Stadt nach Regen, Türme und nasse Reflexionen\",\"desc\":\"Weite Silhouette im oberen Bildbereich mit warmem und kühlem Neon; nasses Mittelgrund-Pflaster spiegelt Lichter und Auto-Spuren; scharfe Tiefenschärfe, ruhige filmische Stimmung.\",\"nsfwLevel\":0,\"safeForWork\":true}"
     }
   },
   "privacyNsfwMask": {
-    "tapToUnlock": "Tap to enter privacy password",
-    "actionBlocked": "Verify privacy password via the hide overlay first"
+    "tapToUnlock": "Tippen, um Privatpasswort einzugeben",
+    "actionBlocked": "Zuerst Privatpasswort über die Maskierung verifizieren"
   }
 }

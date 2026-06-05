@@ -178,7 +178,8 @@
         "allowedFileExtHint": "掃描本機目錄時只索引所選副檔名，減少無關檔案",
         "autoRefreshDirectoryHint": "按間隔重新掃描本機目錄，發現新增或移除的檔案",
         "autoDownloadHint": "按間隔與關鍵詞從已選下載源儲存圖片到下載目錄",
-        "dynamicPerformanceModeHint": "降低影片解碼與渲染負載；播放卡頓時可嘗試節電檔"
+        "dynamicPerformanceModeHint": "降低影片解碼與渲染負載；播放卡頓時可嘗試節電檔",
+        "downloadMediaTypes": "自動下載類型"
       },
       "privacyPasswordForm": {
         "old": {
@@ -558,7 +559,14 @@
         "requeueFailedSuccess": "已將 {count} 張失敗圖片加入待分析佇列，背景將自動處理",
         "requeueFailedSuccessNoAi": "已將 {count} 張加入待分析佇列；未開啟「啟用 AI」，不會自動分析",
         "requeueFailedSuccessNoPump": "已將 {count} 張加入待分析佇列；目前分析模式不會自動背景處理",
-        "requeueFailedEmpty": "目前沒有分析失敗的圖片"
+        "requeueFailedEmpty": "目前沒有分析失敗的圖片",
+        "analysisCurrentTask": "正在分析 #{id}，已等待 {sec} 秒",
+        "analysisCurrentTaskVision": "正在分析 #{id}，等待視覺模型 {sec} 秒",
+        "analysisCurrentTaskMulti": "正在分析 {ids}，已等待 {sec} 秒",
+        "visualEmbedBackfillRunning": "畫面向量補算中，剩餘 {pending} 張",
+        "visualEmbedBackfillPending": "畫面向量待補算 {pending} 張",
+        "visualEmbedBackfillDone": "畫面向量已補全（目前模型）",
+        "visualEmbedBackfillDoneSkipped": "畫面向量已補全（目前模型），已跳過 {skipped} 張壞圖"
       },
       "privacySpace": {
         "enableNsfwContentMask": "敏感內容隱藏",
@@ -599,7 +607,11 @@
       "resetAiAnalysisSuccess": "已清空庫內 {count} 條圖片的 AI 分析資料，已刪除 {autoCollections} 個 AI 推薦合集，背景將自動處理",
       "resetAiAnalysisSuccessNoAi": "已清空庫內 {count} 條並標為待分析，已刪除 {autoCollections} 個 AI 推薦合集；未開啟「啟用 AI」，不會自動分析",
       "resetAiAnalysisSuccessNoPump": "已清空庫內 {count} 條並標為待分析，已刪除 {autoCollections} 個 AI 推薦合集；目前分析模式不會自動背景處理，請手動分析或改為「背景連續」/「僅新圖」",
-      "resetAiAnalysisEmpty": "庫中沒有可清空的圖片"
+      "resetAiAnalysisEmpty": "庫中沒有可清空的圖片",
+      "clearResourcesLibraryDB": "清空資源庫資料",
+      "clearResourcesLibraryConfirm": "将<strong>清空資源庫</strong>内全部壁纸记录（含本地入库与各来源下载入库），并同步刪除关联的 AI 分析、标签、向量、合集成员及指向这些资源的收藏/回忆/隐私/统计关联；<strong>不刪除磁盘文件</strong>（本地目录可刷新重新入库，下载文件请用「清空所有下载」）；<strong>不清空</strong>收藏/回忆/词库整表；将<strong>刪除全部 AI 推荐（系统）合集</strong>；用户自建合集保留但成员会被移除。<br/><br/>此操作不可逆，確認继续？",
+      "clearResourcesLibrarySuccess": "已清空資源庫 {count} 條記錄，已刪除 {autoCollections} 個 AI 推薦合集",
+      "clearResourcesLibraryEmpty": "資源庫中暫無記錄"
     },
     "About": {
       "name": "名稱",
@@ -688,7 +700,15 @@
       "curateManualConfirmSettled": "系统合集已定格，手動整理将用 LLM 全量重建，并移除未入选的系统合集。是否繼續？",
       "auto": {
         "storagePrompt": "{detail}"
-      }
+      },
+      "similarBackToForYou": "返回猜你喜歡",
+      "listTabForYou": "猜你喜歡",
+      "forYouTitle": "猜你喜歡",
+      "forYouHint": "根據你的設桌布與收藏偏好推薦",
+      "forYouEmpty": "暫無推薦，多設桌布或收藏後會更好",
+      "forYouRefresh": "刷新推薦",
+      "forYouDegraded": "偏好數據不足，已展示高分桌布",
+      "sectionForYou": "猜你喜歡"
     }
   },
   "messages": {
@@ -824,7 +844,8 @@
     "invalidShortcutOnlyModifiers": "快速鍵不能只包含修飾鍵，請再按一個一般鍵",
     "dialogOk": "確定",
     "aiJsonParseFailed": "AI 回傳無法解析為 JSON",
-    "aiNotEnabled": "AI 未啟用"
+    "aiNotEnabled": "AI 未啟用",
+    "noVideoPoster": "影片封面不存在，請先下載該影片後再分析。"
   },
   "resourceTypeList": {
     "localResource": "本地資源",
@@ -1315,7 +1336,8 @@
       "collectionQuery": "用戶想建立壁紙智慧合集。將描述解析為 queryJson，僅輸出 JSON。\n用戶描述：{prompt}\n欄位：\n- filterKeywords: string（核心檢索詞，與描述一致）\n- tags: string[]\n- tagsMode: any|all\n- quality: string[]（未提解析度時必須是 []；僅允許 8K、5K、4K、2K，禁止 1080p/720p/high/best 等）\n（不要輸出 orientation、scoreMin、scoreMax；最低分由應用 AI 設定統一）\n- resourceName: 固定 \"resources\"（全庫，禁止 favorites/local/history）\n- isRandom: boolean\n- sortField: score|created_at|views\n- sortType: -1|1\n- semanticQuery: string\n- useSemantic: boolean（有主題/氛圍描述時 true）\n- limitCount: 5-50 整數\n\n規則：tags 語言與資源 AI 標籤及當前介面語言一致；勿臆造 orientation/quality/scoreMin/scoreMax；具體實體詞 filterKeywords 填該詞並在 tags 寫同語言同義標籤。",
       "keywordExpand": "為壁紙自動下載擴展搜尋關鍵詞。輸入：{keywords}\n輸出 JSON：{\"keywords\":[\"詞1\",\"詞2\"]}，10 個以內，語言與當前介面一致，不要解釋。",
       "collectionTagExpand": "為壁紙合集檢索擴展標籤同義詞。主題詞：{keyword}\n輸出 JSON：{\"tags\":[\"標籤1\",\"標籤2\"]}，8 個以內，標籤語言與資源 AI 分析 tags 及當前介面語言一致，不要解釋。",
-      "collectionNaming": "你是壁紙庫策展助手。下面每個 id 對應一組「畫面向量聚類」結果，組內壁紙視覺風格相近。請為每個 id 單獨起名，禁止合併多個 id，禁止把 A 組的語料寫到 B 組。\n\n要求：\n1. 僅輸出 JSON，不要 markdown\n2. 輸出條數不超過 {targetCount}，且每條 id 必須來自輸入\n3. 只能依據該 id 的 titleSamples（AI 短標題）、samples 與 tags 起名；name 優先參考 titleSamples；不得添加語料中未出現的詞\n4. name 是簡短氛圍標題（不是完整句子、不是編號占位），總長度 {nameMinLen}-{nameMaxLen} 字符\n5. samples 分散時用更泛化但仍能在 titleSamples/samples/tags 中找到依據的表述\n6. prompt / semanticQuery 可以稍長，但 name 必須獨立且簡短\n\n輸入候選：\n{candidates}\n\n輸出格式：\n{\n  \"collections\": [\n    {\n      \"id\": \"vec:0\",\n      \"name\": \"山湖靜景\",\n      \"prompt\": \"一句話描述該組畫面氛圍\",\n      \"semanticQuery\": \"用於語義搜索的短語\"\n    }\n  ]\n}\n7. name 語言必須與當前應用介面語言（{uiLocale}）一致，並與 samples/tags 同語言；禁止中英混用"
+      "collectionNaming": "你是壁紙庫策展助手。下面每個 id 對應一組「畫面向量聚類」結果，組內壁紙視覺風格相近。請為每個 id 單獨起名，禁止合併多個 id，禁止把 A 組的語料寫到 B 組。\n\n要求：\n1. 僅輸出 JSON，不要 markdown\n2. 輸出條數不超過 {targetCount}，且每條 id 必須來自輸入\n3. 只能依據該 id 的 titleSamples（AI 短標題）、samples 與 tags 起名；name 優先參考 titleSamples；不得添加語料中未出現的詞\n4. name 是簡短氛圍標題（不是完整句子、不是編號占位），總長度 {nameMinLen}-{nameMaxLen} 字符\n5. samples 分散時用更泛化但仍能在 titleSamples/samples/tags 中找到依據的表述\n6. prompt / semanticQuery 可以稍長，但 name 必須獨立且簡短\n\n輸入候選：\n{candidates}\n\n輸出格式：\n{\n  \"collections\": [\n    {\n      \"id\": \"vec:0\",\n      \"name\": \"山湖靜景\",\n      \"prompt\": \"一句話描述該組畫面氛圍\",\n      \"semanticQuery\": \"用於語義搜索的短語\"\n    }\n  ]\n}\n7. name 語言必須與當前應用介面語言（{uiLocale}）一致，並與 samples/tags 同語言；禁止中英混用",
+      "videoPosterAnalysis": "你是壁纸影片分析助手。输入仅为该动态壁纸的封面帧（不是完整影片），请仅根据此帧可见内容分析，勿臆测影片中的动态或声画变化。输出格式与字段规则同图像分析。\n\n【字段职责（勿混用）】\n- title：简短标题，≤40 字，点出主体与场景\n- summary：检索用一句话，≤80 字，概括画面主题与关键元素（不写用途、不写「适合桌面」）\n- desc：给人看的详细描述，120–220 字，按顺序写清：主体/人物、动作与姿态、服饰与身体暴露程度、场景与环境、构图与景别、色调与光线、风格与氛围；只描述可见内容，不臆测故事，不评价用途\n- tags：3–10 个检索标签，与界面语言一致，含主体、场景、风格、色调等\n- score：1–100 整数，美学综合分\n- nsfwLevel：0–3 整数（敏感分级，见下表）\n- safeForWork：布尔，是否与下表联动规则一致\n\n【敏感分级 nsfwLevel（中英对照）】\n0 安全 Safe：普通风景/静物/日常人像，无性暗示或敏感主体。反例：不宜标 0——画面以情色或隐私部位清晰呈现、明显不适合办公场所\n1 轻微 Mild：泳装/运动装/时尚摄影感、肌肤较多但无露点、姿态略暧昧。反例：不宜标 1——明显全裸、以情色行为为主体、隐私部位清晰可见（应 ≥2）\n2 中度 Moderate：露点或大面积裸露、强性暗示、血腥特写、明显成人向构图。反例：不宜标 2——情色行为为画面中心、隐私部位特写（应 3）\n3 重度 Explicit：以情色或性行为为主体、隐私部位清晰可辨、极端血腥暴力。反例：不宜标 3——仅泳装/比基尼且无露点（应 1）\n\n【safeForWork 与 nsfwLevel 联动（必须遵守）】\n- nsfwLevel≥2 ⇒ safeForWork 必须为 false\n- safeForWork 为 false ⇒ nsfwLevel 必须 ≥2\n- nsfwLevel=0 ⇒ safeForWork 必须为 true\n- 不得出现 nsfwLevel=0 且 safeForWork=false\n\n示例（安全）：{\"score\":82,\"tags\":[\"夜景\",\"城市\",\"霓虹\",\"雨\",\"蓝调\"],\"title\":\"雨夜都市天际线\",\"summary\":\"雨后城市夜景，高楼灯火与湿润路面反光\",\"desc\":\"远景城市天际线占据画面上部，暖黄与冷蓝霓虹交织；中景街道被雨水打湿形成镜面反光，可见车灯拖影；构图偏横屏全景，景深清晰；整体氛围潮湿而宁静，写实摄影风格。\",\"nsfwLevel\":0,\"safeForWork\":true}"
     }
   },
   "privacyNsfwMask": {

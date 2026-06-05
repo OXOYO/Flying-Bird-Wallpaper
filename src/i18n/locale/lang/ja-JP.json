@@ -53,7 +53,7 @@
         "rhythmWallpaper": "リズム壁紙",
         "remoteResource": "リモートリソース",
         "privacyPassword": "プライバシーパスワード",
-        "privacySpaceOptions": "Privacy space options"
+        "privacySpaceOptions": "プライバシースペースオプション"
       },
       "settingDataForm": {
         "locale": "言語",
@@ -160,25 +160,26 @@
         "confirmOnDeleteFile": "削除前に確認",
         "enableSegmentationTask": "セグメンテーションタスクを有効化",
         "powerSaveMode": "省電力モード",
-        "enableExpandSideMenuHint": "When on, hover the left edge of the main window to expand/collapse the narrow sidebar for quick navigation",
-        "showSideMenuLabelHint": "Off: icons only to save width; On: show menu text under icons",
-        "suspensionBallVisibleHint": "Shows a small floating ball on the desktop; hover for prev/next/play/close shortcuts",
-        "startH5ServerOnStartupHint": "Starts the local H5 web server on launch; scan the sidebar QR code to browse wallpapers on your phone",
-        "enableSegmentationTaskHint": "Shows the word-cloud drawer on Search; segments the current list (may pause in power-save mode)",
-        "powerSaveModeHint": "Reduces background wallpaper switching, folder refresh, and AI analysis—good for battery saving",
-        "showTagHint": "Shows source/quality badges on cards; some tags are clickable filters",
-        "confirmOnDeleteFileHint": "Ask for confirmation before deleting local files from browse pages",
-        "viewImageIntervalTimeHint": "How long each image stays visible during autoplay in the built-in viewer",
-        "autoSwitchWallpaperHint": "Automatically change the desktop wallpaper at the interval below; off = manual or suspension ball only",
-        "switchTypeHint": "Sequential: in list order; Random: pick a random image each time",
-        "allScreenHint": "Apply the same wallpaper to all monitors when on",
-        "scaleTypeHint": "How the image is cropped or stretched to fill the screen",
-        "filterKeywordsHint": "Only images whose path/name contains a keyword are used for rotation (empty = no filter)",
-        "localResourceFoldersHint": "Local folders used as wallpaper libraries; scanning respects allowed file types",
-        "allowedFileExtHint": "Only these extensions are indexed when scanning local folders",
-        "autoRefreshDirectoryHint": "Rescan local folders on a schedule to pick up new or removed files",
+        "enableExpandSideMenuHint": "オン時、メインウィンドウ左端にマウスを置くと狭いサイドバーを展開/折りたたみ",
+        "showSideMenuLabelHint": "オフ：幅節約のためアイコンのみ；オン：アイコン下にメニュー文字",
+        "suspensionBallVisibleHint": "デスクトップに小さな浮遊ボール；ホバーで前/次/再生/閉じる",
+        "startH5ServerOnStartupHint": "起動時にローカル H5 Web サーバーを開始；サイドバー QR でスマホから閲覧",
+        "enableSegmentationTaskHint": "「検索」にワードクラウドドロワー；現在リストを分詞（省電モードで一時停止の可能性）",
+        "powerSaveModeHint": "壁紙切替・フォルダ更新・AI分析の頻度を下げ、ノートPCの省電に",
+        "showTagHint": "カードに出所/品質バッジ；一部タグはクリックフィルター",
+        "confirmOnDeleteFileHint": "閲覧ページからローカルファイル削除前に確認",
+        "viewImageIntervalTimeHint": "内蔵ビューア自動再生時、各画像の表示時間",
+        "autoSwitchWallpaperHint": "下の間隔でデスクトップ壁紙を自動変更；オフ=手動または浮遊ボールのみ",
+        "switchTypeHint": "順次：リスト順；ランダム：毎回ランダム選択",
+        "allScreenHint": "オン時、全モニターに同一壁紙",
+        "scaleTypeHint": "画面いっぱいに敷く際の切り抜き/伸縮",
+        "filterKeywordsHint": "パス/ファイル名にキーワードを含む画像のみローテーション（空=フィルターなし）",
+        "localResourceFoldersHint": "ローカルフォルダを壁紙ライブラリに；スキャンは許可ファイル種に従う",
+        "allowedFileExtHint": "ローカルスキャン時、選択拡張子のみインデックス",
+        "autoRefreshDirectoryHint": "間隔でローカルフォルダを再スキャンし追加/削除を検出",
         "autoDownloadHint": "Periodically download images from selected sources using your keywords into the download folder",
-        "dynamicPerformanceModeHint": "Lowers video decode/render load; try a lighter mode if playback stutters"
+        "dynamicPerformanceModeHint": "動画デコード/描画負荷を下げる；カクつく場合は省電モードを試す",
+        "downloadMediaTypes": "自動ダウンロードの種類"
       },
       "privacyPasswordForm": {
         "old": {
@@ -193,9 +194,9 @@
         },
         "confirm": "パスワードを更新",
         "hint": {
-          "label": "Password hint",
-          "placeholder": "e.g. last four digits of a date (optional)",
-          "tooltip": "Saved with your password to help you remember it; shown when verifying. Do not enter the password itself"
+          "label": "パスワードヒント",
+          "placeholder": "例：日付下4桁（任意）",
+          "tooltip": "パスワードと一緒に保存し思い出し用；検証時に表示。パスワード自体は入力しない"
         }
       },
       "shortcutSetting": {
@@ -220,7 +221,7 @@
         "searchInstalledPlaceholder": "インストール済みプラグインを検索...",
         "refresh": "更新",
         "name": "プラグイン名",
-        "version": "Version",
+        "version": "バージョン",
         "author": "作者",
         "description": "説明",
         "website": "公式サイト",
@@ -298,7 +299,7 @@
           "hint": {
             "unsplash": "Unsplash: Access Key のみ（Client-ID プレフィックス不要）",
             "pexels": "Pexels: API Key のみ（Bearer プレフィックス不要）",
-            "pixabay": "Pixabay: API Key"
+            "pixabay": "Pixabay：API キー"
           }
         },
         "feedback": {
@@ -327,7 +328,7 @@
           "fallbackBody": "一部のプラグインソースを読み込めませんでした。ネットワークまたはソース設定を確認して再試行してください。"
         },
         "loadErrors": {
-          "errorsSeparator": "; ",
+          "errorsSeparator": "；",
           "sourceItem": "{sourceName}（{hint}）",
           "network": "ネットワーク接続に失敗しました。接続を確認して再試行してください",
           "server5xx": "リモートサービスは一時的に利用できません。しばらくしてから再試行してください",
@@ -445,10 +446,10 @@
           "openrouter": "OpenRouter",
           "openai": "OpenAI",
           "deepseek": "DeepSeek",
-          "siliconflow": "SiliconFlow",
+          "siliconflow": "SiliconFlow（硅基流动）",
           "groq": "Groq",
           "together": "Together AI",
-          "moonshot": "Moonshot",
+          "moonshot": "Moonshot（月之暗面）",
           "custom": "カスタム OpenAI 互換"
         },
         "visionSection": "ビジョンモデル",
@@ -458,7 +459,7 @@
         "textModel": "テキストモデル",
         "textBaseUrl": "サービス URL",
         "embeddingModel": "ベクトルモデル",
-        "apiKey": "API Key",
+        "apiKey": "API キー",
         "copyApiKey": "コピー",
         "apiKeyPlaceholder": "リモート API Key を入力",
         "customBaseUrlPlaceholder": "https://your-api.example.com",
@@ -496,7 +497,7 @@
           "serverError": "AI サービスは一時的に利用できません（HTTP {status}）。しばらくしてから再試行してください",
           "providerError": "AI サービスエラー：{detail}",
           "providerErrorGeneric": "不明な AI サービスエラーです。しばらくしてから再試行してください",
-          "modelNameMissing": "Select or enter a model name first"
+          "modelNameMissing": "先にモデル名を選択または入力してください"
         },
         "autoCollectionsEnabled": "AI によるコレクション自動整理",
         "autoCollectionsEnabledHint": "タグとベクトル雰囲気でクラスタリングし、LLM で名前を付けてシステムコレクションに統合（重複可、削除可）",
@@ -522,29 +523,29 @@
         "sectionFeaturesFindSimilar": "類似検索",
         "sectionFeaturesSearch": "検索とダウンロード",
         "sectionFeaturesLegacy": "互換オプション",
-        "enabledHint": "Master switch: when off, auto analysis, semantic search, and AI collections stop; settings are kept",
-        "analysisConcurrency": "Background concurrency",
-        "analysisConcurrencyHint": "In background continuous / new-images-only modes, how many images call the vision model at once (1–10). Takes effect after save; lower if VRAM is tight. Text embeddings run async per image and do not use this slot",
+        "enabledHint": "マスタースイッチ：オフにすると自動分析・意味検索・AIコレクションが停止します。子設定は保持されます",
+        "analysisConcurrency": "バックグラウンド並列数",
+        "analysisConcurrencyHint": "バックグラウンド連続/新規画像のみモードで、同時にビジョンモデルを呼ぶ枚数（1～10）。保存後すぐ反映；VRAM不足時は下げてください。テキスト embedding は各画像分析成功後に非同期書き込みで、この並列を消費しません",
         "copyModelName": "モデル名をコピー",
-        "textEmbedModelHint": "Text-only embeddings for semantic search (e.g. nomic-embed-text)—not visual vectors or vision analysis",
-        "listEmptyVisualEmbed": "No visual embedding models found. Enter manually (e.g. batiai/qwen2-vl-embed-2b:q8). Text-only embed models (e.g. nomic-embed-text) cannot embed images.",
-        "purposeVisualEmbed": "visual embedding",
+        "textEmbedModelHint": "意味検索専用のテキスト embedding（例：nomic-embed-text）—画面ベクトルやビジョン分析モデルとは無関係",
+        "listEmptyVisualEmbed": "画面 embedding モデルが見つかりません。手動入力可（例：batiai/qwen2-vl-embed-2b:q8）。純テキスト embed（例：nomic-embed-text）は画像を扱えません。",
+        "purposeVisualEmbed": "画面ベクトル",
         "testConnection": "接続をテスト",
-        "findSimilarHintTitle": "Find similar",
-        "findSimilarHint": "Automatically fuses visual vectors (built-in MobileCLIP) and text vectors (embedding model) with RRF ranking—no similarity threshold to tune. Text channel joins when AI is enabled.",
-        "findSimilarHintShort": "Uses built-in MobileCLIP for visual similarity by default; when an embedding model is configured, title and description are considered too.",
-        "visualEmbedSource": "Visual vector source",
-        "visualEmbedSourceHint": "Built-in: offline, bundled, best for visual similarity. Remote: experimental image embedding via Ollama or compatible APIs; falls back to built-in on failure.",
-        "visualEmbedSourceBuiltin": "Built-in MobileCLIP",
-        "visualEmbedSourceRemote": "Remote embedding model",
+        "findSimilarHintTitle": "類似を探す",
+        "findSimilarHint": "画面ベクトル（内蔵 MobileCLIP）とテキストベクトル（embedding モデル）を RRF ランキングで自動融合—類似度閾値の調整不要。AI 有効時にテキスト経路も参加します。",
+        "findSimilarHintShort": "既定では内蔵 MobileCLIP で画面類似；embedding モデル設定時はタイトルと説明も参照します。",
+        "visualEmbedSource": "画面ベクトルソース",
+        "visualEmbedSourceHint": "内蔵：オフライン・アプリ同梱、画面類似に最適。リモート：Ollama 等の画像 embedding（実験的）、失敗時は内蔵にフォールバック。",
+        "visualEmbedSourceBuiltin": "内蔵 MobileCLIP",
+        "visualEmbedSourceRemote": "リモート embedding モデル",
         "visualEmbedSection": "画面モデル",
-        "visualEmbedBaseUrl": "Service URL",
-        "visualEmbedModel": "Visual vector model",
-        "visualEmbedModelHint": "Image embeddings for find-similar; built-in MobileCLIP recommended. Remote models must support image vectors—not vision or text embed models. Falls back to built-in on failure.",
-        "visualEmbedRemoteSectionHint": "Configure provider, URL, API key, and model in the Visual vector service section below.",
-        "visualEmbedModelPlaceholder": "e.g. batiai/qwen3-vl-embed-2b",
-        "legacyLocalVisualEmbed": "Built-in visual vectors",
-        "legacyLocalVisualEmbedHint": "When enabled, uses built-in visual vectors for similarity and Find similar. When disabled, uses the remote embedding model in Visual vector service (falls back to built-in on failure).",
+        "visualEmbedBaseUrl": "サービス URL",
+        "visualEmbedModel": "画面ベクトルモデル",
+        "visualEmbedModelHint": "類似検索用の画像 embedding；内蔵 MobileCLIP 推奨。リモートは画像ベクトル対応必須—ビジョン/テキスト embed 不可。失敗時内蔵へ。",
+        "visualEmbedRemoteSectionHint": "下の「画面ベクトルサービス」でプロバイダー・URL・API Key・モデルを個別設定してください。",
+        "visualEmbedModelPlaceholder": "例：batiai/qwen3-vl-embed-2b",
+        "legacyLocalVisualEmbed": "内蔵画面ベクトル",
+        "legacyLocalVisualEmbedHint": "オン時は内蔵画面ベクトルで類似/類似検索。オフ時は「画面ベクトルサービス」のリモート embedding（失敗時内蔵）。",
         "pumpBlockReason_scheduler_stopped": "バックグラウンド分析タイマーが停止しています（省電でタスク削除後など）。AI設定を保存するか、AC電源に接続してください。",
         "pumpBlockReason_power_save_battery": "省電モードかつバッテリー駆動のため、バックグラウンド分析を一時停止しています",
         "pumpBlockReason_maintenance": "リソースメンテナンス中のため、分析を一時停止しています",
@@ -558,13 +559,20 @@
         "requeueFailedSuccess": "失敗した{count}枚を待機キューに戻しました。バックグラウンドで処理を開始します",
         "requeueFailedSuccessNoAi": "{count}枚を待機キューに戻しました。「AIを有効化」がオフのため自動分析は行われません",
         "requeueFailedSuccessNoPump": "{count}枚を待機キューに戻しました。現在の分析モードではバックグラウンド実行されません",
-        "requeueFailedEmpty": "再キューできる失敗画像はありません"
+        "requeueFailedEmpty": "再キューできる失敗画像はありません",
+        "analysisCurrentTask": "分析中 #{id}、待機 {sec} 秒",
+        "analysisCurrentTaskVision": "分析中 #{id}、ビジョンモデル待ち {sec} 秒",
+        "analysisCurrentTaskMulti": "分析中 {ids}、待機 {sec} 秒",
+        "visualEmbedBackfillRunning": "ビジュアルベクトル補算中、残り {pending} 枚",
+        "visualEmbedBackfillPending": "ビジュアルベクトル待ち {pending} 枚",
+        "visualEmbedBackfillDone": "ビジュアルベクトル完了（現在のモデル）",
+        "visualEmbedBackfillDoneSkipped": "ビジュアルベクトル完了（現在のモデル）、不良画像 {skipped} 枚をスキップ"
       },
       "privacySpace": {
         "enableNsfwContentMask": "センシティブコンテンツを非表示",
-        "enableNsfwContentMaskHint": "Requires a privacy password: cannot turn on without one; turning off requires verification. When on, sensitivity level ≥ 2 is masked on browse pages (search and collections unchanged—display only). Previous/next wallpaper skip those images (manual Set as wallpaper is not affected). Tap the mask and enter your password to view on the current page; masking returns when you switch menus or the app goes to background. Not masked in Privacy Space."
+        "enableNsfwContentMaskHint": "プライバシーパスワード必須：未設定ではオン不可；オフには検証が必要。オン時、閲覧ページで敏感レベル≥2をマスク（検索・コレクションは変更なし—表示のみ）。前/次の壁紙切替で該当画像をスキップ（手動「壁紙に設定」は影響なし）。マスクをタップしてパスワード入力で一時表示；メニュー切替やバックグラウンドで復帰。プライバシースペース内はマスクなし。"
       },
-      "privacyPasswordHintLabel": "Password hint"
+      "privacyPasswordHintLabel": "パスワードヒント"
     },
     "Utils": {
       "dataUtils": "データツール",
@@ -599,7 +607,11 @@
       "resetAiAnalysisSuccess": "ライブラリ内{count}件のAIデータをクリアし、AI推奨コレクション{autoCollections}件を削除しました。バックグラウンド処理を開始します",
       "resetAiAnalysisSuccessNoAi": "{count}件を待機に戻し、AI推奨コレクション{autoCollections}件を削除しました。「AIを有効化」がオフのため自動分析は行われません",
       "resetAiAnalysisSuccessNoPump": "{count}件を待機に戻し、AI推奨コレクション{autoCollections}件を削除しました。現在の分析モードではバックグラウンド実行されません",
-      "resetAiAnalysisEmpty": "クリアできる画像がありません"
+      "resetAiAnalysisEmpty": "クリアできる画像がありません",
+      "clearResourcesLibraryDB": "リソースライブラリデータを消去",
+      "clearResourcesLibraryConfirm": "リソースライブラリ内の<strong>すべての壁紙レコード</strong>（ローカルスキャンおよび各ソースからのダウンロード）を消去し、関連する AI 分析、タグ、ベクトル、コレクション所属、およびそれらのレコードへのお気に入り/履歴/プライバシー/統計のリンクも削除します。<strong>ディスク上のファイルは削除されません</strong>（ローカルフォルダは更新で再取り込み可能；ダウンロードファイルは「すべてのダウンロードを消去」を使用）。お気に入り/履歴/語彙<strong>テーブル全体は消去しません</strong>。<strong>AI 推薦（システム）コレクションをすべて削除</strong>します。ユーザー作成コレクションは残りますがメンバーは削除されます。<br/><br/>この操作は元に戻せません。続行しますか？",
+      "clearResourcesLibrarySuccess": "リソースライブラリ {count} 件を消去し、AI 推薦コレクション {autoCollections} 件を削除しました",
+      "clearResourcesLibraryEmpty": "リソースライブラリは既に空です"
     },
     "About": {
       "name": "名前",
@@ -671,24 +683,32 @@
       "noItems": "コレクションが空です。更新して生成してください",
       "selectHint": "コレクションを選択して壁紙を表示してください",
       "confirmDelete": "このコレクションを削除しますか？",
-      "curatorStatsShortSettled": "Settled · Analyzed {analyzed} · {auto} picks (new images added incrementally)",
-      "curatorFooterLine": "AI Analysis · {status} · Progress {done}/{total} · {percent}% · Collections {auto}/{target}",
-      "curatorFooterLabel": "AI Analysis",
-      "curatorFooterProgress": "Progress {done}/{total}",
-      "curatorFooterCollections": "Collections {auto}/{target}",
+      "curatorStatsShortSettled": "確定 · 分析済み {analyzed} · おすすめ {auto} 件（新規画像は段階的に追加）",
+      "curatorFooterLine": "AI分析 · {status} · 進捗 {done}/{total} · {percent}% · コレクション {auto}/{target}",
+      "curatorFooterLabel": "AI分析",
+      "curatorFooterProgress": "進捗 {done}/{total}",
+      "curatorFooterCollections": "コレクション {auto}/{target}",
       "curatorFooterStatus": {
-        "disabled": "Off",
-        "settled": "Settled",
-        "running": "Running",
-        "queued": "Queued",
-        "complete": "Complete",
-        "idle": "Idle",
-        "onDemand": "On demand"
+        "disabled": "無効",
+        "settled": "確定",
+        "running": "実行中",
+        "queued": "待機中",
+        "complete": "完了",
+        "idle": "アイドル",
+        "onDemand": "オンデマンド"
       },
-      "curateManualConfirmSettled": "System collections are settled. Manual curation will run a full LLM rebuild and remove collections not in the new plan. Continue?",
+      "curateManualConfirmSettled": "システムコレクションは確定済みです。手動整理は LLM による全量再構築を行い、新プランに含まれないコレクションを削除します。続行しますか？",
       "auto": {
         "storagePrompt": "{detail}"
-      }
+      },
+      "similarBackToForYou": "おすすめに戻る",
+      "listTabForYou": "おすすめ",
+      "forYouTitle": "おすすめ",
+      "forYouHint": "壁紙の設定とお気に入りの傾向に基づくおすすめ",
+      "forYouEmpty": "おすすめはまだありません。壁紙を設定するかお気に入りを増やすと改善します",
+      "forYouRefresh": "おすすめを更新",
+      "forYouDegraded": "嗜好データが不足しているため、高評価の壁紙を表示しています",
+      "sectionForYou": "おすすめ"
     }
   },
   "messages": {
@@ -823,8 +843,9 @@
     "conflictWindowShortcut": "ウィンドウ「{window}」内で「{name}」とショートカットが競合しています",
     "invalidShortcutOnlyModifiers": "ショートカットは修飾キーのみにできません。別のキーを押してください。",
     "dialogOk": "OK",
-    "aiJsonParseFailed": "AI response could not be parsed as JSON",
-    "aiNotEnabled": "AI is not enabled"
+    "aiJsonParseFailed": "AI 応答を JSON として解析できませんでした",
+    "aiNotEnabled": "AI が有効ではありません",
+    "noVideoPoster": "動画ポスターがありません。先に動画をダウンロードしてから分析してください。"
   },
   "resourceTypeList": {
     "localResource": "ローカルリソース",
@@ -1118,22 +1139,22 @@
       "updated_at": "レコード更新時間",
       "ctimeMs": "リソース作成時間",
       "mtimeMs": "リソース更新時間",
-      "summary": "Summary",
-      "tags": "Tags",
-      "nsfwLevel": "NSFW level",
-      "aiAnalysisStatus": "AI analysis"
+      "summary": "要約",
+      "tags": "タグ",
+      "nsfwLevel": "敏感レベル",
+      "aiAnalysisStatus": "AI 分析"
     },
     "nsfwLevel": {
-      "0": "Safe (0)",
-      "1": "Mild (1)",
-      "2": "Moderate (2)",
-      "3": "High (3)"
+      "0": "安全 (0)",
+      "1": "軽微 (1)",
+      "2": "中程度 (2)",
+      "3": "高 (3)"
     },
     "aiAnalysisStatus": {
-      "pending": "Pending",
-      "done": "Done",
-      "failed": "Failed",
-      "skipped": "Skipped"
+      "pending": "待機",
+      "done": "完了",
+      "failed": "失敗",
+      "skipped": "スキップ"
     }
   },
   "h5": {
@@ -1141,7 +1162,7 @@
       "home": "ホーム",
       "search": "検索",
       "setting": "設定",
-      "browse": "Browse"
+      "browse": "閲覧"
     },
     "pages": {
       "home": {
@@ -1178,10 +1199,10 @@
           "updated_at": "レコード更新時間",
           "ctimeMs": "リソース作成時間",
           "mtimeMs": "リソース更新時間",
-          "summary": "Summary",
-          "tags": "Tags",
-          "nsfwLevel": "NSFW level",
-          "aiAnalysisStatus": "AI analysis"
+          "summary": "要約",
+          "tags": "タグ",
+          "nsfwLevel": "敏感レベル",
+          "aiAnalysisStatus": "AI 分析"
         }
       },
       "search": {
@@ -1272,10 +1293,10 @@
             "label": "表示サイズ",
             "placeholder": "表示サイズを選択してください"
           },
-          "h5FullscreenImageCompress": "Fullscreen optimized loading",
+          "h5FullscreenImageCompress": "全画面最適化読み込み",
           "h5FullscreenImageCompressHint": "Card mode always uses compressed thumbnails; fullscreen uses compressed images when on, originals when off",
-          "h5ImageCompressStartSize": "Compress threshold (MB)",
-          "h5ImageCompressStartSizeHint": "Skip resize below this size; always applies in card mode",
+          "h5ImageCompressStartSize": "圧縮開始サイズ (MB)",
+          "h5ImageCompressStartSizeHint": "このサイズ未満はリサイズしない；カードモードでは常に有効",
           "h5FunctionSettings": "機能設定",
           "h5FloatingButtonPosition": {
             "label": "フローティングボタンの位置",
@@ -1304,22 +1325,23 @@
       }
     },
     "drawer": {
-      "title": "Browse",
+      "title": "閲覧",
       "openBrowseMenu": "閲覧メニューを開く"
     }
   },
   "ai": {
     "prompts": {
-      "imageAnalysis": "You are a wallpaper image analysis assistant. Output only one JSON object, no markdown fences, no extra commentary.\n\n[Field roles — do not mix]\n- title: short headline, ≤40 chars, subject + scene\n- summary: one line for search, ≤80 chars, theme and key visible elements (no use-case, no \"good for desktop\")\n- desc: detailed visible description for humans, 120–220 chars (same language as UI). Cover: subject(s), pose/action, clothing and body exposure level, environment, framing/composition, color and lighting, style/mood. Visible facts only; no invented story; no suitability advice\n- tags: 3–10 search tags (same language as UI)\n- score: integer 1–100, overall aesthetic score\n- nsfwLevel: integer 0–3 (sensitivity rubric below)\n- safeForWork: boolean, must follow linkage rules below\n\n[Sensitivity rubric nsfwLevel — EN + 中文]\n0 Safe 安全: landscapes, still life, everyday portraits, no sexual or sensitive focus. Counter-example: do NOT use 0 when erotic focus or clearly visible intimate body parts, not workplace-appropriate\n1 Mild 轻微: swimwear/sportswear/fashion look, much skin but no nipples/genitals, mildly suggestive pose. Counter-example: do NOT use 1 for full nudity, sex acts as main subject, visible intimate parts (use ≥2)\n2 Moderate 中度: visible nipples/partial nudity, strong sexual suggestion, graphic gore, obvious adult-oriented framing. Counter-example: do NOT use 2 when intercourse is central or intimate close-ups (use 3)\n3 Explicit 重度: erotic or sexual acts as main subject, clearly visible genitals, extreme gore. Counter-example: do NOT use 3 for bikini/swimwear with no nudity (use 1)\n\n[safeForWork ↔ nsfwLevel linkage — mandatory]\n- nsfwLevel≥2 ⇒ safeForWork must be false\n- safeForWork false ⇒ nsfwLevel must be ≥2\n- nsfwLevel=0 ⇒ safeForWork must be true\n- Never output nsfwLevel=0 with safeForWork=false\n\nExample (safe): {\"score\":82,\"tags\":[\"night\",\"city\",\"neon\",\"rain\",\"blue\"],\"title\":\"Rainy city skyline\",\"summary\":\"Night cityscape after rain, towers and wet reflections\",\"desc\":\"Wide skyline in the upper frame with warm and cool neon; wet mid-ground pavement mirrors lights and car streaks; sharp deep focus, cinematic calm mood.\",\"nsfwLevel\":0,\"safeForWork\":true}",
-      "searchParse": "Parse the user's wallpaper search description into JSON. No markdown.\nUser input: {query}\nOutput fields:\n- filterKeywords: string, core keywords\n- tags: string array, [] if omitted\n- orientation: array, [] if omitted; elements 1 (landscape) or 0 (portrait), or landscape/portrait\n- quality: array, [] if omitted; only 8K, 5K, 4K, 2K (must match DB field; no 1080p/720p/lowercase 4k)\n- filterType: images | videos | \"\" (empty if type not specified; do not output fileType)\n- scoreMin: integer 0-100 or null unless user asks for a minimum score\n- scoreMax: integer 0-100 or null\n\nExample: {\"filterKeywords\":\"ocean\",\"tags\":[\"ocean\",\"blue\"],\"orientation\":[1],\"quality\":[\"4K\"],\"filterType\":\"images\",\"scoreMin\":null,\"scoreMax\":null}",
-      "collectionQuery": "The user wants to create a smart wallpaper collection. Parse the description into queryJson. Output JSON only.\nUser description: {prompt}\nFields:\n- filterKeywords: string (core search term)\n- tags: string[]\n- tagsMode: any|all\n- quality: string[] (must be [] unless user asks resolution; only 8K, 5K, 4K, 2K; no 1080p/720p)\n(Do not output orientation, scoreMin, or scoreMax; minimum score comes from app AI settings.)\n- resourceName: always \"resources\" (full library; never favorites/local/history)\n- isRandom: boolean\n- sortField: score|created_at|views\n- sortType: -1|1\n- semanticQuery: string\n- useSemantic: boolean (true when theme/mood is described)\n- limitCount: integer 5-50\n\nRules: tags must match resource AI tag language (prefer same as UI); do not invent orientation/quality/scoreMin/scoreMax; for entity words put the word in filterKeywords and add synonymous tags in the same language as resource tags.",
+      "imageAnalysis": "あなたは壁紙画像分析アシスタントです。JSON オブジェクトのみを出力し、markdown コードブロックや余分な説明は不要です。\n\n【フィールドの役割（混同しない）】\n- title：短い見出し、≤40 文字、被写体＋シーン\n- summary：検索用の1行、≤80 文字、画面のテーマと主要な可視要素（用途や「デスクトップ向き」は書かない）\n- desc：人向けの詳細な可視説明、120–220 文字（UI と同じ言語）。被写体、ポーズ/動作、服装と露出度、環境、構図/フレーミング、色と光、スタイル/雰囲気を順に記述。可視内容のみ；物語の創作や適性評価はしない\n- tags：3–10 個の検索タグ（UI と同じ言語）\n- score：1–100 の整数、美学総合点\n- nsfwLevel：0–3 の整数（下記の感度基準）\n- safeForWork：ブール値、下記の連動ルールに従う\n\n【感度基準 nsfwLevel（日英対照）】\n0 Safe 安全：風景/静物/日常ポートレート、性的・センシティブな焦点なし。反例：0 にしない——エロティックな焦点や私的部位が明確、職場不適切\n1 Mild 轻微：水着/スポーツウェア/ファッション、肌露出多めだが露点なし、やや示唆的なポーズ。反例：1 にしない——全裸、性行為が主題、私的部位が明確（≥2）\n2 Moderate 中度：露点や部分裸、強い性的示唆、グロテスク、明らかに成人向け構図。反例：2 にしない——性行為が中心、私的部位のクローズアップ（3）\n3 Explicit 重度：エロ/性行為が主題、私的部位が明確、極端なグロテスク。反例：3 にしない——水着/ビキニで露点なし（1）\n\n【safeForWork と nsfwLevel の連動（必須）】\n- nsfwLevel≥2 ⇒ safeForWork は false\n- safeForWork が false ⇒ nsfwLevel は ≥2\n- nsfwLevel=0 ⇒ safeForWork は true\n- nsfwLevel=0 かつ safeForWork=false は禁止\n\n例（安全）：{\"score\":82,\"tags\":[\"夜景\",\"都市\",\"ネオン\",\"雨\",\"ブルー\"],\"title\":\"雨の都市スカイライン\",\"summary\":\"雨後の夜の街並み、ビル群と濡れた路面の反射\",\"desc\":\"画面上部に広がるスカイライン、暖色と寒色のネオンが交差；中景の濡れた舗装が光と車の光跡を映す；横長全景、シャープな被写界深度；湿った静かな写実的ムード。\",\"nsfwLevel\":0,\"safeForWork\":true}",
+      "searchParse": "ユーザーの壁紙検索記述を JSON に解析してください。markdown 不可。\nユーザー入力：{query}\n出力フィールド：\n- filterKeywords: 文字列、核心キーワード\n- tags: 文字列配列、未記載時 []\n- orientation: 配列、未記載時 []；要素は 1（横）または 0（縦）、または landscape/portrait\n- quality: 配列、未記載時 []；8K、5K、4K、2K のみ（DB フィールドと一致；1080p/720p/小文字 4k 禁止）\n- filterType: images | videos | \"\"（タイプ未指定時は空；fileType 禁止）\n- scoreMin: 0-100 整数、ユーザーが下限を求めない限り null\n- scoreMax: 0-100 整数または null\n\n例：{\"filterKeywords\":\"海\",\"tags\":[\"海\",\"青\"],\"orientation\":[1],\"quality\":[\"4K\"],\"filterType\":\"images\",\"scoreMin\":null,\"scoreMax\":null}",
+      "collectionQuery": "ユーザーは壁紙スマートコレクションを作成したいです。記述を queryJson に解析し、JSON のみ出力。\nユーザー記述：{prompt}\nフィールド：\n- filterKeywords: string（核心検索語）\n- tags: string[]\n- tagsMode: any|all\n- quality: string[]（解像度未指定時は必ず []；8K、5K、4K、2K のみ；1080p/720p 禁止）\n（orientation、scoreMin、scoreMax は出力しない；最低点はアプリ AI 設定）\n- resourceName: 固定 \"resources\"（全库；favorites/local/history 禁止）\n- isRandom: boolean\n- sortField: score|created_at|views\n- sortType: -1|1\n- semanticQuery: string\n- useSemantic: boolean（テーマ/雰囲気記述時 true）\n- limitCount: 5-50 整数\n\n規則：tags はリソース AI タグおよび UI 言語と一致；orientation/quality/scoreMin/scoreMax を捏造しない；実体語は filterKeywords と同言語の同義 tags。",
       "keywordExpand": "壁紙の自動ダウンロード用に検索キーワードを拡張してください。入力：{keywords}\n出力 JSON：{\"keywords\":[\"語1\",\"語2\"]}、最大 10 件、言語はこのプロンプトと同じ、説明は不要。",
-      "collectionTagExpand": "Expand wallpaper collection search tags for synonyms. Theme: {keyword}\nOutput JSON: {\"tags\":[\"tag1\",\"tag2\"]}, up to 8 items, tags in the same language as resource AI analysis and UI when possible, no explanation.",
-      "collectionNaming": "You are a wallpaper library curator. Each id below is one image-vector cluster. Name each id separately. Do NOT merge ids. Do NOT apply group A's corpus to group B.\n\nRules:\n1. Output JSON only, no markdown\n2. At most {targetCount} entries; each id must come from the input\n3. Base naming ONLY on that id's titleSamples (short AI titles), samples, and tags; prefer titleSamples for name; do not add words absent from the corpus\n4. name MUST be a short mood title (NOT a full sentence, NOT a numbered placeholder), length {nameMinLen}-{nameMaxLen} chars\n5. If samples diverge, use broader wording still supported by titleSamples/samples/tags\n6. prompt / semanticQuery may be longer; name must stay short on its own\n\nInput candidates:\n{candidates}\n\nOutput format:\n{\n  \"collections\": [\n    {\n      \"id\": \"vec:0\",\n      \"name\": \"Alpine Lakes\",\n      \"prompt\": \"One-line mood for this group\",\n      \"semanticQuery\": \"Phrase for semantic search\"\n    }\n  ]\n}\n7. name language MUST match the app UI locale ({uiLocale}) and the language of samples/tags; no mixed-language titles"
+      "collectionTagExpand": "壁紙コレクション検索タグの同義語を拡張。テーマ：{keyword}\nJSON：{\"tags\":[\"タグ1\",\"タグ2\"]}、8 個以内、リソース AI タグおよび UI 言語に合わせ、説明不要。",
+      "collectionNaming": "あなたは壁紙ライブラリのキュレーターです。以下の各 id は画面ベクトルクラスターです。各 id を個別に命名。id を統合しない。A 組の語料を B に適用しない。\n\n要件：\n1. JSON のみ、markdown 不可\n2. 出力は {targetCount} 件以内、各 id は入力由来\n3. 各 id の titleSamples、samples、tags のみで命名；name は titleSamples 優先；語料にない語は禁止\n4. name は短い雰囲気タイトル（完全文・番号プレースホルダ不可）、{nameMinLen}-{nameMaxLen} 文字\n5. samples が分散する場合はより汎化したが語料に根拠のある表現\n6. prompt / semanticQuery はやや長く可；name は短く独立\n\n入力候補：\n{candidates}\n\n出力形式：\n{\n  \"collections\": [\n    {\n      \"id\": \"vec:0\",\n      \"name\": \"山湖静景\",\n      \"prompt\": \"このグループの雰囲気を一行で\",\n      \"semanticQuery\": \"意味検索用フレーズ\"\n    }\n  ]\n}\n7. name の言語は UI ロケール（{uiLocale}）および samples/tags と一致；言語混在禁止",
+      "videoPosterAnalysis": "あなたは壁紙動画分析アシスタントです。入力は動的壁紙のカバーフレームのみ（動画全体ではありません）。このフレームの可視内容のみ分析し、動きや音声は推測しないでください。出力形式とフィールド規則は画像分析と同じです。\n\n【フィールドの役割（混同しない）】\n- title：短い見出し、≤40 文字、被写体＋シーン\n- summary：検索用の1行、≤80 文字、画面のテーマと主要な可視要素（用途や「デスクトップ向き」は書かない）\n- desc：人向けの詳細な可視説明、120–220 文字（UI と同じ言語）。被写体、ポーズ/動作、服装と露出度、環境、構図/フレーミング、色と光、スタイル/雰囲気を順に記述。可視内容のみ；物語の創作や適性評価はしない\n- tags：3–10 個の検索タグ（UI と同じ言語）\n- score：1–100 の整数、美学総合点\n- nsfwLevel：0–3 の整数（下記の感度基準）\n- safeForWork：ブール値、下記の連動ルールに従う\n\n【感度基準 nsfwLevel（日英対照）】\n0 Safe 安全：風景/静物/日常ポートレート、性的・センシティブな焦点なし。反例：0 にしない——エロティックな焦点や私的部位が明確、職場不適切\n1 Mild 轻微：水着/スポーツウェア/ファッション、肌露出多めだが露点なし、やや示唆的なポーズ。反例：1 にしない——全裸、性行為が主題、私的部位が明確（≥2）\n2 Moderate 中度：露点や部分裸、強い性的示唆、グロテスク、明らかに成人向け構図。反例：2 にしない——性行為が中心、私的部位のクローズアップ（3）\n3 Explicit 重度：エロ/性行為が主題、私的部位が明確、極端なグロテスク。反例：3 にしない——水着/ビキニで露点なし（1）\n\n【safeForWork と nsfwLevel の連動（必須）】\n- nsfwLevel≥2 ⇒ safeForWork は false\n- safeForWork が false ⇒ nsfwLevel は ≥2\n- nsfwLevel=0 ⇒ safeForWork は true\n- nsfwLevel=0 かつ safeForWork=false は禁止\n\n例（安全）：{\"score\":82,\"tags\":[\"夜景\",\"都市\",\"ネオン\",\"雨\",\"ブルー\"],\"title\":\"雨の都市スカイライン\",\"summary\":\"雨後の夜の街並み、ビル群と濡れた路面の反射\",\"desc\":\"画面上部に広がるスカイライン、暖色と寒色のネオンが交差；中景の濡れた舗装が光と車の光跡を映す；横長全景、シャープな被写界深度；湿った静かな写実的ムード。\",\"nsfwLevel\":0,\"safeForWork\":true}"
     }
   },
   "privacyNsfwMask": {
-    "tapToUnlock": "Tap to enter privacy password",
-    "actionBlocked": "Verify privacy password via the hide overlay first"
+    "tapToUnlock": "タップしてプライバシーパスワードを入力",
+    "actionBlocked": "先にマスクからプライバシーパスワードを確認してください"
   }
 }

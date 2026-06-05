@@ -19,7 +19,7 @@ const props = defineProps({
   browseType: {
     type: String,
     required: true,
-    validator: (v) => ['favorites', 'history', 'collection'].includes(v)
+    validator: (v) => ['favorites', 'history', 'collection', 'recommend'].includes(v)
   },
   collectionId: {
     type: [Number, String],

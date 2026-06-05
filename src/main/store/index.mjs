@@ -250,7 +250,11 @@ export default class Store {
       this.aiAnalysisManager.onAnalysisBatchDone = () => this.syncAutoCurateGateFromAnalysis()
       this.embeddingManager.onEmbeddingDone = () => this.scheduleCollectionCurator(60 * 1000)
       this.embeddingManager.onVisualEmbeddingDone = () => this.scheduleCollectionCurator(60 * 1000)
-      this.recommendManager = RecommendManager.getInstance(global.logger, this.dbManager)
+      this.recommendManager = RecommendManager.getInstance(
+        global.logger,
+        this.dbManager,
+        this.settingManager
+      )
       this.wallpaperManager.textQueryParser = this.textQueryParser
       this.wallpaperManager.aiAnalysisManager = this.aiAnalysisManager
 
@@ -1525,6 +1529,10 @@ export default class Store {
 
     ipcMain.handle('main:recommend', async (event, params) => {
       return this.recommendManager.recommend(params)
+    })
+
+    ipcMain.handle('main:recommend:addAllToFavorites', async (event, params) => {
+      return this.recommendManager.addAllToFavorites(params || {})
     })
 
     ipcMain.handle('main:collections:list', () => this.collectionsManager.list())

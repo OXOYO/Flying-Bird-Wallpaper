@@ -10,9 +10,13 @@ import { resolveApiUserMessage } from '@common/utils.js'
 import { scheduleDialogInputFocus } from '@common/focusDialogInput.mjs'
 import {
   buildCollectionPickerGroups,
+  buildForYouPickerItem,
   COLLECTION_PICKER_TAB_ALL,
   COLLECTION_PICKER_TAB_AUTO,
-  COLLECTION_PICKER_TAB_USER
+  COLLECTION_PICKER_TAB_USER,
+  COLLECTION_PICKER_TAB_FOR_YOU,
+  FOR_YOU_VIRTUAL_ID,
+  isForYouVirtualItem
 } from '@common/collectionPickerFilter.mjs'
 
 const { t } = useTranslation()
@@ -23,6 +27,8 @@ const { immersiveMode } = storeToRefs(commonStore)
 const loading = ref(false)
 const collections = ref([])
 const selectedId = ref(null)
+const recommendMode = ref(false)
+const forYouTotal = ref(0)
 const showPicker = ref(false)
 const pickerQuery = ref('')
 const pickerTab = ref(COLLECTION_PICKER_TAB_ALL)
@@ -71,39 +77,66 @@ const promptSubmitLabel = computed(() =>
     : t('pages.Collections.create')
 )
 
+const forYouPickerItem = computed(() =>
+  buildForYouPickerItem({
+    title: t('pages.Collections.forYouTitle'),
+    count: forYouTotal.value
+  })
+)
+
 const pickerGroups = computed(() =>
   buildCollectionPickerGroups(collections.value, {
     query: pickerQuery.value,
     tab: pickerTab.value,
     isAutoCollection,
     sectionAutoLabel: t('pages.Collections.sectionAuto'),
-    sectionUserLabel: t('pages.Collections.sectionUser')
+    sectionUserLabel: t('pages.Collections.sectionUser'),
+    forYouItem: forYouPickerItem.value,
+    forYouSectionLabel: t('pages.Collections.sectionForYou')
   })
+)
+
+const pickerActiveId = computed(() =>
+  recommendMode.value ? FOR_YOU_VIRTUAL_ID : selectedId.value
 )
 
 const hasPickerFilter = computed(
   () => !!pickerQuery.value.trim() || pickerTab.value !== COLLECTION_PICKER_TAB_ALL
 )
 
-const selectedCollection = computed(
-  () => collections.value.find((item) => item.id === selectedId.value) || null
+const selectedCollection = computed(() =>
+  recommendMode.value ? null : collections.value.find((item) => item.id === selectedId.value) || null
 )
 
-const collectionItemCount = (item) => Number(item?.itemCount ?? item?.itemcount ?? 0)
-
-const itemCountText = (item) =>
-  t('pages.Collections.itemCount', { count: collectionItemCount(item) })
-
 const dropdownLabel = computed(() => {
+  if (recommendMode.value) return t('pages.Collections.forYouTitle')
   if (selectedCollection.value) return selectedCollection.value.name
   if (loading.value) return t('messages.loading')
   return t('pages.Collections.selectPlaceholder')
 })
 
 const dropdownMeta = computed(() => {
+  if (recommendMode.value) {
+    return itemCountText({ itemCount: forYouTotal.value })
+  }
   if (!selectedCollection.value) return ''
   return itemCountText(selectedCollection.value)
 })
+
+const browseBrowseType = computed(() => (recommendMode.value ? 'recommend' : 'collection'))
+
+const showBrowseView = computed(() => recommendMode.value || !!selectedId.value)
+
+const collectionItemCount = (item) => Number(item?.itemCount ?? item?.itemcount ?? 0)
+
+const itemCountText = (item) =>
+  t('pages.Collections.itemCount', { count: collectionItemCount(item) })
+
+const collectionSimilarBackLabel = computed(() =>
+  recommendMode.value
+    ? t('pages.Collections.similarBackToForYou')
+    : t('pages.Collections.similarBack')
+)
 
 const layoutToggleTitle = computed(() => {
   const exposed = browseRef.value?.layoutToggleTitle
@@ -128,8 +161,8 @@ const onCollectionSimilarBack = () => {
   browseRef.value?.exitSimilarMode?.()
 }
 
-watch(selectedId, (id) => {
-  if (!id) {
+watch([selectedId, recommendMode], ([id, inRecommend]) => {
+  if (!id && !inRecommend) {
     collectionSimilarMode.value = false
     collectionSimilarSourceImageSrc.value = ''
   }
@@ -158,15 +191,42 @@ const onCollectionPickerOpened = () => {
 
 const selectCollection = (item) => {
   if (!item?.id) return
-  selectedId.value = item.id
   showPicker.value = false
+  if (isForYouVirtualItem(item)) {
+    if (!recommendMode.value) {
+      selectedId.value = null
+      recommendMode.value = true
+      void refreshForYouTotal()
+      void nextTick(() => browseRef.value?.refresh?.())
+    }
+    settingStore.vibrate()
+    return
+  }
+  recommendMode.value = false
+  selectedId.value = item.id
   settingStore.vibrate()
 }
 
+const refreshForYouTotal = async () => {
+  const res = await api.recommend({ startPage: 1, pageSize: 1, resourceName: 'resources' })
+  if (res?.success) {
+    forYouTotal.value = Number(res.data?.total) || 0
+  }
+}
+
+const enterRecommendMode = async () => {
+  selectedId.value = null
+  recommendMode.value = true
+  await refreshForYouTotal()
+  await nextTick()
+  await browseRef.value?.refresh?.()
+}
+
 const ensureSelection = () => {
+  if (recommendMode.value) return
   const list = collections.value
   if (!list.length) {
-    selectedId.value = null
+    void enterRecommendMode()
     return
   }
   if (!list.some((item) => item.id === selectedId.value)) {
@@ -180,7 +240,14 @@ const fetchList = async () => {
     const res = await api.collectionsList()
     if (res?.success && Array.isArray(res.data)) {
       collections.value = res.data
-      ensureSelection()
+      if (recommendMode.value) {
+        await refreshForYouTotal()
+      } else {
+        ensureSelection()
+        if (!selectedId.value && !collections.value.length) {
+          await enterRecommendMode()
+        }
+      }
     } else {
       showNotify({ type: 'danger', message: resolveApiUserMessage(res, t) })
     }
@@ -328,14 +395,28 @@ const onDeleteCurrent = async () => {
 }
 
 const onAddAllFavorites = async () => {
+  settingStore.vibrate()
+  if (recommendMode.value) {
+    const res = await api.recommendAddAllToFavorites({ resourceName: 'resources' })
+    showNotify({
+      type: res?.success ? 'success' : 'danger',
+      message: res?.success ? t('messages.operationSuccess') : resolveApiUserMessage(res, t)
+    })
+    return
+  }
   const item = selectedCollection.value
   if (!item?.id) return
-  settingStore.vibrate()
   const res = await api.collectionsAddAllToFavorites(item.id)
   showNotify({
     type: res?.success ? 'success' : 'danger',
     message: res?.success ? t('messages.operationSuccess') : resolveApiUserMessage(res, t)
   })
+}
+
+const onRecommendRefresh = async () => {
+  if (!recommendMode.value) return
+  settingStore.vibrate()
+  await browseRef.value?.refresh?.()
 }
 
 const onRefreshCollection = async () => {
@@ -385,6 +466,11 @@ const headerActionSheetActions = computed(() => {
     { name: t('pages.Collections.createNew'), actionKey: 'create' },
     { name: t('pages.Collections.curateNow'), actionKey: 'curate' }
   ]
+  if (recommendMode.value) {
+    actions.push({ name: t('pages.Collections.forYouRefresh'), actionKey: 'forYouRefresh' })
+    actions.push({ name: t('pages.Collections.addFavorites'), actionKey: 'favorites' })
+    return actions
+  }
   if (item && isUserCollection(item)) {
     actions.push({ name: t('pages.Collections.editCollection'), actionKey: 'edit' })
     actions.push({ name: t('pages.Collections.refresh'), actionKey: 'refresh' })
@@ -424,6 +510,9 @@ const onHeaderActionSelect = async (action) => {
     case 'refresh':
       await onRefreshCollection()
       break
+    case 'forYouRefresh':
+      await onRecommendRefresh()
+      break
     case 'refreshMode':
       showRefreshMode.value = true
       break
@@ -448,7 +537,7 @@ const init = async () => {
 
 const refresh = async () => {
   await fetchList()
-  if (selectedId.value) {
+  if (showBrowseView.value) {
     await browseRef.value?.refresh?.()
   }
 }
@@ -475,8 +564,8 @@ onMounted(() => {
           v-if="!immersiveMode"
           type="button"
           class="collection-dropdown"
-          :class="{ 'collection-dropdown--disabled': !collections.length && !loading }"
-          :disabled="!collections.length && !loading"
+          :class="{ 'collection-dropdown--disabled': loading }"
+          :disabled="loading"
           @click="showPicker = true"
         >
           <span class="collection-dropdown__name">{{ dropdownLabel }}</span>
@@ -485,7 +574,7 @@ onMounted(() => {
         </button>
         <template v-if="!immersiveMode" #trailing>
           <van-button
-            v-if="selectedId"
+            v-if="showBrowseView"
             class="h5-chrome-icon-btn"
             plain
             :title="layoutToggleTitle"
@@ -507,14 +596,14 @@ onMounted(() => {
           <van-button
             class="chrome-mini-btn"
             plain
-            :disabled="!collections.length && !loading"
+            :disabled="loading"
             :aria-label="t('pages.Collections.selectPlaceholder')"
             @click="showPicker = true"
           >
             <van-icon name="arrow-down" />
           </van-button>
           <van-button
-            v-if="selectedId"
+            v-if="showBrowseView"
             class="chrome-mini-btn"
             plain
             :title="layoutToggleTitle"
@@ -537,15 +626,16 @@ onMounted(() => {
         v-if="collectionSimilarMode"
         :message="t('pages.Collections.similarModeBanner')"
         :source-image-src="collectionSimilarSourceImageSrc"
-        :back-aria-label="t('pages.Collections.similarBack')"
+        :back-aria-label="collectionSimilarBackLabel"
         @back="onCollectionSimilarBack"
       />
     </div>
 
     <H5ResourceBrowseView
-      v-if="selectedId"
+      v-if="showBrowseView"
+      :key="`${browseBrowseType}-${selectedId || 'for_you'}`"
       ref="browseRef"
-      browse-type="collection"
+      :browse-type="browseBrowseType"
       :collection-id="selectedId"
       display-mode-storage-key="fbw_h5_collections_display_mode"
       hide-chrome
@@ -582,6 +672,7 @@ onMounted(() => {
             <van-tab :name="COLLECTION_PICKER_TAB_ALL" :title="t('pages.Collections.listTabAll')" />
             <van-tab :name="COLLECTION_PICKER_TAB_AUTO" :title="t('pages.Collections.listTabAuto')" />
             <van-tab :name="COLLECTION_PICKER_TAB_USER" :title="t('pages.Collections.listTabUser')" />
+            <van-tab :name="COLLECTION_PICKER_TAB_FOR_YOU" :title="t('pages.Collections.listTabForYou')" />
           </van-tabs>
         </div>
         <div class="collection-picker__body">
@@ -595,7 +686,7 @@ onMounted(() => {
                   v-for="item in group.items"
                   :key="item.id"
                   clickable
-                  :class="{ 'collection-picker__item--active': item.id === selectedId }"
+                  :class="{ 'collection-picker__item--active': item.id === pickerActiveId }"
                   @click="selectCollection(item)"
                 >
                   <template #title>
@@ -604,7 +695,7 @@ onMounted(() => {
                       <span class="collection-picker__tail">
                         <span class="collection-picker__count">{{ itemCountText(item) }}</span>
                         <van-icon
-                          v-if="item.id === selectedId"
+                          v-if="item.id === pickerActiveId"
                           name="success"
                           class="collection-picker__check"
                         />

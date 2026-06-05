@@ -93,7 +93,8 @@ flowchart TB
 ## Sprint 0 — 数据层
 
 - `sql.mjs` 新表/新列；`schemaUpgrade.mjs` 旧库补列与 **`migrateResourceAiSplitV1`**
-- `resources/migrations/1.3.8_to_2.0.0.mjs`
+- `resources/migrations/1.3.8_to_2.0.0.mjs`（**唯一**版本跃迁脚本；已移除 `1.0.0_to_1.0.1.mjs` 占位）
+- 每次启动仍由 `DatabaseManager._init` → `upgradeResourcesSchema` 幂等补 schema（含旧库画面向量复合 PK）
 - **`fbw_resources`**：文件元数据、插件 `title`/`desc`、`qualityScore`（本地质量分，非 AI）
 - **`fbw_resource_ai`**：AI 文案/摘要/美学分/敏感等级/分析状态/失败计数（详见 [data-model-resources-and-ai.md](./data-model-resources-and-ai.md)）
 - 插件本地 `resourceName`：**`源名_插件名`**（`pluginResourceId.js` + `pluginResourceMigration.mjs`）
@@ -208,7 +209,8 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | `main:collections:*` | 合集 CRUD、generate、收藏；`get` 支持 `{ id, startPage, pageSize }` → `{ items, total, ... }` |
 | `main:collections:curate` | 手动触发自动策展（不受稳定锁存限制） |
 | `main:collections:curatorStats` | 策展统计（含 `autoCurateSettled`） |
-| `main:recommend` | 轻量推荐 |
+| `main:recommend` | 轻量推荐分页 `{ list, total, startPage, pageSize, prefTags, degraded }` |
+| `main:recommend:addAllToFavorites` | 按当前推荐条件批量加收藏（最多 500 条） |
 
 ---
 
@@ -419,9 +421,29 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | 清空资源库 | 工具页 `clearResourcesLibrary`；`clearDB(fbw_resources)` 全量委托同一逻辑 |
 | 目录刷新 | 全量 scan + `scanComplete` 才 prune；`ON CONFLICT(filePath) DO UPDATE` |
 | 视频 AI | 方案 A：`posterPath` 封面帧 analyze/embed；策展/找相似/清空 AI 含视频 |
-| 其它 | Recommend 后端对齐 search；语义过滤 `skipStatistics`；IPC id 校验；动态壁纸性能 IPC 修复 |
+| 其它 | Recommend 桌面+H5 接入；语义过滤 `skipStatistics`；IPC id 校验；动态壁纸性能 IPC 修复 |
 
 **验收：** 删本地文件后 DB 无残留；刷新目录 mtime 变更会更新；清空 AI 文案含视频；远程 embed fallback 后找相似仍可用。
+
+---
+
+## §20 后续增量（猜你喜欢 + 画面向量 PK 迁移修复）— 已落地
+
+> 详述：[ai-collections-ux-and-curate.md](./ai-collections-ux-and-curate.md) §3.5 · [resource-lifecycle-and-cleanup.md](./resource-lifecycle-and-cleanup.md) §4
+
+| 项 | 说明 |
+|----|------|
+| 猜你喜欢 | 合集 Picker 第 4 Tab + 虚拟项 `__for_you__`（**不入库**）；与 Tab「AI 推荐」（`source=auto` 系统合集）命名分离 |
+| 浏览三态 | `collection` / `recommend` / `similar` 互斥；无合集时默认进入猜你喜欢 |
+| 数据 | `RecommendManager.recommend` 分页；对齐 `ai.scoreMinFilter`；偏好 tag 空则降级高分排序 |
+| 操作 | 刷新推荐、`recommendAddAllToFavorites`；悬浮按钮与 Header 菜单 |
+| 找相似 scope | 推荐模式下 `{ type: 'search', resourceType: 'localResource', resourceName: 'resources' }` |
+| H5 | `browseType=recommend`；`/api/recommend`、`/api/recommend/add-all-favorites` |
+| Schema | `migrateImageVecBlobCompositePk`：`INSERT` 过滤孤儿 `resourceId`；失败 `DROP _new` + 恢复 FK |
+| 迁移脚本 | 仅保留 `resources/migrations/1.3.8_to_2.0.0.mjs` |
+| i18n | 12 语言各 1081 键；猜你喜欢 / AI 设置 / 清空资源库等键补全；`ai.prompts.*` 非中英文本地化；维护见 `sync-i18n.mjs`、`check-i18n.mjs`（`ai-analysis-ux` §15） |
+
+**验收：** 无合集仅有猜你喜欢可浏览分页；切换合集 ↔ 猜你喜欢；找相似后返回推荐列表；冷启动 `degraded` 文案；重启无 `FOREIGN KEY constraint failed`（画面向量 PK 迁移）；`node scripts/check-i18n.mjs` 无缺失键。
 
 ---
 
@@ -471,6 +493,7 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | **增量¹⁰** | ✅ | 系统合集同名/高重叠合并 dedupe（`mergeCollectionPlans`、全库保留最小 id） |
 | **增量¹¹** | ✅ | 省电关/插 AC 恢复后台 AI；`restartPowerSaveDependentTasks`、`resumeBackgroundAiTasksIfAllowed` |
 | **增量¹²** | ✅ | 关联清理统一、FK/复合 PK 迁移、清空资源库、刷新 UPSERT+prune、视频封面 AI |
+| **增量¹³** | ✅ | 猜你喜欢桌面+H5；画面向量 PK 迁移孤儿过滤；迁移脚本收敛；i18n 12 语言对齐 |
 | Sprint 5 | ⏸ | OpenClaw/Agent — 仅文档 |
 
 ---
@@ -498,6 +521,14 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 8. **缩略图**：网络/日志中 `imageSrc` 含 `w=1080`（本地 `fbwtp://`）
 9. 删除系统合集、关闭 `autoCollectionsEnabled` 验证行为  
 9a. **重复合并**：曾有两个同名同成员系统合集 → 整理后仅一条；日志「合并重复系统合集」
+
+### 猜你喜欢（增量¹³）
+
+17. 合集页 Picker →「猜你喜欢」Tab：无合集时默认进入；有合集可切换  
+18. 分页滚到底加载；`ListCountIndicator` 显示 `current/total`  
+19. 菜单/悬浮按钮：刷新推荐、全部收藏  
+20. 猜你喜欢内「找相似」→ 返回后恢复推荐列表（非合集）  
+21. H5 合集页同路径：`/api/recommend` 分页浏览  
 
 ### 其他
 
@@ -561,3 +592,4 @@ OpenClaw Plugin、AgentBridge、MCP — 见 [openclaw-agent-integration.md](./op
 | **v3.1** | 2026-06-01 | §17 同名/高重叠 plan 合并与全库 dedupe；链至 ai-collections v1.6 |
 | **v3.2** | 2026-05-27 | §18 省电关/插 AC 恢复后台 AI；链至 ai-analysis §4.2 |
 | **v3.3** | **2026-06-03** | §19 资源生命周期 / 视频 AI / 关联清理；`resource-lifecycle-and-cleanup.md`；增量¹² |
+| **v3.4** | **2026-06-05** | §20 猜你喜欢桌面+H5；画面向量 PK 迁移孤儿过滤；迁移脚本仅 `1.3.8_to_2.0.0.mjs`；i18n 对齐与维护脚本收敛；增量¹³ |

@@ -340,7 +340,7 @@ MCP 与 OpenClaw Plugin 可共享 **同一份 Tool 定义 JSON**，两个薄适�
 | OpenAPI | `docs/agent-api.openapi.yaml` | 对外契约 |
 | OpenClaw 插件 | 独立 repo | Plugin + Skills |
 | MCP Server | `packages/fbw-mcp-server/`（可选） | stdio 入口 |
-| i18n | `zh-CN` / `en-US` | 设置与错误文案 |
+| i18n | 12 语言包（`src/i18n/locale/lang/`）；维护见 `sync-i18n.mjs` / `check-i18n.mjs` |
 
 ---
 

@@ -1,7 +1,7 @@
 # 视觉向量与找相似
 
-> 文档版本：**v2.3**  
-> 整理日期：**2026-06-03**  
+> 文档版本：**v2.4**  
+> 整理日期：**2026-06-05**  
 > 状态：**已实现**  
 > 关联：[ai-dev-plan.md](./ai-dev-plan.md) · [resource-lifecycle-and-cleanup.md](./resource-lifecycle-and-cleanup.md) · [ai-feature-roadmap.md](./ai-feature-roadmap.md) · [README.md](./README.md)
 
@@ -266,3 +266,4 @@
 | **v2.1** | 2026-05-29 | 合集改用画面向量：策展 K-Means、用户合集关键词优先 + `VisualCollectionSearch`；§13 |
 | **v2.2** | 2026-05-29 | `regenPrompt` 默认 false；LLM 动态标签扩展；实体词禁用画面补充；风景顶替根因与修复 |
 | **v2.3** | **2026-06-03** | 复合主键 `(resourceId,model)`；远程 fallback 写 active model；视频 `posterPath`；findSimilar IPC 校验；链至 cleanup 文档 |
+| **v2.4** | **2026-06-05** | `migrateImageVecBlobCompositePk` 迁移过滤孤儿 `resourceId`，修复 `FOREIGN KEY constraint failed` |

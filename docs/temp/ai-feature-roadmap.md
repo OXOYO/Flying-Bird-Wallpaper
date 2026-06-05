@@ -1,8 +1,8 @@
 # 飞鸟壁纸 AI 能力完整功能清单
 
-> 文档版本：**v2.4**  
-> 整理日期：**2026-06-03**  
-> 状态：**2.0.0 核心已落地**；系统合集 **v1.7**；**资源生命周期 / 视频 AI** 已落地；部分 P3/P4 仍为规划  
+> 文档版本：**v2.5**  
+> 整理日期：**2026-06-05**  
+> 状态：**2.0.0 核心已落地**；系统合集 **v1.7**；**猜你喜欢** 桌面+H5 已接入；**资源生命周期 / 视频 AI** 已落地；部分 P3/P4 仍为规划  
 > 关联：[resource-lifecycle-and-cleanup.md](./resource-lifecycle-and-cleanup.md) · [data-model-resources-and-ai.md](./data-model-resources-and-ai.md) · [ai-dev-plan.md](./ai-dev-plan.md) · [README.md](./README.md)
 
 **图例：** ✅ 已实现 · 🟡 部分实现 · ⬜ 未开始
@@ -92,7 +92,7 @@
 | AI-018 | **视频封面 AI 分析** | ✅ | 方案 A：`posterPath` 单帧；`AiVisionResourcePath`；菜单/向量/策展纳入 |
 | AI-019 | **资源关联清理 / Schema** | ✅ | `resourceDeleteCleanup`；FK CASCADE；复合 PK；刷新 prune — 见 lifecycle 文档 |
 | INF-001 | 清空资源库（工具页） | ✅ | `clearResourcesLibrary`；不删磁盘、不清收藏整表 |
-| INF-002 | 猜你喜欢 `recommend` | 🟡 | 后端 IPC 就绪；**前端未接入** |
+| INF-002 | 猜你喜欢 `recommend` | ✅ | 合集页 Picker 虚拟项 + 分页；桌面/H5；`recommendAddAllToFavorites` |
 
 ### 4.2 发现与搜索（P1）
 
@@ -171,7 +171,7 @@ fbw_collections (
 
 | ID | 功能 | 状态 | 说明 |
 |----|------|------|------|
-| AI-301 | 猜你喜欢 | 🟡 | `RecommendManager` 基础版 |
+| AI-301 | 猜你喜欢 | ✅ | `RecommendManager`；偏好 tags + `scoreMinFilter`；冷启动降级 |
 | AI-302 | 行为画像 | 🟡 | tags 统计推荐 |
 | AI-303 | 智能自动切换 | 🟡 | smartSwitch 策略 |
 | AI-304 | 自动下载扩词 | ✅ | `expandDownloadKeywords` |
@@ -194,7 +194,7 @@ fbw_collections (
 | AI-501～504 | AI 助手面板等 | ⬜ |
 | AI-511 | H5 文字 NL 搜索 | ✅ |
 | AI-512 | H5 AI 元数据 | 🟡 |
-| AI-513 | H5 浏览合集 | 🟡 |
+| AI-513 | H5 浏览合集 | 🟡 | 合集 + **猜你喜欢**（`browseType=recommend`）；其余 H5 AI 元数据仍部分 |
 
 ### 4.7～4.9（P3/P4）
 
@@ -280,7 +280,7 @@ AI 助手、AIGC 工具
 |--------|--------|-------------|
 | P0 | 14 | 14 ✅（含 AI-008a/b/c） |
 | P1 | 18+2 子项 | 18 ✅ / 1 🟡（AI-208b 部分）/ 1 ⬜（AI-104+）；AI-104b 向量角标 ⬜ |
-| P2 | 10 | 4 ✅ / 4 🟡 / 2 ⬜ |
+| P2 | 10 | 5 ✅ / 3 🟡 / 2 ⬜ |
 | P3+ | 15 | 少量 🟡 |
 
 ---
@@ -316,3 +316,4 @@ AI 助手、AIGC 工具
 | **v2.2** | 2026-06-01 | AI-208a 增补 v1.6：同名/高重叠合并 dedupe；progressive 不再累积重复系统合集 |
 | **v2.3** | 2026-05-27 | AI-017 省电恢复后台 AI；AI-007/008b 说明看门狗与恢复路径；链至 ai-analysis §4.2 |
 | **v2.4** | **2026-06-03** | AI-018 视频封面 AI；AI-019/INF-001 关联清理与清空资源库；INF-002 recommend 后端就绪 |
+| **v2.5** | **2026-06-05** | INF-002 / AI-301 猜你喜欢桌面+H5 接入；画面向量 PK 迁移孤儿行过滤；迁移脚本仅 `1.3.8_to_2.0.0.mjs` |

@@ -320,6 +320,26 @@ export const registerBusinessApi = (router, deps) => {
     sendJson(ctx, await cm.addAllToFavorites(id))
   })
 
+  router.get('/api/recommend', async (ctx) => {
+    const RecommendManager = (await import('../../../store/RecommendManager.mjs')).default
+    const rm = RecommendManager.getInstance(logger, dbManager, settingManager)
+    const rawPage = Number(ctx.request.query?.startPage ?? 1)
+    const startPage =
+      Number.isFinite(rawPage) && rawPage >= 1 ? Math.min(Math.floor(rawPage), 1_000_000) : 1
+    const rawSize = Number(ctx.request.query?.pageSize ?? 20)
+    const pageSize =
+      Number.isFinite(rawSize) && rawSize >= 1 ? Math.min(Math.floor(rawSize), 200) : 20
+    const resourceName = ctx.request.query?.resourceName || 'resources'
+    sendJson(ctx, rm.recommend({ startPage, pageSize, resourceName }))
+  })
+
+  router.post('/api/recommend/add-all-favorites', async (ctx) => {
+    const body = await readJsonBody(ctx)
+    const RecommendManager = (await import('../../../store/RecommendManager.mjs')).default
+    const rm = RecommendManager.getInstance(logger, dbManager, settingManager)
+    sendJson(ctx, rm.addAllToFavorites(body || {}))
+  })
+
   router.post('/api/collections/curate', async (ctx) => {
     const CollectionCurator = (await import('../../../store/CollectionCurator.mjs')).default
     const curator = CollectionCurator.getInstance(logger, dbManager, settingManager)

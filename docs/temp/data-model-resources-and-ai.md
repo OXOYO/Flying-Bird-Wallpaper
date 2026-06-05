@@ -1,8 +1,8 @@
 # 资源库数据模型（主表 + AI 附表）
 
-> 文档版本：**v1.3**  
-> 整理日期：2026-06-03  
-> 状态：**已实现**（启动时 `migrateResourceAiSplitV1` + FK / 复合 PK 迁移）  
+> 文档版本：**v1.4**  
+> 整理日期：2026-06-05  
+> 状态：**已实现**（启动时 `migrateResourceAiSplitV1` + FK / 复合 PK 迁移；画面向量 PK 迁移过滤孤儿行）  
 > 关联：[ai-dev-plan.md](./ai-dev-plan.md) · [resource-lifecycle-and-cleanup.md](./resource-lifecycle-and-cleanup.md) · [privacy-and-sensitive-content.md](./privacy-and-sensitive-content.md) · [README.md](./README.md)
 
 ---
@@ -57,7 +57,9 @@
 
 | 项 | 说明 |
 |----|------|
-| 入口 | `upgradeResourcesSchema`：`migrateResourceAiSplitV1` + `posterPath` + `migrateImageVecBlobCompositePk` + `upgradeResourceForeignKeys` + `migrateResourceVecTablesFk` |
+| 入口 | `upgradeResourcesSchema`：`migrateResourceAiSplitV1` + `posterPath` + `migrateImageVecBlobCompositePk` + `ensureVisualEmbedStateTable` + `upgradeResourceForeignKeys` + `migrateResourceVecTablesFk` |
+| 版本跃迁 | `VersionManager` 仅加载 `resources/migrations/1.3.8_to_2.0.0.mjs`（1.3.8→2.0.0 一次性表/索引 + 调用 `upgradeResourcesSchema`） |
+| 画面向量 PK | `migrateImageVecBlobCompositePk`：旧单主键 `(resourceId)` → `(resourceId, model)`；**INSERT 仅保留** `resourceId ∈ fbw_resources` 的行，跳过孤儿向量 |
 | 已迁移判定 | 主表存在 `qualityScore` 且 **无** `aiAnalysisStatus`（`isResourceAiSplitDone`） |
 | 数据搬迁 | 旧主表 AI 列写入附表；含 **`fileType IN ('image','video')`**；`done` 时复制 title/desc 到 AI 附表 |
 | 插件 ID | 另有一次性 `pluginResourceIdFormatV1`（`pluginResourceMigration.mjs`），与 AI 拆分独立 |
@@ -100,3 +102,4 @@
 | v1.1 | 2026-05-27 | 新增 `posterPath`：视频下载本地化封面；`imageUrl`/`videoUrl` 保持远程原址 |
 | v1.2 | 2026-05-27 | 远程收藏隐式下载入库；自动下载 `downloadMediaTypes` 多选；统一 `downloadFile` |
 | **v1.3** | **2026-06-03** | FK CASCADE；画面向量复合主键；视频纳入 AI 迁移；清空资源库与 cleanup 模块；链至 `resource-lifecycle-and-cleanup.md` |
+| **v1.4** | **2026-06-05** | `migrateImageVecBlobCompositePk` 孤儿行过滤与失败清理；版本迁移脚本仅 `1.3.8_to_2.0.0.mjs` |

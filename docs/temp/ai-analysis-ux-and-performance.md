@@ -317,7 +317,9 @@
 |----|------|
 | 占位符 | `src/i18n/i18next.js`：`prefix: '{'`、`suffix: '}'` → 文案写 `{count}`，**勿**写 `{{count}}` |
 | 主进程消息 | 清空/重试成功类由主进程 `t()` 生成完整句，渲染端直接 `ElMessage({ message: res.message })` |
-| 新键语言 | `clearAiAnalysis*`、`requeueFailed*`、`pumpBlockReason_*`、`runStatusDisabled*` 等 20 键已在 **12 种语言**补全（`scripts/patch-i18n-missing.mjs`） |
+| 语言包 | **12 种语言**各 **1081** 键（与 `zh-CN` / `en-US` 对齐）；含猜你喜欢、AI 设置、清空资源库、`ai.prompts.*` 等 |
+| 维护脚本 | `node scripts/sync-i18n.mjs` 补缺失键；`node scripts/check-i18n.mjs` 校验键 parity 与英文残留 |
+| 新增键流程 | 先写入 `zh-CN.json` + `en-US.json` → 跑 `sync-i18n.mjs` → 补译其余语言 → `check-i18n.mjs` 验收 |
 
 ---
 
@@ -336,3 +338,4 @@
 | **v1.8** | 2026-05-27 | 进度卡常显、失败重试入队、工具页清空 AI；附表 `aiAnalysisFailCount`；§12–§15；链至 [data-model-resources-and-ai.md](./data-model-resources-and-ai.md) |
 | **v1.9** | 2026-05-27 | §4.2 省电模式暂停/恢复；`restartPowerSaveDependentTasks` + `resumeBackgroundAiTasksIfAllowed`；修复关省电后长期「等待中」 |
 | **v2.0** | **2026-06-03** | 视频封面 AI（方案 A）；清空 AI 含视频；`skipStatistics`；词库清理走 `resourceDeleteCleanup`；链至 `resource-lifecycle-and-cleanup.md` |
+| **v2.1** | **2026-06-05** | §15：12 语言 1081 键对齐；英文 UI 残留与 `ai.prompts.*` 本地化；维护脚本收敛为 `sync-i18n` / `check-i18n` |

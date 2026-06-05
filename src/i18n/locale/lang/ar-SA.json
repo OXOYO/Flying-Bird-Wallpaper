@@ -1,6 +1,6 @@
 {
   "appInfo": {
-    "appName": "Flying Bird Wallpaper",
+    "appName": "خلفيات الطائر الطائر",
     "description": "تطبيق خلفيات سطح المكتب Flying Bird Wallpaper غني بالميزات يدعم أنواع متعددة من الخلفيات بما في ذلك الصور ومقاطع الفيديو والخلفيات الإيقاعية والألوان الصلبة، مما يجعل سطح مكتبك فريدًا ومليئًا بالحيوية."
   },
   "actions": {
@@ -19,8 +19,8 @@
     "menu": "القائمة",
     "wordDrawer": "الكلمات",
     "qrCode": "رمز الاستجابة السريعة",
-    "expandSideMenu": "Expand sidebar",
-    "collapseSideMenu": "Collapse sidebar"
+    "expandSideMenu": "توسيع الشريط الجانبي",
+    "collapseSideMenu": "طي الشريط الجانبي"
   },
   "qrCode": {
     "notice": "امسح رمز الاستجابة السريعة للوصول إلى الإصدار المحمول",
@@ -53,7 +53,7 @@
         "rhythmWallpaper": "خلفية إيقاعية",
         "remoteResource": "الموارد عن بُعد",
         "privacyPassword": "كلمة مرور الخصوصية",
-        "privacySpaceOptions": "Privacy space options"
+        "privacySpaceOptions": "خيارات المساحة الخاصة"
       },
       "settingDataForm": {
         "locale": "اللغة",
@@ -160,25 +160,26 @@
         "confirmOnDeleteFile": "تأكيد قبل الحذف",
         "enableSegmentationTask": "تمكين مهمة التجزئة",
         "powerSaveMode": "وضع توفير الطاقة",
-        "enableExpandSideMenuHint": "When on, hover the left edge of the main window to expand/collapse the narrow sidebar for quick navigation",
-        "showSideMenuLabelHint": "Off: icons only to save width; On: show menu text under icons",
-        "suspensionBallVisibleHint": "Shows a small floating ball on the desktop; hover for prev/next/play/close shortcuts",
-        "startH5ServerOnStartupHint": "Starts the local H5 web server on launch; scan the sidebar QR code to browse wallpapers on your phone",
-        "enableSegmentationTaskHint": "Shows the word-cloud drawer on Search; segments the current list (may pause in power-save mode)",
-        "powerSaveModeHint": "Reduces background wallpaper switching, folder refresh, and AI analysis—good for battery saving",
-        "showTagHint": "Shows source/quality badges on cards; some tags are clickable filters",
-        "confirmOnDeleteFileHint": "Ask for confirmation before deleting local files from browse pages",
-        "viewImageIntervalTimeHint": "How long each image stays visible during autoplay in the built-in viewer",
-        "autoSwitchWallpaperHint": "Automatically change the desktop wallpaper at the interval below; off = manual or suspension ball only",
-        "switchTypeHint": "Sequential: in list order; Random: pick a random image each time",
-        "allScreenHint": "Apply the same wallpaper to all monitors when on",
-        "scaleTypeHint": "How the image is cropped or stretched to fill the screen",
-        "filterKeywordsHint": "Only images whose path/name contains a keyword are used for rotation (empty = no filter)",
-        "localResourceFoldersHint": "Local folders used as wallpaper libraries; scanning respects allowed file types",
-        "allowedFileExtHint": "Only these extensions are indexed when scanning local folders",
-        "autoRefreshDirectoryHint": "Rescan local folders on a schedule to pick up new or removed files",
+        "enableExpandSideMenuHint": "عند التفعيل، مرّر على الحافة اليسرى للنافذة الرئيسية لتوسيع/طي الشريط الجانبي الضيق",
+        "showSideMenuLabelHint": "إيقاف: أيقونات فقط لتوفير العرض؛ تشغيل: نص القائمة تحت الأيقونات",
+        "suspensionBallVisibleHint": "يعرض كرة عائمة صغيرة على سطح المكتب؛ مرور للسابق/التالي/تشغيل/إغلاق",
+        "startH5ServerOnStartupHint": "يبدأ خادم H5 المحلي عند التشغيل؛ رمز QR في الشريط الجانبي للهاتف",
+        "enableSegmentationTaskHint": "يعرض درج سحابة الكلمات في البحث؛ يقسم القائمة الحالية (قد يتوقف في وضع توفير الطاقة)",
+        "powerSaveModeHint": "يقلل تبديل الخلفية وتحديث المجلدات وتحليل الذكاء الاصطناعي—مناسب لتوفير البطارية",
+        "showTagHint": "يعرض شارات المصدر/الجودة على البطاقات؛ بعض الوسوم فلاتر قابلة للنقر",
+        "confirmOnDeleteFileHint": "اطلب تأكيداً قبل حذف الملفات المحلية من صفحات التصفح",
+        "viewImageIntervalTimeHint": "مدة بقاء كل صورة أثناء التشغيل التلقائي في العارض المدمج",
+        "autoSwitchWallpaperHint": "تغيير خلفية سطح المكتب تلقائياً بالفاصل أدناه؛ إيقاف = يدوي أو الكرة العائمة فقط",
+        "switchTypeHint": "تسلسلي: بترتيب القائمة؛ عشوائي: صورة عشوائية في كل مرة",
+        "allScreenHint": "تطبيق نفس الخلفية على جميع الشاشات عند التفعيل",
+        "scaleTypeHint": "كيف تُقص أو تُمدد الصورة لملء الشاشة",
+        "filterKeywordsHint": "فقط الصور التي يحتوي مسارها/اسمها على كلمة مفتاحية تُستخدم في التدوير (فارغ = بلا فلتر)",
+        "localResourceFoldersHint": "مجلدات محلية كمكتبات خلفيات؛ المسح يحترم أنواع الملفات المسموحة",
+        "allowedFileExtHint": "فقط هذه الامتدادات تُفهرس عند مسح المجلدات المحلية",
+        "autoRefreshDirectoryHint": "إعادة مسح المجلدات المحلية بجدولة لاكتشاف الملفات الجديدة أو المحذوفة",
         "autoDownloadHint": "Periodically download images from selected sources using your keywords into the download folder",
-        "dynamicPerformanceModeHint": "Lowers video decode/render load; try a lighter mode if playback stutters"
+        "dynamicPerformanceModeHint": "يخفض حمل فك/عرض الفيديو؛ جرّب وضعاً أخف عند التقطيع",
+        "downloadMediaTypes": "أنواع الوسائط للتنزيل التلقائي"
       },
       "privacyPasswordForm": {
         "old": {
@@ -193,9 +194,9 @@
         },
         "confirm": "تحديث كلمة المرور",
         "hint": {
-          "label": "Password hint",
-          "placeholder": "e.g. last four digits of a date (optional)",
-          "tooltip": "Saved with your password to help you remember it; shown when verifying. Do not enter the password itself"
+          "label": "تلميح كلمة المرور",
+          "placeholder": "مثل آخر أربعة أرقام من تاريخ (اختياري)",
+          "tooltip": "يُحفظ مع كلمة المرور للمساعدة على التذكر؛ يُعرض عند التحقق. لا تُدخل كلمة المرور نفسها"
         }
       },
       "shortcutSetting": {
@@ -298,7 +299,7 @@
           "hint": {
             "unsplash": "Unsplash: Access Key فقط، بدون بادئة Client-ID",
             "pexels": "Pexels: API Key فقط، بدون بادئة Bearer",
-            "pixabay": "Pixabay: API Key"
+            "pixabay": "Pixabay: مفتاح API"
           }
         },
         "feedback": {
@@ -327,7 +328,7 @@
           "fallbackBody": "تعذر تحميل بعض مصادر الإضافات. تحقق من الشبكة أو إعدادات المصدر وحاول مرة أخرى."
         },
         "loadErrors": {
-          "errorsSeparator": "; ",
+          "errorsSeparator": "؛ ",
           "sourceItem": "{sourceName} ({hint})",
           "network": "فشل اتصال الشبكة. تحقق من الشبكة وحاول مرة أخرى.",
           "server5xx": "الخدمة البعيدة غير متاحة مؤقتًا. حاول لاحقًا.",
@@ -448,7 +449,7 @@
           "siliconflow": "SiliconFlow",
           "groq": "Groq",
           "together": "Together AI",
-          "moonshot": "Moonshot",
+          "moonshot": "Moonshot (月之暗面)",
           "custom": "متوافق مع OpenAI (مخصّص)"
         },
         "visionSection": "نموذج الرؤية",
@@ -458,7 +459,7 @@
         "textModel": "نموذج النص",
         "textBaseUrl": "عنوان الخدمة",
         "embeddingModel": "نموذج التضمين",
-        "apiKey": "API Key",
+        "apiKey": "مفتاح API",
         "copyApiKey": "نسخ",
         "apiKeyPlaceholder": "أدخل API Key البعيد",
         "customBaseUrlPlaceholder": "https://your-api.example.com",
@@ -496,7 +497,7 @@
           "serverError": "خدمة AI غير متاحة مؤقتاً (HTTP {status}). أعد المحاولة لاحقاً",
           "providerError": "خطأ خدمة AI: {detail}",
           "providerErrorGeneric": "خطأ غير معروف من خدمة AI. أعد المحاولة لاحقاً",
-          "modelNameMissing": "Select or enter a model name first"
+          "modelNameMissing": "اختر أو أدخل اسم النموذج أولاً"
         },
         "autoCollectionsEnabled": "تنسيق مجموعات AI تلقائياً",
         "autoCollectionsEnabledHint": "تجميع حسب الوسوم والأجواء المتجهة، ثم دمج في مجموعات نظام عبر LLM (يُسمح بالتداخل، قابلة للحذف)",
@@ -522,29 +523,29 @@
         "sectionFeaturesFindSimilar": "إيجاد مشابه",
         "sectionFeaturesSearch": "البحث والتنزيل",
         "sectionFeaturesLegacy": "التوافق",
-        "enabledHint": "Master switch: when off, auto analysis, semantic search, and AI collections stop; settings are kept",
-        "analysisConcurrency": "Background concurrency",
-        "analysisConcurrencyHint": "In background continuous / new-images-only modes, how many images call the vision model at once (1–10). Takes effect after save; lower if VRAM is tight. Text embeddings run async per image and do not use this slot",
+        "enabledHint": "المفتاح الرئيسي: عند الإيقاف، يتوقف التحليل التلقائي والبحث الدلالي ومجموعات الذكاء الاصطناعي؛ تبقى الإعدادات الفرعية",
+        "analysisConcurrency": "التزامن في الخلفية",
+        "analysisConcurrencyHint": "في وضع الخلفية المستمر / الصور الجديدة فقط، عدد الصور التي تستدعي نموذج الرؤية معاً (1–10). يسري بعد الحفظ؛ قلّل عند نقص VRAM. تُكتب embeddings النص بشكل غير متزامن لكل صورة ولا تستخدم هذا الخانة",
         "copyModelName": "نسخ اسم النموذج",
-        "textEmbedModelHint": "Text-only embeddings for semantic search (e.g. nomic-embed-text)—not visual vectors or vision analysis",
-        "listEmptyVisualEmbed": "No visual embedding models found. Enter manually (e.g. batiai/qwen2-vl-embed-2b:q8). Text-only embed models (e.g. nomic-embed-text) cannot embed images.",
-        "purposeVisualEmbed": "visual embedding",
+        "textEmbedModelHint": "embeddings نصية فقط للبحث الدلالي (مثل nomic-embed-text)—ليست متجهات بصرية ولا تحليل رؤية",
+        "listEmptyVisualEmbed": "لم يُعثر على نماذج embedding بصرية. أدخل يدوياً (مثل batiai/qwen2-vl-embed-2b:q8). نماذج embed نص فقط (مثل nomic-embed-text) لا تستطيع تضمين الصور.",
+        "purposeVisualEmbed": "متجه بصري",
         "testConnection": "اختبار الاتصال",
-        "findSimilarHintTitle": "Find similar",
-        "findSimilarHint": "Automatically fuses visual vectors (built-in MobileCLIP) and text vectors (embedding model) with RRF ranking—no similarity threshold to tune. Text channel joins when AI is enabled.",
-        "findSimilarHintShort": "Uses built-in MobileCLIP for visual similarity by default; when an embedding model is configured, title and description are considered too.",
-        "visualEmbedSource": "Visual vector source",
-        "visualEmbedSourceHint": "Built-in: offline, bundled, best for visual similarity. Remote: experimental image embedding via Ollama or compatible APIs; falls back to built-in on failure.",
-        "visualEmbedSourceBuiltin": "Built-in MobileCLIP",
-        "visualEmbedSourceRemote": "Remote embedding model",
+        "findSimilarHintTitle": "إيجاد مشابه",
+        "findSimilarHint": "يدمج تلقائياً المتجهات البصرية (MobileCLIP المدمج) ومتجهات النص (نموذج embedding) مع ترتيب RRF—لا حاجة لضبط عتبة التشابه. ينضم مسار النص عند تفعيل الذكاء الاصطناعي.",
+        "findSimilarHintShort": "يستخدم MobileCLIP المدمج للتشابه البصري افتراضياً؛ عند ضبط نموذج embedding يُؤخذ العنوان والوصف أيضاً.",
+        "visualEmbedSource": "مصدر المتجه البصري",
+        "visualEmbedSourceHint": "مدمج: دون اتصال، مرفق مع التطبيق، الأفضل للتشابه البصري. بعيد: embedding صورة تجريبي عبر Ollama أو واجهات متوافقة؛ يعود للمدمج عند الفشل.",
+        "visualEmbedSourceBuiltin": "MobileCLIP المدمج",
+        "visualEmbedSourceRemote": "نموذج embedding بعيد",
         "visualEmbedSection": "نموذج الصورة",
-        "visualEmbedBaseUrl": "Service URL",
-        "visualEmbedModel": "Visual vector model",
-        "visualEmbedModelHint": "Image embeddings for find-similar; built-in MobileCLIP recommended. Remote models must support image vectors—not vision or text embed models. Falls back to built-in on failure.",
-        "visualEmbedRemoteSectionHint": "Configure provider, URL, API key, and model in the Visual vector service section below.",
-        "visualEmbedModelPlaceholder": "e.g. batiai/qwen3-vl-embed-2b",
-        "legacyLocalVisualEmbed": "Built-in visual vectors",
-        "legacyLocalVisualEmbedHint": "When enabled, uses built-in visual vectors for similarity and Find similar. When disabled, uses the remote embedding model in Visual vector service (falls back to built-in on failure).",
+        "visualEmbedBaseUrl": "عنوان URL للخدمة",
+        "visualEmbedModel": "نموذج المتجه البصري",
+        "visualEmbedModelHint": "embeddings صورة لإيجاد المشابه؛ يُوصى بـ MobileCLIP المدمج. النماذج البعيدة يجب أن تدعم متجهات الصورة—لا رؤية ولا embed نص. يعود للمدمج عند الفشل.",
+        "visualEmbedRemoteSectionHint": "اضبط المزود والعنوان ومفتاح API والنموذج في قسم خدمة المتجه البصري أدناه.",
+        "visualEmbedModelPlaceholder": "مثل batiai/qwen3-vl-embed-2b",
+        "legacyLocalVisualEmbed": "متجهات بصرية مدمجة",
+        "legacyLocalVisualEmbedHint": "عند التفعيل، متجهات بصرية مدمجة للتشابه وإيجاد المشابه. عند الإيقاف، نموذج embedding بعيد في خدمة المتجه البصري (يعود للمدمج عند الفشل).",
         "pumpBlockReason_scheduler_stopped": "توقّ مؤقت التحليل في الخلفية (غالباً بعد وضع توفير الطاقة على البطارية). احفظ إعدادات الذكاء الاصطناعي أو وصّل التيار.",
         "pumpBlockReason_power_save_battery": "وضع توفير الطاقة على البطارية — التحليل في الخلفية متوقف",
         "pumpBlockReason_maintenance": "صيانة الموارد جارية — التحليل متوقف",
@@ -558,13 +559,20 @@
         "requeueFailedSuccess": "أُعيدت {count} صورة إلى قائمة الانتظار؛ ستبدأ المعالجة في الخلفية",
         "requeueFailedSuccessNoAi": "أُعيدت {count} صورة؛ «تفعيل الذكاء الاصطناعي» متوقف",
         "requeueFailedSuccessNoPump": "أُعيدت {count} صورة؛ الوضع الحالي لا يعمل في الخلفية",
-        "requeueFailedEmpty": "لا توجد صور فاشلة لإعادة الإدراج"
+        "requeueFailedEmpty": "لا توجد صور فاشلة لإعادة الإدراج",
+        "analysisCurrentTask": "جاري تحليل #{id}، انتظر {sec} ث",
+        "analysisCurrentTaskVision": "جاري تحليل #{id}، انتظار نموذج الرؤية {sec} ث",
+        "analysisCurrentTaskMulti": "جاري تحليل {ids}، انتظر {sec} ث",
+        "visualEmbedBackfillRunning": "تعبئة المتجهات البصرية، متبقٍ {pending}",
+        "visualEmbedBackfillPending": "{pending} صورة بانتظار المتجهات البصرية",
+        "visualEmbedBackfillDone": "اكتملت المتجهات البصرية (النموذج الحالي)",
+        "visualEmbedBackfillDoneSkipped": "اكتملت المتجهات البصرية (النموذج الحالي)، تم تخطي {skipped} صورة تالفة"
       },
       "privacySpace": {
         "enableNsfwContentMask": "إخفاء المحتوى الحساس",
-        "enableNsfwContentMaskHint": "Requires a privacy password: cannot turn on without one; turning off requires verification. When on, sensitivity level ≥ 2 is masked on browse pages (search and collections unchanged—display only). Previous/next wallpaper skip those images (manual Set as wallpaper is not affected). Tap the mask and enter your password to view on the current page; masking returns when you switch menus or the app goes to background. Not masked in Privacy Space."
+        "enableNsfwContentMaskHint": "يتطلب كلمة مرور خصوصية: لا يمكن التفعيل بدونها؛ الإيقاف يتطلب التحقق. عند التفعيل، مستوى الحساسية ≥2 يُخفى في صفحات التصفح (البحث والمجموعات دون تغيير—عرض فقط). السابق/التالي للخلفية يتخطى تلك الصور (تعيين يدوي كخلفية غير متأثر). اضغط القناع وأدخل كلمة المرور للعرض المؤقت؛ يعود الإخفاء عند تغيير القائمة أو الخلفية. بلا إخفاء في المساحة الخاصة."
       },
-      "privacyPasswordHintLabel": "Password hint"
+      "privacyPasswordHintLabel": "تلميح كلمة المرور"
     },
     "Utils": {
       "dataUtils": "أدوات البيانات",
@@ -599,7 +607,11 @@
       "resetAiAnalysisSuccess": "تم مسح بيانات الذكاء الاصطناعي لـ {count} صورة؛ حُذفت {autoCollections} مجموعة موصى بها؛ ستبدأ المعالجة في الخلفية",
       "resetAiAnalysisSuccessNoAi": "تم وضع {count} صورة قيد الانتظار؛ حُذفت {autoCollections} مجموعة؛ «تفعيل الذكاء الاصطناعي» متوقف",
       "resetAiAnalysisSuccessNoPump": "تم وضع {count} صورة قيد الانتظار؛ حُذفت {autoCollections} مجموعة؛ الوضع الحالي لا يعمل في الخلفية",
-      "resetAiAnalysisEmpty": "لا توجد صور في المكتبة للمسح"
+      "resetAiAnalysisEmpty": "لا توجد صور في المكتبة للمسح",
+      "clearResourcesLibraryDB": "مسح بيانات مكتبة الموارد",
+      "clearResourcesLibraryConfirm": "سيؤدي هذا إلى <strong>مسح جميع سجلات الخلفيات</strong> في مكتبة الموارد (المسح المحلي والتنزيلات من كل مصدر)، بما في ذلك تحليل الذكاء الاصطناعي والوسوم والembeddings وعضوية المجموعات وروابط المفضلة/السجل/الخصوصية/الإحصاءات لتلك السجلات. <strong>ملفات القرص لا تُحذف</strong> (يمكن إعادة استيراد المجلدات المحلية عبر التحديث؛ استخدم «مسح جميع التنزيلات» لملفات التنزيل). <strong>لا</strong> يمسح جداول المفضلة/السجل/الكلمات بالكامل. ستُزال <strong>جميع المجموعات الموصى بها بالذكاء الاصطناعي (النظامية)</strong>؛ مجموعات المستخدم تبقى لكن تفقد الأعضاء.<br/><br/>لا يمكن التراجع. متابعة؟",
+      "clearResourcesLibrarySuccess": "تم مسح {count} سجل(اً) وحذف {autoCollections} مجموعة موصى بها بالذكاء الاصطناعي",
+      "clearResourcesLibraryEmpty": "مكتبة الموارد فارغة بالفعل"
     },
     "About": {
       "name": "الاسم",
@@ -671,24 +683,32 @@
       "noItems": "المجموعة فارغة، حدّث لإنشاء المحتوى",
       "selectHint": "اختر مجموعة لتصفح الخلفيات",
       "confirmDelete": "حذف هذه المجموعة؟",
-      "curatorStatsShortSettled": "Settled · Analyzed {analyzed} · {auto} picks (new images added incrementally)",
-      "curatorFooterLine": "AI Analysis · {status} · Progress {done}/{total} · {percent}% · Collections {auto}/{target}",
-      "curatorFooterLabel": "AI Analysis",
-      "curatorFooterProgress": "Progress {done}/{total}",
-      "curatorFooterCollections": "Collections {auto}/{target}",
+      "curatorStatsShortSettled": "مُثبّت · تم تحليل {analyzed} · {auto} اختيار (تُضاف صور جديدة تدريجياً)",
+      "curatorFooterLine": "تحليل الذكاء الاصطناعي · {status} · التقدم {done}/{total} · {percent}% · المجموعات {auto}/{target}",
+      "curatorFooterLabel": "تحليل الذكاء الاصطناعي",
+      "curatorFooterProgress": "التقدم {done}/{total}",
+      "curatorFooterCollections": "المجموعات {auto}/{target}",
       "curatorFooterStatus": {
-        "disabled": "Off",
-        "settled": "Settled",
-        "running": "Running",
-        "queued": "Queued",
-        "complete": "Complete",
-        "idle": "Idle",
-        "onDemand": "On demand"
+        "disabled": "متوقف",
+        "settled": "مُثبّت",
+        "running": "قيد التشغيل",
+        "queued": "في قائمة الانتظار",
+        "complete": "مكتمل",
+        "idle": "خامل",
+        "onDemand": "عند الطلب"
       },
-      "curateManualConfirmSettled": "System collections are settled. Manual curation will run a full LLM rebuild and remove collections not in the new plan. Continue?",
+      "curateManualConfirmSettled": "مجموعات النظام مُثبّتة. التنسيق اليدوي سيجري إعادة بناء LLM كاملة ويزيل المجموعات غير المدرجة في الخطة الجديدة. متابعة؟",
       "auto": {
         "storagePrompt": "{detail}"
-      }
+      },
+      "similarBackToForYou": "العودة إلى «لك»",
+      "listTabForYou": "لك",
+      "forYouTitle": "لك",
+      "forYouHint": "توصيات بناءً على عاداتك في الخلفيات والمفضلة",
+      "forYouEmpty": "لا توصيات بعد — عيّن خلفيات أو أضف إلى المفضلة",
+      "forYouRefresh": "تحديث التوصيات",
+      "forYouDegraded": "بيانات التفضيل غير كافية — عرض الخلفيات الأعلى تقييماً",
+      "sectionForYou": "لك"
     }
   },
   "messages": {
@@ -822,9 +842,10 @@
     "h5ServerStartFailDetail": "فشل بدء خادم H5: {error}",
     "conflictWindowShortcut": "تعارض مع «{name}» في النافذة «{window}»",
     "invalidShortcutOnlyModifiers": "لا يمكن أن يتكوّن الاختصار من مفاتيح التعديل فقط. اضغط مفتاحاً آخر.",
-    "dialogOk": "OK",
-    "aiJsonParseFailed": "AI response could not be parsed as JSON",
-    "aiNotEnabled": "AI is not enabled"
+    "dialogOk": "موافق",
+    "aiJsonParseFailed": "تعذر تحليل استجابة الذكاء الاصطناعي كـ JSON",
+    "aiNotEnabled": "الذكاء الاصطناعي غير مفعّل",
+    "noVideoPoster": "ملصق الفيديو مفقود. نزّل الفيديو أولاً ثم حلّله."
   },
   "resourceTypeList": {
     "localResource": "الموارد المحلية",
@@ -1118,22 +1139,22 @@
       "updated_at": "وقت تحديث السجل",
       "ctimeMs": "وقت إنشاء المورد",
       "mtimeMs": "وقت تحديث المورد",
-      "summary": "Summary",
-      "tags": "Tags",
-      "nsfwLevel": "NSFW level",
-      "aiAnalysisStatus": "AI analysis"
+      "summary": "ملخص",
+      "tags": "وسوم",
+      "nsfwLevel": "مستوى NSFW",
+      "aiAnalysisStatus": "تحليل الذكاء الاصطناعي"
     },
     "nsfwLevel": {
-      "0": "Safe (0)",
-      "1": "Mild (1)",
-      "2": "Moderate (2)",
-      "3": "High (3)"
+      "0": "آمن (0)",
+      "1": "خفيف (1)",
+      "2": "متوسط (2)",
+      "3": "مرتفع (3)"
     },
     "aiAnalysisStatus": {
-      "pending": "Pending",
-      "done": "Done",
-      "failed": "Failed",
-      "skipped": "Skipped"
+      "pending": "قيد الانتظار",
+      "done": "تم",
+      "failed": "فشل",
+      "skipped": "تم التخطي"
     }
   },
   "h5": {
@@ -1141,7 +1162,7 @@
       "home": "الرئيسية",
       "search": "بحث",
       "setting": "الإعدادات",
-      "browse": "Browse"
+      "browse": "تصفح"
     },
     "pages": {
       "home": {
@@ -1178,10 +1199,10 @@
           "updated_at": "وقت تحديث السجل",
           "ctimeMs": "وقت إنشاء المورد",
           "mtimeMs": "وقت تحديث المورد",
-          "summary": "Summary",
-          "tags": "Tags",
-          "nsfwLevel": "NSFW level",
-          "aiAnalysisStatus": "AI analysis"
+          "summary": "ملخص",
+          "tags": "وسوم",
+          "nsfwLevel": "مستوى NSFW",
+          "aiAnalysisStatus": "تحليل الذكاء الاصطناعي"
         }
       },
       "search": {
@@ -1207,8 +1228,8 @@
           "close": "إغلاق معاينة الفيديو",
           "enterLandscape": "تشغيل أفقي",
           "exitLandscape": "الخروج من الوضع الأفقي",
-          "play": "Play video",
-          "pause": "Pause video"
+          "play": "تشغيل الفيديو",
+          "pause": "إيقاف الفيديو مؤقتاً"
         },
         "actions": {
           "info": "معلومات",
@@ -1272,10 +1293,10 @@
             "label": "حجم العرض",
             "placeholder": "حدد حجم العرض"
           },
-          "h5FullscreenImageCompress": "Fullscreen optimized loading",
+          "h5FullscreenImageCompress": "تحميل محسّن بملء الشاشة",
           "h5FullscreenImageCompressHint": "Card mode always uses compressed thumbnails; fullscreen uses compressed images when on, originals when off",
-          "h5ImageCompressStartSize": "Compress threshold (MB)",
-          "h5ImageCompressStartSizeHint": "Skip resize below this size; always applies in card mode",
+          "h5ImageCompressStartSize": "عتبة الضغط (MB)",
+          "h5ImageCompressStartSizeHint": "بدون تغيير حجم تحت هذا الحجم؛ دائماً نشط في وضع البطاقة",
           "h5FunctionSettings": "إعدادات الوظائف",
           "h5FloatingButtonPosition": {
             "label": "موضع الزر العائم",
@@ -1304,22 +1325,23 @@
       }
     },
     "drawer": {
-      "title": "Browse",
-      "openBrowseMenu": "Open browse menu"
+      "title": "تصفح",
+      "openBrowseMenu": "فتح قائمة التصفح"
     }
   },
   "ai": {
     "prompts": {
-      "imageAnalysis": "You are a wallpaper image analysis assistant. Output only one JSON object, no markdown fences, no extra commentary.\n\n[Field roles — do not mix]\n- title: short headline, ≤40 chars, subject + scene\n- summary: one line for search, ≤80 chars, theme and key visible elements (no use-case, no \"good for desktop\")\n- desc: detailed visible description for humans, 120–220 chars (same language as UI). Cover: subject(s), pose/action, clothing and body exposure level, environment, framing/composition, color and lighting, style/mood. Visible facts only; no invented story; no suitability advice\n- tags: 3–10 search tags (same language as UI)\n- score: integer 1–100, overall aesthetic score\n- nsfwLevel: integer 0–3 (sensitivity rubric below)\n- safeForWork: boolean, must follow linkage rules below\n\n[Sensitivity rubric nsfwLevel — EN + 中文]\n0 Safe 安全: landscapes, still life, everyday portraits, no sexual or sensitive focus. Counter-example: do NOT use 0 when erotic focus or clearly visible intimate body parts, not workplace-appropriate\n1 Mild 轻微: swimwear/sportswear/fashion look, much skin but no nipples/genitals, mildly suggestive pose. Counter-example: do NOT use 1 for full nudity, sex acts as main subject, visible intimate parts (use ≥2)\n2 Moderate 中度: visible nipples/partial nudity, strong sexual suggestion, graphic gore, obvious adult-oriented framing. Counter-example: do NOT use 2 when intercourse is central or intimate close-ups (use 3)\n3 Explicit 重度: erotic or sexual acts as main subject, clearly visible genitals, extreme gore. Counter-example: do NOT use 3 for bikini/swimwear with no nudity (use 1)\n\n[safeForWork ↔ nsfwLevel linkage — mandatory]\n- nsfwLevel≥2 ⇒ safeForWork must be false\n- safeForWork false ⇒ nsfwLevel must be ≥2\n- nsfwLevel=0 ⇒ safeForWork must be true\n- Never output nsfwLevel=0 with safeForWork=false\n\nExample (safe): {\"score\":82,\"tags\":[\"night\",\"city\",\"neon\",\"rain\",\"blue\"],\"title\":\"Rainy city skyline\",\"summary\":\"Night cityscape after rain, towers and wet reflections\",\"desc\":\"Wide skyline in the upper frame with warm and cool neon; wet mid-ground pavement mirrors lights and car streaks; sharp deep focus, cinematic calm mood.\",\"nsfwLevel\":0,\"safeForWork\":true}",
-      "searchParse": "Parse the user's wallpaper search description into JSON. No markdown.\nUser input: {query}\nOutput fields:\n- filterKeywords: string, core keywords\n- tags: string array, [] if omitted\n- orientation: array, [] if omitted; elements 1 (landscape) or 0 (portrait), or landscape/portrait\n- quality: array, [] if omitted; only 8K, 5K, 4K, 2K (must match DB field; no 1080p/720p/lowercase 4k)\n- filterType: images | videos | \"\" (empty if type not specified; do not output fileType)\n- scoreMin: integer 0-100 or null unless user asks for a minimum score\n- scoreMax: integer 0-100 or null\n\nExample: {\"filterKeywords\":\"ocean\",\"tags\":[\"ocean\",\"blue\"],\"orientation\":[1],\"quality\":[\"4K\"],\"filterType\":\"images\",\"scoreMin\":null,\"scoreMax\":null}",
-      "collectionQuery": "The user wants to create a smart wallpaper collection. Parse the description into queryJson. Output JSON only.\nUser description: {prompt}\nFields:\n- filterKeywords: string (core search term)\n- tags: string[]\n- tagsMode: any|all\n- quality: string[] (must be [] unless user asks resolution; only 8K, 5K, 4K, 2K; no 1080p/720p)\n(Do not output orientation, scoreMin, or scoreMax; minimum score comes from app AI settings.)\n- resourceName: always \"resources\" (full library; never favorites/local/history)\n- isRandom: boolean\n- sortField: score|created_at|views\n- sortType: -1|1\n- semanticQuery: string\n- useSemantic: boolean (true when theme/mood is described)\n- limitCount: integer 5-50\n\nRules: tags must match resource AI tag language (prefer same as UI); do not invent orientation/quality/scoreMin/scoreMax; for entity words put the word in filterKeywords and add synonymous tags in the same language as resource tags.",
+      "imageAnalysis": "أنت مساعد لتحليل صور الخلفيات. أخرج كائن JSON واحد فقط، بدون أسوار markdown، بدون تعليقات إضافية.\n\n[أدوار الحقول — لا تخلط]\n- title: عنوان قصير، ≤40 حرفاً، الموضوع + المشهد\n- summary: سطر واحد للبحث، ≤80 حرفاً، الموضوع والعناصر المرئية الرئيسية (بدون حالة استخدام، بدون «مناسب للسطح»)\n- desc: وصف مرئي مفصل للبشر، 120–220 حرفاً (نفس لغة الواجهة). يغطي: الموضوع/المواضيع، الوضعية/الفعل، الملابس ومستوى كشف الجسم، البيئة، الإطار/التكوين، اللون والإضاءة، الأسلوب/المزاج. حقائق مرئية فقط؛ لا قصة مخترعة؛ لا نصيحة ملاءمة\n- tags: 3–10 وسوم بحث (نفس لغة الواجهة)\n- score: عدد صحيح 1–100، تقييم جمالي عام\n- nsfwLevel: عدد صحيح 0–3 (معايير الحساسية أدناه)\n- safeForWork: منطقي، يجب اتباع قواعد الربط أدناه\n\n[معايير الحساسية nsfwLevel — AR + 中文]\n0 Safe 安全: مناظر طبيعية، طبيعة صامتة، portraits يومية، بلا تركيز جنسي أو حساس. مضاد: لا تستخدم 0 عند تركيز إيروتيكي أو أجزاء حميمة واضحة، غير مناسب للعمل\n1 Mild 轻微: ملابس سباحة/رياضة/موضة، جلد كثير بلا حلمات/أعضاء، وضعية mildly suggestive. مضاد: لا 1 للعري الكامل، أفعال جنسية كموضوع رئيسي، أجزاء حميمة واضحة (≥2)\n2 Moderate 中度: حلمات/عري جزئي، إيحاء جنسي قوي، دماء graphic، إطار بالغ واضح. مضاد: لا 2 عند جماع مركزي أو لقطات حميمة (3)\n3 Explicit 重度: أفعال إيروتيكية/جنسية كموضوع رئيسي، أعضاء تناسلية واضحة، دماء extreme. مضاد: لا 3 لبikini/سباحة بلا عري (1)\n\n[ربط safeForWork ↔ nsfwLevel — إلزامي]\n- nsfwLevel≥2 ⇒ safeForWork يجب أن يكون false\n- safeForWork false ⇒ nsfwLevel يجب أن يكون ≥2\n- nsfwLevel=0 ⇒ safeForWork يجب أن يكون true\n- لا تُخرج nsfwLevel=0 مع safeForWork=false أبداً\n\nمثال (آمن): {\"score\":82,\"tags\":[\"ليل\",\"مدينة\",\"نيون\",\"مطر\",\"أزرق\"],\"title\":\"أفق مدينة ممطر\",\"summary\":\"منظر ليلي بعد المطر، أبراج وانعكاسات رطبة\",\"desc\":\"أفق واسع في الجزء العلوي بإضاءة نيون دافئة وباردة؛ رصيف رطب في الوسط يعكس الأضواء ومسارات السيارات؛ تركيز عميق حاد، مزاج سينمائي هادئ.\",\"nsfwLevel\":0,\"safeForWork\":true}",
+      "searchParse": "حلّل وصف بحث الخلفيات للمستخدم إلى JSON. بدون markdown.\nمدخل المستخدم: {query}\nحقول الإخراج:\n- filterKeywords: string، الكلمات المفتاحية الأساسية\n- tags: مصفوفة strings، [] إذا لم تُذكر\n- orientation: مصفوفة، [] إذا لم تُذكر؛ عناصر 1 (أفقي) أو 0 (عمودي)، أو landscape/portrait\n- quality: مصفوفة، [] إذا لم تُذكر؛ 8K و5K و4K و2K فقط (يجب مطابقة حقل DB؛ لا 1080p/720p/4k صغيرة)\n- filterType: images | videos | \"\" (فارغ إذا لم يُحدد النوع؛ لا تُخرج fileType)\n- scoreMin: عدد صحيح 0-100 أو null ما لم يطلب المستخدم حداً أدنى\n- scoreMax: عدد صحيح 0-100 أو null\n\nمثال: {\"filterKeywords\":\"محيط\",\"tags\":[\"محيط\",\"أزرق\"],\"orientation\":[1],\"quality\":[\"4K\"],\"filterType\":\"images\",\"scoreMin\":null,\"scoreMax\":null}",
+      "collectionQuery": "يريد المستخدم إنشاء مجموعة خلفيات ذكية. حلّل الوصف إلى queryJson. JSON فقط.\nوصف المستخدم: {prompt}\nالحقول:\n- filterKeywords: string (مصطلح البحث الأساسي)\n- tags: string[]\n- tagsMode: any|all\n- quality: string[] (يجب [] ما لم يطلب دقة؛ 8K و5K و4K و2K فقط؛ لا 1080p/720p)\n(لا تُخرج orientation أو scoreMin أو scoreMax؛ الحد الأدنى من إعدادات الذكاء الاصطناعي.)\n- resourceName: دائماً \"resources\" (المكتبة كاملة؛ لا favorites/local/history)\n- isRandom: boolean\n- sortField: score|created_at|views\n- sortType: -1|1\n- semanticQuery: string\n- useSemantic: boolean (true عند وصف موضوع/مزاج)\n- limitCount: عدد صحيح 5-50\n\nالقواعد: tags بلغة وسوم الذكاء الاصطناعي للموارد (يفضل UI)؛ لا تخترع orientation/quality/scoreMin/scoreMax؛ الكيانات في filterKeywords ووسوم مرادفة بنفس اللغة.",
       "keywordExpand": "وسّع كلمات البحث للتنزيل التلقائي للخلفيات. المُدخل: {keywords}\nإخراج JSON: {\"keywords\":[\"كلمة1\",\"كلمة2\"]}، بحد أقصى 10 عناصر، بنفس لغة هذه التعليمات، دون شرح.",
-      "collectionTagExpand": "Expand wallpaper collection search tags for synonyms. Theme: {keyword}\nOutput JSON: {\"tags\":[\"tag1\",\"tag2\"]}, up to 8 items, tags in the same language as resource AI analysis and UI when possible, no explanation.",
-      "collectionNaming": "You are a wallpaper library curator. Each id below is one image-vector cluster. Name each id separately. Do NOT merge ids. Do NOT apply group A's corpus to group B.\n\nRules:\n1. Output JSON only, no markdown\n2. At most {targetCount} entries; each id must come from the input\n3. Base naming ONLY on that id's titleSamples (short AI titles), samples, and tags; prefer titleSamples for name; do not add words absent from the corpus\n4. name MUST be a short mood title (NOT a full sentence, NOT a numbered placeholder), length {nameMinLen}-{nameMaxLen} chars\n5. If samples diverge, use broader wording still supported by titleSamples/samples/tags\n6. prompt / semanticQuery may be longer; name must stay short on its own\n\nInput candidates:\n{candidates}\n\nOutput format:\n{\n  \"collections\": [\n    {\n      \"id\": \"vec:0\",\n      \"name\": \"Alpine Lakes\",\n      \"prompt\": \"One-line mood for this group\",\n      \"semanticQuery\": \"Phrase for semantic search\"\n    }\n  ]\n}\n7. name language MUST match the app UI locale ({uiLocale}) and the language of samples/tags; no mixed-language titles"
+      "collectionTagExpand": "وسّع وسوم بحث المجموعة بمرادفات. الموضوع: {keyword}\nJSON: {\"tags\":[\"وسم1\",\"وسم2\"]}, حتى 8، بلغة وسوم الذكاء الاصطناعي والواجهة إن أمكن، بدون شرح.",
+      "collectionNaming": "أنت أمين مكتبة خلفيات. كل id أدناه مجموعة متجهات صورة. سمِّ كل id على حدة. لا تدمج ids. لا تطبّق corpus A على B.\n\nالقواعد:\n1. JSON فقط، بدون markdown\n2. على الأكثر {targetCount} مدخلات؛ كل id من المدخل\n3. التسمية فقط من titleSamples وsamples وtags لذلك id؛ name يفضّل titleSamples؛ لا كلمات خارج corpus\n4. name يجب أن يكون عنوان مزاج قصير (ليس جملة كاملة، ليس placeholder مرقّم)، طول {nameMinLen}-{nameMaxLen} حرفاً\n5. إذا تباينت samples، صياغة أوسع مدعومة بال corpus\n6. prompt / semanticQuery قد يكونان أطول؛ name يبقى قصيراً\n\nالمرشحون:\n{candidates}\n\nالتنسيق:\n{\n  \"collections\": [\n    {\n      \"id\": \"vec:0\",\n      \"name\": \"بحيرات جبلية\",\n      \"prompt\": \"سطر واحد لمزاج هذه المجموعة\",\n      \"semanticQuery\": \"عبارة للبحث الدلالي\"\n    }\n  ]\n}\n7. لغة name يجب أن تطابق locale الواجهة ({uiLocale}) وsamples/tags؛ بلا عناوين مختلطة",
+      "videoPosterAnalysis": "أنت مساعد لتحليل فيديو الخلفيات. المدخل هو إطار الغلاف فقط (وليس الفيديو كاملاً). حلّل ما يظهر في هذا الإطار فقط؛ لا تستنتج الحركة أو الصوت. التنسيق وقواعد الحقول كتحليل الصورة.\n\n[أدوار الحقول — لا تخلط]\n- title: عنوان قصير، ≤40 حرفاً، الموضوع + المشهد\n- summary: سطر واحد للبحث، ≤80 حرفاً، الموضوع والعناصر المرئية الرئيسية (بدون حالة استخدام، بدون «مناسب للسطح»)\n- desc: وصف مرئي مفصل للبشر، 120–220 حرفاً (نفس لغة الواجهة). يغطي: الموضوع/المواضيع، الوضعية/الفعل، الملابس ومستوى كشف الجسم، البيئة، الإطار/التكوين، اللون والإضاءة، الأسلوب/المزاج. حقائق مرئية فقط؛ لا قصة مخترعة؛ لا نصيحة ملاءمة\n- tags: 3–10 وسوم بحث (نفس لغة الواجهة)\n- score: عدد صحيح 1–100، تقييم جمالي عام\n- nsfwLevel: عدد صحيح 0–3 (معايير الحساسية أدناه)\n- safeForWork: منطقي، يجب اتباع قواعد الربط أدناه\n\n[معايير الحساسية nsfwLevel — AR + 中文]\n0 Safe 安全: مناظر طبيعية، طبيعة صامتة، portraits يومية، بلا تركيز جنسي أو حساس. مضاد: لا تستخدم 0 عند تركيز إيروتيكي أو أجزاء حميمة واضحة، غير مناسب للعمل\n1 Mild 轻微: ملابس سباحة/رياضة/موضة، جلد كثير بلا حلمات/أعضاء، وضعية mildly suggestive. مضاد: لا 1 للعري الكامل، أفعال جنسية كموضوع رئيسي، أجزاء حميمة واضحة (≥2)\n2 Moderate 中度: حلمات/عري جزئي، إيحاء جنسي قوي، دماء graphic، إطار بالغ واضح. مضاد: لا 2 عند جماع مركزي أو لقطات حميمة (3)\n3 Explicit 重度: أفعال إيروتيكية/جنسية كموضوع رئيسي، أعضاء تناسلية واضحة، دماء extreme. مضاد: لا 3 لبikini/سباحة بلا عري (1)\n\n[ربط safeForWork ↔ nsfwLevel — إلزامي]\n- nsfwLevel≥2 ⇒ safeForWork يجب أن يكون false\n- safeForWork false ⇒ nsfwLevel يجب أن يكون ≥2\n- nsfwLevel=0 ⇒ safeForWork يجب أن يكون true\n- لا تُخرج nsfwLevel=0 مع safeForWork=false أبداً\n\nمثال (آمن): {\"score\":82,\"tags\":[\"ليل\",\"مدينة\",\"نيون\",\"مطر\",\"أزرق\"],\"title\":\"أفق مدينة ممطر\",\"summary\":\"منظر ليلي بعد المطر، أبراج وانعكاسات رطبة\",\"desc\":\"أفق واسع في الجزء العلوي بإضاءة نيون دافئة وباردة؛ رصيف رطب في الوسط يعكس الأضواء ومسارات السيارات؛ تركيز عميق حاد، مزاج سينمائي هادئ.\",\"nsfwLevel\":0,\"safeForWork\":true}"
     }
   },
   "privacyNsfwMask": {
-    "tapToUnlock": "Tap to enter privacy password",
-    "actionBlocked": "Verify privacy password via the hide overlay first"
+    "tapToUnlock": "اضغط لإدخال كلمة مرور الخصوصية",
+    "actionBlocked": "تحقق من كلمة مرور الخصوصية عبر طبقة الإخفاء أولاً"
   }
 }

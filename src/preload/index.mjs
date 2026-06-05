@@ -289,6 +289,8 @@ const api = {
   findSimilar: (payload) => invokeWithObject('main:findSimilar', ipcRenderer, payload),
   semanticSearch: (payload) => invokeWithObject('main:semanticSearch', ipcRenderer, payload),
   recommend: (...args) => ipcRenderer.invoke('main:recommend', ...args),
+  recommendAddAllToFavorites: (...args) =>
+    ipcRenderer.invoke('main:recommend:addAllToFavorites', ...args),
   collectionsList: (...args) => ipcRenderer.invoke('main:collections:list', ...args),
   collectionsGet: (...args) => ipcRenderer.invoke('main:collections:get', ...args),
   collectionsCreate: (...args) => ipcRenderer.invoke('main:collections:create', ...args),

@@ -1,7 +1,7 @@
 # 资源生命周期与关联清理
 
-> 文档版本：**v1.0**  
-> 整理日期：**2026-06-03**  
+> 文档版本：**v1.1**  
+> 整理日期：**2026-06-05**  
 > 状态：**已实现**  
 > 关联：[data-model-resources-and-ai.md](./data-model-resources-and-ai.md) · [main-window-ux-and-infrastructure.md](./main-window-ux-and-infrastructure.md) · [ai-visual-embedding-and-similar.md](./ai-visual-embedding-and-similar.md) · [README.md](./README.md)
 
@@ -56,7 +56,7 @@
 | 变更 | 说明 |
 |------|------|
 | **FK CASCADE** | `favorites` / `history` / `privacy_space` / `statistics` / `resource_words` / `collection_items` / `resource_embeddings` / `resource_vec_blob` → `fbw_resources`；旧库 `upgradeResourceForeignKeys` |
-| **画面向量复合主键** | `fbw_resource_image_vec_blob`：`PRIMARY KEY (resourceId, model)`；`migrateImageVecBlobCompositePk` |
+| **画面向量复合主键** | `fbw_resource_image_vec_blob`：`PRIMARY KEY (resourceId, model)`；`migrateImageVecBlobCompositePk`（**v1.1**：迁移时过滤孤儿 `resourceId`，失败清理 `_new` 表） |
 | **AI 拆分迁移** | `migrateResourceAiSplitV1` 含 **video** AI 搬迁；`PRAGMA foreign_keys=OFF` 后再 `DROP TABLE` |
 | **`posterPath`** | 迁移 DDL 与 `sql.mjs` 对齐；仍保留 `addColumnIfMissing` 兜底 |
 
@@ -106,7 +106,7 @@ i18n 文案已改为「图片与（有封面的）视频」（`zh-CN` / `en-US`�
 
 | 主题 | 说明 |
 |------|------|
-| `RecommendManager.recommend` | 虚拟 `resourceName`（`resources` / `favorites` / `history`）与 search 对齐；偏好标签排除隐私；tag 零结果降级 |
+| `RecommendManager.recommend` | 虚拟 `resourceName`（`resources` / `favorites` / `history`）与 search 对齐；偏好标签排除隐私；tag 零结果降级；**桌面/H5 合集页已接入** |
 | 语义搜索统计 | `search({ skipStatistics: true })` 过滤路径不 +views |
 | `findSimilar` IPC | 校验 `resourceId`；collection scope 缺 id 返回 `null`（不限制范围） |
 | 合集 `itemCount` | `JOIN fbw_resources`，不计孤儿成员 |
@@ -126,7 +126,7 @@ i18n 文案已改为「图片与（有封面的）视频」（`zh-CN` / `en-US`�
 | 删文件 | `FileManager.deleteFile`、`index.mjs` `main:deleteFile` |
 | 刷新目录 | `file_server/index.mjs`、`FileManager.processDirectoryData` |
 | 视觉路径 | `src/main/ai/AiVisionResourcePath.mjs` |
-| 推荐（仅后端） | `RecommendManager.mjs`、`main:recommend` |
+| 推荐 | `RecommendManager.mjs`、`main:recommend`、`main:recommend:addAllToFavorites`；H5 `/api/recommend*` |
 
 ---
 
@@ -134,7 +134,7 @@ i18n 文案已改为「图片与（有封面的）视频」（`zh-CN` / `en-US`�
 
 | 项 | 说明 |
 |------|------|
-| 前端未接 `recommend` / `parseSearchQuery` | 后端 IPC 就绪，产品入口待做 |
+| 前端未接 `parseSearchQuery` 产品入口 | 后端 IPC 就绪 |
 | `FileManager` 本地限定 | FIXME：刷新/删除以 `local` 为主 |
 | 用户合集空壳 | 清空资源库后用户自建合集行保留、成员被 FK 清掉 |
 | sqlite-vec 索引 | `fbw_image_vec_index` 仍按单 resourceId；多 model 时 BLOB 路检索为准 |
@@ -146,3 +146,4 @@ i18n 文案已改为「图片与（有封面的）视频」（`zh-CN` / `en-US`�
 | 版本 | 日期 | 说明 |
 |------|------|------|
 | v1.0 | 2026-06-03 | 关联清理统一、FK/复合 PK 迁移、刷新 UPSERT+prune、clearDB 对齐、视频 AI/清空语义、Recommend/IPC 修复 |
+| **v1.1** | **2026-06-05** | `migrateImageVecBlobCompositePk` 孤儿行过滤；猜你喜欢前端接入；迁移脚本仅 `1.3.8_to_2.0.0.mjs` |

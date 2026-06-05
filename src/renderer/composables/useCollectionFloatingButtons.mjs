@@ -1,4 +1,4 @@
-import { computed, ref } from 'vue'
+import { computed, ref, unref } from 'vue'
 
 /**
  * 合集页悬浮按钮：对齐搜索页可用项（网格尺寸/比例、刷新、返回顶部），不含加载更多/排序/隐私空间等
@@ -9,8 +9,10 @@ export function useCollectionFloatingButtons({
   gridSizeList,
   gridRatioList,
   selectedCollection,
+  recommendMode,
   similarMode,
-  isAutoCollection
+  isAutoCollection,
+  similarBackTitle
 }) {
   const showFixedBtns = ref(true)
 
@@ -32,17 +34,35 @@ export function useCollectionFloatingButtons({
     }
 
     if (similarMode.value) {
+      const backTitle = unref(similarBackTitle) || t('pages.Collections.similarBack')
       ret.push({
         action: 'exitSimilar',
         actionParams: [],
-        title: t('pages.Collections.similarBack'),
+        title: backTitle,
         icon: 'custom:arrow-right',
         iconStyle: { transform: 'rotate(180deg)' },
         style: { bottom: getBottom() }
       })
     }
 
-    if (selectedCollection.value) {
+    if (recommendMode?.value) {
+      ret.push({
+        action: 'onRefresh',
+        actionParams: [],
+        title: t('pages.Collections.forYouRefresh'),
+        icon: 'custom:refresh-right',
+        iconStyle: {},
+        style: { bottom: getBottom() }
+      })
+      ret.push({
+        action: 'addAllFavorites',
+        actionParams: [],
+        title: t('pages.Collections.addFavorites'),
+        icon: 'custom:star',
+        iconStyle: {},
+        style: { bottom: getBottom() }
+      })
+    } else if (selectedCollection.value) {
       if (!isAutoCollection(selectedCollection.value)) {
         ret.push({
           action: 'onRefresh',

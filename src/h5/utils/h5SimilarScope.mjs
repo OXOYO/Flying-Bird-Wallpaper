@@ -12,12 +12,15 @@ export function buildH5SearchSimilarScope(form = {}) {
 
 /**
  * @param {{
- *   browseType: 'favorites' | 'history' | 'collection',
+ *   browseType: 'favorites' | 'history' | 'collection' | 'recommend',
  *   inPrivacySpace?: boolean,
  *   collectionId?: number | string | null
  * }} ctx
  */
 export function buildH5BrowseSimilarScope({ browseType, inPrivacySpace = false, collectionId = null }) {
+  if (browseType === 'recommend') {
+    return { type: 'search', resourceType: 'localResource', resourceName: 'resources' }
+  }
   if (browseType === 'collection') {
     const id = Number(collectionId)
     return Number.isFinite(id) && id > 0 ? { type: 'collection', collectionId: id } : null
