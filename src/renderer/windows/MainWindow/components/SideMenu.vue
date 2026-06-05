@@ -120,19 +120,19 @@ const onCopyH5ServerUrl = () => {
   const h5ServerUrl = commonData.value?.h5ServerUrl
   if (!h5ServerUrl) return
   clipboard
-      .write(h5ServerUrl)
-      .then(() => {
-        ElMessage({
-          type: 'success',
-          message: t('messages.copySuccess')
-        })
+    .write(h5ServerUrl)
+    .then(() => {
+      ElMessage({
+        type: 'success',
+        message: t('messages.copySuccess')
       })
-      .catch(() => {
-        ElMessage({
-          type: 'error',
-          message: t('messages.copyFail')
-        })
+    })
+    .catch(() => {
+      ElMessage({
+        type: 'error',
+        message: t('messages.copyFail')
       })
+    })
 }
 </script>
 
@@ -257,11 +257,7 @@ const onCopyH5ServerUrl = () => {
             <el-link :href="h5ServerUrl" target="_blank" class="qr-code-url">
               {{ h5ServerUrl }}
             </el-link>
-            <IconifyIcon
-              class="qr-code-copy"
-              icon="custom:copy"
-              @click="onCopyH5ServerUrl"
-            />
+            <IconifyIcon class="qr-code-copy" icon="custom:copy" @click="onCopyH5ServerUrl" />
           </div>
           <div class="qr-code-title">{{ $t('qrCode.notice') }}</div>
           <el-button
@@ -273,12 +269,7 @@ const onCopyH5ServerUrl = () => {
           >
             {{ $t('qrCode.stopH5Server') }}
           </el-button>
-          <el-button
-            v-else
-            class="qr-code-btn"
-            plain
-            @click="onToolClick('startH5Server')"
-          >
+          <el-button v-else class="qr-code-btn" plain @click="onToolClick('startH5Server')">
             {{ $t('qrCode.startH5Server') }}
           </el-button>
         </div>
@@ -505,7 +496,7 @@ const onCopyH5ServerUrl = () => {
     display: flex;
     width: 100%;
     margin: 0;
-    padding: 8px 0;
+    padding: 0;
     justify-content: center;
     align-items: center;
     outline: none;
