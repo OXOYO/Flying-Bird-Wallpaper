@@ -78,6 +78,7 @@ onBeforeUnmount(() => {
 
 .window-side-wrapper {
   position: relative;
+  z-index: 25;
   height: 100%;
   overflow: unset;
   transition: all 0.3s ease-in-out;

@@ -704,6 +704,18 @@ defineExpose({
               @change="onSettingDataFormChange"
             />
           </el-form-item>
+          <el-form-item prop="videoDefaultMuted" class="ai-form-item-labeled">
+            <template #label>
+              <SettingFormLabelTip
+                :label="t('pages.Setting.settingDataForm.videoDefaultMuted')"
+                :hint="t('pages.Setting.settingDataForm.videoDefaultMutedHint')"
+              />
+            </template>
+            <el-switch
+              v-model="settingDataForm.videoDefaultMuted"
+              @change="onSettingDataFormChange"
+            />
+          </el-form-item>
           <el-form-item class="ai-form-item-labeled">
             <template #label>
               <SettingFormLabelTip

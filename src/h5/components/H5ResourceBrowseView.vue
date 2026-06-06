@@ -9,6 +9,7 @@ import H5FloatingButtons from '@h5/components/H5FloatingButtons.vue'
 import H5ListEmpty from '@h5/components/H5ListEmpty.vue'
 import H5PrivacyPasswordDialog from '@h5/components/H5PrivacyPasswordDialog.vue'
 import H5NsfwContentMask from '@h5/components/H5NsfwContentMask.vue'
+import H5InlineVideoMuteButton from '@h5/components/H5InlineVideoMuteButton.vue'
 import { useH5ResourceBrowse } from '@h5/composables/useH5ResourceBrowse.mjs'
 import { resolveApiUserMessage } from '@common/utils.js'
 import { scheduleDialogInputFocus } from '@common/focusDialogInput.mjs'
@@ -154,8 +155,12 @@ const {
   retryLoadPoster,
   setInlineVideoRef,
   isInlineVideoPlaying,
+  isInlineVideoActive,
+  onInlineVideoPlayingEvent,
+  isInlineVideoMuted,
   onInlineVideoSurfaceClick,
   toggleInlineVideo,
+  toggleInlineVideoMute,
   onInlineVideoPaused,
   onInlineVideoError,
   onRefresh,
@@ -186,6 +191,8 @@ const {
   onCardMouseUp,
   onMediaContextMenu,
   showImageInfo,
+  showSelectedVideoFullscreenAction,
+  playSelectedVideoFullscreen,
   toggleSelectedFavorite,
   saveSelectedMedia,
   deleteSelectedMedia,
@@ -496,11 +503,12 @@ defineExpose({
                           x5-playsinline
                           x5-video-player-type="h5"
                           preload="metadata"
+                          @playing="onInlineVideoPlayingEvent(row.item)"
                           @click.stop="onInlineVideoSurfaceClick(row.item)"
                           @pause="onInlineVideoPaused(row.item)"
                           @error="onInlineVideoError(row.item)"
                         />
-                        <template v-if="!isInlineVideoPlaying(row.item)">
+                        <template v-if="!isInlineVideoActive(row.item)">
                           <div
                             v-if="row.item.posterSrc && imageErrorState[getItemKey(row.item)]"
                             class="preview-fallback preview-fallback--overlay"
@@ -536,7 +544,7 @@ defineExpose({
                         <button
                           v-if="
                             row.item.videoSrc &&
-                            !isInlineVideoPlaying(row.item) &&
+                            !isInlineVideoActive(row.item) &&
                             !shouldMaskNsfwItem(row.item)
                           "
                           type="button"
@@ -549,6 +557,15 @@ defineExpose({
                             icon="custom:play-circle"
                           />
                         </button>
+                        <H5InlineVideoMuteButton
+                          :visible="
+                            row.item.videoSrc &&
+                            isInlineVideoActive(row.item) &&
+                            !shouldMaskNsfwItem(row.item)
+                          "
+                          :muted="isInlineVideoMuted(row.item)"
+                          @toggle="toggleInlineVideoMute(row.item)"
+                        />
                       </template>
                       <template v-else>
                         <div
@@ -669,12 +686,13 @@ defineExpose({
                         webkit-playsinline
                         x5-playsinline
                         preload="metadata"
+                        @playing="onInlineVideoPlayingEvent(item)"
                         @click.stop="onInlineVideoSurfaceClick(item)"
                         @pause="onInlineVideoPaused(item)"
                         @error="onInlineVideoError(item)"
                       />
                       <button
-                        v-if="!isInlineVideoPlaying(item) && !shouldMaskNsfwItem(item)"
+                        v-if="!isInlineVideoActive(item) && !shouldMaskNsfwItem(item)"
                         type="button"
                         class="fullscreen-slide-video-btn"
                         :aria-label="t('h5.pages.search.videoPreview.play')"
@@ -685,6 +703,13 @@ defineExpose({
                           icon="custom:play-circle"
                         />
                       </button>
+                      <H5InlineVideoMuteButton
+                        :visible="
+                          isInlineVideoActive(item) && !shouldMaskNsfwItem(item)
+                        "
+                        :muted="isInlineVideoMuted(item)"
+                        @toggle="toggleInlineVideoMute(item)"
+                      />
                     </template>
                     <div
                       v-else-if="item.fileType === 'video'"
@@ -755,6 +780,16 @@ defineExpose({
             <IconifyIcon class="action-icon-inner" icon="custom:info-line" />
           </div>
           <span class="action-label">{{ t('h5.pages.search.actions.info') }}</span>
+        </div>
+        <div
+          v-if="showSelectedVideoFullscreenAction"
+          class="action-item"
+          @click="playSelectedVideoFullscreen"
+        >
+          <div class="action-icon-wrapper">
+            <IconifyIcon class="action-icon-inner" icon="custom:play-circle" />
+          </div>
+          <span class="action-label">{{ t('h5.pages.search.actions.fullscreenPlay') }}</span>
         </div>
         <div
           v-if="canFindSimilarSelected"

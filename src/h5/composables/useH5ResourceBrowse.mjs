@@ -26,7 +26,8 @@ import {
   sortTypeOptions,
   DEFAULT_BROWSE_SORT_FIELD,
   DEFAULT_BROWSE_SORT_TYPE,
-  isQualityFilterApplicable
+  isQualityFilterApplicable,
+  isVideoDefaultMuted
 } from '@common/publicData.js'
 import { handleInfoVal, resolveApiUserMessage, isTransientSearchFailure } from '@common/utils.js'
 import { applyFavoriteResourceToItem, shouldRecordDownloadStat, applyResolvedResourceFromResult } from '@h5/utils/favoriteApiBody.js'
@@ -34,6 +35,7 @@ import { applyUnfavoriteToItem } from '@common/favoriteResourceUtils.js'
 import { resolveFindSimilarEmptyMessage } from '@common/findSimilarUtils.js'
 import { resolveNsfwGatedMediaSrc } from '@common/privacyNsfwMask.js'
 import { runLongPressFavoriteBatch } from '@h5/utils/h5FavoriteGesture.mjs'
+import { runH5ActionLoading } from '@h5/utils/runH5ActionLoading.mjs'
 import { usePreviewViewStat } from '@h5/composables/usePreviewViewStat.mjs'
 import { usePrivacyNsfwMask } from '@common/composables/usePrivacyNsfwMask.mjs'
 import { useH5FullscreenAutoPlay } from '@h5/composables/useH5FullscreenAutoPlay.js'
@@ -215,6 +217,7 @@ export function useH5ResourceBrowse(options) {
   let browseToolbarResizeObserver = null
   const inlineVideoRefs = {}
   const inlineVideoPlayingKeys = ref(new Set())
+  const inlineVideoMuteByKey = reactive({})
   const inlineVideoVisibilityObservers = {}
   const fullscreenPagerRef = ref(null)
   const fullscreenVisibleIndex = ref(0)
@@ -544,13 +547,52 @@ export function useH5ResourceBrowse(options) {
     if (!key) return
     const next = new Set(inlineVideoPlayingKeys.value)
     if (playing) next.add(key)
-    else next.delete(key)
+    else {
+      next.delete(key)
+      delete inlineVideoMuteByKey[key]
+    }
     inlineVideoPlayingKeys.value = next
+  }
+
+  const syncInlineVideoMuteState = (key, el) => {
+    if (key && el) inlineVideoMuteByKey[key] = !!el.muted
+  }
+
+  const isInlineVideoMuted = (item) => {
+    const key = getItemKey(item)
+    if (!key || !isInlineVideoActive(item)) return true
+    if (Object.prototype.hasOwnProperty.call(inlineVideoMuteByKey, key)) {
+      return !!inlineVideoMuteByKey[key]
+    }
+    return !!inlineVideoRefs[key]?.muted
+  }
+
+  const toggleInlineVideoMute = (item) => {
+    const key = getItemKey(item)
+    const el = inlineVideoRefs[key]
+    if (!key || !el || !isInlineVideoActive(item)) return
+    el.muted = !el.muted
+    inlineVideoMuteByKey[key] = el.muted
   }
 
   const isInlineVideoPlaying = (item) => {
     const key = getItemKey(item)
     return key ? inlineVideoPlayingKeys.value.has(key) : false
+  }
+
+  const isInlineVideoActive = (item) => {
+    const key = getItemKey(item)
+    if (!key) return false
+    if (inlineVideoPlayingKeys.value.has(key)) return true
+    const el = inlineVideoRefs[key]
+    return !!(el && !el.paused && !el.ended)
+  }
+
+  const onInlineVideoPlayingEvent = (item) => {
+    const key = getItemKey(item)
+    if (!key) return
+    markInlineVideoPlaying(key, true)
+    syncInlineVideoMuteState(key, inlineVideoRefs[key])
   }
 
   const findVideoKeyByEl = (el) => {
@@ -639,6 +681,9 @@ export function useH5ResourceBrowse(options) {
       }
     }
     inlineVideoPlayingKeys.value = new Set()
+    for (const key of Object.keys(inlineVideoMuteByKey)) {
+      delete inlineVideoMuteByKey[key]
+    }
   }
 
   const pauseInlineVideo = (item) => {
@@ -658,7 +703,7 @@ export function useH5ResourceBrowse(options) {
     pauseInlineVideo(item)
   }
 
-  const playInlineVideo = async (item, { preferMuted = false } = {}) => {
+  const playInlineVideo = async (item, { preferMuted } = {}) => {
     if (!item?.videoSrc) return false
     const key = getItemKey(item)
     let el = inlineVideoRefs[key]
@@ -681,9 +726,14 @@ export function useH5ResourceBrowse(options) {
       }
     }
 
-    if (preferMuted && (await tryPlay(true))) return true
-    if (await tryPlay(false)) return true
-    if (!preferMuted && (await tryPlay(true))) return true
+    const wantMutedFirst = preferMuted ?? isVideoDefaultMuted(settingData.value)
+    const succeed = () => {
+      syncInlineVideoMuteState(key, el)
+      return true
+    }
+    if (wantMutedFirst && (await tryPlay(true))) return succeed()
+    if (await tryPlay(false)) return succeed()
+    if (!wantMutedFirst && (await tryPlay(true))) return succeed()
     markInlineVideoPlaying(key, false)
     return false
   }
@@ -704,7 +754,7 @@ export function useH5ResourceBrowse(options) {
     }
 
     if (current?.fileType === 'video' && current.videoSrc) {
-      await playInlineVideo(current, { preferMuted: true })
+      await playInlineVideo(current)
     }
   }
 
@@ -729,7 +779,7 @@ export function useH5ResourceBrowse(options) {
       return
     }
 
-    const ok = await playInlineVideo(item, { preferMuted: false })
+    const ok = await playInlineVideo(item)
     if (!ok) {
       showNotify({ type: 'danger', message: t('messages.operationFail') })
     }
@@ -1877,6 +1927,52 @@ export function useH5ResourceBrowse(options) {
     })
   }
 
+  const showSelectedVideoFullscreenAction = computed(
+    () =>
+      displayMode.value === 'waterfall' &&
+      selectedItem.value?.fileType === 'video' &&
+      !!selectedItem.value?.videoSrc
+  )
+
+  const playSelectedVideoFullscreen = async () => {
+    const index = longPress.selectedIndex
+    const item = list.value[index]
+    if (!item?.videoSrc || item.fileType !== 'video') return
+    if (blockIfNsfwMasked(item)) return
+
+    state.showActionPopup = false
+    pauseAllInlineVideos()
+    if (isInlineVideoPlaying(item)) pauseInlineVideo(item)
+    persistWaterfallScrollPosition()
+    fullscreenAutoPlay.stop()
+    fullscreenAutoPlayUserStopped.value = true
+
+    fullscreenVisibleIndex.value = index
+    displayMode.value = 'fullscreen'
+    writeH5DisplayMode('fullscreen')
+
+    state.jumpScrollLock = true
+    try {
+      await nextTick()
+      await fullscreenPagerRef.value?.scrollToIndex?.(index, false)
+      await nextTick()
+      await sleep(120)
+      const key = getItemKey(item)
+      for (let i = 0; i < 12 && !inlineVideoRefs[key]; i++) {
+        await nextTick()
+        await sleep(50)
+      }
+      const ok = await playInlineVideo(item)
+      if (!ok) {
+        showNotify({ type: 'warning', message: t('messages.operationFail') })
+      }
+    } finally {
+      setTimeout(() => {
+        state.jumpScrollLock = false
+      }, 280)
+    }
+  }
+
   const openPreview = (index) => {
     if (longPress.suppressClick) {
       longPress.suppressClick = false
@@ -2218,33 +2314,34 @@ export function useH5ResourceBrowse(options) {
       return
     }
     const filename = getMediaDownloadFilename(item)
-    try {
-      settingStore.vibrate()
-      let blobUrl = ''
+    state.showActionPopup = false
+    await runH5ActionLoading(async () => {
       try {
-        const res = await fetch(url)
-        if (!res.ok) throw new Error('fetch failed')
-        const blob = await res.blob()
-        blobUrl = URL.createObjectURL(blob)
-        triggerBrowserDownload(blobUrl, filename)
-      } catch (_) {
-        triggerBrowserDownload(url, filename)
-      } finally {
-        if (blobUrl) URL.revokeObjectURL(blobUrl)
-      }
-      if (shouldRecordDownloadStat(item)) {
+        settingStore.vibrate()
+        let blobUrl = ''
         try {
-          await api.updateDownloadCount(item.id, 1)
+          const res = await fetch(url)
+          if (!res.ok) throw new Error('fetch failed')
+          const blob = await res.blob()
+          blobUrl = URL.createObjectURL(blob)
+          triggerBrowserDownload(blobUrl, filename)
         } catch (_) {
-          /* 统计失败不影响保存结果 */
+          triggerBrowserDownload(url, filename)
+        } finally {
+          if (blobUrl) URL.revokeObjectURL(blobUrl)
         }
+        if (shouldRecordDownloadStat(item)) {
+          try {
+            await api.updateDownloadCount(item.id, 1)
+          } catch (_) {
+            /* 统计失败不影响保存结果 */
+          }
+        }
+        showNotify({ type: 'success', message: t('messages.saveSuccess') })
+      } catch (_) {
+        showNotify({ type: 'danger', message: t('messages.saveFail') })
       }
-      showNotify({ type: 'success', message: t('messages.saveSuccess') })
-    } catch (_) {
-      showNotify({ type: 'danger', message: t('messages.saveFail') })
-    } finally {
-      state.showActionPopup = false
-    }
+    }, t('messages.loading'))
   }
 
   const removeSelectedItemFromList = (item) => {
@@ -2297,6 +2394,18 @@ export function useH5ResourceBrowse(options) {
         closeOnClickOverlay: true,
         zIndex: H5_OVERLAY_Z.confirmDialog
       })
+    } catch (error) {
+      if (error !== 'cancel') {
+        showNotify({
+          type: 'danger',
+          message: resolveApiUserMessage(error, t) || t('messages.deleteFail')
+        })
+      }
+      state.showActionPopup = false
+      return
+    }
+    state.showActionPopup = false
+    await runH5ActionLoading(async () => {
       settingStore.vibrate()
       const res = await api.deleteImage(toRaw(item))
       if (res?.success) {
@@ -2308,16 +2417,7 @@ export function useH5ResourceBrowse(options) {
           message: resolveApiUserMessage(res, t) || t('messages.deleteFail')
         })
       }
-    } catch (error) {
-      if (error !== 'cancel') {
-        showNotify({
-          type: 'danger',
-          message: resolveApiUserMessage(error, t) || t('messages.deleteFail')
-        })
-      }
-    } finally {
-      state.showActionPopup = false
-    }
+    }, t('messages.loading'))
   }
 
   const toggleSelectedFavorite = async () => {
@@ -2326,8 +2426,8 @@ export function useH5ResourceBrowse(options) {
       showNotify({ type: 'warning', message: t('messages.noData') })
       return
     }
-    await onToggleFavorite(item)
     state.showActionPopup = false
+    await runH5ActionLoading(() => onToggleFavorite(item))
   }
 
   const addSelectedToPrivacySpace = async () => {
@@ -2336,28 +2436,29 @@ export function useH5ResourceBrowse(options) {
       showNotify({ type: 'warning', message: t('messages.noData') })
       return
     }
-    try {
-      const wasPublicFavorite = !!item.isFavorite
-      const res = await api.addToFavorites(item, true)
-      if (!res?.success) {
-        showNotify({
-          type: 'danger',
-          message: resolveApiUserMessage(res, t) || t('messages.operationFail')
-        })
-        return
+    state.showActionPopup = false
+    await runH5ActionLoading(async () => {
+      try {
+        const wasPublicFavorite = !!item.isFavorite
+        const res = await api.addToFavorites(item, true)
+        if (!res?.success) {
+          showNotify({
+            type: 'danger',
+            message: resolveApiUserMessage(res, t) || t('messages.operationFail')
+          })
+          return
+        }
+        applyFavoriteResourceToItem(item, res)
+        if (wasPublicFavorite) {
+          await api.removeFavorites(item, false)
+          item.isFavorite = 0
+        }
+        removeItemAfterUnfavorite(item)
+        showNotify({ type: 'success', message: t('messages.operationSuccess') })
+      } catch (_) {
+        showNotify({ type: 'danger', message: t('messages.operationFail') })
       }
-      applyFavoriteResourceToItem(item, res)
-      if (wasPublicFavorite) {
-        await api.removeFavorites(item, false)
-        item.isFavorite = 0
-      }
-      removeItemAfterUnfavorite(item)
-      showNotify({ type: 'success', message: t('messages.operationSuccess') })
-    } catch (_) {
-      showNotify({ type: 'danger', message: t('messages.operationFail') })
-    } finally {
-      state.showActionPopup = false
-    }
+    }, t('messages.loading'))
   }
 
   const removeSelectedFromPrivacySpace = async () => {
@@ -2366,17 +2467,19 @@ export function useH5ResourceBrowse(options) {
       showNotify({ type: 'warning', message: t('messages.noData') })
       return
     }
-    const res = await api.removeFavorites(item, true)
-    if (res?.success) {
-      removeItemAfterUnfavorite(item)
-      showNotify({ type: 'success', message: t('messages.operationSuccess') })
-    } else {
-      showNotify({
-        type: 'danger',
-        message: resolveApiUserMessage(res, t) || t('messages.operationFail')
-      })
-    }
     state.showActionPopup = false
+    await runH5ActionLoading(async () => {
+      const res = await api.removeFavorites(item, true)
+      if (res?.success) {
+        removeItemAfterUnfavorite(item)
+        showNotify({ type: 'success', message: t('messages.operationSuccess') })
+      } else {
+        showNotify({
+          type: 'danger',
+          message: resolveApiUserMessage(res, t) || t('messages.operationFail')
+        })
+      }
+    }, t('messages.loading'))
   }
 
   const openActionByIndex = (index) => {
@@ -2700,8 +2803,12 @@ export function useH5ResourceBrowse(options) {
     retryLoadPoster,
     setInlineVideoRef,
     isInlineVideoPlaying,
+    isInlineVideoActive,
+    onInlineVideoPlayingEvent,
+    isInlineVideoMuted,
     onInlineVideoSurfaceClick,
     toggleInlineVideo,
+    toggleInlineVideoMute,
     onInlineVideoPaused,
     onInlineVideoError,
     loadList,
@@ -2736,6 +2843,8 @@ export function useH5ResourceBrowse(options) {
     onCardMouseUp,
     onMediaContextMenu,
     showImageInfo,
+    showSelectedVideoFullscreenAction,
+    playSelectedVideoFullscreen,
     toggleSelectedFavorite,
     saveSelectedMedia,
     deleteSelectedMedia,

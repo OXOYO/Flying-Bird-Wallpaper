@@ -10,7 +10,8 @@ import {
   resourceTypeList,
   orientationOptions,
   DEFAULT_BROWSE_SORT_FIELD,
-  DEFAULT_BROWSE_SORT_TYPE
+  DEFAULT_BROWSE_SORT_TYPE,
+  isVideoDefaultMuted
 } from '@common/publicData.js'
 import { debounce, resolveApiUserMessage } from '@common/utils.js'
 import ExploreSearchHeader from './ExploreSearchHeader.vue'
@@ -43,6 +44,7 @@ const scrollRef = ref(null)
 let hoverCardIndex = ref(-1)
 
 const viewImageRef = ref(null)
+const viewVideoRef = ref(null)
 const viewImageOptions = {
   button: true,
   backdrop: true
@@ -505,6 +507,13 @@ const cardItemBtns = computed(() => {
       icon: 'custom:preview'
     })
   }
+  if (item.fileType === 'video' && item.videoSrc) {
+    ret.push({
+      title: t('exploreCommon.fullscreenPlay'),
+      action: 'doViewVideoFullscreen',
+      icon: 'custom:play-circle'
+    })
+  }
   if (supportsAiVisionActions(item)) {
     ret.push({
       title: t('exploreCommon.aiAnalyze'),
@@ -661,6 +670,9 @@ const onCardItemBtnClick = (action, item, index) => {
       break
     case 'doViewImage':
       doViewImage(item, index)
+      break
+    case 'doViewVideoFullscreen':
+      doViewVideoFullscreen(item, index)
       break
     case 'addToFavorites':
       addToFavorites(item, index)
@@ -1433,6 +1445,20 @@ const doViewImage = async (item, index, inner = false) => {
   }
 }
 
+const doViewVideoFullscreen = (item, index) => {
+  if (shouldMaskItem.value(item)) return
+  if (!item?.videoSrc || item.fileType !== 'video') return
+  const video = videoRefs.value[index]
+  if (video && !video.paused) {
+    video.pause()
+    if (cardList.value[index]) {
+      cardList.value[index].isPlaying = false
+    }
+    videoPlayState.playSources.delete(item.uniqueKey)
+  }
+  viewVideoRef.value?.view(item)
+}
+
 const onAiAnalyze = async (item, index) => {
   if (!item) return
   const res = await window.FBW.analyzeResource({ id: item.id, item: cloneForIpc(item) })
@@ -1887,6 +1913,7 @@ const onVideoMouseEnter = (item, index) => {
   try {
     // 设置播放状态
     cardList.value[index].isPlaying = true
+    video.muted = isVideoDefaultMuted(settingData.value)
     // 记录播放来源为自动播放
     videoPlayState.playSources.set(item.uniqueKey, 'auto')
 
@@ -1967,6 +1994,7 @@ const toggleVideo = (item, index) => {
 
       // 设置播放状态
       cardList.value[index].isPlaying = true
+      video.muted = isVideoDefaultMuted(settingData.value)
       // 记录播放来源为手动播放
       videoPlayState.playSources.set(item.uniqueKey, 'manual')
 
@@ -2385,7 +2413,7 @@ onBeforeUnmount(() => {
                   :src="item.videoSrc"
                   :poster="item.imageSrc"
                   preload="metadata"
-                  muted
+                  :muted="isVideoDefaultMuted(settingData)"
                   loop
                   @ended="onVideoEnded(item, index)"
                   @error="onVideoError(item, index, $event)"
@@ -2438,6 +2466,11 @@ onBeforeUnmount(() => {
       :on-mask-click="onNsfwMaskClick"
       @prev-more="onViewImagePrevMore"
       @next-more="onViewImageNextMore"
+    />
+    <view-video
+      ref="viewVideoRef"
+      :should-mask-item="shouldMaskItem"
+      :on-mask-click="onNsfwMaskClick"
     />
     <view-info ref="viewInfoRef" />
   </el-main>

@@ -67,6 +67,13 @@ export function buildResourceCardButtons(item, context, t) {
       { title: t('exploreCommon.doViewImage'), action: 'doViewImage', icon: 'custom:preview' }
     )
   }
+  if (item.fileType === 'video' && item.videoSrc) {
+    ret.push({
+      title: t('exploreCommon.fullscreenPlay'),
+      action: 'doViewVideoFullscreen',
+      icon: 'custom:play-circle'
+    })
+  }
   if (supportsAiVisionActions(item)) {
     ret.push(
       {
@@ -137,6 +144,7 @@ export function buildResourceCardButtons(item, context, t) {
  * @param {(item: object, index: number) => void} [options.onItemUpdated]
  * @param {(item: object, index: number) => void} [options.onItemRemoved]
  * @param {import('vue').Ref} [options.viewImageRef]
+ * @param {import('vue').Ref} [options.viewVideoRef]
  * @param {import('vue').Ref} [options.viewInfoRef]
  * @param {() => object} [options.cardContext]
  * @param {(items: Array) => void} [options.onFindSimilarResult]
@@ -227,6 +235,12 @@ export function useResourceCardActions(options = {}) {
     } else {
       window.FBW.openViewImageWindow({ activeIndex, list })
     }
+  }
+
+  const doViewVideoFullscreen = (item) => {
+    if (options.shouldBlockView?.(item)) return
+    if (!item?.videoSrc || item.fileType !== 'video') return
+    options.viewVideoRef?.value?.view(item)
   }
 
   const onViewImagePrevMore = (item) => {
@@ -444,6 +458,9 @@ export function useResourceCardActions(options = {}) {
         break
       case 'doViewImage':
         doViewImage(item, index)
+        break
+      case 'doViewVideoFullscreen':
+        doViewVideoFullscreen(item)
         break
       case 'addToFavorites':
         addToFavorites(item, index)

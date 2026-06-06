@@ -4,6 +4,12 @@ import InstantTooltip from '@renderer/components/InstantTooltip.vue'
 import { buildResourceCardButtons } from '@renderer/composables/useResourceCardActions.js'
 import { useHorizontalWheelScroll } from '@renderer/composables/useHorizontalWheelScroll.mjs'
 import NsfwContentMask from '@renderer/components/NsfwContentMask.vue'
+import UseSettingStore from '@renderer/stores/settingStore.js'
+import { isVideoDefaultMuted } from '@common/publicData.js'
+
+const settingStore = UseSettingStore()
+const { settingData } = storeToRefs(settingStore)
+const videoDefaultMuted = computed(() => isVideoDefaultMuted(settingData.value))
 
 const props = defineProps({
   item: { type: Object, required: true },
@@ -49,6 +55,10 @@ const cardStyle = computed(() => {
 
 const onBtnClick = (action) => {
   if (props.actionsDisabled) return
+  if (action === 'doViewVideoFullscreen' && videoRef.value) {
+    videoRef.value.pause()
+    isPlaying.value = false
+  }
   emit('action', action, props.item, props.index)
 }
 
@@ -61,6 +71,7 @@ const toggleVideo = () => {
   const video = videoRef.value
   if (!video) return
   if (video.paused) {
+    video.muted = videoDefaultMuted.value
     video
       .play()
       .then(() => {
@@ -142,7 +153,7 @@ const onVideoEnded = () => {
           :src="item.videoSrc"
           :poster="item.imageSrc"
           preload="metadata"
-          muted
+          :muted="videoDefaultMuted"
           loop
           @ended="onVideoEnded"
         ></video>

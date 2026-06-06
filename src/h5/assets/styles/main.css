@@ -89,8 +89,9 @@
   position: sticky;
   top: 0;
   z-index: 10;
-  min-height: var(--fbw-browse-toolbar-height);
   box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  min-height: calc(var(--fbw-browse-toolbar-height) + env(safe-area-inset-top, 0px));
   background: var(--van-background-2, #fff);
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06);
 }
@@ -133,8 +134,8 @@ html.van-theme-dark .van-tabbar.h5-tabbar {
 .browse-chrome-host.browse-toolbar--similar,
 .collections-header.collections-header--similar {
   position: sticky;
-  height: var(--fbw-browse-toolbar-height);
-  min-height: var(--fbw-browse-toolbar-height);
+  height: calc(var(--fbw-browse-toolbar-height) + env(safe-area-inset-top, 0px));
+  min-height: calc(var(--fbw-browse-toolbar-height) + env(safe-area-inset-top, 0px));
 }
 
 .search-toolbar-wrap--similar .h5-browse-chrome,

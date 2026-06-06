@@ -50,6 +50,7 @@ const recommendMode = ref(true)
 const forYouTotal = ref(0)
 const recommendDegraded = ref(false)
 const viewImageRef = ref(null)
+const viewVideoRef = ref(null)
 const viewInfoRef = ref(null)
 const privacyPasswordDialogRef = ref(null)
 const viewImageOptions = { button: true, backdrop: true }
@@ -312,6 +313,7 @@ const resourceActions = useResourceCardActions({
     gridItems.value = list
   },
   viewImageRef,
+  viewVideoRef,
   viewInfoRef,
   getSimilarScope: () => {
     if (recommendMode.value) {
@@ -1282,6 +1284,11 @@ onBeforeUnmount(() => {
       :on-mask-click="onNsfwMaskClick"
       @prev-more="resourceActions.onViewImagePrevMore"
       @next-more="resourceActions.onViewImageNextMore"
+    />
+    <ViewVideo
+      ref="viewVideoRef"
+      :should-mask-item="shouldMaskItem"
+      :on-mask-click="onNsfwMaskClick"
     />
     <PrivacyPasswordDialog ref="privacyPasswordDialogRef" />
     <ViewInfo ref="viewInfoRef" />

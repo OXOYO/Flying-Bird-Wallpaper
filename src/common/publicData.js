@@ -332,6 +332,8 @@ export const defaultSettingData = {
   showTag: true,
   // 删除文件时是否需要确认
   confirmOnDeleteFile: true,
+  /** 视频播放默认静音（卡片预览、铺满/全屏播放） */
+  videoDefaultMuted: true,
   /*** h5服务配置 ***/
   h5Locale: 'enUS',
   // 是否已设置了语言
@@ -357,6 +359,11 @@ export const defaultSettingData = {
   h5NumberIndicatorPosition: 'top',
   h5Vibration: true,
   h5WeekScreen: true
+}
+
+/** @param {Record<string, unknown>} [settingData] */
+export function isVideoDefaultMuted(settingData = {}) {
+  return settingData.videoDefaultMuted !== false
 }
 
 /** 合并默认项并迁移旧版 H5 图片压缩设置 */

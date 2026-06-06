@@ -475,6 +475,19 @@ onMounted(() => {
                 />
               </template>
             </van-cell>
+
+            <van-cell
+              :title="t('pages.Setting.settingDataForm.videoDefaultMuted')"
+              :label="t('pages.Setting.settingDataForm.videoDefaultMutedHint')"
+            >
+              <template #right-icon>
+                <van-switch
+                  v-model="settingDataForm.videoDefaultMuted"
+                  size="20px"
+                  @change="onSettingDataChange('videoDefaultMuted')"
+                />
+              </template>
+            </van-cell>
           </van-cell-group>
         </van-collapse-item>
 
