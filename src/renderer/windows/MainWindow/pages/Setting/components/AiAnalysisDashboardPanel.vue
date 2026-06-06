@@ -1,4 +1,5 @@
 <script setup>
+import { computed } from 'vue'
 import { useTranslation } from 'i18next-vue'
 
 const props = defineProps({
@@ -15,13 +16,22 @@ const props = defineProps({
   speedTooltip: { type: String, default: '' }
 })
 
-const emit = defineEmits(['requeueFailed'])
+const emit = defineEmits(['requeueFailed', 'requeueSkipped', 'requeueRetryable'])
 
 const { t } = useTranslation()
+
+const retryableCount = computed(
+  () => (Number(props.stats?.failed) || 0) + (Number(props.stats?.skipped) || 0)
+)
 
 const onFailedChipClick = () => {
   if (!(Number(props.stats?.failed) > 0)) return
   emit('requeueFailed')
+}
+
+const onSkippedChipClick = () => {
+  if (!(Number(props.stats?.skipped) > 0)) return
+  emit('requeueSkipped')
 }
 
 /** 侧栏窄：从标题左缘向上展开，向右延伸，避免左侧溢出 */
@@ -125,10 +135,36 @@ const titleTooltipPopperOptions = {
           {{ t('pages.Setting.aiSetting.statFailedLabel') }} {{ stats?.failed ?? 0 }}
         </span>
       </el-tooltip>
-      <span v-if="(stats?.skipped ?? 0) > 0" class="stat-chip stat-chip--skipped">
-        {{ t('pages.Setting.aiSetting.statSkippedLabel') }} {{ stats?.skipped ?? 0 }}
-      </span>
+      <el-tooltip
+        :content="t('pages.Setting.aiSetting.statSkippedHint')"
+        placement="top"
+        :disabled="!(stats?.skipped > 0)"
+        :show-after="300"
+        popper-class="ai-setting-feature-tip"
+      >
+        <span
+          class="stat-chip stat-chip--skipped"
+          :class="{ 'stat-chip--clickable': (stats?.skipped ?? 0) > 0 }"
+          role="button"
+          :tabindex="(stats?.skipped ?? 0) > 0 ? 0 : -1"
+          @click="onSkippedChipClick"
+          @keydown.enter.prevent="onSkippedChipClick"
+        >
+          {{ t('pages.Setting.aiSetting.statSkippedLabel') }} {{ stats?.skipped ?? 0 }}
+        </span>
+      </el-tooltip>
     </div>
+
+    <el-button
+      v-if="retryableCount > 0"
+      class="analysis-dashboard__requeue-btn"
+      type="primary"
+      size="small"
+      text
+      @click="emit('requeueRetryable')"
+    >
+      {{ t('pages.Setting.aiSetting.requeueRetryableButton') }}
+    </el-button>
 
     <p v-if="footerHint" class="analysis-dashboard__footer-hint">{{ footerHint }}</p>
   </div>
@@ -273,14 +309,30 @@ const titleTooltipPopperOptions = {
     color: var(--el-color-danger);
   }
 
+  &--skipped {
+    color: var(--el-text-color-secondary);
+  }
+
   &--clickable {
     cursor: pointer;
-
-    &:hover {
-      background: var(--el-color-danger-light-9);
-      border-color: var(--el-color-danger-light-5);
-    }
   }
+
+  &--clickable.stat-chip--failed:hover {
+    background: var(--el-color-danger-light-9);
+    border-color: var(--el-color-danger-light-5);
+  }
+
+  &--clickable.stat-chip--skipped:hover {
+    background: var(--el-fill-color);
+    border-color: var(--el-border-color);
+  }
+}
+
+.analysis-dashboard__requeue-btn {
+  margin-top: 8px;
+  padding: 0;
+  height: auto;
+  font-size: 11px;
 }
 
 .analysis-dashboard__footer-hint {

@@ -1,3 +1,5 @@
+@import '../../../common/styles/nsfwContentMask.css';
+
 :root {
   --fbw-tabbar-height: var(--van-tabbar-height);
   /** 与 van-search / h5-chrome-icon-btn 内容区对齐 */

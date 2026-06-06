@@ -12,11 +12,6 @@ const { t } = useTranslation()
 const onClick = (e) => {
   emit('click', e)
 }
-
-/** 阻止触摸/鼠标事件冒泡到卡片，避免触发长按菜单等 */
-const onShieldPointer = (e) => {
-  e.stopPropagation()
-}
 </script>
 
 <template>
@@ -26,12 +21,7 @@ const onShieldPointer = (e) => {
     role="button"
     tabindex="0"
     @click.stop="onClick"
-    @touchstart.stop="onShieldPointer"
-    @touchmove.stop="onShieldPointer"
-    @touchend.stop="onShieldPointer"
-    @touchcancel.stop="onShieldPointer"
-    @mousedown.stop="onShieldPointer"
-    @contextmenu.stop.prevent="onShieldPointer"
+    @contextmenu.stop.prevent
   >
     <IconifyIcon class="h5-nsfw-content-mask__icon" icon="custom:hide" />
     <span class="h5-nsfw-content-mask__text">{{ t('privacyNsfwMask.tapToUnlock') }}</span>
@@ -47,24 +37,26 @@ const onShieldPointer = (e) => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 12px;
-  background: rgba(12, 14, 18, 0.78);
-  backdrop-filter: blur(12px);
+  gap: var(--fbw-nsfw-mask-content-gap, 5px);
+  padding: var(--fbw-nsfw-mask-content-padding, 8px);
+  background: var(--fbw-nsfw-mask-bg, rgba(12, 14, 18, 0.76));
+  backdrop-filter: blur(var(--fbw-nsfw-mask-blur, 24px));
+  -webkit-backdrop-filter: blur(var(--fbw-nsfw-mask-blur, 24px));
   cursor: pointer;
   user-select: none;
+  touch-action: pan-y;
 }
 
 .h5-nsfw-content-mask__icon {
-  font-size: 32px;
+  font-size: var(--fbw-nsfw-mask-icon-size, 22px);
   color: rgba(255, 255, 255, 0.92);
 }
 
 .h5-nsfw-content-mask__text {
-  font-size: 12px;
-  line-height: 1.45;
+  font-size: var(--fbw-nsfw-mask-text-size, 11px);
+  line-height: 1.35;
   text-align: center;
-  color: rgba(255, 255, 255, 0.88);
+  color: rgba(255, 255, 255, 0.85);
   max-width: 88%;
 }
 </style>

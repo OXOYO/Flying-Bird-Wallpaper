@@ -627,25 +627,55 @@ export default class AiAnalysisManager {
 
   /** 将全部 failed 标为 pending 并入队（不改动分析结果字段） */
   requeueFailedAiAnalysis() {
+    return this._requeueAnalysisByStatuses([AI_ANALYSIS_STATUS.FAILED], 'requeueFailed')
+  }
+
+  /** 将全部 skipped 标为 pending 并入队（重置失败次数，便于手动重试） */
+  requeueSkippedAiAnalysis() {
+    return this._requeueAnalysisByStatuses([AI_ANALYSIS_STATUS.SKIPPED], 'requeueSkipped')
+  }
+
+  /** 将 failed + skipped 一并标为 pending（手动重新分析） */
+  requeueRetryableAiAnalysis() {
+    return this._requeueAnalysisByStatuses(
+      [AI_ANALYSIS_STATUS.FAILED, AI_ANALYSIS_STATUS.SKIPPED],
+      'requeueRetryable'
+    )
+  }
+
+  _requeueAnalysisByStatuses(statuses, messagePrefix) {
+    const normalized = (statuses || []).filter(Boolean)
+    if (!normalized.length) {
+      return {
+        success: true,
+        message: t(`pages.Setting.aiSetting.${messagePrefix}Empty`),
+        data: { affected: 0, autoPump: false }
+      }
+    }
+    const placeholders = normalized.map(() => '?').join(', ')
     const row = this.db
       .prepare(
         `SELECT COUNT(*) as c FROM fbw_resource_ai ai
          JOIN fbw_resources r ON r.id = ai.resourceId
-         WHERE r.fileType IN ('image', 'video') AND ai.aiAnalysisStatus = ?`
+         WHERE r.fileType IN ('image', 'video') AND ai.aiAnalysisStatus IN (${placeholders})`
       )
-      .get(AI_ANALYSIS_STATUS.FAILED)
+      .get(...normalized)
     const count = row?.c || 0
     if (!count) {
-      return { success: true, message: t('pages.Setting.aiSetting.requeueFailedEmpty'), data: { affected: 0, autoPump: false } }
+      return {
+        success: true,
+        message: t(`pages.Setting.aiSetting.${messagePrefix}Empty`),
+        data: { affected: 0, autoPump: false }
+      }
     }
 
     this.db
       .prepare(
         `UPDATE fbw_resource_ai SET aiAnalysisStatus = ?, aiAnalysisFailCount = 0, updated_at = datetime('now', 'localtime')
-         WHERE aiAnalysisStatus = ?
+         WHERE aiAnalysisStatus IN (${placeholders})
            AND resourceId IN (SELECT id FROM fbw_resources WHERE fileType IN ('image', 'video'))`
       )
-      .run(AI_ANALYSIS_STATUS.PENDING, AI_ANALYSIS_STATUS.FAILED)
+      .run(AI_ANALYSIS_STATUS.PENDING, ...normalized)
 
     const ai = this.ai
     const autoPump =
@@ -653,13 +683,15 @@ export default class AiAnalysisManager {
       ai.analysisMode !== 'off' &&
       ai.analysisMode !== 'on_demand'
 
-    this.logger.info(`[AiAnalysisManager] requeueFailed affected=${count} autoPump=${autoPump}`)
+    this.logger.info(
+      `[AiAnalysisManager] ${messagePrefix} affected=${count} statuses=${normalized.join(',')} autoPump=${autoPump}`
+    )
 
-    let message = t('pages.Setting.aiSetting.requeueFailedSuccess', { count })
+    let message = t(`pages.Setting.aiSetting.${messagePrefix}Success`, { count })
     if (!this.provider.isEnabled()) {
-      message = t('pages.Setting.aiSetting.requeueFailedSuccessNoAi', { count })
+      message = t(`pages.Setting.aiSetting.${messagePrefix}SuccessNoAi`, { count })
     } else if (!autoPump) {
-      message = t('pages.Setting.aiSetting.requeueFailedSuccessNoPump', { count })
+      message = t(`pages.Setting.aiSetting.${messagePrefix}SuccessNoPump`, { count })
     }
 
     return { success: true, message, data: { affected: count, autoPump } }

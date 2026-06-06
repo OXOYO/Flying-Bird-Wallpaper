@@ -46,7 +46,7 @@ const itemsTotal = ref(0)
 const itemsStartPage = ref(1)
 const itemsHasMore = ref(false)
 const itemsLoading = ref(false)
-const recommendMode = ref(false)
+const recommendMode = ref(true)
 const forYouTotal = ref(0)
 const recommendDegraded = ref(false)
 const viewImageRef = ref(null)
@@ -164,12 +164,22 @@ const syncGridItems = (items, append = false) => {
   }
 }
 
+const showLoadError = (res) => {
+  ElMessage({
+    type: 'error',
+    message: resolveApiUserMessage(res, t) || t('messages.getDataFail')
+  })
+}
+
 const fetchRecommendItems = async (startPage, append = false) => {
   itemsLoading.value = true
   try {
     const pageSize = getItemsPageSize()
     const res = await window.FBW.recommend({ startPage, pageSize, resourceName: 'resources' })
-    if (!res?.success) return
+    if (!res?.success) {
+      showLoadError(res)
+      return false
+    }
     syncGridItems(res.data?.list, append)
     const total = Number(res.data?.total) || 0
     itemsTotal.value = total
@@ -177,18 +187,22 @@ const fetchRecommendItems = async (startPage, append = false) => {
     itemsStartPage.value = res.data?.startPage ?? startPage
     itemsHasMore.value = gridItems.value.length < total
     recommendDegraded.value = !!res.data?.degraded
+    return true
   } finally {
     itemsLoading.value = false
   }
 }
 
 const fetchCollectionItems = async (id, startPage, append = false) => {
-  if (!id) return
+  if (!id) return false
   itemsLoading.value = true
   try {
     const pageSize = getItemsPageSize()
     const res = await window.FBW.collectionsGet({ id, startPage, pageSize })
-    if (!res?.success) return
+    if (!res?.success) {
+      showLoadError(res)
+      return false
+    }
     detail.value = { collection: res.data.collection }
     syncGridItems(res.data.items, append)
     const total = Number(res.data.total) || 0
@@ -198,6 +212,7 @@ const fetchCollectionItems = async (id, startPage, append = false) => {
     collections.value = collections.value.map((row) =>
       row.id === id ? { ...row, ...(res.data.collection || {}), itemCount: total } : row
     )
+    return true
   } finally {
     itemsLoading.value = false
   }
@@ -210,12 +225,15 @@ const loadMoreSimilarItems = async (opts = {}) => {
   itemsLoading.value = true
   try {
     const lastLen = gridItems.value.length
-    await appendSimilarPage(
+    const result = await appendSimilarPage(
       () => gridItems.value,
       (list) => {
         gridItems.value = list
       }
     )
+    if (result.failed) {
+      showLoadError(result.error)
+    }
     itemsHasMore.value = similarHasMore.value
     itemsTotal.value = similarTotal.value
     if (anchorPrevious && lastLen > 0) {
@@ -499,12 +517,8 @@ const resetGridScroll = () => {
 const selectFirstDisplayed = async () => {
   if (recommendMode.value) return
   const list = collections.value
-  if (!list.length) {
-    if (!recommendMode.value) await enterRecommendMode()
-    return
-  }
   if (!list.some((item) => item.id === selectedId.value)) {
-    await loadDetail(list[0].id)
+    await enterRecommendMode()
   }
 }
 
@@ -542,7 +556,10 @@ const applyCollectionListResponse = (listRes) => {
       ...row,
       itemCount: Number(row.itemCount ?? row.itemcount ?? 0)
     }))
+    return true
   }
+  showLoadError(listRes)
+  return false
 }
 
 const fetchCollectionList = () => window.FBW.collectionsList()
@@ -558,7 +575,9 @@ const refreshCollectionList = async () => {
 
 const resetCollectionPickerFilter = () => {
   collectionPickerQuery.value = ''
-  collectionPickerTab.value = COLLECTION_PICKER_TAB_ALL
+  collectionPickerTab.value = recommendMode.value
+    ? COLLECTION_PICKER_TAB_FOR_YOU
+    : COLLECTION_PICKER_TAB_ALL
 }
 
 const syncCollectionPickerPopoverWidth = () => {
@@ -590,17 +609,15 @@ const loadList = async () => {
   loading.value = true
   try {
     const listRes = await fetchCollectionList()
-    applyCollectionListResponse(listRes)
+    if (!applyCollectionListResponse(listRes)) return
     await curatorStatsRef.value?.refresh()
     await nextTick()
     if (recommendMode.value) {
       await fetchRecommendItems(1, false)
-    } else if (!selectedId.value && collections.value.length) {
-      await loadDetail(collections.value[0].id)
-    } else if (!selectedId.value) {
-      await enterRecommendMode()
-    } else {
+    } else if (selectedId.value) {
       await selectFirstDisplayed()
+    } else {
+      await enterRecommendMode()
     }
   } finally {
     loading.value = false
@@ -703,6 +720,10 @@ const onRefresh = async (id) => {
 const onDelete = async (id) => {
   await ElMessageBox.confirm(t('pages.Collections.confirmDelete'), { type: 'warning' })
   const res = await window.FBW.collectionsDelete({ id })
+  ElMessage({
+    type: res.success ? 'success' : 'error',
+    message: res.success ? t('messages.deleteSuccess') : resolveApiUserMessage(res, t)
+  })
   if (res.success) {
     if (selectedId.value === id) {
       selectedId.value = null
@@ -715,6 +736,15 @@ const onDelete = async (id) => {
 }
 
 const onAddFavorites = async (id) => {
+  const item = collections.value.find((c) => c.id === id)
+  try {
+    await ElMessageBox.confirm(
+      t('pages.Collections.confirmAddAllFavorites', { name: item?.name || '' }),
+      { type: 'warning' }
+    )
+  } catch {
+    return
+  }
   const res = await window.FBW.collectionsAddAllToFavorites({ id })
   ElMessage({
     type: res.success ? 'success' : 'error',
@@ -739,6 +769,13 @@ const onRecommendRefresh = async () => {
 }
 
 const onRecommendAddAllFavorites = async () => {
+  try {
+    await ElMessageBox.confirm(t('pages.Collections.confirmAddAllForYouFavorites'), {
+      type: 'warning'
+    })
+  } catch {
+    return
+  }
   const res = await window.FBW.recommendAddAllToFavorites({ resourceName: 'resources' })
   ElMessage({
     type: res.success ? 'success' : 'error',
@@ -880,10 +917,8 @@ const onCurateNow = async () => {
 }
 
 watch([selectedId, recommendMode], async ([id, inRecommend]) => {
-  unbindResizeObserver()
   if (!id && !inRecommend) return
   await nextTick()
-  bindResizeObserver()
   await measureBlock()
 })
 
@@ -892,8 +927,13 @@ watch(
   () => nextTick(() => measureBlock())
 )
 
-onMounted(() => {
-  loadList()
+onMounted(async () => {
+  await loadList()
+  await nextTick()
+  bindResizeObserver()
+  if (selectedId.value || recommendMode.value) {
+    await measureBlock()
+  }
 })
 
 onBeforeUnmount(() => {
@@ -965,6 +1005,10 @@ onBeforeUnmount(() => {
                     :name="COLLECTION_PICKER_TAB_ALL"
                   />
                   <el-tab-pane
+                    :label="t('pages.Collections.listTabForYou')"
+                    :name="COLLECTION_PICKER_TAB_FOR_YOU"
+                  />
+                  <el-tab-pane
                     :label="t('pages.Collections.listTabAuto')"
                     :name="COLLECTION_PICKER_TAB_AUTO"
                   />
@@ -972,13 +1016,9 @@ onBeforeUnmount(() => {
                     :label="t('pages.Collections.listTabUser')"
                     :name="COLLECTION_PICKER_TAB_USER"
                   />
-                  <el-tab-pane
-                    :label="t('pages.Collections.listTabForYou')"
-                    :name="COLLECTION_PICKER_TAB_FOR_YOU"
-                  />
                 </el-tabs>
               </div>
-              <el-scrollbar :max-height="300" class="collection-picker-panel__list">
+              <el-scrollbar height="300" class="collection-picker-panel__list">
                 <template v-if="collectionPickerGroups.length">
                   <div
                     v-for="group in collectionPickerGroups"
@@ -1402,8 +1442,10 @@ onBeforeUnmount(() => {
   }
 
   &__list {
-    min-height: 64px;
+    height: 300px;
+    flex-shrink: 0;
     padding-top: 4px;
+    box-sizing: border-box;
   }
 
   &__group {
@@ -1471,10 +1513,15 @@ onBeforeUnmount(() => {
   }
 
   &__empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 276px;
     padding: 24px 12px;
     text-align: center;
     font-size: 13px;
     color: var(--el-text-color-secondary);
+    box-sizing: border-box;
   }
 }
 

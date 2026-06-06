@@ -233,11 +233,13 @@ export function useH5ResourceBrowse(options) {
   const {
     similarMode,
     similarSourceItem,
+    similarQuery,
     similarTotal,
     similarHasMore,
     resetSimilar,
     startSimilar,
     appendSimilarPage,
+    refreshSimilarFirstPage,
     resolvePageSize: resolveSimilarPageSize
   } = useH5SimilarResults({
     normalizeRows: (rows) => rows.map(normalizeBrowseItem),
@@ -282,16 +284,79 @@ export function useH5ResourceBrowse(options) {
     if (state.loading || !similarHasMore.value) return
     state.loading = true
     try {
-      const hasMore = await appendSimilarPage(
+      const result = await appendSimilarPage(
         () => list.value,
         (next) => {
           list.value = next
         }
       )
-      state.finished = !hasMore
-      if (!hasMore && list.value.length) {
+      state.finished = !result.hasMore
+      if (result.failed) {
+        showNotify({
+          type: 'danger',
+          message: resolveApiUserMessage(result.error, t) || t('messages.operationFail')
+        })
+      } else if (!result.hasMore && list.value.length) {
         showToast({ message: t('messages.noMoreData') })
       }
+    } finally {
+      state.loading = false
+      state.refreshing = false
+      nextTick(() => {
+        void syncFullscreenActiveMedia()
+      })
+    }
+  }
+
+  const refreshSimilarResults = async () => {
+    const q = similarQuery.value
+    if (!similarMode.value || !q?.resourceId) {
+      state.refreshing = false
+      return
+    }
+    state.loading = true
+    try {
+      const pageSize = resolveSimilarPageSize()
+      const result = await refreshSimilarFirstPage()
+      if (!result.ok) {
+        if (result.inactive) return
+        if (result.empty) {
+          showNotify({
+            type: 'warning',
+            message: resolveFindSimilarEmptyMessage(t, result.emptyReason)
+          })
+          return
+        }
+        if (result.failed) {
+          showNotify({
+            type: 'danger',
+            message: resolveApiUserMessage(result.error, t) || t('messages.operationFail')
+          })
+        }
+        return
+      }
+      const sourceItem = similarSourceItem.value
+      if (sourceItem && result.res?.success) {
+        applyResolvedResourceFromResult(sourceItem, result.res)
+      }
+      list.value = startSimilar({
+        resourceId: q.resourceId,
+        scope: q.scope,
+        sourceItem,
+        firstRows: result.rows,
+        pageSize,
+        total: result.total
+      })
+      state.finished = !similarHasMore.value
+      page.total = similarTotal.value
+      fullscreenVisibleIndex.value = 0
+      fullscreenScrollTop.value = 0
+      state.scrollTop = 0
+      await nextTick()
+      fullscreenPagerRef.value?.scrollToIndex?.(0, false)
+      if (pageWrapperRef.value) pageWrapperRef.value.scrollTop = 0
+    } catch (_) {
+      showNotify({ type: 'danger', message: t('messages.operationFail') })
     } finally {
       state.loading = false
       state.refreshing = false
@@ -878,9 +943,6 @@ export function useH5ResourceBrowse(options) {
       await loadSimilarMore()
       return
     }
-    if (reset && similarMode.value) {
-      exitSimilarMode()
-    }
     if (state.loading) return
     if (browseType === 'collection' && !unref(collectionId)) {
       state.finished = true
@@ -964,6 +1026,7 @@ export function useH5ResourceBrowse(options) {
   }
 
   const reload = async () => {
+    if (similarMode.value) exitSimilarMode()
     pauseAllInlineVideos()
     await loadList(true)
   }
@@ -971,6 +1034,10 @@ export function useH5ResourceBrowse(options) {
   const onRefresh = async () => {
     pauseAllInlineVideos()
     state.refreshing = true
+    if (similarMode.value) {
+      await refreshSimilarResults()
+      return
+    }
     await loadList(true)
   }
 

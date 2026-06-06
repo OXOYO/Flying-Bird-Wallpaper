@@ -1,0 +1,68 @@
+/** 敏感遮罩：遮罩层 + 底层媒体预模糊（H5 / 桌面端共用变量） */
+:root {
+  --fbw-nsfw-mask-blur: 24px;
+  --fbw-nsfw-mask-bg: rgba(12, 14, 18, 0.76);
+  --fbw-nsfw-media-blur: 32px;
+  --fbw-nsfw-media-scale: 1.08;
+  --fbw-nsfw-mask-icon-size: 22px;
+  --fbw-nsfw-mask-text-size: 11px;
+  --fbw-nsfw-mask-content-gap: 5px;
+  --fbw-nsfw-mask-content-padding: 8px;
+}
+
+@media (min-width: 600px) {
+  :root {
+    --fbw-nsfw-mask-blur: 40px;
+    --fbw-nsfw-mask-bg: rgba(12, 14, 18, 0.84);
+    --fbw-nsfw-media-blur: 48px;
+    --fbw-nsfw-media-scale: 1.1;
+  }
+}
+
+@media (min-width: 960px) {
+  :root {
+    --fbw-nsfw-mask-blur: 56px;
+    --fbw-nsfw-mask-bg: rgba(12, 14, 18, 0.9);
+    --fbw-nsfw-media-blur: 64px;
+    --fbw-nsfw-media-scale: 1.12;
+  }
+}
+
+/* H5 */
+.preview-wrap--nsfw-masked,
+.fullscreen-slide--nsfw-masked {
+  overflow: hidden;
+}
+
+.preview-wrap--nsfw-masked .preview,
+.preview-wrap--nsfw-masked .preview--poster,
+.preview-wrap--nsfw-masked .preview--poster-overlay,
+.preview-wrap--nsfw-masked .preview--inline-video,
+.fullscreen-slide--nsfw-masked .fullscreen-slide-media .fullscreen-slide-img,
+.fullscreen-slide--nsfw-masked .fullscreen-slide-video {
+  filter: blur(var(--fbw-nsfw-media-blur));
+  transform: scale(var(--fbw-nsfw-media-scale));
+  transform-origin: center;
+}
+
+/* 桌面端 */
+.card-media--nsfw-masked .card-item-image-wrapper,
+.card-media--nsfw-masked .card-item-video-wrapper,
+.card-item--nsfw-masked .card-item-image-wrapper,
+.card-item--nsfw-masked .card-item-video-wrapper {
+  overflow: hidden;
+}
+
+.card-media--nsfw-masked .card-item-video-player,
+.card-item--nsfw-masked .card-item-video-player {
+  filter: blur(var(--fbw-nsfw-media-blur));
+  transform: scale(var(--fbw-nsfw-media-scale));
+  transform-origin: center;
+}
+
+.card-media--nsfw-masked .card-item-image-wrapper .el-image__inner,
+.card-item--nsfw-masked .card-item-image-wrapper .el-image__inner {
+  filter: blur(var(--fbw-nsfw-media-blur));
+  transform: scale(var(--fbw-nsfw-media-scale));
+  transform-origin: center;
+}

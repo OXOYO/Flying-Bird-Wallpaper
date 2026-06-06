@@ -16,6 +16,7 @@ import {
   COLLECTION_VISUAL_MIN_EMBEDDINGS
 } from '../ai/aiConstants.mjs'
 import { buildAnalyzableResourceWhere } from '../ai/AiVisionResourcePath.mjs'
+import { RESOURCE_AI_JOIN, RESOURCE_AI_SELECT_SQL } from './resourceAiSql.mjs'
 
 export default class CollectionsManager {
   static _instance = null
@@ -117,9 +118,10 @@ export default class CollectionsManager {
     const offset = (startPage - 1) * pageSize
     const rows = this.db
       .prepare(
-        `SELECT ci.id AS collectionItemId, ci.collectionId, ci.resourceId, ci.rank, r.*
+        `SELECT ci.id AS collectionItemId, ci.collectionId, ci.resourceId, ci.rank, r.*, ${RESOURCE_AI_SELECT_SQL}
          FROM fbw_collection_items ci
          JOIN fbw_resources r ON r.id = ci.resourceId
+         ${RESOURCE_AI_JOIN}
          WHERE ci.collectionId = ?
          ORDER BY ci.rank ASC
          LIMIT ? OFFSET ?`

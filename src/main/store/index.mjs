@@ -377,6 +377,32 @@ export default class Store {
     }
   }
 
+  async requeueSkippedAiAnalysis() {
+    try {
+      const res = this.aiAnalysisManager.requeueSkippedAiAnalysis()
+      if (res?.success && res.data?.autoPump) {
+        this.triggerBackgroundAnalysisPump()
+      }
+      return res
+    } catch (err) {
+      global.logger.error(`requeueSkippedAiAnalysis: ${err}`)
+      return { success: false, message: t('messages.operationFail') }
+    }
+  }
+
+  async requeueRetryableAiAnalysis() {
+    try {
+      const res = this.aiAnalysisManager.requeueRetryableAiAnalysis()
+      if (res?.success && res.data?.autoPump) {
+        this.triggerBackgroundAnalysisPump()
+      }
+      return res
+    } catch (err) {
+      global.logger.error(`requeueRetryableAiAnalysis: ${err}`)
+      return { success: false, message: t('messages.operationFail') }
+    }
+  }
+
   async resetAiAnalysis() {
     await this.enterResourceMaintenance()
     try {
@@ -1449,6 +1475,14 @@ export default class Store {
 
     ipcMain.handle('main:requeueFailedAiAnalysis', async () => {
       return await this.requeueFailedAiAnalysis()
+    })
+
+    ipcMain.handle('main:requeueSkippedAiAnalysis', async () => {
+      return await this.requeueSkippedAiAnalysis()
+    })
+
+    ipcMain.handle('main:requeueRetryableAiAnalysis', async () => {
+      return await this.requeueRetryableAiAnalysis()
     })
 
     ipcMain.handle('main:testAiConnection', async (event, params) => {

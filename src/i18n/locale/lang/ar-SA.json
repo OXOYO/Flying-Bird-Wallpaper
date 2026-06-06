@@ -683,6 +683,8 @@
       "noItems": "المجموعة فارغة، حدّث لإنشاء المحتوى",
       "selectHint": "اختر مجموعة لتصفح الخلفيات",
       "confirmDelete": "حذف هذه المجموعة؟",
+      "confirmAddAllFavorites": "إضافة جميع الخلفيات في «{name}» إلى المفضلة؟",
+      "confirmAddAllForYouFavorites": "إضافة جميع الخلفيات في «لك» إلى المفضلة؟",
       "curatorStatsShortSettled": "مُثبّت · تم تحليل {analyzed} · {auto} اختيار (تُضاف صور جديدة تدريجياً)",
       "curatorFooterLine": "تحليل الذكاء الاصطناعي · {status} · التقدم {done}/{total} · {percent}% · المجموعات {auto}/{target}",
       "curatorFooterLabel": "تحليل الذكاء الاصطناعي",

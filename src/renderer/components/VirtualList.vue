@@ -182,6 +182,14 @@ watch(
   { deep: true }
 )
 
+watch(
+  () => [props.itemWidth, props.itemHeight, props.gridSize, props.gridGap],
+  () => {
+    styleCache.clear()
+    updateVisibleItems()
+  }
+)
+
 // 监听窗口大小变化
 const handleResize = () => {
   updateVisibleItems()

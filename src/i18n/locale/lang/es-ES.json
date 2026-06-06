@@ -683,6 +683,8 @@
       "noItems": "La colección está vacía, actualiza para generar",
       "selectHint": "Selecciona una colección para ver los fondos de pantalla",
       "confirmDelete": "¿Eliminar esta colección?",
+      "confirmAddAllFavorites": "¿Añadir todos los fondos de «{name}» a favoritos?",
+      "confirmAddAllForYouFavorites": "¿Añadir todos los fondos de «Para ti» a favoritos?",
       "curatorStatsShortSettled": "Fijado · Analizado {analyzed} · {auto} selecciones (nuevas imágenes añadidas gradualmente)",
       "curatorFooterLine": "Análisis IA · {status} · Progreso {done}/{total} · {percent}% · Colecciones {auto}/{target}",
       "curatorFooterLabel": "Análisis IA",

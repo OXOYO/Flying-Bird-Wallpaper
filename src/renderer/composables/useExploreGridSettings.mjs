@@ -1,3 +1,4 @@
+import { resolveApiUserMessage } from '@common/utils.js'
 import { buildGridRatioList, buildGridSizeList } from './exploreGridOptions.mjs'
 
 /** 更新设置并触发网格重算（合集 / 搜索等共用） */
@@ -13,6 +14,11 @@ export function useExploreGridSettings({ t, settingStore, settingData, cardBlock
     })
     if (res?.success) {
       settingStore.updateSettingData(res.data)
+    } else {
+      ElMessage({
+        type: 'error',
+        message: resolveApiUserMessage(res, t) || t('messages.saveFail')
+      })
     }
     await measureAndApply?.()
   }

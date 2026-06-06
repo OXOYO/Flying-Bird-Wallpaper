@@ -683,6 +683,8 @@
       "noItems": "컬렉션이 비어 있습니다. 새로고침하여 생성하세요",
       "selectHint": "컬렉션을 선택하여 배경화면을 둘러보세요",
       "confirmDelete": "이 컬렉션을 삭제할까요?",
+      "confirmAddAllFavorites": "「{name}」의 모든 배경화면을 즐겨찾기에 추가할까요?",
+      "confirmAddAllForYouFavorites": "「추천」의 모든 배경화면을 즐겨찾기에 추가할까요?",
       "curatorStatsShortSettled": "확정 · 분석 {analyzed} · 추천 {auto}개 (새 이미지 점진 추가)",
       "curatorFooterLine": "AI 분석 · {status} · 진행 {done}/{total} · {percent}% · 컬렉션 {auto}/{target}",
       "curatorFooterLabel": "AI 분석",

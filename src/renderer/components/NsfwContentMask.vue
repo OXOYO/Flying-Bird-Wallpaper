@@ -37,24 +37,25 @@ const onClick = (e) => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 12px;
-  background: rgba(12, 14, 18, 0.72);
-  backdrop-filter: blur(14px);
+  gap: var(--fbw-nsfw-mask-content-gap, 5px);
+  padding: var(--fbw-nsfw-mask-content-padding, 8px);
+  background: var(--fbw-nsfw-mask-bg, rgba(12, 14, 18, 0.76));
+  backdrop-filter: blur(var(--fbw-nsfw-mask-blur, 24px));
+  -webkit-backdrop-filter: blur(var(--fbw-nsfw-mask-blur, 24px));
   cursor: pointer;
   user-select: none;
 
   &__icon {
-    font-size: 36px;
+    font-size: var(--fbw-nsfw-mask-icon-size, 22px);
     color: rgba(255, 255, 255, 0.92);
   }
 
   &__text {
-    font-size: 13px;
-    line-height: 1.4;
+    font-size: var(--fbw-nsfw-mask-text-size, 11px);
+    line-height: 1.35;
     text-align: center;
-    color: rgba(255, 255, 255, 0.88);
-    max-width: 90%;
+    color: rgba(255, 255, 255, 0.85);
+    max-width: 88%;
   }
 }
 </style>

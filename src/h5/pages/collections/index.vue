@@ -27,7 +27,7 @@ const { immersiveMode } = storeToRefs(commonStore)
 const loading = ref(false)
 const collections = ref([])
 const selectedId = ref(null)
-const recommendMode = ref(false)
+const recommendMode = ref(true)
 const forYouTotal = ref(0)
 const showPicker = ref(false)
 const pickerQuery = ref('')
@@ -170,7 +170,7 @@ watch([selectedId, recommendMode], ([id, inRecommend]) => {
 
 const resetPickerFilter = () => {
   pickerQuery.value = ''
-  pickerTab.value = COLLECTION_PICKER_TAB_ALL
+  pickerTab.value = recommendMode.value ? COLLECTION_PICKER_TAB_FOR_YOU : COLLECTION_PICKER_TAB_ALL
 }
 
 watch(showPicker, (open) => {
@@ -225,12 +225,8 @@ const enterRecommendMode = async () => {
 const ensureSelection = () => {
   if (recommendMode.value) return
   const list = collections.value
-  if (!list.length) {
-    void enterRecommendMode()
-    return
-  }
   if (!list.some((item) => item.id === selectedId.value)) {
-    selectedId.value = list[0].id
+    void enterRecommendMode()
   }
 }
 
@@ -241,12 +237,9 @@ const fetchList = async () => {
     if (res?.success && Array.isArray(res.data)) {
       collections.value = res.data
       if (recommendMode.value) {
-        await refreshForYouTotal()
+        await enterRecommendMode()
       } else {
         ensureSelection()
-        if (!selectedId.value && !collections.value.length) {
-          await enterRecommendMode()
-        }
       }
     } else {
       showNotify({ type: 'danger', message: resolveApiUserMessage(res, t) })
@@ -395,6 +388,26 @@ const onDeleteCurrent = async () => {
 }
 
 const onAddAllFavorites = async () => {
+  try {
+    if (recommendMode.value) {
+      await showConfirmDialog({
+        title: t('pages.Collections.addFavorites'),
+        message: t('pages.Collections.confirmAddAllForYouFavorites')
+      })
+    } else {
+      const item = selectedCollection.value
+      if (!item?.id) return
+      await showConfirmDialog({
+        title: t('pages.Collections.addFavorites'),
+        message: t('pages.Collections.confirmAddAllFavorites', { name: item.name || '' })
+      })
+    }
+  } catch (err) {
+    if (err !== 'cancel') {
+      showNotify({ type: 'danger', message: resolveApiUserMessage(err, t) })
+    }
+    return
+  }
   settingStore.vibrate()
   if (recommendMode.value) {
     const res = await api.recommendAddAllToFavorites({ resourceName: 'resources' })
@@ -656,7 +669,7 @@ onMounted(() => {
       position="bottom"
       round
       class="collection-picker-popup"
-      :style="{ maxHeight: '60vh' }"
+      :style="{ height: '60vh' }"
       @opened="onCollectionPickerOpened"
     >
       <div class="collection-picker">
@@ -670,9 +683,9 @@ onMounted(() => {
           />
           <van-tabs v-model:active="pickerTab" shrink class="collection-picker__tabs">
             <van-tab :name="COLLECTION_PICKER_TAB_ALL" :title="t('pages.Collections.listTabAll')" />
+            <van-tab :name="COLLECTION_PICKER_TAB_FOR_YOU" :title="t('pages.Collections.listTabForYou')" />
             <van-tab :name="COLLECTION_PICKER_TAB_AUTO" :title="t('pages.Collections.listTabAuto')" />
             <van-tab :name="COLLECTION_PICKER_TAB_USER" :title="t('pages.Collections.listTabUser')" />
-            <van-tab :name="COLLECTION_PICKER_TAB_FOR_YOU" :title="t('pages.Collections.listTabForYou')" />
           </van-tabs>
         </div>
         <div class="collection-picker__body">
@@ -824,10 +837,18 @@ onMounted(() => {
   padding: 48px 16px 80px;
 }
 
+.collection-picker-popup :deep(.van-popup) {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 .collection-picker {
   display: flex;
   flex-direction: column;
-  max-height: 60vh;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
 }
 
 .collection-picker :deep(.van-cell) {
@@ -862,6 +883,15 @@ onMounted(() => {
   overflow: auto;
   padding-top: 4px;
   padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+
+  .van-empty {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 100%;
+    padding: 24px 16px;
+    box-sizing: border-box;
+  }
 }
 
 .collection-picker__group {

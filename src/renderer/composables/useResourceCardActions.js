@@ -15,6 +15,7 @@ import {
   resolveResourceSrcType
 } from '@common/favoriteResourceUtils.js'
 import { resolveFindSimilarEmptyMessage } from '@common/findSimilarUtils.js'
+import { resolveApiUserMessage } from '@common/utils.js'
 
 export function normalizeResourceItem(item, options = {}) {
   if (!item) return item
@@ -336,6 +337,11 @@ export function useResourceCardActions(options = {}) {
         type: 'info',
         message: resolveFindSimilarEmptyMessage(t, res.data?.emptyReason)
       })
+    } else if (res) {
+      ElMessage({
+        type: 'error',
+        message: resolveApiUserMessage(res, t) || t('messages.operationFail')
+      })
     }
   }
 
@@ -348,6 +354,11 @@ export function useResourceCardActions(options = {}) {
         patch.videoSrc = `fbwtp://fbw/api/videos/get?filePath=${encodeURIComponent(patch.filePath)}`
       }
       patchListItem(item, index, patch)
+    } else {
+      ElMessage({
+        type: 'error',
+        message: resolveApiUserMessage(res, t) || t('messages.operationFail')
+      })
     }
     setCardItemStatus(index, res?.success ? 'success' : 'error')
   }
@@ -357,6 +368,11 @@ export function useResourceCardActions(options = {}) {
     if (res?.success) {
       applyUnfavoriteToItem(item, res)
       patchListItem(item, index, { isFavorite: 0, favorites: item.favorites ?? 0 })
+    } else {
+      ElMessage({
+        type: 'error',
+        message: resolveApiUserMessage(res, t) || t('messages.operationFail')
+      })
     }
     setCardItemStatus(index, res?.success ? 'success' : 'error')
   }
@@ -373,6 +389,11 @@ export function useResourceCardActions(options = {}) {
       const res = await window.FBW.deleteFile(cloneForIpc(item))
       if (res?.success) {
         removeListItem(item, index)
+      } else {
+        ElMessage({
+          type: 'error',
+          message: resolveApiUserMessage(res, t) || t('messages.deleteFail')
+        })
       }
       setCardItemStatus(index, res?.success ? 'success' : 'error')
     }

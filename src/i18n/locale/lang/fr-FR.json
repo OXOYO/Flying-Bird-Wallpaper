@@ -683,6 +683,8 @@
       "noItems": "La collection est vide, actualisez pour générer",
       "selectHint": "Sélectionnez une collection pour parcourir les fonds d'écran",
       "confirmDelete": "Supprimer cette collection ?",
+      "confirmAddAllFavorites": "Ajouter toutes les images de « {name} » aux favoris ?",
+      "confirmAddAllForYouFavorites": "Ajouter toutes les images de « Pour vous » aux favoris ?",
       "curatorStatsShortSettled": "Fixé · Analysé {analyzed} · {auto} sélections (nouvelles images ajoutées progressivement)",
       "curatorFooterLine": "Analyse IA · {status} · Progression {done}/{total} · {percent}% · Collections {auto}/{target}",
       "curatorFooterLabel": "Analyse IA",

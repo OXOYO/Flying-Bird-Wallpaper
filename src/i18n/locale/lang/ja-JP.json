@@ -683,6 +683,8 @@
       "noItems": "コレクションが空です。更新して生成してください",
       "selectHint": "コレクションを選択して壁紙を表示してください",
       "confirmDelete": "このコレクションを削除しますか？",
+      "confirmAddAllFavorites": "「{name}」内のすべての壁紙をお気に入りに追加しますか？",
+      "confirmAddAllForYouFavorites": "「おすすめ」のすべての壁紙をお気に入りに追加しますか？",
       "curatorStatsShortSettled": "確定 · 分析済み {analyzed} · おすすめ {auto} 件（新規画像は段階的に追加）",
       "curatorFooterLine": "AI分析 · {status} · 進捗 {done}/{total} · {percent}% · コレクション {auto}/{target}",
       "curatorFooterLabel": "AI分析",

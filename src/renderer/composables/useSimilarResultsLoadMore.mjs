@@ -66,7 +66,9 @@ export function useSimilarResultsLoadMore({ normalizeRows, getPageSize = () => 5
 
   const fetchSimilarMore = async (excludeIds = []) => {
     const q = similarQuery.value
-    if (!q?.resourceId) return { rows: [], total: similarTotal.value }
+    if (!q?.resourceId) {
+      return { rows: [], total: similarTotal.value, failed: false }
+    }
 
     const limit = resolvePageSize()
     q.pageSize = limit
@@ -81,33 +83,38 @@ export function useSimilarResultsLoadMore({ normalizeRows, getPageSize = () => 5
     )
 
     if (!res?.success || !Array.isArray(res.data?.list)) {
-      return { rows: [], total: similarTotal.value }
+      return { rows: [], total: similarTotal.value, failed: true, error: res }
     }
     if (res.data?.total != null) {
       similarTotal.value = Number(res.data.total) || 0
     }
     return {
       rows: normalizeRows(res.data.list),
-      total: similarTotal.value
+      total: similarTotal.value,
+      failed: false
     }
   }
 
   /**
    * @param {() => Array} getCurrentList
    * @param {(list: Array) => void} setList
-   * @returns {Promise<boolean>} 是否还有更多
+   * @returns {Promise<{ hasMore: boolean, failed?: boolean, error?: object }>}
    */
   const appendSimilarPage = async (getCurrentList, setList) => {
     if (!similarMode.value || !similarQuery.value || !similarHasMore.value) {
-      return false
+      return { hasMore: false, failed: false }
     }
 
     const current = getCurrentList() || []
     const excludeIds = current.map((row) => row.id).filter((id) => id != null)
-    const { rows } = await fetchSimilarMore(excludeIds)
+    const { rows, failed, error } = await fetchSimilarMore(excludeIds)
+    if (failed) {
+      similarHasMore.value = false
+      return { hasMore: false, failed: true, error }
+    }
     if (!rows.length) {
       similarHasMore.value = false
-      return false
+      return { hasMore: false, failed: false }
     }
     const keys = new Set(current.map((row) => row.uniqueKey))
     const merged = [
@@ -116,7 +123,7 @@ export function useSimilarResultsLoadMore({ normalizeRows, getPageSize = () => 5
     ]
     setList(merged)
     syncHasMore(merged.length)
-    return similarHasMore.value
+    return { hasMore: similarHasMore.value, failed: false }
   }
 
   return {

@@ -683,6 +683,8 @@
       "noItems": "A coleção está vazia, atualize para gerar",
       "selectHint": "Selecione uma coleção para explorar papéis de parede",
       "confirmDelete": "Excluir esta coleção?",
+      "confirmAddAllFavorites": "Adicionar todos os papéis de «{name}» aos favoritos?",
+      "confirmAddAllForYouFavorites": "Adicionar todos os papéis de «Para você» aos favoritos?",
       "curatorStatsShortSettled": "Fixado · Analisado {analyzed} · {auto} seleções (novas imagens adicionadas gradualmente)",
       "curatorFooterLine": "Análise IA · {status} · Progresso {done}/{total} · {percent}% · Coleções {auto}/{target}",
       "curatorFooterLabel": "Análise IA",

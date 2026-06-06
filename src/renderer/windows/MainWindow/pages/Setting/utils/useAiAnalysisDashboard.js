@@ -1,6 +1,7 @@
 import { computed, onMounted, onUnmounted, ref, unref, watch } from 'vue'
 import { useTranslation } from 'i18next-vue'
 import { resolveAnalysisStatusTagType } from '@common/analysisRunStatus.mjs'
+import { resolveApiUserMessage } from '@common/utils.js'
 import { formatAnalysisRemaining, msToAnalysisSeconds } from './formatAnalysisDuration.js'
 
 const ANALYSIS_SPEED_MIN_SAMPLES = 3
@@ -213,11 +214,20 @@ export function useAiAnalysisDashboard(aiSource, options = {}) {
     { deep: true }
   )
 
-  const requeueFailedAiAnalysis = async () => {
-    const failed = analysisStats.value?.failed ?? 0
-    if (!failed) return { success: false }
+  const showRequeueFeedback = (res) => {
+    ElMessage({
+      type: res?.success ? 'success' : 'error',
+      message:
+        res?.message ||
+        resolveApiUserMessage(res, t) ||
+        (res?.success ? t('messages.operationSuccess') : t('messages.operationFail'))
+    })
+  }
+
+  const requeueWithConfirm = async ({ count, confirmKey, invoke }) => {
+    if (!count) return { success: false }
     try {
-      await ElMessageBox.confirm(t('pages.Setting.aiSetting.requeueFailedConfirm', { count: failed }), {
+      await ElMessageBox.confirm(t(`pages.Setting.aiSetting.${confirmKey}`, { count }), {
         type: 'warning',
         draggable: true,
         dangerouslyUseHTMLString: true
@@ -225,13 +235,49 @@ export function useAiAnalysisDashboard(aiSource, options = {}) {
     } catch {
       return { success: false, cancelled: true }
     }
-    const res = await window.FBW.requeueFailedAiAnalysis()
-    if (res?.message) {
-      ElMessage({
-        type: res.success ? 'success' : 'error',
-        message: res.message
-      })
+    const res = await invoke()
+    showRequeueFeedback(res)
+    if (res?.success) await fetchAnalysisStats()
+    return res
+  }
+
+  const requeueFailedAiAnalysis = async () => {
+    const failed = analysisStats.value?.failed ?? 0
+    return requeueWithConfirm({
+      count: failed,
+      confirmKey: 'requeueFailedConfirm',
+      invoke: () => window.FBW.requeueFailedAiAnalysis()
+    })
+  }
+
+  const requeueSkippedAiAnalysis = async () => {
+    const skipped = analysisStats.value?.skipped ?? 0
+    return requeueWithConfirm({
+      count: skipped,
+      confirmKey: 'requeueSkippedConfirm',
+      invoke: () => window.FBW.requeueSkippedAiAnalysis()
+    })
+  }
+
+  const requeueRetryableAiAnalysis = async () => {
+    const failed = analysisStats.value?.failed ?? 0
+    const skipped = analysisStats.value?.skipped ?? 0
+    const count = failed + skipped
+    if (!count) return { success: false }
+    try {
+      await ElMessageBox.confirm(
+        t('pages.Setting.aiSetting.requeueRetryableConfirm', { count, failed, skipped }),
+        {
+          type: 'warning',
+          draggable: true,
+          dangerouslyUseHTMLString: true
+        }
+      )
+    } catch {
+      return { success: false, cancelled: true }
     }
+    const res = await window.FBW.requeueRetryableAiAnalysis()
+    showRequeueFeedback(res)
     if (res?.success) await fetchAnalysisStats()
     return res
   }
@@ -257,6 +303,8 @@ export function useAiAnalysisDashboard(aiSource, options = {}) {
     fetchAnalysisStats,
     startStatsPolling,
     stopStatsPolling,
-    requeueFailedAiAnalysis
+    requeueFailedAiAnalysis,
+    requeueSkippedAiAnalysis,
+    requeueRetryableAiAnalysis
   }
 }

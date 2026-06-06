@@ -12,7 +12,7 @@ import {
   DEFAULT_BROWSE_SORT_FIELD,
   DEFAULT_BROWSE_SORT_TYPE
 } from '@common/publicData.js'
-import { debounce } from '@common/utils.js'
+import { debounce, resolveApiUserMessage } from '@common/utils.js'
 import ExploreSearchHeader from './ExploreSearchHeader.vue'
 import ExploreSimilarModeBanner from '@renderer/components/ExploreSimilarModeBanner.vue'
 import InstantTooltip from '@renderer/components/InstantTooltip.vue'
@@ -781,9 +781,18 @@ const onSwitchGridRatio = async (childVal) => {
     const res = await window.FBW.updateSettingData(gridFormData)
     if (res?.success) {
       settingStore.updateSettingData(res.data)
+    } else {
+      ElMessage({
+        type: 'error',
+        message: resolveApiUserMessage(res, t) || t('messages.saveFail')
+      })
     }
   } catch (err) {
     console.error('Failed to update grid settings:', err)
+    ElMessage({
+      type: 'error',
+      message: t('messages.saveFail')
+    })
   }
 }
 
@@ -813,6 +822,11 @@ const onSwitchGridSize = async (childVal) => {
   const res = await window.FBW.updateSettingData(gridFormData)
   if (res && res.success) {
     settingStore.updateSettingData(res.data)
+  } else {
+    ElMessage({
+      type: 'error',
+      message: resolveApiUserMessage(res, t) || t('messages.saveFail')
+    })
   }
 }
 
@@ -1096,12 +1110,18 @@ const loadMoreSimilar = async (opts = {}) => {
   flags.loading = true
   try {
     const lastIndex = cardList.value.length - 1
-    await appendSimilarPage(
+    const result = await appendSimilarPage(
       () => cardList.value,
       (list) => {
         cardList.value = list
       }
     )
+    if (result.failed) {
+      ElMessage({
+        type: 'error',
+        message: resolveApiUserMessage(result.error, t) || t('messages.operationFail')
+      })
+    }
     flags.hasMore = similarHasMore.value
     if (anchorPrevious && lastIndex >= 0) {
       setTimeout(() => scrollRef.value?.scrollToIndex(lastIndex))
@@ -1526,7 +1546,10 @@ const onFindSimilar = async (item) => {
         message: resolveFindSimilarEmptyMessage(t, res.data?.emptyReason)
       })
     } else if (res) {
-      ElMessage({ type: 'error', message: res.message || t('messages.operationFail') })
+      ElMessage({
+        type: 'error',
+        message: resolveApiUserMessage(res, t) || t('messages.operationFail')
+      })
     }
   } finally {
     flags.loading = false
@@ -1669,6 +1692,11 @@ const addToFavorites = async (item, index, isPrivacySpace = false) => {
         }
       }
     }
+  } else {
+    ElMessage({
+      type: 'error',
+      message: resolveApiUserMessage(res, t) || t('messages.operationFail')
+    })
   }
   setCardItemStatus(index, res.success ? 'success' : 'error', callback)
 }
@@ -1689,6 +1717,11 @@ const removeFavorites = async (item, index, isPrivacySpace = false) => {
         await onRefresh(true)
       }
     }
+  } else {
+    ElMessage({
+      type: 'error',
+      message: resolveApiUserMessage(res, t) || t('messages.operationFail')
+    })
   }
   setCardItemStatus(index, res.success ? 'success' : 'error', callback)
 }
@@ -1728,6 +1761,11 @@ const onDeleteFile = (item, index) => {
           scrollRef.value?.updateVisibleItems(false)
         })
       }
+    } else {
+      ElMessage({
+        type: 'error',
+        message: resolveApiUserMessage(res, t) || t('messages.deleteFail')
+      })
     }
     setCardItemStatus(index, res.success ? 'success' : 'error', callback)
   }
@@ -2223,6 +2261,7 @@ onBeforeUnmount(() => {
             <div
               :class="[
                 'card-item',
+                shouldMaskItem(item) ? 'card-item--nsfw-masked' : '',
                 cardItemStatus.index === index && cardItemStatus.status
                   ? 'card-item__' + cardItemStatus.status
                   : ''

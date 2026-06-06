@@ -683,6 +683,8 @@
       "noItems": "Raccolta vuota, aggiorna per generare",
       "selectHint": "Seleziona una raccolta per sfogliare i wallpaper",
       "confirmDelete": "Eliminare questa raccolta?",
+      "confirmAddAllFavorites": "Aggiungere tutti gli sfondi di «{name}» ai preferiti?",
+      "confirmAddAllForYouFavorites": "Aggiungere tutti gli sfondi di «Per te» ai preferiti?",
       "curatorStatsShortSettled": "Fissato · Analizzato {analyzed} · {auto} selezioni (nuove immagini aggiunte gradualmente)",
       "curatorFooterLine": "Analisi IA · {status} · Progresso {done}/{total} · {percent}% · Raccolte {auto}/{target}",
       "curatorFooterLabel": "Analisi IA",

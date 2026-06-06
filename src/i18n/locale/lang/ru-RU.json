@@ -683,6 +683,8 @@
       "noItems": "Подборка пуста, обновите для генерации",
       "selectHint": "Выберите подборку для просмотра обоев",
       "confirmDelete": "Удалить эту подборку?",
+      "confirmAddAllFavorites": "Добавить все обои из «{name}» в избранное?",
+      "confirmAddAllForYouFavorites": "Добавить все обои из «Для вас» в избранное?",
       "curatorStatsShortSettled": "Зафиксировано · Проанализировано {analyzed} · {auto} подборок (новые изображения добавляются постепенно)",
       "curatorFooterLine": "Анализ ИИ · {status} · Прогресс {done}/{total} · {percent}% · Коллекции {auto}/{target}",
       "curatorFooterLabel": "Анализ ИИ",

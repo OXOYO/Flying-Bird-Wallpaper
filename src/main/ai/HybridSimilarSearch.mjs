@@ -167,7 +167,8 @@ export default class HybridSimilarSearch {
     const pageSize = Math.max(1, Number(limit) || 20)
     return {
       resourceIds: filtered.slice(0, pageSize).map((h) => h.resourceId),
-      total: filtered.length
+      // 全量相似候选数（稳定值）；excludeIds 仅用于分页切片，不应缩小 total
+      total: ranked.length
     }
   }
 }

@@ -51,7 +51,9 @@ const {
   analysisFooterHint,
   analysisSpeedLine,
   analysisSpeedTooltip,
-  requeueFailedAiAnalysis
+  requeueFailedAiAnalysis,
+  requeueSkippedAiAnalysis,
+  requeueRetryableAiAnalysis
 } = useAiAnalysisDashboard(computed(() => settingData.value?.ai || {}), {
   tabActive: toRef(props, 'tabActive')
 })
@@ -493,6 +495,8 @@ defineExpose({
         :speed-tooltip="analysisSpeedTooltip"
         :running="!!analysisStats?.running"
         @requeue-failed="requeueFailedAiAnalysis"
+        @requeue-skipped="requeueSkippedAiAnalysis"
+        @requeue-retryable="requeueRetryableAiAnalysis"
       />
     </aside>
     <el-scrollbar ref="baseSettingsScrollbarRef" style="height: 100%; flex: 1">

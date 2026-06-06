@@ -683,6 +683,8 @@
       "noItems": "Sammlung ist leer, bitte aktualisieren zum Generieren",
       "selectHint": "Wählen Sie eine Sammlung, um Wallpapers anzuzeigen",
       "confirmDelete": "Diese Sammlung löschen?",
+      "confirmAddAllFavorites": "Alle Wallpapers in „{name}“ zu Favoriten hinzufügen?",
+      "confirmAddAllForYouFavorites": "Alle Wallpapers in „Für dich“ zu Favoriten hinzufügen?",
       "curatorStatsShortSettled": "Festgelegt · Analysiert {analyzed} · {auto} Auswahlen (neue Bilder schrittweise hinzugefügt)",
       "curatorFooterLine": "KI-Analyse · {status} · Fortschritt {done}/{total} · {percent}% · Sammlungen {auto}/{target}",
       "curatorFooterLabel": "KI-Analyse",

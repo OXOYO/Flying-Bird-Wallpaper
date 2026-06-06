@@ -471,7 +471,10 @@ defineExpose({
                   >
                     <div
                       class="preview-wrap"
-                      :class="{ 'preview-wrap--video': row.item.fileType === 'video' }"
+                      :class="{
+                        'preview-wrap--video': row.item.fileType === 'video',
+                        'preview-wrap--nsfw-masked': shouldMaskNsfwItem(row.item)
+                      }"
                       :style="{ height: `${row.height}px` }"
                       role="button"
                       tabindex="0"
@@ -598,7 +601,10 @@ defineExpose({
                 <template #default="{ item, index }">
                   <div
                     class="fullscreen-slide"
-                    :class="{ 'fullscreen-slide--video': item.fileType === 'video' }"
+                    :class="{
+                      'fullscreen-slide--video': item.fileType === 'video',
+                      'fullscreen-slide--nsfw-masked': shouldMaskNsfwItem(item)
+                    }"
                     :style="item.fileType === 'video' ? { backgroundColor: '#000' } : undefined"
                     @touchstart="(e) => onImageTouchStart(index, e)"
                     @touchmove="onImageTouchMove"
