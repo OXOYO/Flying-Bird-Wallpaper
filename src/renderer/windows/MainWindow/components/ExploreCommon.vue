@@ -1420,6 +1420,7 @@ const onTagClick = (field, value) => {
 
 // 查看图片
 const doViewImage = async (item, index, inner = false) => {
+  if (shouldMaskItem.value(item)) return
   const list = cloneForIpc(getRecords(index, viewSize))
   const activeIndex = list.findIndex((i) => i.uniqueKey === item.uniqueKey)
   if (inner) {
@@ -2433,6 +2434,8 @@ onBeforeUnmount(() => {
     <view-image
       ref="viewImageRef"
       :options="viewImageOptions"
+      :should-mask-item="shouldMaskItem"
+      :on-mask-click="onNsfwMaskClick"
       @prev-more="onViewImagePrevMore"
       @next-more="onViewImageNextMore"
     />

@@ -1,12 +1,41 @@
 <script setup>
+import UseSettingStore from '@renderer/stores/settingStore.js'
+import PrivacyPasswordDialog from '@renderer/components/PrivacyPasswordDialog.vue'
+import { usePrivacyNsfwMask } from '@common/composables/usePrivacyNsfwMask.mjs'
+import { resolveNsfwMaskVerifyFailMessage } from '@common/privacyNsfwMask.js'
+import { useTranslation } from 'i18next-vue'
+
+const { t } = useTranslation()
+const settingStore = UseSettingStore()
+const { settingData } = storeToRefs(settingStore)
+
 const viewImageRef = ref(null)
+const privacyPasswordDialogRef = ref(null)
 const viewImageOptions = {
   button: false,
   backdrop: 'static'
 }
 
+const {
+  shouldMaskItem,
+  onMaskClick,
+  lockPage,
+  refreshHasPassword
+} = usePrivacyNsfwMask({
+  settingData,
+  hasPrivacyPassword: () => window.FBW.hasPrivacyPassword(),
+  openPasswordDialog: () => privacyPasswordDialogRef.value?.open?.(),
+  checkPrivacyPassword: (pwd) => window.FBW.checkPrivacyPassword(pwd),
+  onVerifyFail: (res) => {
+    ElMessage({
+      type: 'error',
+      message: resolveNsfwMaskVerifyFailMessage(res, t)
+    })
+  }
+})
+
 const doView = (activeIndex = -1, list = []) => {
-  viewImageRef.value.view(activeIndex, list)
+  viewImageRef.value?.view(activeIndex, list)
 }
 
 const getPostData = async () => {
@@ -19,16 +48,16 @@ const onSendPostDataCallback = (event, data) => {
 }
 
 onBeforeMount(() => {
-  // 监听主进程的发送数据事件
   window.FBW.onSendPostData(onSendPostDataCallback)
 })
 
 onMounted(async () => {
+  lockPage()
+  await refreshHasPassword()
   await getPostData()
 })
 
 onBeforeUnmount(() => {
-  // 取消监听主进程的发送数据事件
   window.FBW.offSendPostData(onSendPostDataCallback)
 })
 </script>
@@ -41,8 +70,14 @@ onBeforeUnmount(() => {
       style="background-color: #efefef"
     />
     <div class="window-container-inner">
-      <view-image ref="viewImageRef" :options="viewImageOptions" />
+      <view-image
+        ref="viewImageRef"
+        :options="viewImageOptions"
+        :should-mask-item="shouldMaskItem"
+        :on-mask-click="onMaskClick"
+      />
     </div>
+    <PrivacyPasswordDialog ref="privacyPasswordDialogRef" />
   </div>
 </template>
 

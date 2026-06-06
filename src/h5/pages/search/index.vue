@@ -20,8 +20,10 @@ import { handleInfoVal, resolveApiUserMessage, isTransientSearchFailure } from '
 import { applyFavoriteResourceToItem, shouldRecordDownloadStat, applyResolvedResourceFromResult } from '@h5/utils/favoriteApiBody.js'
 import { applyUnfavoriteToItem } from '@common/favoriteResourceUtils.js'
 import { resolveFindSimilarEmptyMessage } from '@common/findSimilarUtils.js'
+import { resolveNsfwGatedMediaSrc } from '@common/privacyNsfwMask.js'
 import { runLongPressFavoriteBatch } from '@h5/utils/h5FavoriteGesture.mjs'
 import { usePreviewViewStat } from '@h5/composables/usePreviewViewStat.mjs'
+import { useH5PreviewNsfwShield } from '@h5/composables/useH5PreviewNsfwShield.mjs'
 import { usePrivacyNsfwMask } from '@common/composables/usePrivacyNsfwMask.mjs'
 import H5PrivacyPasswordDialog from '@h5/components/H5PrivacyPasswordDialog.vue'
 import H5NsfwContentMask from '@h5/components/H5NsfwContentMask.vue'
@@ -128,7 +130,8 @@ const H5_OVERLAY_Z = {
   actionPopup: 3001,
   imageInfoBackdrop: 3010,
   imageInfoPanel: 3020,
-  confirmDialog: 3030
+  confirmDialog: 3030,
+  privacyPasswordDialog: 3040
 }
 
 const form = reactive({
@@ -599,7 +602,12 @@ const getFullscreenListImageSrc = (item, options = {}) => {
 }
 
 /** 预览始终原图（与铺满列表压缩策略无关） */
-const getPreviewImageSrc = (item) => appendImageRetryQuery(getItemRawImageUrl(item), item)
+const getPreviewImageSrc = (item) =>
+  resolveNsfwGatedMediaSrc(
+    item,
+    appendImageRetryQuery(getItemRawImageUrl(item), item),
+    shouldMaskItem.value
+  )
 
 const getDisplayImageSrc = (item, options = {}) => {
   if (displayMode.value === 'waterfall') {
@@ -1142,6 +1150,22 @@ const getPreviewIndexForListIndex = (listIndex) => {
   }
   return pos
 }
+
+const previewCurrentListIndex = computed(() =>
+  resolveListIndexFromPreviewIndex(previewCurrentIndex.value)
+)
+
+const previewShowsNsfwMask = computed(() => {
+  if (!state.showPreview) return false
+  const item = list.value[previewCurrentListIndex.value]
+  return !!item && shouldMaskItem.value(item)
+})
+
+useH5PreviewNsfwShield({
+  showPreview: computed(() => state.showPreview),
+  showsMask: previewShowsNsfwMask,
+  onMaskClick: onNsfwMaskClick
+})
 
 const { resetPreviewViewStat, recordViewForPreviewIndex } = usePreviewViewStat({
   list,
@@ -1920,8 +1944,14 @@ const onPreviewIndexChange = (payload) => {
   const raw = typeof payload === 'number' ? payload : payload?.index
   previewCurrentIndex.value = Math.max(0, Number(raw) || 0)
   previewImageErrorAt.value = -1
-  void recordViewForPreviewIndex(previewCurrentIndex.value)
-}
+  const listIdx = previewCurrentListIndex.value
+  if (listIdx >= 0) {
+    longPress.selectedIndex = listIdx
+  }
+    if (!previewShowsNsfwMask.value) {
+      void recordViewForPreviewIndex(previewCurrentIndex.value)
+    }
+  }
 
 let previewImageErrorCaptureEl = null
 const onPreviewImageCaptureError = (event) => {
@@ -1969,6 +1999,7 @@ const onPreviewLayerTouchStart = (event) => {
   if (!state.showPreview) return
   const el = event.target
   if (!(el instanceof Element) || !el.closest('.van-image-preview')) return
+  if (previewShowsNsfwMask.value || el.closest('.h5-preview-nsfw-shield')) return
   const touch = event.touches?.[0]
   if (!touch) return
   clearPreviewLongPressTimer()
@@ -3027,6 +3058,7 @@ onMounted(async () => {
             <van-search
               v-model="form.keywords"
               class="filter-keyword-input"
+              shape="round"
               :name="H5_SEARCH_FIELD_NAME"
               autocomplete="off"
               autocorrect="off"
@@ -3187,9 +3219,17 @@ onMounted(async () => {
       v-model:show="state.showPreview"
       :images="previewImages"
       :start-position="previewStartPosition"
+      :close-on-click-image="false"
+      :close-on-click-overlay="false"
       closeable
       @change="onPreviewIndexChange"
-    />
+    >
+      <template v-if="previewShowsNsfwMask" #cover>
+        <div class="h5-preview-nsfw-shield">
+          <H5NsfwContentMask :visible="true" />
+        </div>
+      </template>
+    </van-image-preview>
 
     <Teleport to="body">
       <div
@@ -3416,6 +3456,10 @@ onMounted(async () => {
   position: relative;
   box-sizing: border-box;
   background-color: rgba(0, 0, 0, 0.07);
+
+  &--nsfw-masked {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
 }
 .fullscreen-slide-media {
   position: absolute;
@@ -4038,6 +4082,38 @@ onMounted(async () => {
 
 <!-- 预览 teleport 到 body，需非 scoped：禁用长按系统菜单/保存图片等 -->
 <style lang="scss">
+.van-image-preview .van-image-preview__cover {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+.h5-preview-nsfw-shield {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(
+    var(--van-image-preview-close-icon-margin, 16px) +
+      var(--van-image-preview-close-icon-size, 22px) + 12px
+  );
+  bottom: 0;
+  pointer-events: none;
+}
+.h5-preview-nsfw-shield .h5-nsfw-content-mask {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.van-image-preview .van-image-preview__index,
+.van-image-preview .van-image-preview__close-icon,
+.van-image-preview .van-image-preview__indicators {
+  z-index: 10;
+  pointer-events: auto;
+}
 .h5-preview-error-hint {
   position: fixed;
   left: 50%;
@@ -4054,6 +4130,10 @@ onMounted(async () => {
   color: #fff;
   background: rgba(0, 0, 0, 0.72);
   pointer-events: auto;
+}
+.van-image-preview .van-image-preview__image-wrap,
+.van-image-preview .van-image-preview__image {
+  position: relative;
 }
 .van-image-preview {
   -webkit-touch-callout: none;

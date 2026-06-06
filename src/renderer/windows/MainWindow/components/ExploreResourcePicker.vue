@@ -480,5 +480,9 @@ const isItemActive = (item) => item?.optionValue?.key === selectedKey.value
 .resource-picker-popper.el-popover.el-popper {
   padding: 10px;
   box-sizing: border-box;
+
+  .el-input__wrapper {
+    border-radius: 6px;
+  }
 }
 </style>

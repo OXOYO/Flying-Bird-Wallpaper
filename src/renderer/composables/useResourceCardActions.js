@@ -219,6 +219,7 @@ export function useResourceCardActions(options = {}) {
   }
 
   const doViewImage = async (item, index, inner = false) => {
+    if (options.shouldBlockView?.(item)) return
     const list = cloneForIpc(getViewRecords(index, viewSize))
     const activeIndex = list.findIndex((i) => i.uniqueKey === item.uniqueKey)
     if (inner && options.viewImageRef?.value) {

@@ -32,6 +32,7 @@ import { handleInfoVal, resolveApiUserMessage, isTransientSearchFailure } from '
 import { applyFavoriteResourceToItem, shouldRecordDownloadStat, applyResolvedResourceFromResult } from '@h5/utils/favoriteApiBody.js'
 import { applyUnfavoriteToItem } from '@common/favoriteResourceUtils.js'
 import { resolveFindSimilarEmptyMessage } from '@common/findSimilarUtils.js'
+import { resolveNsfwGatedMediaSrc } from '@common/privacyNsfwMask.js'
 import { runLongPressFavoriteBatch } from '@h5/utils/h5FavoriteGesture.mjs'
 import { usePreviewViewStat } from '@h5/composables/usePreviewViewStat.mjs'
 import { usePrivacyNsfwMask } from '@common/composables/usePrivacyNsfwMask.mjs'
@@ -60,13 +61,15 @@ import {
   writeH5DisplayMode,
   writeH5DisplaySize
 } from '@h5/utils/h5BrowsePreferences.mjs'
+import { useH5PreviewNsfwShield } from '@h5/composables/useH5PreviewNsfwShield.mjs'
 
 /** H5 叠层：高于 van-image-preview 默认层级（约 2000） */
 const H5_OVERLAY_Z = {
   actionPopup: 3001,
   imageInfoBackdrop: 3010,
   imageInfoPanel: 3020,
-  confirmDialog: 3030
+  confirmDialog: 3030,
+  privacyPasswordDialog: 3040
 }
 
 const FALLBACK_ITEM_HEIGHT = 220
@@ -175,6 +178,7 @@ export function useH5ResourceBrowse(options) {
   }
 
   const shouldMaskNsfwItem = nsfwMask.shouldMaskItem
+  const isNsfwItemMasked = (item) => shouldMaskNsfwItem.value(item)
   const onNsfwMaskClick = nsfwMask.onMaskClick
   const lockNsfwMaskPage = nsfwMask.lockPage
   const refreshNsfwMaskHasPassword = nsfwMask.refreshHasPassword
@@ -451,7 +455,12 @@ export function useH5ResourceBrowse(options) {
     return appendImageRetryQuery(url, item)
   }
 
-  const getPreviewImageSrc = (item) => appendImageRetryQuery(getItemRawImageUrl(item), item)
+  const getPreviewImageSrc = (item) =>
+    resolveNsfwGatedMediaSrc(
+      item,
+      appendImageRetryQuery(getItemRawImageUrl(item), item),
+      isNsfwItemMasked
+    )
 
   const getDisplayImageSrc = (item, opts = {}) => {
     if (displayMode.value === 'waterfall') {
@@ -1112,6 +1121,22 @@ export function useH5ResourceBrowse(options) {
     }
     return pos
   }
+
+  const previewCurrentListIndex = computed(() =>
+    resolveListIndexFromPreviewIndex(previewCurrentIndex.value)
+  )
+
+  const previewShowsNsfwMask = computed(() => {
+    if (!state.showPreview) return false
+    const item = list.value[previewCurrentListIndex.value]
+    return !!item && isNsfwItemMasked(item)
+  })
+
+  useH5PreviewNsfwShield({
+    showPreview: computed(() => state.showPreview),
+    showsMask: previewShowsNsfwMask,
+    onMaskClick: onNsfwMaskClick
+  })
 
   const { resetPreviewViewStat, recordViewForPreviewIndex } = usePreviewViewStat({
     list,
@@ -1875,7 +1900,13 @@ export function useH5ResourceBrowse(options) {
     const raw = typeof payload === 'number' ? payload : payload?.index
     previewCurrentIndex.value = Math.max(0, Number(raw) || 0)
     previewImageErrorAt.value = -1
-    void recordViewForPreviewIndex(previewCurrentIndex.value)
+    const listIdx = previewCurrentListIndex.value
+    if (listIdx >= 0) {
+      longPress.selectedIndex = listIdx
+    }
+    if (!previewShowsNsfwMask.value) {
+      void recordViewForPreviewIndex(previewCurrentIndex.value)
+    }
   }
 
   let previewImageErrorCaptureEl = null
@@ -1925,6 +1956,7 @@ export function useH5ResourceBrowse(options) {
     if (!state.showPreview) return
     const el = event.target
     if (!(el instanceof Element) || !el.closest('.van-image-preview')) return
+    if (previewShowsNsfwMask.value || el.closest('.h5-preview-nsfw-shield')) return
     const touch = event.touches?.[0]
     if (!touch) return
     clearPreviewLongPressTimer()
@@ -2626,6 +2658,7 @@ export function useH5ResourceBrowse(options) {
     immersiveIndicatorChromeInsetClass,
     previewImages,
     previewStartPosition,
+    previewShowsNsfwMask,
     selectedItem,
     canFindSimilarSelected,
     similarMode,

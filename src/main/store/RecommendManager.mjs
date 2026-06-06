@@ -54,7 +54,9 @@ export default class RecommendManager {
         sql += ` AND EXISTS (SELECT 1 FROM fbw_favorites f WHERE f.resourceId = r.id)`
       } else if (isHistory) {
         sql += ` AND EXISTS (SELECT 1 FROM fbw_history h WHERE h.resourceId = r.id)`
-      } else if (!isResources) {
+      } else if (isResources) {
+        sql += ` AND NOT EXISTS (SELECT 1 FROM fbw_favorites f WHERE f.resourceId = r.id)`
+      } else {
         sql += ` AND r.resourceName = ?`
         params.push(resourceName)
       }

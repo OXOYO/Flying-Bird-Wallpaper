@@ -79,6 +79,7 @@ defineExpose({ open })
 <template>
   <van-dialog
     v-model:show="visible"
+    :z-index="3040"
     :title="t('messages.inputPrivacySpacePassword')"
     :show-confirm-button="false"
     :show-cancel-button="false"

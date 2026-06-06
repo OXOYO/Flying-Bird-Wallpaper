@@ -866,6 +866,32 @@ onMounted(() => {
   padding: 0 4px 4px;
 }
 
+.collection-picker__search :deep(.van-search__content) {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.collection-picker__search :deep(.van-cell) {
+  align-items: center;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.collection-picker__search :deep(.van-field__left-icon) {
+  display: flex;
+  align-items: center;
+  margin-right: 4px;
+}
+
+.collection-picker__search :deep(.van-field__control) {
+  line-height: 22px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
 .collection-picker__tabs {
   :deep(.van-tabs__wrap) {
     height: 32px;

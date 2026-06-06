@@ -327,6 +327,7 @@ const resourceActions = useResourceCardActions({
     isSearchMenu: false,
     isLocalResource: true
   }),
+  shouldBlockView: (item) => shouldMaskItem.value(item),
   onItemRemoved: async () => {
     if (selectedId.value) await loadDetail(selectedId.value)
   },
@@ -1277,6 +1278,8 @@ onBeforeUnmount(() => {
     <ViewImage
       ref="viewImageRef"
       :options="viewImageOptions"
+      :should-mask-item="shouldMaskItem"
+      :on-mask-click="onNsfwMaskClick"
       @prev-more="resourceActions.onViewImagePrevMore"
       @next-more="resourceActions.onViewImageNextMore"
     />
@@ -1683,5 +1686,9 @@ onBeforeUnmount(() => {
 .collection-picker-popper.el-popover.el-popper {
   padding: 10px;
   box-sizing: border-box;
+
+  .el-input__wrapper {
+    border-radius: 6px;
+  }
 }
 </style>

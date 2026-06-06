@@ -105,7 +105,7 @@ export function usePrivacyNsfwMask(ctx) {
   const onMaskClick = async (event) => {
     event?.stopPropagation?.()
     event?.preventDefault?.()
-    await unlockWithPassword()
+    return unlockWithPassword()
   }
 
   const isActionBlocked = (item) => shouldMaskItem.value(item)

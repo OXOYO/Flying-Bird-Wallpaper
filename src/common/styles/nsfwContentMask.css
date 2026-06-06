@@ -32,6 +32,7 @@
 .preview-wrap--nsfw-masked,
 .fullscreen-slide--nsfw-masked {
   overflow: hidden;
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
 .preview-wrap--nsfw-masked .preview,

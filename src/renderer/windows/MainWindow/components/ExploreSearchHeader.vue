@@ -391,7 +391,11 @@ const onExtraCommand = (command) => {
                 :placeholder="keywordsPlaceholder"
                 clearable
                 @keydown.enter.prevent="onApplyFilters"
-              />
+              >
+                <template #prefix>
+                  <IconifyIcon icon="custom:search" />
+                </template>
+              </el-input>
             </div>
 
             <div
@@ -498,7 +502,6 @@ const onExtraCommand = (command) => {
               <el-select
                 v-model="draft.orientation"
                 multiple
-                collapse-tags
                 :teleported="false"
                 :placeholder="t('exploreCommon.searchForm.orientation.placeholder')"
                 popper-class="explore-filter-select-popper"
@@ -523,7 +526,6 @@ const onExtraCommand = (command) => {
               <el-select
                 v-model="draft.quality"
                 multiple
-                collapse-tags
                 :teleported="false"
                 :placeholder="t('exploreCommon.searchForm.quality.placeholder')"
                 popper-class="explore-filter-select-popper"
@@ -774,6 +776,10 @@ const onExtraCommand = (command) => {
 .explore-filter-popover.el-popover.el-popper {
   overflow: visible !important;
   box-sizing: border-box;
+
+  .el-input__wrapper {
+    border-radius: 6px;
+  }
 
   .explore-filter-panel {
     display: flex;

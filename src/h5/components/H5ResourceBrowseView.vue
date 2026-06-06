@@ -110,6 +110,7 @@ const {
   immersiveIndicatorChromeInsetClass,
   previewImages,
   previewStartPosition,
+  previewShowsNsfwMask,
   selectedItem,
   canFindSimilarSelected,
   similarMode,
@@ -714,9 +715,17 @@ defineExpose({
       v-model:show="state.showPreview"
       :images="previewImages"
       :start-position="previewStartPosition"
+      :close-on-click-image="false"
+      :close-on-click-overlay="false"
       closeable
       @change="onPreviewIndexChange"
-    />
+    >
+      <template v-if="previewShowsNsfwMask" #cover>
+        <div class="h5-preview-nsfw-shield">
+          <H5NsfwContentMask :visible="true" />
+        </div>
+      </template>
+    </van-image-preview>
 
     <Teleport to="body">
       <div
@@ -906,6 +915,7 @@ defineExpose({
             <van-search
               v-model="searchForm.filterKeywords"
               class="filter-keyword-input"
+              shape="round"
               :name="H5_SEARCH_FIELD_NAME"
               autocomplete="off"
               autocorrect="off"
@@ -1078,6 +1088,10 @@ defineExpose({
   position: relative;
   box-sizing: border-box;
   background-color: rgba(0, 0, 0, 0.07);
+
+  &--nsfw-masked {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
 }
 .fullscreen-slide-media {
   position: absolute;
@@ -1433,6 +1447,38 @@ defineExpose({
 
 <!-- 预览 teleport 到 body，需非 scoped：禁用长按系统菜单/保存图片等 -->
 <style lang="scss">
+.van-image-preview .van-image-preview__cover {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+.h5-preview-nsfw-shield {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(
+    var(--van-image-preview-close-icon-margin, 16px) +
+      var(--van-image-preview-close-icon-size, 22px) + 12px
+  );
+  bottom: 0;
+  pointer-events: none;
+}
+.h5-preview-nsfw-shield .h5-nsfw-content-mask {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.van-image-preview .van-image-preview__index,
+.van-image-preview .van-image-preview__close-icon,
+.van-image-preview .van-image-preview__indicators {
+  z-index: 10;
+  pointer-events: auto;
+}
 .h5-preview-error-hint {
   position: fixed;
   left: 50%;
@@ -1449,6 +1495,10 @@ defineExpose({
   color: #fff;
   background: rgba(0, 0, 0, 0.72);
   pointer-events: auto;
+}
+.van-image-preview .van-image-preview__image-wrap,
+.van-image-preview .van-image-preview__image {
+  position: relative;
 }
 .van-image-preview {
   -webkit-touch-callout: none;

@@ -1,6 +1,35 @@
 /** 需要隐藏的最低敏感等级（2、3） */
 export const NSFW_MASK_MIN_LEVEL = 2
 
+/** 1×1 透明图：遮罩未解锁时不向预览/查看器提供真实 URL */
+export const NSFW_MASKED_MEDIA_PLACEHOLDER =
+  'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
+
+/**
+ * 未解锁遮罩时返回占位图，避免预览/查看器加载原图
+ * @param {object|null|undefined} item
+ * @param {string} src
+ * @param {(item: object) => boolean} [shouldMask]
+ */
+export function resolveNsfwGatedMediaSrc(item, src, shouldMask) {
+  if (src && typeof shouldMask === 'function' && shouldMask(item)) {
+    return NSFW_MASKED_MEDIA_PLACEHOLDER
+  }
+  return src || ''
+}
+
+/**
+ * 窗口内/独立预览查看器：遮罩时不加载任何真实图片 URL（含缩略图）
+ * @param {object|null|undefined} item
+ * @param {(item: object) => boolean} [shouldMask]
+ */
+export function resolveNsfwGatedViewerMediaSrc(item, shouldMask) {
+  if (typeof shouldMask === 'function' && shouldMask(item)) {
+    return NSFW_MASKED_MEDIA_PLACEHOLDER
+  }
+  return item?.rawImageUrl || ''
+}
+
 export function isNsfwMaskableItem(item) {
   if (!item) return false
   const level = Number(item.nsfwLevel)
