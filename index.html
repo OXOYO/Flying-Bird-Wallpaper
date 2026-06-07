@@ -4,13 +4,16 @@
     <meta charset="UTF-8">
     <link rel="icon" href="favicon.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Flying Bird Wallpaper — desktop wallpaper app with AI search, smart collections, multi-source plugins, H5 mobile access, and rhythm/dynamic wallpapers.">
     <title>Flying Bird Wallpaper</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Navigation Bar -->
     <nav>
-        <img class="logo" src="https://raw.githubusercontent.com/OXOYO/Flying-Bird-Wallpaper/refs/heads/dev/resources/icons/icon.svg">
+        <div class="logo-container">
+            <img class="logo" src="https://raw.githubusercontent.com/OXOYO/Flying-Bird-Wallpaper/refs/heads/dev/resources/icons/icon.svg" alt="Flying Bird Wallpaper">
+            <span class="version-badge">v2.0</span>
+        </div>
         <div class="nav-links">
             <a href="#home">Home</a>
             <a href="#features">Features</a>
@@ -19,75 +22,66 @@
         </div>
     </nav>
 
-    <!-- Hero Section -->
-    <section class="hero">
+    <section id="home" class="hero">
         <div class="hero-content">
             <div class="hero-text">
                 <h1>Flying Bird Wallpaper</h1>
                 <p class="tagline">Let Your Desktop Shine with Unique Charm</p>
-                <p class="description">All-in-one wallpaper browsing, collection, and management, supporting multiple wallpaper types including images, videos, rhythm, solid colors, and providing multiple high-quality wallpaper sources like NASA, Unsplash, and Pixabay.</p>
+                <p class="description">All-in-one wallpaper browsing, collection, and management. Supports images, videos, rhythm, and solid colors — with AI-powered semantic search, visual similarity, smart collections, and high-quality sources such as NASA, Unsplash, and Pixabay.</p>
                 <div class="cta-group">
-                    <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/releases" class="download-btn" target="_blank">
+                    <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/releases" class="download-btn" target="_blank" rel="noopener">
                         Download Now
                     </a>
-                    <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper" class="github-btn" target="_blank">
-                        <svg height="20" viewBox="0 0 16 16" width="20" xmlns="http://www.w3.org/2000/svg">
+                    <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper" class="github-btn" target="_blank" rel="noopener">
+                        <svg height="20" viewBox="0 0 16 16" width="20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                             <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" fill="currentColor"></path>
                         </svg>
                         GitHub
                     </a>
-                    <!-- <div class="github-stats">
-                        <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/stargazers" target="_blank">
-                            <img src="https://img.shields.io/github/stars/OXOYO/Flying-Bird-Wallpaper?style=social" alt="GitHub stars">
-                        </a>
-                        <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/releases" target="_blank">
-                            <img src="https://img.shields.io/github/downloads/OXOYO/Flying-Bird-Wallpaper/total?style=social" alt="GitHub downloads">
-                        </a>
-                    </div> -->
                 </div>
             </div>
-            <!-- Carousel -->
             <div class="carousel">
                 <div class="carousel-inner">
                     <div class="carousel-item">
                         <img src="https://raw.githubusercontent.com/OXOYO/Flying-Bird-Wallpaper/main/docs/fbw_search_en.png" alt="Search Interface" class="carousel-image">
                         <div class="carousel-caption">
-                            <h3>Multi-source Wallpaper Search</h3>
-                            <p>Integrates multiple high-quality wallpaper sources, easily find your favorite wallpapers</p>
+                            <h3>Explore &amp; Semantic Search</h3>
+                            <p>Keyword filters plus AI natural-language search across desktop and H5</p>
                         </div>
                     </div>
                     <div class="carousel-item">
                         <img src="https://raw.githubusercontent.com/OXOYO/Flying-Bird-Wallpaper/main/docs/fbw_viewer_window.png" alt="Wallpaper Viewer" class="carousel-image">
                         <div class="carousel-caption">
-                            <h3>Beautiful Wallpaper Preview</h3>
-                            <p>Full-screen experience of wallpaper effects, supporting multiple operations</p>
+                            <h3>Image &amp; Video Preview</h3>
+                            <p>Fullscreen preview with inline mute control on explore cards</p>
                         </div>
                     </div>
                     <div class="carousel-item">
                         <img src="https://raw.githubusercontent.com/OXOYO/Flying-Bird-Wallpaper/main/docs/fbw_settings_en.png" alt="Settings Interface" class="carousel-image">
                         <div class="carousel-caption">
-                            <h3>Personalized Settings</h3>
-                            <p>Rich options to meet your personalized needs</p>
+                            <h3>AI &amp; Personalization</h3>
+                            <p>Configure AI providers, privacy, scheduled tasks, and 12 languages</p>
+                        </div>
+                    </div>
+                    <div class="carousel-item">
+                        <img src="https://raw.githubusercontent.com/OXOYO/Flying-Bird-Wallpaper/main/docs/fbw_h5_home_en.png" alt="H5 Mobile" class="carousel-image">
+                        <div class="carousel-caption">
+                            <h3>H5 Mobile Access</h3>
+                            <p>Browse, favorite, and sync settings on your phone via REST + SSE</p>
                         </div>
                     </div>
                 </div>
-                <button class="carousel-control prev">&#10094;</button>
-                <button class="carousel-control next">&#10095;</button>
-                <div class="carousel-indicators">
-                    <div class="indicator active" data-index="0"></div>
-                    <div class="indicator" data-index="1"></div>
-                    <div class="indicator" data-index="2"></div>
-                </div>
+                <button class="carousel-control prev" type="button" aria-label="Previous slide">&#10094;</button>
+                <button class="carousel-control next" type="button" aria-label="Next slide">&#10095;</button>
             </div>
         </div>
-        <div class="scroll-down">
+        <div class="scroll-down" aria-hidden="true">
             <span></span>
             <span></span>
             <span></span>
         </div>
     </section>
 
-    <!-- Features Section -->
     <section id="features" class="section section-2">
         <div class="container">
             <h2 class="section-title">Core Features</h2>
@@ -95,65 +89,83 @@
                 <div class="feature-card">
                     <div class="feature-icon">🔍</div>
                     <h3>Multi-source Wallpapers</h3>
-                    <p>Integrates NASA, Unsplash, Pixabay and other high-quality wallpaper sources, supports custom wallpaper source plugins, and also supports local directory images.</p>
+                    <p>NASA, Unsplash, Pixabay, and more — plus custom resource plugins and local folders.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🧠</div>
+                    <h3>AI 2.0 Analysis</h3>
+                    <p>Ollama or OpenAI-compatible vision/text models for tags, titles, scores, and background analysis.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">⚡</div>
-                    <h3>Smart Search</h3>
-                    <p>Supports keyword search and intelligent classification, quickly locate your favorite wallpapers.</p>
+                    <h3>Semantic Search</h3>
+                    <p>Natural-language queries in Explore and H5, powered by local sqlite-vec embeddings.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Find Similar</h3>
+                    <p>Visual embedding search with MobileCLIP (built-in or remote) plus text boost from any card.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📚</div>
+                    <h3>Smart Collections</h3>
+                    <p>Create collections in plain language, auto-curated system sets, and For You recommendations.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">🪄</div>
                     <h3>Multiple Wallpaper Types</h3>
-                    <p>Supports image, video, rhythm, solid color and other wallpaper types to meet personalized needs.</p>
+                    <p>Images, videos, rhythm visuals, solid colors, dynamic and webpage wallpapers (lab).</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">📱</div>
-                    <h3>H5 Mobile Support</h3>
-                    <p>Supports mobile access, browse and set wallpapers anytime, anywhere.</p>
+                    <h3>H5 Mobile</h3>
+                    <p>Phone-friendly browsing with HTTP REST APIs and SSE push for multi-device settings sync.</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">⚙️</div>
-                    <h3>Personalized Settings</h3>
-                    <p>Rich setting options, including scheduled tasks, automatic updates, multi-language support, etc.</p>
+                    <div class="feature-icon">🔒</div>
+                    <h3>Privacy &amp; Safety</h3>
+                    <p>Password-protected private space and optional sensitive-content masking for browse and rotation.</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">🔮</div>
-                    <h3>Smart Management</h3>
-                    <p>Supports wallpaper collection, history records, thesaurus function and private space, easy to manage personal wallpaper library.</p>
+                    <div class="feature-icon">🌐</div>
+                    <h3>Cross-platform</h3>
+                    <p>Windows x64/ARM64 and macOS Intel/Apple Silicon; floating ball, favorites, history, 12 languages.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Technology Section -->
     <section id="technology" class="section section-3">
         <div class="container">
             <h2 class="section-title">Technology Architecture</h2>
             <div class="tech-content">
                 <div class="tech-item">
-                    <h3>Electron Cross-platform Framework</h3>
-                    <p>Developed based on Electron, perfectly supports Windows and macOS systems, ensuring cross-platform compatibility.</p>
+                    <h3>Electron Cross-platform</h3>
+                    <p>Windows (x64 / ARM64) and macOS (Intel / Apple Silicon) with a multi-process architecture for stability.</p>
                 </div>
                 <div class="tech-item">
-                    <h3>Vue 3 Frontend Technology</h3>
-                    <p>Using Vue 3 to build a modern user interface, providing a smooth user experience.</p>
+                    <h3>Vue 3 Frontend</h3>
+                    <p>Modern desktop UI (Element Plus) and mobile H5 UI (Vant) with Pinia state management.</p>
                 </div>
                 <div class="tech-item">
-                    <h3>Multi-process Architecture</h3>
-                    <p>Adopts the architecture design of separating main process, child process and rendering process, improving application stability and performance.</p>
+                    <h3>SQLite + sqlite-vec</h3>
+                    <p>Local data, settings, history, text/visual vectors for semantic search and similarity.</p>
                 </div>
                 <div class="tech-item">
-                    <h3>SQLite Database</h3>
-                    <p>Locally stores user data, including settings, cache, history, etc., ensuring data security.</p>
+                    <h3>AI Integration</h3>
+                    <p>Configurable providers for analysis and embeddings; optional ONNX legacy aesthetic scoring.</p>
                 </div>
                 <div class="tech-item">
-                    <h3>WebSocket Communication</h3>
-                    <p>Realizes real-time interaction between frontend and backend, supports data synchronization between H5 and desktop ends.</p>
+                    <h3>Electron IPC</h3>
+                    <p>Secure communication between the main process and renderer windows on desktop.</p>
                 </div>
                 <div class="tech-item">
-                    <h3>Plug-in System</h3>
-                    <p>Supports extending new wallpaper sources, facilitating function expansion and customized development.</p>
+                    <h3>HTTP REST + SSE</h3>
+                    <p>H5 server exposes REST endpoints and Server-Sent Events (e.g. settings sync) — no Socket.IO.</p>
+                </div>
+                <div class="tech-item">
+                    <h3>Plugin System</h3>
+                    <p>Extend wallpaper sources and capabilities without rebuilding the core app.</p>
                 </div>
             </div>
         </div>
@@ -164,12 +176,13 @@
             <div class="footer-links">
                 <a href="#home">Home</a>
                 <a href="#features">Features</a>
-                <a href="#tech">Technology Architecture</a>
-                <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper" target="_blank">GitHub</a>
-                <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/releases" target="_blank">Download</a>
+                <a href="#technology">Technology</a>
+                <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper" target="_blank" rel="noopener">GitHub</a>
+                <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/releases" target="_blank" rel="noopener">Download</a>
+                <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/tree/dev" target="_blank" rel="noopener">Docs</a>
                 <a href="index_zh.html">中文</a>
             </div>
-            <p class="copyright">© 2025 OXOYO. All rights reserved.</p>
+            <p class="copyright">© 2025–2026 OXOYO. All rights reserved.</p>
         </div>
     </footer>
 

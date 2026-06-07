@@ -32,6 +32,7 @@ nav {
 .logo-container {
     display: flex;
     align-items: center;
+    gap: 12px;
     height: 100%;
 }
 
@@ -41,8 +42,23 @@ nav {
     transition: transform 0.3s ease;
 }
 
-.logo:hover {
+.logo-container:hover .logo {
     transform: scale(1.05);
+}
+
+.version-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    color: #2c3e50;
+    background: rgba(74, 111, 165, 0.14);
+    border: 1px solid rgba(74, 111, 165, 0.25);
+    white-space: nowrap;
 }
 
 .nav-links {
@@ -334,6 +350,20 @@ section {
         opacity: 0;
         transform: rotate(45deg) translate(10px, 10px);
     }
+}
+
+.section-2 {
+    background: linear-gradient(135deg, #bbdefb, #e0f7fa);
+}
+
+.section-3 {
+    background: linear-gradient(135deg, #e0f7fa, #f0f8ff);
+}
+
+.container {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
 /* Features section styles */

@@ -4,13 +4,16 @@
     <meta charset="UTF-8">
     <link rel="icon" href="favicon.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flying Bird Wallpaper - 飞鸟壁纸</title>
+    <meta name="description" content="飞鸟壁纸 — 支持 AI 语义搜索、智能合集、多源插件、H5 移动端、律动与动态壁纸的桌面壁纸软件。">
+    <title>飞鸟壁纸 - Flying Bird Wallpaper</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- 导航栏 -->
     <nav>
-        <img class="logo" src="https://raw.githubusercontent.com/OXOYO/Flying-Bird-Wallpaper/refs/heads/dev/resources/icons/icon.svg">
+        <div class="logo-container">
+            <img class="logo" src="https://raw.githubusercontent.com/OXOYO/Flying-Bird-Wallpaper/refs/heads/dev/resources/icons/icon.svg" alt="飞鸟壁纸">
+            <span class="version-badge">v2.0</span>
+        </div>
         <div class="nav-links">
             <a href="#home">首页</a>
             <a href="#features">功能</a>
@@ -19,75 +22,66 @@
         </div>
     </nav>
 
-    <!-- 第一屏：首页 -->
-    <section class="hero">
+    <section id="home" class="hero">
         <div class="hero-content">
             <div class="hero-text">
                 <h1>飞鸟壁纸</h1>
                 <p class="tagline">让您的桌面焕发独特魅力</p>
-                <p class="description">集壁纸浏览、收藏、管理于一体，支持图片、视频、律动、纯色等多种壁纸类型，提供NASA、Unsplash、Pixabay等多个优质壁纸源。</p>
+                <p class="description">集壁纸浏览、收藏、管理于一体，支持图片、视频、律动、纯色等多种类型；2.0 新增 AI 语义搜索、画面找相似、智能合集与猜你喜欢，并集成 NASA、Unsplash、Pixabay 等优质壁纸源。</p>
                 <div class="cta-group">
-                    <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/releases" class="download-btn" target="_blank">
+                    <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/releases" class="download-btn" target="_blank" rel="noopener">
                         立即下载
                     </a>
-                    <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper" class="github-btn" target="_blank">
-                        <svg height="20" viewBox="0 0 16 16" width="20" xmlns="http://www.w3.org/2000/svg">
+                    <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper" class="github-btn" target="_blank" rel="noopener">
+                        <svg height="20" viewBox="0 0 16 16" width="20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                             <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" fill="currentColor"></path>
                         </svg>
                         GitHub
                     </a>
-                    <!-- <div class="github-stats">
-                        <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/stargazers" target="_blank">
-                            <img src="https://img.shields.io/github/stars/OXOYO/Flying-Bird-Wallpaper?style=social" alt="GitHub stars">
-                        </a>
-                        <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/releases" target="_blank">
-                            <img src="https://img.shields.io/github/downloads/OXOYO/Flying-Bird-Wallpaper/total?style=social" alt="GitHub downloads">
-                        </a>
-                    </div> -->
                 </div>
             </div>
-            <!-- 轮播图 -->
             <div class="carousel">
                 <div class="carousel-inner">
                     <div class="carousel-item">
                         <img src="https://raw.githubusercontent.com/OXOYO/Flying-Bird-Wallpaper/main/docs/fbw_search.png" alt="搜索界面" class="carousel-image">
                         <div class="carousel-caption">
-                            <h3>多源壁纸搜索</h3>
-                            <p>集成多个优质壁纸源，轻松找到心仪壁纸</p>
+                            <h3>探索与语义搜索</h3>
+                            <p>关键词筛选 + AI 自然语言搜索，桌面与 H5 均可使用</p>
                         </div>
                     </div>
                     <div class="carousel-item">
                         <img src="https://raw.githubusercontent.com/OXOYO/Flying-Bird-Wallpaper/main/docs/fbw_viewer_window.png" alt="壁纸查看器" class="carousel-image">
                         <div class="carousel-caption">
-                            <h3>精美壁纸预览</h3>
-                            <p>全屏体验壁纸效果，支持多种操作</p>
+                            <h3>图片与视频预览</h3>
+                            <p>全屏预览，卡片内联播放支持静音切换</p>
                         </div>
                     </div>
                     <div class="carousel-item">
                         <img src="https://raw.githubusercontent.com/OXOYO/Flying-Bird-Wallpaper/main/docs/fbw_settings.png" alt="设置界面" class="carousel-image">
                         <div class="carousel-caption">
-                            <h3>个性化设置</h3>
-                            <p>丰富选项满足您的个性化需求</p>
+                            <h3>AI 与个性化</h3>
+                            <p>配置 AI 服务、隐私空间、定时任务与 12 种语言</p>
+                        </div>
+                    </div>
+                    <div class="carousel-item">
+                        <img src="https://raw.githubusercontent.com/OXOYO/Flying-Bird-Wallpaper/main/docs/fbw_h5_home.png" alt="H5 移动端" class="carousel-image">
+                        <div class="carousel-caption">
+                            <h3>H5 移动端</h3>
+                            <p>手机浏览收藏，REST + SSE 多设备设置同步</p>
                         </div>
                     </div>
                 </div>
-                <button class="carousel-control prev">&#10094;</button>
-                <button class="carousel-control next">&#10095;</button>
-                <div class="carousel-indicators">
-                    <div class="indicator active" data-index="0"></div>
-                    <div class="indicator" data-index="1"></div>
-                    <div class="indicator" data-index="2"></div>
-                </div>
+                <button class="carousel-control prev" type="button" aria-label="上一张">&#10094;</button>
+                <button class="carousel-control next" type="button" aria-label="下一张">&#10095;</button>
             </div>
         </div>
-        <div class="scroll-down">
+        <div class="scroll-down" aria-hidden="true">
             <span></span>
             <span></span>
             <span></span>
         </div>
     </section>
 
-    <!-- 第二屏：功能介绍 -->
     <section id="features" class="section section-2">
         <div class="container">
             <h2 class="section-title">核心功能</h2>
@@ -95,65 +89,83 @@
                 <div class="feature-card">
                     <div class="feature-icon">🔍</div>
                     <h3>多源壁纸</h3>
-                    <p>集成NASA、Unsplash、Pixabay等多个优质壁纸源，支持自定义壁纸源插件，同时支持本地目录图片。</p>
+                    <p>集成 NASA、Unsplash、Pixabay 等优质源，支持自定义资源插件与本地目录。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🧠</div>
+                    <h3>AI 2.0 分析</h3>
+                    <p>接入 Ollama 或 OpenAI 兼容接口，自动标签、标题、美学分与后台分析队列。</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">⚡</div>
-                    <h3>智能搜索</h3>
-                    <p>支持关键词搜索与智能分类，快速定位心仪壁纸。</p>
+                    <h3>语义搜索</h3>
+                    <p>探索页与 H5 支持自然语言查询，基于本地 sqlite-vec 向量检索。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h3>找相似</h3>
+                    <p>内置 MobileCLIP 或远程画面向量，结合文案 boost，卡片一键找相似。</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📚</div>
+                    <h3>智能合集</h3>
+                    <p>自然语言创建合集、系统自动策展，以及「猜你喜欢」推荐。</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">🪄</div>
                     <h3>多种壁纸类型</h3>
-                    <p>支持图片、视频、律动、纯色等多种壁纸类型，满足个性化需求。</p>
+                    <p>图片、视频、律动、纯色；实验室含动态壁纸与网页壁纸。</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">📱</div>
-                    <h3>H5移动端</h3>
-                    <p>支持手机端访问，随时随地浏览和设置壁纸。</p>
+                    <h3>H5 移动端</h3>
+                    <p>手机友好界面，HTTP REST 接口 + SSE 推送实现多设备设置同步。</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">⚙️</div>
-                    <h3>个性化设置</h3>
-                    <p>丰富的设置选项，包括定时任务、自动更新、多语言支持等。</p>
+                    <div class="feature-icon">🔒</div>
+                    <h3>隐私与安全</h3>
+                    <p>密码保护隐私空间，可选敏感内容隐藏（浏览遮罩与壁纸轮换过滤）。</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">🔮</div>
-                    <h3>智能管理</h3>
-                    <p>支持壁纸收藏、历史记录、词库功能和隐私空间，方便管理个人壁纸库。</p>
+                    <div class="feature-icon">🌐</div>
+                    <h3>跨平台</h3>
+                    <p>Windows x64/ARM64、macOS Intel/Apple Silicon；悬浮球、收藏、历史、12 语言。</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- 第三屏：技术架构 -->
     <section id="technology" class="section section-3">
         <div class="container">
             <h2 class="section-title">技术架构</h2>
             <div class="tech-content">
                 <div class="tech-item">
-                    <h3>Electron跨平台框架</h3>
-                    <p>基于Electron开发，完美支持Windows和macOS系统，确保跨平台兼容性。</p>
+                    <h3>Electron 跨平台</h3>
+                    <p>支持 Windows（x64 / ARM64）与 macOS（Intel / Apple Silicon），多进程架构保障稳定性。</p>
                 </div>
                 <div class="tech-item">
-                    <h3>Vue 3前端技术</h3>
-                    <p>采用Vue 3构建现代化用户界面，提供流畅的用户体验。</p>
+                    <h3>Vue 3 前端</h3>
+                    <p>桌面端 Element Plus + 移动端 Vant，Pinia 状态管理。</p>
                 </div>
                 <div class="tech-item">
-                    <h3>多进程架构</h3>
-                    <p>采用主进程、子进程、渲染进程分离的架构设计，提高应用稳定性和性能。</p>
+                    <h3>SQLite + sqlite-vec</h3>
+                    <p>本地存储设置、历史与文本/画面向量，支撑语义搜索与找相似。</p>
                 </div>
                 <div class="tech-item">
-                    <h3>SQLite数据库</h3>
-                    <p>本地存储用户数据，包括设置、缓存、历史记录等，确保数据安全。</p>
+                    <h3>AI 集成</h3>
+                    <p>可配置分析与向量化服务；保留 ONNX 本地美学评分（Legacy 可选）。</p>
                 </div>
                 <div class="tech-item">
-                    <h3>WebSocket通信</h3>
-                    <p>实现前后端实时交互，支持H5端与桌面端的数据同步。</p>
+                    <h3>Electron IPC</h3>
+                    <p>桌面端主进程与渲染进程之间的安全通信。</p>
+                </div>
+                <div class="tech-item">
+                    <h3>HTTP REST + SSE</h3>
+                    <p>H5 服务提供 REST 接口与 Server-Sent Events 推送（如设置同步），已不使用 Socket.IO。</p>
                 </div>
                 <div class="tech-item">
                     <h3>插件化系统</h3>
-                    <p>支持扩展新壁纸源，便于功能扩展和定制化开发。</p>
+                    <p>扩展壁纸源与能力，无需重新编译核心应用。</p>
                 </div>
             </div>
         </div>
@@ -164,12 +176,13 @@
             <div class="footer-links">
                 <a href="#home">首页</a>
                 <a href="#features">功能特性</a>
-                <a href="#tech">技术架构</a>
-                <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper" target="_blank">GitHub</a>
-                <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/releases" target="_blank">下载</a>
+                <a href="#technology">技术架构</a>
+                <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper" target="_blank" rel="noopener">GitHub</a>
+                <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/releases" target="_blank" rel="noopener">下载</a>
+                <a href="https://github.com/OXOYO/Flying-Bird-Wallpaper/tree/dev" target="_blank" rel="noopener">开发文档</a>
                 <a href="index.html">English</a>
             </div>
-            <p class="copyright">© 2025 OXOYO. All rights reserved.</p>
+            <p class="copyright">© 2025–2026 OXOYO. 保留所有权利。</p>
         </div>
     </footer>
 

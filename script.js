@@ -3,41 +3,67 @@ let currentIndex = 0;
 const slides = document.querySelectorAll('.carousel-item');
 const totalSlides = slides.length;
 const carouselInner = document.querySelector('.carousel-inner');
+const nextBtn = document.querySelector('.carousel-control.next');
+const prevBtn = document.querySelector('.carousel-control.prev');
+let autoplayTimer = null;
 
-// Update carousel position
 function updateCarousel() {
+    if (!carouselInner || totalSlides === 0) return;
     carouselInner.style.transform = `translateX(-${currentIndex * 100}%)`;
 }
 
-// Next slide
 function nextSlide() {
+    if (totalSlides === 0) return;
     currentIndex = (currentIndex + 1) % totalSlides;
     updateCarousel();
 }
 
-// Previous slide
 function prevSlide() {
+    if (totalSlides === 0) return;
     currentIndex = (currentIndex - 1 + totalSlides) % totalSlides;
     updateCarousel();
 }
 
-// Auto play
-setInterval(nextSlide, 5000);
+function startAutoplay() {
+    stopAutoplay();
+    autoplayTimer = setInterval(nextSlide, 5000);
+}
 
-// Bind button events
-document.querySelector('.carousel-control.next').addEventListener('click', nextSlide);
-document.querySelector('.carousel-control.prev').addEventListener('click', prevSlide);
+function stopAutoplay() {
+    if (autoplayTimer) {
+        clearInterval(autoplayTimer);
+        autoplayTimer = null;
+    }
+}
 
-// Smooth scrolling
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+if (totalSlides > 0) {
+    updateCarousel();
+    startAutoplay();
+
+    nextBtn?.addEventListener('click', () => {
+        nextSlide();
+        startAutoplay();
+    });
+    prevBtn?.addEventListener('click', () => {
+        prevSlide();
+        startAutoplay();
+    });
+
+    const carousel = document.querySelector('.carousel');
+    carousel?.addEventListener('mouseenter', stopAutoplay);
+    carousel?.addEventListener('mouseleave', startAutoplay);
+}
+
+document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
     anchor.addEventListener('click', function (e) {
+        const href = this.getAttribute('href');
+        if (!href || href === '#') return;
+        const target = document.querySelector(href);
+        if (!target) return;
         e.preventDefault();
-        const target = document.querySelector(this.getAttribute('href'));
-        if (target) {
-            target.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-            });
-        }
+        target.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+        });
     });
 });
