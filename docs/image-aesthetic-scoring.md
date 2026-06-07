@@ -4,6 +4,8 @@
 
 Flying Bird Wallpaper 使用基于 ONNX 的深度学习模型来计算图像美学评分。该系统能够自动评估图像的视觉美感，并为每张图像生成 1-100 分的评分，用于排序和筛选高质量壁纸。
 
+> **2.0.0 说明**：除本 ONNX 本地评分（`qualityScore` / legacy `legacyOnnxScore`）外，应用还支持 AI 视觉分析写入 **`fbw_resource_ai.aiScore`**。探索页评分筛选与排序以 AI 分数为主（若已分析）。详见 [AI 能力](./ai-features.md)。
+
 ## 技术架构
 
 ### 模型信息

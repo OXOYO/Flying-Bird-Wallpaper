@@ -85,6 +85,7 @@ Flying-Bird-Wallpaper/
 | npm run build:linux     | 构建 Linux 安装包                                        |
 | npm run local:build:win | Windows 本地打包（使用特定环境配置）                     |
 | npm run local:build:mac | macOS 本地打包（使用特定环境配置）                       |
+| npm run download:mobileclip2-s0 | 下载内置 MobileCLIP2-S0 模型（AI 画面向量）      |
 | npm run changelog       | 生成/更新 CHANGELOG.md（基于 conventional-changelog）    |
 | npm run changelog:first | 生成完整的 CHANGELOG.md（首次/全量）                     |
 
@@ -148,6 +149,18 @@ Flying-Bird-Wallpaper/
     ```
     本地构建命令会使用平台特定的配置文件（.npmrc.local.win 或 .npmrc.local.mac），
     以确保在不同环境下正确编译原生模块。
+
+### Windows 双架构说明
+
+`electron-builder.yml` 默认同时打包 **x64** 与 **arm64**。本地 `npm run build:win` 会为两个架构重新编译 `better-sqlite3` 等原生模块。
+
+| 场景 | 说明 |
+|------|------|
+| **GitHub Actions** | `windows-latest` runner 预装 x64 + ARM64 的 MSVC 工具，双架构打包通常正常 |
+| **本地仅 x64** | 若未安装 VS 的 **ARM64 生成工具**，可临时只打 x64：`npm run build && electron-builder --win --x64` |
+| **本地双架构** | 在 Visual Studio Installer →「使用 C++ 的桌面开发」中勾选 **MSVC v143 ARM64 生成工具** |
+
+常见本地错误 `MSB8020: 无法找到 v143 的生成工具` 即缺少 ARM64 编译组件，与进程占用无关。详见 [FAQ - Windows 本地打包失败](./faq.md#q-windows-本地-buildwin-在-arm64-步骤失败)。
 
 ---
 

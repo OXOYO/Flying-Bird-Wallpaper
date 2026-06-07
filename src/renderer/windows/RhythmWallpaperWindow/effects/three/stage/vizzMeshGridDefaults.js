@@ -1,6 +1,6 @@
 /**
  * vizz.fm mesh-grid 控件默认值（bundle id:"mesh-grid"）
- * @see docs/temp/vizz-mesh-sphere-extract.txt
+ * @see docs/rhythm_wallpaper.md
  */
 export const VIZZ_MESH_GRID_DEFAULTS = {
   waveHeight: 3.15,

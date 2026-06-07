@@ -12,7 +12,9 @@ Flying Bird Wallpaper is a feature-rich desktop wallpaper software that supports
 - [Color Wallpaper](./docs/color_wallpaper.md)
 - [Dynamic Wallpaper](./docs/dynamic_wallpaper.md)
 - [Rhythm Wallpaper](./docs/rhythm_wallpaper.md)
-- [Image Aesthetic Rating](./docs/image_aesthetic_rating.md)
+- [Image Aesthetic Scoring](./docs/image-aesthetic-scoring.md)
+- [AI Features (2.0)](./docs/ai-features.md)
+- [Privacy & Sensitive Content](./docs/privacy-and-sensitive-content.md)
 - [H5](./docs/h5.md)
 - [FAQ and Support](./docs/faq.md)
 

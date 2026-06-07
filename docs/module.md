@@ -19,8 +19,14 @@
 
 ## 渲染进程
 
-- [主窗口](renderer_process.md#主窗口-mainwindow)：搜索、词库、收藏、回忆、设置、工具、关于等模块
+- [主窗口](renderer_process.md#主窗口-mainwindow)：探索、搜索、合集、词库、收藏、历史、设置、工具、关于等模块
 - [悬浮球](renderer_process.md#悬浮球-suspensionball)：快捷操作壁纸切换
 - [预览图片窗口](renderer_process.md#预览图片窗口-viewimagewindow)：独立窗口预览图片
 - [动态壁纸窗口](renderer_process.md#动态壁纸窗口-dynamicwallpaperwindow)：渲染视频作为壁纸
 - [律动壁纸窗口](renderer_process.md#律动壁纸窗口-rhythmwallpaperwindow)：渲染律动效果作为壁纸
+
+## AI 与隐私（2.0.0+）
+
+- [AI 能力](ai-features.md)：语义搜索、找相似、智能合集、猜你喜欢、后台分析
+- [敏感内容隐藏](privacy-and-sensitive-content.md)：浏览遮罩与壁纸轮换过滤
+- [图像美学评分](image-aesthetic-scoring.md)：ONNX 本地评分（Legacy 可选）

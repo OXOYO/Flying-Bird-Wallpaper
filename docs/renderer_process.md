@@ -33,7 +33,8 @@
 ### 2. 功能页面
 
 - **Explore**：探索页面，浏览和发现壁纸
-- **Search**：搜索页面，关键词搜索壁纸
+- **Search**：搜索页面，关键词/语义搜索壁纸
+- **Collections**：合集页面，用户合集、系统策展与猜你喜欢
 - **Favorites**：收藏页面，管理收藏的壁纸
 - **History**：历史页面，查看浏览历史
 - **Words**：词库页面，管理搜索关键词
@@ -79,6 +80,30 @@ const enabledMenus = computed(() => {
   })
 })
 ```
+
+---
+
+## 探索与合集浏览（2.0.0+）
+
+### 1. 视频内联预览
+
+探索页（`ExploreCommon.vue`）与合集页（`Collections.vue`）卡片内支持视频缩略图播放：
+
+- **静音控制**：`ResourceExploreCard.vue` 右下角音量按钮，默认静音，点击切换
+- **状态管理**：`ExploreCommon.vue` 使用 `videoMutedByIndex`，监听 `playing` 事件与 `<video>.muted` 同步
+- **全屏预览**：`ViewVideo.vue` 全屏播放；关闭按钮默认隐藏，**鼠标 hover 视频区域**或 **键盘 focus-visible** 时显示
+
+### 2. 找相似与语义搜索
+
+- 探索顶栏：评分筛选、`useSemanticSearch` 语义搜索开关
+- 卡片菜单：**找相似** 调用 `HybridSimilarSearch`（画面向量优先）
+- 详见 [AI 能力](./ai-features.md)
+
+### 3. 敏感内容遮罩
+
+- 组件：`NsfwContentMask.vue` + `usePrivacyNsfwMask.mjs`
+- 接入：`ExploreCommon.vue`、`Collections.vue`
+- 策略见 [privacy-and-sensitive-content.md](./privacy-and-sensitive-content.md)
 
 ---
 
@@ -214,6 +239,14 @@ const handleSetVideoSource = (event, source) => {
 - **帧率控制**：限制视频播放帧率，优化性能
 - **缩放模式**：支持 cover、contain 等缩放模式
 - **亮度/对比度**：实时调整视频显示效果
+
+### 2.1 全屏预览窗口（ViewVideo）
+
+桌面探索/合集触发的全屏视频预览使用 `ViewVideo.vue`：
+
+- 关闭按钮位于右上角，**默认不可见**（`opacity: 0`）
+- 鼠标 **移入视频区域** 时显示；**键盘 Tab 聚焦** 时同样可见（无障碍）
+- 内联卡片播放的静音按钮见上文「探索与合集浏览」
 
 **关键代码片段：**
 
