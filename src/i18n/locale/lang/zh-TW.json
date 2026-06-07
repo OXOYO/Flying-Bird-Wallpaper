@@ -1032,6 +1032,8 @@
     "setAsWallpaperWithDownload": "設為桌布",
     "doViewImage": "預覽圖片",
     "fullscreenPlay": "全屏播放",
+    "videoMute": "靜音",
+    "videoUnmute": "開啟聲音",
     "addToFavorites": "加入收藏",
     "removeFavorites": "取消收藏",
     "addToPrivacySpace": "加入隱私空間",

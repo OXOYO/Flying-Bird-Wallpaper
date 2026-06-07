@@ -1043,6 +1043,8 @@
     "setAsWallpaperWithDownload": "设为壁纸",
     "doViewImage": "预览图片",
     "fullscreenPlay": "全屏播放",
+    "videoMute": "静音",
+    "videoUnmute": "开启声音",
     "aiAnalyze": "AI 分析",
     "findSimilar": "找相似",
     "findSimilarEmpty": "未找到相似壁纸",

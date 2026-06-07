@@ -85,6 +85,8 @@ watch(selectedMenu, () => {
 const { onHorizontalWheel } = useHorizontalWheelScroll()
 
 const videoRefs = ref([])
+/** 卡片内联视频静音状态（按列表索引） */
+const videoMutedByIndex = reactive({})
 /** 切换菜单卸载时忽略 video @error，避免清空 src 触发误报 */
 let isUnmountingVideos = false
 
@@ -1896,6 +1898,34 @@ const onDblClickCard = (item, index) => {
   }
 }
 
+const syncVideoMuteState = (index) => {
+  const video = videoRefs.value[index]
+  if (video && index >= 0) videoMutedByIndex[index] = video.muted
+}
+
+const isVideoMutedAt = (index) => {
+  if (Object.prototype.hasOwnProperty.call(videoMutedByIndex, index)) {
+    return !!videoMutedByIndex[index]
+  }
+  const video = videoRefs.value[index]
+  return video?.muted ?? isVideoDefaultMuted(settingData.value)
+}
+
+const toggleVideoMute = (item, index) => {
+  if (isNsfwActionBlocked(item)) {
+    notifyNsfwMaskBlocked()
+    return
+  }
+  const video = videoRefs.value[index]
+  if (!video || !cardList.value[index]?.isPlaying) return
+  video.muted = !video.muted
+  videoMutedByIndex[index] = video.muted
+}
+
+const onVideoPlaying = (index) => {
+  syncVideoMuteState(index)
+}
+
 // 鼠标移入视频区域
 const onVideoMouseEnter = (item, index) => {
   const video = videoRefs.value[index]
@@ -1914,6 +1944,7 @@ const onVideoMouseEnter = (item, index) => {
     // 设置播放状态
     cardList.value[index].isPlaying = true
     video.muted = isVideoDefaultMuted(settingData.value)
+    syncVideoMuteState(index)
     // 记录播放来源为自动播放
     videoPlayState.playSources.set(item.uniqueKey, 'auto')
 
@@ -1995,6 +2026,7 @@ const toggleVideo = (item, index) => {
       // 设置播放状态
       cardList.value[index].isPlaying = true
       video.muted = isVideoDefaultMuted(settingData.value)
+      syncVideoMuteState(index)
       // 记录播放来源为手动播放
       videoPlayState.playSources.set(item.uniqueKey, 'manual')
 
@@ -2037,6 +2069,8 @@ const onVideoEnded = (item, index) => {
   if (cardList.value[index].isPlaying) {
     cardList.value[index].isPlaying = false
   }
+
+  delete videoMutedByIndex[index]
 
   // 移除播放来源记录
   const playSource = videoPlayState.playSources.get(item.uniqueKey)
@@ -2413,11 +2447,31 @@ onBeforeUnmount(() => {
                   :src="item.videoSrc"
                   :poster="item.imageSrc"
                   preload="metadata"
-                  :muted="isVideoDefaultMuted(settingData)"
                   loop
+                  @playing="onVideoPlaying(index)"
                   @ended="onVideoEnded(item, index)"
                   @error="onVideoError(item, index, $event)"
                 ></video>
+                <InstantTooltip
+                  v-if="!shouldMaskItem(item) && item.isPlaying"
+                  :content="
+                    isVideoMutedAt(index)
+                      ? t('exploreCommon.videoUnmute')
+                      : t('exploreCommon.videoMute')
+                  "
+                >
+                  <button
+                    type="button"
+                    class="card-item-video-mute-btn"
+                    @click.stop="toggleVideoMute(item, index)"
+                  >
+                    <IconifyIcon
+                      :icon="
+                        isVideoMutedAt(index) ? 'custom:volume-mute' : 'custom:volume-on'
+                      "
+                    />
+                  </button>
+                </InstantTooltip>
                 <IconifyIcon
                   v-if="!shouldMaskItem(item)"
                   class="card-item-video-btn"
@@ -2816,6 +2870,36 @@ onBeforeUnmount(() => {
   /* 播放状态下的按钮样式 */
   &:hover .card-item-video-btn:hover {
     transform: translate(-50%, -50%) scale(1.1);
+  }
+
+  .card-item-video-mute-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 21;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    font-size: 18px;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    transition: opacity 0.2s, background-color 0.2s;
+    cursor: pointer;
+    text-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.58);
+    }
+  }
+
+  &:hover .card-item-video-mute-btn {
+    opacity: 1;
   }
 }
 

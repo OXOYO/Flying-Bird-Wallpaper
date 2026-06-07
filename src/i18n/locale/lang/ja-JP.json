@@ -1020,6 +1020,8 @@
     "setAsWallpaperWithDownload": "壁紙に設定",
     "doViewImage": "画像プレビュー",
     "fullscreenPlay": "全画面再生",
+    "videoMute": "ミュート",
+    "videoUnmute": "音声をオン",
     "addToFavorites": "お気に入りに追加",
     "removeFavorites": "お気に入りから削除",
     "addToPrivacySpace": "プライバシースペースに追加",

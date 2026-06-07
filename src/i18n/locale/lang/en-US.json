@@ -1043,6 +1043,8 @@
     "setAsWallpaperWithDownload": "Set as wallpaper",
     "doViewImage": "Preview image",
     "fullscreenPlay": "Play fullscreen",
+    "videoMute": "Mute",
+    "videoUnmute": "Unmute",
     "addToFavorites": "Add to favorites",
     "removeFavorites": "Cancel favorites",
     "addToPrivacySpace": "Add to privacy space",

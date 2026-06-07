@@ -1020,6 +1020,8 @@
     "setAsWallpaperWithDownload": "Establecer como fondo de pantalla",
     "doViewImage": "Vista previa de imagen",
     "fullscreenPlay": "Reproducir a pantalla completa",
+    "videoMute": "Silenciar",
+    "videoUnmute": "Activar sonido",
     "addToFavorites": "Añadir a favoritos",
     "removeFavorites": "Eliminar de favoritos",
     "addToPrivacySpace": "Añadir al espacio privado",

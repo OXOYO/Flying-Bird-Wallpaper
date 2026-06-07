@@ -1020,6 +1020,8 @@
     "setAsWallpaperWithDownload": "배경화면으로 설정",
     "doViewImage": "이미지 미리보기",
     "fullscreenPlay": "전체 화면 재생",
+    "videoMute": "음소거",
+    "videoUnmute": "소리 켜기",
     "addToFavorites": "즐겨찾기에 추가",
     "removeFavorites": "즐겨찾기에서 제거",
     "addToPrivacySpace": "비밀 공간에 추가",

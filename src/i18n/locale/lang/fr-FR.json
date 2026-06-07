@@ -1020,6 +1020,8 @@
     "setAsWallpaperWithDownload": "Définir comme fond d'écran",
     "doViewImage": "Aperçu de l'image",
     "fullscreenPlay": "Lecture plein écran",
+    "videoMute": "Couper le son",
+    "videoUnmute": "Activer le son",
     "addToFavorites": "Ajouter aux favoris",
     "removeFavorites": "Retirer des favoris",
     "addToPrivacySpace": "Ajouter à l'espace privé",

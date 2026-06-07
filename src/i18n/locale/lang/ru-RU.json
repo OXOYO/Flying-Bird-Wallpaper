@@ -1020,6 +1020,8 @@
     "setAsWallpaperWithDownload": "Установить как обои",
     "doViewImage": "Предварительный просмотр изображения",
     "fullscreenPlay": "Воспроизвести на весь экран",
+    "videoMute": "Без звука",
+    "videoUnmute": "Включить звук",
     "addToFavorites": "Добавить в избранное",
     "removeFavorites": "Удалить из избранного",
     "addToPrivacySpace": "Добавить в приватное пространство",

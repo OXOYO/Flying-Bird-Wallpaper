@@ -39,6 +39,21 @@ const { t } = useTranslation()
 const { onHorizontalWheel } = useHorizontalWheelScroll()
 const videoRef = ref(null)
 const isPlaying = ref(false)
+const videoMuted = ref(true)
+
+const syncVideoMuteState = () => {
+  const video = videoRef.value
+  if (video) videoMuted.value = video.muted
+}
+
+const isVideoMuted = computed(() => videoMuted.value)
+
+const toggleVideoMute = () => {
+  const video = videoRef.value
+  if (!video || !isPlaying.value) return
+  video.muted = !video.muted
+  videoMuted.value = video.muted
+}
 
 const buttons = computed(() => buildResourceCardButtons(props.item, props.cardContext, t))
 
@@ -72,10 +87,12 @@ const toggleVideo = () => {
   if (!video) return
   if (video.paused) {
     video.muted = videoDefaultMuted.value
+    videoMuted.value = video.muted
     video
       .play()
       .then(() => {
         isPlaying.value = true
+        syncVideoMuteState()
       })
       .catch(() => {})
   } else {
@@ -153,10 +170,24 @@ const onVideoEnded = () => {
           :src="item.videoSrc"
           :poster="item.imageSrc"
           preload="metadata"
-          :muted="videoDefaultMuted"
           loop
+          @playing="syncVideoMuteState"
           @ended="onVideoEnded"
         ></video>
+        <InstantTooltip
+          v-if="!nsfwMasked && isPlaying"
+          :content="isVideoMuted ? t('exploreCommon.videoUnmute') : t('exploreCommon.videoMute')"
+        >
+          <button
+            type="button"
+            class="card-item-video-mute-btn"
+            @click.stop="toggleVideoMute"
+          >
+            <IconifyIcon
+              :icon="isVideoMuted ? 'custom:volume-mute' : 'custom:volume-on'"
+            />
+          </button>
+        </InstantTooltip>
         <IconifyIcon
           v-if="!nsfwMasked"
           class="card-item-video-btn"
@@ -377,6 +408,35 @@ const onVideoEnded = () => {
   }
 
   &:hover .card-item-video-btn {
+    opacity: 1;
+  }
+
+  .card-item-video-mute-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 21;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    font-size: 18px;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    transition: opacity 0.2s, background-color 0.2s;
+    cursor: pointer;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.58);
+    }
+  }
+
+  &:hover .card-item-video-mute-btn {
     opacity: 1;
   }
 }
