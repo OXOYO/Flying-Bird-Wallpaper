@@ -62,22 +62,27 @@ Flying Bird Wallpaper is a feature-rich desktop wallpaper application that suppo
 
 ## [Docs](https://github.com/OXOYO/Flying-Bird-Wallpaper/blob/dev/README.md)
 
+> Developer documentation (build, architecture, AI 2.0) lives on the [`dev`](https://github.com/OXOYO/Flying-Bird-Wallpaper/tree/dev) branch.
+
 ## Core Features
 
 1. **Multiple Wallpaper Sources** - Integrates high-quality wallpaper sources such as NASA, Unsplash, Pixabay, supports custom wallpaper source plugins, and local directory images.
-2. **Smart Search** - Supports keyword search and intelligent classification for quick access to your favorite wallpapers.
-3. **One-Click Management** - Set wallpaper, favorite images, and save locally with one click for efficient operation.
-4. **Desktop Floating Ball** - Quickly switch wallpapers without opening the main interface.
-5. **H5 Version** - Supports mobile access, browse wallpapers anytime, anywhere.
-6. **Multi-language Support** - Built-in multilingual interface to meet international needs.
-7. **Auto Update** - Automatically checks for updates to keep the application up to date.
-8. **Cross-Platform Compatibility** - Perfectly supports Windows and macOS systems.
-9. **Scheduled Tasks** - Set scheduled wallpaper changes, directory refresh, resource downloads, and automatic desktop background switching.
-10. **Word Bank Function** - Automatically generates a word bank through word segmentation for quick keyword search.
-11. **History** - Records used wallpapers for easy review and reuse.
-12. **Favorites** - Collect your favorite wallpapers and build a personal wallpaper library.
-13. **Private Space** - Provides a privacy-protected wallpaper storage space to ensure personal privacy.
-14. **Image Preview** - Supports wallpaper preview to view details and effects.
+2. **Smart Search** - Keyword search, filters, and **semantic search** (AI-powered natural language queries in Explore / H5).
+3. **AI 2.0** - Configurable vision/text AI analysis (Ollama, OpenAI-compatible APIs): auto tags, titles, aesthetic scores, and background queue processing.
+4. **Find Similar** - Visual embedding search (built-in MobileCLIP or remote service) with text boost; available from explore cards and collections.
+5. **Smart Collections** - User-created collections via natural language plus **auto-curated** system collections; **For You** recommendations on desktop and H5.
+6. **One-Click Management** - Set wallpaper, favorite images, and save locally with one click for efficient operation.
+7. **Desktop Floating Ball** - Quickly switch wallpapers without opening the main interface.
+8. **H5 Version** - Supports mobile access, browse wallpapers anytime, anywhere; inline video preview with mute toggle.
+9. **Multi-language Support** - Built-in multilingual interface (12 languages) to meet international needs.
+10. **Auto Update** - Automatically checks for updates to keep the application up to date.
+11. **Cross-Platform Compatibility** - Windows (x64 / ARM64) and macOS (Intel / Apple Silicon).
+12. **Scheduled Tasks** - Set scheduled wallpaper changes, directory refresh, resource downloads, and automatic desktop background switching.
+13. **Word Bank Function** - Automatically generates a word bank through word segmentation for quick keyword search.
+14. **History** - Records used wallpapers for easy review and reuse.
+15. **Favorites** - Collect your favorite wallpapers and build a personal wallpaper library.
+16. **Private Space** - Password-protected private storage; optional **sensitive content masking** for browsing and wallpaper rotation.
+17. **Image & Video Preview** - Preview images and videos; fullscreen video close button on hover; card inline playback with mute control.
 
 ## Experimental Features
 
@@ -92,13 +97,16 @@ Flying Bird Wallpaper is a feature-rich desktop wallpaper application that suppo
 - **Vue 3 Frontend** - Builds a modern user interface
 - **Modular Design** - Improves application stability
 - **Plugin System** - Supports extending new wallpaper sources
-- **SQLite Database** - Local storage for user data
-- **WebSocket Communication** - Enables real-time interaction between frontend and backend
+- **SQLite Database** - Local storage for user data; **sqlite-vec** for semantic / visual search
+- **AI Integration** - Ollama and OpenAI-compatible providers for analysis and embeddings
+- **Electron IPC** - Desktop main ↔ renderer communication
+- **HTTP REST + SSE** - H5 REST APIs and Server-Sent Events (e.g. settings sync push)
 
 ## System Requirements
 
-- Windows 10 or above
-- macOS 10.13 or above
+- **Windows** 10 or above (x64 and ARM64 installers)
+- **macOS** 10.15 (Catalina) or above; Intel and Apple Silicon (M series)
+- **Memory** 4 GB RAM minimum; 8 GB recommended for AI background analysis
 
 ## LICENSE
 
