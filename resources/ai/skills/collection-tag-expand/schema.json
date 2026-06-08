@@ -1,0 +1,13 @@
+{
+  "type": "object",
+  "properties": {
+    "tags": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "string",
+        "maxLength": 64
+      }
+    }
+  }
+}

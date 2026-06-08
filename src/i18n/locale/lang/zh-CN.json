@@ -115,10 +115,7 @@
       "selectHint": "请选择合集查看壁纸",
       "confirmDelete": "确定删除该合集？",
       "confirmAddAllFavorites": "确定将「{name}」内全部壁纸加入收藏吗？",
-      "confirmAddAllForYouFavorites": "确定将「猜你喜欢」中的全部壁纸加入收藏吗？",
-      "auto": {
-        "storagePrompt": "{detail}"
-      }
+      "confirmAddAllForYouFavorites": "确定将「猜你喜欢」中的全部壁纸加入收藏吗？"
     },
     "Setting": {
       "tabs": {
@@ -312,7 +309,6 @@
         "visualEmbedBaseUrl": "服务地址",
         "visualEmbedModel": "画面向量模型",
         "visualEmbedModelHint": "用于找相似的画面 embedding；推荐内置 MobileCLIP。远程需支持图像向量，与视觉分析、文本向量模型无关；失败时回退内置。",
-        "visualEmbedRemoteSectionHint": "请在下方「画面向量服务」卡片中独立配置服务商、地址、API Key 与模型。",
         "visualEmbedModelPlaceholder": "例如 batiai/qwen3-vl-embed-2b",
         "statImageEmbeddingLabel": "已向量化(视觉)",
         "scoreMinFilter": "最低评分过滤",
@@ -322,7 +318,7 @@
         "enableNsfwCheck": "内容安全筛选",
         "enableNsfwCheckHint": "搜索与合集生成时隐藏高风险内容（依据分析结果中的安全等级）",
         "smartSearch": "智能语义搜索",
-        "expandDownloadKeywords": "自动下载扩展关键词",
+        "expandDownloadKeywords": "扩展关键词",
         "expandDownloadKeywordsHint": "在自动下载任务（图片或视频）中，用 AI 根据已有关键词补充同义/相关词，提高匹配覆盖面（需启用 AI）",
         "remoteVisionPrivacyNote": "使用云端视觉服务时，分析会将本地图片（经压缩后）发送至所选服务商，请确认你信任该服务及其隐私政策。本机 Ollama / 本机 OpenAI 兼容地址不会显示此说明。",
         "legacyOnnxScore": "兼容 ONNX 评分",
@@ -330,10 +326,14 @@
         "legacyJiebaTags": "兼容 jieba 分词",
         "legacyJiebaTagsHint": "用本地 jieba 分词生成标签，替代 AI 视觉分析返回的标签；适合未配置视觉模型时",
         "legacyLocalVisualEmbed": "内置画面向量",
-        "legacyLocalVisualEmbedHint": "开启时使用内置画面向量做画面相似与找相似；关闭后改用「画面向量服务」中的远程 embedding 模型（失败时回退内置）。",
+        "legacyLocalVisualEmbedHint": "开启时使用内置画面向量做画面相似与找相似；关闭后改用「画面模型」中的远程 embedding 模型（失败时回退内置）。",
         "save": "保存 AI 设置",
         "saveSuccess": "AI 设置已保存",
-        "saveFail": "AI 设置保存失败"
+        "saveFail": "AI 设置保存失败",
+        "promptProfile": "内容分级策略",
+        "promptProfileHint": "影响视觉 AI 分析的敏感内容与办公安全判定。默认：泳装等轻微内容可仍为安全；严格：轻微敏感一律视为不适合办公。切换后会对已有分析（含原始 LLM 数据）自动重算，无需重新调用模型；无原始数据的旧记录需重新分析。",
+        "promptProfileDefault": "默认（平衡）",
+        "promptProfileStrictNsfw": "严格（办公/家长）"
       },
       "divider": {
         "base": "基础设置",
@@ -725,17 +725,6 @@
       "github": "GitHub",
       "email": "Email",
       "sponsor": "赞助"
-    }
-  },
-  "ai": {
-    "prompts": {
-      "imageAnalysis": "你是壁纸图像分析助手。请仅输出一个 JSON 对象，不要 markdown 代码块，不要额外说明。\n\n【字段职责（勿混用）】\n- title：简短标题，≤40 字，点出主体与场景\n- summary：检索用一句话，≤80 字，概括画面主题与关键元素（不写用途、不写「适合桌面」）\n- desc：给人看的详细描述，120–220 字，按顺序写清：主体/人物、动作与姿态、服饰与身体暴露程度、场景与环境、构图与景别、色调与光线、风格与氛围；只描述可见内容，不臆测故事，不评价用途\n- tags：3–10 个检索标签，与界面语言一致，含主体、场景、风格、色调等\n- score：1–100 整数，美学综合分\n- nsfwLevel：0–3 整数（敏感分级，见下表）\n- safeForWork：布尔，是否与下表联动规则一致\n\n【敏感分级 nsfwLevel（中英对照）】\n0 安全 Safe：普通风景/静物/日常人像，无性暗示或敏感主体。反例：不宜标 0——画面以情色或隐私部位清晰呈现、明显不适合办公场所\n1 轻微 Mild：泳装/运动装/时尚摄影感、肌肤较多但无露点、姿态略暧昧。反例：不宜标 1——明显全裸、以情色行为为主体、隐私部位清晰可见（应 ≥2）\n2 中度 Moderate：露点或大面积裸露、强性暗示、血腥特写、明显成人向构图。反例：不宜标 2——情色行为为画面中心、隐私部位特写（应 3）\n3 重度 Explicit：以情色或性行为为主体、隐私部位清晰可辨、极端血腥暴力。反例：不宜标 3——仅泳装/比基尼且无露点（应 1）\n\n【safeForWork 与 nsfwLevel 联动（必须遵守）】\n- nsfwLevel≥2 ⇒ safeForWork 必须为 false\n- safeForWork 为 false ⇒ nsfwLevel 必须 ≥2\n- nsfwLevel=0 ⇒ safeForWork 必须为 true\n- 不得出现 nsfwLevel=0 且 safeForWork=false\n\n示例（安全）：{\"score\":82,\"tags\":[\"夜景\",\"城市\",\"霓虹\",\"雨\",\"蓝调\"],\"title\":\"雨夜都市天际线\",\"summary\":\"雨后城市夜景，高楼灯火与湿润路面反光\",\"desc\":\"远景城市天际线占据画面上部，暖黄与冷蓝霓虹交织；中景街道被雨水打湿形成镜面反光，可见车灯拖影；构图偏横屏全景，景深清晰；整体氛围潮湿而宁静，写实摄影风格。\",\"nsfwLevel\":0,\"safeForWork\":true}",
-      "videoPosterAnalysis": "你是壁纸视频分析助手。输入仅为该动态壁纸的封面帧（不是完整视频），请仅根据此帧可见内容分析，勿臆测视频中的动态或声画变化。输出格式与字段规则同图像分析。\n\n【字段职责（勿混用）】\n- title：简短标题，≤40 字，点出主体与场景\n- summary：检索用一句话，≤80 字，概括画面主题与关键元素（不写用途、不写「适合桌面」）\n- desc：给人看的详细描述，120–220 字，按顺序写清：主体/人物、动作与姿态、服饰与身体暴露程度、场景与环境、构图与景别、色调与光线、风格与氛围；只描述可见内容，不臆测故事，不评价用途\n- tags：3–10 个检索标签，与界面语言一致，含主体、场景、风格、色调等\n- score：1–100 整数，美学综合分\n- nsfwLevel：0–3 整数（敏感分级，见下表）\n- safeForWork：布尔，是否与下表联动规则一致\n\n【敏感分级 nsfwLevel（中英对照）】\n0 安全 Safe：普通风景/静物/日常人像，无性暗示或敏感主体。反例：不宜标 0——画面以情色或隐私部位清晰呈现、明显不适合办公场所\n1 轻微 Mild：泳装/运动装/时尚摄影感、肌肤较多但无露点、姿态略暧昧。反例：不宜标 1——明显全裸、以情色行为为主体、隐私部位清晰可见（应 ≥2）\n2 中度 Moderate：露点或大面积裸露、强性暗示、血腥特写、明显成人向构图。反例：不宜标 2——情色行为为画面中心、隐私部位特写（应 3）\n3 重度 Explicit：以情色或性行为为主体、隐私部位清晰可辨、极端血腥暴力。反例：不宜标 3——仅泳装/比基尼且无露点（应 1）\n\n【safeForWork 与 nsfwLevel 联动（必须遵守）】\n- nsfwLevel≥2 ⇒ safeForWork 必须为 false\n- safeForWork 为 false ⇒ nsfwLevel 必须 ≥2\n- nsfwLevel=0 ⇒ safeForWork 必须为 true\n- 不得出现 nsfwLevel=0 且 safeForWork=false\n\n示例（安全）：{\"score\":82,\"tags\":[\"夜景\",\"城市\",\"霓虹\",\"雨\",\"蓝调\"],\"title\":\"雨夜都市天际线\",\"summary\":\"雨后城市夜景，高楼灯火与湿润路面反光\",\"desc\":\"远景城市天际线占据画面上部，暖黄与冷蓝霓虹交织；中景街道被雨水打湿形成镜面反光，可见车灯拖影；构图偏横屏全景，景深清晰；整体氛围潮湿而宁静，写实摄影风格。\",\"nsfwLevel\":0,\"safeForWork\":true}",
-      "searchParse": "将用户的壁纸搜索描述解析为 JSON，不要 markdown。\n用户描述：{query}\n输出字段：\n- filterKeywords: 字符串，核心关键词\n- tags: 字符串数组，未提及时 []\n- orientation: 数组，未提及时 []；元素为 1（横屏）或 0（竖屏），或 landscape/portrait\n- quality: 数组，未提及时 []；仅 8K、5K、4K、2K（与资源 quality 字段一致，禁止 1080p/720p 及小写 4k）\n- filterType: images | videos | \"\"（未提类型时空字符串；禁止输出 fileType）\n- scoreMin: 0-100 整数，用户未提评分门槛时为 null\n- scoreMax: 0-100 整数或 null\n\n示例：{\"filterKeywords\":\"海洋\",\"tags\":[\"海洋\",\"蓝色\"],\"orientation\":[1],\"quality\":[\"4K\"],\"filterType\":\"images\",\"scoreMin\":null,\"scoreMax\":null}",
-      "collectionQuery": "用户想创建壁纸智能合集。将描述解析为 queryJson，仅输出 JSON。\n用户描述：{prompt}\n字段：\n- filterKeywords: string（核心检索词，与描述一致）\n- tags: string[]\n- tagsMode: any|all\n- quality: string[]（未提分辨率时必须是 []；仅允许 8K、5K、4K、2K，禁止 1080p/720p/high/best 等）\n（不要输出 orientation、scoreMin、scoreMax；最低分由应用 AI 设置统一）\n- resourceName: 固定 \"resources\"（全库，禁止 favorites/local/history）\n- isRandom: boolean\n- sortField: score|created_at|views\n- sortType: -1|1\n- semanticQuery: string\n- useSemantic: boolean（有主题/氛围描述时 true）\n- limitCount: 5-50 整数\n\n规则：tags 语言与资源 AI 标签及当前界面语言一致；勿臆造 orientation/quality/scoreMin/scoreMax；具体实体词 filterKeywords 填该词并在 tags 写同语言同义标签。",
-      "collectionTagExpand": "为壁纸合集检索扩展标签同义词。主题词：{keyword}\n输出 JSON：{\"tags\":[\"标签1\",\"标签2\"]}，8 个以内，标签语言与资源 AI 分析 tags 及当前界面语言一致，不要解释。",
-      "keywordExpand": "为壁纸自动下载扩展搜索关键词。输入：{keywords}\n输出 JSON：{\"keywords\":[\"词1\",\"词2\"]}，10 个以内，语言与当前界面一致，不要解释。",
-      "collectionNaming": "你是壁纸库策展助手。下面每个 id 对应一组「画面向量聚类」结果，组内壁纸视觉风格相近。请为每个 id 单独起名，禁止合并多个 id，禁止把 A 组的语料写到 B 组。\n\n要求：\n1. 仅输出 JSON，不要 markdown\n2. 输出条数不超过 {targetCount}，且每条 id 必须来自输入\n3. 只能依据该 id 的 titleSamples（AI 短标题）、samples 与 tags 起名；name 优先参考 titleSamples；不得添加语料中未出现的词\n4. name 是简短氛围标题（不是完整句子、不是编号占位），总长度 {nameMinLen}-{nameMaxLen} 字符\n5. samples 分散时用更泛化但仍能在 titleSamples/samples/tags 中找到依据的表述\n6. prompt / semanticQuery 可以稍长，但 name 必须独立且简短\n\n输入候选：\n{candidates}\n\n输出格式：\n{\n  \"collections\": [\n    {\n      \"id\": \"vec:0\",\n      \"name\": \"山湖静景\",\n      \"prompt\": \"一句话描述该组画面氛围\",\n      \"semanticQuery\": \"用于语义搜索的短语\"\n    }\n  ]\n}\n7. name 语言必须与当前应用界面语言（{uiLocale}）一致，并与 samples/tags 同语言；禁止中英混用"
     }
   },
   "messages": {

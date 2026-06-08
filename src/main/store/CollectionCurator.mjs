@@ -5,6 +5,7 @@ import VecStore from '../ai/VecStore.mjs'
 import { kMeansCluster, cosineSimilarity } from '../ai/VectorCluster.mjs'
 import { buildAutoCollectionStoragePrompt, buildCollectionNamingPrompt } from '../ai/AiPrompts.mjs'
 import { extractJsonObject, normalizeCollectionNamingPlan } from '../ai/AiResponseParser.mjs'
+import { resolveSkillContext } from '../ai/skills/skillContext.mjs'
 import { t } from '../../i18n/server.js'
 import {
   AUTO_COLLECTION_MIN_EMBEDDINGS,
@@ -450,12 +451,15 @@ export default class CollectionCurator {
     const eligible = candidates.filter((c) => c.resourceIds.length >= AUTO_COLLECTION_MIN_ITEMS)
     if (!eligible.length) return { plans: [], usedLlm: false }
 
+    const skillCtx = resolveSkillContext(this.settingManager, { outputLocale: locale })
+
     if (this.ai.enabled) {
       for (let attempt = 0; attempt < 2; attempt++) {
         try {
           const plans = await this.callLlmPlans(
-            buildCollectionNamingPrompt,
-            normalizeCollectionNamingPlan,
+            (c, n) => buildCollectionNamingPrompt(c, n, skillCtx),
+            (json, c, n, min, loc) =>
+              normalizeCollectionNamingPlan(json, c, n, min, loc, skillCtx),
             eligible,
             targetCount,
             locale

@@ -38,9 +38,6 @@ const loadingVisionModels = ref(false)
 const loadingTextModels = ref(false)
 const loadingEmbedModels = ref(false)
 const loadingVisualEmbedModels = ref(false)
-const testVisionResult = ref(null)
-const testTextResult = ref(null)
-const testVisualEmbedResult = ref(null)
 const visionModels = ref([])
 const textModels = ref([])
 const embedModels = ref([])
@@ -64,19 +61,13 @@ const analysisModeOptions = computed(() => [
   { label: t('pages.Setting.aiSetting.analysisModeNewOnly'), value: 'new_only' }
 ])
 
+const promptProfileOptions = computed(() => [
+  { label: t('pages.Setting.aiSetting.promptProfileDefault'), value: 'default' },
+  { label: t('pages.Setting.aiSetting.promptProfileStrictNsfw'), value: 'strict-nsfw' }
+])
+
 /** AI 功能开关分组 */
 const featureSwitchGroups = [
-  {
-    anchorId: 'divider-ai-features-search',
-    titleKey: 'pages.Setting.aiSetting.sectionFeaturesSearch',
-    items: [
-      {
-        key: 'expandDownloadKeywords',
-        labelKey: 'pages.Setting.aiSetting.expandDownloadKeywords',
-        hintKey: 'pages.Setting.aiSetting.expandDownloadKeywordsHint'
-      }
-    ]
-  },
   {
     anchorId: 'divider-ai-features-legacy',
     titleKey: 'pages.Setting.aiSetting.sectionFeaturesLegacy',
@@ -238,6 +229,9 @@ const ensureAiFields = () => {
   if (aiForm.visionMaxLongEdge == null) aiForm.visionMaxLongEdge = 2048
   if (aiForm.visionPreprocessMinSizeMB == null) aiForm.visionPreprocessMinSizeMB = 1.5
   if (aiForm.visionJpegQuality == null) aiForm.visionJpegQuality = 88
+  if (!aiForm.promptProfile || !['default', 'strict-nsfw'].includes(aiForm.promptProfile)) {
+    aiForm.promptProfile = 'default'
+  }
 }
 
 const syncAiFormFromStore = () => {
@@ -408,18 +402,22 @@ const onTextPresetChange = async () => {
   await refreshTextModels(true)
 }
 
+const showTestConnectionMessage = (success, message) => {
+  ElMessage({
+    type: success ? 'success' : 'error',
+    message
+  })
+}
+
 const onTestVision = async () => {
   testingVision.value = true
-  testVisionResult.value = null
   ensureAiFields()
   try {
     const res = await window.FBW.testAiConnection({ type: 'vision', ai: aiSnapshot() })
-    testVisionResult.value = {
-      success: res.success,
-      message: res.success
-        ? t('pages.Setting.aiSetting.testOk')
-        : resolveAiUserMessage(res, t)
-    }
+    showTestConnectionMessage(
+      res.success,
+      res.success ? t('pages.Setting.aiSetting.testOk') : resolveAiUserMessage(res, t)
+    )
   } finally {
     testingVision.value = false
   }
@@ -427,24 +425,18 @@ const onTestVision = async () => {
 
 const onTestText = async () => {
   testingText.value = true
-  testTextResult.value = null
   ensureAiFields()
   try {
     const textRes = await window.FBW.testAiConnection({ type: 'text', ai: aiSnapshot() })
     if (!textRes.success) {
-      testTextResult.value = {
-        success: false,
-        message: resolveAiUserMessage(textRes, t)
-      }
+      showTestConnectionMessage(false, resolveAiUserMessage(textRes, t))
       return
     }
     const embedRes = await window.FBW.testAiConnection({ type: 'embed', ai: aiSnapshot() })
-    testTextResult.value = {
-      success: embedRes.success,
-      message: embedRes.success
-        ? t('pages.Setting.aiSetting.testOk')
-        : resolveAiUserMessage(embedRes, t)
-    }
+    showTestConnectionMessage(
+      embedRes.success,
+      embedRes.success ? t('pages.Setting.aiSetting.testOk') : resolveAiUserMessage(embedRes, t)
+    )
   } finally {
     testingText.value = false
   }
@@ -452,16 +444,13 @@ const onTestText = async () => {
 
 const onTestVisualEmbed = async () => {
   testingVisualEmbed.value = true
-  testVisualEmbedResult.value = null
   ensureAiFields()
   try {
     const res = await window.FBW.testAiConnection({ type: 'visual-embed', ai: aiSnapshot() })
-    testVisualEmbedResult.value = {
-      success: res.success,
-      message: res.success
-        ? t('pages.Setting.aiSetting.testOk')
-        : resolveAiUserMessage(res, t)
-    }
+    showTestConnectionMessage(
+      res.success,
+      res.success ? t('pages.Setting.aiSetting.testOk') : resolveAiUserMessage(res, t)
+    )
   } finally {
     testingVisualEmbed.value = false
   }
@@ -486,8 +475,6 @@ const onFeatureToggleChange = async (item, enabled) => {
 
 const resetForm = () => {
   syncAiFormFromStore()
-  testVisionResult.value = null
-  testTextResult.value = null
   visionModels.value = []
   textModels.value = []
   embedModels.value = []
@@ -565,11 +552,6 @@ defineExpose({ resetForm, restoreAnchorScroll })
             />
             <el-anchor-link
               class="anchor-sub-link"
-              href="#divider-ai-features-search"
-              :title="t('pages.Setting.aiSetting.sectionFeaturesSearch')"
-            />
-            <el-anchor-link
-              class="anchor-sub-link"
               href="#divider-ai-features-legacy"
               :title="t('pages.Setting.aiSetting.sectionFeaturesLegacy')"
             />
@@ -642,6 +624,46 @@ defineExpose({ resetForm, restoreAnchorScroll })
               >
                 <el-option
                   v-for="item in analysisModeOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+            </div>
+          </el-form-item>
+          <el-form-item class="ai-form-item-labeled">
+            <template #label>
+              <span class="form-item-label-with-tip">
+                <span class="form-item-label-with-tip__text">{{
+                  t('pages.Setting.aiSetting.promptProfile')
+                }}</span>
+                <el-tooltip
+                  :content="t('pages.Setting.aiSetting.promptProfileHint')"
+                  placement="top"
+                  :show-after="300"
+                  popper-class="ai-setting-feature-tip"
+                >
+                  <span
+                    class="form-item-tip-trigger"
+                    tabindex="0"
+                    role="button"
+                    :aria-label="t('pages.Setting.aiSetting.promptProfileHint')"
+                    @click.stop
+                  >
+                    <IconifyIcon icon="custom:info-outline-rounded" />
+                  </span>
+                </el-tooltip>
+              </span>
+            </template>
+            <div class="ai-form-control-row">
+              <el-select
+                v-model="aiForm.promptProfile"
+                style="width: 290px"
+                :disabled="!aiForm.enabled"
+                @change="onAiFormChange"
+              >
+                <el-option
+                  v-for="item in promptProfileOptions"
                   :key="item.value"
                   :label="item.label"
                   :value="item.value"
@@ -896,13 +918,6 @@ defineExpose({ resetForm, restoreAnchorScroll })
             <el-button :loading="testingVision" @click="onTestVision">
               {{ t('pages.Setting.aiSetting.testConnection') }}
             </el-button>
-            <el-text
-              v-if="testVisionResult"
-              class="test-result"
-              :type="testVisionResult.success ? 'success' : 'danger'"
-            >
-              {{ testVisionResult.message }}
-            </el-text>
           </el-form-item>
 
           <div id="divider-ai-text" class="divider-sub">
@@ -1001,13 +1016,6 @@ defineExpose({ resetForm, restoreAnchorScroll })
             <el-button :loading="testingText" @click="onTestText">
               {{ t('pages.Setting.aiSetting.testConnection') }}
             </el-button>
-            <el-text
-              v-if="testTextResult"
-              class="test-result"
-              :type="testTextResult.success ? 'success' : 'danger'"
-            >
-              {{ testTextResult.message }}
-            </el-text>
           </el-form-item>
 
           <template v-if="showOpenRouterFields">
@@ -1109,13 +1117,6 @@ defineExpose({ resetForm, restoreAnchorScroll })
             <el-button :loading="testingVisualEmbed" @click="onTestVisualEmbed">
               {{ t('pages.Setting.aiSetting.testConnection') }}
             </el-button>
-            <el-text
-              v-if="testVisualEmbedResult"
-              class="test-result"
-              :type="testVisualEmbedResult.success ? 'success' : 'danger'"
-            >
-              {{ testVisualEmbedResult.message }}
-            </el-text>
           </el-form-item>
         </div>
 
@@ -1387,17 +1388,6 @@ defineExpose({ resetForm, restoreAnchorScroll })
   font-size: 13px;
   line-height: 1;
 }
-
-.test-result {
-  display: inline-block;
-  max-width: min(520px, 100%);
-  margin-left: 12px;
-  font-size: 13px;
-  line-height: 1.5;
-  vertical-align: top;
-  word-break: break-word;
-}
-
 </style>
 
 <style lang="scss">

@@ -518,7 +518,6 @@
         "visualEmbedBaseUrl": "服務位址",
         "visualEmbedModel": "畫面 embedding 模型",
         "visualEmbedModelHint": "需為支援圖像向量的 embedding 模型；與視覺分析模型無關。失敗時回退內建 MobileCLIP。",
-        "visualEmbedRemoteSectionHint": "請在下方「畫面向量服務」卡片中獨立設定服務商、位址、API Key 與模型。",
         "visualEmbedModelPlaceholder": "例如 batiai/qwen3-vl-embed-2b",
         "statImageEmbeddingLabel": "已向量化(視覺)",
         "scoreMinFilter": "最低評分過濾",
@@ -528,7 +527,7 @@
         "enableNsfwCheck": "內容安全篩選",
         "enableNsfwCheckHint": "搜尋與合集產生時隱藏高風險內容（依據分析結果中的安全等級）",
         "smartSearch": "智慧語意搜尋",
-        "expandDownloadKeywords": "自動下載擴展關鍵詞",
+        "expandDownloadKeywords": "擴展關鍵詞",
         "expandDownloadKeywordsHint": "在自動下載任務（圖片或影片）中，用 AI 根據已有關鍵詞補充同義/相關詞，提高匹配覆蓋面（需啟用 AI）",
         "remoteVisionPrivacyNote": "使用雲端視覺服務時，分析會將本機圖片（經壓縮後）傳送至所選服務商，請確認你信任該服務及其隱私政策。本機 Ollama / 本機 OpenAI 相容位址不會顯示此說明。",
         "legacyOnnxScore": "相容 ONNX 評分",
@@ -536,7 +535,7 @@
         "legacyJiebaTags": "相容 jieba 分詞",
         "legacyJiebaTagsHint": "用本機 jieba 分詞產生標籤，替代 AI 視覺分析返回的標籤；適合未設定視覺模型時",
         "legacyLocalVisualEmbed": "內建畫面向量",
-        "legacyLocalVisualEmbedHint": "開啟時使用內建畫面向量做畫面相似與找相似；關閉後改用「畫面向量服務」中的遠端 embedding 模型（失敗時回退內建）。",
+        "legacyLocalVisualEmbedHint": "開啟時使用內建畫面向量做畫面相似與找相似；關閉後改用「畫面模型」中的遠端 embedding 模型（失敗時回退內建）。",
         "save": "儲存 AI 設定",
         "saveSuccess": "AI 設定已儲存",
         "saveFail": "AI 設定儲存失敗",
@@ -580,7 +579,11 @@
         "visualEmbedBackfillRunning": "畫面向量補算中，剩餘 {pending} 張",
         "visualEmbedBackfillPending": "畫面向量待補算 {pending} 張",
         "visualEmbedBackfillDone": "畫面向量已補全（目前模型）",
-        "visualEmbedBackfillDoneSkipped": "畫面向量已補全（目前模型），已跳過 {skipped} 張壞圖"
+        "visualEmbedBackfillDoneSkipped": "畫面向量已補全（目前模型），已跳過 {skipped} 張壞圖",
+        "promptProfile": "內容分級策略",
+        "promptProfileHint": "影響視覺 AI 分析的敏感內容與辦公安全判定。預設：泳裝等輕微內容仍可為安全；嚴格：輕微敏感一律視為不適合辦公。切換後會對已有分析（含原始 LLM 資料）自動重算，無需重新呼叫模型；無原始資料的舊記錄需重新分析。",
+        "promptProfileDefault": "預設（平衡）",
+        "promptProfileStrictNsfw": "嚴格（辦公/家長）"
       },
       "privacySpace": {
         "enableNsfwContentMask": "敏感內容隱藏",
@@ -714,9 +717,6 @@
         "onDemand": "按需"
       },
       "curateManualConfirmSettled": "系统合集已定格，手動整理将用 LLM 全量重建，并移除未入选的系统合集。是否繼續？",
-      "auto": {
-        "storagePrompt": "{detail}"
-      },
       "similarBackToForYou": "返回猜你喜歡",
       "listTabForYou": "猜你喜歡",
       "forYouTitle": "猜你喜歡",
@@ -1349,17 +1349,6 @@
     "drawer": {
       "title": "瀏覽",
       "openBrowseMenu": "開啟瀏覽選單"
-    }
-  },
-  "ai": {
-    "prompts": {
-      "imageAnalysis": "你是壁紙圖像分析助手。請僅輸出一個 JSON 物件，不要 markdown 程式碼塊，不要額外說明。\n\n【欄位職責（勿混用）】\n- title：簡短標題，≤40 字，點出主體與場景\n- summary：檢索用一句話，≤80 字，概括畫面主題與關鍵元素（不寫用途、不寫「適合桌面」）\n- desc：給人看的詳細描述，120–220 字，按順序寫清：主體/人物、動作與姿態、服飾與身體暴露程度、場景與環境、構圖與景別、色調與光線、風格與氛圍；只描述可見內容，不臆測故事，不評價用途\n- tags：3–10 個檢索標籤，與介面語言一致，含主體、場景、風格、色調等\n- score：1–100 整數，美學綜合分\n- nsfwLevel：0–3 整數（敏感分級，見下表）\n- safeForWork：布林，是否與下表聯動規則一致\n\n【敏感分級 nsfwLevel（中英對照）】\n0 安全 Safe：普通風景/靜物/日常人像，無性暗示或敏感主體。反例：不宜標 0——畫面以情色或隱私部位清晰呈現、明顯不適合辦公場所\n1 輕微 Mild：泳裝/運動裝/時尚攝影感、肌膚較多但無露點、姿態略曖昧。反例：不宜標 1——明顯全裸、以情色行為為主體、隱私部位清晰可見（應 ≥2）\n2 中度 Moderate：露點或大面積裸露、強性暗示、血腥特寫、明顯成人向構圖。反例：不宜標 2——情色行為為畫面中心、隱私部位特寫（應 3）\n3 重度 Explicit：以情色或性行為為主體、隱私部位清晰可辨、極端血腥暴力。反例：不宜標 3——僅泳裝/比基尼且無露點（應 1）\n\n【safeForWork 與 nsfwLevel 聯動（必須遵守）】\n- nsfwLevel≥2 ⇒ safeForWork 必須為 false\n- safeForWork 為 false ⇒ nsfwLevel 必須 ≥2\n- nsfwLevel=0 ⇒ safeForWork 必須為 true\n- 不得出現 nsfwLevel=0 且 safeForWork=false\n\n示例（安全）：{\"score\":82,\"tags\":[\"夜景\",\"城市\",\"霓虹\",\"雨\",\"藍調\"],\"title\":\"雨夜都市天際線\",\"summary\":\"雨後城市夜景，高樓燈火與濕潤路面反光\",\"desc\":\"遠景城市天際線佔據畫面上部，暖黃與冷藍霓虹交織；中景街道被雨水打濕形成鏡面反光，可見車燈拖影；構圖偏橫屏全景，景深清晰；整體氛圍潮濕而寧靜，寫實攝影風格。\",\"nsfwLevel\":0,\"safeForWork\":true}",
-      "searchParse": "將用戶的壁紙搜尋描述解析為 JSON，不要 markdown。\n用戶描述：{query}\n輸出欄位：\n- filterKeywords: 字串，核心關鍵詞\n- tags: 字串陣列，未提時 []\n- orientation: 陣列，未提時 []；元素為 1（橫屏）或 0（豎屏），或 landscape/portrait\n- quality: 陣列，未提時 []；僅 8K、5K、4K、2K（與資源 quality 欄位一致，禁止 1080p/720p 及小寫 4k）\n- filterType: images | videos | \"\"（未提類型時空字串；禁止輸出 fileType）\n- scoreMin: 0-100 整數，用戶未提評分門檻時為 null\n- scoreMax: 0-100 整數或 null\n\n範例：{\"filterKeywords\":\"海洋\",\"tags\":[\"海洋\",\"藍色\"],\"orientation\":[1],\"quality\":[\"4K\"],\"filterType\":\"images\",\"scoreMin\":null,\"scoreMax\":null}",
-      "collectionQuery": "用戶想建立壁紙智慧合集。將描述解析為 queryJson，僅輸出 JSON。\n用戶描述：{prompt}\n欄位：\n- filterKeywords: string（核心檢索詞，與描述一致）\n- tags: string[]\n- tagsMode: any|all\n- quality: string[]（未提解析度時必須是 []；僅允許 8K、5K、4K、2K，禁止 1080p/720p/high/best 等）\n（不要輸出 orientation、scoreMin、scoreMax；最低分由應用 AI 設定統一）\n- resourceName: 固定 \"resources\"（全庫，禁止 favorites/local/history）\n- isRandom: boolean\n- sortField: score|created_at|views\n- sortType: -1|1\n- semanticQuery: string\n- useSemantic: boolean（有主題/氛圍描述時 true）\n- limitCount: 5-50 整數\n\n規則：tags 語言與資源 AI 標籤及當前介面語言一致；勿臆造 orientation/quality/scoreMin/scoreMax；具體實體詞 filterKeywords 填該詞並在 tags 寫同語言同義標籤。",
-      "keywordExpand": "為壁紙自動下載擴展搜尋關鍵詞。輸入：{keywords}\n輸出 JSON：{\"keywords\":[\"詞1\",\"詞2\"]}，10 個以內，語言與當前介面一致，不要解釋。",
-      "collectionTagExpand": "為壁紙合集檢索擴展標籤同義詞。主題詞：{keyword}\n輸出 JSON：{\"tags\":[\"標籤1\",\"標籤2\"]}，8 個以內，標籤語言與資源 AI 分析 tags 及當前介面語言一致，不要解釋。",
-      "collectionNaming": "你是壁紙庫策展助手。下面每個 id 對應一組「畫面向量聚類」結果，組內壁紙視覺風格相近。請為每個 id 單獨起名，禁止合併多個 id，禁止把 A 組的語料寫到 B 組。\n\n要求：\n1. 僅輸出 JSON，不要 markdown\n2. 輸出條數不超過 {targetCount}，且每條 id 必須來自輸入\n3. 只能依據該 id 的 titleSamples（AI 短標題）、samples 與 tags 起名；name 優先參考 titleSamples；不得添加語料中未出現的詞\n4. name 是簡短氛圍標題（不是完整句子、不是編號占位），總長度 {nameMinLen}-{nameMaxLen} 字符\n5. samples 分散時用更泛化但仍能在 titleSamples/samples/tags 中找到依據的表述\n6. prompt / semanticQuery 可以稍長，但 name 必須獨立且簡短\n\n輸入候選：\n{candidates}\n\n輸出格式：\n{\n  \"collections\": [\n    {\n      \"id\": \"vec:0\",\n      \"name\": \"山湖靜景\",\n      \"prompt\": \"一句話描述該組畫面氛圍\",\n      \"semanticQuery\": \"用於語義搜索的短語\"\n    }\n  ]\n}\n7. name 語言必須與當前應用介面語言（{uiLocale}）一致，並與 samples/tags 同語言；禁止中英混用",
-      "videoPosterAnalysis": "你是壁纸影片分析助手。输入仅为该动态壁纸的封面帧（不是完整影片），请仅根据此帧可见内容分析，勿臆测影片中的动态或声画变化。输出格式与字段规则同图像分析。\n\n【字段职责（勿混用）】\n- title：简短标题，≤40 字，点出主体与场景\n- summary：检索用一句话，≤80 字，概括画面主题与关键元素（不写用途、不写「适合桌面」）\n- desc：给人看的详细描述，120–220 字，按顺序写清：主体/人物、动作与姿态、服饰与身体暴露程度、场景与环境、构图与景别、色调与光线、风格与氛围；只描述可见内容，不臆测故事，不评价用途\n- tags：3–10 个检索标签，与界面语言一致，含主体、场景、风格、色调等\n- score：1–100 整数，美学综合分\n- nsfwLevel：0–3 整数（敏感分级，见下表）\n- safeForWork：布尔，是否与下表联动规则一致\n\n【敏感分级 nsfwLevel（中英对照）】\n0 安全 Safe：普通风景/静物/日常人像，无性暗示或敏感主体。反例：不宜标 0——画面以情色或隐私部位清晰呈现、明显不适合办公场所\n1 轻微 Mild：泳装/运动装/时尚摄影感、肌肤较多但无露点、姿态略暧昧。反例：不宜标 1——明显全裸、以情色行为为主体、隐私部位清晰可见（应 ≥2）\n2 中度 Moderate：露点或大面积裸露、强性暗示、血腥特写、明显成人向构图。反例：不宜标 2——情色行为为画面中心、隐私部位特写（应 3）\n3 重度 Explicit：以情色或性行为为主体、隐私部位清晰可辨、极端血腥暴力。反例：不宜标 3——仅泳装/比基尼且无露点（应 1）\n\n【safeForWork 与 nsfwLevel 联动（必须遵守）】\n- nsfwLevel≥2 ⇒ safeForWork 必须为 false\n- safeForWork 为 false ⇒ nsfwLevel 必须 ≥2\n- nsfwLevel=0 ⇒ safeForWork 必须为 true\n- 不得出现 nsfwLevel=0 且 safeForWork=false\n\n示例（安全）：{\"score\":82,\"tags\":[\"夜景\",\"城市\",\"霓虹\",\"雨\",\"蓝调\"],\"title\":\"雨夜都市天际线\",\"summary\":\"雨后城市夜景，高楼灯火与湿润路面反光\",\"desc\":\"远景城市天际线占据画面上部，暖黄与冷蓝霓虹交织；中景街道被雨水打湿形成镜面反光，可见车灯拖影；构图偏横屏全景，景深清晰；整体氛围潮湿而宁静，写实摄影风格。\",\"nsfwLevel\":0,\"safeForWork\":true}"
     }
   },
   "privacyNsfwMask": {

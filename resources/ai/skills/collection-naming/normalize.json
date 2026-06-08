@@ -1,0 +1,9 @@
+{
+  "version": "1.0.0",
+  "pipeline": "collection-naming-plan",
+  "hooks": [
+    "collectionNamingPlan"
+  ],
+  "repairs": [],
+  "defaults": {}
+}

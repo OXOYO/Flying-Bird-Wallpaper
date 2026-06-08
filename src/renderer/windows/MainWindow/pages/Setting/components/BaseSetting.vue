@@ -68,6 +68,16 @@ const settingDataForm = reactive({
   ...toRaw(settingStore.settingData)
 })
 
+const ensureAiForm = () => {
+  if (!settingDataForm.ai || typeof settingDataForm.ai !== 'object') {
+    settingDataForm.ai = {}
+  }
+  if (settingDataForm.ai.expandDownloadKeywords === undefined) {
+    settingDataForm.ai.expandDownloadKeywords = false
+  }
+}
+ensureAiForm()
+
 const minTimes = reactive({
   switchIntervalUnit: 1,
   refreshDirectoryIntervalUnit: 1,
@@ -82,6 +92,11 @@ const scaleTypes = scaleTypesByOS[osType]
 const maxFolderCount = 5
 const maxColorCount = 20
 const maxDownloadKeywordsCount = 20
+
+const aiEnabled = computed(() => !!settingDataForm.ai?.enabled)
+const expandDownloadKeywordsDisabled = computed(
+  () => !settingDataForm.downloadSources?.length || !aiEnabled.value
+)
 
 const flags = reactive({
   saving: false,
@@ -101,6 +116,7 @@ watch(
       Object.keys(newValue).forEach((key) => {
         settingDataForm[key] = newValue[key]
       })
+      ensureAiForm()
     }
   }
 )
@@ -368,6 +384,7 @@ const onDownloadMediaTypesChange = (val) => {
 }
 
 onMounted(() => {
+  ensureAiForm()
   initMinTimes()
 })
 
@@ -384,6 +401,7 @@ const syncFormFromSettingData = () => {
   settingDataForm.downloadMediaTypes = normalizeDownloadMediaTypes(
     settingDataForm.downloadMediaTypes
   )
+  ensureAiForm()
   initMinTimes()
 }
 
@@ -1080,6 +1098,19 @@ defineExpose({
               style="max-width: 450px"
               :max="maxDownloadKeywordsCount"
               @change="onDownloadKeywordsChange"
+            />
+          </el-form-item>
+          <el-form-item class="ai-form-item-labeled">
+            <template #label>
+              <SettingFormLabelTip
+                :label="t('pages.Setting.aiSetting.expandDownloadKeywords')"
+                :hint="t('pages.Setting.aiSetting.expandDownloadKeywordsHint')"
+              />
+            </template>
+            <el-switch
+              v-model="settingDataForm.ai.expandDownloadKeywords"
+              :disabled="expandDownloadKeywordsDisabled"
+              @change="onSettingDataFormChange"
             />
           </el-form-item>
           <el-form-item

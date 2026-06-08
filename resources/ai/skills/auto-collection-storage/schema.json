@@ -1,0 +1,13 @@
+{
+  "type": "object",
+  "properties": {
+    "detail": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "name": {
+      "type": "string",
+      "maxLength": 200
+    }
+  }
+}

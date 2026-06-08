@@ -25,6 +25,12 @@ import {
   buildAnalyzableResourceWhere,
   resolveVisionImagePath
 } from './AiVisionResourcePath.mjs'
+import {
+  parseRawLlmJson,
+  replayNormalizeRaw,
+  shouldReplayNormalizeRow,
+  stringifyAnalysisMeta
+} from './AiNormalizeReplay.mjs'
 
 export default class AiAnalysisManager {
   static _instance = null
@@ -58,6 +64,7 @@ export default class AiAnalysisManager {
     this._lastAnalysisMs = 0
     /** @type {Map<number, { startedAt: number, phase: string }>} */
     this._activeAnalyses = new Map()
+    this._normalizeReplayRunning = false
     AiAnalysisManager._instance = this
   }
 
@@ -147,6 +154,164 @@ export default class AiAnalysisManager {
   isImageFile(filePath) {
     const ext = path.extname(filePath || '').toLowerCase()
     return ['.jpg', '.jpeg', '.png', '.webp', '.bmp', '.gif'].includes(ext)
+  }
+
+  /**
+   * 写入视觉分析 normalize 结果（分析 / 重放共用）
+   * @param {object} row 资源行（含 id）
+   * @param {object} payload
+   * @param {object} [options]
+   * @param {boolean} [options.preserveAnalyzedAt] 重放时不改 aiAnalyzedAt
+   */
+  applyVisionAnalysisResult(row, payload, options = {}) {
+    const result = payload.data || payload
+    const safeForWork = result.safeForWork === false ? 0 : 1
+    const analysisMeta = stringifyAnalysisMeta(payload.analysisMeta || result.analysisMeta || {})
+    const rawLlmJson =
+      payload.rawLlmJson != null
+        ? typeof payload.rawLlmJson === 'string'
+          ? payload.rawLlmJson
+          : JSON.stringify(payload.rawLlmJson)
+        : result.rawLlmJson != null
+          ? JSON.stringify(result.rawLlmJson)
+          : ''
+
+    const analyzedAtSql = options.preserveAnalyzedAt
+      ? 'aiAnalyzedAt = fbw_resource_ai.aiAnalyzedAt'
+      : "aiAnalyzedAt = datetime('now', 'localtime')"
+
+    this.db
+      .prepare(
+        `INSERT INTO fbw_resource_ai (
+            resourceId, aiTitle, aiDesc, summary, aiScore, nsfwLevel, safeForWork,
+            aiAnalysisStatus, aiAnalyzedAt, aiAnalysisFailCount, analysisMeta, rawLlmJson, updated_at
+          ) VALUES (
+            @id, @title, @desc, @summary, @score, @nsfwLevel, @safeForWork,
+            @status, datetime('now', 'localtime'), 0, @analysisMeta, @rawLlmJson, datetime('now', 'localtime')
+          )
+          ON CONFLICT(resourceId) DO UPDATE SET
+            aiTitle = excluded.aiTitle,
+            aiDesc = excluded.aiDesc,
+            summary = excluded.summary,
+            aiScore = excluded.aiScore,
+            nsfwLevel = excluded.nsfwLevel,
+            safeForWork = excluded.safeForWork,
+            aiAnalysisStatus = excluded.aiAnalysisStatus,
+            aiAnalysisFailCount = 0,
+            analysisMeta = excluded.analysisMeta,
+            rawLlmJson = CASE WHEN excluded.rawLlmJson != '' THEN excluded.rawLlmJson ELSE fbw_resource_ai.rawLlmJson END,
+            ${analyzedAtSql},
+            updated_at = datetime('now', 'localtime')`
+      )
+      .run({
+        id: row.id,
+        score: result.score,
+        title: result.title || '',
+        desc: result.desc || '',
+        summary: result.summary || '',
+        nsfwLevel: result.nsfwLevel,
+        safeForWork,
+        status: AI_ANALYSIS_STATUS.DONE,
+        analysisMeta,
+        rawLlmJson
+      })
+
+    this.db
+      .prepare(`UPDATE fbw_resources SET updated_at = datetime('now', 'localtime') WHERE id = ?`)
+      .run(row.id)
+
+    const ai = this.ai
+    if (result.tags?.length && ai.enabled && !ai.legacyJiebaTags) {
+      this.wordsManager.applyTagsFromAnalysis(row, result.tags)
+    } else if (ai.legacyJiebaTags) {
+      this.wordsManager.handleWords([row])
+    }
+
+    if (ai.enabled) {
+      setImmediate(() => {
+        this.embeddingManager.upsertForResource(row.id).catch((err) => {
+          this.logger.warn(`[AiAnalysisManager] text embedding ${row.id}: ${err}`)
+        })
+      })
+    }
+
+    if (typeof this.onAnalysisDone === 'function') {
+      setImmediate(() => this.onAnalysisDone(row.id))
+    }
+  }
+
+  /** 后台批量 normalize 重放（Phase D） */
+  scheduleNormalizeReplay(ctx = {}) {
+    if (this._normalizeReplayRunning) {
+      this.logger.info('[AiAnalysisManager] normalize replay already running, skip schedule')
+      return { scheduled: false }
+    }
+    setImmediate(() => {
+      this.runNormalizeReplayBatch(ctx).catch((err) => {
+        this.logger.warn(`[AiAnalysisManager] normalize replay failed: ${err.message}`)
+      })
+    })
+    return { scheduled: true }
+  }
+
+  /**
+   * @param {object} ctx
+   * @param {string} [ctx.profile]
+   * @param {string} [ctx.reason]
+   * @param {boolean} [ctx.force]
+   * @param {number} [ctx.limit]
+   */
+  async runNormalizeReplayBatch(ctx = {}) {
+    if (this._normalizeReplayRunning) return { replayed: 0, skipped: 0, noRaw: 0 }
+    this._normalizeReplayRunning = true
+    const profile = ctx.profile || this.ai.promptProfile || 'default'
+    const reason = ctx.reason || 'manual'
+    const limit = ctx.limit > 0 ? ctx.limit : undefined
+
+    let replayed = 0
+    let skipped = 0
+    let noRaw = 0
+
+    try {
+      const sql = `
+        SELECT ai.resourceId AS id, ai.rawLlmJson, ai.analysisMeta,
+               r.fileType, r.fileName, r.filePath, r.posterPath, r.resourceName, r.title, r.desc
+        FROM fbw_resource_ai ai
+        INNER JOIN fbw_resources r ON r.id = ai.resourceId
+        WHERE ai.aiAnalysisStatus = ?
+          AND ai.rawLlmJson IS NOT NULL
+          AND ai.rawLlmJson != ''
+      `
+      const rows = this.db.prepare(sql).all(AI_ANALYSIS_STATUS.DONE)
+      const candidates = limit ? rows.slice(0, limit) : rows
+
+      this.logger.info(
+        `[AiAnalysisManager] normalize replay start reason=${reason} profile=${profile} candidates=${candidates.length}`
+      )
+
+      for (const row of candidates) {
+        const replayCtx = { ...ctx, profile, reason }
+        if (!parseRawLlmJson(row.rawLlmJson)) {
+          noRaw += 1
+          continue
+        }
+        if (!shouldReplayNormalizeRow(row, replayCtx)) {
+          skipped += 1
+          continue
+        }
+        const raw = parseRawLlmJson(row.rawLlmJson)
+        const payload = replayNormalizeRaw(raw, row, replayCtx)
+        this.applyVisionAnalysisResult(row, payload, { preserveAnalyzedAt: true })
+        replayed += 1
+      }
+
+      this.logger.info(
+        `[AiAnalysisManager] normalize replay done reason=${reason} replayed=${replayed} skipped=${skipped} noRaw=${noRaw}`
+      )
+      return { replayed, skipped, noRaw, profile, reason }
+    } finally {
+      this._normalizeReplayRunning = false
+    }
   }
 
   /** @returns {string|null} 跳过原因；null 表示可继续分析 */
@@ -257,66 +422,23 @@ export default class AiAnalysisManager {
         videoPoster: row.fileType === 'video'
       })
       modelMs = Date.now() - modelStartedAt
-      const safeForWork = result.safeForWork === false ? 0 : 1
-      this.db
-        .prepare(
-          `INSERT INTO fbw_resource_ai (
-            resourceId, aiTitle, aiDesc, summary, aiScore, nsfwLevel, safeForWork,
-            aiAnalysisStatus, aiAnalyzedAt, aiAnalysisFailCount, updated_at
-          ) VALUES (
-            @id, @title, @desc, @summary, @score, @nsfwLevel, @safeForWork,
-            @status, datetime('now', 'localtime'), 0, datetime('now', 'localtime')
-          )
-          ON CONFLICT(resourceId) DO UPDATE SET
-            aiTitle = excluded.aiTitle,
-            aiDesc = excluded.aiDesc,
-            summary = excluded.summary,
-            aiScore = excluded.aiScore,
-            nsfwLevel = excluded.nsfwLevel,
-            safeForWork = excluded.safeForWork,
-            aiAnalysisStatus = excluded.aiAnalysisStatus,
-            aiAnalyzedAt = excluded.aiAnalyzedAt,
-            aiAnalysisFailCount = 0,
-            updated_at = excluded.updated_at`
-        )
-        .run({
-          id: row.id,
-          score: result.score,
-          title: result.title || '',
-          desc: result.desc || '',
-          summary: result.summary,
-          nsfwLevel: result.nsfwLevel,
-          safeForWork,
-          status: AI_ANALYSIS_STATUS.DONE
-        })
-      this.db
-        .prepare(
-          `UPDATE fbw_resources SET updated_at = datetime('now', 'localtime') WHERE id = ?`
-        )
-        .run(row.id)
+      const payload = {
+        data: result,
+        analysisMeta: {
+          ...result.analysisMeta,
+          normalizedAt: new Date().toISOString()
+        },
+        rawLlmJson: result.rawLlmJson != null ? JSON.stringify(result.rawLlmJson) : ''
+      }
+      this.applyVisionAnalysisResult(row, payload)
 
       const ai = this.ai
-      if (result.tags?.length && ai.enabled && !ai.legacyJiebaTags) {
-        this.wordsManager.applyTagsFromAnalysis(row, result.tags)
-      } else if (ai.legacyJiebaTags) {
-        this.wordsManager.handleWords([row])
-      }
-
-      setImmediate(() => {
-        if (ai.enabled) {
-          this.embeddingManager.upsertForResource(row.id).catch((err) => {
-            this.logger.warn(`[AiAnalysisManager] text embedding ${row.id}: ${err}`)
-          })
-        }
-        if (ai.enabled) {
+      if (ai.enabled) {
+        setImmediate(() => {
           this.embeddingManager.upsertImageForResource(row.id).catch((err) => {
             this.logger.warn(`[AiAnalysisManager] visual embedding ${row.id}: ${err}`)
           })
-        }
-      })
-
-      if (typeof this.onAnalysisDone === 'function') {
-        setImmediate(() => this.onAnalysisDone(row.id))
+        })
       }
 
       this.recordAnalysisDuration(modelMs)

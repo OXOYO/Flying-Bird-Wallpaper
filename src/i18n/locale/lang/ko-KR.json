@@ -511,7 +511,7 @@
         "enableNsfwCheck": "콘텐츠 안전 필터",
         "enableNsfwCheckHint": "분석 안전 등급에 따라 검색 및 컬렉션 생성 시 고위험 항목 숨김",
         "smartSearch": "스마트 의미 검색",
-        "expandDownloadKeywords": "자동 다운로드 키워드 확장",
+        "expandDownloadKeywords": "키워드 확장",
         "expandDownloadKeywordsHint": "자동 다운로드 작업(이미지 또는 동영상)에서 AI로 기존 키워드에서 동의어/관련어를 확장합니다(AI 활성화 필요)",
         "remoteVisionPrivacyNote": "클라우드 시각 분석은 로컬 이미지(압축됨)를 선택한 제공업체로 전송합니다. 해당 서비스와 개인정보 처리방침을 신뢰하는지 확인하세요. 로컬 Ollama 또는 localhost OpenAI 호환 엔드포인트에서는 이 안내가 표시되지 않습니다.",
         "legacyOnnxScore": "레거시 ONNX 점수",
@@ -544,10 +544,9 @@
         "visualEmbedBaseUrl": "서비스 URL",
         "visualEmbedModel": "화면 벡터 모델",
         "visualEmbedModelHint": "유사 찾기용 이미지 embedding; 내장 MobileCLIP 권장. 원격은 이미지 벡터 지원 필수—비전/텍스트 embed 불가. 실패 시 내장.",
-        "visualEmbedRemoteSectionHint": "아래 「화면 벡터 서비스」에서 제공자, URL, API Key, 모델을 개별 설정하세요.",
         "visualEmbedModelPlaceholder": "예: batiai/qwen3-vl-embed-2b",
         "legacyLocalVisualEmbed": "내장 화면 벡터",
-        "legacyLocalVisualEmbedHint": "켜면 내장 화면 벡터로 유사/유사 찾기. 끄면 「화면 벡터 서비스」의 원격 embedding(실패 시 내장).",
+        "legacyLocalVisualEmbedHint": "켜면 내장 화면 벡터로 유사/유사 찾기. 끄면 「화면 모델」의 원격 embedding(실패 시 내장).",
         "pumpBlockReason_scheduler_stopped": "백그라운드 분석 타이머가 중지되었습니다(절전 모드로 작업 삭제 후 등). AI 설정을 저장하거나 AC 전원을 연결하세요.",
         "pumpBlockReason_power_save_battery": "절전 모드이며 배터리 사용 중 — 백그라운드 분석 일시 중지",
         "pumpBlockReason_maintenance": "리소스 유지보수 중 — 분석 일시 중지",
@@ -568,7 +567,11 @@
         "visualEmbedBackfillRunning": "시각 벡터 보충 중, {pending}장 남음",
         "visualEmbedBackfillPending": "시각 벡터 대기 {pending}장",
         "visualEmbedBackfillDone": "시각 벡터 보충 완료(현재 모델)",
-        "visualEmbedBackfillDoneSkipped": "시각 벡터 보충 완료(현재 모델), 손상 이미지 {skipped}장 건너뜀"
+        "visualEmbedBackfillDoneSkipped": "시각 벡터 보충 완료(현재 모델), 손상 이미지 {skipped}장 건너뜀",
+        "promptProfile": "콘텐츠 민감도 프로필",
+        "promptProfileHint": "시각 AI 분석의 NSFW 및 직장 안전 판정에 영향을 줍니다. 기본: 수영복 등 경미한 콘텐츠는 안전할 수 있음. 엄격: 1단계도 직장 부적합. 전환 후 저장된 raw LLM 데이터가 있는 분석은 모델 재호출 없이 자동 재정규화. raw 없는 기록은 재분석 필요.",
+        "promptProfileDefault": "기본(균형)",
+        "promptProfileStrictNsfw": "엄격(직장/가족)"
       },
       "privacySpace": {
         "enableNsfwContentMask": "민감 콘텐츠 숨기기",
@@ -702,9 +705,6 @@
         "onDemand": "요청 시"
       },
       "curateManualConfirmSettled": "시스템 컬렉션이 확정되었습니다. 수동 정리는 LLM 전체 재구성을 실행하고 새 계획에 없는 컬렉션을 제거합니다. 계속할까요?",
-      "auto": {
-        "storagePrompt": "{detail}"
-      },
       "similarBackToForYou": "추천으로 돌아가기",
       "listTabForYou": "추천",
       "forYouTitle": "추천",
@@ -1337,17 +1337,6 @@
     "drawer": {
       "title": "탐색",
       "openBrowseMenu": "탐색 메뉴 열기"
-    }
-  },
-  "ai": {
-    "prompts": {
-      "imageAnalysis": "당신은 배경화면 이미지 분석 도우미입니다. JSON 객체 하나만 출력하고, markdown 코드 블록이나 추가 설명은 금지합니다.\n\n[필드 역할 — 혼용 금지]\n- title: 짧은 제목, ≤40자, 피사체 + 장면\n- summary: 검색용 한 줄, ≤80자, 화면 주제와 핵심 가시 요소(용도, 「데스크톱에 적합」 등 금지)\n- desc: 사람이 읽는 상세 가시 설명, 120–220자(UI와 동일 언어). 피사체, 포즈/동작, 의복과 노출 수준, 환경, 구도/프레이밍, 색과 조명, 스타일/분위기 순서. 보이는 사실만; 허구의 이야기나 적합성 평가 금지\n- tags: 3–10개 검색 태그(UI와 동일 언어)\n- score: 1–100 정수, 미학 종합 점수\n- nsfwLevel: 0–3 정수(아래 민감도 기준)\n- safeForWork: 불리언, 아래 연동 규칙 준수\n\n[민감도 기준 nsfwLevel — KO + 中文]\n0 Safe 安全: 풍경, 정물, 일상 인물, 성적·민감 초점 없음. 반례: 0 금지——에로틱 초점이나 사적인 부위가 뚜렷, 직장 부적합\n1 Mild 轻微: 수영복/운동복/패션, 피부 노출 많지만 유두/성기 없음, 약간 선정적 포즈. 반례: 1 금지——전면 누드, 성행위가 주제, 사적 부위 명확(≥2)\n2 Moderate 中度: 유두 노출/부분 누드, 강한 성적 암시, 그로tesque, 명백한 성인용 구도. 반례: 2 금지——성행위가 중심, 사적 부위 클로즈업(3)\n3 Explicit 重度: 에로/성행위가 주제, 성기 명확, 극단적 잔혹. 반례: 3 금지——수영복/비키니에 노출 없음(1)\n\n[safeForWork ↔ nsfwLevel 연동 — 필수]\n- nsfwLevel≥2 ⇒ safeForWork는 false\n- safeForWork false ⇒ nsfwLevel은 ≥2\n- nsfwLevel=0 ⇒ safeForWork는 true\n- nsfwLevel=0과 safeForWork=false 동시 출력 금지\n\n예(안전): {\"score\":82,\"tags\":[\"야경\",\"도시\",\"네온\",\"비\",\"블루\"],\"title\":\"비 오는 도시 스카이라인\",\"summary\":\"비 온 뒤 야경, 고층 빌딩과 젖은 노면 반사\",\"desc\":\"상단 프레임의 넓은 스카이라인, 따뜻하고 차가운 네온이 교차; 중경의 젖은 포장도로가 빛과 차량 광迹을 비춤; 가로형 파노라마, 선명한 심도; 습하고 고요한 시네마틱 분위기.\",\"nsfwLevel\":0,\"safeForWork\":true}",
-      "searchParse": "사용자의 배경화면 검색 설명을 JSON으로 파싱하세요. markdown 금지.\n사용자 입력: {query}\n출력 필드:\n- filterKeywords: 문자열, 핵심 키워드\n- tags: 문자열 배열, 생략 시 []\n- orientation: 배열, 생략 시 []; 요소 1(가로) 또는 0(세로), 또는 landscape/portrait\n- quality: 배열, 생략 시 []; 8K, 5K, 4K, 2K만 (DB 필드와 일치; 1080p/720p/소문자 4k 금지)\n- filterType: images | videos | \"\" (유형 미지정 시 빈 문자열; fileType 출력 금지)\n- scoreMin: 0-100 정수, 사용자가 최소 점수를 요청하지 않으면 null\n- scoreMax: 0-100 정수 또는 null\n\n예: {\"filterKeywords\":\"바다\",\"tags\":[\"바다\",\"파랑\"],\"orientation\":[1],\"quality\":[\"4K\"],\"filterType\":\"images\",\"scoreMin\":null,\"scoreMax\":null}",
-      "collectionQuery": "사용자가 스마트 배경화면 컬렉션을 만들려 합니다. 설명을 queryJson으로 파싱하세요. JSON만 출력.\n사용자 설명: {prompt}\n필드:\n- filterKeywords: string (핵심 검색어)\n- tags: string[]\n- tagsMode: any|all\n- quality: string[] (해상도 미언급 시 반드시 []; 8K, 5K, 4K, 2K만; 1080p/720p 금지)\n(orientation, scoreMin, scoreMax 출력 금지; 최소 점수는 앱 AI 설정)\n- resourceName: 항상 \"resources\" (전체 라이브러리; favorites/local/history 금지)\n- isRandom: boolean\n- sortField: score|created_at|views\n- sortType: -1|1\n- semanticQuery: string\n- useSemantic: boolean (주제/분위기 설명 시 true)\n- limitCount: 5-50 정수\n\n규칙: tags는 리소스 AI 태그 및 UI 언어와 일치; orientation/quality/scoreMin/scoreMax 창작 금지; 개체어는 filterKeywords와 동일 언어 동의 tags.",
-      "keywordExpand": "자동 배경화면 다운로드를 위한 검색 키워드를 확장하세요. 입력: {keywords}\n출력 JSON: {\"keywords\":[\"단어1\",\"단어2\"]}, 최대 10개, 이 프롬프트와 같은 언어 사용, 설명 없음.",
-      "collectionTagExpand": "배경화면 컬렉션 검색 태그 동의어를 확장하세요. 주제: {keyword}\nJSON: {\"tags\":[\"태그1\",\"태그2\"]}, 최대 8개, 리소스 AI 태그 및 UI 언어에 맞게, 설명 금지.",
-      "collectionNaming": "당신은 배경화면 라이브러리 큐레이터입니다. 아래 각 id는 화면 벡터 클러스터입니다. 각 id를 개별 명명하세요. id 병합 금지. A 그룹 말뭉치를 B에 적용 금지.\n\n규칙:\n1. JSON만, markdown 금지\n2. 최대 {targetCount}개, 각 id는 입력에서\n3. 해당 id의 titleSamples, samples, tags만으로 명명; name은 titleSamples 우선; 말뭉치에 없는 단어 금지\n4. name은 짧은 분위기 제목(완전한 문장·번호 placeholder 금지), {nameMinLen}-{nameMaxLen}자\n5. samples가 분산되면 더 일반적이되 말뭉치 근거 있는 표현\n6. prompt / semanticQuery는 더 길 수 있음; name은 짧게 유지\n\n입력 후보:\n{candidates}\n\n출력 형식:\n{\n  \"collections\": [\n    {\n      \"id\": \"vec:0\",\n      \"name\": \"알프스 호수\",\n      \"prompt\": \"이 그룹 분위기 한 줄\",\n      \"semanticQuery\": \"의미 검색용 구문\"\n    }\n  ]\n}\n7. name 언어는 UI 로케일({uiLocale}) 및 samples/tags와 일치; 혼합 언어 금지",
-      "videoPosterAnalysis": "당신은 배경화면 동영상 분석 도우미입니다. 입력은 동적 배경화면의 커버 프레임뿐(전체 영상 아님)입니다. 이 프레임의 가시 내용만 분석하고, 움직임이나 소리는 추측하지 마세요. 출력 형식과 필드 규칙은 이미지 분석과 동일합니다.\n\n[필드 역할 — 혼용 금지]\n- title: 짧은 제목, ≤40자, 피사체 + 장면\n- summary: 검색용 한 줄, ≤80자, 화면 주제와 핵심 가시 요소(용도, 「데스크톱에 적합」 등 금지)\n- desc: 사람이 읽는 상세 가시 설명, 120–220자(UI와 동일 언어). 피사체, 포즈/동작, 의복과 노출 수준, 환경, 구도/프레이밍, 색과 조명, 스타일/분위기 순서. 보이는 사실만; 허구의 이야기나 적합성 평가 금지\n- tags: 3–10개 검색 태그(UI와 동일 언어)\n- score: 1–100 정수, 미학 종합 점수\n- nsfwLevel: 0–3 정수(아래 민감도 기준)\n- safeForWork: 불리언, 아래 연동 규칙 준수\n\n[민감도 기준 nsfwLevel — KO + 中文]\n0 Safe 安全: 풍경, 정물, 일상 인물, 성적·민감 초점 없음. 반례: 0 금지——에로틱 초점이나 사적인 부위가 뚜렷, 직장 부적합\n1 Mild 轻微: 수영복/운동복/패션, 피부 노출 많지만 유두/성기 없음, 약간 선정적 포즈. 반례: 1 금지——전면 누드, 성행위가 주제, 사적 부위 명확(≥2)\n2 Moderate 中度: 유두 노출/부분 누드, 강한 성적 암시, 그로tesque, 명백한 성인용 구도. 반례: 2 금지——성행위가 중심, 사적 부위 클로즈업(3)\n3 Explicit 重度: 에로/성행위가 주제, 성기 명확, 극단적 잔혹. 반례: 3 금지——수영복/비키니에 노출 없음(1)\n\n[safeForWork ↔ nsfwLevel 연동 — 필수]\n- nsfwLevel≥2 ⇒ safeForWork는 false\n- safeForWork false ⇒ nsfwLevel은 ≥2\n- nsfwLevel=0 ⇒ safeForWork는 true\n- nsfwLevel=0과 safeForWork=false 동시 출력 금지\n\n예(안전): {\"score\":82,\"tags\":[\"야경\",\"도시\",\"네온\",\"비\",\"블루\"],\"title\":\"비 오는 도시 스카이라인\",\"summary\":\"비 온 뒤 야경, 고층 빌딩과 젖은 노면 반사\",\"desc\":\"상단 프레임의 넓은 스카이라인, 따뜻하고 차가운 네온이 교차; 중경의 젖은 포장도로가 빛과 차량 광迹을 비춤; 가로형 파노라마, 선명한 심도; 습하고 고요한 시네마틱 분위기.\",\"nsfwLevel\":0,\"safeForWork\":true}"
     }
   },
   "privacyNsfwMask": {

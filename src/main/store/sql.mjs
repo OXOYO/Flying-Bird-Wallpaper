@@ -138,6 +138,8 @@ export const createTables = [
     aiAnalysisStatus TEXT NOT NULL DEFAULT 'pending',
     aiAnalyzedAt DATETIME,
     aiAnalysisFailCount INTEGER NOT NULL DEFAULT 0,
+    analysisMeta TEXT NOT NULL DEFAULT '',
+    rawLlmJson TEXT NOT NULL DEFAULT '',
     updated_at DATETIME DEFAULT (datetime('now', 'localtime')),
     FOREIGN KEY (resourceId) REFERENCES fbw_resources(id) ON DELETE CASCADE
   )`,

@@ -1,0 +1,20 @@
+{
+  "version": "1.0.0",
+  "pipeline": "analysis-result",
+  "defaults": {},
+  "ignoreFromModel": [],
+  "repairs": [
+    {
+      "id": "nsfw-safeForWork",
+      "fields": ["nsfwLevel", "safeForWork"],
+      "rules": [
+        { "when": { "safeForWork": false, "nsfwLevelLt": 2 }, "set": { "nsfwLevel": 2 } },
+        { "when": { "nsfwLevelGte": 2 }, "set": { "safeForWork": false } },
+        { "when": { "nsfwLevelEq": 0 }, "set": { "safeForWork": true } },
+        { "when": { "nsfwLevelEq": 1, "safeForWork": false }, "set": { "nsfwLevel": 2 } }
+      ]
+    }
+  ],
+  "hooks": [],
+  "postProcess": []
+}

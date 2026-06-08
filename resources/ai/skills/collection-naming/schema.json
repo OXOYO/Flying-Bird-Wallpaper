@@ -1,0 +1,30 @@
+{
+  "type": "object",
+  "properties": {
+    "collections": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "prompt": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "semanticQuery": {
+            "type": "string",
+            "maxLength": 500
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,6 +1,7 @@
 import { OllamaProvider, OpenAiCompatibleProvider } from './providers/HttpAiProviders.mjs'
 import { buildImageAnalysisPrompt, buildVideoPosterAnalysisPrompt } from './AiPrompts.mjs'
-import { extractJsonObject, normalizeAnalysisResult } from './AiResponseParser.mjs'
+import { extractJsonObject, normalizeAnalysisResultWithMeta } from './AiResponseParser.mjs'
+import { resolveSkillContext } from './skills/skillContext.mjs'
 import { calculateImageScore } from '../utils/utils.mjs'
 import { AI_PROVIDER_TYPES, DEFAULT_AI_TIMEOUT_MS, AI_TEST_CONNECTION_TIMEOUT_MS, resolveEffectiveVisionTimeout, AI_VISION_LONG_EDGE_MIN } from './aiConstants.mjs'
 import { prepareVisionImageForAnalysis, prepareVisionImageForEmbed, shrinkBufferToEmbedLimit, formatVisionPrepLog } from './AiVisionImagePrep.mjs'
@@ -14,6 +15,7 @@ import {
 } from './AiModelUtils.mjs'
 import { buildRemoteExtraHeaders, presetRequiresApiKey } from '../../common/aiProviders.js'
 import { t } from '../../i18n/server.js'
+import i18next from '../../i18n/i18next.js'
 
 const PURPOSE_LABEL = {
   vision: 'vision',
@@ -117,10 +119,22 @@ export default class AiAnalysisProvider {
     const ai = this.ai
     if (ai.legacyOnnxScore && !ai.enabled) {
       const score = await calculateImageScore(filePath)
-      return normalizeAnalysisResult({ score, tags: [], safeForWork: true, nsfwLevel: 0 })
+      const raw = { score, tags: [], safeForWork: true, nsfwLevel: 0 }
+      const { data, meta } = normalizeAnalysisResultWithMeta(raw, { packId: 'image-analysis' })
+      return {
+        ...data,
+        rawLlmJson: raw,
+        analysisMeta: { ...meta, outputLocale: i18next.language || 'enUS' }
+      }
     }
     if (!ai.enabled) {
-      return normalizeAnalysisResult({ score: 0, tags: [], safeForWork: true, nsfwLevel: 0 })
+      const raw = { score: 0, tags: [], safeForWork: true, nsfwLevel: 0 }
+      const { data, meta } = normalizeAnalysisResultWithMeta(raw, { packId: 'image-analysis' })
+      return {
+        ...data,
+        rawLlmJson: raw,
+        analysisMeta: { ...meta, outputLocale: i18next.language || 'enUS' }
+      }
     }
 
     let fileSizeBytes = 0
@@ -142,9 +156,11 @@ export default class AiAnalysisProvider {
       : { filePath }
 
     const visionStartedAt = Date.now()
+    const skillCtx = resolveSkillContext(this.settingManager, { outputLocale: i18next.language })
+    const analysisPackId = options.videoPoster ? 'video-poster-analysis' : 'image-analysis'
     const prompt = options.videoPoster
-      ? buildVideoPosterAnalysisPrompt()
-      : buildImageAnalysisPrompt()
+      ? buildVideoPosterAnalysisPrompt(skillCtx)
+      : buildImageAnalysisPrompt(skillCtx)
     const rawText = await provider.analyzeImage(visionInput, prompt, ai.visionModel)
     const visionMs = Date.now() - visionStartedAt
     const parseStartedAt = Date.now()
@@ -159,12 +175,27 @@ export default class AiAnalysisProvider {
       )
       throw new Error(t('messages.aiJsonParseFailed'))
     }
+    const { data: result, meta } = normalizeAnalysisResultWithMeta(parsed, {
+      packId: analysisPackId,
+      ...skillCtx
+    })
     if (this.logger) {
       this.logger.info(
         `[AiAnalysisProvider] vision pipeline visionMs=${visionMs}ms parseMs=${parseMs}ms timeoutMs=${effectiveTimeoutMs} ${formatVisionPrepLog(prepared.meta)} model=${ai.visionModel} file=${filePath}`
       )
     }
-    return normalizeAnalysisResult(parsed)
+    return {
+      ...result,
+      rawLlmJson: parsed,
+      analysisMeta: {
+        packId: meta.packId,
+        packVersion: meta.packVersion,
+        normalizeVersion: meta.normalizeVersion,
+        profile: meta.profile || skillCtx.profile,
+        outputLocale: skillCtx.outputLocale || i18next.language || 'enUS',
+        normalizedAt: new Date().toISOString()
+      }
+    }
   }
 
   async chatText(prompt, useTextProvider = true) {

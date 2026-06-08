@@ -1,0 +1,18 @@
+{
+  "version": "1.0.0",
+  "pipeline": "collection-query",
+  "defaults": {
+    "resourceName": "resources",
+    "tagsMode": "any",
+    "sortField": "score",
+    "sortType": -1,
+    "orientation": []
+  },
+  "ignoreFromModel": [
+    "scoreMin",
+    "orientation"
+  ],
+  "defaultsMode": "force",
+  "repairs": [],
+  "hooks": []
+}

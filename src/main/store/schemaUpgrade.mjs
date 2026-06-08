@@ -26,6 +26,12 @@ const runSchemaStep = (logger, name, fn) => {
 
 export function upgradeResourcesSchema(db, logger) {
   runSchemaStep(logger, 'migrateResourceAiSplitV1', () => migrateResourceAiSplitV1(db, logger))
+  runSchemaStep(logger, 'add resource ai analysisMeta', () =>
+    addColumnIfMissing(db, 'fbw_resource_ai', 'analysisMeta', "TEXT NOT NULL DEFAULT ''", logger)
+  )
+  runSchemaStep(logger, 'add resource ai rawLlmJson', () =>
+    addColumnIfMissing(db, 'fbw_resource_ai', 'rawLlmJson', "TEXT NOT NULL DEFAULT ''", logger)
+  )
   runSchemaStep(logger, 'add posterPath', () =>
     addColumnIfMissing(db, 'fbw_resources', 'posterPath', "TEXT NOT NULL DEFAULT ''", logger)
   )

@@ -1,0 +1,55 @@
+{
+  "type": "object",
+  "properties": {
+    "filterKeywords": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "tags": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "string",
+        "maxLength": 64
+      }
+    },
+    "tagsMode": {
+      "type": "string",
+      "maxLength": 8
+    },
+    "quality": {
+      "type": "array",
+      "maxItems": 4,
+      "items": {
+        "type": "string",
+        "maxLength": 8
+      }
+    },
+    "resourceName": {
+      "type": "string",
+      "maxLength": 32
+    },
+    "isRandom": {
+      "type": "boolean"
+    },
+    "sortField": {
+      "type": "string",
+      "maxLength": 32
+    },
+    "sortType": {
+      "type": "integer"
+    },
+    "semanticQuery": {
+      "type": "string",
+      "maxLength": 500
+    },
+    "useSemantic": {
+      "type": "boolean"
+    },
+    "limitCount": {
+      "type": "integer",
+      "minimum": 5,
+      "maximum": 50
+    }
+  }
+}

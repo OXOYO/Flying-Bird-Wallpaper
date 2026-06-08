@@ -1,0 +1,8 @@
+{
+  "version": "1.0.0",
+  "pipeline": "keywords-list",
+  "listField": "keywords",
+  "maxItems": 10,
+  "repairs": [],
+  "hooks": []
+}

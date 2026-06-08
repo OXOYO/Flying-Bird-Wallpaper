@@ -99,7 +99,11 @@ export const defaultAiSettings = {
   /** 后台分析单张最大失败次数 */
   analysisMaxRetries: 1,
   autoCurateSettled: false,
-  autoCurateSettledAnalyzed: 0
+  autoCurateSettledAnalyzed: 0,
+  /** Skill Pack 策略 profile（default | strict-nsfw 等） */
+  promptProfile: 'default',
+  /** 可选锁定 pack 版本 { packId: version } */
+  packOverrides: {}
 }
 
 export const VISUAL_EMBED_SOURCES = {

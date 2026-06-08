@@ -1,0 +1,7 @@
+{
+  "version": "1.0.0",
+  "pipeline": "tags-list",
+  "maxItems": 8,
+  "repairs": [],
+  "hooks": []
+}

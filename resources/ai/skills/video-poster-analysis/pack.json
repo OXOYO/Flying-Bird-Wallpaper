@@ -1,0 +1,10 @@
+{
+  "id": "video-poster-analysis",
+  "version": "1.0.0",
+  "modelKind": "vision",
+  "schemaFile": "schema.json",
+  "normalizeFile": "normalize.json",
+  "skillFile": "SKILL.md",
+  "normalizePackId": "image-analysis",
+  "outputLocaleFooter": true
+}

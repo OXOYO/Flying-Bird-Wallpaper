@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$comment": "Same shape as image-analysis; normalize reuses image-analysis pack",
+  "type": "object",
+  "properties": {
+    "score": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "tags": {
+      "type": "array",
+      "maxItems": 12,
+      "items": { "type": "string", "maxLength": 64 }
+    },
+    "title": { "type": "string", "maxLength": 120 },
+    "desc": { "type": "string", "maxLength": 500 },
+    "summary": { "type": "string", "maxLength": 200 },
+    "nsfwLevel": { "type": "integer", "minimum": 0, "maximum": 3 },
+    "safeForWork": { "type": "boolean" }
+  }
+}

@@ -511,7 +511,7 @@
         "enableNsfwCheck": "コンテンツ安全フィルター",
         "enableNsfwCheckHint": "検索とコレクション生成時、分析結果の安全レベルに基づき高リスク項目を非表示にします",
         "smartSearch": "スマートセマンティック検索",
-        "expandDownloadKeywords": "自動ダウンロードのキーワード拡張",
+        "expandDownloadKeywords": "キーワード拡張",
         "expandDownloadKeywordsHint": "自動ダウンロードタスク（画像・動画）で、既存キーワードから AI が同義語・関連語を補足し、マッチ範囲を広げます（AI 有効が必要）",
         "remoteVisionPrivacyNote": "クラウドのビジョン分析では、ローカル画像（圧縮後）が選択したプロバイダーに送信されます。サービスとプライバシーポリシーを信頼できることを確認してください。ローカル Ollama または localhost の OpenAI 互換エンドポイントではこの注記は表示されません。",
         "legacyOnnxScore": "従来の ONNX スコア",
@@ -544,10 +544,9 @@
         "visualEmbedBaseUrl": "サービス URL",
         "visualEmbedModel": "画面ベクトルモデル",
         "visualEmbedModelHint": "類似検索用の画像 embedding；内蔵 MobileCLIP 推奨。リモートは画像ベクトル対応必須—ビジョン/テキスト embed 不可。失敗時内蔵へ。",
-        "visualEmbedRemoteSectionHint": "下の「画面ベクトルサービス」でプロバイダー・URL・API Key・モデルを個別設定してください。",
         "visualEmbedModelPlaceholder": "例：batiai/qwen3-vl-embed-2b",
         "legacyLocalVisualEmbed": "内蔵画面ベクトル",
-        "legacyLocalVisualEmbedHint": "オン時は内蔵画面ベクトルで類似/類似検索。オフ時は「画面ベクトルサービス」のリモート embedding（失敗時内蔵）。",
+        "legacyLocalVisualEmbedHint": "オン時は内蔵画面ベクトルで類似/類似検索。オフ時は「画面モデル」のリモート embedding（失敗時内蔵）。",
         "pumpBlockReason_scheduler_stopped": "バックグラウンド分析タイマーが停止しています（省電でタスク削除後など）。AI設定を保存するか、AC電源に接続してください。",
         "pumpBlockReason_power_save_battery": "省電モードかつバッテリー駆動のため、バックグラウンド分析を一時停止しています",
         "pumpBlockReason_maintenance": "リソースメンテナンス中のため、分析を一時停止しています",
@@ -568,7 +567,11 @@
         "visualEmbedBackfillRunning": "ビジュアルベクトル補算中、残り {pending} 枚",
         "visualEmbedBackfillPending": "ビジュアルベクトル待ち {pending} 枚",
         "visualEmbedBackfillDone": "ビジュアルベクトル完了（現在のモデル）",
-        "visualEmbedBackfillDoneSkipped": "ビジュアルベクトル完了（現在のモデル）、不良画像 {skipped} 枚をスキップ"
+        "visualEmbedBackfillDoneSkipped": "ビジュアルベクトル完了（現在のモデル）、不良画像 {skipped} 枚をスキップ",
+        "promptProfile": "コンテンツ敏感度プロファイル",
+        "promptProfileHint": "視覚 AI 分析の NSFW と職場向け安全判定に影響します。デフォルト：水着など軽度は安全のままの場合あり。厳格：レベル1も職場不向き。切替後、保存済み raw LLM データがある分析はモデル再呼び出しなしで自動再正規化。raw なしの旧記録は再分析が必要。",
+        "promptProfileDefault": "デフォルト（バランス）",
+        "promptProfileStrictNsfw": "厳格（職場・ファミリー）"
       },
       "privacySpace": {
         "enableNsfwContentMask": "センシティブコンテンツを非表示",
@@ -702,9 +705,6 @@
         "onDemand": "オンデマンド"
       },
       "curateManualConfirmSettled": "システムコレクションは確定済みです。手動整理は LLM による全量再構築を行い、新プランに含まれないコレクションを削除します。続行しますか？",
-      "auto": {
-        "storagePrompt": "{detail}"
-      },
       "similarBackToForYou": "おすすめに戻る",
       "listTabForYou": "おすすめ",
       "forYouTitle": "おすすめ",
@@ -1337,17 +1337,6 @@
     "drawer": {
       "title": "閲覧",
       "openBrowseMenu": "閲覧メニューを開く"
-    }
-  },
-  "ai": {
-    "prompts": {
-      "imageAnalysis": "あなたは壁紙画像分析アシスタントです。JSON オブジェクトのみを出力し、markdown コードブロックや余分な説明は不要です。\n\n【フィールドの役割（混同しない）】\n- title：短い見出し、≤40 文字、被写体＋シーン\n- summary：検索用の1行、≤80 文字、画面のテーマと主要な可視要素（用途や「デスクトップ向き」は書かない）\n- desc：人向けの詳細な可視説明、120–220 文字（UI と同じ言語）。被写体、ポーズ/動作、服装と露出度、環境、構図/フレーミング、色と光、スタイル/雰囲気を順に記述。可視内容のみ；物語の創作や適性評価はしない\n- tags：3–10 個の検索タグ（UI と同じ言語）\n- score：1–100 の整数、美学総合点\n- nsfwLevel：0–3 の整数（下記の感度基準）\n- safeForWork：ブール値、下記の連動ルールに従う\n\n【感度基準 nsfwLevel（日英対照）】\n0 Safe 安全：風景/静物/日常ポートレート、性的・センシティブな焦点なし。反例：0 にしない——エロティックな焦点や私的部位が明確、職場不適切\n1 Mild 轻微：水着/スポーツウェア/ファッション、肌露出多めだが露点なし、やや示唆的なポーズ。反例：1 にしない——全裸、性行為が主題、私的部位が明確（≥2）\n2 Moderate 中度：露点や部分裸、強い性的示唆、グロテスク、明らかに成人向け構図。反例：2 にしない——性行為が中心、私的部位のクローズアップ（3）\n3 Explicit 重度：エロ/性行為が主題、私的部位が明確、極端なグロテスク。反例：3 にしない——水着/ビキニで露点なし（1）\n\n【safeForWork と nsfwLevel の連動（必須）】\n- nsfwLevel≥2 ⇒ safeForWork は false\n- safeForWork が false ⇒ nsfwLevel は ≥2\n- nsfwLevel=0 ⇒ safeForWork は true\n- nsfwLevel=0 かつ safeForWork=false は禁止\n\n例（安全）：{\"score\":82,\"tags\":[\"夜景\",\"都市\",\"ネオン\",\"雨\",\"ブルー\"],\"title\":\"雨の都市スカイライン\",\"summary\":\"雨後の夜の街並み、ビル群と濡れた路面の反射\",\"desc\":\"画面上部に広がるスカイライン、暖色と寒色のネオンが交差；中景の濡れた舗装が光と車の光跡を映す；横長全景、シャープな被写界深度；湿った静かな写実的ムード。\",\"nsfwLevel\":0,\"safeForWork\":true}",
-      "searchParse": "ユーザーの壁紙検索記述を JSON に解析してください。markdown 不可。\nユーザー入力：{query}\n出力フィールド：\n- filterKeywords: 文字列、核心キーワード\n- tags: 文字列配列、未記載時 []\n- orientation: 配列、未記載時 []；要素は 1（横）または 0（縦）、または landscape/portrait\n- quality: 配列、未記載時 []；8K、5K、4K、2K のみ（DB フィールドと一致；1080p/720p/小文字 4k 禁止）\n- filterType: images | videos | \"\"（タイプ未指定時は空；fileType 禁止）\n- scoreMin: 0-100 整数、ユーザーが下限を求めない限り null\n- scoreMax: 0-100 整数または null\n\n例：{\"filterKeywords\":\"海\",\"tags\":[\"海\",\"青\"],\"orientation\":[1],\"quality\":[\"4K\"],\"filterType\":\"images\",\"scoreMin\":null,\"scoreMax\":null}",
-      "collectionQuery": "ユーザーは壁紙スマートコレクションを作成したいです。記述を queryJson に解析し、JSON のみ出力。\nユーザー記述：{prompt}\nフィールド：\n- filterKeywords: string（核心検索語）\n- tags: string[]\n- tagsMode: any|all\n- quality: string[]（解像度未指定時は必ず []；8K、5K、4K、2K のみ；1080p/720p 禁止）\n（orientation、scoreMin、scoreMax は出力しない；最低点はアプリ AI 設定）\n- resourceName: 固定 \"resources\"（全库；favorites/local/history 禁止）\n- isRandom: boolean\n- sortField: score|created_at|views\n- sortType: -1|1\n- semanticQuery: string\n- useSemantic: boolean（テーマ/雰囲気記述時 true）\n- limitCount: 5-50 整数\n\n規則：tags はリソース AI タグおよび UI 言語と一致；orientation/quality/scoreMin/scoreMax を捏造しない；実体語は filterKeywords と同言語の同義 tags。",
-      "keywordExpand": "壁紙の自動ダウンロード用に検索キーワードを拡張してください。入力：{keywords}\n出力 JSON：{\"keywords\":[\"語1\",\"語2\"]}、最大 10 件、言語はこのプロンプトと同じ、説明は不要。",
-      "collectionTagExpand": "壁紙コレクション検索タグの同義語を拡張。テーマ：{keyword}\nJSON：{\"tags\":[\"タグ1\",\"タグ2\"]}、8 個以内、リソース AI タグおよび UI 言語に合わせ、説明不要。",
-      "collectionNaming": "あなたは壁紙ライブラリのキュレーターです。以下の各 id は画面ベクトルクラスターです。各 id を個別に命名。id を統合しない。A 組の語料を B に適用しない。\n\n要件：\n1. JSON のみ、markdown 不可\n2. 出力は {targetCount} 件以内、各 id は入力由来\n3. 各 id の titleSamples、samples、tags のみで命名；name は titleSamples 優先；語料にない語は禁止\n4. name は短い雰囲気タイトル（完全文・番号プレースホルダ不可）、{nameMinLen}-{nameMaxLen} 文字\n5. samples が分散する場合はより汎化したが語料に根拠のある表現\n6. prompt / semanticQuery はやや長く可；name は短く独立\n\n入力候補：\n{candidates}\n\n出力形式：\n{\n  \"collections\": [\n    {\n      \"id\": \"vec:0\",\n      \"name\": \"山湖静景\",\n      \"prompt\": \"このグループの雰囲気を一行で\",\n      \"semanticQuery\": \"意味検索用フレーズ\"\n    }\n  ]\n}\n7. name の言語は UI ロケール（{uiLocale}）および samples/tags と一致；言語混在禁止",
-      "videoPosterAnalysis": "あなたは壁紙動画分析アシスタントです。入力は動的壁紙のカバーフレームのみ（動画全体ではありません）。このフレームの可視内容のみ分析し、動きや音声は推測しないでください。出力形式とフィールド規則は画像分析と同じです。\n\n【フィールドの役割（混同しない）】\n- title：短い見出し、≤40 文字、被写体＋シーン\n- summary：検索用の1行、≤80 文字、画面のテーマと主要な可視要素（用途や「デスクトップ向き」は書かない）\n- desc：人向けの詳細な可視説明、120–220 文字（UI と同じ言語）。被写体、ポーズ/動作、服装と露出度、環境、構図/フレーミング、色と光、スタイル/雰囲気を順に記述。可視内容のみ；物語の創作や適性評価はしない\n- tags：3–10 個の検索タグ（UI と同じ言語）\n- score：1–100 の整数、美学総合点\n- nsfwLevel：0–3 の整数（下記の感度基準）\n- safeForWork：ブール値、下記の連動ルールに従う\n\n【感度基準 nsfwLevel（日英対照）】\n0 Safe 安全：風景/静物/日常ポートレート、性的・センシティブな焦点なし。反例：0 にしない——エロティックな焦点や私的部位が明確、職場不適切\n1 Mild 轻微：水着/スポーツウェア/ファッション、肌露出多めだが露点なし、やや示唆的なポーズ。反例：1 にしない——全裸、性行為が主題、私的部位が明確（≥2）\n2 Moderate 中度：露点や部分裸、強い性的示唆、グロテスク、明らかに成人向け構図。反例：2 にしない——性行為が中心、私的部位のクローズアップ（3）\n3 Explicit 重度：エロ/性行為が主題、私的部位が明確、極端なグロテスク。反例：3 にしない——水着/ビキニで露点なし（1）\n\n【safeForWork と nsfwLevel の連動（必須）】\n- nsfwLevel≥2 ⇒ safeForWork は false\n- safeForWork が false ⇒ nsfwLevel は ≥2\n- nsfwLevel=0 ⇒ safeForWork は true\n- nsfwLevel=0 かつ safeForWork=false は禁止\n\n例（安全）：{\"score\":82,\"tags\":[\"夜景\",\"都市\",\"ネオン\",\"雨\",\"ブルー\"],\"title\":\"雨の都市スカイライン\",\"summary\":\"雨後の夜の街並み、ビル群と濡れた路面の反射\",\"desc\":\"画面上部に広がるスカイライン、暖色と寒色のネオンが交差；中景の濡れた舗装が光と車の光跡を映す；横長全景、シャープな被写界深度；湿った静かな写実的ムード。\",\"nsfwLevel\":0,\"safeForWork\":true}"
     }
   },
   "privacyNsfwMask": {

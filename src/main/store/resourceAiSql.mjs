@@ -11,6 +11,8 @@ export const CREATE_RESOURCE_AI_TABLE = `CREATE TABLE IF NOT EXISTS fbw_resource
   aiAnalysisStatus TEXT NOT NULL DEFAULT 'pending',
   aiAnalyzedAt DATETIME,
   aiAnalysisFailCount INTEGER NOT NULL DEFAULT 0,
+  analysisMeta TEXT NOT NULL DEFAULT '',
+  rawLlmJson TEXT NOT NULL DEFAULT '',
   updated_at DATETIME DEFAULT (datetime('now', 'localtime')),
   FOREIGN KEY (resourceId) REFERENCES fbw_resources(id) ON DELETE CASCADE
 )`
@@ -42,6 +44,7 @@ export const RESOURCE_AI_SELECT_SQL = `
   COALESCE(ai.aiAnalysisStatus, 'pending') AS aiAnalysisStatus,
   ai.aiAnalyzedAt AS aiAnalyzedAt,
   COALESCE(ai.aiAnalysisFailCount, 0) AS aiAnalysisFailCount,
+  ai.analysisMeta AS analysisMeta,
   ai.safeForWork AS safeForWork`
 
 export function hasLegacyAiColumnsOnResources(db) {

@@ -221,7 +221,9 @@ export const defaultSettingData = {
     autoCollectionsMaxCount: 20,
     analysisMaxRetries: 1,
     autoCurateSettled: false,
-    autoCurateSettledAnalyzed: 0
+    autoCurateSettledAnalyzed: 0,
+    promptProfile: 'default',
+    packOverrides: {}
   },
   /*** 搜索（仅搜索页 / H5 搜索） ***/
   search: {

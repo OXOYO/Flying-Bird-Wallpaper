@@ -248,6 +248,12 @@ export default class Store {
         this.syncAutoCurateGateFromAnalysis()
       }
       this.aiAnalysisManager.onAnalysisBatchDone = () => this.syncAutoCurateGateFromAnalysis()
+      setImmediate(() => {
+        this.aiAnalysisManager.scheduleNormalizeReplay({
+          reason: 'startup-version-check',
+          profile: this.settingData?.ai?.promptProfile || 'default'
+        })
+      })
       this.embeddingManager.onEmbeddingDone = () => this.scheduleCollectionCurator(60 * 1000)
       this.embeddingManager.onVisualEmbeddingDone = () => this.scheduleCollectionCurator(60 * 1000)
       this.recommendManager = RecommendManager.getInstance(
@@ -899,6 +905,17 @@ export default class Store {
   restartAiAnalysisTask(oldData, newData) {
     const o = oldData?.ai || {}
     const n = newData?.ai || {}
+    const oldProfile = o.promptProfile || 'default'
+    const newProfile = n.promptProfile || 'default'
+    if (oldProfile !== newProfile && this.aiAnalysisManager) {
+      global.logger.info(
+        `[Store] promptProfile ${oldProfile} → ${newProfile}，调度 normalize 重放`
+      )
+      this.aiAnalysisManager.scheduleNormalizeReplay({
+        reason: 'profile-change',
+        profile: newProfile
+      })
+    }
     if (JSON.stringify(o) !== JSON.stringify(n)) {
       this.initAiAnalysisTask()
       this.initVisualEmbedTask()

@@ -1,0 +1,18 @@
+{
+  "version": "1.0.0",
+  "repairs": [
+    {
+      "id": "strict-nsfw-mild-sfw",
+      "rules": [
+        {
+          "when": {
+            "nsfwLevelEq": 1
+          },
+          "set": {
+            "safeForWork": false
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -511,7 +511,7 @@
         "enableNsfwCheck": "Filtro de segurança de conteúdo",
         "enableNsfwCheckHint": "Oculta itens de maior risco na busca e na geração de coleções com base no nível de segurança da análise",
         "smartSearch": "Busca semântica inteligente",
-        "expandDownloadKeywords": "Expandir palavras-chave de download automático",
+        "expandDownloadKeywords": "Expandir palavras-chave",
         "expandDownloadKeywordsHint": "Em tarefas de download automático (imagens ou vídeos), use a IA para expandir sinônimos/termos relacionados a partir das palavras-chave existentes (requer IA ativada)",
         "remoteVisionPrivacyNote": "A análise visual na nuvem envia suas imagens locais (comprimidas) ao provedor selecionado. Certifique-se de confiar nesse serviço e em sua política de privacidade. Esta nota fica oculta para Ollama local ou endpoints OpenAI compatíveis em localhost.",
         "legacyOnnxScore": "Pontuação ONNX legada",
@@ -544,10 +544,9 @@
         "visualEmbedBaseUrl": "URL do serviço",
         "visualEmbedModel": "Modelo de vetor visual",
         "visualEmbedModelHint": "Embeddings de imagem para encontrar similares; MobileCLIP integrado recomendado. Modelos remotos devem suportar vetores de imagem—não visão nem embed de texto. Volta ao integrado se falhar.",
-        "visualEmbedRemoteSectionHint": "Configure provedor, URL, chave API e modelo na seção Serviço de vetor visual abaixo.",
         "visualEmbedModelPlaceholder": "ex. batiai/qwen3-vl-embed-2b",
         "legacyLocalVisualEmbed": "Vetores visuais integrados",
-        "legacyLocalVisualEmbedHint": "Quando ativado, usa vetores visuais integrados para similaridade e Encontrar similares. Quando desativado, usa o modelo remoto em Serviço de vetor visual (volta ao integrado se falhar).",
+        "legacyLocalVisualEmbedHint": "Quando ativado, usa vetores visuais integrados para similaridade e Encontrar similares. Quando desativado, usa o modelo remoto em Modelo de imagem (volta ao integrado se falhar).",
         "pumpBlockReason_scheduler_stopped": "O temporizador de análise em segundo plano parou (muitas vezes após economia de energia na bateria). Salve as configurações de IA ou conecte à tomada.",
         "pumpBlockReason_power_save_battery": "Economia de energia na bateria — análise em segundo plano pausada",
         "pumpBlockReason_maintenance": "Manutenção de recursos — análise pausada",
@@ -568,7 +567,11 @@
         "visualEmbedBackfillRunning": "Preenchendo vetores visuais, {pending} restantes",
         "visualEmbedBackfillPending": "{pending} imagens aguardando vetores visuais",
         "visualEmbedBackfillDone": "Vetores visuais completos (modelo atual)",
-        "visualEmbedBackfillDoneSkipped": "Vetores visuais completos (modelo atual), {skipped} imagens inválidas ignoradas"
+        "visualEmbedBackfillDoneSkipped": "Vetores visuais completos (modelo atual), {skipped} imagens inválidas ignoradas",
+        "promptProfile": "Perfil de sensibilidade do conteúdo",
+        "promptProfileHint": "Afeta NSFW e classificação segura para trabalho na análise visual. Padrão: conteúdo leve (ex. maiô) pode permanecer seguro. Rigoroso: nível 1 sempre inadequado para escritório. Após trocar, análises com raw LLM salvo são re-normalizadas sem nova chamada ao modelo; registros antigos sem raw precisam de re-análise.",
+        "promptProfileDefault": "Padrão (equilibrado)",
+        "promptProfileStrictNsfw": "Rigoroso (escritório / família)"
       },
       "privacySpace": {
         "enableNsfwContentMask": "Ocultar conteúdo sensível",
@@ -702,9 +705,6 @@
         "onDemand": "Sob demanda"
       },
       "curateManualConfirmSettled": "As coleções do sistema estão fixadas. A curadoria manual executará uma reconstrução LLM completa e removerá coleções fora do novo plano. Continuar?",
-      "auto": {
-        "storagePrompt": "{detail}"
-      },
       "similarBackToForYou": "Voltar para «Para você»",
       "listTabForYou": "Para você",
       "forYouTitle": "Para você",
@@ -1337,17 +1337,6 @@
     "drawer": {
       "title": "Navegar",
       "openBrowseMenu": "Abrir menu de navegação"
-    }
-  },
-  "ai": {
-    "prompts": {
-      "imageAnalysis": "Você é um assistente de análise de imagens de papel de parede. Retorne apenas um objeto JSON, sem blocos markdown, sem comentários extras.\n\n[Papéis dos campos — não misturar]\n- title: título curto, ≤40 car., assunto + cena\n- summary: uma linha para busca, ≤80 car., tema e elementos visíveis-chave (sem caso de uso, sem «bom para desktop»)\n- desc: descrição visível detalhada para humanos, 120–220 car. (mesmo idioma da UI). Cobrir: assunto(s), pose/ação, roupa e nível de exposição corporal, ambiente, enquadramento/composição, cor e iluminação, estilo/clima. Apenas fatos visíveis; sem história inventada; sem conselho de adequação\n- tags: 3–10 tags de busca (mesmo idioma da UI)\n- score: inteiro 1–100, pontuação estética geral\n- nsfwLevel: inteiro 0–3 (rubrica de sensibilidade abaixo)\n- safeForWork: booleano, deve seguir as regras de ligação abaixo\n\n[Rubrica de sensibilidade nsfwLevel — PT + 中文]\n0 Safe 安全: paisagens, natureza-morta, retratos cotidianos, sem foco sexual ou sensível. Contraexemplo: NÃO usar 0 com foco erótico ou partes íntimas claramente visíveis, inadequado no trabalho\n1 Mild 轻微: roupa de banho/esporte/moda, muita pele mas sem mamilos/genitais, pose levemente sugestiva. Contraexemplo: NÃO 1 para nudez total, atos sexuais como assunto principal, partes íntimas visíveis (≥2)\n2 Moderate 中度: mamilos visíveis/nudez parcial, forte sugestão sexual, gore gráfico, enquadramento claramente adulto. Contraexemplo: NÃO 2 se relação sexual for central ou close-ups íntimos (3)\n3 Explicit 重度: atos eróticos ou sexuais como assunto principal, genitais claramente visíveis, gore extremo. Contraexemplo: NÃO 3 para biquíni/maiô sem nudez (1)\n\n[Ligação safeForWork ↔ nsfwLevel — obrigatória]\n- nsfwLevel≥2 ⇒ safeForWork deve ser false\n- safeForWork false ⇒ nsfwLevel deve ser ≥2\n- nsfwLevel=0 ⇒ safeForWork deve ser true\n- Nunca retornar nsfwLevel=0 com safeForWork=false\n\nExemplo (seguro): {\"score\":82,\"tags\":[\"noite\",\"cidade\",\"neon\",\"chuva\",\"azul\"],\"title\":\"Horizonte urbano chuvoso\",\"summary\":\"Paisagem urbana noturna após a chuva, torres e reflexos molhados\",\"desc\":\"Amplo horizonte na parte superior com neon quente e frio; calçada molhada no centro reflete luzes e rastros de carros; foco profundo nítido, clima cinematográfico calmo.\",\"nsfwLevel\":0,\"safeForWork\":true}",
-      "searchParse": "Analise a descrição de busca de papel de parede do usuário em JSON. Sem markdown.\nEntrada do usuário: {query}\nCampos de saída:\n- filterKeywords: string, palavras-chave principais\n- tags: array de strings, [] se omitido\n- orientation: array, [] se omitido; elementos 1 (paisagem) ou 0 (retrato), ou landscape/portrait\n- quality: array, [] se omitido; apenas 8K, 5K, 4K, 2K (deve corresponder ao campo DB; sem 1080p/720p/4k minúsculo)\n- filterType: images | videos | \"\" (vazio se tipo não especificado; não produzir fileType)\n- scoreMin: inteiro 0-100 ou null salvo pedido de pontuação mínima\n- scoreMax: inteiro 0-100 ou null\n\nExemplo: {\"filterKeywords\":\"oceano\",\"tags\":[\"oceano\",\"azul\"],\"orientation\":[1],\"quality\":[\"4K\"],\"filterType\":\"images\",\"scoreMin\":null,\"scoreMax\":null}",
-      "collectionQuery": "O usuário quer criar uma coleção inteligente de papéis de parede. Analise a descrição em queryJson. Apenas JSON.\nDescrição: {prompt}\nCampos:\n- filterKeywords: string (termo principal)\n- tags: string[]\n- tagsMode: any|all\n- quality: string[] (deve ser [] salvo pedido de resolução; apenas 8K, 5K, 4K, 2K; sem 1080p/720p)\n(Não produzir orientation, scoreMin, scoreMax; mínimo vem das configurações de IA.)\n- resourceName: sempre \"resources\" (biblioteca completa; nunca favorites/local/history)\n- isRandom: boolean\n- sortField: score|created_at|views\n- sortType: -1|1\n- semanticQuery: string\n- useSemantic: boolean (true quando tema/clima descritos)\n- limitCount: inteiro 5-50\n\nRegras: tags no idioma dos tags IA dos recursos (preferir UI); não inventar orientation/quality/scoreMin/scoreMax; entidades em filterKeywords e tags sinônimos no mesmo idioma.",
-      "keywordExpand": "Expanda palavras-chave de busca para download automático de papéis de parede. Entrada: {keywords}\nSaída JSON: {\"keywords\":[\"palavra1\",\"palavra2\"]}, no máximo 10 itens, no mesmo idioma desta instrução, sem explicação.",
-      "collectionTagExpand": "Expanda tags de busca da coleção com sinônimos. Tema: {keyword}\nJSON: {\"tags\":[\"tag1\",\"tag2\"]}, máx. 8, idioma dos tags IA e UI se possível, sem explicação.",
-      "collectionNaming": "Você é curador de biblioteca de papéis de parede. Cada id abaixo é um cluster de vetores de imagem. Nomeie cada id separadamente. NÃO mescle ids. NÃO aplique corpus A em B.\n\nRegras:\n1. Apenas JSON, sem markdown\n2. No máximo {targetCount} entradas; cada id da entrada\n3. Nomear SOMENTE com titleSamples, samples e tags dessa id; name prefere titleSamples; sem palavras fora do corpus\n4. name DEVE ser título curto de clima (NÃO frase completa, NÃO marcador numerado), comprimento {nameMinLen}-{nameMaxLen} car.\n5. Se samples divergirem, redação mais ampla mas apoiada no corpus\n6. prompt / semanticQuery podem ser mais longos; name permanece curto\n\nCandidatos:\n{candidates}\n\nFormato:\n{\n  \"collections\": [\n    {\n      \"id\": \"vec:0\",\n      \"name\": \"Lagos alpinos\",\n      \"prompt\": \"Uma linha de clima para este grupo\",\n      \"semanticQuery\": \"Frase para busca semântica\"\n    }\n  ]\n}\n7. Idioma de name DEVE corresponder à locale UI ({uiLocale}) e a samples/tags; sem títulos mistos",
-      "videoPosterAnalysis": "Você é um assistente de análise de vídeos de papel de parede. A entrada é apenas o frame poster (não o vídeo completo). Analise apenas o visível neste frame; não infira movimento ou áudio. Formato e regras iguais à análise de imagem.\n\n[Papéis dos campos — não misturar]\n- title: título curto, ≤40 car., assunto + cena\n- summary: uma linha para busca, ≤80 car., tema e elementos visíveis-chave (sem caso de uso, sem «bom para desktop»)\n- desc: descrição visível detalhada para humanos, 120–220 car. (mesmo idioma da UI). Cobrir: assunto(s), pose/ação, roupa e nível de exposição corporal, ambiente, enquadramento/composição, cor e iluminação, estilo/clima. Apenas fatos visíveis; sem história inventada; sem conselho de adequação\n- tags: 3–10 tags de busca (mesmo idioma da UI)\n- score: inteiro 1–100, pontuação estética geral\n- nsfwLevel: inteiro 0–3 (rubrica de sensibilidade abaixo)\n- safeForWork: booleano, deve seguir as regras de ligação abaixo\n\n[Rubrica de sensibilidade nsfwLevel — PT + 中文]\n0 Safe 安全: paisagens, natureza-morta, retratos cotidianos, sem foco sexual ou sensível. Contraexemplo: NÃO usar 0 com foco erótico ou partes íntimas claramente visíveis, inadequado no trabalho\n1 Mild 轻微: roupa de banho/esporte/moda, muita pele mas sem mamilos/genitais, pose levemente sugestiva. Contraexemplo: NÃO 1 para nudez total, atos sexuais como assunto principal, partes íntimas visíveis (≥2)\n2 Moderate 中度: mamilos visíveis/nudez parcial, forte sugestão sexual, gore gráfico, enquadramento claramente adulto. Contraexemplo: NÃO 2 se relação sexual for central ou close-ups íntimos (3)\n3 Explicit 重度: atos eróticos ou sexuais como assunto principal, genitais claramente visíveis, gore extremo. Contraexemplo: NÃO 3 para biquíni/maiô sem nudez (1)\n\n[Ligação safeForWork ↔ nsfwLevel — obrigatória]\n- nsfwLevel≥2 ⇒ safeForWork deve ser false\n- safeForWork false ⇒ nsfwLevel deve ser ≥2\n- nsfwLevel=0 ⇒ safeForWork deve ser true\n- Nunca retornar nsfwLevel=0 com safeForWork=false\n\nExemplo (seguro): {\"score\":82,\"tags\":[\"noite\",\"cidade\",\"neon\",\"chuva\",\"azul\"],\"title\":\"Horizonte urbano chuvoso\",\"summary\":\"Paisagem urbana noturna após a chuva, torres e reflexos molhados\",\"desc\":\"Amplo horizonte na parte superior com neon quente e frio; calçada molhada no centro reflete luzes e rastros de carros; foco profundo nítido, clima cinematográfico calmo.\",\"nsfwLevel\":0,\"safeForWork\":true}"
     }
   },
   "privacyNsfwMask": {

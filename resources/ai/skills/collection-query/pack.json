@@ -1,0 +1,8 @@
+{
+  "id": "collection-query",
+  "version": "1.0.0",
+  "modelKind": "text",
+  "schemaFile": "schema.json",
+  "normalizeFile": "normalize.json",
+  "skillFile": "SKILL.md"
+}

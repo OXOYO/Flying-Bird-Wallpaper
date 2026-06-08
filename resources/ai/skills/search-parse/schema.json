@@ -1,0 +1,43 @@
+{
+  "type": "object",
+  "properties": {
+    "filterKeywords": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "tags": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "string",
+        "maxLength": 64
+      }
+    },
+    "orientation": {
+      "type": "array",
+      "maxItems": 1
+    },
+    "quality": {
+      "type": "array",
+      "maxItems": 4,
+      "items": {
+        "type": "string",
+        "maxLength": 8
+      }
+    },
+    "filterType": {
+      "type": "string",
+      "maxLength": 16
+    },
+    "scoreMin": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "scoreMax": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100
+    }
+  }
+}
