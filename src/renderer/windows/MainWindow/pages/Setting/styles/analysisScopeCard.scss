@@ -1,0 +1,99 @@
+.reanalyze-scope-picker {
+  text-align: left;
+}
+
+.reanalyze-scope-picker__section-label {
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--el-text-color-secondary);
+}
+
+.reanalyze-scope-picker__cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.scope-card {
+  padding: 10px 12px;
+  border: 1px solid var(--el-border-color);
+  border-radius: 8px;
+  background: var(--el-fill-color-blank);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+  outline: none;
+
+  &:hover:not(.scope-card--disabled):not(.scope-card--static) {
+    border-color: var(--el-color-primary-light-5);
+    background: var(--el-color-primary-light-9);
+  }
+
+  &:focus-visible:not(.scope-card--disabled):not(.scope-card--static) {
+    box-shadow: 0 0 0 2px var(--el-color-primary-light-7);
+  }
+
+  &--selected {
+    border-color: var(--el-color-primary);
+    background: var(--el-color-primary-light-9);
+  }
+
+  &--disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  &--static {
+    cursor: default;
+  }
+}
+
+.scope-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.scope-card__title {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--el-text-color-primary);
+}
+
+.scope-card__count {
+  flex-shrink: 0;
+  min-width: 28px;
+  padding: 0 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 20px;
+  text-align: center;
+  color: var(--el-color-primary);
+  background: var(--el-color-primary-light-8);
+}
+
+.scope-card--selected .scope-card__count {
+  color: var(--el-color-white);
+  background: var(--el-color-primary);
+}
+
+.scope-card__meta {
+  margin: 0 0 4px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--el-text-color-secondary);
+}
+
+.scope-card__desc {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--el-text-color-secondary);
+}

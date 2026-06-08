@@ -281,9 +281,9 @@ const api = {
 
   analyzeResource: (...args) => ipcRenderer.invoke('main:analyzeResource', ...args),
   resetAiAnalysis: (...args) => ipcRenderer.invoke('main:resetAiAnalysis', ...args),
-  requeueFailedAiAnalysis: (...args) => ipcRenderer.invoke('main:requeueFailedAiAnalysis', ...args),
-  requeueSkippedAiAnalysis: (...args) => ipcRenderer.invoke('main:requeueSkippedAiAnalysis', ...args),
   requeueRetryableAiAnalysis: (...args) => ipcRenderer.invoke('main:requeueRetryableAiAnalysis', ...args),
+  requeueAllAiAnalysisWithoutClear: (...args) =>
+    ipcRenderer.invoke('main:requeueAllAiAnalysisWithoutClear', ...args),
   testAiConnection: (...args) => ipcRenderer.invoke('main:testAiConnection', ...args),
   listAiModels: (...args) => ipcRenderer.invoke('main:listAiModels', ...args),
   getAiAnalysisStats: (...args) => ipcRenderer.invoke('main:getAiAnalysisStats', ...args),

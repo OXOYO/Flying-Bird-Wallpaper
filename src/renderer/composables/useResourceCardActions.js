@@ -274,7 +274,7 @@ export function useResourceCardActions(options = {}) {
     if (index < 0 || index >= list.length - 1) {
       empty = true
     } else {
-      const start = index + 1
+      let start = index + 1
       let end = start + viewSize
       if (end > list.length) {
         start = Math.max(0, list.length - viewSize)

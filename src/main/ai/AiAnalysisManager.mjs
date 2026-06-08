@@ -747,16 +747,6 @@ export default class AiAnalysisManager {
     return this.clearAllAiAnalysisData()
   }
 
-  /** 将全部 failed 标为 pending 并入队（不改动分析结果字段） */
-  requeueFailedAiAnalysis() {
-    return this._requeueAnalysisByStatuses([AI_ANALYSIS_STATUS.FAILED], 'requeueFailed')
-  }
-
-  /** 将全部 skipped 标为 pending 并入队（重置失败次数，便于手动重试） */
-  requeueSkippedAiAnalysis() {
-    return this._requeueAnalysisByStatuses([AI_ANALYSIS_STATUS.SKIPPED], 'requeueSkipped')
-  }
-
   /** 将 failed + skipped 一并标为 pending（手动重新分析） */
   requeueRetryableAiAnalysis() {
     return this._requeueAnalysisByStatuses(
@@ -765,7 +755,18 @@ export default class AiAnalysisManager {
     )
   }
 
-  _requeueAnalysisByStatuses(statuses, messagePrefix) {
+  /**
+   * 将全部非 pending 可分析资源标为 pending（不改动标题/评分/raw 等；清空 aiAnalyzedAt 以便「仅新图」可再次处理）
+   */
+  requeueAllAiAnalysisWithoutClear() {
+    return this._requeueAnalysisByStatuses(
+      [AI_ANALYSIS_STATUS.DONE, AI_ANALYSIS_STATUS.FAILED, AI_ANALYSIS_STATUS.SKIPPED],
+      'requeueAllNoClear',
+      { clearAnalyzedAt: true }
+    )
+  }
+
+  _requeueAnalysisByStatuses(statuses, messagePrefix, options = {}) {
     const normalized = (statuses || []).filter(Boolean)
     if (!normalized.length) {
       return {
@@ -775,11 +776,12 @@ export default class AiAnalysisManager {
       }
     }
     const placeholders = normalized.map(() => '?').join(', ')
+    const analyzable = buildAnalyzableResourceWhere('r')
     const row = this.db
       .prepare(
         `SELECT COUNT(*) as c FROM fbw_resource_ai ai
          JOIN fbw_resources r ON r.id = ai.resourceId
-         WHERE r.fileType IN ('image', 'video') AND ai.aiAnalysisStatus IN (${placeholders})`
+         WHERE ${analyzable} AND ai.aiAnalysisStatus IN (${placeholders})`
       )
       .get(...normalized)
     const count = row?.c || 0
@@ -791,11 +793,12 @@ export default class AiAnalysisManager {
       }
     }
 
+    const analyzedAtSql = options.clearAnalyzedAt ? 'aiAnalyzedAt = NULL,' : ''
     this.db
       .prepare(
-        `UPDATE fbw_resource_ai SET aiAnalysisStatus = ?, aiAnalysisFailCount = 0, updated_at = datetime('now', 'localtime')
+        `UPDATE fbw_resource_ai SET aiAnalysisStatus = ?, aiAnalysisFailCount = 0, ${analyzedAtSql} updated_at = datetime('now', 'localtime')
          WHERE aiAnalysisStatus IN (${placeholders})
-           AND resourceId IN (SELECT id FROM fbw_resources WHERE fileType IN ('image', 'video'))`
+           AND resourceId IN (SELECT r.id FROM fbw_resources r WHERE ${analyzable})`
       )
       .run(AI_ANALYSIS_STATUS.PENDING, ...normalized)
 

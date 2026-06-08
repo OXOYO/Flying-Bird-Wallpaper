@@ -1,0 +1,26 @@
+.ai-analysis-message-box.el-message-box {
+  width: 520px;
+  max-width: min(520px, calc(100vw - 40px));
+
+  .el-message-box__status {
+    display: none;
+  }
+
+  .el-message-box__container {
+    margin-left: 0;
+    gap: 0;
+  }
+
+  .el-message-box__header {
+    padding-bottom: 8px;
+  }
+
+  .el-message-box__message {
+    width: 100%;
+    padding: 4px 2px 0;
+  }
+
+  .el-message-box__btns {
+    padding-top: 12px;
+  }
+}

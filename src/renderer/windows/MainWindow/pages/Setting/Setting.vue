@@ -122,4 +122,6 @@ const onTabChange = (tab) => {
 
 <style lang="scss">
 @use './setting-form-tip.scss';
+@use './styles/aiAnalysisMessageBox.scss';
+@use './styles/analysisScopeCard.scss';
 </style>

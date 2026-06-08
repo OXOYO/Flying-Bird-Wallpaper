@@ -51,8 +51,6 @@ const {
   analysisFooterHint,
   analysisSpeedLine,
   analysisSpeedTooltip,
-  requeueFailedAiAnalysis,
-  requeueSkippedAiAnalysis,
   requeueRetryableAiAnalysis
 } = useAiAnalysisDashboard(computed(() => settingData.value?.ai || {}), {
   tabActive: toRef(props, 'tabActive')
@@ -512,8 +510,6 @@ defineExpose({
         :speed-line="analysisSpeedLine"
         :speed-tooltip="analysisSpeedTooltip"
         :running="!!analysisStats?.running"
-        @requeue-failed="requeueFailedAiAnalysis"
-        @requeue-skipped="requeueSkippedAiAnalysis"
         @requeue-retryable="requeueRetryableAiAnalysis"
       />
     </aside>

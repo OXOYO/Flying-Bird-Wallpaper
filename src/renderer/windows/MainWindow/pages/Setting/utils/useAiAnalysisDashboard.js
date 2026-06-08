@@ -1,10 +1,13 @@
-import { computed, onMounted, onUnmounted, ref, unref, watch } from 'vue'
+import { computed, h, onMounted, onUnmounted, ref, unref, watch } from 'vue'
 import { useTranslation } from 'i18next-vue'
 import { resolveAnalysisStatusTagType } from '@common/analysisRunStatus.mjs'
 import { resolveApiUserMessage } from '@common/utils.js'
 import { formatAnalysisRemaining, msToAnalysisSeconds } from './formatAnalysisDuration.js'
+import ReanalyzeScopePicker from '../components/ReanalyzeScopePicker.vue'
+import { REANALYZE_MODE } from './reanalyzeScope.mjs'
 
 const ANALYSIS_SPEED_MIN_SAMPLES = 3
+const AI_ANALYSIS_MESSAGE_BOX_CLASS = 'ai-analysis-message-box'
 
 /**
  * AI 分析进度侧边栏（与 AiAnalysisDashboardPanel 配套）
@@ -224,59 +227,68 @@ export function useAiAnalysisDashboard(aiSource, options = {}) {
     })
   }
 
-  const requeueWithConfirm = async ({ count, confirmKey, invoke }) => {
-    if (!count) return { success: false }
+  const invokeReanalyzeByMode = async (mode) => {
+    if (mode === REANALYZE_MODE.RETRYABLE) {
+      return window.FBW.requeueRetryableAiAnalysis()
+    }
+    if (mode === REANALYZE_MODE.FULL_NO_CLEAR) {
+      return window.FBW.requeueAllAiAnalysisWithoutClear()
+    }
+    if (mode === REANALYZE_MODE.FULL_CLEAR) {
+      return window.FBW.resetAiAnalysis()
+    }
+    return { success: false, message: t('messages.operationFail') }
+  }
+
+  const requeueRetryableAiAnalysis = async () => {
+    const stats = analysisStats.value || {}
+    const failed = stats.failed ?? 0
+    const skipped = stats.skipped ?? 0
+    const done = stats.done ?? 0
+    const total = stats.total ?? 0
+    const dialogState = { mode: REANALYZE_MODE.RETRYABLE, hasActionable: true }
+
+    const pickerVnode = h(ReanalyzeScopePicker, {
+      failed,
+      skipped,
+      done,
+      total,
+      state: dialogState,
+      t
+    })
+
     try {
-      await ElMessageBox.confirm(t(`pages.Setting.aiSetting.${confirmKey}`, { count }), {
-        type: 'warning',
+      await ElMessageBox({
+        title: t('pages.Setting.aiSetting.reanalyzeDialogTitle'),
+        customClass: AI_ANALYSIS_MESSAGE_BOX_CLASS,
         draggable: true,
-        dangerouslyUseHTMLString: true
+        showCancelButton: true,
+        confirmButtonText: t('pages.Setting.aiSetting.reanalyzeDialogConfirm'),
+        cancelButtonText: t('pages.Setting.aiSetting.reanalyzeDialogCancel'),
+        message: pickerVnode,
+        beforeClose: (action, _instance, done) => {
+          if (action !== 'confirm') {
+            done()
+            return
+          }
+          if (!dialogState.hasActionable) {
+            ElMessage({
+              type: 'warning',
+              message: t('pages.Setting.aiSetting.reanalyzeNothing')
+            })
+            return
+          }
+          done()
+        }
       })
     } catch {
       return { success: false, cancelled: true }
     }
-    const res = await invoke()
-    showRequeueFeedback(res)
-    if (res?.success) await fetchAnalysisStats()
-    return res
-  }
 
-  const requeueFailedAiAnalysis = async () => {
-    const failed = analysisStats.value?.failed ?? 0
-    return requeueWithConfirm({
-      count: failed,
-      confirmKey: 'requeueFailedConfirm',
-      invoke: () => window.FBW.requeueFailedAiAnalysis()
-    })
-  }
+    const mode = dialogState.mode
+    if (!mode) return { success: false, cancelled: true }
 
-  const requeueSkippedAiAnalysis = async () => {
-    const skipped = analysisStats.value?.skipped ?? 0
-    return requeueWithConfirm({
-      count: skipped,
-      confirmKey: 'requeueSkippedConfirm',
-      invoke: () => window.FBW.requeueSkippedAiAnalysis()
-    })
-  }
-
-  const requeueRetryableAiAnalysis = async () => {
-    const failed = analysisStats.value?.failed ?? 0
-    const skipped = analysisStats.value?.skipped ?? 0
-    const count = failed + skipped
-    if (!count) return { success: false }
-    try {
-      await ElMessageBox.confirm(
-        t('pages.Setting.aiSetting.requeueRetryableConfirm', { count, failed, skipped }),
-        {
-          type: 'warning',
-          draggable: true,
-          dangerouslyUseHTMLString: true
-        }
-      )
-    } catch {
-      return { success: false, cancelled: true }
-    }
-    const res = await window.FBW.requeueRetryableAiAnalysis()
+    const res = await invokeReanalyzeByMode(mode)
     showRequeueFeedback(res)
     if (res?.success) await fetchAnalysisStats()
     return res
@@ -303,8 +315,6 @@ export function useAiAnalysisDashboard(aiSource, options = {}) {
     fetchAnalysisStats,
     startStatsPolling,
     stopStatsPolling,
-    requeueFailedAiAnalysis,
-    requeueSkippedAiAnalysis,
     requeueRetryableAiAnalysis
   }
 }

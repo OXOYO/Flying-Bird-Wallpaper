@@ -155,8 +155,6 @@ const {
   analysisFooterHint,
   analysisSpeedLine,
   analysisSpeedTooltip,
-  requeueFailedAiAnalysis,
-  requeueSkippedAiAnalysis,
   requeueRetryableAiAnalysis
 } = useAiAnalysisDashboard(computed(() => aiForm), { tabActive: toRef(props, 'tabActive') })
 
@@ -571,8 +569,6 @@ defineExpose({ resetForm, restoreAnchorScroll })
         :speed-line="analysisSpeedLine"
         :speed-tooltip="analysisSpeedTooltip"
         :running="!!analysisStats?.running"
-        @requeue-failed="requeueFailedAiAnalysis"
-        @requeue-skipped="requeueSkippedAiAnalysis"
         @requeue-retryable="requeueRetryableAiAnalysis"
       />
     </aside>

@@ -370,32 +370,6 @@ export default class Store {
     }
   }
 
-  async requeueFailedAiAnalysis() {
-    try {
-      const res = this.aiAnalysisManager.requeueFailedAiAnalysis()
-      if (res?.success && res.data?.autoPump) {
-        this.triggerBackgroundAnalysisPump()
-      }
-      return res
-    } catch (err) {
-      global.logger.error(`requeueFailedAiAnalysis: ${err}`)
-      return { success: false, message: t('messages.operationFail') }
-    }
-  }
-
-  async requeueSkippedAiAnalysis() {
-    try {
-      const res = this.aiAnalysisManager.requeueSkippedAiAnalysis()
-      if (res?.success && res.data?.autoPump) {
-        this.triggerBackgroundAnalysisPump()
-      }
-      return res
-    } catch (err) {
-      global.logger.error(`requeueSkippedAiAnalysis: ${err}`)
-      return { success: false, message: t('messages.operationFail') }
-    }
-  }
-
   async requeueRetryableAiAnalysis() {
     try {
       const res = this.aiAnalysisManager.requeueRetryableAiAnalysis()
@@ -405,6 +379,19 @@ export default class Store {
       return res
     } catch (err) {
       global.logger.error(`requeueRetryableAiAnalysis: ${err}`)
+      return { success: false, message: t('messages.operationFail') }
+    }
+  }
+
+  async requeueAllAiAnalysisWithoutClear() {
+    try {
+      const res = this.aiAnalysisManager.requeueAllAiAnalysisWithoutClear()
+      if (res?.success && res.data?.autoPump) {
+        this.triggerBackgroundAnalysisPump()
+      }
+      return res
+    } catch (err) {
+      global.logger.error(`requeueAllAiAnalysisWithoutClear: ${err}`)
       return { success: false, message: t('messages.operationFail') }
     }
   }
@@ -1490,16 +1477,12 @@ export default class Store {
       return await this.resetAiAnalysis(params)
     })
 
-    ipcMain.handle('main:requeueFailedAiAnalysis', async () => {
-      return await this.requeueFailedAiAnalysis()
-    })
-
-    ipcMain.handle('main:requeueSkippedAiAnalysis', async () => {
-      return await this.requeueSkippedAiAnalysis()
-    })
-
     ipcMain.handle('main:requeueRetryableAiAnalysis', async () => {
       return await this.requeueRetryableAiAnalysis()
+    })
+
+    ipcMain.handle('main:requeueAllAiAnalysisWithoutClear', async () => {
+      return await this.requeueAllAiAnalysisWithoutClear()
     })
 
     ipcMain.handle('main:testAiConnection', async (event, params) => {
