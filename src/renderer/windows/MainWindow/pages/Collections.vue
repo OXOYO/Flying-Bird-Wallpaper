@@ -27,6 +27,7 @@ import PrivacyPasswordDialog from '@renderer/components/PrivacyPasswordDialog.vu
 import { useSimilarResultsLoadMore } from '@renderer/composables/useSimilarResultsLoadMore.mjs'
 import { usePrivacyNsfwMask } from '@common/composables/usePrivacyNsfwMask.mjs'
 import { resolveNsfwMaskVerifyFailMessage } from '@common/privacyNsfwMask.js'
+import { useExploreCardVideo } from '@renderer/composables/useExploreCardVideo.mjs'
 
 const { t } = useTranslation()
 const settingStore = UseSettingStore()
@@ -75,6 +76,14 @@ const {
 const notifyNsfwMaskBlocked = () => {
   ElMessage({ type: 'warning', message: t('privacyNsfwMask.actionBlocked') })
 }
+
+const exploreCardVideo = useExploreCardVideo({
+  getList: () => gridItems.value,
+  getSettingData: () => settingData.value,
+  isActionBlocked: (item) => isNsfwActionBlocked(item),
+  notifyBlocked: notifyNsfwMaskBlocked,
+  t
+})
 
 const isAutoCollection = (item) => item?.source === 'auto'
 
@@ -940,6 +949,8 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  exploreCardVideo.setUnmounting(true)
+  exploreCardVideo.cleanupVideos()
   unbindResizeObserver()
 })
 </script>
@@ -1188,6 +1199,7 @@ onBeforeUnmount(() => {
                 <ResourceExploreCard
                   :item="item"
                   :index="index"
+                  :video-api="exploreCardVideo"
                   fill
                   :show-tags="showResourceTags"
                   :show-ai-badge="false"
@@ -1652,10 +1664,6 @@ onBeforeUnmount(() => {
   will-change: transform;
   transform: translateZ(0);
   backface-visibility: hidden;
-
-  &:active {
-    opacity: 0.8;
-  }
 }
 
 .card-item__success::after,

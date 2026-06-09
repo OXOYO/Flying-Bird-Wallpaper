@@ -10,8 +10,7 @@ import {
   resourceTypeList,
   orientationOptions,
   DEFAULT_BROWSE_SORT_FIELD,
-  DEFAULT_BROWSE_SORT_TYPE,
-  isVideoDefaultMuted
+  DEFAULT_BROWSE_SORT_TYPE
 } from '@common/publicData.js'
 import { debounce, resolveApiUserMessage } from '@common/utils.js'
 import ExploreSearchHeader from './ExploreSearchHeader.vue'
@@ -29,6 +28,7 @@ import { supportsAiVisionActions } from '@renderer/utils/resourceImageUrl.js'
 import { cloneForIpc } from '@renderer/utils/cloneForIpc.js'
 import { useHorizontalWheelScroll } from '@renderer/composables/useHorizontalWheelScroll.mjs'
 import { useSimilarResultsLoadMore } from '@renderer/composables/useSimilarResultsLoadMore.mjs'
+import { useExploreCardVideo } from '@renderer/composables/useExploreCardVideo.mjs'
 
 const { t } = useTranslation()
 const commonStore = UseCommonStore()
@@ -84,21 +84,9 @@ watch(selectedMenu, () => {
 
 const { onHorizontalWheel } = useHorizontalWheelScroll()
 
-const videoRefs = ref([])
-/** 卡片内联视频静音状态（按列表索引） */
-const videoMutedByIndex = reactive({})
-/** 切换菜单卸载时忽略 video @error，避免清空 src 触发误报 */
-let isUnmountingVideos = false
-
 const cardItemStatus = reactive({
   index: -1,
   status: null
-})
-
-// 视频播放状态管理
-const videoPlayState = reactive({
-  // 记录每个视频的播放来源：'auto' 或 'manual'
-  playSources: new Map()
 })
 
 const props = defineProps({
@@ -214,6 +202,15 @@ const activeWordsList = computed(() => {
 
 // 卡片列表
 const cardList = ref([])
+
+const exploreCardVideo = useExploreCardVideo({
+  getList: () => cardList.value,
+  getSettingData: () => settingData.value,
+  isActionBlocked: (item) => isNsfwActionBlocked(item),
+  notifyBlocked: notifyNsfwMaskBlocked,
+  t
+})
+
 /** @type {import('vue').Ref<{ cardList: unknown[], hasMore: boolean, empty: boolean } | null>} */
 const similarListSnapshot = ref(null)
 
@@ -1450,14 +1447,7 @@ const doViewImage = async (item, index, inner = false) => {
 const doViewVideoFullscreen = (item, index) => {
   if (shouldMaskItem.value(item)) return
   if (!item?.videoSrc || item.fileType !== 'video') return
-  const video = videoRefs.value[index]
-  if (video && !video.paused) {
-    video.pause()
-    if (cardList.value[index]) {
-      cardList.value[index].isPlaying = false
-    }
-    videoPlayState.playSources.delete(item.uniqueKey)
-  }
+  exploreCardVideo.pauseInlineVideo(item, index)
   viewVideoRef.value?.view(item)
 }
 
@@ -1878,13 +1868,13 @@ const setCardItemStatus = (index, status, callback) => {
 const onOverCard = (item, index) => {
   hoverCardIndex.value = index
   if (item.fileType === 'video') {
-    onVideoMouseEnter(item, index)
+    exploreCardVideo.onVideoMouseEnter(item, index)
   }
 }
 const onLeaveCard = (item, index) => {
   hoverCardIndex.value = -1
   if (item.fileType === 'video') {
-    onVideoMouseLeave(item, index)
+    exploreCardVideo.onVideoMouseLeave(item, index)
   }
 }
 
@@ -1896,234 +1886,6 @@ const onDblClickCard = (item, index) => {
   if (item.fileType === 'image') {
     doViewImage(item, index, true)
   }
-}
-
-const syncVideoMuteState = (index) => {
-  const video = videoRefs.value[index]
-  if (video && index >= 0) videoMutedByIndex[index] = video.muted
-}
-
-const isVideoMutedAt = (index) => {
-  if (Object.prototype.hasOwnProperty.call(videoMutedByIndex, index)) {
-    return !!videoMutedByIndex[index]
-  }
-  const video = videoRefs.value[index]
-  return video?.muted ?? isVideoDefaultMuted(settingData.value)
-}
-
-const toggleVideoMute = (item, index) => {
-  if (isNsfwActionBlocked(item)) {
-    notifyNsfwMaskBlocked()
-    return
-  }
-  const video = videoRefs.value[index]
-  if (!video || !cardList.value[index]?.isPlaying) return
-  video.muted = !video.muted
-  videoMutedByIndex[index] = video.muted
-}
-
-const onVideoPlaying = (index) => {
-  syncVideoMuteState(index)
-}
-
-// 鼠标移入视频区域
-const onVideoMouseEnter = (item, index) => {
-  const video = videoRefs.value[index]
-  if (!video || !video.paused) {
-    return
-  }
-
-  const playSource = videoPlayState.playSources.get(item.uniqueKey)
-
-  // 如果是手动播放，则不执行自动播放
-  if (playSource === 'manual') {
-    return
-  }
-
-  try {
-    // 设置播放状态
-    cardList.value[index].isPlaying = true
-    video.muted = isVideoDefaultMuted(settingData.value)
-    syncVideoMuteState(index)
-    // 记录播放来源为自动播放
-    videoPlayState.playSources.set(item.uniqueKey, 'auto')
-
-    const playPromise = video.play()
-    // 如果 play() 返回 Promise，则处理可能的错误
-    if (playPromise !== undefined) {
-      playPromise.catch((err) => {
-        // 忽略 AbortError，这是用户主动暂停视频的正常行为
-        if (err.name !== 'AbortError') {
-          console.error('Video auto play error:', err)
-          cardList.value[index].isPlaying = false
-          videoPlayState.playSources.delete(item.uniqueKey)
-        }
-      })
-    }
-  } catch (err) {
-    console.error('Video auto play error:', err)
-    cardList.value[index].isPlaying = false
-    videoPlayState.playSources.delete(item.uniqueKey)
-  }
-}
-
-// 鼠标移出视频区域
-const onVideoMouseLeave = (item, index) => {
-  const video = videoRefs.value[index]
-  if (!video) {
-    return
-  }
-
-  // 检查当前视频的播放来源
-  const playSource = videoPlayState.playSources.get(item.uniqueKey)
-
-  // 如果是手动播放且视频已暂停，移除播放来源记录，允许自动播放重新触发
-  if (playSource === 'manual' && video.paused) {
-    videoPlayState.playSources.delete(item.uniqueKey)
-    return
-  }
-
-  // 如果是手动播放，则不执行自动暂停
-  if (playSource === 'manual') {
-    return
-  }
-
-  if (playSource === 'auto' && !video.paused) {
-    try {
-      // 暂停视频并更新状态
-      cardList.value[index].isPlaying = false
-      video.pause()
-      // 移除自动播放来源记录
-      videoPlayState.playSources.delete(item.uniqueKey)
-    } catch (err) {
-      console.error('Video auto pause error:', err)
-    }
-  }
-}
-
-const toggleVideo = (item, index) => {
-  if (isNsfwActionBlocked(item)) {
-    notifyNsfwMaskBlocked()
-    return
-  }
-  const video = videoRefs.value[index]
-  if (!video) return
-  try {
-    if (video.paused) {
-      // 先暂停所有其他正在播放的视频
-      for (let i = 0; i < videoRefs.value.length; i++) {
-        const otherVideo = videoRefs.value[i]
-        if (otherVideo && otherVideo !== video && !otherVideo.paused) {
-          otherVideo.pause()
-          if (cardList.value[i]) {
-            cardList.value[i].isPlaying = false
-            // 移除其他视频的播放来源记录
-            videoPlayState.playSources.delete(cardList.value[i].uniqueKey)
-          }
-        }
-      }
-
-      // 设置播放状态
-      cardList.value[index].isPlaying = true
-      video.muted = isVideoDefaultMuted(settingData.value)
-      syncVideoMuteState(index)
-      // 记录播放来源为手动播放
-      videoPlayState.playSources.set(item.uniqueKey, 'manual')
-
-      const playPromise = video.play()
-      // 如果 play() 返回 Promise，则处理可能的错误
-      if (playPromise !== undefined) {
-        playPromise.catch((err) => {
-          // 忽略 AbortError，这是用户主动暂停视频的正常行为
-          if (err.name !== 'AbortError') {
-            console.error('Video play error:', err)
-            cardList.value[index].isPlaying = false
-            // 移除播放来源记录
-            videoPlayState.playSources.delete(item.uniqueKey)
-          }
-        })
-      }
-    } else {
-      // 暂停视频并更新状态
-      cardList.value[index].isPlaying = false
-      video.pause()
-      // 保持播放来源为手动播放，防止自动播放重新触发
-      videoPlayState.playSources.set(item.uniqueKey, 'manual')
-    }
-  } catch (err) {
-    console.error('Video toggle error:', err)
-    cardList.value[index].isPlaying = false
-    // 移除播放来源记录
-    videoPlayState.playSources.delete(item.uniqueKey)
-  }
-}
-
-const onVideoEnded = (item, index) => {
-  const video = videoRefs.value[index]
-  if (!video) return
-
-  // 重置视频时间
-  video.currentTime = 0
-
-  // 更新播放状态
-  if (cardList.value[index].isPlaying) {
-    cardList.value[index].isPlaying = false
-  }
-
-  delete videoMutedByIndex[index]
-
-  // 移除播放来源记录
-  const playSource = videoPlayState.playSources.get(item.uniqueKey)
-  if (playSource) {
-    videoPlayState.playSources.delete(item.uniqueKey)
-  }
-}
-
-const onVideoError = (item, index, event) => {
-  if (isUnmountingVideos) return
-
-  const video = event?.target ?? videoRefs.value[index]
-  if (!video) return
-
-  const errorCode = video.error?.code
-  // 卸载/清空 src 时的 aborted 不提示用户
-  if (errorCode === 1) return
-
-  const errorMessage = getVideoErrorMessage(errorCode)
-  console.error('Video Error Details:', {
-    errorCode,
-    errorMessage,
-    videoSrc: video.src,
-    item,
-    index
-  })
-  ElMessage({
-    type: 'error',
-    message: errorMessage
-  })
-
-  video.currentTime = 0
-
-  if (cardList.value[index]?.isPlaying) {
-    cardList.value[index].isPlaying = false
-  }
-
-  const playSource = videoPlayState.playSources.get(item.uniqueKey)
-  if (playSource) {
-    videoPlayState.playSources.delete(item.uniqueKey)
-  }
-}
-
-// 获取视频错误信息的辅助函数
-const getVideoErrorMessage = (errorCode) => {
-  const keyByCode = {
-    1: 'messages.videoErrAborted',
-    2: 'messages.videoErrNetwork',
-    3: 'messages.videoErrDecode',
-    4: 'messages.videoErrUnsupported'
-  }
-  const key = keyByCode[errorCode]
-  return key ? t(key) : t('messages.videoErrUnknown', { code: errorCode ?? '?' })
 }
 
 const onTriggerActionCallback = (event, action, params) => {
@@ -2161,7 +1923,8 @@ onMounted(() => {
   })
 })
 onBeforeUnmount(() => {
-  isUnmountingVideos = true
+  exploreCardVideo.setUnmounting(true)
+  exploreCardVideo.cleanupVideos()
   // 取消主进程事件监听
   window.FBW.offTriggerAction()
   // 清理ResizeObserver
@@ -2170,18 +1933,6 @@ onBeforeUnmount(() => {
     resizeObserver.unobserve(entry)
   }
   resizeObserver.disconnect()
-
-  // 清理视频元素引用（先解绑 onerror，避免清空 src 时批量误报）
-  videoRefs.value.forEach((video) => {
-    if (video) {
-      video.onerror = null
-      video.pause()
-      video.removeAttribute('src')
-      video.load()
-    }
-  })
-  videoRefs.value = []
-  videoPlayState.playSources.clear()
 
   // 清空大型数据结构
   cardList.value = []
@@ -2431,31 +2182,20 @@ onBeforeUnmount(() => {
                 class="card-item-video-wrapper"
               >
                 <video
-                  :ref="
-                    (el) => {
-                      if (el) {
-                        videoRefs[index] = el
-                      } else {
-                        // 当元素被销毁时清理引用
-                        if (videoRefs[index]) {
-                          delete videoRefs[index]
-                        }
-                      }
-                    }
-                  "
+                  :ref="exploreCardVideo.bindVideoRef(index)"
                   class="card-item-video-player"
                   :src="item.videoSrc"
                   :poster="item.imageSrc"
                   preload="metadata"
                   loop
-                  @playing="onVideoPlaying(index)"
-                  @ended="onVideoEnded(item, index)"
-                  @error="onVideoError(item, index, $event)"
+                  @playing="exploreCardVideo.onVideoPlaying(index)"
+                  @ended="exploreCardVideo.onVideoEnded(item, index)"
+                  @error="exploreCardVideo.onVideoError(item, index, $event)"
                 ></video>
                 <InstantTooltip
                   v-if="!shouldMaskItem(item) && item.isPlaying"
                   :content="
-                    isVideoMutedAt(index)
+                    exploreCardVideo.isVideoMutedAt(index)
                       ? t('exploreCommon.videoUnmute')
                       : t('exploreCommon.videoMute')
                   "
@@ -2463,11 +2203,13 @@ onBeforeUnmount(() => {
                   <button
                     type="button"
                     class="card-item-video-mute-btn"
-                    @click.stop="toggleVideoMute(item, index)"
+                    @click.stop="exploreCardVideo.toggleVideoMute(item, index)"
                   >
                     <IconifyIcon
                       :icon="
-                        isVideoMutedAt(index) ? 'custom:volume-mute' : 'custom:volume-on'
+                        exploreCardVideo.isVideoMutedAt(index)
+                          ? 'custom:volume-mute'
+                          : 'custom:volume-on'
                       "
                     />
                   </button>
@@ -2476,7 +2218,7 @@ onBeforeUnmount(() => {
                   v-if="!shouldMaskItem(item)"
                   class="card-item-video-btn"
                   :icon="item.isPlaying ? 'custom:pause-circle' : 'custom:play-circle'"
-                  @click="toggleVideo(item, index)"
+                  @click="exploreCardVideo.toggleVideo(item, index)"
                 />
               </div>
               <el-scrollbar
