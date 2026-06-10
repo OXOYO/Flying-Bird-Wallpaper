@@ -390,6 +390,11 @@
         "analysisProgressCardDesc": "為本機圖片產生標籤、評分與描述，並自動建立語意向量（用於相似搜尋與智慧合集）。背景按佇列逐張處理，速度取決於模型與逾時設定。",
         "analysisProgressSummary": "已完成 {done} / {total} 張（{percent}%）",
         "analysisProgressCount": "{done} / {total} 張",
+        "analysisProgressCountOrder": "依序為已分析 / 失敗 / 跳過 / 總數",
+        "analysisProgressUnit": "張",
+        "analysisProgressTotalHint": "共 {total} 張",
+        "analysisProgressPercentHint": "右側 {percent}% 為已分析占比",
+        "analysisProgressBreakdown": "已分析 {done} · 失敗 {failed} · 已跳過 {skipped}",
         "analysisDurationSec": "{sec} 秒",
         "analysisDurationMin": "{min} 分鐘",
         "analysisDurationHour": "{hour} 小時",
@@ -398,6 +403,9 @@
         "analysisSpeedEta": "剩餘 {duration}",
         "analysisSpeedGathering": "速度統計中…",
         "analysisSpeedTooltip": "僅統計最近成功完成的視覺分析耗時（不含向量化）；剩餘時間為按待分析數量估算",
+        "analysisSpeedChartLive": "即時吞吐",
+        "analysisSpeedChartAvg": "近期平均",
+        "analysisSpeedChartLegend": "折線：藍=本輪吞吐（張/分），橙=近期平均速度。",
         "runStatusLoading": "正在讀取狀態…",
         "runStatusRunning": "正在執行",
         "runStatusQueued": "等待中",
@@ -645,7 +653,11 @@
       "version": "版本",
       "github": "GitHub",
       "email": "Email",
-      "sponsor": "贊助"
+      "sponsor": "贊助",
+      "legal": "法律資訊",
+      "privacyPolicy": "隱私政策",
+      "disclaimer": "免責聲明",
+      "openSourceLicense": "開源許可（MIT）"
     },
     "Collections": {
       "title": "智慧合集",
@@ -1362,5 +1374,9 @@
   "privacyNsfwMask": {
     "tapToUnlock": "點擊輸入隱私密碼以查看",
     "actionBlocked": "請先點擊遮罩層驗證隱私密碼"
+  },
+  "legal": {
+    "viewPrivacyPolicy": "查看隱私政策",
+    "h5NetworkNotice": "僅在可信區域網路中使用；同網裝置可能存取本機壁紙瀏覽服務。"
   }
 }

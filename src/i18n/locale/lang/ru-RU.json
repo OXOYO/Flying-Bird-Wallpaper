@@ -390,6 +390,11 @@
         "analysisProgressCardDesc": "Создаёт теги, оценки и описания для локальных изображений. Векторы используются для поиска похожих и умных подборок. Изображения обрабатываются по одному в фоне.",
         "analysisProgressSummary": "Готово {done} / {total} изображений ({percent}%)",
         "analysisProgressCount": "{done} / {total} изображений",
+        "analysisProgressCountOrder": "Порядок: готово / ошибки / пропущено / всего",
+        "analysisProgressUnit": "изобр.",
+        "analysisProgressTotalHint": "Всего {total} изображений",
+        "analysisProgressPercentHint": "Справа {percent}% — доля проанализированных",
+        "analysisProgressBreakdown": "Готово {done} · Ошибки {failed} · Пропущено {skipped}",
         "analysisDurationSec": "{sec} сек",
         "analysisDurationMin": "{min} мин",
         "analysisDurationHour": "{hour} ч",
@@ -398,6 +403,9 @@
         "analysisSpeedEta": "Осталось {duration}",
         "analysisSpeedGathering": "Измерение скорости…",
         "analysisSpeedTooltip": "На основе недавних успешных визуальных анализов (без векторизации); оставшееся время оценивается по числу ожидающих",
+        "analysisSpeedChartLive": "Текущая пропускная способность",
+        "analysisSpeedChartAvg": "Недавнее среднее",
+        "analysisSpeedChartLegend": "Линии: синяя = текущая пропускная способность (изобр./мин), оранжевая = недавняя средняя скорость.",
         "runStatusLoading": "Загрузка статуса…",
         "runStatusRunning": "Выполняется",
         "runStatusQueued": "Ожидание",
@@ -620,7 +628,11 @@
       "version": "Версия",
       "github": "GitHub",
       "email": "Эл. почта",
-      "sponsor": "Спонсор"
+      "sponsor": "Спонсор",
+      "legal": "Legal",
+      "privacyPolicy": "Privacy policy",
+      "disclaimer": "Disclaimer",
+      "openSourceLicense": "Open-source license (MIT)"
     },
     "Collections": {
       "title": "Умные подборки",
@@ -1337,5 +1349,9 @@
   "privacyNsfwMask": {
     "tapToUnlock": "Нажмите, чтобы ввести пароль приватности",
     "actionBlocked": "Сначала подтвердите пароль приватности через маску"
+  },
+  "legal": {
+    "viewPrivacyPolicy": "View privacy policy",
+    "h5NetworkNotice": "Use only on trusted local networks; devices on the same network may access the wallpaper browser."
   }
 }

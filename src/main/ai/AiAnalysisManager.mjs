@@ -102,6 +102,7 @@ export default class AiAnalysisManager {
       avgAnalysisMs,
       sampleCount,
       etaAnalysisMs,
+      recentAnalysisMs: [...samples],
       currentAnalyses,
       currentAnalysisResourceId: primary?.id || 0,
       currentAnalysisStartedAt: primary?.startedAt || 0

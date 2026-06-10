@@ -15,13 +15,14 @@ import { useAiAnalysisDashboard } from '../utils/useAiAnalysisDashboard.js'
 import clipboard from 'clipboardy'
 import AiAnalysisDashboardPanel from './AiAnalysisDashboardPanel.vue'
 import SettingFormLabelTip from './SettingFormLabelTip.vue'
+import { getLegalUrls } from '@common/legalUrls.js'
 import AiIconCopyButton from './AiIconCopyButton.vue'
 
 const props = defineProps({
   tabActive: { type: Boolean, default: true }
 })
 
-const { t } = useTranslation()
+const { t, i18next } = useTranslation()
 const settingStore = UseSettingStore()
 const { settingData } = storeToRefs(settingStore)
 
@@ -107,6 +108,9 @@ const visualEmbedRequiresApiKey = computed(() =>
 )
 const showRemoteVisualEmbedPrivacyNote = computed(() => visualEmbedRequiresApiKey.value)
 
+const legalUrls = computed(() => getLegalUrls(i18next.language))
+const openPrivacyPolicy = () => window.FBW.openUrl(legalUrls.value.privacy)
+
 const localModelHintKey = (presetId) => {
   if (!isLocalPreset(presetId)) return ''
   if (presetId === 'ollama') return 'pages.Setting.aiSetting.ollamaModelHint'
@@ -151,10 +155,11 @@ const {
   analysisStatusLabel,
   analysisStatusTooltip,
   analysisStatusTagType,
-  analysisProgressSummary,
   analysisFooterHint,
   analysisSpeedLine,
   analysisSpeedTooltip,
+  analysisSpeedSeries,
+  showAnalysisSpeedChart,
   requeueRetryableAiAnalysis
 } = useAiAnalysisDashboard(computed(() => aiForm), { tabActive: toRef(props, 'tabActive') })
 
@@ -564,10 +569,11 @@ defineExpose({ resetForm, restoreAnchorScroll })
         :status-label="analysisStatusLabel"
         :status-tooltip="analysisStatusTooltip"
         :status-tag-type="analysisStatusTagType"
-        :summary="analysisProgressSummary"
         :footer-hint="analysisFooterHint"
         :speed-line="analysisSpeedLine"
         :speed-tooltip="analysisSpeedTooltip"
+        :speed-series="analysisSpeedSeries"
+        :show-speed-chart="showAnalysisSpeedChart"
         :running="!!analysisStats?.running"
         @requeue-retryable="requeueRetryableAiAnalysis"
       />
@@ -859,7 +865,10 @@ defineExpose({ resetForm, restoreAnchorScroll })
                 />
               </el-select>
               <div v-if="showRemoteVisionPrivacyNote" class="field-hint">
-                {{ t('pages.Setting.aiSetting.remoteVisionPrivacyNote') }}
+                <span>{{ t('pages.Setting.aiSetting.remoteVisionPrivacyNote') }}</span>
+                <el-link type="primary" class="field-hint__link" @click="openPrivacyPolicy">
+                  {{ t('legal.viewPrivacyPolicy') }}
+                </el-link>
               </div>
             </div>
           </el-form-item>
@@ -1050,7 +1059,10 @@ defineExpose({ resetForm, restoreAnchorScroll })
                 />
               </el-select>
               <div v-if="showRemoteVisualEmbedPrivacyNote" class="field-hint">
-                {{ t('pages.Setting.aiSetting.remoteVisionPrivacyNote') }}
+                <span>{{ t('pages.Setting.aiSetting.remoteVisionPrivacyNote') }}</span>
+                <el-link type="primary" class="field-hint__link" @click="openPrivacyPolicy">
+                  {{ t('legal.viewPrivacyPolicy') }}
+                </el-link>
               </div>
             </div>
           </el-form-item>
@@ -1373,6 +1385,11 @@ defineExpose({ resetForm, restoreAnchorScroll })
   color: var(--el-text-color-secondary);
   font-size: 12px;
   line-height: 1.5;
+
+  &__link {
+    margin-left: 6px;
+    vertical-align: baseline;
+  }
 }
 
 .timeout-unit {

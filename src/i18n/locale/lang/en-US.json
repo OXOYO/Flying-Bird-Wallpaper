@@ -143,6 +143,11 @@
         "analysisProgressCardDesc": "Vision analysis generates tags, scores, and descriptions. Text embeddings are written async after each success; visual vectors are backfilled by built-in MobileCLIP or a remote model. The queue runs continuously while backlog exists—speed depends on model, concurrency, and timeout.",
         "analysisProgressSummary": "{done} / {total} images done ({percent}%)",
         "analysisProgressCount": "{done} / {total} images",
+        "analysisProgressCountOrder": "Order: analyzed / failed / skipped / total",
+        "analysisProgressUnit": "images",
+        "analysisProgressTotalHint": "{total} images in total",
+        "analysisProgressPercentHint": "Right {percent}% is the analyzed share",
+        "analysisProgressBreakdown": "Analyzed {done} · Failed {failed} · Skipped {skipped}",
         "analysisDurationSec": "{sec} sec",
         "analysisDurationMin": "{min} min",
         "analysisDurationHour": "{hour} h",
@@ -154,6 +159,9 @@
         "analysisSpeedEta": "{duration} left",
         "analysisSpeedGathering": "Measuring speed…",
         "analysisSpeedTooltip": "Based on recent successful vision-only analysis times (excludes embedding); remaining time is estimated from pending count",
+        "analysisSpeedChartLive": "Live throughput",
+        "analysisSpeedChartAvg": "Recent average",
+        "analysisSpeedChartLegend": "Lines: blue = live throughput (img/min), orange = recent average speed.",
         "visualEmbedBackfillRunning": "Visual vectors backfilling, {pending} left",
         "visualEmbedBackfillPending": "{pending} images pending visual vectors",
         "visualEmbedBackfillDone": "Visual vectors complete (current model)",
@@ -732,7 +740,11 @@
       "version": "Version",
       "github": "GitHub",
       "email": "Email",
-      "sponsor": "Sponsor"
+      "sponsor": "Sponsor",
+      "legal": "Legal",
+      "privacyPolicy": "Privacy policy",
+      "disclaimer": "Disclaimer",
+      "openSourceLicense": "Open-source license (MIT)"
     }
   },
   "messages": {
@@ -1362,5 +1374,9 @@
         "sponsor": "Sponsor"
       }
     }
+  },
+  "legal": {
+    "viewPrivacyPolicy": "View privacy policy",
+    "h5NetworkNotice": "Use only on trusted local networks; devices on the same network may access the wallpaper browser."
   }
 }

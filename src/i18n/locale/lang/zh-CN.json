@@ -143,6 +143,11 @@
         "analysisProgressCardDesc": "为本地图片生成标签、评分与描述（视觉分析）。文本向量在分析后异步写入；画面向量由内置 MobileCLIP 或远程模型独立补算。后台有待分析时会连续处理，速度取决于模型、并发与超时。",
         "analysisProgressSummary": "已完成 {done} / {total} 张（{percent}%）",
         "analysisProgressCount": "{done} / {total} 张",
+        "analysisProgressCountOrder": "依次为已分析 / 失败 / 跳过 / 总数",
+        "analysisProgressUnit": "张",
+        "analysisProgressTotalHint": "共 {total} 张",
+        "analysisProgressPercentHint": "右侧 {percent}% 为已分析占比",
+        "analysisProgressBreakdown": "已分析 {done} · 失败 {failed} · 已跳过 {skipped}",
         "analysisDurationSec": "{sec} 秒",
         "analysisDurationMin": "{min} 分钟",
         "analysisDurationHour": "{hour} 小时",
@@ -154,6 +159,9 @@
         "analysisSpeedEta": "剩余 {duration}",
         "analysisSpeedGathering": "速度统计中…",
         "analysisSpeedTooltip": "仅统计最近成功完成的视觉分析耗时（不含向量化）；剩余时间为按待分析数量估算",
+        "analysisSpeedChartLive": "实时吞吐",
+        "analysisSpeedChartAvg": "近期平均",
+        "analysisSpeedChartLegend": "折线：蓝=本轮吞吐（张/分），橙=近期平均速度。",
         "visualEmbedBackfillRunning": "画面向量补算中，剩余 {pending} 张",
         "visualEmbedBackfillPending": "画面向量待补算 {pending} 张",
         "visualEmbedBackfillDone": "画面向量已补全（当前模型）",
@@ -732,7 +740,11 @@
       "version": "版本",
       "github": "GitHub",
       "email": "Email",
-      "sponsor": "赞助"
+      "sponsor": "赞助",
+      "legal": "法律信息",
+      "privacyPolicy": "隐私政策",
+      "disclaimer": "免责声明",
+      "openSourceLicense": "开源许可（MIT）"
     }
   },
   "messages": {
@@ -1362,5 +1374,9 @@
         "sponsor": "赞助"
       }
     }
+  },
+  "legal": {
+    "viewPrivacyPolicy": "查看隐私政策",
+    "h5NetworkNotice": "仅在可信局域网中使用；同网设备可能访问本机壁纸浏览服务。"
   }
 }

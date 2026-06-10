@@ -390,6 +390,11 @@
         "analysisProgressCardDesc": "로컬 이미지에 태그, 점수, 설명을 생성합니다. 임베딩은 유사 검색과 스마트 컬렉션을 지원합니다. 이미지는 백그라운드에서 하나씩 처리됩니다.",
         "analysisProgressSummary": "{done} / {total}장 완료 ({percent}%)",
         "analysisProgressCount": "{done} / {total}장",
+        "analysisProgressCountOrder": "순서: 분석 완료 / 실패 / 건너뜀 / 합계",
+        "analysisProgressUnit": "장",
+        "analysisProgressTotalHint": "총 {total}장",
+        "analysisProgressPercentHint": "오른쪽 {percent}%는 분석 완료 비율",
+        "analysisProgressBreakdown": "분석 완료 {done} · 실패 {failed} · 건너뜀 {skipped}",
         "analysisDurationSec": "{sec}초",
         "analysisDurationMin": "{min}분",
         "analysisDurationHour": "{hour}시간",
@@ -398,6 +403,9 @@
         "analysisSpeedEta": "남은 시간 {duration}",
         "analysisSpeedGathering": "속도 측정 중…",
         "analysisSpeedTooltip": "최근 성공한 시각 분석 시간만 기준(임베딩 제외). 남은 시간은 대기 수량으로 추정",
+        "analysisSpeedChartLive": "실시간 처리량",
+        "analysisSpeedChartAvg": "최근 평균",
+        "analysisSpeedChartLegend": "선: 파랑=현재 처리량(장/분), 주황=최근 평균 속도.",
         "runStatusLoading": "상태 읽는 중…",
         "runStatusRunning": "실행 중",
         "runStatusQueued": "대기 중",
@@ -620,7 +628,11 @@
       "version": "버전",
       "github": "GitHub",
       "email": "이메일",
-      "sponsor": "후원"
+      "sponsor": "후원",
+      "legal": "Legal",
+      "privacyPolicy": "Privacy policy",
+      "disclaimer": "Disclaimer",
+      "openSourceLicense": "Open-source license (MIT)"
     },
     "Collections": {
       "title": "스마트 컬렉션",
@@ -1337,5 +1349,9 @@
   "privacyNsfwMask": {
     "tapToUnlock": "탭하여 프라이버시 비밀번호 입력",
     "actionBlocked": "먼저 마스크에서 프라이버시 비밀번호를 확인하세요"
+  },
+  "legal": {
+    "viewPrivacyPolicy": "View privacy policy",
+    "h5NetworkNotice": "Use only on trusted local networks; devices on the same network may access the wallpaper browser."
   }
 }

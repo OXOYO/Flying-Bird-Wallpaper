@@ -390,6 +390,11 @@
         "analysisProgressCardDesc": "Genera tag, punteggi e descrizioni per le immagini locali. Gli embedding alimentano la ricerca simili e le raccolte intelligenti. Le immagini vengono elaborate una per una in background.",
         "analysisProgressSummary": "{done} / {total} immagini completate ({percent}%)",
         "analysisProgressCount": "{done} / {total} immagini",
+        "analysisProgressCountOrder": "Ordine: analizzate / fallite / saltate / totale",
+        "analysisProgressUnit": "immagini",
+        "analysisProgressTotalHint": "{total} immagini in totale",
+        "analysisProgressPercentHint": "A destra {percent}% = quota analizzate",
+        "analysisProgressBreakdown": "Analizzate {done} · Fallite {failed} · Saltate {skipped}",
         "analysisDurationSec": "{sec} s",
         "analysisDurationMin": "{min} min",
         "analysisDurationHour": "{hour} h",
@@ -398,6 +403,9 @@
         "analysisSpeedEta": "Rimangono {duration}",
         "analysisSpeedGathering": "Misurazione velocità…",
         "analysisSpeedTooltip": "Basato sui tempi recenti di analisi visiva riuscita (escluso l'embedding); il tempo rimanente è stimato dal conteggio in attesa",
+        "analysisSpeedChartLive": "Throughput in tempo reale",
+        "analysisSpeedChartAvg": "Media recente",
+        "analysisSpeedChartLegend": "Linee: blu = throughput in tempo reale (img/min), arancione = velocità media recente.",
         "runStatusLoading": "Caricamento stato…",
         "runStatusRunning": "In esecuzione",
         "runStatusQueued": "In attesa",
@@ -620,7 +628,11 @@
       "version": "Versione",
       "github": "GitHub",
       "email": "Email",
-      "sponsor": "Sponsor"
+      "sponsor": "Sponsor",
+      "legal": "Legal",
+      "privacyPolicy": "Privacy policy",
+      "disclaimer": "Disclaimer",
+      "openSourceLicense": "Open-source license (MIT)"
     },
     "Collections": {
       "title": "Raccolte intelligenti",
@@ -1337,5 +1349,9 @@
   "privacyNsfwMask": {
     "tapToUnlock": "Tocca per inserire la password privacy",
     "actionBlocked": "Verifica prima la password privacy tramite il layer nascosto"
+  },
+  "legal": {
+    "viewPrivacyPolicy": "View privacy policy",
+    "h5NetworkNotice": "Use only on trusted local networks; devices on the same network may access the wallpaper browser."
   }
 }

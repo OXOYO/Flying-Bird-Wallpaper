@@ -390,6 +390,11 @@
         "analysisProgressCardDesc": "Erzeugt Tags, Bewertungen und Beschreibungen für lokale Bilder. Vektoren ermöglichen Ähnlichkeitssuche und intelligente Sammlungen. Bilder werden nacheinander im Hintergrund verarbeitet.",
         "analysisProgressSummary": "{done} / {total} Bilder fertig ({percent} %)",
         "analysisProgressCount": "{done} / {total} Bilder",
+        "analysisProgressCountOrder": "Reihenfolge: analysiert / fehlgeschlagen / übersprungen / gesamt",
+        "analysisProgressUnit": "Bilder",
+        "analysisProgressTotalHint": "Insgesamt {total} Bilder",
+        "analysisProgressPercentHint": "Rechts {percent}% = Anteil analysiert",
+        "analysisProgressBreakdown": "Analysiert {done} · Fehlgeschlagen {failed} · Übersprungen {skipped}",
         "analysisDurationSec": "{sec} Sek.",
         "analysisDurationMin": "{min} Min.",
         "analysisDurationHour": "{hour} Std.",
@@ -398,6 +403,9 @@
         "analysisSpeedEta": "Noch {duration}",
         "analysisSpeedGathering": "Geschwindigkeit wird gemessen…",
         "analysisSpeedTooltip": "Basierend auf kürzlich erfolgreichen rein visuellen Analysezeiten (ohne Vektorisierung); verbleibende Zeit wird aus der Warteschlangenanzahl geschätzt",
+        "analysisSpeedChartLive": "Live-Durchsatz",
+        "analysisSpeedChartAvg": "Kürzlicher Durchschnitt",
+        "analysisSpeedChartLegend": "Linien: Blau = Live-Durchsatz (Bilder/Min.), Orange = kürzliche Durchschnittsgeschwindigkeit.",
         "runStatusLoading": "Status wird geladen…",
         "runStatusRunning": "Läuft",
         "runStatusQueued": "Wartend",
@@ -620,7 +628,11 @@
       "version": "Version",
       "github": "GitHub",
       "email": "E-Mail",
-      "sponsor": "Sponsoren"
+      "sponsor": "Sponsoren",
+      "legal": "Legal",
+      "privacyPolicy": "Privacy policy",
+      "disclaimer": "Disclaimer",
+      "openSourceLicense": "Open-source license (MIT)"
     },
     "Collections": {
       "title": "Intelligente Sammlungen",
@@ -1337,5 +1349,9 @@
   "privacyNsfwMask": {
     "tapToUnlock": "Tippen, um Privatpasswort einzugeben",
     "actionBlocked": "Zuerst Privatpasswort über die Maskierung verifizieren"
+  },
+  "legal": {
+    "viewPrivacyPolicy": "View privacy policy",
+    "h5NetworkNotice": "Use only on trusted local networks; devices on the same network may access the wallpaper browser."
   }
 }

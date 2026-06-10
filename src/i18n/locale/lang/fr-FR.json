@@ -390,6 +390,11 @@
         "analysisProgressCardDesc": "Génère tags, notes et descriptions pour les images locales. Les embeddings alimentent la recherche similaire et les collections intelligentes. Les images sont traitées une par une en arrière-plan.",
         "analysisProgressSummary": "{done} / {total} images terminées ({percent} %)",
         "analysisProgressCount": "{done} / {total} images",
+        "analysisProgressCountOrder": "Ordre : analysées / échecs / ignorées / total",
+        "analysisProgressUnit": "images",
+        "analysisProgressTotalHint": "{total} images au total",
+        "analysisProgressPercentHint": "À droite, {percent} % = part analysée",
+        "analysisProgressBreakdown": "Analysées {done} · Échecs {failed} · Ignorées {skipped}",
         "analysisDurationSec": "{sec} s",
         "analysisDurationMin": "{min} min",
         "analysisDurationHour": "{hour} h",
@@ -398,6 +403,9 @@
         "analysisSpeedEta": "{duration} restant",
         "analysisSpeedGathering": "Mesure de la vitesse…",
         "analysisSpeedTooltip": "Basé sur les temps d'analyse visuelle réussis récents (hors embedding) ; le temps restant est estimé à partir du nombre en attente",
+        "analysisSpeedChartLive": "Débit en direct",
+        "analysisSpeedChartAvg": "Moyenne récente",
+        "analysisSpeedChartLegend": "Lignes : bleu = débit en direct (img/min), orange = vitesse moyenne récente.",
         "runStatusLoading": "Chargement du statut…",
         "runStatusRunning": "En cours",
         "runStatusQueued": "En attente",
@@ -620,7 +628,11 @@
       "version": "Version",
       "github": "GitHub",
       "email": "E-mail",
-      "sponsor": "Sponsor"
+      "sponsor": "Sponsor",
+      "legal": "Legal",
+      "privacyPolicy": "Privacy policy",
+      "disclaimer": "Disclaimer",
+      "openSourceLicense": "Open-source license (MIT)"
     },
     "Collections": {
       "title": "Collections intelligentes",
@@ -1337,5 +1349,9 @@
   "privacyNsfwMask": {
     "tapToUnlock": "Appuyer pour entrer le mot de passe privé",
     "actionBlocked": "Vérifiez d'abord le mot de passe privé via le masque"
+  },
+  "legal": {
+    "viewPrivacyPolicy": "View privacy policy",
+    "h5NetworkNotice": "Use only on trusted local networks; devices on the same network may access the wallpaper browser."
   }
 }

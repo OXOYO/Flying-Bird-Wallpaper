@@ -24,6 +24,7 @@ import {
 } from '@common/publicData.js'
 import { localeOptions } from '@i18n/locale/index.js'
 import { useTranslation } from 'i18next-vue'
+import { getLegalUrls } from '@common/legalUrls.js'
 import { useSettingAnchorScroll } from '../utils/useSettingAnchorScroll.js'
 import { useAiAnalysisDashboard } from '../utils/useAiAnalysisDashboard.js'
 import AiAnalysisDashboardPanel from './AiAnalysisDashboardPanel.vue'
@@ -33,7 +34,10 @@ const props = defineProps({
   tabActive: { type: Boolean, default: true }
 })
 
-const { t } = useTranslation()
+const { t, i18next } = useTranslation()
+
+const legalUrls = computed(() => getLegalUrls(i18next.language))
+const openPrivacyPolicy = () => window.FBW.openUrl(legalUrls.value.privacy)
 const commonStore = UseCommonStore()
 const settingStore = UseSettingStore()
 const { commonData, resourceMap } = storeToRefs(commonStore)
@@ -47,10 +51,11 @@ const {
   analysisStatusLabel,
   analysisStatusTooltip,
   analysisStatusTagType,
-  analysisProgressSummary,
   analysisFooterHint,
   analysisSpeedLine,
   analysisSpeedTooltip,
+  analysisSpeedSeries,
+  showAnalysisSpeedChart,
   requeueRetryableAiAnalysis
 } = useAiAnalysisDashboard(computed(() => settingData.value?.ai || {}), {
   tabActive: toRef(props, 'tabActive')
@@ -505,10 +510,11 @@ defineExpose({
         :status-label="analysisStatusLabel"
         :status-tooltip="analysisStatusTooltip"
         :status-tag-type="analysisStatusTagType"
-        :summary="analysisProgressSummary"
         :footer-hint="analysisFooterHint"
         :speed-line="analysisSpeedLine"
         :speed-tooltip="analysisSpeedTooltip"
+        :speed-series="analysisSpeedSeries"
+        :show-speed-chart="showAnalysisSpeedChart"
         :running="!!analysisStats?.running"
         @requeue-retryable="requeueRetryableAiAnalysis"
       />
@@ -648,6 +654,12 @@ defineExpose({
               v-model="settingDataForm.startH5ServerOnStartup"
               @change="onSettingDataFormChange"
             />
+            <p v-if="settingDataForm.startH5ServerOnStartup" class="h5-legal-hint">
+              {{ t('legal.h5NetworkNotice') }}
+              <el-link type="primary" class="h5-legal-hint__link" @click="openPrivacyPolicy">
+                {{ t('legal.viewPrivacyPolicy') }}
+              </el-link>
+            </p>
           </el-form-item>
           <el-form-item prop="enableSegmentationTask" class="ai-form-item-labeled">
             <template #label>
@@ -1659,6 +1671,19 @@ defineExpose({
   align-items: center;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.h5-legal-hint {
+  margin: 8px 0 0;
+  max-width: 420px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--el-text-color-secondary);
+
+  &__link {
+    margin-left: 4px;
+    vertical-align: baseline;
+  }
 }
 </style>
 

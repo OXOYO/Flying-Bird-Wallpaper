@@ -390,6 +390,11 @@
         "analysisProgressCardDesc": "ローカル画像にタグ・スコア・説明を生成します。ベクトルは類似検索とスマートコレクションに使用されます。バックグラウンドで 1 枚ずつ処理されます。",
         "analysisProgressSummary": "完了 {done} / {total} 枚（{percent}%）",
         "analysisProgressCount": "{done} / {total} 枚",
+        "analysisProgressCountOrder": "順に分析済み / 失敗 / スキップ / 合計",
+        "analysisProgressUnit": "枚",
+        "analysisProgressTotalHint": "合計 {total} 枚",
+        "analysisProgressPercentHint": "右の {percent}% は分析済みの割合",
+        "analysisProgressBreakdown": "分析済み {done} · 失敗 {failed} · スキップ {skipped}",
         "analysisDurationSec": "{sec} 秒",
         "analysisDurationMin": "{min} 分",
         "analysisDurationHour": "{hour} 時間",
@@ -398,6 +403,9 @@
         "analysisSpeedEta": "残り {duration}",
         "analysisSpeedGathering": "速度を計測中…",
         "analysisSpeedTooltip": "直近の成功したビジョンのみ分析の所要時間に基づく（ベクトル化は除く）。残り時間は未分析枚数から推定",
+        "analysisSpeedChartLive": "リアルタイム処理量",
+        "analysisSpeedChartAvg": "直近平均",
+        "analysisSpeedChartLegend": "折れ線：青=今回の処理量（枚/分）、橙=直近の平均速度。",
         "runStatusLoading": "状態を読み込み中…",
         "runStatusRunning": "実行中",
         "runStatusQueued": "待機中",
@@ -620,7 +628,11 @@
       "version": "バージョン",
       "github": "GitHub",
       "email": "メール",
-      "sponsor": "スポンサー"
+      "sponsor": "スポンサー",
+      "legal": "Legal",
+      "privacyPolicy": "Privacy policy",
+      "disclaimer": "Disclaimer",
+      "openSourceLicense": "Open-source license (MIT)"
     },
     "Collections": {
       "title": "スマートコレクション",
@@ -1337,5 +1349,9 @@
   "privacyNsfwMask": {
     "tapToUnlock": "タップしてプライバシーパスワードを入力",
     "actionBlocked": "先にマスクからプライバシーパスワードを確認してください"
+  },
+  "legal": {
+    "viewPrivacyPolicy": "View privacy policy",
+    "h5NetworkNotice": "Use only on trusted local networks; devices on the same network may access the wallpaper browser."
   }
 }
