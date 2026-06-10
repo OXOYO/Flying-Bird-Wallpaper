@@ -155,10 +155,11 @@ const {
   analysisStatusLabel,
   analysisStatusTooltip,
   analysisStatusTagType,
-  analysisProgressSummary,
   analysisFooterHint,
   analysisSpeedLine,
   analysisSpeedTooltip,
+  analysisSpeedSeries,
+  showAnalysisSpeedChart,
   requeueRetryableAiAnalysis
 } = useAiAnalysisDashboard(computed(() => aiForm), { tabActive: toRef(props, 'tabActive') })
 
@@ -568,10 +569,11 @@ defineExpose({ resetForm, restoreAnchorScroll })
         :status-label="analysisStatusLabel"
         :status-tooltip="analysisStatusTooltip"
         :status-tag-type="analysisStatusTagType"
-        :summary="analysisProgressSummary"
         :footer-hint="analysisFooterHint"
         :speed-line="analysisSpeedLine"
         :speed-tooltip="analysisSpeedTooltip"
+        :speed-series="analysisSpeedSeries"
+        :show-speed-chart="showAnalysisSpeedChart"
         :running="!!analysisStats?.running"
         @requeue-retryable="requeueRetryableAiAnalysis"
       />

@@ -8,6 +8,14 @@ import { REANALYZE_MODE } from './reanalyzeScope.mjs'
 
 const ANALYSIS_SPEED_MIN_SAMPLES = 3
 const AI_ANALYSIS_MESSAGE_BOX_CLASS = 'ai-analysis-message-box'
+const SPEED_HISTORY_MAX = 24
+
+/** 毫秒 → 张/分钟（用于 sparkline 纵轴） */
+function msToImagesPerMinute(ms) {
+  const n = Number(ms) || 0
+  if (n <= 0) return 0
+  return 60000 / n
+}
 
 /**
  * AI 分析进度侧边栏（与 AiAnalysisDashboardPanel 配套）
@@ -21,6 +29,9 @@ export function useAiAnalysisDashboard(aiSource, options = {}) {
   const analysisStats = ref(null)
   const loadingAnalysisStats = ref(false)
   let statsTimer = null
+  /** @type {{ done: number, t: number } | null} */
+  let lastPollSnapshot = null
+  const speedHistory = ref([])
 
   /** 设置侧栏 AI 分析卡片始终展示（与「启用 AI」开关无关） */
   const showAnalysisProgress = computed(() => true)
@@ -78,14 +89,6 @@ export function useAiAnalysisDashboard(aiSource, options = {}) {
 
   const analysisStatusTagType = computed(() => resolveAnalysisStatusTagType(analysisRunStatus.value))
 
-  const analysisProgressSummary = computed(() => {
-    const s = analysisStats.value
-    return t('pages.Setting.aiSetting.analysisProgressCount', {
-      done: s?.done ?? 0,
-      total: s?.total ?? 0
-    })
-  })
-
   const analysisFooterHint = computed(() => '')
 
   const nowTick = ref(Date.now())
@@ -121,7 +124,63 @@ export function useAiAnalysisDashboard(aiSource, options = {}) {
     return Math.max(0, nowTick.value - s.currentAnalysisStartedAt)
   })
 
-  const analysisSpeedTooltip = computed(() => t('pages.Setting.aiSetting.analysisSpeedTooltip'))
+  const analysisSpeedTooltip = computed(() => {
+    const base = t('pages.Setting.aiSetting.analysisSpeedTooltip')
+    const legend = t('pages.Setting.aiSetting.analysisSpeedChartLegend')
+    return legend ? `${base} ${legend}` : base
+  })
+
+  const resetSpeedHistory = () => {
+    speedHistory.value = []
+    lastPollSnapshot = null
+  }
+
+  const pushSpeedSample = (throughput, avgSpeed) => {
+    speedHistory.value.push({
+      throughput: Math.max(0, throughput),
+      avgSpeed: Math.max(0, avgSpeed)
+    })
+    if (speedHistory.value.length > SPEED_HISTORY_MAX) {
+      speedHistory.value.shift()
+    }
+  }
+
+  const ingestSpeedSample = (stats) => {
+    if (!stats) return
+    const now = Date.now()
+    const done = stats.done ?? 0
+    const avgMs = stats.avgAnalysisMs ?? 0
+    const avgSpeed = msToImagesPerMinute(avgMs)
+
+    let throughput = 0
+    if (lastPollSnapshot) {
+      const deltaDone = done - lastPollSnapshot.done
+      const deltaSec = (now - lastPollSnapshot.t) / 1000
+      if (deltaDone > 0 && deltaSec > 0) {
+        throughput = (deltaDone / deltaSec) * 60
+      }
+    }
+
+    if (stats.running || throughput > 0 || avgSpeed > 0) {
+      pushSpeedSample(throughput, avgSpeed)
+    }
+
+    lastPollSnapshot = { done, t: now }
+  }
+
+  const analysisSpeedSeries = computed(() => speedHistory.value)
+
+  const showAnalysisSpeedChart = computed(() => {
+    const s = analysisStats.value
+    return !!(s?.running || speedHistory.value.length >= 2)
+  })
+
+  watch(
+    () => !!analysisStats.value?.running,
+    (running, wasRunning) => {
+      if (running && !wasRunning) resetSpeedHistory()
+    }
+  )
 
   const analysisSpeedLine = computed(() => {
     const s = analysisStats.value
@@ -165,7 +224,10 @@ export function useAiAnalysisDashboard(aiSource, options = {}) {
     loadingAnalysisStats.value = true
     try {
       const res = await window.FBW.getAiAnalysisStats()
-      if (res?.success) analysisStats.value = res.data
+      if (res?.success) {
+        analysisStats.value = res.data
+        ingestSpeedSample(res.data)
+      }
     } finally {
       loadingAnalysisStats.value = false
     }
@@ -174,7 +236,7 @@ export function useAiAnalysisDashboard(aiSource, options = {}) {
   const resolveStatsPollIntervalMs = () => {
     const s = analysisStats.value
     const ai = unref(aiSource) || {}
-    if (s?.running) return 5000
+    if (s?.running) return 2000
     if (ai.enabled && (s?.pending ?? 0) > 0) return 10000
     const fast = ai.analysisMode === 'background_slow' || ai.analysisMode === 'new_only'
     return fast ? 10000 : 30000
@@ -308,10 +370,11 @@ export function useAiAnalysisDashboard(aiSource, options = {}) {
     analysisStatusLabel,
     analysisStatusTooltip,
     analysisStatusTagType,
-    analysisProgressSummary,
     analysisFooterHint,
     analysisSpeedLine,
     analysisSpeedTooltip,
+    analysisSpeedSeries,
+    showAnalysisSpeedChart,
     fetchAnalysisStats,
     startStatsPolling,
     stopStatsPolling,

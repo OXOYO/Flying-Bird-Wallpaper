@@ -1,5 +1,7 @@
 <script setup>
+import { computed } from 'vue'
 import { useTranslation } from 'i18next-vue'
+import AnalysisSpeedSparkline from './AnalysisSpeedSparkline.vue'
 
 const props = defineProps({
   loading: { type: Boolean, default: false },
@@ -7,12 +9,13 @@ const props = defineProps({
   percent: { type: Number, default: 0 },
   statusLabel: { type: String, default: '' },
   statusTagType: { type: String, default: 'info' },
-  summary: { type: String, default: '' },
   footerHint: { type: String, default: '' },
   running: { type: Boolean, default: false },
   statusTooltip: { type: String, default: '' },
   speedLine: { type: String, default: '' },
-  speedTooltip: { type: String, default: '' }
+  speedTooltip: { type: String, default: '' },
+  speedSeries: { type: Array, default: () => [] },
+  showSpeedChart: { type: Boolean, default: false }
 })
 
 const emit = defineEmits(['requeueRetryable'])
@@ -32,6 +35,77 @@ const titleTooltipPopperOptions = {
     }
   ]
 }
+
+const MIN_ISSUE_SEGMENT_PX = 3
+
+const progressSegments = computed(() => {
+  const s = props.stats
+  if (!s) return []
+
+  const done = s.done ?? 0
+  const pending = s.pending ?? 0
+  const failed = s.failed ?? 0
+  const skipped = s.skipped ?? 0
+  const total = s.total ?? done + pending + failed + skipped
+  if (!total) return []
+
+  const isComplete = props.percent >= 100 && total > 0
+  const items = [
+    { key: 'done', count: done, tone: isComplete ? 'success' : 'done' },
+    { key: 'failed', count: failed, tone: 'failed', minPx: MIN_ISSUE_SEGMENT_PX },
+    { key: 'skipped', count: skipped, tone: 'skipped', minPx: MIN_ISSUE_SEGMENT_PX }
+  ]
+
+  return items.filter((item) => item.count > 0)
+})
+
+const progressCounts = computed(() => {
+  const s = props.stats
+  if (!s) return []
+
+  const done = s.done ?? 0
+  const pending = s.pending ?? 0
+  const failed = s.failed ?? 0
+  const skipped = s.skipped ?? 0
+  const total = s.total ?? done + pending + failed + skipped
+  const isComplete = props.percent >= 100 && total > 0
+
+  return [
+    { key: 'done', value: done, tone: isComplete ? 'success' : 'done' },
+    { key: 'failed', value: failed, tone: 'failed' },
+    { key: 'skipped', value: skipped, tone: 'skipped' }
+  ]
+})
+
+const progressTotal = computed(() => {
+  const s = props.stats
+  if (!s) return 0
+  const done = s.done ?? 0
+  const pending = s.pending ?? 0
+  const failed = s.failed ?? 0
+  const skipped = s.skipped ?? 0
+  return s.total ?? done + pending + failed + skipped
+})
+
+const progressSummaryTooltip = computed(() => {
+  const s = props.stats
+  if (!s) return ''
+
+  const done = s.done ?? 0
+  const failed = s.failed ?? 0
+  const skipped = s.skipped ?? 0
+  const total = progressTotal.value
+
+  const lines = [
+    t('pages.Setting.aiSetting.analysisProgressCountOrder'),
+    t('pages.Setting.aiSetting.analysisProgressBreakdown', { done, failed, skipped }),
+    t('pages.Setting.aiSetting.analysisProgressTotalHint', { total }),
+    t('pages.Setting.aiSetting.analysisProgressPercentHint', { percent: props.percent })
+  ]
+  if (failed > 0) lines.push(t('pages.Setting.aiSetting.statFailedHint'))
+  if (skipped > 0) lines.push(t('pages.Setting.aiSetting.statSkippedHint'))
+  return lines.join('\n')
+})
 </script>
 
 <template>
@@ -49,39 +123,120 @@ const titleTooltipPopperOptions = {
           {{ t('pages.Setting.aiSetting.analysisProgressCardTitle') }}
         </h4>
       </el-tooltip>
-      <el-tooltip
-        v-if="statusLabel"
-        :content="statusTooltip"
-        placement="top"
-        :disabled="!statusTooltip"
-        :show-after="300"
-        popper-class="ai-setting-feature-tip"
-      >
-        <el-tag
-          :type="statusTagType"
-          size="small"
-          effect="plain"
-          class="analysis-dashboard__status-tag"
+      <div class="analysis-dashboard__head-actions">
+        <el-tooltip
+          v-if="statusLabel"
+          :content="statusTooltip"
+          placement="top"
+          :disabled="!statusTooltip"
+          :show-after="300"
+          popper-class="ai-setting-feature-tip"
         >
-          <span class="analysis-dashboard__status-dot" :class="{ 'is-pulse': running }" />
-          {{ statusLabel }}
-        </el-tag>
-      </el-tooltip>
+          <el-tag
+            :type="statusTagType"
+            size="small"
+            effect="plain"
+            class="analysis-dashboard__status-tag"
+          >
+            <span class="analysis-dashboard__status-dot" :class="{ 'is-pulse': running }" />
+            {{ statusLabel }}
+          </el-tag>
+        </el-tooltip>
+        <el-tooltip
+          :content="t('pages.Setting.aiSetting.requeueRetryableButton')"
+          placement="top"
+          :show-after="300"
+          popper-class="ai-setting-feature-tip"
+        >
+          <el-button
+            class="analysis-dashboard__requeue-btn"
+            text
+            :aria-label="t('pages.Setting.aiSetting.requeueRetryableButton')"
+            @click="emit('requeueRetryable')"
+          >
+            <IconifyIcon icon="custom:refresh-right" />
+          </el-button>
+        </el-tooltip>
+      </div>
     </div>
 
-    <div class="analysis-dashboard__progress-row">
-      <span class="analysis-dashboard__summary">{{ summary }}</span>
-      <span class="analysis-dashboard__percent">{{ percent }}%</span>
-    </div>
-    <el-progress
+    <el-tooltip
+      :content="progressSummaryTooltip"
+      placement="top-start"
+      :offset="6"
+      :show-after="300"
+      :disabled="!progressSummaryTooltip"
+      popper-class="ai-setting-feature-tip ai-analysis-dashboard-title-tip ai-analysis-dashboard-progress-tip"
+      :popper-options="titleTooltipPopperOptions"
+    >
+      <div class="analysis-dashboard__progress-row">
+        <div class="analysis-dashboard__counts">
+          <template v-for="(item, idx) in progressCounts" :key="item.key">
+            <span v-if="idx > 0" class="analysis-dashboard__count-sep">/</span>
+            <span
+              class="analysis-dashboard__count"
+              :class="[
+                `analysis-dashboard__count--${item.tone}`,
+                { 'is-zero': item.value === 0 }
+              ]"
+            >
+              {{ item.value }}
+            </span>
+          </template>
+          <template v-if="progressTotal > 0">
+            <span class="analysis-dashboard__count-sep">/</span>
+            <span class="analysis-dashboard__count analysis-dashboard__count--total">{{ progressTotal }}</span>
+            <span class="analysis-dashboard__count-unit">{{
+              t('pages.Setting.aiSetting.analysisProgressUnit')
+            }}</span>
+          </template>
+        </div>
+        <span class="analysis-dashboard__percent">{{ percent }}%</span>
+      </div>
+    </el-tooltip>
+    <div
       class="analysis-dashboard__bar"
-      :percentage="percent"
-      :stroke-width="6"
-      :show-text="false"
-      :striped="running"
-      :striped-flow="running"
-      :status="running ? undefined : percent >= 100 && stats?.total ? 'success' : undefined"
-    />
+      role="progressbar"
+      :aria-valuenow="percent"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      :aria-label="progressSummaryTooltip"
+    >
+      <div
+        v-for="segment in progressSegments"
+        :key="segment.key"
+        class="analysis-dashboard__bar-segment"
+          :class="[
+            `analysis-dashboard__bar-segment--${segment.tone}`
+          ]"
+        :style="{
+          flexGrow: segment.count,
+          minWidth: segment.minPx ? `${segment.minPx}px` : undefined
+        }"
+      />
+    </div>
+
+    <el-tooltip
+      v-if="showSpeedChart"
+      :content="speedTooltip"
+      placement="top-start"
+      :show-after="300"
+      :disabled="!speedTooltip"
+      popper-class="ai-setting-feature-tip ai-analysis-dashboard-title-tip"
+      :popper-options="titleTooltipPopperOptions"
+    >
+      <div class="analysis-dashboard__chart-wrap">
+        <AnalysisSpeedSparkline :series="speedSeries" :active="running" />
+        <div v-if="showSpeedChart" class="analysis-dashboard__chart-legend">
+          <span class="analysis-dashboard__legend-item analysis-dashboard__legend-item--live">
+            {{ t('pages.Setting.aiSetting.analysisSpeedChartLive') }}
+          </span>
+          <span class="analysis-dashboard__legend-item analysis-dashboard__legend-item--avg">
+            {{ t('pages.Setting.aiSetting.analysisSpeedChartAvg') }}
+          </span>
+        </div>
+      </div>
+    </el-tooltip>
 
     <el-tooltip
       v-if="speedLine"
@@ -94,47 +249,6 @@ const titleTooltipPopperOptions = {
     >
       <p class="analysis-dashboard__speed">{{ speedLine }}</p>
     </el-tooltip>
-
-    <div class="analysis-dashboard__chips">
-      <span class="stat-chip stat-chip--done">
-        {{ t('pages.Setting.aiSetting.statDoneLabel') }} {{ stats?.done ?? 0 }}
-      </span>
-      <span class="stat-chip stat-chip--pending">
-        {{ t('pages.Setting.aiSetting.statPendingLabel') }} {{ stats?.pending ?? 0 }}
-      </span>
-      <el-tooltip
-        :content="t('pages.Setting.aiSetting.statFailedHint')"
-        placement="top"
-        :disabled="!(stats?.failed > 0)"
-        :show-after="300"
-        popper-class="ai-setting-feature-tip"
-      >
-        <span class="stat-chip stat-chip--failed">
-          {{ t('pages.Setting.aiSetting.statFailedLabel') }} {{ stats?.failed ?? 0 }}
-        </span>
-      </el-tooltip>
-      <el-tooltip
-        :content="t('pages.Setting.aiSetting.statSkippedHint')"
-        placement="top"
-        :disabled="!(stats?.skipped > 0)"
-        :show-after="300"
-        popper-class="ai-setting-feature-tip"
-      >
-        <span class="stat-chip stat-chip--skipped">
-          {{ t('pages.Setting.aiSetting.statSkippedLabel') }} {{ stats?.skipped ?? 0 }}
-        </span>
-      </el-tooltip>
-    </div>
-
-    <el-button
-      class="analysis-dashboard__requeue-btn"
-      type="primary"
-      size="small"
-      text
-      @click="emit('requeueRetryable')"
-    >
-      {{ t('pages.Setting.aiSetting.requeueRetryableButton') }}
-    </el-button>
 
     <p v-if="footerHint" class="analysis-dashboard__footer-hint">{{ footerHint }}</p>
   </div>
@@ -168,12 +282,21 @@ const titleTooltipPopperOptions = {
   text-overflow: ellipsis;
 }
 
-.analysis-dashboard__status-tag {
+.analysis-dashboard__head-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   flex-shrink: 0;
+  max-width: 58%;
+}
+
+.analysis-dashboard__status-tag {
+  flex-shrink: 1;
+  min-width: 0;
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  max-width: 52%;
+  max-width: 100%;
   height: 20px;
   padding: 0 6px;
   font-size: 10px;
@@ -218,26 +341,134 @@ const titleTooltipPopperOptions = {
   margin-bottom: 4px;
   font-size: 10px;
   line-height: 1.35;
+  cursor: help;
+}
+
+.analysis-dashboard__counts {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.analysis-dashboard__count {
+  font-size: 11px;
+  font-weight: 600;
+
+  &--done {
+    color: var(--el-color-primary);
+  }
+
+  &--success {
+    color: var(--el-color-success);
+  }
+
+  &--failed {
+    color: var(--el-color-danger);
+  }
+
+  &--skipped {
+    color: var(--el-text-color-placeholder);
+  }
+
+  &.is-zero {
+    opacity: 0.42;
+    font-weight: 500;
+  }
+
+  &--total {
+    color: var(--el-text-color-primary);
+  }
+}
+
+.analysis-dashboard__count-unit {
+  margin-left: 2px;
+  font-size: 10px;
+  font-weight: 400;
   color: var(--el-text-color-secondary);
 }
 
-.analysis-dashboard__summary {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.analysis-dashboard__count-sep {
+  margin: 0 1px;
+  color: var(--el-text-color-placeholder);
+  font-weight: 400;
 }
 
 .analysis-dashboard__percent {
   flex-shrink: 0;
   font-size: 12px;
   font-weight: 600;
+  line-height: 1.35;
   color: var(--el-text-color-primary);
 }
 
 .analysis-dashboard__bar {
+  display: flex;
+  height: 6px;
   margin-bottom: 6px;
+  border-radius: 100px;
+  overflow: hidden;
+  background: var(--el-border-color-extra-light);
+}
+
+.analysis-dashboard__bar-segment {
+  flex-shrink: 0;
+  height: 100%;
+  min-width: 0;
+  transition: flex-grow 0.25s ease;
+
+  &--done {
+    background: var(--el-color-primary);
+  }
+
+  &--success {
+    background: var(--el-color-success);
+  }
+
+  &--failed {
+    background: var(--el-color-danger);
+  }
+
+  &--skipped {
+    background: var(--el-text-color-placeholder);
+  }
+}
+
+.analysis-dashboard__chart-wrap {
+  margin-bottom: 4px;
+}
+
+.analysis-dashboard__chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: 9px;
+  line-height: 1.2;
+  color: var(--el-text-color-secondary);
+}
+
+.analysis-dashboard__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  &::before {
+    content: '';
+    width: 12px;
+    height: 2px;
+    border-radius: 1px;
+  }
+
+  &--live::before {
+    background: var(--el-color-primary);
+  }
+
+  &--avg::before {
+    background: #e8a87c;
+  }
 }
 
 .analysis-dashboard__speed {
@@ -252,44 +483,28 @@ const titleTooltipPopperOptions = {
   overflow: hidden;
 }
 
-.analysis-dashboard__chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.stat-chip {
-  padding: 2px 5px;
-  border-radius: 4px;
-  font-size: 10px;
-  line-height: 1.3;
-  background: var(--el-fill-color-light);
-  border: 1px solid var(--el-border-color-lighter);
-  white-space: nowrap;
-
-  &--done {
-    color: var(--el-color-success);
-  }
-
-  &--pending {
-    color: var(--el-color-warning);
-  }
-
-  &--failed {
-    color: var(--el-color-danger);
-  }
-
-  &--skipped {
-    color: var(--el-text-color-secondary);
-  }
-
-}
-
 .analysis-dashboard__requeue-btn {
-  margin-top: 8px;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
   padding: 0;
-  height: auto;
-  font-size: 11px;
+  margin: 0;
+  border: 1px solid var(--el-color-primary-light-5);
+  border-radius: 4px;
+  color: var(--el-color-primary);
+  background: transparent;
+
+  &:hover,
+  &:focus-visible {
+    color: var(--el-color-primary);
+    border-color: var(--el-color-primary-light-3);
+    background: var(--el-color-primary-light-9);
+  }
+
+  :deep(svg) {
+    width: 12px;
+    height: 12px;
+  }
 }
 
 .analysis-dashboard__footer-hint {
@@ -306,5 +521,9 @@ const titleTooltipPopperOptions = {
 <style lang="scss">
 .ai-analysis-dashboard-title-tip {
   max-width: 172px !important;
+}
+
+.ai-analysis-dashboard-progress-tip {
+  white-space: pre-line;
 }
 </style>

@@ -51,10 +51,11 @@ const {
   analysisStatusLabel,
   analysisStatusTooltip,
   analysisStatusTagType,
-  analysisProgressSummary,
   analysisFooterHint,
   analysisSpeedLine,
   analysisSpeedTooltip,
+  analysisSpeedSeries,
+  showAnalysisSpeedChart,
   requeueRetryableAiAnalysis
 } = useAiAnalysisDashboard(computed(() => settingData.value?.ai || {}), {
   tabActive: toRef(props, 'tabActive')
@@ -509,10 +510,11 @@ defineExpose({
         :status-label="analysisStatusLabel"
         :status-tooltip="analysisStatusTooltip"
         :status-tag-type="analysisStatusTagType"
-        :summary="analysisProgressSummary"
         :footer-hint="analysisFooterHint"
         :speed-line="analysisSpeedLine"
         :speed-tooltip="analysisSpeedTooltip"
+        :speed-series="analysisSpeedSeries"
+        :show-speed-chart="showAnalysisSpeedChart"
         :running="!!analysisStats?.running"
         @requeue-retryable="requeueRetryableAiAnalysis"
       />
