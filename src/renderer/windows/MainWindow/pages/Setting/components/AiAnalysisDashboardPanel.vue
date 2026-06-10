@@ -53,10 +53,16 @@ const progressSegments = computed(() => {
   const items = [
     { key: 'done', count: done, tone: isComplete ? 'success' : 'done' },
     { key: 'failed', count: failed, tone: 'failed', minPx: MIN_ISSUE_SEGMENT_PX },
-    { key: 'skipped', count: skipped, tone: 'skipped', minPx: MIN_ISSUE_SEGMENT_PX }
+    { key: 'skipped', count: skipped, tone: 'skipped', minPx: MIN_ISSUE_SEGMENT_PX },
+    { key: 'pending', count: pending, tone: 'pending' }
   ]
 
-  return items.filter((item) => item.count > 0)
+  return items
+    .filter((item) => item.count > 0)
+    .map((item) => ({
+      ...item,
+      widthPercent: (item.count / total) * 100
+    }))
 })
 
 const progressCounts = computed(() => {
@@ -210,7 +216,7 @@ const progressSummaryTooltip = computed(() => {
             `analysis-dashboard__bar-segment--${segment.tone}`
           ]"
         :style="{
-          flexGrow: segment.count,
+          width: `${segment.widthPercent}%`,
           minWidth: segment.minPx ? `${segment.minPx}px` : undefined
         }"
       />
@@ -417,7 +423,7 @@ const progressSummaryTooltip = computed(() => {
   flex-shrink: 0;
   height: 100%;
   min-width: 0;
-  transition: flex-grow 0.25s ease;
+  transition: width 0.25s ease;
 
   &--done {
     background: var(--el-color-primary);
@@ -433,6 +439,10 @@ const progressSummaryTooltip = computed(() => {
 
   &--skipped {
     background: var(--el-text-color-placeholder);
+  }
+
+  &--pending {
+    background: transparent;
   }
 }
 
