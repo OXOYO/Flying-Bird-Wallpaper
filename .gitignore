@@ -5,6 +5,8 @@
 
 !docs/
 !docs/*
+!docs/legal/
+!docs/legal/**
 
 !README.md
 !README_ZH.md
