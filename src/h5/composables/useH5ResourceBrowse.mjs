@@ -101,11 +101,12 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 /**
  * 收藏 / 回忆 / 合集详情共用浏览逻辑（从 search 页抽取）
  * @param {{
- *   browseType: 'favorites' | 'history' | 'collection' | 'recommend',
+ *   browseType: 'favorites' | 'history' | 'collection' | 'recommend' | import('vue').Ref<string>,
  *   collectionId?: import('vue').Ref|null,
  *   displayModeStorageKey: string,
  *   removeOnUnfavorite?: boolean,
  *   pageClass?: string
+ *   nsfwPageKey?: string
  * }} options
  */
 export function useH5ResourceBrowse(options) {
@@ -115,7 +116,8 @@ export function useH5ResourceBrowse(options) {
     displayModeStorageKey,
     removeOnUnfavorite = false,
     pageClass = 'page-browse',
-    openPrivacyPasswordDialog = null
+    openPrivacyPasswordDialog = null,
+    nsfwPageKey = ''
   } = options
 
   const { t } = useTranslation()
@@ -128,9 +130,13 @@ export function useH5ResourceBrowse(options) {
     displaySize: readH5DisplaySize()
   })
 
-  const showBrowseSearch = browseType === 'favorites' || browseType === 'history'
+  const getBrowseType = () => unref(browseType)
+
+  const showBrowseSearch = computed(
+    () => getBrowseType() === 'favorites' || getBrowseType() === 'history'
+  )
   /** 收藏页顶栏：进入/退出隐私空间浏览模式 */
-  const enablePrivacySpaceToolbar = browseType === 'favorites'
+  const enablePrivacySpaceToolbar = computed(() => getBrowseType() === 'favorites')
   /** 长按菜单：加入/移出隐私空间（收藏、回忆、合集） */
   const showPrivacySpaceActions = true
 
@@ -152,6 +158,7 @@ export function useH5ResourceBrowse(options) {
 
   const nsfwMask = usePrivacyNsfwMask({
     settingData,
+    pageKey: nsfwPageKey,
     inPrivacySpace,
     hasPrivacyPassword: () => api.hasPrivacyPassword(),
     openPasswordDialog: () => openPrivacyPasswordDialog?.(),
@@ -263,7 +270,7 @@ export function useH5ResourceBrowse(options) {
 
   const buildSimilarScope = () =>
     buildH5BrowseSimilarScope({
-      browseType,
+      browseType: getBrowseType(),
       inPrivacySpace: inPrivacySpace.value,
       collectionId: unref(collectionId)
     })
@@ -840,10 +847,11 @@ export function useH5ResourceBrowse(options) {
   }
 
   const fetchBrowsePage = async (startPage, pageSize) => {
-    if (browseType === 'recommend') {
+    const type = getBrowseType()
+    if (type === 'recommend') {
       return fetchRecommendPageWithRetry({ startPage, pageSize, resourceName: 'resources' })
     }
-    if (browseType === 'collection') {
+    if (type === 'collection') {
       const id = unref(collectionId)
       return fetchCollectionPageWithRetry({ id, startPage, pageSize })
     }
@@ -851,7 +859,7 @@ export function useH5ResourceBrowse(options) {
       .trim()
       .replace(/^#+/, '')
     const resourceName =
-      browseType === 'history' ? 'history' : inPrivacySpace.value ? 'privacy_space' : 'favorites'
+      type === 'history' ? 'history' : inPrivacySpace.value ? 'privacy_space' : 'favorites'
     return fetchSearchPageWithRetry({
       resourceType: 'localResource',
       resourceName,
@@ -939,10 +947,11 @@ export function useH5ResourceBrowse(options) {
   }
 
   const extractPageRows = (res) => {
-    if (browseType === 'collection') {
+    const type = getBrowseType()
+    if (type === 'collection') {
       return Array.isArray(res?.data?.items) ? res.data.items : []
     }
-    if (browseType === 'recommend') {
+    if (type === 'recommend') {
       return Array.isArray(res?.data?.list) ? res.data.list : []
     }
     return Array.isArray(res?.data?.list) ? res.data.list : []
@@ -950,10 +959,11 @@ export function useH5ResourceBrowse(options) {
 
   const isBrowseResponseValid = (res) => {
     if (!res?.success) return false
-    if (browseType === 'collection') {
+    const type = getBrowseType()
+    if (type === 'collection') {
       return Array.isArray(res?.data?.items)
     }
-    if (browseType === 'recommend') {
+    if (type === 'recommend') {
       return Array.isArray(res?.data?.list)
     }
     return Array.isArray(res?.data?.list)
@@ -1003,7 +1013,7 @@ export function useH5ResourceBrowse(options) {
       return
     }
     if (state.loading) return
-    if (browseType === 'collection' && !unref(collectionId)) {
+    if (getBrowseType() === 'collection' && !unref(collectionId)) {
       state.finished = true
       return
     }
@@ -1106,13 +1116,13 @@ export function useH5ResourceBrowse(options) {
   }
 
   const removeItemAfterUnfavorite = (item) => {
-    if (!removeOnUnfavorite || browseType !== 'favorites') return
+    if (!removeOnUnfavorite || getBrowseType() !== 'favorites') return
     removeSelectedItemFromList(item)
   }
 
   const onToggleFavorite = async (item) => {
     if (blockIfNsfwMasked(item)) return
-    const isPrivacy = enablePrivacySpaceToolbar && inPrivacySpace.value
+    const isPrivacy = enablePrivacySpaceToolbar.value && inPrivacySpace.value
     const wasFavorite = !!item.isFavorite
     const res = wasFavorite
       ? await api.removeFavorites(item, isPrivacy)
@@ -1519,8 +1529,9 @@ export function useH5ResourceBrowse(options) {
 
   /** 迷你顶栏右侧按钮数量不同，预留宽度 */
   const immersiveIndicatorChromeInsetClass = computed(() => {
-    if (browseType === 'collection') return 'h5-page-indicator--in-chrome-r3'
-    if (browseType === 'favorites') return 'h5-page-indicator--in-chrome-r3'
+    const type = getBrowseType()
+    if (type === 'collection') return 'h5-page-indicator--in-chrome-r3'
+    if (type === 'favorites') return 'h5-page-indicator--in-chrome-r3'
     return 'h5-page-indicator--in-chrome-r2'
   })
 
@@ -1919,11 +1930,16 @@ export function useH5ResourceBrowse(options) {
     }
   )
 
+  watch(
+    () => unref(browseType),
+    (next, prev) => {
+      if (next !== prev) void reload()
+    }
+  )
+
   if (collectionId) {
     watch(collectionId, (id, prev) => {
-      if (id != null && id !== '' && id !== prev) {
-        void reload()
-      }
+      if (id !== prev) void reload()
     })
   }
 
@@ -2663,7 +2679,7 @@ export function useH5ResourceBrowse(options) {
 
   onDeactivated(() => {
     lockNsfwMaskPage()
-    if (browseType === 'favorites' && inPrivacySpace.value) {
+    if (getBrowseType() === 'favorites' && inPrivacySpace.value) {
       void exitPrivacySpace()
     }
     persistWaterfallScrollPosition()
@@ -2713,7 +2729,7 @@ export function useH5ResourceBrowse(options) {
   })
 
   return {
-    browseType,
+    browseType: computed(() => getBrowseType()),
     pageClass,
     H5_OVERLAY_Z,
     JUMP_DIALOG_TOP_VAR,

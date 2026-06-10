@@ -59,9 +59,11 @@ const viewImageOptions = { button: true, backdrop: true }
 const {
   shouldMaskItem,
   onMaskClick: onNsfwMaskClick,
+  lockPage: lockNsfwMaskPage,
   isActionBlocked: isNsfwActionBlocked
 } = usePrivacyNsfwMask({
   settingData,
+  pageKey: 'desktop:Collections',
   hasPrivacyPassword: () => window.FBW.hasPrivacyPassword(),
   openPasswordDialog: () => privacyPasswordDialogRef.value?.open(),
   checkPrivacyPassword: (pwd) => window.FBW.checkPrivacyPassword(pwd),
@@ -949,6 +951,7 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  lockNsfwMaskPage()
   exploreCardVideo.setUnmounting(true)
   exploreCardVideo.cleanupVideos()
   unbindResizeObserver()

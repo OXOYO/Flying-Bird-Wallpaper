@@ -80,6 +80,7 @@ const {
   isActionBlocked: isNsfwActionBlocked
 } = usePrivacyNsfwMask({
   settingData,
+  pageKey: 'h5:search',
   hasPrivacyPassword: () => api.hasPrivacyPassword(),
   openPasswordDialog: () => privacyPasswordDialogRef.value?.open(),
   checkPrivacyPassword: (pwd) => api.checkPrivacyPassword(pwd),

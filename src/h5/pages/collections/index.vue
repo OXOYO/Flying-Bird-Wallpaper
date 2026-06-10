@@ -646,10 +646,10 @@ onMounted(() => {
 
     <H5ResourceBrowseView
       v-if="showBrowseView"
-      :key="`${browseBrowseType}-${selectedId || 'for_you'}`"
       ref="browseRef"
       :browse-type="browseBrowseType"
       :collection-id="selectedId"
+      nsfw-page-key="h5:collections"
       display-mode-storage-key="fbw_h5_collections_display_mode"
       hide-chrome
       :external-toolbar-ref="headerRef"

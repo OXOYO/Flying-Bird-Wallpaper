@@ -13,6 +13,7 @@ defineExpose({
   <H5ResourceBrowseView
     ref="browseRef"
     browse-type="favorites"
+    nsfw-page-key="h5:favorites"
     display-mode-storage-key="fbw_h5_favorites_display_mode"
     :remove-on-unfavorite="true"
   />

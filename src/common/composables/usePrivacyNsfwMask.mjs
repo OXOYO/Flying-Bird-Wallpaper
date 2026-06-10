@@ -3,11 +3,18 @@ import {
   isNsfwMaskFeatureActive,
   shouldApplyNsfwMask
 } from '../privacyNsfwMask.js'
+import {
+  isNsfwPageUnlocked,
+  unlockNsfwPage,
+  lockNsfwPage as lockNsfwPageSession,
+  lockAllNsfwPages
+} from '../privacyNsfwUnlockSession.mjs'
 
 /**
  * 隐私空间设置：NSFW 内容隐藏（页内解锁，切页/切后台后恢复；已进入隐私空间时不隐藏）
  * @param {{
  *   settingData: import('vue').Ref|import('vue').ComputedRef,
+ *   pageKey?: string,
  *   inPrivacySpace?: import('vue').Ref|import('vue').ComputedRef|boolean|(() => boolean),
  *   hasPrivacyPassword: () => Promise<{ success?: boolean, data?: boolean }>,
  *   openPasswordDialog: () => Promise<string|null>,
@@ -17,8 +24,26 @@ import {
  * }} ctx
  */
 export function usePrivacyNsfwMask(ctx) {
-  const pageUnlocked = ref(false)
+  const pageKey = ctx.pageKey || ''
+  const pageUnlockedLocal = ref(false)
+  const unlockVersion = ref(0)
   const hasPassword = ref(false)
+
+  const isPageUnlocked = () => {
+    void unlockVersion.value
+    if (pageKey) return isNsfwPageUnlocked(pageKey)
+    return pageUnlockedLocal.value
+  }
+
+  const setPageUnlocked = (value) => {
+    if (pageKey) {
+      if (value) unlockNsfwPage(pageKey)
+      else lockNsfwPageSession(pageKey)
+    } else {
+      pageUnlockedLocal.value = value
+    }
+    unlockVersion.value += 1
+  }
 
   const resolveSetting = () => {
     const raw = ctx.settingData
@@ -39,8 +64,9 @@ export function usePrivacyNsfwMask(ctx) {
   /** 供模板顶层绑定，确保 setting / 密码状态变化时重新渲染 */
   const shouldMaskItem = computed(() => {
     const fa = featureActive.value
-    const pu = pageUnlocked.value
+    void unlockVersion.value
     const ips = resolveInPrivacySpace()
+    const pu = isPageUnlocked()
     return (item) =>
       shouldApplyNsfwMask(item, {
         featureActive: fa,
@@ -50,7 +76,7 @@ export function usePrivacyNsfwMask(ctx) {
   })
 
   const lockPage = () => {
-    pageUnlocked.value = false
+    setPageUnlocked(false)
   }
 
   const refreshHasPassword = async () => {
@@ -64,7 +90,9 @@ export function usePrivacyNsfwMask(ctx) {
 
   const onVisibilityChange = () => {
     if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
-      lockPage()
+      lockAllNsfwPages()
+      pageUnlockedLocal.value = false
+      unlockVersion.value += 1
     }
   }
 
@@ -83,7 +111,7 @@ export function usePrivacyNsfwMask(ctx) {
 
   const unlockWithPassword = async () => {
     if (!featureActive.value) return true
-    if (pageUnlocked.value) return true
+    if (isPageUnlocked()) return true
     if (!hasPassword.value) {
       ctx.onVerifyFail?.({ errorCode: 'PRIVACY_PASSWORD_NOT_SET' })
       return false
@@ -94,7 +122,7 @@ export function usePrivacyNsfwMask(ctx) {
 
     const res = await ctx.checkPrivacyPassword?.(pwd)
     if (res?.success) {
-      pageUnlocked.value = true
+      setPageUnlocked(true)
       ctx.onUnlockSuccess?.()
       return true
     }
@@ -111,7 +139,7 @@ export function usePrivacyNsfwMask(ctx) {
   const isActionBlocked = (item) => shouldMaskItem.value(item)
 
   return {
-    pageUnlocked,
+    pageUnlocked: computed(() => isPageUnlocked()),
     featureActive,
     hasPassword,
     shouldMaskItem,

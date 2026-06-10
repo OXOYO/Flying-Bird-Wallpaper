@@ -13,6 +13,7 @@ defineExpose({
   <H5ResourceBrowseView
     ref="browseRef"
     browse-type="history"
+    nsfw-page-key="h5:history"
     display-mode-storage-key="fbw_h5_history_display_mode"
   />
 </template>

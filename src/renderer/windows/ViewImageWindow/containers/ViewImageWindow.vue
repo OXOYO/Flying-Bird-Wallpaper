@@ -23,6 +23,7 @@ const {
   refreshHasPassword
 } = usePrivacyNsfwMask({
   settingData,
+  pageKey: 'desktop:ViewImage',
   hasPrivacyPassword: () => window.FBW.hasPrivacyPassword(),
   openPasswordDialog: () => privacyPasswordDialogRef.value?.open?.(),
   checkPrivacyPassword: (pwd) => window.FBW.checkPrivacyPassword(pwd),
@@ -58,6 +59,7 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  lockPage()
   window.FBW.offSendPostData(onSendPostDataCallback)
 })
 </script>

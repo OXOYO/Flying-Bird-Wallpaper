@@ -49,21 +49,28 @@ const props = defineProps({
   externalToolbarRef: {
     type: Object,
     default: null
+  },
+  /** 与所在 H5 页面对应，切换合集/列表不重置解锁；切底部 Tab 后 onDeactivated 会锁定 */
+  nsfwPageKey: {
+    type: String,
+    default: ''
   }
 })
 
 const emit = defineEmits(['back', 'similar-change'])
 
 const collectionIdRef = toRef(props, 'collectionId')
+const browseTypeRef = toRef(props, 'browseType')
 
 const privacyPasswordDialogRef = ref(null)
 const jumpFieldRef = ref(null)
 
 const browse = useH5ResourceBrowse({
-  browseType: props.browseType,
+  browseType: browseTypeRef,
   collectionId: collectionIdRef,
   displayModeStorageKey: props.displayModeStorageKey,
   removeOnUnfavorite: props.removeOnUnfavorite,
+  nsfwPageKey: props.nsfwPageKey,
   openPrivacyPasswordDialog: () => privacyPasswordDialogRef.value?.open()
 })
 
@@ -206,7 +213,9 @@ const onJumpDialogOpened = () => {
   scheduleDialogInputFocus(() => jumpFieldRef.value)
 }
 
-const isPrivacySpaceUi = computed(() => enablePrivacySpaceToolbar && inPrivacySpace.value)
+const isPrivacySpaceUi = computed(
+  () => enablePrivacySpaceToolbar.value && inPrivacySpace.value
+)
 
 const showBrowseListEmpty = computed(
   () => state.finished && !state.loading && !list.value.length
@@ -219,7 +228,7 @@ const privacySpaceToggleTitle = computed(() =>
 )
 
 const onTogglePrivacySpace = async () => {
-  if (!enablePrivacySpaceToolbar) return
+  if (!enablePrivacySpaceToolbar.value) return
   if (!inPrivacySpace.value) {
     const res = await api.hasPrivacyPassword()
     if (!res?.success || !res?.data) {

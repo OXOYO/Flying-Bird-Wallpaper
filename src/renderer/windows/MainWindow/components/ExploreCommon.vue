@@ -54,6 +54,11 @@ const viewSize = 5
 const viewInfoRef = ref(null)
 const privacyPasswordDialogRef = ref(null)
 
+const props = defineProps({
+  menu: String,
+  menuParams: Object
+})
+
 const {
   shouldMaskItem,
   onMaskClick: onNsfwMaskClick,
@@ -61,6 +66,7 @@ const {
   isActionBlocked: isNsfwActionBlocked
 } = usePrivacyNsfwMask({
   settingData,
+  pageKey: `desktop:${props.menu}`,
   inPrivacySpace: () => flags.inPrivacySpace,
   hasPrivacyPassword: () => window.FBW.hasPrivacyPassword(),
   openPasswordDialog: () => privacyPasswordDialogRef.value?.open(),
@@ -87,11 +93,6 @@ const { onHorizontalWheel } = useHorizontalWheelScroll()
 const cardItemStatus = reactive({
   index: -1,
   status: null
-})
-
-const props = defineProps({
-  menu: String,
-  menuParams: Object
 })
 
 // 启用的菜单列表
