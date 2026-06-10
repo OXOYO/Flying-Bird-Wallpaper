@@ -620,7 +620,11 @@
       "version": "バージョン",
       "github": "GitHub",
       "email": "メール",
-      "sponsor": "スポンサー"
+      "sponsor": "スポンサー",
+      "legal": "Legal",
+      "privacyPolicy": "Privacy policy",
+      "disclaimer": "Disclaimer",
+      "openSourceLicense": "Open-source license (MIT)"
     },
     "Collections": {
       "title": "スマートコレクション",
@@ -1337,5 +1341,9 @@
   "privacyNsfwMask": {
     "tapToUnlock": "タップしてプライバシーパスワードを入力",
     "actionBlocked": "先にマスクからプライバシーパスワードを確認してください"
+  },
+  "legal": {
+    "viewPrivacyPolicy": "View privacy policy",
+    "h5NetworkNotice": "Use only on trusted local networks; devices on the same network may access the wallpaper browser."
   }
 }

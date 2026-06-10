@@ -620,7 +620,11 @@
       "version": "النسخة",
       "github": "جيت هب",
       "email": "البريد الإلكتروني",
-      "sponsor": "التبرع"
+      "sponsor": "التبرع",
+      "legal": "Legal",
+      "privacyPolicy": "Privacy policy",
+      "disclaimer": "Disclaimer",
+      "openSourceLicense": "Open-source license (MIT)"
     },
     "Collections": {
       "title": "مجموعات ذكية",
@@ -1337,5 +1341,9 @@
   "privacyNsfwMask": {
     "tapToUnlock": "اضغط لإدخال كلمة مرور الخصوصية",
     "actionBlocked": "تحقق من كلمة مرور الخصوصية عبر طبقة الإخفاء أولاً"
+  },
+  "legal": {
+    "viewPrivacyPolicy": "View privacy policy",
+    "h5NetworkNotice": "Use only on trusted local networks; devices on the same network may access the wallpaper browser."
   }
 }

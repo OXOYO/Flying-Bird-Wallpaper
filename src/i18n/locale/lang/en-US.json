@@ -732,7 +732,11 @@
       "version": "Version",
       "github": "GitHub",
       "email": "Email",
-      "sponsor": "Sponsor"
+      "sponsor": "Sponsor",
+      "legal": "Legal",
+      "privacyPolicy": "Privacy policy",
+      "disclaimer": "Disclaimer",
+      "openSourceLicense": "Open-source license (MIT)"
     }
   },
   "messages": {
@@ -1362,5 +1366,9 @@
         "sponsor": "Sponsor"
       }
     }
+  },
+  "legal": {
+    "viewPrivacyPolicy": "View privacy policy",
+    "h5NetworkNotice": "Use only on trusted local networks; devices on the same network may access the wallpaper browser."
   }
 }

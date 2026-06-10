@@ -1,5 +1,11 @@
 <script setup>
 import { appInfo } from '@common/config.js'
+import { getLegalUrls } from '@common/legalUrls.js'
+import { useTranslation } from 'i18next-vue'
+
+const { i18next } = useTranslation()
+
+const legalUrls = computed(() => getLegalUrls(i18next.language))
 
 const openUrl = (url) => {
   window.FBW.openUrl(url)
@@ -68,6 +74,21 @@ const openUrl = (url) => {
             {{ appInfo.afdian }}
           </el-link>
         </el-form-item>
+        <el-form-item :label="$t('pages.About.legal')">
+          <div class="about-legal-links">
+            <el-link type="primary" @click="openUrl(legalUrls.privacy)">
+              {{ $t('pages.About.privacyPolicy') }}
+            </el-link>
+            <span class="about-legal-sep">·</span>
+            <el-link type="primary" @click="openUrl(legalUrls.disclaimer)">
+              {{ $t('pages.About.disclaimer') }}
+            </el-link>
+            <span class="about-legal-sep">·</span>
+            <el-link type="primary" @click="openUrl(legalUrls.license)">
+              {{ $t('pages.About.openSourceLicense') }}
+            </el-link>
+          </div>
+        </el-form-item>
       </div>
     </el-form>
   </el-main>
@@ -76,5 +97,17 @@ const openUrl = (url) => {
 <style scoped lang="scss">
 .page-about {
   padding: 0 20px;
+}
+
+.about-legal-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.about-legal-sep {
+  color: var(--el-text-color-secondary);
+  user-select: none;
 }
 </style>

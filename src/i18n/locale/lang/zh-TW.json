@@ -645,7 +645,11 @@
       "version": "版本",
       "github": "GitHub",
       "email": "Email",
-      "sponsor": "贊助"
+      "sponsor": "贊助",
+      "legal": "法律資訊",
+      "privacyPolicy": "隱私政策",
+      "disclaimer": "免責聲明",
+      "openSourceLicense": "開源許可（MIT）"
     },
     "Collections": {
       "title": "智慧合集",
@@ -1362,5 +1366,9 @@
   "privacyNsfwMask": {
     "tapToUnlock": "點擊輸入隱私密碼以查看",
     "actionBlocked": "請先點擊遮罩層驗證隱私密碼"
+  },
+  "legal": {
+    "viewPrivacyPolicy": "查看隱私政策",
+    "h5NetworkNotice": "僅在可信區域網路中使用；同網裝置可能存取本機壁紙瀏覽服務。"
   }
 }

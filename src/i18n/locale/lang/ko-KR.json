@@ -620,7 +620,11 @@
       "version": "버전",
       "github": "GitHub",
       "email": "이메일",
-      "sponsor": "후원"
+      "sponsor": "후원",
+      "legal": "Legal",
+      "privacyPolicy": "Privacy policy",
+      "disclaimer": "Disclaimer",
+      "openSourceLicense": "Open-source license (MIT)"
     },
     "Collections": {
       "title": "스마트 컬렉션",
@@ -1337,5 +1341,9 @@
   "privacyNsfwMask": {
     "tapToUnlock": "탭하여 프라이버시 비밀번호 입력",
     "actionBlocked": "먼저 마스크에서 프라이버시 비밀번호를 확인하세요"
+  },
+  "legal": {
+    "viewPrivacyPolicy": "View privacy policy",
+    "h5NetworkNotice": "Use only on trusted local networks; devices on the same network may access the wallpaper browser."
   }
 }

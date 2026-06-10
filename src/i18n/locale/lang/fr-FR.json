@@ -620,7 +620,11 @@
       "version": "Version",
       "github": "GitHub",
       "email": "E-mail",
-      "sponsor": "Sponsor"
+      "sponsor": "Sponsor",
+      "legal": "Legal",
+      "privacyPolicy": "Privacy policy",
+      "disclaimer": "Disclaimer",
+      "openSourceLicense": "Open-source license (MIT)"
     },
     "Collections": {
       "title": "Collections intelligentes",
@@ -1337,5 +1341,9 @@
   "privacyNsfwMask": {
     "tapToUnlock": "Appuyer pour entrer le mot de passe privé",
     "actionBlocked": "Vérifiez d'abord le mot de passe privé via le masque"
+  },
+  "legal": {
+    "viewPrivacyPolicy": "View privacy policy",
+    "h5NetworkNotice": "Use only on trusted local networks; devices on the same network may access the wallpaper browser."
   }
 }
