@@ -21,7 +21,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Install dependencies
         run: npm ci
@@ -65,12 +65,13 @@ jobs:
   build:
     needs: create-release
     strategy:
+      fail-fast: false
       matrix:
-        os: [macos-latest, windows-latest]
+        os: [macos-latest, windows-2022]
         include:
           - os: macos-latest
             build_command: npm run build:mac --userconfig=.npmrc.github-actions
-          - os: windows-latest
+          - os: windows-2022
             build_command: npm run build:win --userconfig=.npmrc.github-actions
 
     runs-on: ${{ matrix.os }}
@@ -81,11 +82,14 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
+        env:
+          # electron-builder.yml 开启 buildDependenciesFromSource 时，CI 优先使用预编译 better-sqlite3，避免在 runner 上源码编译
+          npm_config_build_from_source: 'false'
 
       - name: Uninstall sharp
         run: npm uninstall sharp
@@ -98,7 +102,7 @@ jobs:
         run: npm install --os=darwin --cpu=x64 sharp
 
       - name: Install sharp for Windows
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-2022'
         run: npm install --os=win32 sharp
 
       - name: Build application
@@ -108,32 +112,32 @@ jobs:
 
       # 添加这个新步骤，在上传前删除 .blockmap 文件
       - name: Check blockmap files (Unix)
-        if: matrix.os != 'windows-latest'
+        if: matrix.os != 'windows-2022'
         run: |
           echo "检查 .blockmap 文件数量："
           find dist -name "*.blockmap" | wc -l
 
       - name: Remove blockmap files (Unix)
-        if: matrix.os != 'windows-latest'
+        if: matrix.os != 'windows-2022'
         run: |
           find dist -name "*.blockmap" -type f -delete
           echo "已删除所有 .blockmap 文件"
 
       - name: Check blockmap files (Windows)
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-2022'
         run: |
           $count = (Get-ChildItem -Path dist -Filter "*.blockmap" -Recurse).Count
           echo "还有 $count 个 .blockmap 文件"
 
       - name: Remove blockmap files (Windows)
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-2022'
         run: |
           Get-ChildItem -Path dist -Filter "*.blockmap" -Recurse | Remove-Item -Force
           echo "已删除所有 .blockmap 文件"
 
       # 添加验证步骤
       - name: Verify deletion (Unix)
-        if: matrix.os != 'windows-latest'
+        if: matrix.os != 'windows-2022'
         run: |
           remaining=$(find dist -name "*.blockmap" | wc -l)
           echo "删除后剩余 .blockmap 文件数量：$remaining"
@@ -143,7 +147,7 @@ jobs:
           fi
 
       - name: Verify deletion (Windows)
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-2022'
         run: |
           $remaining = (Get-ChildItem -Path dist -Filter "*.blockmap" -Recurse).Count
           echo "删除后剩余 .blockmap 文件数量：$remaining"
@@ -154,14 +158,14 @@ jobs:
 
       # 添加强制删除步骤，确保所有 .blockmap 文件都被删除
       - name: Force remove blockmap files (Unix)
-        if: matrix.os != 'windows-latest'
+        if: matrix.os != 'windows-2022'
         run: |
           rm -f dist/*.blockmap
           rm -f dist/**/*.blockmap
           echo "已强制删除所有 .blockmap 文件"
 
       - name: Force remove blockmap files (Windows)
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-2022'
         run: |
           if (Test-Path dist/*.blockmap) { Remove-Item -Path dist/*.blockmap -Force }
           Get-ChildItem -Path dist -Recurse -Filter "*.blockmap" | Remove-Item -Force
@@ -169,13 +173,13 @@ jobs:
 
       # 修改这个步骤，为不同操作系统使用不同的命令
       - name: List files before upload (Unix)
-        if: matrix.os != 'windows-latest'
+        if: matrix.os != 'windows-2022'
         run: |
           echo "上传前检查文件列表："
           ls -la dist/
 
       - name: List files before upload (Windows)
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-2022'
         run: |
           echo "上传前检查文件列表："
           Get-ChildItem -Path dist/ -Force
