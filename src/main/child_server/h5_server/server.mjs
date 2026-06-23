@@ -3,6 +3,7 @@ import KoaRouter from '@koa/router'
 import staticServe from 'koa-static'
 import compress from 'koa-compress'
 import http2 from 'node:http2'
+import http from 'node:http'
 import fs from 'node:fs'
 import path from 'node:path'
 import zlib from 'node:zlib'
@@ -15,7 +16,7 @@ import { t } from '../../../i18n/server.js'
 export default async ({
   port = 8888,
   host = '0.0.0.0',
-  useHttps = true,
+  useHttps = false,
   dbManager,
   settingManager,
   resourcesManager,
@@ -42,7 +43,8 @@ export default async ({
   try {
     const __dirname = path.dirname(fileURLToPath(import.meta.url))
     port = await findAvailablePort(port)
-    host = getLocalIP()
+    const displayHost = getLocalIP()
+    const listenHost = '0.0.0.0'
 
     // 创建 Koa 应用
     const app = new Koa()
@@ -78,7 +80,7 @@ export default async ({
       }
     }
 
-    // 启用 HTTP/2，同时兼容 HTTP/1.1
+    // HTTPS：HTTP/2 + HTTP/1.1；HTTP：标准 HTTP/1.1（浏览器不支持明文 HTTP/2）
     if (useHttps && sslOptions) {
       httpServer = http2.createSecureServer({
         ...sslOptions,
@@ -86,8 +88,8 @@ export default async ({
       })
       logger.info('[H5Server] INFO => 已创建HTTPS服务器(HTTP/2 + HTTP/1.1)')
     } else {
-      httpServer = http2.createServer({ allowHTTP1: true })
-      logger.info('[H5Server] INFO => 已创建HTTP服务器(HTTP/2 + HTTP/1.1)')
+      httpServer = http.createServer()
+      logger.info('[H5Server] INFO => 已创建HTTP服务器(HTTP/1.1)')
     }
 
     // 包装 postMessage 函数，确保它能正常工作
@@ -180,10 +182,10 @@ export default async ({
       await next()
     })
 
-    // 启动服务器
-    httpServer.listen(port, host, () => {
+    // 启动服务器（监听全部网卡，URL 仍展示局域网 IP 供手机扫码）
+    httpServer.listen(port, listenHost, () => {
       const protocol = useHttps ? 'https' : 'http'
-      const serverUrl = `${protocol}://${host}:${port}`
+      const serverUrl = `${protocol}://${displayHost}:${port}`
       typeof onStartSuccess === 'function' && onStartSuccess(serverUrl)
     })
 
@@ -198,7 +200,7 @@ export default async ({
         findAvailablePort(port + 1)
           .then((newPort) => {
             logger.info(`[H5Server] INFO => 尝试使用新端口: ${newPort}`)
-            httpServer.listen(newPort, host)
+            httpServer.listen(newPort, listenHost)
           })
           .catch((err) => {
             typeof onStartFail === 'function' &&
