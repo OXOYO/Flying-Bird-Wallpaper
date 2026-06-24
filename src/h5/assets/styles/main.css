@@ -12,6 +12,16 @@
   --fbw-chrome-mini-btn-size: 40px;
   --fbw-chrome-mini-btn-bg: rgba(0, 0, 0, 0.45);
   --fbw-chrome-mini-btn-blur: blur(8px);
+  /** 长按操作菜单图标底（对齐鸿蒙 Theme.actionIconBg） */
+  --fbw-action-icon-bg: #eee;
+  --fbw-action-icon-color: var(--van-text-color, #323233);
+  --fbw-action-label-color: var(--van-text-color, #323233);
+}
+
+html.van-theme-dark {
+  --fbw-action-icon-bg: #2a2a2a;
+  --fbw-action-icon-color: #e8e8e8;
+  --fbw-action-label-color: #e8e8e8;
 }
 
 /** 页头图标按钮（抽屉、布局切换、筛选等）统一尺寸 */
@@ -514,10 +524,11 @@ html.van-theme-dark .van-tabbar.h5-tabbar {
   height: 52px;
   flex-shrink: 0;
   box-sizing: border-box;
-  background-color: #eee;
+  background-color: var(--fbw-action-icon-bg);
   border-radius: 10px;
   font-size: 24px;
   line-height: 1;
+  color: var(--fbw-action-icon-color);
 }
 
 .action-icon-inner {
@@ -528,6 +539,7 @@ html.van-theme-dark .van-tabbar.h5-tabbar {
   height: 1em;
   font-size: 24px;
   line-height: 1;
+  color: inherit;
   transition: transform 0.3s ease-out;
 }
 
@@ -545,9 +557,12 @@ html.van-theme-dark .van-tabbar.h5-tabbar {
   min-height: calc(1.35em * 2);
   word-break: keep-all;
   overflow-wrap: anywhere;
+  color: var(--fbw-action-label-color);
 }
 
-.delete-action {
+.delete-action,
+.delete-action .action-icon-wrapper,
+.delete-action .action-label {
   color: #ff4d4f;
 }
 
