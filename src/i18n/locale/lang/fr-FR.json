@@ -1,4 +1,4 @@
-{
+﻿{
   "appInfo": {
     "appName": "Papier peint Oiseau Volant",
     "description": "Flying Bird Wallpaper est une application de fond d'écran de bureau riche en fonctionnalités qui prend en charge plusieurs types de fonds d'écran, notamment des images, des vidéos, des fonds d'écran rythmiques et des couleurs unies, rendant votre bureau unique et vibrant."
@@ -814,6 +814,9 @@
     "rhythmWallpaperNeedVirtualAudio": "Veuillez installer et configurer une carte son virtuelle (comme VB-Audio/BlackHole) pour utiliser la fonction de fond d'écran rythmique",
     "noData": "Aucune donnée",
     "loading": "Chargement...",
+    "pullRefreshPulling": "Pull to refresh...",
+    "pullRefreshLoosing": "Loose to refresh...",
+    "pullRefreshLoading": "Loading...",
     "loadingMore": "Charger plus...",
     "invalidIndex": "Veuillez saisir un index valide",
     "indexOutOfRange": "Index hors limites",

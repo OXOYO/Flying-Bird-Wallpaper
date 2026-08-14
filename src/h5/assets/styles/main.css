@@ -45,13 +45,29 @@ html.van-theme-dark {
   min-width: 0;
 }
 
-.van-button.h5-chrome-icon-btn .van-icon {
+.van-button.h5-chrome-icon-btn .van-icon,
+.van-button.h5-chrome-icon-btn .iconify,
+.van-button.h5-chrome-icon-btn svg {
   font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: inherit;
+}
+
+/** 沉浸迷你钮：对齐鸿蒙 compact iconSize 16 */
+.van-button.chrome-mini-btn .van-icon,
+.van-button.chrome-mini-btn .iconify,
+.van-button.chrome-mini-btn svg {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: inherit;
 }
 
 .van-button.h5-chrome-icon-btn--active {
   color: var(--van-primary-color);
-  background: rgba(25, 137, 250, 0.1);
+  /* 对齐鸿蒙 Theme.withAlpha(primary, 0.1) */
+  background: color-mix(in srgb, var(--van-primary-color) 10%, transparent);
 }
 
 /** 铺满 / 瀑布流 — 暂无数据区域占满可视区并居中 */
@@ -411,9 +427,12 @@ html.van-theme-dark .van-tabbar.h5-tabbar {
 
 .collections-header .collection-dropdown__arrow {
   flex-shrink: 0;
+  display: inline-flex;
   margin-left: 2px;
   color: var(--van-text-color-2);
   font-size: 16px;
+  width: 16px;
+  height: 16px;
 }
 
 /**
@@ -483,7 +502,9 @@ html.van-theme-dark .van-tabbar.h5-tabbar {
   color: rgba(255, 255, 255, 0.92) !important;
 }
 
-.page-wrapper.page-browse--privacy-space .chrome-mini-btn .van-icon {
+.page-wrapper.page-browse--privacy-space .chrome-mini-btn .van-icon,
+.page-wrapper.page-browse--privacy-space .chrome-mini-btn .iconify,
+.page-wrapper.page-browse--privacy-space .chrome-mini-btn svg {
   color: rgba(255, 255, 255, 0.92) !important;
 }
 
@@ -494,7 +515,9 @@ html.van-theme-dark .van-tabbar.h5-tabbar {
   box-shadow: 0 0 0 1px rgba(149, 212, 117, 0.15) !important;
 }
 
-.page-wrapper.page-browse--privacy-space .chrome-mini-btn--active .van-icon {
+.page-wrapper.page-browse--privacy-space .chrome-mini-btn--active .van-icon,
+.page-wrapper.page-browse--privacy-space .chrome-mini-btn--active .iconify,
+.page-wrapper.page-browse--privacy-space .chrome-mini-btn--active svg {
   color: #95d475 !important;
 }
 

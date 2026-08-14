@@ -583,7 +583,7 @@ onMounted(() => {
         >
           <span class="collection-dropdown__name">{{ dropdownLabel }}</span>
           <span v-if="dropdownMeta" class="collection-dropdown__meta">{{ dropdownMeta }}</span>
-          <van-icon class="collection-dropdown__arrow" name="arrow-down" />
+          <IconifyIcon class="collection-dropdown__arrow" icon="custom:arrow-down" />
         </button>
         <template v-if="!immersiveMode" #trailing>
           <van-button
@@ -594,7 +594,7 @@ onMounted(() => {
             :aria-label="layoutToggleTitle"
             @click="onToggleLayoutMode"
           >
-            <van-icon :name="browseDisplayMode === 'waterfall' ? 'expand-o' : 'apps-o'" />
+            <IconifyIcon :icon="browseDisplayMode === 'waterfall' ? 'custom:expand-o' : 'custom:card-list'" />
           </van-button>
           <van-button
             class="h5-chrome-icon-btn"
@@ -613,7 +613,7 @@ onMounted(() => {
             :aria-label="t('pages.Collections.selectPlaceholder')"
             @click="showPicker = true"
           >
-            <van-icon name="arrow-down" />
+            <IconifyIcon icon="custom:arrow-down" />
           </van-button>
           <van-button
             v-if="showBrowseView"
@@ -623,7 +623,7 @@ onMounted(() => {
             :aria-label="layoutToggleTitle"
             @click="onToggleLayoutMode"
           >
-            <van-icon :name="browseDisplayMode === 'waterfall' ? 'expand-o' : 'apps-o'" />
+            <IconifyIcon :icon="browseDisplayMode === 'waterfall' ? 'custom:expand-o' : 'custom:card-list'" />
           </van-button>
           <van-button
             class="chrome-mini-btn"
@@ -754,7 +754,6 @@ onMounted(() => {
     <van-action-sheet
       v-model:show="showHeaderActions"
       :actions="headerActionSheetActions"
-      :cancel-text="t('pages.Collections.dialogCancel')"
       @select="onHeaderActionSelect"
     >
       <template #action="{ action }">
@@ -763,13 +762,13 @@ onMounted(() => {
           :class="{ 'collection-action-item--nav': action.arrow }"
         >
           <span v-if="action.arrow" class="collection-action-item__balance" aria-hidden="true">
-            <van-icon name="arrow" />
+            <IconifyIcon icon="custom:arrow-right" />
           </span>
           <div class="collection-action-item__text">
             <span>{{ action.name }}</span>
             <span v-if="action.subname" class="collection-action-item__subname">{{ action.subname }}</span>
           </div>
-          <van-icon v-if="action.arrow" name="arrow" class="collection-action-item__arrow" />
+          <IconifyIcon v-if="action.arrow" icon="custom:arrow-right" class="collection-action-item__arrow" />
         </div>
       </template>
     </van-action-sheet>
@@ -1031,8 +1030,17 @@ onMounted(() => {
 
 .collection-action-item__arrow {
   flex-shrink: 0;
+  display: inline-flex;
   font-size: 14px;
+  width: 14px;
+  height: 14px;
   line-height: 1;
   color: var(--van-text-color-3);
+}
+
+.collection-action-item__balance :deep(svg),
+.collection-action-item__arrow :deep(svg) {
+  width: 14px;
+  height: 14px;
 }
 </style>

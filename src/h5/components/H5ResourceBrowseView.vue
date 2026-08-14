@@ -10,6 +10,9 @@ import H5ListEmpty from '@h5/components/H5ListEmpty.vue'
 import H5PrivacyPasswordDialog from '@h5/components/H5PrivacyPasswordDialog.vue'
 import H5NsfwContentMask from '@h5/components/H5NsfwContentMask.vue'
 import H5InlineVideoMuteButton from '@h5/components/H5InlineVideoMuteButton.vue'
+import H5ZoomableImage from '@h5/components/H5ZoomableImage.vue'
+import H5SingleImagePreview from '@h5/components/H5SingleImagePreview.vue'
+import H5PullRefreshHead from '@h5/components/H5PullRefreshHead.vue'
 import { useH5ResourceBrowse } from '@h5/composables/useH5ResourceBrowse.mjs'
 import { resolveApiUserMessage } from '@common/utils.js'
 import { scheduleDialogInputFocus } from '@common/focusDialogInput.mjs'
@@ -117,8 +120,12 @@ const {
   showIndicatorInBrowseChrome,
   immersiveIndicatorChromeInsetClass,
   previewImages,
+  previewSingleSrc,
   previewStartPosition,
   previewShowsNsfwMask,
+  fullscreenInteractLocked,
+  onFullscreenZoomChange,
+  onFullscreenPinchActive,
   selectedItem,
   canFindSimilarSelected,
   similarMode,
@@ -324,7 +331,7 @@ defineExpose({
               />
             </form>
             <van-button class="h5-chrome-icon-btn" plain @click="state.showFilters = true">
-              <van-icon name="arrow-down" />
+              <IconifyIcon icon="custom:arrow-down" />
             </van-button>
           </div>
           <template v-if="!immersiveMode" #trailing>
@@ -335,7 +342,7 @@ defineExpose({
               :aria-label="layoutToggleTitle"
               @click="toggleDisplayMode"
             >
-              <van-icon :name="displayMode === 'waterfall' ? 'expand-o' : 'apps-o'" />
+              <IconifyIcon :icon="displayMode === 'waterfall' ? 'custom:expand-o' : 'custom:card-list'" />
             </van-button>
             <van-button
               v-if="enablePrivacySpaceToolbar"
@@ -358,7 +365,7 @@ defineExpose({
               plain
               @click="state.showFilters = true"
             >
-              <van-icon name="arrow-down" />
+              <IconifyIcon icon="custom:arrow-down" />
             </van-button>
             <van-button
               class="chrome-mini-btn"
@@ -367,7 +374,7 @@ defineExpose({
               :aria-label="layoutToggleTitle"
               @click="toggleDisplayMode"
             >
-              <van-icon :name="displayMode === 'waterfall' ? 'expand-o' : 'apps-o'" />
+              <IconifyIcon :icon="displayMode === 'waterfall' ? 'custom:expand-o' : 'custom:card-list'" />
             </van-button>
             <van-button
               v-if="enablePrivacySpaceToolbar"
@@ -432,6 +439,15 @@ defineExpose({
       </Teleport>
 
       <van-pull-refresh v-model="state.refreshing" :disabled="isPullRefreshDisabled" @refresh="onRefresh">
+        <template #pulling>
+          <H5PullRefreshHead mode="pulling" />
+        </template>
+        <template #loosing>
+          <H5PullRefreshHead mode="loosing" />
+        </template>
+        <template #loading>
+          <H5PullRefreshHead mode="loading" />
+        </template>
         <div
           class="browse-pull-inner"
           :class="{
@@ -609,7 +625,7 @@ defineExpose({
               </div>
             </div>
             <H5ListEmpty v-else-if="state.finished && !state.loading" :description="t('messages.noData')" />
-            <div v-if="state.loading && list.length" class="load-more-text">{{ t('messages.loading') }}</div>
+            <div v-if="state.loading && list.length" class="load-more-text">{{ t('messages.pullRefreshLoading') }}</div>
           </template>
           <template v-else>
             <div class="fullscreen-slider">
@@ -621,6 +637,7 @@ defineExpose({
                 :finished="state.finished"
                 :suppress-load-more="state.jumpScrollLock"
                 :allow-top-pull="isFullscreenPullAtTop"
+                :snap-disabled="fullscreenInteractLocked"
                 @scroll="onFullscreenPagerScroll"
                 @index-change="onFullscreenPagerIndexChange"
                 @load-more="onLoadMore"
@@ -642,7 +659,6 @@ defineExpose({
                     @mouseup="onCardMouseUp"
                     @mouseleave="onCardMouseUp"
                     @contextmenu="onMediaContextMenu(index, $event)"
-                    @click="openPreview(index)"
                   >
                     <div
                       v-if="item.fileType !== 'video' && shouldLoadFullscreenImage(index)"
@@ -661,21 +677,19 @@ defineExpose({
                           v-if="!isSlideImageLoaded(item)"
                           class="fullscreen-slide-loading"
                           type="spinner"
-                          color="var(--van-gray-5)"
+                          color="rgba(255, 255, 255, 0.65)"
                         />
-                        <img
+                        <H5ZoomableImage
                           class="fullscreen-slide-img"
                           :class="{ 'fullscreen-slide-img--ready': isSlideImageLoaded(item) }"
-                          :style="{ objectFit: mediaObjectFit }"
                           :src="getFullscreenListImageSrc(item)"
-                          alt=""
-                          draggable="false"
-                          decoding="async"
-                          :loading="index === fullscreenVisibleIndex ? 'eager' : 'lazy'"
+                          :object-fit="mediaObjectFit"
+                          :active="index === fullscreenVisibleIndex"
+                          @zoom-change="onFullscreenZoomChange"
+                          @pinch-active="onFullscreenPinchActive"
                           @load="onSlideImageLoad(item)"
                           @error="onImageLoadError(item, $event)"
                         />
-                        <div class="media-touch-shield" aria-hidden="true" />
                       </template>
                     </div>
                     <div
@@ -738,28 +752,25 @@ defineExpose({
                 v-else-if="state.finished && !state.loading"
                 :description="t('messages.noData')"
               />
-              <div v-if="state.loading && list.length" class="load-more-text">{{ t('messages.loading') }}</div>
+              <div v-if="state.loading && list.length" class="load-more-text">{{ t('messages.pullRefreshLoading') }}</div>
             </div>
           </template>
         </div>
       </van-pull-refresh>
     </div>
 
-    <van-image-preview
+    <H5SingleImagePreview
       v-model:show="state.showPreview"
-      :images="previewImages"
-      :start-position="previewStartPosition"
-      :close-on-click-image="false"
-      :close-on-click-overlay="false"
-      closeable
-      @change="onPreviewIndexChange"
+      :src="previewSingleSrc"
+      object-fit="contain"
+      @close="previewImageErrorAt = -1"
     >
       <template v-if="previewShowsNsfwMask" #cover>
         <div class="h5-preview-nsfw-shield">
           <H5NsfwContentMask :visible="true" />
         </div>
       </template>
-    </van-image-preview>
+    </H5SingleImagePreview>
 
     <Teleport to="body">
       <div
@@ -954,7 +965,6 @@ defineExpose({
     >
       <div class="filter-panel">
         <div class="filter-panel-header">
-          <div class="filter-title">{{ t('h5.pages.search.filters.title') }}</div>
           <form class="filter-keyword-form" autocomplete="off" @submit.prevent="onApplyBrowseFilters">
             <van-search
               v-model="searchForm.filterKeywords"
@@ -973,87 +983,109 @@ defineExpose({
         <div class="filter-panel-body">
           <div class="filter-group">
             <div class="group-title">{{ t('h5.pages.search.filters.listMode') }}</div>
-            <van-radio-group
-              v-model="searchForm.isRandom"
-              class="filter-options"
-              direction="horizontal"
-            >
-              <van-radio
+            <div class="filter-chip-group">
+              <button
                 v-for="o in listModeRadioOptions"
                 :key="String(o.value)"
-                :name="o.value"
+                type="button"
+                class="filter-chip"
+                :class="{ 'filter-chip--active': searchForm.isRandom === o.value }"
+                @click="searchForm.isRandom = o.value"
               >
                 {{ o.text }}
-              </van-radio>
-            </van-radio-group>
+              </button>
+            </div>
           </div>
           <div v-if="!searchForm.isRandom" class="filter-group">
             <div class="group-title">{{ t('pages.Setting.settingDataForm.sortField') }}</div>
-            <van-radio-group
-              v-model="searchForm.sortField"
-              class="filter-options filter-options--sort"
-              direction="horizontal"
-            >
-              <van-radio v-for="o in sortFieldRadioOptions" :key="o.value" :name="o.value">
+            <div class="filter-chip-group">
+              <button
+                v-for="o in sortFieldRadioOptions"
+                :key="o.value"
+                type="button"
+                class="filter-chip"
+                :class="{ 'filter-chip--active': searchForm.sortField === o.value }"
+                @click="searchForm.sortField = o.value"
+              >
                 {{ o.text }}
-              </van-radio>
-            </van-radio-group>
+              </button>
+            </div>
           </div>
           <div v-if="!searchForm.isRandom" class="filter-group">
             <div class="group-title">{{ t('pages.Setting.settingDataForm.sortType') }}</div>
-            <van-radio-group
-              v-model="searchForm.sortType"
-              class="filter-options"
-              direction="horizontal"
-            >
-              <van-radio v-for="o in sortTypeRadioOptions" :key="o.value" :name="o.value">
+            <div class="filter-chip-group">
+              <button
+                v-for="o in sortTypeRadioOptions"
+                :key="o.value"
+                type="button"
+                class="filter-chip"
+                :class="{ 'filter-chip--active': searchForm.sortType === o.value }"
+                @click="searchForm.sortType = o.value"
+              >
                 {{ o.text }}
-              </van-radio>
-            </van-radio-group>
+              </button>
+            </div>
           </div>
           <div class="filter-group">
             <div class="group-title">{{ t('exploreCommon.searchForm.filterType.placeholder') }}</div>
-            <van-radio-group
-              v-model="searchForm.filterType"
-              class="filter-options"
-              direction="horizontal"
-            >
-              <van-radio
+            <div class="filter-chip-group">
+              <button
                 v-for="o in filterTypeDropdownOptions"
                 :key="o.value"
-                :name="o.value"
+                type="button"
+                class="filter-chip"
+                :class="{ 'filter-chip--active': searchForm.filterType === o.value }"
+                @click="searchForm.filterType = o.value"
               >
                 {{ o.text }}
-              </van-radio>
-            </van-radio-group>
+              </button>
+            </div>
           </div>
           <div class="filter-group">
             <div class="group-title">{{ t('exploreCommon.searchForm.orientation.placeholder') }}</div>
-            <van-radio-group
-              v-model="searchForm.orientation"
-              class="filter-options"
-              direction="horizontal"
-            >
-              <van-radio name="">{{ t('h5.pages.search.filters.all') }}</van-radio>
-              <van-radio
+            <div class="filter-chip-group">
+              <button
+                type="button"
+                class="filter-chip"
+                :class="{ 'filter-chip--active': searchForm.orientation === '' }"
+                @click="searchForm.orientation = ''"
+              >
+                {{ t('h5.pages.search.filters.all') }}
+              </button>
+              <button
                 v-for="o in orientationOptions"
                 :key="o.value"
-                :name="String(o.value)"
+                type="button"
+                class="filter-chip"
+                :class="{ 'filter-chip--active': searchForm.orientation === String(o.value) }"
+                @click="searchForm.orientation = String(o.value)"
               >
                 {{ t(o.locale) }}
-              </van-radio>
-            </van-radio-group>
+              </button>
+            </div>
           </div>
           <div v-if="showBrowseQualityFilter" class="filter-group">
             <div class="group-title">{{ t('exploreCommon.searchForm.quality.placeholder') }}</div>
-            <van-radio-group
-              v-model="searchForm.quality"
-              class="filter-options"
-              direction="horizontal"
-            >
-              <van-radio name="">{{ t('h5.pages.search.filters.all') }}</van-radio>
-              <van-radio v-for="q in qualityList" :key="q" :name="q">{{ q }}</van-radio>
-            </van-radio-group>
+            <div class="filter-chip-group">
+              <button
+                type="button"
+                class="filter-chip"
+                :class="{ 'filter-chip--active': searchForm.quality === '' }"
+                @click="searchForm.quality = ''"
+              >
+                {{ t('h5.pages.search.filters.all') }}
+              </button>
+              <button
+                v-for="q in qualityList"
+                :key="q"
+                type="button"
+                class="filter-chip"
+                :class="{ 'filter-chip--active': searchForm.quality === q }"
+                @click="searchForm.quality = q"
+              >
+                {{ q }}
+              </button>
+            </div>
           </div>
         </div>
         <div class="filter-actions">
@@ -1086,6 +1118,7 @@ defineExpose({
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  background: #000;
 }
 .page-browse--fullscreen .page-browse-inner {
   flex: 1;
@@ -1131,10 +1164,10 @@ defineExpose({
   cursor: pointer;
   position: relative;
   box-sizing: border-box;
-  background-color: rgba(0, 0, 0, 0.07);
+  background-color: #000;
 
   &--nsfw-masked {
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: #000;
   }
 }
 .fullscreen-slide-media {
@@ -1143,10 +1176,8 @@ defineExpose({
   z-index: 1;
 
   .fullscreen-slide-img {
-    pointer-events: none;
     -webkit-user-drag: none;
     user-drag: none;
-    touch-action: manipulation;
   }
 
   .media-touch-shield {
@@ -1155,8 +1186,8 @@ defineExpose({
 }
 .fullscreen-slide-fallback {
   z-index: 2;
-  color: var(--van-text-color-2);
-  background: rgba(0, 0, 0, 0.06);
+  color: rgba(255, 255, 255, 0.72);
+  background: #000;
 }
 .fullscreen-slide-loading {
   position: absolute;
@@ -1170,10 +1201,14 @@ defineExpose({
   height: 100%;
   display: block;
   object-position: center;
+  /* 容器保持不透明黑底；仅图片淡入，避免加载态露白 */
+  opacity: 1;
+}
+.fullscreen-slide-img :deep(.h5-zoomable-image__img) {
   opacity: 0;
   transition: opacity 0.2s ease;
 }
-.fullscreen-slide-img--ready {
+.fullscreen-slide-img--ready :deep(.h5-zoomable-image__img) {
   opacity: 1;
 }
 .fullscreen-slide-placeholder {
@@ -1263,7 +1298,7 @@ defineExpose({
   justify-content: flex-end;
   padding: 24px 16px;
   box-sizing: border-box;
-  background: rgba(0, 0, 0, 0.04);
+  background: #000;
 }
 
 .result-list-skeleton {
@@ -1662,14 +1697,40 @@ defineExpose({
   color: var(--van-text-color-2);
 }
 
-.filter-options {
+.filter-chip-group {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px 14px;
+  gap: 0;
 }
 
-.filter-options :deep(.van-radio) {
+/* 对齐鸿蒙 Theme.searchBg：勿用 --van-search-background（搜索框常为 transparent） */
+.filter-chip {
+  height: 36px;
   min-width: 96px;
+  margin: 0 8px 8px 0;
+  padding: 0 12px;
+  border: none;
+  border-radius: 4px;
+  background: #f2f3f5;
+  color: var(--van-text-color);
+  font-size: 14px;
+  line-height: 36px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.filter-chip--active {
+  background: var(--van-primary-color);
+  color: #fff;
+}
+
+html.van-theme-dark .filter-chip {
+  background: #2a2a2a;
+}
+
+html.van-theme-dark .filter-chip--active {
+  background: var(--van-primary-color);
+  color: #fff;
 }
 
 .filter-actions {

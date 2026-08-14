@@ -1,4 +1,4 @@
-{
+﻿{
   "appInfo": {
     "appName": "خلفيات الطائر الطائر",
     "description": "تطبيق خلفيات سطح المكتب Flying Bird Wallpaper غني بالميزات يدعم أنواع متعددة من الخلفيات بما في ذلك الصور ومقاطع الفيديو والخلفيات الإيقاعية والألوان الصلبة، مما يجعل سطح مكتبك فريدًا ومليئًا بالحيوية."
@@ -814,6 +814,9 @@
     "rhythmWallpaperNeedVirtualAudio": "يرجى تثبيت وتكوين بطاقة صوت افتراضية (مثل VB-Audio/BlackHole) لاستخدام وظيفة الخلفية الإيقاعية",
     "noData": "لا توجد بيانات",
     "loading": "جارٍ التحميل...",
+    "pullRefreshPulling": "Pull to refresh...",
+    "pullRefreshLoosing": "Loose to refresh...",
+    "pullRefreshLoading": "Loading...",
     "loadingMore": "تحميل المزيد...",
     "invalidIndex": "يرجى إدخال فهرس صالح",
     "indexOutOfRange": "الفهرس خارج النطاق",

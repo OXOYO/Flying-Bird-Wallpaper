@@ -1,4 +1,4 @@
-{
+﻿{
   "appInfo": {
     "appName": "Обои Летящая Птица",
     "description": "Flying Bird Wallpaper - это многофункциональное приложение для обоев на рабочем столе, которое поддерживает несколько типов обоев, включая изображения, видео, ритмические обои и сплошные цвета, делая ваш рабочий стол уникальным и ярким."
@@ -814,6 +814,9 @@
     "rhythmWallpaperNeedVirtualAudio": "Установите и настройте виртуальную звуковую карту (например, VB-Audio/BlackHole), чтобы использовать функцию ритмических обоев",
     "noData": "Нет данных",
     "loading": "Загрузка...",
+    "pullRefreshPulling": "Pull to refresh...",
+    "pullRefreshLoosing": "Loose to refresh...",
+    "pullRefreshLoading": "Loading...",
     "loadingMore": "Загрузить еще...",
     "invalidIndex": "Введите допустимый индекс",
     "indexOutOfRange": "Индекс вне диапазона",

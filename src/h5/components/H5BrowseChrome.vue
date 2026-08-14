@@ -26,7 +26,7 @@ const openDrawer = () => {
     :class="{ 'h5-browse-chrome--privacy': privacyMode }"
   >
     <van-button class="h5-chrome-icon-btn" plain :aria-label="'menu'" @click="openDrawer">
-      <van-icon name="wap-nav" />
+      <IconifyIcon icon="custom:wap-nav" />
     </van-button>
     <div v-if="$slots.default" class="h5-browse-chrome__main">
       <slot />
@@ -43,7 +43,7 @@ const openDrawer = () => {
   >
     <div class="h5-browse-chrome__mini-start">
       <van-button class="chrome-mini-btn" plain @click="openDrawer">
-        <van-icon name="wap-nav" />
+        <IconifyIcon icon="custom:wap-nav" />
       </van-button>
     </div>
     <div v-if="$slots['mini-trailing']" class="h5-browse-chrome__mini-end">

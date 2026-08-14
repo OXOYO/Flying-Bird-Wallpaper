@@ -1,4 +1,4 @@
-{
+﻿{
   "appInfo": {
     "appName": "플라잉 버드 배경화면",
     "description": "플라잉 버드 배경화면은 이미지, 비디오, 리듬, 솔리드 컬러 등 다양한 배경화면 유형을 지원하는 기능이 풍부한 데스크톱 배경화면 소프트웨어로, 당신의 데스크톱을 독특한 매력으로 빛나게 만들어 줍니다."
@@ -814,6 +814,9 @@
     "rhythmWallpaperNeedVirtualAudio": "리듬 배경화면 기능을 사용하려면 가상 사운드 카드(VB-Audio/BlackHole 등)를 설치하고 설정해 주세요",
     "noData": "데이터 없음",
     "loading": "로딩 중...",
+    "pullRefreshPulling": "Pull to refresh...",
+    "pullRefreshLoosing": "Loose to refresh...",
+    "pullRefreshLoading": "Loading...",
     "loadingMore": "더 불러오기...",
     "invalidIndex": "유효한 인덱스를 입력해 주세요",
     "indexOutOfRange": "인덱스가 범위를 벗어났습니다",

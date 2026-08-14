@@ -1,4 +1,4 @@
-{
+﻿{
   "appInfo": {
     "appName": "飛鳥壁紙",
     "description": "飛鳥壁紙は、画像、動画、リズム、単色など複数の壁紙タイプをサポートする機能豊富なデスクトップ壁紙ソフトウェアで、あなたのデスクトップを独特な魅力に満ちたものにします。"
@@ -814,6 +814,9 @@
     "rhythmWallpaperNeedVirtualAudio": "リズム壁紙機能を使用するには、仮想サウンドカード（VB-Audio/BlackHoleなど）をインストールして設定してください",
     "noData": "データなし",
     "loading": "読み込み中...",
+    "pullRefreshPulling": "Pull to refresh...",
+    "pullRefreshLoosing": "Loose to refresh...",
+    "pullRefreshLoading": "Loading...",
     "loadingMore": "さらに読み込む...",
     "invalidIndex": "有効なインデックスを入力してください",
     "indexOutOfRange": "インデックスが範囲外です",

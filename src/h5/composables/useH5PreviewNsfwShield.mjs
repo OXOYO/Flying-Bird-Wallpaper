@@ -4,12 +4,8 @@ const TAP_MOVE_THRESHOLD = 10
 const TAP_DEBOUNCE_MS = 320
 
 /**
- * van-image-preview 敏感遮罩：视觉层不拦截手势，捕获阶段区分 tap / swipe 后打开密码窗
- * @param {{
- *   showPreview: import('vue').Ref<boolean>|import('vue').ComputedRef<boolean>,
- *   showsMask: import('vue').Ref<boolean>|import('vue').ComputedRef<boolean>,
- *   onMaskClick?: (event?: Event) => void | Promise<void>
- * }} ctx
+ * 预览敏感遮罩：视觉层不拦截手势，捕获阶段区分 tap / swipe 后打开密码窗
+ * 兼容 van-image-preview 与 h5-single-image-preview
  */
 export function useH5PreviewNsfwShield(ctx) {
   let lastMaskTapAt = 0
@@ -25,11 +21,14 @@ export function useH5PreviewNsfwShield(ctx) {
     !!(
       el?.closest?.('.van-image-preview__close-icon') ||
       el?.closest?.('.van-image-preview__index') ||
-      el?.closest?.('.van-image-preview__indicators')
+      el?.closest?.('.van-image-preview__indicators') ||
+      el?.closest?.('.h5-single-image-preview__close')
     )
 
   const isPreviewContent = (el) =>
-    el instanceof Element && !!el.closest('.van-image-preview') && !isPreviewChrome(el)
+    el instanceof Element &&
+    !!(el.closest('.van-image-preview') || el.closest('.h5-single-image-preview')) &&
+    !isPreviewChrome(el)
 
   const triggerMaskClick = (event) => {
     const now = Date.now()

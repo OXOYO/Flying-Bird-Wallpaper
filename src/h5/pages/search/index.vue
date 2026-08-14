@@ -35,9 +35,13 @@ import H5ListEmpty from '@h5/components/H5ListEmpty.vue'
 import H5BrowseChrome from '@h5/components/H5BrowseChrome.vue'
 import H5InlineVideoMuteButton from '@h5/components/H5InlineVideoMuteButton.vue'
 import H5SimilarModeBanner from '@h5/components/H5SimilarModeBanner.vue'
+import H5ZoomableImage from '@h5/components/H5ZoomableImage.vue'
+import H5SingleImagePreview from '@h5/components/H5SingleImagePreview.vue'
+import H5PullRefreshHead from '@h5/components/H5PullRefreshHead.vue'
 import { useH5SimilarResults } from '@h5/composables/useH5SimilarResults.mjs'
 import { buildH5SearchSimilarScope } from '@h5/utils/h5SimilarScope.mjs'
 import { useH5FullscreenAutoPlay } from '@h5/composables/useH5FullscreenAutoPlay.js'
+import { useH5FullscreenImagePrefetch } from '@h5/composables/useH5FullscreenImagePrefetch.mjs'
 import {
   applyH5CardImageCompress,
   applyH5ImageCompress
@@ -370,8 +374,6 @@ const FULLSCREEN_PAGE_SIZE = 20
 const WATERFALL_PAGE_SIZE_MIN = 24
 const WATERFALL_PAGE_SIZE_MAX = 160
 const WATERFALL_VIEWPORT_BUFFER_ROWS = 2
-/** 铺满模式：仅为当前张及相邻张设置图片 src，避免虚拟列表缓冲项拉原图 */
-const FULLSCREEN_IMAGE_PRELOAD_RANGE = 1
 /** 与 .search-pull-inner 的 padding-top 保持一致 */
 const SEARCH_WATERFALL_CONTENT_GAP_PX = 10
 /** 顶部指示器与首行卡片顶边的间距 */
@@ -634,12 +636,19 @@ const getDisplayPosterSrc = (item, options = {}) => {
   return appendImageRetryQuery(url, item)
 }
 
-const shouldLoadFullscreenImage = (index) => {
-  if (displayMode.value !== 'fullscreen') return false
-  const cur = fullscreenVisibleIndex.value
-  if (typeof index !== 'number' || index < 0) return false
-  return Math.abs(index - cur) <= FULLSCREEN_IMAGE_PRELOAD_RANGE
-}
+const {
+  shouldLoadFullscreenImage,
+  notifyFullscreenImageSettled,
+  cancelFullscreenPrefetch
+} = useH5FullscreenImagePrefetch({
+  list,
+  currentIndex: fullscreenVisibleIndex,
+  displayMode,
+  getImageSrc: (item) => getFullscreenListImageSrc(item),
+  getItemKey,
+  compressEnabled: computed(() => !!settingData.value.h5FullscreenImageCompress)
+})
+
 const clearImageLoadedKey = (key) => {
   if (!key) return
   const next = new Set(imageLoadedKeys.value)
@@ -670,6 +679,7 @@ const onImageLoadError = (item, event) => {
   if (!key) return
   imageErrorState[key] = true
   clearImageLoadedKey(key)
+  notifyFullscreenImageSettled(item)
 }
 const onPosterLoadError = onImageLoadError
 const onSlideImageLoad = (item) => {
@@ -677,6 +687,7 @@ const onSlideImageLoad = (item) => {
   if (!key) return
   imageErrorState[key] = false
   markImageLoaded(item)
+  notifyFullscreenImageSettled(item)
 }
 const retryLoadImage = (item) => {
   const key = getItemKey(item)
@@ -1163,25 +1174,37 @@ const onResetFilters = () => {
   onSearch()
 }
 
-// 仅在打开预览时生成数组；排除视频项，避免与 van-image-preview 下标错位
-const previewImages = computed(() => {
-  if (!state.showPreview) return []
-  return list.value
-    .filter((item) => item.fileType !== 'video')
-    .map((item) => getPreviewImageSrc(item))
-    .filter(Boolean)
-})
-const previewStartPosition = computed(() => {
-  if (!state.showPreview || longPress.selectedIndex < 0) return 0
+/** 卡片模式单图预览 src（对齐鸿蒙：无列表翻页） */
+const previewSingleSrc = computed(() => {
+  if (!state.showPreview || longPress.selectedIndex < 0) return ''
   const sel = list.value[longPress.selectedIndex]
-  if (!sel || sel.fileType === 'video') return 0
-  let pos = 0
-  for (let i = 0; i < longPress.selectedIndex; i++) {
-    const row = list.value[i]
-    if (row?.fileType !== 'video' && row?.imageSrc) pos++
-  }
-  return pos
+  if (!sel || sel.fileType === 'video') return ''
+  return getPreviewImageSrc(sel) || ''
 })
+
+/** 兼容旧逻辑：单图模式下索引恒为当前选中项在可预览列表中的位置 */
+const previewImages = computed(() => {
+  const src = previewSingleSrc.value
+  return src ? [src] : []
+})
+const previewStartPosition = computed(() => 0)
+
+/** 铺满原位放大/捏合时锁定翻页与下拉刷新 */
+const fullscreenZoomed = ref(false)
+const fullscreenPinchActive = ref(false)
+const fullscreenInteractLocked = computed(
+  () => fullscreenZoomed.value || fullscreenPinchActive.value
+)
+const onFullscreenZoomChange = (zoomed) => {
+  fullscreenZoomed.value = !!zoomed
+}
+const onFullscreenPinchActive = (active) => {
+  fullscreenPinchActive.value = !!active
+}
+const resetFullscreenInteractLock = () => {
+  fullscreenZoomed.value = false
+  fullscreenPinchActive.value = false
+}
 
 const resolveListIndexFromPreviewIndex = (previewIndex) => {
   let pos = 0
@@ -1491,6 +1514,9 @@ const onFullscreenPagerIndexChange = (idx) => {
     fullscreenAutoPlay.stop()
     fullscreenAutoPlayUserStopped.value = true
   }
+  if (idx !== fullscreenVisibleIndex.value) {
+    resetFullscreenInteractLock()
+  }
   fullscreenVisibleIndex.value = idx
   nextTick(() => {
     void syncFullscreenActiveMedia()
@@ -1505,18 +1531,20 @@ const fullscreenIndicatorText = computed(() => {
   return t('h5.pages.search.displayMode.indicator', { current: cur, total })
 })
 
-const isPullRefreshDisabled = computed(() =>
-  computeH5PullRefreshDisabled({
-    loading: state.loading,
-    displayMode: displayMode.value,
-    waterfallScrollTop: state.scrollTop,
-    fullscreenScrollTop: fullscreenScrollTop.value,
-    fullscreenVisibleIndex: fullscreenVisibleIndex.value,
-    scrollIdleActive:
-      displayMode.value === 'fullscreen'
-        ? fullscreenScrollIdle.active.value
-        : waterfallScrollIdle.active.value
-  })
+const isPullRefreshDisabled = computed(
+  () =>
+    fullscreenInteractLocked.value ||
+    computeH5PullRefreshDisabled({
+      loading: state.loading,
+      displayMode: displayMode.value,
+      waterfallScrollTop: state.scrollTop,
+      fullscreenScrollTop: fullscreenScrollTop.value,
+      fullscreenVisibleIndex: fullscreenVisibleIndex.value,
+      scrollIdleActive:
+        displayMode.value === 'fullscreen'
+          ? fullscreenScrollIdle.active.value
+          : waterfallScrollIdle.active.value
+    })
 )
 
 const isFullscreenPullAtTop = computed(() =>
@@ -2024,6 +2052,8 @@ const openPreview = (index) => {
     longPress.suppressClick = false
     return
   }
+  // 铺满模式：原位缩放，不进预览弹层
+  if (displayMode.value === 'fullscreen') return
   const row = list.value[index]
   if (!row) return
   if (blockIfNsfwMasked(row)) return
@@ -2034,6 +2064,7 @@ const openPreview = (index) => {
   }
   if (!row.imageSrc) return
   previewCurrentIndex.value = getPreviewIndexForListIndex(index)
+  previewImageErrorAt.value = -1
   state.showPreview = true
   void recordViewForPreviewIndex(previewCurrentIndex.value)
 }
@@ -2056,7 +2087,7 @@ const onPreviewImageCaptureError = (event) => {
   if (!state.showPreview) return
   const target = event?.target
   if (!(target instanceof HTMLImageElement)) return
-  if (!target.closest('.van-image-preview')) return
+  if (!target.closest('.van-image-preview') && !target.closest('.h5-single-image-preview')) return
   const listIdx = resolveListIndexFromPreviewIndex(previewCurrentIndex.value)
   const item = list.value[listIdx]
   if (!item) return
@@ -2068,7 +2099,9 @@ const onPreviewImageCaptureError = (event) => {
 const bindPreviewImageErrorCapture = () => {
   unbindPreviewImageErrorCapture()
   nextTick(() => {
-    previewImageErrorCaptureEl = document.querySelector('.van-image-preview')
+    previewImageErrorCaptureEl =
+      document.querySelector('.h5-single-image-preview') ||
+      document.querySelector('.van-image-preview')
     previewImageErrorCaptureEl?.addEventListener('error', onPreviewImageCaptureError, true)
   })
 }
@@ -2096,7 +2129,12 @@ const clearPreviewLongPressTimer = () => {
 const onPreviewLayerTouchStart = (event) => {
   if (!state.showPreview) return
   const el = event.target
-  if (!(el instanceof Element) || !el.closest('.van-image-preview')) return
+  if (
+    !(el instanceof Element) ||
+    (!el.closest('.van-image-preview') && !el.closest('.h5-single-image-preview'))
+  ) {
+    return
+  }
   if (previewShowsNsfwMask.value || el.closest('.h5-preview-nsfw-shield')) return
   const touch = event.touches?.[0]
   if (!touch) return
@@ -2515,7 +2553,7 @@ const openActionByIndex = (index) => {
 
 /** 列表/全屏/预览内媒体区域，用于捕获阶段拦截系统 contextmenu */
 const SEARCH_MEDIA_CONTEXT_SELECTOR =
-  '.result-item, .fullscreen-slide, .van-image-preview, .preview-wrap'
+  '.result-item, .fullscreen-slide, .van-image-preview, .h5-single-image-preview, .preview-wrap'
 
 const SEARCH_MEDIA_CAPTURE_EVENTS = ['contextmenu', 'selectstart', 'dragstart']
 
@@ -2538,13 +2576,19 @@ const isSearchPageMediaTarget = (el) =>
 const onSearchMediaContextMenuCapture = (event) => {
   const el = event.target
   if (!(el instanceof Element)) return
-  if (!el.closest('.page-search') && !el.closest('.van-image-preview')) return
+  if (
+    !el.closest('.page-search') &&
+    !el.closest('.van-image-preview') &&
+    !el.closest('.h5-single-image-preview')
+  ) {
+    return
+  }
   if (!isSearchPageMediaTarget(el)) return
   event.preventDefault()
 
   if (isTouchLikeContextMenu(event)) return
 
-  if (el.closest('.van-image-preview')) {
+  if (el.closest('.van-image-preview') || el.closest('.h5-single-image-preview')) {
     event.stopPropagation()
     const listIdx = resolveListIndexFromPreviewIndex(previewCurrentIndex.value)
     if (listIdx >= 0) openActionByIndex(listIdx)
@@ -2555,7 +2599,13 @@ const onSearchMediaContextMenuCapture = (event) => {
 const onSearchMediaAuxEventCapture = (event) => {
   const el = event.target
   if (!(el instanceof Element)) return
-  if (!el.closest('.page-search') && !el.closest('.van-image-preview')) return
+  if (
+    !el.closest('.page-search') &&
+    !el.closest('.van-image-preview') &&
+    !el.closest('.h5-single-image-preview')
+  ) {
+    return
+  }
   if (!isSearchPageMediaTarget(el)) return
   event.preventDefault()
 }
@@ -2733,6 +2783,7 @@ onUnmounted(() => {
   window.removeEventListener('resize', onPageResize)
   fullscreenScrollIdle.dispose()
   waterfallScrollIdle.dispose()
+  cancelFullscreenPrefetch()
 })
 
 const init = async () => {
@@ -2799,7 +2850,7 @@ onMounted(async () => {
             />
           </form>
           <van-button class="h5-chrome-icon-btn" plain @click="state.showFilters = true">
-            <van-icon name="arrow-down" />
+            <IconifyIcon icon="custom:arrow-down" />
           </van-button>
         </div>
         <template #trailing>
@@ -2810,12 +2861,12 @@ onMounted(async () => {
             :aria-label="layoutToggleTitle"
             @click="toggleDisplayMode"
           >
-            <van-icon :name="displayMode === 'waterfall' ? 'expand-o' : 'apps-o'" />
+            <IconifyIcon :icon="displayMode === 'waterfall' ? 'custom:expand-o' : 'custom:card-list'" />
           </van-button>
         </template>
         <template #mini-trailing>
           <van-button class="chrome-mini-btn filter-btn" plain @click="state.showFilters = true">
-            <van-icon name="arrow-down" />
+            <IconifyIcon icon="custom:arrow-down" />
           </van-button>
           <van-button
             class="chrome-mini-btn"
@@ -2824,7 +2875,7 @@ onMounted(async () => {
             :aria-label="layoutToggleTitle"
             @click="toggleDisplayMode"
           >
-            <van-icon :name="displayMode === 'waterfall' ? 'expand-o' : 'apps-o'" />
+            <IconifyIcon :icon="displayMode === 'waterfall' ? 'custom:expand-o' : 'custom:card-list'" />
           </van-button>
         </template>
       </H5BrowseChrome>
@@ -2852,6 +2903,15 @@ onMounted(async () => {
 
 
       <van-pull-refresh v-model="state.refreshing" :disabled="isPullRefreshDisabled" @refresh="onRefresh">
+        <template #pulling>
+          <H5PullRefreshHead mode="pulling" />
+        </template>
+        <template #loosing>
+          <H5PullRefreshHead mode="loosing" />
+        </template>
+        <template #loading>
+          <H5PullRefreshHead mode="loading" />
+        </template>
         <div
           class="search-pull-inner"
           :class="{
@@ -3029,7 +3089,7 @@ onMounted(async () => {
               </div>
             </div>
             <H5ListEmpty v-else-if="state.finished && !state.loading" :description="t('messages.noData')" />
-            <div v-if="state.loading && list.length" class="load-more-text">{{ t('messages.loading') }}</div>
+            <div v-if="state.loading && list.length" class="load-more-text">{{ t('messages.pullRefreshLoading') }}</div>
           </template>
           <template v-else>
             <div class="fullscreen-slider">
@@ -3041,6 +3101,7 @@ onMounted(async () => {
                 :finished="state.finished"
                 :suppress-load-more="state.jumpScrollLock"
                 :allow-top-pull="isFullscreenPullAtTop"
+                :snap-disabled="fullscreenInteractLocked"
                 @scroll="onFullscreenPagerScroll"
                 @index-change="onFullscreenPagerIndexChange"
                 @load-more="onLoadMore"
@@ -3062,7 +3123,6 @@ onMounted(async () => {
                     @mouseup="onCardMouseUp"
                     @mouseleave="onCardMouseUp"
                     @contextmenu="onMediaContextMenu(index, $event)"
-                    @click="openPreview(index)"
                   >
                     <div
                       v-if="item.fileType !== 'video' && shouldLoadFullscreenImage(index)"
@@ -3081,21 +3141,19 @@ onMounted(async () => {
                           v-if="!isSlideImageLoaded(item)"
                           class="fullscreen-slide-loading"
                           type="spinner"
-                          color="var(--van-gray-5)"
+                          color="rgba(255, 255, 255, 0.65)"
                         />
-                        <img
+                        <H5ZoomableImage
                           class="fullscreen-slide-img"
                           :class="{ 'fullscreen-slide-img--ready': isSlideImageLoaded(item) }"
-                          :style="{ objectFit: mediaObjectFit }"
                           :src="getFullscreenListImageSrc(item)"
-                          alt=""
-                          draggable="false"
-                          decoding="async"
-                          :loading="index === fullscreenVisibleIndex ? 'eager' : 'lazy'"
+                          :object-fit="mediaObjectFit"
+                          :active="index === fullscreenVisibleIndex"
+                          @zoom-change="onFullscreenZoomChange"
+                          @pinch-active="onFullscreenPinchActive"
                           @load="onSlideImageLoad(item)"
                           @error="onImageLoadError(item, $event)"
                         />
-                        <div class="media-touch-shield" aria-hidden="true" />
                       </template>
                     </div>
                     <div
@@ -3156,7 +3214,7 @@ onMounted(async () => {
                 v-else-if="state.finished && !state.loading"
                 :description="t('messages.noData')"
               />
-              <div v-if="state.loading && list.length" class="load-more-text">{{ t('messages.loading') }}</div>
+              <div v-if="state.loading && list.length" class="load-more-text">{{ t('messages.pullRefreshLoading') }}</div>
             </div>
           </template>
         </div>
@@ -3172,7 +3230,6 @@ onMounted(async () => {
     >
       <div class="filter-panel">
         <div class="filter-panel-header">
-          <div class="filter-title">{{ t('h5.pages.search.filters.title') }}</div>
           <form class="filter-keyword-form" autocomplete="off" @submit.prevent="onApplyFilters">
             <van-search
               v-model="form.keywords"
@@ -3213,114 +3270,209 @@ onMounted(async () => {
               shape="round"
               clearable
             />
-            <van-tabs v-model:active="filterResourcePickerTab" shrink class="search-resource-picker__tabs">
-              <van-tab
-                :name="RESOURCE_PICKER_TAB_ALL"
-                :title="t('exploreCommon.searchForm.resourceName.listTabAll')"
-              />
-              <van-tab
-                :name="RESOURCE_PICKER_TAB_LOCAL"
-                :title="t('resourceTypeList.localResource')"
-              />
-              <van-tab
-                :name="RESOURCE_PICKER_TAB_REMOTE"
-                :title="t('resourceTypeList.remoteResource')"
-              />
-            </van-tabs>
-            <div class="search-resource-picker__body">
-              <template v-if="filterResourcePickerGroups.length">
-                <div
-                  v-for="group in filterResourcePickerGroups"
-                  :key="group.key"
-                  class="search-resource-picker__group"
+            <div class="search-resource-picker__main">
+              <div class="search-resource-picker__tabbar" role="tablist">
+                <button
+                  type="button"
+                  role="tab"
+                  class="search-resource-picker__tab"
+                  :class="{ 'search-resource-picker__tab--active': filterResourcePickerTab === RESOURCE_PICKER_TAB_ALL }"
+                  :aria-selected="filterResourcePickerTab === RESOURCE_PICKER_TAB_ALL"
+                  @click="filterResourcePickerTab = RESOURCE_PICKER_TAB_ALL"
                 >
+                  <span class="search-resource-picker__tab-bar" />
+                  <span class="search-resource-picker__tab-label">{{
+                    t('exploreCommon.searchForm.resourceName.listTabAll')
+                  }}</span>
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  class="search-resource-picker__tab"
+                  :class="{
+                    'search-resource-picker__tab--active': filterResourcePickerTab === RESOURCE_PICKER_TAB_LOCAL
+                  }"
+                  :aria-selected="filterResourcePickerTab === RESOURCE_PICKER_TAB_LOCAL"
+                  @click="filterResourcePickerTab = RESOURCE_PICKER_TAB_LOCAL"
+                >
+                  <span class="search-resource-picker__tab-bar" />
+                  <span class="search-resource-picker__tab-label">{{
+                    t('resourceTypeList.localResource')
+                  }}</span>
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  class="search-resource-picker__tab"
+                  :class="{
+                    'search-resource-picker__tab--active': filterResourcePickerTab === RESOURCE_PICKER_TAB_REMOTE
+                  }"
+                  :aria-selected="filterResourcePickerTab === RESOURCE_PICKER_TAB_REMOTE"
+                  @click="filterResourcePickerTab = RESOURCE_PICKER_TAB_REMOTE"
+                >
+                  <span class="search-resource-picker__tab-bar" />
+                  <span class="search-resource-picker__tab-label">{{
+                    t('resourceTypeList.remoteResource')
+                  }}</span>
+                </button>
+              </div>
+              <div class="search-resource-picker__body">
+                <template v-if="filterResourcePickerGroups.length">
                   <div
-                    v-if="group.title && !group.hideTitle"
-                    class="search-resource-picker__group-title"
+                    v-for="group in filterResourcePickerGroups"
+                    :key="group.key"
+                    class="search-resource-picker__group"
                   >
-                    {{ group.title }}
-                  </div>
-                  <van-cell-group inset>
-                    <van-cell
-                      v-for="item in group.items"
-                      :key="item.optionValue.key"
-                      clickable
-                      :class="{ 'search-resource-picker__item--active': isFilterResourceActive(item) }"
-                      @click="selectFilterResource(item)"
+                    <div
+                      v-if="group.title && !group.hideTitle"
+                      class="search-resource-picker__group-title"
                     >
-                      <template #title>
-                        <div class="search-resource-picker__row">
-                          <span class="search-resource-picker__name">{{
-                            resourcePickerItemLabel(item)
-                          }}</span>
-                          <van-icon
-                            v-if="isFilterResourceActive(item)"
-                            name="success"
-                            class="search-resource-picker__check"
-                          />
-                        </div>
-                      </template>
-                    </van-cell>
-                  </van-cell-group>
-                </div>
-              </template>
-              <van-empty
-                v-else
-                class="search-resource-picker__empty"
-                :description="
-                  hasFilterResourcePickerFilter
-                    ? t('exploreCommon.searchForm.resourceName.listNoMatch')
-                    : t('messages.noData')
-                "
-              />
+                      {{ group.title }}
+                    </div>
+                    <van-cell-group inset>
+                      <van-cell
+                        v-for="item in group.items"
+                        :key="item.optionValue.key"
+                        clickable
+                        :class="{ 'search-resource-picker__item--active': isFilterResourceActive(item) }"
+                        @click="selectFilterResource(item)"
+                      >
+                        <template #title>
+                          <div class="search-resource-picker__row">
+                            <span class="search-resource-picker__name">{{
+                              resourcePickerItemLabel(item)
+                            }}</span>
+                            <van-icon
+                              v-if="isFilterResourceActive(item)"
+                              name="success"
+                              class="search-resource-picker__check"
+                            />
+                          </div>
+                        </template>
+                      </van-cell>
+                    </van-cell-group>
+                  </div>
+                </template>
+                <van-empty
+                  v-else
+                  class="search-resource-picker__empty"
+                  :description="
+                    hasFilterResourcePickerFilter
+                      ? t('exploreCommon.searchForm.resourceName.listNoMatch')
+                      : t('messages.noData')
+                  "
+                />
+              </div>
             </div>
           </div>
         </div>
         <template v-if="form.resourceType === 'localResource'">
           <div class="filter-group">
             <div class="group-title">{{ t('h5.pages.search.filters.listMode') }}</div>
-            <van-radio-group v-model="form.isRandom" class="filter-options" direction="horizontal">
-              <van-radio v-for="o in listModeRadioOptions" :key="String(o.value)" :name="o.value">
+            <div class="filter-chip-group">
+              <button
+                v-for="o in listModeRadioOptions"
+                :key="String(o.value)"
+                type="button"
+                class="filter-chip"
+                :class="{ 'filter-chip--active': form.isRandom === o.value }"
+                @click="form.isRandom = o.value"
+              >
                 {{ o.text }}
-              </van-radio>
-            </van-radio-group>
+              </button>
+            </div>
           </div>
           <div v-if="!form.isRandom" class="filter-group">
             <div class="group-title">{{ t('pages.Setting.settingDataForm.sortField') }}</div>
-            <van-radio-group v-model="form.sortField" class="filter-options filter-options--sort" direction="horizontal">
-              <van-radio v-for="o in sortFieldRadioOptions" :key="o.value" :name="o.value">{{ o.text }}</van-radio>
-            </van-radio-group>
+            <div class="filter-chip-group">
+              <button
+                v-for="o in sortFieldRadioOptions"
+                :key="o.value"
+                type="button"
+                class="filter-chip"
+                :class="{ 'filter-chip--active': form.sortField === o.value }"
+                @click="form.sortField = o.value"
+              >
+                {{ o.text }}
+              </button>
+            </div>
           </div>
           <div v-if="!form.isRandom" class="filter-group">
             <div class="group-title">{{ t('pages.Setting.settingDataForm.sortType') }}</div>
-            <van-radio-group v-model="form.sortType" class="filter-options" direction="horizontal">
-              <van-radio v-for="o in sortTypeRadioOptions" :key="o.value" :name="o.value">{{ o.text }}</van-radio>
-            </van-radio-group>
+            <div class="filter-chip-group">
+              <button
+                v-for="o in sortTypeRadioOptions"
+                :key="o.value"
+                type="button"
+                class="filter-chip"
+                :class="{ 'filter-chip--active': form.sortType === o.value }"
+                @click="form.sortType = o.value"
+              >
+                {{ o.text }}
+              </button>
+            </div>
           </div>
         </template>
         <div class="filter-group">
           <div class="group-title">{{ t('exploreCommon.searchForm.filterType.placeholder') }}</div>
-          <van-radio-group v-model="form.filterType" class="filter-options" direction="horizontal">
-            <van-radio v-for="o in filterTypeDropdownOptions" :key="o.value" :name="o.value">
+          <div class="filter-chip-group">
+            <button
+              v-for="o in filterTypeDropdownOptions"
+              :key="o.value"
+              type="button"
+              class="filter-chip"
+              :class="{ 'filter-chip--active': form.filterType === o.value }"
+              @click="form.filterType = o.value"
+            >
               {{ o.text }}
-            </van-radio>
-          </van-radio-group>
+            </button>
+          </div>
         </div>
         <div class="filter-group">
           <div class="group-title">{{ t('exploreCommon.searchForm.orientation.placeholder') }}</div>
-          <van-radio-group v-model="form.orientation" class="filter-options" direction="horizontal">
-            <van-radio name="">{{ t('h5.pages.search.filters.all') }}</van-radio>
-            <van-radio v-for="o in orientationOptions" :key="o.value" :name="String(o.value)">
+          <div class="filter-chip-group">
+            <button
+              type="button"
+              class="filter-chip"
+              :class="{ 'filter-chip--active': form.orientation === '' }"
+              @click="form.orientation = ''"
+            >
+              {{ t('h5.pages.search.filters.all') }}
+            </button>
+            <button
+              v-for="o in orientationOptions"
+              :key="o.value"
+              type="button"
+              class="filter-chip"
+              :class="{ 'filter-chip--active': form.orientation === String(o.value) }"
+              @click="form.orientation = String(o.value)"
+            >
               {{ t(o.locale) }}
-            </van-radio>
-          </van-radio-group>
+            </button>
+          </div>
         </div>
         <div v-if="showSearchQualityFilter" class="filter-group">
           <div class="group-title">{{ t('exploreCommon.searchForm.quality.placeholder') }}</div>
-          <van-radio-group v-model="form.quality" class="filter-options" direction="horizontal">
-            <van-radio name="">{{ t('h5.pages.search.filters.all') }}</van-radio>
-            <van-radio v-for="q in qualityList" :key="q" :name="q">{{ q }}</van-radio>
-          </van-radio-group>
+          <div class="filter-chip-group">
+            <button
+              type="button"
+              class="filter-chip"
+              :class="{ 'filter-chip--active': form.quality === '' }"
+              @click="form.quality = ''"
+            >
+              {{ t('h5.pages.search.filters.all') }}
+            </button>
+            <button
+              v-for="q in qualityList"
+              :key="q"
+              type="button"
+              class="filter-chip"
+              :class="{ 'filter-chip--active': form.quality === q }"
+              @click="form.quality = q"
+            >
+              {{ q }}
+            </button>
+          </div>
         </div>
         </div>
         <div class="filter-actions">
@@ -3334,21 +3486,18 @@ onMounted(async () => {
       </div>
     </van-popup>
 
-    <van-image-preview
+    <H5SingleImagePreview
       v-model:show="state.showPreview"
-      :images="previewImages"
-      :start-position="previewStartPosition"
-      :close-on-click-image="false"
-      :close-on-click-overlay="false"
-      closeable
-      @change="onPreviewIndexChange"
+      :src="previewSingleSrc"
+      object-fit="contain"
+      @close="previewImageErrorAt = -1"
     >
       <template v-if="previewShowsNsfwMask" #cover>
         <div class="h5-preview-nsfw-shield">
           <H5NsfwContentMask :visible="true" />
         </div>
       </template>
-    </van-image-preview>
+    </H5SingleImagePreview>
 
     <Teleport to="body">
       <div
@@ -3539,6 +3688,7 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  background: #000;
 }
 .page-search--fullscreen .page-search-inner {
   flex: 1;
@@ -3584,10 +3734,10 @@ onMounted(async () => {
   cursor: pointer;
   position: relative;
   box-sizing: border-box;
-  background-color: rgba(0, 0, 0, 0.07);
+  background-color: #000;
 
   &--nsfw-masked {
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: #000;
   }
 }
 .fullscreen-slide-media {
@@ -3596,10 +3746,8 @@ onMounted(async () => {
   z-index: 1;
 
   .fullscreen-slide-img {
-    pointer-events: none;
     -webkit-user-drag: none;
     user-drag: none;
-    touch-action: manipulation;
   }
 
   .media-touch-shield {
@@ -3608,8 +3756,8 @@ onMounted(async () => {
 }
 .fullscreen-slide-fallback {
   z-index: 2;
-  color: var(--van-text-color-2);
-  background: rgba(0, 0, 0, 0.06);
+  color: rgba(255, 255, 255, 0.72);
+  background: #000;
 }
 .fullscreen-slide-loading {
   position: absolute;
@@ -3622,11 +3770,15 @@ onMounted(async () => {
   width: 100%;
   height: 100%;
   display: block;
+  /* 容器保持不透明黑底；仅图片淡入，避免加载态露白 */
+  opacity: 1;
+}
+.fullscreen-slide-img :deep(.h5-zoomable-image__img) {
   object-position: center;
   opacity: 0;
   transition: opacity 0.2s ease;
 }
-.fullscreen-slide-img--ready {
+.fullscreen-slide-img--ready :deep(.h5-zoomable-image__img) {
   opacity: 1;
 }
 .fullscreen-slide-placeholder {
@@ -3787,7 +3939,7 @@ onMounted(async () => {
   justify-content: flex-end;
   padding: 24px 16px;
   box-sizing: border-box;
-  background: rgba(0, 0, 0, 0.04);
+  background: #000;
 }
 
 .result-list-skeleton {
@@ -4096,23 +4248,113 @@ onMounted(async () => {
   padding-bottom: 0;
 }
 
-.search-resource-picker__tabs {
-  :deep(.van-tabs__wrap) {
-    height: 32px;
-    margin-bottom: 6px;
-  }
+/* 对齐鸿蒙：左侧竖向资源 Tab + 右侧列表 */
+.search-resource-picker__main {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 0;
+  min-width: 0;
+  height: 200px;
+}
 
-  :deep(.van-tab) {
-    font-size: 13px;
+.search-resource-picker__tabbar {
+  flex: 0 0 88px;
+  width: 88px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-right: 6px;
+  box-sizing: border-box;
+}
+
+.search-resource-picker__tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  margin: 0;
+  padding: 8px 6px 8px 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--van-text-color);
+  font-size: 13px;
+  line-height: 1.3;
+  text-align: left;
+  cursor: pointer;
+}
+
+.search-resource-picker__tab-bar {
+  flex: 0 0 3px;
+  width: 3px;
+  height: 16px;
+  border-radius: 1.5px;
+  background: transparent;
+}
+
+.search-resource-picker__tab-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.search-resource-picker__tab--active {
+  background: transparent;
+  color: var(--van-primary-color);
+  font-weight: 500;
+
+  .search-resource-picker__tab-bar {
+    background: var(--van-primary-color);
   }
 }
 
 .search-resource-picker__body {
-  max-height: 200px;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  max-height: none;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-  padding-top: 2px;
+  padding-top: 0;
+}
+
+/* 对齐鸿蒙 FilterOptionChip */
+.filter-chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+}
+
+/* 对齐鸿蒙 Theme.searchBg：勿用 --van-search-background（搜索框常为 transparent） */
+.filter-chip {
+  height: 36px;
+  min-width: 96px;
+  margin: 0 8px 8px 0;
+  padding: 0 12px;
+  border: none;
+  border-radius: 4px;
+  background: #f2f3f5;
+  color: var(--van-text-color);
+  font-size: 14px;
+  line-height: 36px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.filter-chip--active {
+  background: var(--van-primary-color);
+  color: #fff;
+}
+
+html.van-theme-dark .filter-chip {
+  background: #2a2a2a;
+}
+
+html.van-theme-dark .filter-chip--active {
+  background: var(--van-primary-color);
+  color: #fff;
 }
 
 .search-resource-picker__group {
@@ -4158,14 +4400,6 @@ onMounted(async () => {
   margin-bottom: 8px;
   font-size: 13px;
   color: var(--van-text-color-2);
-}
-.filter-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 14px;
-}
-.filter-options :deep(.van-radio) {
-  min-width: 96px;
 }
 .filter-actions {
   flex-shrink: 0;

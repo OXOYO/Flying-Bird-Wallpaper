@@ -1,4 +1,4 @@
-{
+﻿{
   "appInfo": {
     "appName": "Papéis de Parede Pássaro Voador",
     "description": "Flying Bird Wallpaper é um aplicativo de papel de parede para desktop rico em recursos que suporta vários tipos de papéis de parede, incluindo imagens, vídeos, papéis de parede rítmicos e cores sólidas, tornando sua área de trabalho única e vibrante."
@@ -814,6 +814,9 @@
     "rhythmWallpaperNeedVirtualAudio": "Por favor, instale e configure uma placa de som virtual (como VB-Audio/BlackHole) para usar a função de papel de parede rítmico",
     "noData": "Sem dados",
     "loading": "Carregando...",
+    "pullRefreshPulling": "Pull to refresh...",
+    "pullRefreshLoosing": "Loose to refresh...",
+    "pullRefreshLoading": "Loading...",
     "loadingMore": "Carregar mais...",
     "invalidIndex": "Por favor, insira um índice válido",
     "indexOutOfRange": "Índice fora do intervalo",

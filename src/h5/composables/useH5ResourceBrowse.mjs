@@ -64,6 +64,7 @@ import {
   writeH5DisplaySize
 } from '@h5/utils/h5BrowsePreferences.mjs'
 import { useH5PreviewNsfwShield } from '@h5/composables/useH5PreviewNsfwShield.mjs'
+import { useH5FullscreenImagePrefetch } from '@h5/composables/useH5FullscreenImagePrefetch.mjs'
 
 /** H5 叠层：高于 van-image-preview 默认层级（约 2000） */
 const H5_OVERLAY_Z = {
@@ -84,13 +85,12 @@ const FULLSCREEN_PAGE_SIZE = 20
 const WATERFALL_PAGE_SIZE_MIN = 24
 const WATERFALL_PAGE_SIZE_MAX = 160
 const WATERFALL_VIEWPORT_BUFFER_ROWS = 2
-const FULLSCREEN_IMAGE_PRELOAD_RANGE = 1
 const BROWSE_WATERFALL_CONTENT_GAP_PX = 10
 const BROWSE_INDICATOR_TOP_CARD_GAP_PX = 8
 const INLINE_VIDEO_MIN_VISIBLE_RATIO = 0.15
 
 const BROWSE_MEDIA_CONTEXT_SELECTOR =
-  '.result-item, .fullscreen-slide, .van-image-preview, .preview-wrap'
+  '.result-item, .fullscreen-slide, .van-image-preview, .h5-single-image-preview, .preview-wrap'
 
 const BROWSE_MEDIA_CAPTURE_EVENTS = ['contextmenu', 'selectstart', 'dragstart']
 
@@ -492,12 +492,18 @@ export function useH5ResourceBrowse(options) {
     return appendImageRetryQuery(url, item)
   }
 
-  const shouldLoadFullscreenImage = (index) => {
-    if (displayMode.value !== 'fullscreen') return false
-    const cur = fullscreenVisibleIndex.value
-    if (typeof index !== 'number' || index < 0) return false
-    return Math.abs(index - cur) <= FULLSCREEN_IMAGE_PRELOAD_RANGE
-  }
+  const {
+    shouldLoadFullscreenImage,
+    notifyFullscreenImageSettled,
+    cancelFullscreenPrefetch
+  } = useH5FullscreenImagePrefetch({
+    list,
+    currentIndex: fullscreenVisibleIndex,
+    displayMode,
+    getImageSrc: (item) => getFullscreenListImageSrc(item),
+    getItemKey,
+    compressEnabled: computed(() => !!settingData.value.h5FullscreenImageCompress)
+  })
 
   const clearImageLoadedKey = (key) => {
     if (!key) return
@@ -529,6 +535,7 @@ export function useH5ResourceBrowse(options) {
     if (!key) return
     imageErrorState[key] = true
     clearImageLoadedKey(key)
+    notifyFullscreenImageSettled(item)
   }
 
   const onPosterLoadError = onImageLoadError
@@ -538,6 +545,7 @@ export function useH5ResourceBrowse(options) {
     if (!key) return
     imageErrorState[key] = false
     markImageLoaded(item)
+    notifyFullscreenImageSettled(item)
   }
 
   const retryLoadImage = (item) => {
@@ -1142,25 +1150,35 @@ export function useH5ResourceBrowse(options) {
     }
   }
 
-  const previewImages = computed(() => {
-    if (!state.showPreview) return []
-    return list.value
-      .filter((item) => item.fileType !== 'video')
-      .map((item) => getPreviewImageSrc(item))
-      .filter(Boolean)
+  const previewSingleSrc = computed(() => {
+    if (!state.showPreview || longPress.selectedIndex < 0) return ''
+    const sel = list.value[longPress.selectedIndex]
+    if (!sel || sel.fileType === 'video') return ''
+    return getPreviewImageSrc(sel) || ''
   })
 
-  const previewStartPosition = computed(() => {
-    if (!state.showPreview || longPress.selectedIndex < 0) return 0
-    const sel = list.value[longPress.selectedIndex]
-    if (!sel || sel.fileType === 'video') return 0
-    let pos = 0
-    for (let i = 0; i < longPress.selectedIndex; i++) {
-      const row = list.value[i]
-      if (row?.fileType !== 'video' && row?.imageSrc) pos++
-    }
-    return pos
+  const previewImages = computed(() => {
+    const src = previewSingleSrc.value
+    return src ? [src] : []
   })
+
+  const previewStartPosition = computed(() => 0)
+
+  const fullscreenZoomed = ref(false)
+  const fullscreenPinchActive = ref(false)
+  const fullscreenInteractLocked = computed(
+    () => fullscreenZoomed.value || fullscreenPinchActive.value
+  )
+  const onFullscreenZoomChange = (zoomed) => {
+    fullscreenZoomed.value = !!zoomed
+  }
+  const onFullscreenPinchActive = (active) => {
+    fullscreenPinchActive.value = !!active
+  }
+  const resetFullscreenInteractLock = () => {
+    fullscreenZoomed.value = false
+    fullscreenPinchActive.value = false
+  }
 
   const resolveListIndexFromPreviewIndex = (previewIndex) => {
     let pos = 0
@@ -1463,6 +1481,9 @@ export function useH5ResourceBrowse(options) {
       fullscreenAutoPlay.stop()
       fullscreenAutoPlayUserStopped.value = true
     }
+    if (idx !== fullscreenVisibleIndex.value) {
+      resetFullscreenInteractLock()
+    }
     fullscreenVisibleIndex.value = idx
     nextTick(() => {
       void syncFullscreenActiveMedia()
@@ -1476,18 +1497,20 @@ export function useH5ResourceBrowse(options) {
     return t('h5.pages.search.displayMode.indicator', { current: cur, total })
   })
 
-  const isPullRefreshDisabled = computed(() =>
-    computeH5PullRefreshDisabled({
-      loading: state.loading,
-      displayMode: displayMode.value,
-      waterfallScrollTop: state.scrollTop,
-      fullscreenScrollTop: fullscreenScrollTop.value,
-      fullscreenVisibleIndex: fullscreenVisibleIndex.value,
-      scrollIdleActive:
-        displayMode.value === 'fullscreen'
-          ? fullscreenScrollIdle.active.value
-          : waterfallScrollIdle.active.value
-    })
+  const isPullRefreshDisabled = computed(
+    () =>
+      fullscreenInteractLocked.value ||
+      computeH5PullRefreshDisabled({
+        loading: state.loading,
+        displayMode: displayMode.value,
+        waterfallScrollTop: state.scrollTop,
+        fullscreenScrollTop: fullscreenScrollTop.value,
+        fullscreenVisibleIndex: fullscreenVisibleIndex.value,
+        scrollIdleActive:
+          displayMode.value === 'fullscreen'
+            ? fullscreenScrollIdle.active.value
+            : waterfallScrollIdle.active.value
+      })
   )
 
   const isFullscreenPullAtTop = computed(() =>
@@ -1994,6 +2017,7 @@ export function useH5ResourceBrowse(options) {
       longPress.suppressClick = false
       return
     }
+    if (displayMode.value === 'fullscreen') return
     const row = list.value[index]
     if (!row) return
     if (blockIfNsfwMasked(row)) return
@@ -2004,6 +2028,7 @@ export function useH5ResourceBrowse(options) {
     }
     if (!row.imageSrc) return
     previewCurrentIndex.value = getPreviewIndexForListIndex(index)
+    previewImageErrorAt.value = -1
     state.showPreview = true
     void recordViewForPreviewIndex(previewCurrentIndex.value)
   }
@@ -2027,7 +2052,7 @@ export function useH5ResourceBrowse(options) {
     if (!state.showPreview) return
     const target = event?.target
     if (!(target instanceof HTMLImageElement)) return
-    if (!target.closest('.van-image-preview')) return
+    if (!target.closest('.van-image-preview') && !target.closest('.h5-single-image-preview')) return
     const listIdx = resolveListIndexFromPreviewIndex(previewCurrentIndex.value)
     const item = list.value[listIdx]
     if (!item) return
@@ -2039,7 +2064,9 @@ export function useH5ResourceBrowse(options) {
   const bindPreviewImageErrorCapture = () => {
     unbindPreviewImageErrorCapture()
     nextTick(() => {
-      previewImageErrorCaptureEl = document.querySelector('.van-image-preview')
+      previewImageErrorCaptureEl =
+        document.querySelector('.h5-single-image-preview') ||
+        document.querySelector('.van-image-preview')
       previewImageErrorCaptureEl?.addEventListener('error', onPreviewImageCaptureError, true)
     })
   }
@@ -2067,7 +2094,12 @@ export function useH5ResourceBrowse(options) {
   const onPreviewLayerTouchStart = (event) => {
     if (!state.showPreview) return
     const el = event.target
-    if (!(el instanceof Element) || !el.closest('.van-image-preview')) return
+    if (
+      !(el instanceof Element) ||
+      (!el.closest('.van-image-preview') && !el.closest('.h5-single-image-preview'))
+    ) {
+      return
+    }
     if (previewShowsNsfwMask.value || el.closest('.h5-preview-nsfw-shield')) return
     const touch = event.touches?.[0]
     if (!touch) return
@@ -2525,13 +2557,19 @@ export function useH5ResourceBrowse(options) {
   const onBrowseMediaContextMenuCapture = (event) => {
     const el = event.target
     if (!(el instanceof Element)) return
-    if (!el.closest(pageRootSelector) && !el.closest('.van-image-preview')) return
+    if (
+      !el.closest(pageRootSelector) &&
+      !el.closest('.van-image-preview') &&
+      !el.closest('.h5-single-image-preview')
+    ) {
+      return
+    }
     if (!isBrowsePageMediaTarget(el)) return
     event.preventDefault()
 
     if (isTouchLikeContextMenu(event)) return
 
-    if (el.closest('.van-image-preview')) {
+    if (el.closest('.van-image-preview') || el.closest('.h5-single-image-preview')) {
       event.stopPropagation()
       const listIdx = resolveListIndexFromPreviewIndex(previewCurrentIndex.value)
       if (listIdx >= 0) openActionByIndex(listIdx)
@@ -2541,7 +2579,13 @@ export function useH5ResourceBrowse(options) {
   const onBrowseMediaAuxEventCapture = (event) => {
     const el = event.target
     if (!(el instanceof Element)) return
-    if (!el.closest(pageRootSelector) && !el.closest('.van-image-preview')) return
+    if (
+      !el.closest(pageRootSelector) &&
+      !el.closest('.van-image-preview') &&
+      !el.closest('.h5-single-image-preview')
+    ) {
+      return
+    }
     if (!isBrowsePageMediaTarget(el)) return
     event.preventDefault()
   }
@@ -2675,6 +2719,7 @@ export function useH5ResourceBrowse(options) {
     window.removeEventListener('resize', onPageResize)
     fullscreenScrollIdle.dispose()
     waterfallScrollIdle.dispose()
+    cancelFullscreenPrefetch()
   }
 
   onDeactivated(() => {
@@ -2776,8 +2821,12 @@ export function useH5ResourceBrowse(options) {
     showIndicatorInBrowseChrome,
     immersiveIndicatorChromeInsetClass,
     previewImages,
+    previewSingleSrc,
     previewStartPosition,
     previewShowsNsfwMask,
+    fullscreenInteractLocked,
+    onFullscreenZoomChange,
+    onFullscreenPinchActive,
     selectedItem,
     canFindSimilarSelected,
     similarMode,

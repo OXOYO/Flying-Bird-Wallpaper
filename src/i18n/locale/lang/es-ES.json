@@ -1,4 +1,4 @@
-{
+﻿{
   "appInfo": {
     "appName": "Fondos Pájaro Volador",
     "description": "Flying Bird Wallpaper es una aplicación de fondo de escritorio rica en funciones que admite múltiples tipos de fondos de pantalla, incluyendo imágenes, videos, fondos rítmicos y colores sólidos, haciendo que tu escritorio sea único y vibrante."
@@ -814,6 +814,9 @@
     "rhythmWallpaperNeedVirtualAudio": "Por favor, instale y configure una tarjeta de sonido virtual (como VB-Audio/BlackHole) para usar la función de fondo rítmico",
     "noData": "Sin datos",
     "loading": "Cargando...",
+    "pullRefreshPulling": "Pull to refresh...",
+    "pullRefreshLoosing": "Loose to refresh...",
+    "pullRefreshLoading": "Loading...",
     "loadingMore": "Cargar más...",
     "invalidIndex": "Por favor, introduzca un índice válido",
     "indexOutOfRange": "Índice fuera de rango",

@@ -1,4 +1,4 @@
-{
+﻿{
   "appInfo": {
     "appName": "Fliegende Vogel Wallpaper",
     "description": "Flying Bird Wallpaper ist eine funktionsreiche Desktop-Hintergrundanwendung, die mehrere Hintergrundtypen unterstützt, darunter Bilder, Videos, Rhythmus-Hintergründe und Volltonfarben, die Ihren Desktop einzigartig und lebendig machen."
@@ -814,6 +814,9 @@
     "rhythmWallpaperNeedVirtualAudio": "Bitte installieren und konfigurieren Sie eine virtuelle Soundkarte (z. B. VB-Audio/BlackHole), um die Rhythmus-Hintergrund-Funktion zu verwenden",
     "noData": "Keine Daten",
     "loading": "Wird geladen...",
+    "pullRefreshPulling": "Pull to refresh...",
+    "pullRefreshLoosing": "Loose to refresh...",
+    "pullRefreshLoading": "Loading...",
     "loadingMore": "Mehr laden...",
     "invalidIndex": "Bitte geben Sie einen gültigen Index ein",
     "indexOutOfRange": "Index außerhalb des gültigen Bereichs",

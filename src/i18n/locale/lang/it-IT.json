@@ -1,4 +1,4 @@
-{
+﻿{
   "appInfo": {
     "appName": "Sfondo Volatile",
     "description": "Flying Bird Wallpaper è un'applicazione per sfondi desktop ricca di funzionalità che supporta diversi tipi di sfondi, tra cui immagini, video, sfondi ritmici e colori solidi, rendendo il tuo desktop unico e vibrante."
@@ -814,6 +814,9 @@
     "rhythmWallpaperNeedVirtualAudio": "Per favore, installa e configura una scheda audio virtuale (come VB-Audio/BlackHole) per utilizzare la funzione di sfondo ritmico",
     "noData": "Nessun dato",
     "loading": "Caricamento...",
+    "pullRefreshPulling": "Pull to refresh...",
+    "pullRefreshLoosing": "Loose to refresh...",
+    "pullRefreshLoading": "Loading...",
     "loadingMore": "Carica altro...",
     "invalidIndex": "Per favore, inserisci un indice valido",
     "indexOutOfRange": "Indice fuori intervallo",

@@ -265,7 +265,7 @@ onMounted(() => {
           :aria-label="t('h5.drawer.openBrowseMenu')"
           @click="commonStore.openDrawer()"
         >
-          <van-icon name="wap-nav" size="22" />
+          <IconifyIcon class="page-setting__drawer-icon" icon="custom:wap-nav" />
         </button>
       </template>
     </van-nav-bar>
@@ -525,6 +525,14 @@ onMounted(() => {
 
 .page-setting__drawer-btn:active {
   opacity: 0.65;
+}
+
+.page-setting__drawer-icon {
+  display: inline-flex;
+  font-size: 22px;
+  width: 22px;
+  height: 22px;
+  color: inherit;
 }
 
 .page-setting {
